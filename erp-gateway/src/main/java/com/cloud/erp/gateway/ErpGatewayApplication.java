@@ -3,10 +3,10 @@ package com.cloud.erp.gateway;
 import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+
+@SpringBootApplication
 @EnableDiscoveryClient
 public class ErpGatewayApplication {
 
@@ -14,9 +14,9 @@ public class ErpGatewayApplication {
         SpringApplication springApplication=new SpringApplication(
                 ErpGatewayApplication.class
         );
-
         springApplication.setBannerMode(Banner.Mode.LOG);
         springApplication.run(args);
+
     }
 
 }

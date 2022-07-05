@@ -3,18 +3,8 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.105.216
-        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
+        namespace: 242de6d7-faa4-4063-9531-1fbeb07a42ce
       config:
         server-addr: 172.16.105.216
-        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
-        file-extension: yml
-        shared-configs: gateway.yml,common.yml
-#    gateway:
-#      routes:
-#        - id: admin_route
-#          uri: lb://erp-admin
-#          predicates:
-#            - Path=/api/sys/**
-#          filters:
-#            - RewritePath=/api/(?<segment>.*), /$\{segment}
-
+        namespace: 242de6d7-faa4-4063-9531-1fbeb07a42ce
+        shared-configs: common.yml,db-sys.yml

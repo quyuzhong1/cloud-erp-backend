@@ -1,8 +1,8 @@
 spring:
   application:
-    name: erp-auth
+    name: auth
   profiles:
     active: dev
 
 server:
-  port: 9020
+  port: 9100
