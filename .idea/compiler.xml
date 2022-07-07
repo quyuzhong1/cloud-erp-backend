@@ -7,19 +7,21 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="erp-merchant" />
-        <module name="erp-common" />
+        <module name="erp-generator" />
         <module name="erp-admin" />
-        <module name="erp-gateway" />
+        <module name="erp-merchant" />
         <module name="erp-auth" />
+        <module name="erp-gateway" />
+        <module name="erp-common" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="cloud-erp" target="1.5" />
       <module name="erp-admin" target="1.8" />
       <module name="erp-auth" target="1.8" />
-      <module name="erp-common" target="7" />
+      <module name="erp-common" target="8" />
       <module name="erp-gateway" target="1.8" />
+      <module name="erp-generator" target="1.8" />
       <module name="erp-merchant" target="1.8" />
     </bytecodeTargetLevel>
   </component>
@@ -30,6 +32,7 @@
       <module name="erp-auth" options="-parameters" />
       <module name="erp-common" options="" />
       <module name="erp-gateway" options="-parameters" />
+      <module name="erp-generator" options="-parameters" />
       <module name="erp-merchant" options="-parameters" />
     </option>
   </component>

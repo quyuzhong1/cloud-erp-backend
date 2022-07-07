@@ -12,6 +12,7 @@
         <module>erp-common</module>
         <module>erp-auth</module>
         <module>erp-gateway</module>
+        <module>erp-generator</module>
     </modules>
 
 

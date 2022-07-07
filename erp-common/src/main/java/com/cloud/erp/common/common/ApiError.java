@@ -18,9 +18,13 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(10000000, "操作失败！");
+    Default(10000000, "操作失败！"),
 
 
+    /**
+     * 通用错误
+     */
+    ERROR_10000(10000, "参数不全或类型错误！");
 
 
 
