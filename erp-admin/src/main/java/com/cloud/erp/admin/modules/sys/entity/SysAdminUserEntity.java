@@ -15,8 +15,8 @@ import java.util.Date;
 @TableName("sys_admin_user")
 public class SysAdminUserEntity {
 
-    @TableId(value = "user_id",type =IdType.ASSIGN_ID )
-    private String userId;
+    @TableId(value = "user_id",type =IdType.ID_WORKER )
+    private Long userId;
 
     //用户名
     private String userName;

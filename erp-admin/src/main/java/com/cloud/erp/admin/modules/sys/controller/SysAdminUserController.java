@@ -2,7 +2,7 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 import com.cloud.erp.admin.modules.sys.dto.SysAdminUserDTO;
 import com.cloud.erp.admin.modules.sys.service.SysAdminUserServer;
-import com.cloud.erp.common.common.ApiResult;
+import com.cloud.erp.common.common.ApiRest;
 import com.cloud.erp.common.common.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -18,15 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
  * @Created by yl
  */
 @RestController
-@RequestMapping("sys/admin/user")
+@RequestMapping("sys/user")
 public class SysAdminUserController extends BaseController {
 
 
     @Autowired
-    private SysAdminUserServer  sysAdminUserServer;
+    private SysAdminUserServer sysAdminUserServer;
 
     @RequestMapping(value = "/save-user", method = {RequestMethod.POST})
-    public ApiResult addSysUser(@RequestBody @Validated SysAdminUserDTO sysAdminUserDTO) {
+    public ApiRest addSysUser(@RequestBody @Validated SysAdminUserDTO sysAdminUserDTO) {
         int insertFlag = sysAdminUserServer.insertSysUser(sysAdminUserDTO);
         if (insertFlag == 1) {
             return success();
