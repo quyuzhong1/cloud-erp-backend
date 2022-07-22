@@ -1,0 +1,62 @@
+package com.cloud.erp.admin.modules.sys.controller;
+
+import com.cloud.erp.admin.modules.sys.dto.SysPostDTO;
+import com.cloud.erp.admin.modules.sys.entity.SysPostEntity;
+import com.cloud.erp.admin.modules.sys.service.SysPostService;
+import com.cloud.erp.common.common.ApiResult;
+import com.cloud.erp.common.common.BaseController;
+import com.cloud.erp.common.common.dto.BasePagingSearchDTO;
+import com.cloud.erp.common.common.dto.BaseSearchDTO;
+import com.cloud.erp.common.common.dto.PagingDTO;
+import com.cloud.erp.common.common.vo.PagingVO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * @Classname SysPostController
+ * @Description TODO
+ * @Date 2022-07-12 9:54
+ * @Created by yl
+ */
+@RestController
+@RequestMapping("sys/post")
+public class SysPostController extends BaseController {
+
+    @Autowired
+    private SysPostService sysPostService;
+
+    @RequestMapping("/save")
+    public ApiResult save(@RequestBody @Validated SysPostDTO postEntity) {
+        boolean flag = sysPostService.savePost(postEntity);
+        return flag == true ? success() : failure();
+    }
+
+    @RequestMapping("/update")
+    public ApiResult update(@RequestBody @Validated SysPostDTO postEntity) {
+        boolean flag = sysPostService.updatePost(postEntity);
+        return flag == true ? success() : failure();
+    }
+
+    @RequestMapping("/remove")
+    public ApiResult remove(@RequestBody List<String> ids) {
+        boolean flag = sysPostService.removePostByIds(ids);
+        return flag == true ? success() : failure();
+    }
+
+    @RequestMapping("/list")
+    public ApiResult list(@RequestBody BaseSearchDTO dto) {
+        List<SysPostEntity> list = sysPostService.findPost(dto);
+        return success(list);
+    }
+
+    @RequestMapping("/paging")
+    public ApiResult paging(@RequestBody PagingDTO<BasePagingSearchDTO> dto) {
+        PagingVO vo = sysPostService.paging(dto);
+        return success(vo);
+    }
+}
