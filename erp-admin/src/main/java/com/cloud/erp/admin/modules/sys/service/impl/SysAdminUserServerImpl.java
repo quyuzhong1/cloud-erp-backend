@@ -1,6 +1,5 @@
 package com.cloud.erp.admin.modules.sys.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.admin.modules.sys.dto.SysAdminUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAdminUserEntity;
@@ -26,7 +25,6 @@ public class SysAdminUserServerImpl extends ServiceImpl<SysAdminUserMapper, SysA
         SysAdminUserEntity entity = new SysAdminUserEntity();
         //复制属性
         BeanMapperUtils.copy(sysAdminUserDTO,entity);
-        entity.setUserId(IdWorker.getId());
         PassEntity passInfo = PassHandler.buildPassword("");
         entity.setSalt(passInfo.getSalt());
         entity.setPassword(passInfo.getPassword());

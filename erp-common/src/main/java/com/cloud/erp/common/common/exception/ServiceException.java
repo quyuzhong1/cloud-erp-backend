@@ -1,7 +1,7 @@
 package com.cloud.erp.common.common.exception;
 
 import com.cloud.erp.common.common.ApiError;
-import com.cloud.erp.common.common.ApiRest;
+import com.cloud.erp.common.common.ApiResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,11 +24,11 @@ public class ServiceException extends RuntimeException {
     /**
      * 从结果初始化
      *
-     * @param apiRest
+     * @param apiResult
      */
-    public ServiceException(ApiRest apiRest) {
-        this.code = apiRest.getCode();
-        this.msg = apiRest.getMsg();
+    public ServiceException(ApiResult apiResult) {
+        this.code = apiResult.getCode();
+        this.msg = apiResult.getMsg();
     }
 
     /**

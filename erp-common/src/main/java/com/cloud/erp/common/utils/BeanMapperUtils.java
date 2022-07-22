@@ -38,7 +38,7 @@ public class BeanMapperUtils {
      * 映射实体（默认字段）
      *
      * @param toClass 映射类对象
-     * @param data 数据（对象）
+     * @param data    数据（对象）
      * @return 映射类对象
      */
     public <E, T> E map(Class<E> toClass, T data) {
@@ -67,14 +67,14 @@ public class BeanMapperUtils {
      * @param data    数据（集合）
      * @return 映射类对象
      */
-    public <E, T> List<E> mapAsList(Class<E> toClass, Collection<T> data) {
+    public static <E, T> List<E> copyList(Class<E> toClass, Collection<T> data) {
         return MAPPER_FACADE.mapAsList(data, toClass);
     }
 
     /**
      * 获取自定义映射
      *
-     * @param toClass 映射类
+     * @param toClass   映射类
      * @param dataClass 数据映射类
      * @param configMap 自定义配置
      * @return 映射类对象
@@ -95,11 +95,10 @@ public class BeanMapperUtils {
     }
 
 
-    public static void copy(Object source, Object destinationObject){
-        if(source!=null){
+    public static void copy(Object source, Object destinationObject) {
+        if (source != null) {
             MAPPER_FACADE.map(source, destinationObject);
         }
-
     }
 
 

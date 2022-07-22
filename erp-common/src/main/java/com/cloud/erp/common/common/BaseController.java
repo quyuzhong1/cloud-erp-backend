@@ -34,8 +34,8 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> message(Integer code, String message, T data) {
-        ApiRest<T> response = new ApiRest<>();
+    protected <T> ApiResult<T> message(Integer code, String message, T data) {
+        ApiResult<T> response = new ApiResult<>();
         response.setCode(code);
         response.setMsg(message);
         if (data != null) {
@@ -50,7 +50,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> success() {
+    protected <T> ApiResult<T> success() {
         return message(CODE_SUCCESS, "请求成功！", null);
     }
 
@@ -63,7 +63,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> success(String message, T data) {
+    protected <T> ApiResult<T> success(String message, T data) {
         return message(CODE_SUCCESS, message, data);
     }
 
@@ -75,7 +75,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> success(T data) {
+    protected <T> ApiResult<T> success(T data) {
         return message(CODE_SUCCESS, MSG_SUCCESS, data);
     }
 
@@ -89,7 +89,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure(Integer code, String message, T data) {
+    protected <T> ApiResult<T> failure(Integer code, String message, T data) {
         return message(code, message, data);
     }
 
@@ -101,7 +101,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure(String message, T data) {
+    protected <T> ApiResult<T> failure(String message, T data) {
         return message(CODE_FAILURE, message, data);
     }
 
@@ -111,7 +111,7 @@ public class BaseController {
      * @param message
      * @return
      */
-    protected <T> ApiRest<T> failure(String message) {
+    protected <T> ApiResult<T> failure(String message) {
         return message(CODE_FAILURE, message, null);
     }
 
@@ -122,7 +122,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure(T data) {
+    protected <T> ApiResult<T> failure(T data) {
         return message(CODE_FAILURE, MSG_FAILURE, data);
     }
 
@@ -133,7 +133,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure() {
+    protected <T> ApiResult<T> failure() {
         return message(CODE_FAILURE, MSG_FAILURE, null);
     }
 
@@ -144,7 +144,7 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure(ApiError error, T data) {
+    protected <T> ApiResult<T> failure(ApiError error, T data) {
         return message(error.code, error.msg, data);
     }
 
@@ -156,8 +156,8 @@ public class BaseController {
      * @param <T>
      * @return
      */
-    protected <T> ApiRest<T> failure(ServiceException ex) {
-        ApiRest<T> apiRest = message(ex.getCode(), ex.getMsg(), null);
-        return apiRest;
+    protected <T> ApiResult<T> failure(ServiceException ex) {
+        ApiResult<T> apiResult = message(ex.getCode(), ex.getMsg(), null);
+        return apiResult;
     }
 }

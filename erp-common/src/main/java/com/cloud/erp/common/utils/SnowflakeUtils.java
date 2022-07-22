@@ -128,11 +128,9 @@ public class SnowflakeUtils {
     }
 
 
-
-
     public static void main(String[] args) {
-       Long id1= genId();
-        Long id2= genId();
+        Long id1 = genId();
+        Long id2 = genId();
         System.out.println(id1);
         System.out.println(id2);
     }
