@@ -7,8 +7,9 @@ import com.cloud.erp.common.common.BaseController;
 import com.cloud.erp.common.constant.TokenConstants;
 import com.cloud.erp.common.dto.AccountLoginDTO;
 import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
 import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
+import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
+import com.cloud.erp.common.modules.sys.vo.SysLoginUserVO;
 import com.cloud.erp.common.utils.IpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Classname SysLoginController
@@ -57,13 +56,15 @@ public class SysLoginAuthController extends BaseController {
             sysUserFeign.setLoginIp(ipDTO);
             //创建token
             String accessToken = authTokenService.createToken(info);
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("accessToken",accessToken);
-            resultMap.put("menuList",info.getMenuList());
-            resultMap.put("permissionList",info.getPermissionList());
-            resultMap.put("userName",info.getUserName());
-            resultMap.put("headIcon",info.getHeadIcon());
-            return success(resultMap);
+            SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
+            sysLoginUserVO.setAccessToken(accessToken);
+            sysLoginUserVO.setMenuList(info.getMenuList());
+            sysLoginUserVO.setPermissionList(info.getPermissionList());
+            sysLoginUserVO.setUserName(info.getUserName());
+            sysLoginUserVO.setHeadIcon(info.getHeadIcon());
+            sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
+            sysLoginUserVO.setBindingState(info.getBindingState());
+            return success(sysLoginUserVO);
         }
 
     }
@@ -87,13 +88,15 @@ public class SysLoginAuthController extends BaseController {
             sysUserFeign.setLoginIp(ipDTO);
             //创建token
             String accessToken = authTokenService.createToken(info);
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("accessToken",accessToken);
-            resultMap.put("menuList",info.getMenuList());
-            resultMap.put("permissionList",info.getPermissionList());
-            resultMap.put("userName",info.getUserName());
-            resultMap.put("headIcon",info.getHeadIcon());
-            return success(resultMap);
+            SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
+            sysLoginUserVO.setAccessToken(accessToken);
+            sysLoginUserVO.setMenuList(info.getMenuList());
+            sysLoginUserVO.setPermissionList(info.getPermissionList());
+            sysLoginUserVO.setUserName(info.getUserName());
+            sysLoginUserVO.setHeadIcon(info.getHeadIcon());
+            sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
+            sysLoginUserVO.setBindingState(info.getBindingState());
+            return success(sysLoginUserVO);
         }
     }
 
