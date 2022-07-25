@@ -86,9 +86,25 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         wrapper.select(SysRoleUserEntity::getRoleId);
         wrapper.eq(SysRoleUserEntity::getUserId, uid);
         List<Object> list = baseMapper.selectObjs(wrapper);
-        List<String> resultList=new ArrayList<>(list.size());
-        resultList= BeanMapperUtils.copyList(String.class,list);
+        List<String> resultList = new ArrayList<>(list.size());
+        resultList = BeanMapperUtils.copyList(String.class, list);
         return resultList;
+    }
+
+
+    /**
+     * 根据角色id获取到 用户信息
+     *
+     * @param userIds
+     * @return java.util.List<com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity>
+     * @author yl
+     * @date 2022-07-22 16:59
+     */
+    @Override
+    public List<SysRoleUserEntity> findRoleIdsByUidList(List<String> userIds) {
+        LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
+        wrapper.in(SysRoleUserEntity::getUserId, userIds);
+        return this.list(wrapper);
     }
 
 

@@ -82,4 +82,7 @@ public class SysUserInfoEntity implements Serializable {
 
 	private String headIcon;
 
+
+
+
 }

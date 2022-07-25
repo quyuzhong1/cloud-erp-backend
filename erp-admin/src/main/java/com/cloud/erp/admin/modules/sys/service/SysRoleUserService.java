@@ -35,5 +35,7 @@ public interface SysRoleUserService extends IService<SysRoleUserEntity> {
 
 
     List<String> findRoleIdsByUid(String uid);
+
+    List<SysRoleUserEntity> findRoleIdsByUidList(List<String> userIds);
 }
 

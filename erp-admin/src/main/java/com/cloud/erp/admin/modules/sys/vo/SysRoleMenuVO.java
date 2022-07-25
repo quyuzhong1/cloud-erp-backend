@@ -43,7 +43,7 @@ public class SysRoleMenuVO implements Serializable {
     private Integer type;
 
     //选中状态 0 没有  1 有
-    private Integer selectState;
+    private Boolean selectState;
 
 
     @JsonInclude(value= JsonInclude.Include.NON_NULL)

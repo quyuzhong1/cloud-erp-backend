@@ -13,9 +13,9 @@
 
     </select>
 
-    <select id="paging" resultType="com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity">
-        SELECT uid,user_name,real_name,mobile,user_state,last_login_time,
-        last_login_ip,login_count,user_account,create_time,update_time
+    <select id="paging" resultType="com.cloud.erp.admin.modules.sys.vo.SysUserManageVO">
+        SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon
+        last_login_ip,login_count,user_account,create_time,update_time,mail
         FROM sys_user_info sui
         WHERE delete_state=1
         <if test="params.state !=null">

@@ -76,7 +76,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 filter(item -> "0".equals(item.getParentId())).
                 map(item -> {
                     item.setParentName("");
-                    item.setSelectState(0);
+                    item.setSelectState(false);
                     item.setChildrenList(getChildrenList(item, menuList, menuIds));
                     return item;
                 }).collect(Collectors.toList());
@@ -209,9 +209,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");
                     //表示 没有 选中
                     if ("0".equals(selectFlag)) {
-                        m.setSelectState(0);
+                        m.setSelectState(false);
                     } else {
-                        m.setSelectState(1);
+                        m.setSelectState(true);
                     }
                     m.setChildrenList(getChildrenList(m, menuList, menuIds));
                     return m;

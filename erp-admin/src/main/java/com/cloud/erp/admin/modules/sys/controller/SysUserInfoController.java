@@ -46,9 +46,6 @@ public class SysUserInfoController extends BaseController {
 
     @RequestMapping("/paging")
     public ApiResult list(@RequestBody @Validated PagingDTO<SysUserPagingSearchDTO> dto) {
-        LoginUser user= SysInterceptor.threadLocal.get();
-        System.out.println("+++++++++++"+user);
-      //  System.out.println(user.getUid()+"~~~~~~~~~~~~~");
         PagingVO pagingVO = sysUserInfoService.paging(dto);
         return success(pagingVO);
     }

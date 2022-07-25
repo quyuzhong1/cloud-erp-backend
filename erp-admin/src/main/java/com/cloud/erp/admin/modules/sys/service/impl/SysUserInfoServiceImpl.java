@@ -11,6 +11,7 @@ import com.cloud.erp.admin.modules.feign.SysAuthFeign;
 import com.cloud.erp.admin.modules.feign.ThirdFeign;
 import com.cloud.erp.admin.modules.interceptor.SysInterceptor;
 import com.cloud.erp.admin.modules.sys.dto.*;
+import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
 import com.cloud.erp.admin.modules.sys.entity.SysUserThirdEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysUserInfoMapper;
@@ -18,6 +19,7 @@ import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
+import com.cloud.erp.admin.modules.sys.vo.SysUserManageVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.cloud.erp.common.common.ApiError;
 import com.cloud.erp.common.common.dto.PagingDTO;
@@ -43,6 +45,7 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -196,6 +199,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysUserPagingSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
+        List<SysUserManageVO> list=pageData.getRecords();
+        List<String> userIds=list.stream().map(SysUserManageVO::getUid).collect(Collectors.toList());
+        List<SysRoleUserEntity> roleUserList=sysRoleUserService.findRoleIdsByUidList(userIds);
+        for(SysUserManageVO vo:list){
+            List<String> roleIdList=roleUserList.stream().filter(r->r.getUserId().equals(vo.getUid()))
+                    .map(SysRoleUserEntity::getRoleId).collect(Collectors.toList());
+            vo.setRoleIdList(roleIdList);
+        }
         return new PagingVO(pageData);
     }
 
