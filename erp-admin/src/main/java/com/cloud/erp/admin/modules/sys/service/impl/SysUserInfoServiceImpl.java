@@ -155,6 +155,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
         vo.setMenuList(menuList);
+        SysUserThirdEntity  thirdEntity=sysUserThirdService.findByUserId(uid);
+        Integer bindingState=0;
+        String bindingPlatform="";
+        if(!Objects.isNull(thirdEntity)){
+            bindingPlatform=thirdEntity.getThirdPartyType();
+            bindingState=1;
+        }
+        vo.setBindingPlatform(bindingPlatform);
+        vo.setBindingState(bindingState);
         return vo;
     }
 
@@ -354,6 +363,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
         vo.setMenuList(menuList);
+        vo.setBindingState(SysConstant.YES_STATE);
+        vo.setBindingPlatform(bindingPlatform);
         return vo;
     }
 

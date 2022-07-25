@@ -46,4 +46,19 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         queryWrapper.eq(SysUserThirdEntity::getThirdUnionId,unionId);
         return this.getOne(queryWrapper);
     }
+
+    /**
+     * 根据用户id获取对应第三方信息
+     * @author yl
+     * @date 2022-07-25 14:37
+     * @param uid
+     * @return com.cloud.erp.admin.modules.sys.entity.SysUserThirdEntity
+     */
+
+    @Override
+    public SysUserThirdEntity findByUserId(String uid) {
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserThirdEntity::getUserId,uid);
+        return this.getOne(queryWrapper);
+    }
 }

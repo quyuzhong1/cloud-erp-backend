@@ -7,9 +7,8 @@ import com.cloud.erp.common.common.BaseController;
 import com.cloud.erp.common.constant.TokenConstants;
 import com.cloud.erp.common.dto.AccountLoginDTO;
 import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
 import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.cloud.erp.common.modules.sys.vo.SysLoginUserVO;
+import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
 import com.cloud.erp.common.utils.IpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+
 
 /**
  * @Classname SysLoginController

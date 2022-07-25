@@ -53,4 +53,11 @@ public class SysUserDTO implements Serializable {
     //菜单的列表 后面还会改
     private List<String> permissionList;
 
+
+    //绑定平台
+    private String  bindingPlatform;
+
+    //绑定状态
+    private Integer bindingState;
+
 }

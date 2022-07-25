@@ -20,4 +20,9 @@ public class SysConstant {
     public static final Integer BUTTON_TYPE = 3;
 
     public static final Integer FUNCTION_TYPE = 4;
+
+
+    public static final Integer YES_STATE = 1;
+
+    public static final Integer NO_STATE = 0;
 }

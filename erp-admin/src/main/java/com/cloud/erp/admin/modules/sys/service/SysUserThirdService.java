@@ -16,5 +16,7 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
     void bindingThirdParty(String uid, String flagId,String bindingPlatform);
 
     SysUserThirdEntity findByUnionId(String flagId);
+
+    SysUserThirdEntity findByUserId(String uid);
 }
 
