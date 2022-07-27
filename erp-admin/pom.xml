@@ -14,8 +14,9 @@
     <name>erp-admin</name>
     <description>后台管理服务</description>
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>1.8</java.version>		
         <spring-cloud.version>Hoxton.SR8</spring-cloud.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
         <dependency>
