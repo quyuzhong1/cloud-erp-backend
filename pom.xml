@@ -11,11 +11,8 @@
     <modules>
         <module>erp-auth</module>
         <module>erp-gateway</module>
-        <module>erp-generator</module>
         <module>erp-common</module>
         <module>erp-admin</module>
         <module>erp-third-party</module>
     </modules>
-
-
 </project>
