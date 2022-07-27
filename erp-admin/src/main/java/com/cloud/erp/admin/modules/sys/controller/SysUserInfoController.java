@@ -1,10 +1,10 @@
 package com.cloud.erp.admin.modules.sys.controller;
 
 
-import com.cloud.erp.admin.modules.interceptor.SysInterceptor;
 import com.cloud.erp.admin.modules.sys.dto.*;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
+import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.cloud.erp.common.common.ApiResult;
 import com.cloud.erp.common.common.BaseController;
@@ -33,6 +33,9 @@ public class SysUserInfoController extends BaseController {
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
+
+    @Autowired
+    private SysUserThirdService sysUserThirdService;
 
     /**
      * 列表
@@ -104,8 +107,14 @@ public class SysUserInfoController extends BaseController {
 
     @RequestMapping("/myCenter")
     public ApiResult myCenter() {
-        LoginUser loginUser= SysInterceptor.threadLocal.get();
+        LoginUser loginUser= sysUserInfoService.myCenter();
         return success(loginUser);
+    }
+
+    @RequestMapping("/removeThirdParty")
+    public ApiResult removeThirdParty(String bindingThird) {
+        boolean flag=sysUserThirdService.removeThirdParty(bindingThird);
+        return flag==true?success():failure();
     }
 
 

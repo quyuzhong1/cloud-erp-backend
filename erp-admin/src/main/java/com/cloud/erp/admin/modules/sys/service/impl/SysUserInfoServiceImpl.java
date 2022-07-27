@@ -28,6 +28,7 @@ import com.cloud.erp.common.common.token.vo.LoginUser;
 import com.cloud.erp.common.common.vo.PagingVO;
 import com.cloud.erp.common.constant.ThirdConstants;
 import com.cloud.erp.common.dto.AccountLoginDTO;
+import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
 import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
 import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
@@ -155,12 +156,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
         vo.setMenuList(menuList);
-        SysUserThirdEntity  thirdEntity=sysUserThirdService.findByUserId(uid);
-        Integer bindingState=0;
-        String bindingPlatform="";
-        if(!Objects.isNull(thirdEntity)){
-            bindingPlatform=thirdEntity.getThirdPartyType();
-            bindingState=1;
+        SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
+        Integer bindingState = 0;
+        String bindingPlatform = "";
+        if (!Objects.isNull(thirdEntity)) {
+            bindingPlatform = thirdEntity.getThirdPartyType();
+            bindingState = 1;
         }
         vo.setBindingPlatform(bindingPlatform);
         vo.setBindingState(bindingState);
@@ -208,11 +209,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysUserPagingSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
-        List<SysUserManageVO> list=pageData.getRecords();
-        List<String> userIds=list.stream().map(SysUserManageVO::getUid).collect(Collectors.toList());
-        List<SysRoleUserEntity> roleUserList=sysRoleUserService.findRoleIdsByUidList(userIds);
-        for(SysUserManageVO vo:list){
-            List<String> roleIdList=roleUserList.stream().filter(r->r.getUserId().equals(vo.getUid()))
+        List<SysUserManageVO> list = pageData.getRecords();
+        List<String> userIds = list.stream().map(SysUserManageVO::getUid).collect(Collectors.toList());
+        List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
+        for (SysUserManageVO vo : list) {
+            List<String> roleIdList = roleUserList.stream().filter(r -> r.getUserId().equals(vo.getUid()))
                     .map(SysRoleUserEntity::getRoleId).collect(Collectors.toList());
             vo.setRoleIdList(roleIdList);
         }
@@ -237,7 +238,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String flagId = "";
         //飞书平台
         if (ThirdConstants.FS_PLATFORM.equals(bindingPlatform)) {
-            Map<String, Object> fsUserMap = thirdFeign.getFsUser(code);
+            FindThirdUserDTO findThirdUserDTO = new FindThirdUserDTO();
+            findThirdUserDTO.setCode(code);
+            findThirdUserDTO.setThirdType(ThirdConstants.THIRD_BINDING_TYPE);
+            Map<String, Object> fsUserMap = thirdFeign.getFsUser(findThirdUserDTO);
             if (fsUserMap != null && fsUserMap.containsKey("union_id")) {
                 flagId = fsUserMap.get("union_id").toString();
             } else {
@@ -250,9 +254,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (StringUtils.isNotBlank(flagId)) {
             LoginUser loginUser = SysInterceptor.threadLocal.get();
             String uid = loginUser.getUid();
+
+            boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
+             if(ifBinding){
+                 throw new ServiceException(ApiError.ERROR_9020);
+             }
             sysUserThirdService.bindingThirdParty(uid, flagId, bindingPlatform);
         }
-
 
     }
 
@@ -338,7 +346,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String flagId = "";
         //飞书平台
         if (ThirdConstants.FS_PLATFORM.equals(bindingPlatform)) {
-            Map<String, Object> fsUserMap = thirdFeign.getFsUser(code);
+            FindThirdUserDTO findThirdUserDTO = new FindThirdUserDTO();
+            findThirdUserDTO.setCode(code);
+            findThirdUserDTO.setThirdType(ThirdConstants.THIRD_LOGIN_TYPE);
+            Map<String, Object> fsUserMap = thirdFeign.getFsUser(findThirdUserDTO);
             if (fsUserMap != null && fsUserMap.containsKey("union_id")) {
                 flagId = fsUserMap.get("union_id").toString();
             } else {
@@ -366,6 +377,26 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         vo.setBindingState(SysConstant.YES_STATE);
         vo.setBindingPlatform(bindingPlatform);
         return vo;
+    }
+
+    /**
+     * 个人中心
+     * @author yl
+     * @date 2022-07-26 14:15
+     * @param
+     * @return com.cloud.erp.common.common.token.vo.LoginUser
+     */
+
+    @Override
+    public LoginUser myCenter() {
+        LoginUser  loginUser= SysInterceptor.threadLocal.get();
+        SysUserThirdEntity sysUserThirdEntity=sysUserThirdService.findByUserId(loginUser.getUid());
+        String bindingPlatform="";
+        if(!Objects.isNull(sysUserThirdEntity)){
+            bindingPlatform=sysUserThirdEntity.getThirdPartyType();
+        }
+        loginUser.setBindingPlatform(bindingPlatform);
+        return loginUser;
     }
 
     public SysUserInfoEntity findByAccount(String account) {

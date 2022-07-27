@@ -6,23 +6,16 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * @Classname SysUserBindingThirdDTO
+ * @Classname FindThirdUserInfo
  * @Description TODO
- * @Date 2022-07-13 17:08
+ * @Date 2022-07-26 10:41
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class SysUserThirdDTO implements Serializable {
-
+public class FindThirdUserDTO implements Serializable {
 
     private String code;
 
-
-    //FS,DD,QYWX
-    private String bindingPlatform;
-
-
-
-
+    private String thirdType;
 }

@@ -41,6 +41,11 @@ public class LoginUser {
 
     private String accessToken;
 
+    //绑定的平台
+    private String bindingPlatform;
+
+
+
 
     //菜单的列表 后面还会改
     private List<String> menuList;

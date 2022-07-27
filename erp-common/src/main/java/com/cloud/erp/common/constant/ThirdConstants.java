@@ -23,4 +23,10 @@ public interface ThirdConstants {
     //钉钉
     String DD_PLATFORM="DD";
 
+
+    String THIRD_BINDING_TYPE="binding";
+
+
+    String THIRD_LOGIN_TYPE="login";
+
 }

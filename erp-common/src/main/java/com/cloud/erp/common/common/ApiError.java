@@ -50,6 +50,7 @@ public enum ApiError implements Serializable {
     ERROR_9017(9017, "账号密码错误"),
     ERROR_9018(9018, "绑定账号失败"),
     ERROR_9019(9019, "账号尚未绑定请绑定后在登录"),
+    ERROR_9020(9020, "改账号已经绑定"),
 
 
 

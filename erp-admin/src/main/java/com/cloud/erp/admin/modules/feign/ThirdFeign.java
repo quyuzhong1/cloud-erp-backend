@@ -1,5 +1,6 @@
 package com.cloud.erp.admin.modules.feign;
 
+import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,5 +18,5 @@ public interface ThirdFeign {
 
     //设置登录ip账号登录
     @PostMapping("third/feign/fs/getUser")
-    Map<String,Object> getFsUser(@RequestBody String code);
+    Map<String,Object> getFsUser(@RequestBody FindThirdUserDTO dto);
 }

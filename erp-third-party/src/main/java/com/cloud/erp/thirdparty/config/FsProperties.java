@@ -19,6 +19,8 @@ public class FsProperties {
 
     private String clientId;
 
-    private String redirectUri;
+    private String redirectLoginUri;
+
+    private String redirectBindingUri;
 
 }

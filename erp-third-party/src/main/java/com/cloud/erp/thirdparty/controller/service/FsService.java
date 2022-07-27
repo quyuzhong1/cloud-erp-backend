@@ -1,5 +1,7 @@
 package com.cloud.erp.thirdparty.controller.service;
 
+import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
+
 import java.util.Map;
 
 /**
@@ -10,5 +12,5 @@ import java.util.Map;
  */
 public interface FsService {
 
-    Map<String, Object> getFsUser(String code);
+    Map<String, Object> getFsUser(FindThirdUserDTO dto);
 }
