@@ -1,7 +1,0 @@
-spring:
-  application:
-    name: erp-admin
-  profiles:
-    active: dev
-server:
-  port: 9010
