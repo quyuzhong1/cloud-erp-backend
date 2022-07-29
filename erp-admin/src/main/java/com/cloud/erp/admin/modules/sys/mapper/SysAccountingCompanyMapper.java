@@ -3,6 +3,7 @@ package com.cloud.erp.admin.modules.sys.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAccountingCompanyEntity;
 import com.erp.common.dto.BasePagingSearchDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -17,5 +18,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface SysAccountingCompanyMapper  extends BaseMapper<SysAccountingCompanyEntity> {
 
-    IPage<SysAccountingCompanyEntity> paging(Page query,@Param("params") BasePagingSearchDTO params);
+    IPage<SysAccountingCompanyEntity> paging(Page query,@Param("params") CompanyPagingSearchDTO params);
 }

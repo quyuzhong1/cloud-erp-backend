@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cloud.erp.admin.modules.sys.dto.BatchSaveRoleUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.erp.common.dto.BaseSearchDTO;
@@ -35,5 +36,9 @@ public interface SysRoleUserService extends IService<SysRoleUserEntity> {
     List<String> findRoleIdsByUid(String uid);
 
     List<SysRoleUserEntity> findRoleIdsByUidList(List<String> userIds);
+
+    boolean saveBatchRoleUser(BatchSaveRoleUserDTO dto);
+
+    void copyRoleUser(String copyRoleId,String newRoleId);
 }
 

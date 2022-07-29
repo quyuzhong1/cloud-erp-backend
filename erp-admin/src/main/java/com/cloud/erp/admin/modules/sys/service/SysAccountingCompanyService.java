@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAccountingCompanyEntity;
 import com.erp.common.dto.BasePagingSearchDTO;
@@ -34,7 +35,7 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
     boolean updateCompanyState(StateDTO dto);
 
 
-    PagingVO paging(PagingDTO<BasePagingSearchDTO> dto);
+    PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto);
 
     boolean batchUpdateCompanyState(BatchStateDTO dto);
 }

@@ -6,10 +6,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.ApiResult;
 import com.erp.common.enums.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -76,6 +73,12 @@ public class SysRoleController extends BaseController {
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody List<String> ids){
         sysRoleService.removeRoleById(ids);
+        return success();
+    }
+
+    @PostMapping("/copy")
+    public ApiResult copy(String roleId){
+        sysRoleService.copyRole(roleId);
         return success();
     }
 

@@ -22,7 +22,6 @@ public class SysUserManageVO  implements Serializable {
     /**
      * $column.comments
      */
-    @TableId(value = "uid",type = IdType.ASSIGN_ID)
     private String uid;
     /**
      * 用户名

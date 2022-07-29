@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cloud.erp.admin.modules.sys.dto.BatchSavePostUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysPostUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.erp.common.dto.BaseSearchDTO;
@@ -17,4 +18,6 @@ public interface SysPostUserService  extends IService<SysPostUserEntity> {
     void removeByPostId(List<String> ids);
 
     List<SysUserVO> findPostUser(BaseSearchDTO dto);
+
+    boolean saveBatchPostUser(BatchSavePostUserDTO dto);
 }

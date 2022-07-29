@@ -1,8 +1,8 @@
 package com.cloud.erp.gateway.utils;
 
 import com.alibaba.fastjson2.JSON;
-import com.commm.core.constant.CommonConstants;
-import com.commm.core.utils.ConvertUtil;
+import com.comm.core.constant.CommonConstants;
+import com.comm.core.utils.ConvertUtil;
 import com.erp.common.dto.ApiResult;
 import com.erp.common.enums.ApiError;
 import org.apache.commons.lang3.StringUtils;

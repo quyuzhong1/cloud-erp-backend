@@ -10,7 +10,7 @@ import com.cloud.erp.admin.modules.sys.service.SysDepartmentService;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentVO;
-import com.commm.core.utils.BeanMapperUtils;
+import com.comm.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -56,17 +56,17 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     public List<SysDepartmentVO> findDepartmentTree() {
         List<SysDepartmentEntity> allList = this.list();
         //获取所有部门人员
-       List<SysDepartmentUserNumber> userNumberList= sysDepartmentUserService.findUserNumber();
+        List<SysDepartmentUserNumber> userNumberList = sysDepartmentUserService.findUserNumber();
         List<SysDepartmentVO> departList = BeanMapperUtils.copyList(SysDepartmentVO.class, allList);
         List<SysDepartmentVO> treeList = departList.stream().
-                filter(item ->"0".equals(item.getParentId()))
+                filter(item -> "0".equals(item.getParentId()))
                 .map(item -> {
                     item.setParentName("");
-                    item.setChildrenList(getChildren(item, departList,userNumberList));
-                    Integer userNumber=0;
-                    SysDepartmentUserNumber vo= userNumberList.stream().filter(u->u.getDepartmentId().equals(item.getId())).findFirst().orElse(null);
-                    if(!Objects.isNull(vo)){
-                        userNumber=vo.getUserNumber();
+                    item.setChildrenList(getChildren(item, departList, userNumberList));
+                    Integer userNumber = 0;
+                    SysDepartmentUserNumber vo = userNumberList.stream().filter(u -> u.getDepartmentId().equals(item.getId())).findFirst().orElse(null);
+                    if (!Objects.isNull(vo)) {
+                        userNumber = vo.getUserNumber();
                     }
                     item.setUserNumber(userNumber);
                     return item;
@@ -106,13 +106,13 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     public List<String> getDepartmentIds(String departmentId) {
         LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysDepartmentEntity::getId);
-        queryWrapper.eq(SysDepartmentEntity::getParentId,departmentId);
-        List<Object> list=baseMapper.selectObjs(queryWrapper);
-        int size=list.size()+1;
-        List<String> resultList=new ArrayList<>(size);
-        resultList=BeanMapperUtils.copyList(String.class,list);
+        queryWrapper.eq(SysDepartmentEntity::getParentId, departmentId);
+        List<Object> list = baseMapper.selectObjs(queryWrapper);
+        int size = list.size() + 1;
+        List<String> resultList = new ArrayList<>(size);
+        resultList = BeanMapperUtils.copyList(String.class, list);
         resultList.add(departmentId);
-        return  resultList;
+        return resultList;
     }
 
     /**
@@ -143,21 +143,21 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         }
     }
 
-    private List<SysDepartmentVO> getChildren(SysDepartmentVO item, List<SysDepartmentVO> departList,List<SysDepartmentUserNumber> userNumberList) {
+    private List<SysDepartmentVO> getChildren(SysDepartmentVO item, List<SysDepartmentVO> departList, List<SysDepartmentUserNumber> userNumberList) {
         List<SysDepartmentVO> collect = departList.stream().filter(dept -> item.getId().equals(dept.getParentId()))
                 .map(d -> {
-                    Integer userNumber=0;
-                    SysDepartmentUserNumber vo= userNumberList.stream().filter(u->u.getDepartmentId().equals(item.getId())).findFirst().orElse(null);
-                    if(!Objects.isNull(vo)){
-                        userNumber=vo.getUserNumber();
+                    Integer userNumber = 0;
+                    SysDepartmentUserNumber vo = userNumberList.stream().filter(u -> d.getId().equals(u.getDepartmentId())).findFirst().orElse(null);
+                    if (!Objects.isNull(vo)) {
+                        userNumber = vo.getUserNumber();
                     }
                     d.setParentName(item.getName());
                     d.setUserNumber(userNumber);
-                    d.setChildrenList(getChildren(d, departList,userNumberList));
+                    d.setChildrenList(getChildren(d, departList, userNumberList));
 
                     return d;
                 }).collect(Collectors.toList());
-        return  CollectionUtils.isEmpty(collect)?null:collect;
+        return CollectionUtils.isEmpty(collect) ? null : collect;
     }
 
 

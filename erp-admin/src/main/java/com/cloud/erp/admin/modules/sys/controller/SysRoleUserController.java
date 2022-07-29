@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.controller;
 
 
+import com.cloud.erp.admin.modules.sys.dto.BatchSaveRoleUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
@@ -33,8 +34,8 @@ public class SysRoleUserController  extends BaseController {
 
 
     @RequestMapping("/batchSave")
-    public ApiResult batchSave(@RequestBody Set<SysRoleUserEntity> list){
-        boolean flag= sysRoleUserService.saveBatch(list);
+    public ApiResult batchSave(@RequestBody BatchSaveRoleUserDTO dto){
+        boolean flag= sysRoleUserService.saveBatchRoleUser(dto);
         return flag==true?success():failure();
     }
 

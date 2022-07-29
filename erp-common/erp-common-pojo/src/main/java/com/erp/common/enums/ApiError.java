@@ -51,6 +51,8 @@ public enum ApiError implements Serializable {
     ERROR_9018(9018, "绑定账号失败"),
     ERROR_9019(9019, "账号尚未绑定请绑定后在登录"),
     ERROR_9020(9020, "改账号已经绑定"),
+    ERROR_9021(9021, "角色不存在"),
+    ERROR_9022(9022, "搜索类型有误"),
 
 
 

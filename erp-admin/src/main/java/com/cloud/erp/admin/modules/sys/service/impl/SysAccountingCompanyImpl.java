@@ -4,12 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAccountingCompanyEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysAccountingCompanyMapper;
 import com.cloud.erp.admin.modules.sys.service.SysAccountingCompanyService;
-import com.commm.core.utils.BeanMapperUtils;
-import com.erp.common.dto.BasePagingSearchDTO;
+import com.comm.core.utils.BeanMapperUtils;
 import com.erp.common.dto.BatchStateDTO;
 import com.erp.common.dto.PagingDTO;
 import com.erp.common.dto.StateDTO;
@@ -19,6 +19,7 @@ import com.erp.common.vo.PagingVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -92,9 +93,15 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
 
     @Override
-    public PagingVO paging(PagingDTO<BasePagingSearchDTO> dto) {
+    public PagingVO paging(PagingDTO<CompanyPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BasePagingSearchDTO params = dto.getParams();
+        CompanyPagingSearchDTO params = dto.getParams();
+        String searchType = params.getSearchType();
+        String searchTypeStr="company_name,contact_name,contact_address,currency";
+        List<String> searchTypeList = Arrays.asList(searchTypeStr.split(","));
+        if (!searchTypeList.contains(searchType)) {
+            throw new ServiceException(ApiError.ERROR_9022);
+        }
         IPage pageData = baseMapper.paging(query, params);
 
         return new PagingVO(pageData);

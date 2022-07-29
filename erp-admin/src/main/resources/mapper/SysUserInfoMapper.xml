@@ -14,7 +14,7 @@
     </select>
 
     <select id="paging" resultType="com.cloud.erp.admin.modules.sys.vo.SysUserManageVO">
-        SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon
+        SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon,
         last_login_ip,login_count,user_account,create_time,update_time,mail
         FROM sys_user_info sui
         WHERE delete_state=1
@@ -28,7 +28,7 @@
             AND last_login_time &gt;=#{params.startTime}
         </if>
         <if test="params.endTime!=null">
-            AND last_login_time &lt;=#{params.startTime}
+            AND last_login_time &lt;=#{params.endTime}
         </if>
 
         <if test="params.roleId !=null">

@@ -23,6 +23,6 @@ public interface SysRoleService extends IService<SysRoleEntity> {
     void removeRoleById(List<String> id);
 
 
-
+    void copyRole(String roleId);
 }
 

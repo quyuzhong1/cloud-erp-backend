@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cloud.erp.admin.modules.sys.dto.BatchSysDepartUserDTO;
 import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
@@ -36,5 +37,5 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
 
     List<SysDepartmentUserNumber>  findUserNumber();
 
-    boolean saveBatchDepartmentUser(Set<SysDepartmentUserEntity> list);
+    boolean saveBatchDepartmentUser(BatchSysDepartUserDTO list);
 }

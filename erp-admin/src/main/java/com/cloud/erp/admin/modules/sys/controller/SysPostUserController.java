@@ -1,5 +1,6 @@
 package com.cloud.erp.admin.modules.sys.controller;
 
+import com.cloud.erp.admin.modules.sys.dto.BatchSavePostUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysPostUserEntity;
 import com.cloud.erp.admin.modules.sys.service.SysPostUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
@@ -28,8 +29,8 @@ public class SysPostUserController  extends BaseController {
     private SysPostUserService sysPostUserService;
 
     @RequestMapping("/batchSave")
-    public ApiResult batchSave(@RequestBody Set<SysPostUserEntity> list){
-        boolean flag= sysPostUserService.saveBatch(list);
+    public ApiResult batchSave(@RequestBody BatchSavePostUserDTO dto){
+        boolean flag= sysPostUserService.saveBatchPostUser(dto);
         return flag==true?success():failure();
     }
 

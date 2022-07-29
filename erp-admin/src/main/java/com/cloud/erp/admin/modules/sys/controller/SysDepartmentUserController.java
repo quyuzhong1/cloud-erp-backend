@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.controller;
 
 
+import com.cloud.erp.admin.modules.sys.dto.BatchSysDepartUserDTO;
 import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
@@ -33,8 +34,8 @@ public class SysDepartmentUserController  extends BaseController {
 
 
     @RequestMapping("/batchSave")
-    public ApiResult batchSave(@RequestBody Set<SysDepartmentUserEntity> list){
-        boolean flag= sysDepartmentUserService.saveBatchDepartmentUser(list);
+    public ApiResult batchSave(@RequestBody BatchSysDepartUserDTO dto){
+        boolean flag= sysDepartmentUserService.saveBatchDepartmentUser(dto);
         return flag==true?success():failure();
     }
 

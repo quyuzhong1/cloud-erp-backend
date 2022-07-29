@@ -32,5 +32,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     List<String> findMenuCodeByRoleIds(List<String> ids,Integer type);
 
     void removeRefByRoleIds(List<String> roleIds);
+
+    void copyRoleMenu(String copyRoleId, String newRoleId);
 }
 

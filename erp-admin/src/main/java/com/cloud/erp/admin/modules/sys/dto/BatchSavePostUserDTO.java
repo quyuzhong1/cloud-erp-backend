@@ -9,20 +9,20 @@ import java.io.Serializable;
 import java.util.Set;
 
 /**
- * @Classname SysRoleMenuBatchDTO
+ * @Classname BatachSavePostUserDTO
  * @Description TODO
- * @Date 2022-07-20 9:14
+ * @Date 2022-07-29 12:26
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class BatchSysDepartUserDTO implements Serializable {
-
-     //部门id
-    @NotBlank(message = "部门id 不能为空")
-    private String departmentId;
+public class BatchSavePostUserDTO implements Serializable {
+    //部门id
+    @NotBlank(message = "岗位id 不能为空")
+    private String postId;
 
     //用户id集合
     @NotEmpty(message = "用户id集合 不能为空")
     private Set<String> userIds;
+
 }

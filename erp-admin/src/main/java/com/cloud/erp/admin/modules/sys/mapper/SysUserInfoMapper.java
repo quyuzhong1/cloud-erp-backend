@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloud.erp.admin.modules.sys.dto.SysUserPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
+import com.cloud.erp.admin.modules.sys.vo.SysUserManageVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import org.apache.ibatis.annotations.Mapper;
@@ -25,7 +26,7 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
     List<SysUserVO> findList(@Param("searchKeyword") String q,@Param("roleId") String roleId);
 
-    IPage<SysUserInfoEntity> paging(Page query, @Param("params") SysUserPagingSearchDTO params);
+    IPage<SysUserManageVO> paging(Page query, @Param("params") SysUserPagingSearchDTO params);
 
     List<SysUserVO> findRoleIfExistList(@Param("searchKeyword") String q,@Param("roleId") String roleId);
 

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cloud.erp.admin.modules.sys.dto.BatchSysDepartUserDTO;
 import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,17 +35,16 @@ import java.util.stream.Collectors;
 public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserMapper, SysDepartmentUserEntity> implements SysDepartmentUserService {
 
     @Autowired
-    private SysDepartmentService  sysDepartmentService;
+    private SysDepartmentService sysDepartmentService;
 
     @Override
     public PagingVO findDepartmentUser(PagingDTO<DepartmentSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DepartmentSearchDTO params = dto.getParams();
         List<String> departmentIds = sysDepartmentService.getDepartmentIds(params.getDepartmentId());
-        IPage pageData =baseMapper.findDepartmentUser(query,params,departmentIds);
+        IPage pageData = baseMapper.findDepartmentUser(query, params, departmentIds);
         return new PagingVO(pageData);
     }
-
 
 
     /**
@@ -58,7 +59,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public void removeByDepartmentIds(List<String> ids) {
         LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
-        if(CollectionUtils.isNotEmpty(ids)){
+        if (CollectionUtils.isNotEmpty(ids)) {
             wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
             baseMapper.delete(wrapper);
         }
@@ -85,10 +86,11 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     /**
      * 分组获取部门的用户数
-     * @author yl
-     * @date 2022-07-18 14:11
+     *
      * @param
      * @return java.util.List<com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber>
+     * @author yl
+     * @date 2022-07-18 14:11
      */
     @Override
     public List<SysDepartmentUserNumber> findUserNumber() {
@@ -98,23 +100,40 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     /**
      * 批量保存部门员工  先删除
+     *
+     * @param dto
+     * @return boolean
      * @author yl
      * @date 2022-07-29 10:45
-     * @param list
-     * @return boolean
      */
     @Override
     @Transactional
-    public boolean saveBatchDepartmentUser(Set<SysDepartmentUserEntity> list) {
-        if(CollectionUtils.isNotEmpty(list)){
-            List<String> userIds=list.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-            List<String> departmentIds=list.stream().map(SysDepartmentUserEntity::getDepartmentId).collect(Collectors.toList());
-            LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
-            wrapper.in(SysDepartmentUserEntity::getUserId,userIds);
-            wrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIds);
-            baseMapper.delete(wrapper);
-            this.saveBatch(list);
+    public boolean saveBatchDepartmentUser(BatchSysDepartUserDTO dto) {
+        Set<String> userIds = dto.getUserIds();
+        String departmentId = dto.getDepartmentId();
+        //先删除对应的关系
+        removeDepartmentUser(departmentId, userIds);
+        //在添加
+        List<SysDepartmentUserEntity> addList=new LinkedList<>();
+        for(String userId:userIds){
+            SysDepartmentUserEntity entity=new SysDepartmentUserEntity();
+            entity.setUserId(userId);
+            entity.setDepartmentId(departmentId);
+            addList.add(entity);
+        }
+        if(CollectionUtils.isNotEmpty(addList)){
+            return this.saveBatch(addList);
         }
         return false;
+    }
+
+
+    public void removeDepartmentUser(String departmentId, Set<String> userIds) {
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
+            wrapper.in(SysDepartmentUserEntity::getUserId, userIds);
+            wrapper.eq(SysDepartmentUserEntity::getDepartmentId, departmentId);
+            baseMapper.delete(wrapper);
+        }
     }
 }

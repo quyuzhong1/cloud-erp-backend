@@ -10,8 +10,8 @@ import com.cloud.erp.admin.modules.sys.mapper.SysRoleMenuMapper;
 import com.cloud.erp.admin.modules.sys.service.SysMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
 import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO;
-import com.commm.core.constant.CommonConstants;
-import com.commm.core.utils.BeanMapperUtils;
+import com.comm.core.constant.CommonConstants;
+import com.comm.core.utils.BeanMapperUtils;
 import com.erp.common.modules.sys.vo.SysMenuVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -47,11 +47,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Transactional
     public void removeByMenuIds(List<String> menuIds) {
         LambdaQueryWrapper<SysRoleMenuEntity> wrapper = new LambdaQueryWrapper();
-        if(CollectionUtils.isNotEmpty(menuIds)){
+        if (CollectionUtils.isNotEmpty(menuIds)) {
             wrapper.in(SysRoleMenuEntity::getMenuId, menuIds);
             baseMapper.delete(wrapper);
         }
-
 
 
     }
@@ -68,11 +67,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     @Override
     public List<SysRoleMenuVO> findRoleMenuTree(String roleId) {
-        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysRoleMenuEntity::getMenuId);
-        queryWrapper.eq(SysRoleMenuEntity::getRoleId, roleId);
-        List<Object> menuObjs = this.listObjs(queryWrapper);
-        List<String> menuIds = BeanMapperUtils.copyList(String.class, menuObjs);
+        List<String> menuIds = getMenuIdByRoleId(roleId);
         List<SysMenuEntity> allList = sysMenuService.list();
         List<SysRoleMenuVO> menuList = BeanMapperUtils.copyList(SysRoleMenuVO.class, allList);
         List<SysRoleMenuVO> treeList = menuList.stream().
@@ -86,6 +81,19 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         return treeList;
     }
 
+
+    //根据角色id 获取菜单id
+    public List<String> getMenuIdByRoleId(String roleId) {
+        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysRoleMenuEntity::getMenuId);
+        queryWrapper.eq(SysRoleMenuEntity::getRoleId, roleId);
+        List<Object> menuObjs = this.listObjs(queryWrapper);
+        if (CollectionUtils.isNotEmpty(menuObjs)) {
+            List<String> menuIds = BeanMapperUtils.copyList(String.class, menuObjs);
+            return menuIds;
+        }
+        return new ArrayList<>();
+    }
 
     /**
      * 批量保存 角色与 菜单的关系
@@ -136,15 +144,15 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      */
     @Override
     public List<SysMenuVO> findMenuByRoleIds(List<String> roleIds) {
-        if(CollectionUtils.isEmpty(roleIds)){
-            return  new ArrayList<>();
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return new ArrayList<>();
         }
         List<SysMenuEntity> allList = sysMenuService.list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         List<String> menuIds;
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            menuIds=allList.stream().map(s->s.getMenuId()).collect(Collectors.toList());
-        }else{
+            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
+        } else {
             menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
         }
         List<SysMenuVO> resultList = menuList.stream().
@@ -168,16 +176,15 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @author yl
      * @date 2022-07-20 14:19
      */
-
     @Override
     public List<String> findMenuCodeByRoleIds(List<String> roleIds, Integer functionType) {
-        if(CollectionUtils.isEmpty(roleIds)){
-           return new ArrayList<>();
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return new ArrayList<>();
         }
         //如果有系统管理员显示所有的
-        if(roleIds.contains(CommonConstants.ADMIN_ROLE_ID)){
-             return baseMapper.findAllMenuCode(functionType);
-        }else{
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            return baseMapper.findAllMenuCode(functionType);
+        } else {
             return baseMapper.findMenuCodeByRoleIds(roleIds, functionType);
         }
 
@@ -185,16 +192,44 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     /**
      * 方法说明
-     * @author yl
-     * @date 2022-07-29 9:24
+     *
      * @param roleIds 角色id
      * @return void
+     * @author yl
+     * @date 2022-07-29 9:24
      */
     @Override
     public void removeRefByRoleIds(List<String> roleIds) {
-        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper=new LambdaQueryWrapper();
-        queryWrapper.in(SysRoleMenuEntity::getRoleId,roleIds);
+        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(SysRoleMenuEntity::getRoleId, roleIds);
         this.remove(queryWrapper);
+
+    }
+
+    /**
+     * 复制角色菜单
+     *
+     * @param copyRoleId
+     * @param newRoleId
+     * @return void
+     * @author yl
+     * @date 2022-07-29 14:58
+     */
+
+    @Override
+    public void copyRoleMenu(String copyRoleId, String newRoleId) {
+        List<String> menuIds = getMenuIdByRoleId(copyRoleId);
+        if (CollectionUtils.isNotEmpty(menuIds)) {
+            List<SysRoleMenuEntity> addList = new LinkedList<>();
+            for (String menuId : menuIds) {
+                SysRoleMenuEntity entity = new SysRoleMenuEntity();
+                entity.setRoleId(newRoleId);
+                entity.setMenuId(menuId);
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
+
 
     }
 

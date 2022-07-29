@@ -1,5 +1,6 @@
 package com.cloud.erp.admin.modules.sys.controller;
 
+import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.service.SysAccountingCompanyService;
 import com.erp.common.controller.BaseController;
@@ -30,7 +31,7 @@ public class SysAccountingCompanyController extends BaseController {
      * 分页列表
      */
     @RequestMapping("/paging")
-    public ApiResult list(@RequestBody @Validated PagingDTO<BasePagingSearchDTO> dto) {
+    public ApiResult list(@RequestBody @Validated PagingDTO<CompanyPagingSearchDTO> dto) {
         PagingVO pagingVO = sysAccountingCompanyService.paging(dto);
         return success(pagingVO);
     }

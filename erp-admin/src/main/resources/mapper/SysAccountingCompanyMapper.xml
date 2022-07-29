@@ -10,14 +10,9 @@
             AND sac.company_state =#{params.state}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-            AND sac.company_name LIKE concat('%',#{params.searchKeyword},'%')
+            AND sac.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
         </if>
-        <if test="params.startTime!=null">
-            AND sac.create_time &gt;=#{params.startTime}
-        </if>
-        <if test="params.endTime!=null">
-            AND sac.create_time &lt;=#{params.startTime}
-        </if>
+
         ORDER BY update_time DESC
 
     </select>
