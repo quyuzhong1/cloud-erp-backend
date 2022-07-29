@@ -19,8 +19,6 @@ import java.util.Map;
  * @Date 2022-07-11 9:36
  * @Created by yl
  */
-
-
 public class JwtUtils {
 
 
@@ -40,7 +38,6 @@ public class JwtUtils {
         claimsMap.put(SecurityConstants.USER_KEY, info.getToken());
         //过期时间
         Date expireDate = new Date(nowDate.getTime() + expireMinutes * 1000);
-
         SecretKey key = generateKey(secret);
         return Jwts.builder()
                 //作为什么用户的唯一标志
