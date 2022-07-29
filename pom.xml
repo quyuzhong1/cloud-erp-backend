@@ -24,7 +24,6 @@
         <module>erp-admin</module>
         <module>erp-third-party</module>
         <module>erp-common</module>
-
     </modules>
 
     <properties>

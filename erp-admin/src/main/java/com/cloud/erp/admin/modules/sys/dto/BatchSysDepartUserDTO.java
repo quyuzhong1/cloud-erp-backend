@@ -1,0 +1,24 @@
+package com.cloud.erp.admin.modules.sys.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.Set;
+
+/**
+ * @Classname SysRoleMenuBatchDTO
+ * @Description TODO
+ * @Date 2022-07-20 9:14
+ * @Created by yl
+ */
+@Data
+@NoArgsConstructor
+public class BatchSysDepartUserDTO implements Serializable {
+
+     //部门id
+    private String departmentId;
+
+    //菜单id集合
+    private Set<String> menuIdList;
+}
