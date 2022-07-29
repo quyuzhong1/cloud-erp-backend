@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloud.erp.admin.modules.sys.dto.SysUserPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
+import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

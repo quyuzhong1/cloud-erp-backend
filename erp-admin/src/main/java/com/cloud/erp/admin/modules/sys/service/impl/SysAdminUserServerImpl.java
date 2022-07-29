@@ -5,9 +5,9 @@ import com.cloud.erp.admin.modules.sys.dto.SysAdminUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAdminUserEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysAdminUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysAdminUserServer;
-import com.cloud.erp.common.utils.BeanMapperUtils;
-import com.cloud.erp.common.utils.password.PassEntity;
-import com.cloud.erp.common.utils.password.PassHandler;
+import com.commm.core.utils.BeanMapperUtils;
+import com.commm.core.utils.password.PassEntity;
+import com.commm.core.utils.password.PassHandler;
 import org.springframework.stereotype.Service;
 
 /**

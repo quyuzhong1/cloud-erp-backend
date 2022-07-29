@@ -1,14 +1,14 @@
 package com.cloud.erp.admin.modules.sys.controller.feign;
 
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
-import com.cloud.erp.common.common.ApiError;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
-import com.cloud.erp.common.constant.UserStateConstants;
-import com.cloud.erp.common.dto.AccountLoginDTO;
-import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
+import com.commm.core.constant.UserStateConstants;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
+import com.erp.common.enums.ApiError;
+import com.erp.common.modules.sys.dto.AccountLoginDTO;
+import com.erp.common.modules.sys.dto.SysLoginIpDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.modules.sys.dto.SysUserThirdDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

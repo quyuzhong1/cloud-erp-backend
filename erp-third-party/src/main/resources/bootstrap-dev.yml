@@ -3,8 +3,8 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.105.216
-        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
+        namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
       config:
         server-addr: 172.16.105.216
-        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
+        namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
         shared-configs: erp-third-party.yml

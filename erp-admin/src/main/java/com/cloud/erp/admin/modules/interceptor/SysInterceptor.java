@@ -2,7 +2,7 @@ package com.cloud.erp.admin.modules.interceptor;
 
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.common.common.token.vo.LoginUser;
+import com.erp.common.vo.LoginUser;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -21,7 +21,6 @@ public class SysInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)  {
         String tokenUserStr=request.getHeader("tokenUserInfo");
-        System.out.println("================"+tokenUserStr);
         if(StringUtils.isNotBlank(tokenUserStr)){
             LoginUser  user= JSONObject.parseObject(tokenUserStr,LoginUser.class);
             threadLocal.set(user);

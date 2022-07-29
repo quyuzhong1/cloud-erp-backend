@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.feign;
 
-import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
+
+import com.erp.common.modules.sys.dto.FindThirdUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

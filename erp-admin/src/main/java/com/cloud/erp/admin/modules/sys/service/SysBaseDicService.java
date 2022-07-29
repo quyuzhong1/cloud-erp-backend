@@ -2,7 +2,7 @@ package com.cloud.erp.admin.modules.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.entity.SysBaseDicEntity;
-import com.cloud.erp.common.common.dto.BaseDicDTO;
+import com.erp.common.dto.BaseDicDTO;
 
 import java.util.List;
 

@@ -2,9 +2,9 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 import com.cloud.erp.admin.modules.sys.entity.SysRoleEntity;
 import com.cloud.erp.admin.modules.sys.service.SysRoleService;
-import com.cloud.erp.common.common.ApiError;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
+import com.erp.common.enums.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;

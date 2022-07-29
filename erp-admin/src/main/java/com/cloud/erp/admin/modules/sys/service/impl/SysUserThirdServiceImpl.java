@@ -6,7 +6,7 @@ import com.cloud.erp.admin.modules.interceptor.SysInterceptor;
 import com.cloud.erp.admin.modules.sys.entity.SysUserThirdEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysUserThirdMapper;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
-import com.cloud.erp.common.common.token.vo.LoginUser;
+import com.erp.common.vo.LoginUser;
 import org.springframework.stereotype.Service;
 
 

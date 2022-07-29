@@ -21,21 +21,17 @@ import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserManageVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.common.ApiError;
-import com.cloud.erp.common.common.dto.PagingDTO;
-import com.cloud.erp.common.common.exception.ServiceException;
-import com.cloud.erp.common.common.token.vo.LoginUser;
-import com.cloud.erp.common.common.vo.PagingVO;
-import com.cloud.erp.common.constant.ThirdConstants;
-import com.cloud.erp.common.dto.AccountLoginDTO;
-import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
-import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.cloud.erp.common.modules.sys.vo.SysMenuVO;
-import com.cloud.erp.common.utils.BeanMapperUtils;
-import com.cloud.erp.common.utils.password.PassEntity;
-import com.cloud.erp.common.utils.password.PassHandler;
+import com.commm.core.constant.ThirdConstants;
+import com.commm.core.utils.BeanMapperUtils;
+import com.commm.core.utils.password.PassEntity;
+import com.commm.core.utils.password.PassHandler;
+import com.erp.common.dto.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.*;
+import com.erp.common.modules.sys.vo.SysMenuVO;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +63,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private ThirdFeign thirdFeign;
 
-    private static final String DEFAULT_PASS = "123456";
+    private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
 
     @Override

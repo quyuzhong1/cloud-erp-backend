@@ -3,7 +3,7 @@ package com.cloud.erp.admin.modules.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.entity.SysPostUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.common.dto.BaseSearchDTO;
+import com.erp.common.dto.BaseSearchDTO;
 
 import java.util.List;
 

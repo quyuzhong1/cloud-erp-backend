@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.sys.dto;
 
-import com.cloud.erp.common.common.dto.BasePagingSearchDTO;
+
+import com.erp.common.dto.BasePagingSearchDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

@@ -1,8 +1,8 @@
 package com.cloud.erp.auth.modules.sys.controller.feign;
 
 import com.cloud.erp.auth.modules.web.server.AuthTokenService;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

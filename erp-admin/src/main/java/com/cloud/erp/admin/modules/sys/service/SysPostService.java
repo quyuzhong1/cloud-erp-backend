@@ -3,10 +3,10 @@ package com.cloud.erp.admin.modules.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.SysPostDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysPostEntity;
-import com.cloud.erp.common.common.dto.BasePagingSearchDTO;
-import com.cloud.erp.common.common.dto.BaseSearchDTO;
-import com.cloud.erp.common.common.dto.PagingDTO;
-import com.cloud.erp.common.common.vo.PagingVO;
+import com.erp.common.dto.BasePagingSearchDTO;
+import com.erp.common.dto.BaseSearchDTO;
+import com.erp.common.dto.PagingDTO;
+import com.erp.common.vo.PagingVO;
 
 import java.util.List;
 

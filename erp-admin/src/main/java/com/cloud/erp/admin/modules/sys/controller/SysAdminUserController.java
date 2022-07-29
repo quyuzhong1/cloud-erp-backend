@@ -2,8 +2,8 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 import com.cloud.erp.admin.modules.sys.dto.SysAdminUserDTO;
 import com.cloud.erp.admin.modules.sys.service.SysAdminUserServer;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;

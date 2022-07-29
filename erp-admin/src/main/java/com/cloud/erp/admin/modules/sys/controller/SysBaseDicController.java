@@ -2,9 +2,9 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 import com.cloud.erp.admin.modules.sys.entity.SysBaseDicEntity;
 import com.cloud.erp.admin.modules.sys.service.SysBaseDicService;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
-import com.cloud.erp.common.common.dto.BaseDicDTO;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.BaseDicDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +27,7 @@ public class SysBaseDicController extends BaseController {
     private SysBaseDicService sysBaseDicService;
 
     @RequestMapping("/list")
-    public ApiResult  list(@RequestBody @Validated BaseDicDTO dto){
+    public ApiResult list(@RequestBody @Validated BaseDicDTO dto){
        List<SysBaseDicEntity> list= sysBaseDicService.listByDicType(dto);
        return success(list);
     }

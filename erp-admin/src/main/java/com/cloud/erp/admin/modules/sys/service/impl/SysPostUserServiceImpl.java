@@ -6,7 +6,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysPostUserEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysPostUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysPostUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.common.dto.BaseSearchDTO;
+import com.erp.common.dto.BaseSearchDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.SysRoleMenuBatchDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleMenuEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO;
-import com.cloud.erp.common.modules.sys.vo.SysMenuVO;
+import com.erp.common.modules.sys.vo.SysMenuVO;
 
 import java.util.List;
 
@@ -30,5 +30,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
 
 
     List<String> findMenuCodeByRoleIds(List<String> ids,Integer type);
+
+    void removeRefByRoleIds(List<String> roleIds);
 }
 

@@ -2,12 +2,9 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.service.SysAccountingCompanyService;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
-import com.cloud.erp.common.common.dto.BasePagingSearchDTO;
-import com.cloud.erp.common.common.dto.PagingDTO;
-import com.cloud.erp.common.common.dto.StateDTO;
-import com.cloud.erp.common.common.vo.PagingVO;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.*;
+import com.erp.common.vo.PagingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,10 +51,19 @@ public class SysAccountingCompanyController extends BaseController {
 
     //更改状态 禁用或者启用
     @RequestMapping("/updateState")
-    public ApiResult update(@RequestBody @Validated StateDTO dto) {
+    public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
         boolean flag = sysAccountingCompanyService.updateCompanyState(dto);
         return flag == true ? success() : failure();
     }
+
+
+    //更改状态 禁用或者启用
+    @RequestMapping("/batchUpdateState")
+    public ApiResult batchUpdateState(@RequestBody @Validated BatchStateDTO  dto) {
+        boolean flag = sysAccountingCompanyService.batchUpdateCompanyState(dto);
+        return flag == true ? success() : failure();
+    }
+
 
     //更改状态 禁用或者启用
     @RequestMapping("/delete")

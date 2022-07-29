@@ -1,12 +1,12 @@
 package com.cloud.erp.gateway.component;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.common.common.ApiError;
-import com.cloud.erp.common.common.token.vo.LoginUser;
-import com.cloud.erp.common.constant.AuthPassPath;
-import com.cloud.erp.common.constant.TokenConstants;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
+import com.commm.core.constant.AuthPassPath;
+import com.commm.core.constant.TokenConstants;
+import com.erp.common.enums.ApiError;
+import com.erp.common.vo.LoginUser;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;

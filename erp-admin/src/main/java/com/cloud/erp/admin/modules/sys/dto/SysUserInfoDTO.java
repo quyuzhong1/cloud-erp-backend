@@ -1,11 +1,12 @@
 package com.cloud.erp.admin.modules.sys.dto;
 
-import com.cloud.erp.common.common.validator.AddGroup;
-import com.cloud.erp.common.common.validator.UpdateGroup;
+import com.erp.common.validator.AddGroup;
+import com.erp.common.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -23,9 +24,11 @@ public class SysUserInfoDTO implements Serializable {
     private String uid;
 
     @NotBlank(message = "用户名不能为空",  groups = {AddGroup.class})
+    @Size(max = 25,message = "最大长度为25")
     private String userName;
 
     @NotBlank(message = "真实名不能为空",groups = {AddGroup.class, UpdateGroup.class})
+    @Size(max = 10,message = "最大长度为10")
     private String realName;
 
     //电话

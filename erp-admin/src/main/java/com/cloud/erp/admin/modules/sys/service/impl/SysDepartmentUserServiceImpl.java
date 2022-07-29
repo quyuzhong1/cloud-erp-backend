@@ -12,12 +12,16 @@ import com.cloud.erp.admin.modules.sys.mapper.SysDepartmentUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentService;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
-import com.cloud.erp.common.common.dto.PagingDTO;
-import com.cloud.erp.common.common.vo.PagingVO;
+import com.erp.common.dto.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SysDepartmentUserServiceImpl
@@ -54,8 +58,10 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public void removeByDepartmentIds(List<String> ids) {
         LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
-        wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
-        baseMapper.delete(wrapper);
+        if(CollectionUtils.isNotEmpty(ids)){
+            wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
+            baseMapper.delete(wrapper);
+        }
 
     }
 
@@ -87,5 +93,28 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public List<SysDepartmentUserNumber> findUserNumber() {
         return baseMapper.findUserNumber();
+    }
+
+
+    /**
+     * 批量保存部门员工  先删除
+     * @author yl
+     * @date 2022-07-29 10:45
+     * @param list
+     * @return boolean
+     */
+    @Override
+    @Transactional
+    public boolean saveBatchDepartmentUser(Set<SysDepartmentUserEntity> list) {
+        if(CollectionUtils.isNotEmpty(list)){
+            List<String> userIds=list.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
+            List<String> departmentIds=list.stream().map(SysDepartmentUserEntity::getDepartmentId).collect(Collectors.toList());
+            LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
+            wrapper.in(SysDepartmentUserEntity::getUserId,userIds);
+            wrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIds);
+            baseMapper.delete(wrapper);
+            this.saveBatch(list);
+        }
+        return false;
     }
 }

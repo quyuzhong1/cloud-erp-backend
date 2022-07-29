@@ -1,12 +1,12 @@
 package com.cloud.erp.thirdparty.controller.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.common.constant.ThirdConstants;
-import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
-import com.cloud.erp.common.utils.OkHttpUtils;
 import com.cloud.erp.thirdparty.config.FsProperties;
 import com.cloud.erp.thirdparty.constant.LoginConstant;
 import com.cloud.erp.thirdparty.controller.service.FsService;
+import com.commm.core.constant.ThirdConstants;
+import com.commm.core.utils.OkHttpUtils;
+import com.erp.common.modules.sys.dto.FindThirdUserDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

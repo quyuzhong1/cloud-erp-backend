@@ -5,10 +5,11 @@ import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
-import com.cloud.erp.common.common.dto.PagingDTO;
-import com.cloud.erp.common.common.vo.PagingVO;
+import com.erp.common.dto.PagingDTO;
+import com.erp.common.vo.PagingVO;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @Classname SysDepartmentUserService
@@ -34,4 +35,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     void setLead(UpdateUserStateDTO dto);
 
     List<SysDepartmentUserNumber>  findUserNumber();
+
+    boolean saveBatchDepartmentUser(Set<SysDepartmentUserEntity> list);
 }

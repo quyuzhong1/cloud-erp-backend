@@ -1,10 +1,11 @@
 package com.cloud.erp.auth.modules.sys.feign;
 
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.dto.AccountLoginDTO;
-import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
+
+import com.erp.common.dto.ApiResult;
+import com.erp.common.modules.sys.dto.AccountLoginDTO;
+import com.erp.common.modules.sys.dto.SysLoginIpDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.modules.sys.dto.SysUserThirdDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

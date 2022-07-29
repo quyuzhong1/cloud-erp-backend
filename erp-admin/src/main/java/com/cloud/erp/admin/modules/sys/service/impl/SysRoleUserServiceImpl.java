@@ -6,26 +6,22 @@ import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysRoleUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.common.dto.BaseSearchDTO;
-import com.cloud.erp.common.utils.BeanMapperUtils;
-import com.cloud.erp.common.utils.PageUtils;
+import com.commm.core.utils.BeanMapperUtils;
+import com.erp.common.dto.BaseSearchDTO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 @Service
 public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRoleUserEntity> implements SysRoleUserService {
 
-    @Override
-    public PageUtils queryPage(Map<String, Object> params) {
-
-        return null;
-    }
+    @Resource
+    private SysRoleUserMapper sysRoleUserMapper;
 
     /**
      * 批量保存 用户 与角色的  关系
@@ -63,12 +59,12 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
     public void removeRefByRoleId(List<String> roleIds) {
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
         wrapper.in(SysRoleUserEntity::getRoleId, roleIds);
-        baseMapper.delete(wrapper);
+        sysRoleUserMapper.delete(wrapper);
     }
 
     @Override
     public List<SysUserVO> findRoleUser(BaseSearchDTO dto) {
-        List<SysUserVO> list = baseMapper.findRoleUser(dto);
+        List<SysUserVO> list = sysRoleUserMapper.findRoleUser(dto);
         return list;
     }
 
@@ -85,7 +81,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
         wrapper.select(SysRoleUserEntity::getRoleId);
         wrapper.eq(SysRoleUserEntity::getUserId, uid);
-        List<Object> list = baseMapper.selectObjs(wrapper);
+        List<Object> list = sysRoleUserMapper.selectObjs(wrapper);
         List<String> resultList = new ArrayList<>(list.size());
         resultList = BeanMapperUtils.copyList(String.class, list);
         return resultList;
@@ -103,8 +99,13 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
     @Override
     public List<SysRoleUserEntity> findRoleIdsByUidList(List<String> userIds) {
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
-        wrapper.in(SysRoleUserEntity::getUserId, userIds);
-        return this.list(wrapper);
+        if(CollectionUtils.isNotEmpty(userIds)){
+            wrapper.in(SysRoleUserEntity::getUserId, userIds);
+            return this.list(wrapper);
+        }
+        return new ArrayList<>();
+
+
     }
 
 
@@ -114,7 +115,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
     private void deleteUidRoleRef(String uid) {
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
         wrapper.eq(SysRoleUserEntity::getUserId, uid);
-        baseMapper.delete(wrapper);
+        sysRoleUserMapper.delete(wrapper);
     }
 
 

@@ -1,16 +1,17 @@
 package com.cloud.erp.auth.modules.sys.controller;
 
+
 import com.cloud.erp.auth.modules.sys.feign.SysUserFeign;
 import com.cloud.erp.auth.modules.web.server.AuthTokenService;
-import com.cloud.erp.common.common.ApiResult;
-import com.cloud.erp.common.common.BaseController;
-import com.cloud.erp.common.constant.TokenConstants;
-import com.cloud.erp.common.dto.AccountLoginDTO;
-import com.cloud.erp.common.modules.sys.dto.SysLoginIpDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
-import com.cloud.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.cloud.erp.common.modules.sys.vo.SysLoginUserVO;
-import com.cloud.erp.common.utils.IpUtils;
+import com.commm.core.constant.TokenConstants;
+import com.commm.core.utils.IpUtils;
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.ApiResult;
+import com.erp.common.modules.sys.dto.AccountLoginDTO;
+import com.erp.common.modules.sys.dto.SysLoginIpDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.modules.sys.dto.SysUserThirdDTO;
+import com.erp.common.modules.sys.vo.SysLoginUserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;

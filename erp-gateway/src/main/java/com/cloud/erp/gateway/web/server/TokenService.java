@@ -1,16 +1,16 @@
 package com.cloud.erp.gateway.web.server;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.common.common.jwt.utils.JwtUtils;
-import com.cloud.erp.common.common.token.vo.LoginUser;
-import com.cloud.erp.common.constant.RedisCacheConstants;
-import com.cloud.erp.common.modules.sys.dto.SysUserDTO;
-import com.cloud.erp.common.utils.uuid.IdUtils;
 import com.cloud.erp.gateway.config.JwtProperties;
+import com.commm.core.constant.RedisCacheConstants;
+import com.commm.core.utils.IdUtils;
+import com.commm.core.utils.JwtUtils;
+import com.common.web.service.RedisService;
+import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.vo.LoginUser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -30,7 +30,7 @@ public class TokenService {
     private JwtProperties jwtProperties;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private RedisService redisService;
 
 
     private final static long expireTime = RedisCacheConstants.EXPIRATION;
@@ -42,7 +42,7 @@ public class TokenService {
     public void refreshToken(SysUserDTO info, Long expireTime) {
         //放入缓存
         String userKey = getTokenKey(info.getToken());
-        redisTemplate.opsForValue().set(userKey, JSONObject.toJSONString(info) , expireTime, TimeUnit.DAYS);
+        redisService.setCacheObject(userKey, JSONObject.toJSONString(info) , expireTime, TimeUnit.DAYS);
     }
 
     /**
@@ -79,7 +79,7 @@ public class TokenService {
         try {
             if (StringUtils.isNotBlank(accessToken)) {
                 String userKey = JwtUtils.getUserKey(accessToken, jwtProperties.getSecret());
-                String userJson = redisTemplate.opsForValue().get(getTokenKey(userKey));
+                String userJson = redisService.getCacheObject(getTokenKey(userKey));
                 user = JSONObject.parseObject(userJson, LoginUser.class);
             }
         } catch (Exception e) {

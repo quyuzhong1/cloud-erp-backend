@@ -1,6 +1,7 @@
 package com.cloud.erp.thirdparty.controller.service;
 
-import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
+
+import com.erp.common.modules.sys.dto.FindThirdUserDTO;
 
 import java.util.Map;
 

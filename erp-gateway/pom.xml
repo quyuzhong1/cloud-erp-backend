@@ -33,12 +33,26 @@
 
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common</artifactId>
+            <artifactId>erp-common-pojo</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-common-core</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-common-web</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
 
     </dependencies>
+
+
     <dependencyManagement>
         <dependencies>
             <dependency>

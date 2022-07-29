@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.SysFindMenuDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysMenuDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysMenuEntity;
-import com.cloud.erp.common.modules.sys.vo.SysMenuVO;
+import com.erp.common.modules.sys.vo.SysMenuVO;
 
 import java.util.List;
 

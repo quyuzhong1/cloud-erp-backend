@@ -1,8 +1,9 @@
 package com.cloud.erp.thirdparty.controller.feign;
 
-import com.cloud.erp.common.common.BaseController;
-import com.cloud.erp.common.modules.sys.dto.FindThirdUserDTO;
+
 import com.cloud.erp.thirdparty.controller.service.FsService;
+import com.erp.common.controller.BaseController;
+import com.erp.common.modules.sys.dto.FindThirdUserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class FsFeignController extends BaseController {
 
     @ResponseBody
     @PostMapping("/getUser")
-    public Map getOauthToken(@RequestBody  FindThirdUserDTO dto) {
+    public Map getOauthToken(@RequestBody FindThirdUserDTO dto) {
         Map<String,Object > userMap = fsService.getFsUser(dto);
         return userMap;
     }

@@ -1,6 +1,7 @@
 package com.cloud.erp.admin.modules.feign;
 
-import com.cloud.erp.common.common.ApiResult;
+
+import com.erp.common.dto.ApiResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 

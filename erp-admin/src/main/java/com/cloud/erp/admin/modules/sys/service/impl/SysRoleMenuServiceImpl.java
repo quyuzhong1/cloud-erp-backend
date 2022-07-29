@@ -10,9 +10,9 @@ import com.cloud.erp.admin.modules.sys.mapper.SysRoleMenuMapper;
 import com.cloud.erp.admin.modules.sys.service.SysMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
 import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO;
-import com.cloud.erp.common.constant.CommonConstants;
-import com.cloud.erp.common.modules.sys.vo.SysMenuVO;
-import com.cloud.erp.common.utils.BeanMapperUtils;
+import com.commm.core.constant.CommonConstants;
+import com.commm.core.utils.BeanMapperUtils;
+import com.erp.common.modules.sys.vo.SysMenuVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +47,11 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Transactional
     public void removeByMenuIds(List<String> menuIds) {
         LambdaQueryWrapper<SysRoleMenuEntity> wrapper = new LambdaQueryWrapper();
-        wrapper.in(SysRoleMenuEntity::getMenuId, menuIds);
-        baseMapper.delete(wrapper);
+        if(CollectionUtils.isNotEmpty(menuIds)){
+            wrapper.in(SysRoleMenuEntity::getMenuId, menuIds);
+            baseMapper.delete(wrapper);
+        }
+
 
 
     }
@@ -177,6 +180,21 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         }else{
             return baseMapper.findMenuCodeByRoleIds(roleIds, functionType);
         }
+
+    }
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-07-29 9:24
+     * @param roleIds 角色id
+     * @return void
+     */
+    @Override
+    public void removeRefByRoleIds(List<String> roleIds) {
+        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper=new LambdaQueryWrapper();
+        queryWrapper.in(SysRoleMenuEntity::getRoleId,roleIds);
+        this.remove(queryWrapper);
 
     }
 

@@ -3,11 +3,9 @@ package com.cloud.erp.admin.modules.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.cloud.erp.common.common.dto.BaseSearchDTO;
-import com.cloud.erp.common.utils.PageUtils;
+import com.erp.common.dto.BaseSearchDTO;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ${comments}
@@ -19,7 +17,7 @@ import java.util.Map;
 
 public interface SysRoleUserService extends IService<SysRoleUserEntity> {
 
-    PageUtils queryPage(Map<String, Object> params);
+
 
     /**
      * 批量保存 用户的角色id
