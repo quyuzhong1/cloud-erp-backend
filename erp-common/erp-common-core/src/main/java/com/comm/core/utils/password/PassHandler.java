@@ -1,7 +1,7 @@
-package com.commm.core.utils.password;
+package com.comm.core.utils.password;
 
 
-import com.commm.core.utils.Md5Util;
+import com.comm.core.utils.Md5Util;
 import org.apache.commons.lang3.RandomStringUtils;
 
 /**

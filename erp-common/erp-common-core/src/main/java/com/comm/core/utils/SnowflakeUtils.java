@@ -1,4 +1,4 @@
-package com.commm.core.utils;
+package com.comm.core.utils;
 
 /**
  * @Classname SnowflakeUtils

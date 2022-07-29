@@ -1,7 +1,7 @@
-package com.commm.core.utils;
+package com.comm.core.utils;
 
 
-import com.commm.core.constant.SecurityConstants;
+import com.comm.core.constant.SecurityConstants;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
