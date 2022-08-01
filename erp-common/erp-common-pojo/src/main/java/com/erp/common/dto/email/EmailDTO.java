@@ -15,10 +15,10 @@ public class EmailDTO<T> implements Serializable {
 
 
     /**
-     * 内容
+     * 主题
      */
 
-    String title;
+    String subject;
 
     /**
      * 邮件模版

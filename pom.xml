@@ -24,6 +24,7 @@
         <module>erp-admin</module>
         <module>erp-third-party</module>
         <module>erp-common</module>
+        <module>erp-merchant</module>
     </modules>
 
     <properties>
@@ -103,20 +104,6 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.1</version>
-                    <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
-                        <encoding>UTF-8</encoding>
-                        <compilerArgs>
-                            <arg>-XDignore.symbol.file</arg>
-                        </compilerArgs>
-                        <fork>true</fork>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
