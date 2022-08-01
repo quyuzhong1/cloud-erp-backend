@@ -4,7 +4,10 @@ import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.service.SysAccountingCompanyService;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.*;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BatchStateDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.base.StateDTO;
 import com.erp.common.vo.PagingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -60,7 +63,7 @@ public class SysAccountingCompanyController extends BaseController {
 
     //更改状态 禁用或者启用
     @RequestMapping("/batchUpdateState")
-    public ApiResult batchUpdateState(@RequestBody @Validated BatchStateDTO  dto) {
+    public ApiResult batchUpdateState(@RequestBody @Validated BatchStateDTO dto) {
         boolean flag = sysAccountingCompanyService.batchUpdateCompanyState(dto);
         return flag == true ? success() : failure();
     }

@@ -8,7 +8,7 @@ import com.cloud.erp.admin.modules.sys.mapper.SysRoleUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.comm.core.utils.BeanMapperUtils;
-import com.erp.common.dto.BaseSearchDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 

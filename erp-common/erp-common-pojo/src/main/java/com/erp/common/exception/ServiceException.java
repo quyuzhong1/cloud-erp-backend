@@ -1,6 +1,6 @@
 package com.erp.common.exception;
 
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;
 import lombok.AllArgsConstructor;
 import lombok.Data;

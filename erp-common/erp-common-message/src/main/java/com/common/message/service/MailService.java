@@ -1,5 +1,7 @@
 package com.common.message.service;
 
+import javax.mail.MessagingException;
+
 /**
  * @Classname 邮件服务
  * @Description TODO
@@ -17,4 +19,34 @@ public interface MailService{
      * @param cc      　　　　　抄送地址
      */
     void sendSimpleMail(String to, String subject, String content, String... cc);
+
+
+    /**
+     * 发送HTML邮件
+     *
+     * @param to      收件人地址
+     * @param subject 邮件主题
+     * @param content 邮件内容
+     * @param cc      抄送地址
+     * @throws MessagingException 邮件发送异常
+     */
+    void sendHtmlMail(String to, String subject, String content, String... cc) throws MessagingException;
+
+
+    /**
+     * 发送带附件的邮件
+     *
+     * @param to       收件人地址
+     * @param subject  邮件主题
+     * @param content  邮件内容
+     * @param filePath 附件地址
+     * @param cc       抄送地址
+     * @throws MessagingException 邮件发送异常
+     */
+    void sendAttachmentMail(String to, String subject, String content, String filePath, String... cc) throws MessagingException;
+
+
+
+
+
 }

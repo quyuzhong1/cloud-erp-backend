@@ -4,11 +4,10 @@ package com.cloud.erp.admin.modules.sys.controller;
 import com.cloud.erp.admin.modules.sys.dto.BatchSysDepartUserDTO;
 import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
-import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
-import com.erp.common.dto.PagingDTO;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @Classname SysDepartmentUserContrller

@@ -4,7 +4,7 @@ import com.cloud.erp.admin.modules.sys.dto.SysRoleMenuBatchDTO;
 import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
 import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

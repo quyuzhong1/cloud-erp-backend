@@ -16,4 +16,7 @@ public class SysDepartmentUserVO  extends SysUserVO{
 
     //领导状态 0 不是  1 是
     private Integer leadState;
+
+
+    private String departmentName;
 }

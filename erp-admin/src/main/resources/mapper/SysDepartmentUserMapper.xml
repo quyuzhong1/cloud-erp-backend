@@ -4,8 +4,10 @@
 
     <select id="findDepartmentUser" resultType="com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserVO">
         SELECT sdu.id AS flagId,sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
-        sdu.lead_state,sui.user_state
-        FROM sys_department_user sdu JOIN sys_user_info sui ON sdu.user_id=sui.uid
+        sdu.lead_state,sui.user_state,sd.name AS departmentName
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
+        INNER JOIN sys_department sd ON sd.id=sdu.department_id
         WHERE sdu.department_id IN
         <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
             #{departmentId}
@@ -23,7 +25,9 @@
     </select>
 
     <select id="findUserNumber" resultType="com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber">
-        SELECT department_id,count(1) AS userNumber
-        FROM sys_department_user GROUP BY  department_id
+        SELECT sdu.department_id,sdu.user_id
+        FROM sys_department_user  sdu INNER
+        JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        WHERE sui.delete_state=1;
     </select>
 </mapper>

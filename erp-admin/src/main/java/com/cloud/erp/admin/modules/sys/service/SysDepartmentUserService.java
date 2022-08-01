@@ -6,11 +6,10 @@ import com.cloud.erp.admin.modules.sys.dto.DepartmentSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.UpdateUserStateDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
-import com.erp.common.dto.PagingDTO;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @Classname SysDepartmentUserService

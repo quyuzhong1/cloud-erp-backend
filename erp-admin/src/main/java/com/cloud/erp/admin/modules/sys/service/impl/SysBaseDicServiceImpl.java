@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.admin.modules.sys.entity.SysBaseDicEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysBaseDicMapper;
 import com.cloud.erp.admin.modules.sys.service.SysBaseDicService;
-import com.erp.common.dto.BaseDicDTO;
+import com.erp.common.dto.base.BaseDicDTO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 

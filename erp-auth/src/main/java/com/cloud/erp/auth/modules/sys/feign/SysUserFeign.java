@@ -1,7 +1,7 @@
 package com.cloud.erp.auth.modules.sys.feign;
 
 
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;

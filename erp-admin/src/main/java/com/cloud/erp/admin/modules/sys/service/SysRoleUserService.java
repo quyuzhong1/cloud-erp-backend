@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.BatchSaveRoleUserDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.erp.common.dto.BaseSearchDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
 
 import java.util.List;
 

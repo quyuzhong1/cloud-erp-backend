@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cloud.erp.admin.modules.sys.entity.SysPostEntity;
-import com.erp.common.dto.BasePagingSearchDTO;
+import com.erp.common.dto.base.BasePagingSearchDTO;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

@@ -13,7 +13,7 @@ import com.cloud.erp.admin.modules.sys.mapper.SysDepartmentUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentService;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
-import com.erp.common.dto.PagingDTO;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @Classname SysDepartmentUserServiceImpl

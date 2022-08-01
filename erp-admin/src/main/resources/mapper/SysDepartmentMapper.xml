@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.erp.admin.modules.sys.mapper.SysDepartmentMapper">
+
+
+    <select id="findTree" resultType="com.cloud.erp.admin.modules.sys.vo.SysDepartmentTreeVO">
+        WITH RECURSIVE T ( ID, NAME, parent_id, PATH ) AS (
+            SELECT ID,NAME,PARENT_ID,ID::text AS PATH FROM sys_department
+            WHERE parent_id = '0'
+            UNION ALL
+            SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
+            FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
+        )
+        SELECT ID,NAME,PARENT_ID,PATH FROM T ORDER BY 	PATH;
+    </select>
+</mapper>

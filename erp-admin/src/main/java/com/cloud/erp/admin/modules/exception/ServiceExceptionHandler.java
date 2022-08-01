@@ -1,7 +1,7 @@
 package com.cloud.erp.admin.modules.exception;
 
 
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import org.springframework.http.HttpStatus;

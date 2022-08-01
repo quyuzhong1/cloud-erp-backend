@@ -6,7 +6,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysDepartmentEntity;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentService;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentVO;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;

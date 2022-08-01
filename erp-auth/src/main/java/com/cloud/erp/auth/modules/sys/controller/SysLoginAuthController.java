@@ -6,7 +6,7 @@ import com.cloud.erp.auth.modules.web.server.AuthTokenService;
 import com.comm.core.constant.TokenConstants;
 import com.comm.core.utils.IpUtils;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;

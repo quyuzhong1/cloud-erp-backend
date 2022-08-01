@@ -8,6 +8,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysDepartmentEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysDepartmentMapper;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentService;
 import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
+import com.cloud.erp.admin.modules.sys.vo.SysDepartmentTreeVO;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentVO;
 import com.comm.core.utils.BeanMapperUtils;
@@ -58,21 +59,44 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         //获取所有部门人员
         List<SysDepartmentUserNumber> userNumberList = sysDepartmentUserService.findUserNumber();
         List<SysDepartmentVO> departList = BeanMapperUtils.copyList(SysDepartmentVO.class, allList);
+        List<SysDepartmentTreeVO> flagList = baseMapper.findTree();
         List<SysDepartmentVO> treeList = departList.stream().
                 filter(item -> "0".equals(item.getParentId()))
                 .map(item -> {
                     item.setParentName("");
-                    item.setChildrenList(getChildren(item, departList, userNumberList));
-                    Integer userNumber = 0;
-                    SysDepartmentUserNumber vo = userNumberList.stream().filter(u -> u.getDepartmentId().equals(item.getId())).findFirst().orElse(null);
-                    if (!Objects.isNull(vo)) {
-                        userNumber = vo.getUserNumber();
-                    }
+                    //根据用数据库查询的 树结构数据 获取到 该部门id 下有多少子的部门id
+                    List<String> childrenDepartIds = getAllDepartIdsById(item.getId(), flagList);
+                    item.setChildrenList(getChildren(item, departList, userNumberList,flagList));
+                    int userNumber= userNumberList.stream().filter(u->childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.groupingBy(SysDepartmentUserNumber::getUserId)).size();
                     item.setUserNumber(userNumber);
                     return item;
                 }).collect(Collectors.toList());
 
         return treeList;
+    }
+
+
+    /**
+     * 根据部门id 获取下面有多少的 子集部门
+     *
+     * @param departId
+     * @param treeList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-08-01 14:24
+     */
+    private List<String> getAllDepartIdsById(String departId, List<SysDepartmentTreeVO> treeList) {
+        List<String> resultList = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(treeList)) {
+            for (SysDepartmentTreeVO vo : treeList) {
+                //如果路径包含了 就说有
+                if (vo.getPath().contains(departId)) {
+                    resultList.add(vo.getId());
+                }
+
+            }
+        }
+        return resultList;
     }
 
 
@@ -143,18 +167,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         }
     }
 
-    private List<SysDepartmentVO> getChildren(SysDepartmentVO item, List<SysDepartmentVO> departList, List<SysDepartmentUserNumber> userNumberList) {
+    private List<SysDepartmentVO> getChildren(SysDepartmentVO item, List<SysDepartmentVO> departList, List<SysDepartmentUserNumber> userNumberList,List<SysDepartmentTreeVO> flagList) {
         List<SysDepartmentVO> collect = departList.stream().filter(dept -> item.getId().equals(dept.getParentId()))
                 .map(d -> {
-                    Integer userNumber = 0;
-                    SysDepartmentUserNumber vo = userNumberList.stream().filter(u -> d.getId().equals(u.getDepartmentId())).findFirst().orElse(null);
-                    if (!Objects.isNull(vo)) {
-                        userNumber = vo.getUserNumber();
-                    }
+                    List<String> childrenDepartIds=getAllDepartIdsById(d.getId(),flagList);
                     d.setParentName(item.getName());
+                    int userNumber= userNumberList.stream().filter(u->childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.groupingBy(SysDepartmentUserNumber::getUserId)).size();
                     d.setUserNumber(userNumber);
-                    d.setChildrenList(getChildren(d, departList, userNumberList));
-
+                    d.setChildrenList(getChildren(d, departList, userNumberList,flagList));
                     return d;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collect) ? null : collect;

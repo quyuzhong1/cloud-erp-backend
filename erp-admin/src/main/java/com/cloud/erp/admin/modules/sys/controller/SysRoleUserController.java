@@ -2,19 +2,17 @@ package com.cloud.erp.admin.modules.sys.controller;
 
 
 import com.cloud.erp.admin.modules.sys.dto.BatchSaveRoleUserDTO;
-import com.cloud.erp.admin.modules.sys.entity.SysRoleUserEntity;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
-import com.erp.common.dto.BaseSearchDTO;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Set;
 
 
 /**

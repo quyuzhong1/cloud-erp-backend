@@ -1,4 +1,4 @@
-package com.erp.common.dto;
+package com.erp.common.dto.base;
 
 import lombok.Data;
 

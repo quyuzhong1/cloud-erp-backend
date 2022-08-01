@@ -1,7 +1,7 @@
 package com.erp.common.controller;
 
 
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import lombok.NoArgsConstructor;

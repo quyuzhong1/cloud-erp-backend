@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.CompanyPagingSearchDTO;
 import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAccountingCompanyEntity;
-import com.erp.common.dto.BasePagingSearchDTO;
-import com.erp.common.dto.BatchStateDTO;
-import com.erp.common.dto.PagingDTO;
-import com.erp.common.dto.StateDTO;
+import com.erp.common.dto.base.BatchStateDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.base.StateDTO;
 import com.erp.common.vo.PagingVO;
 
 

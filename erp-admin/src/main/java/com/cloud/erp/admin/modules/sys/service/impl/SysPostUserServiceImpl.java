@@ -3,12 +3,11 @@ package com.cloud.erp.admin.modules.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.admin.modules.sys.dto.BatchSavePostUserDTO;
-import com.cloud.erp.admin.modules.sys.entity.SysDepartmentUserEntity;
 import com.cloud.erp.admin.modules.sys.entity.SysPostUserEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysPostUserMapper;
 import com.cloud.erp.admin.modules.sys.service.SysPostUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.erp.common.dto.BaseSearchDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 

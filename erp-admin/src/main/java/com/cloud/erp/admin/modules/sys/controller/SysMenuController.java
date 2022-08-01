@@ -6,7 +6,7 @@ import com.cloud.erp.admin.modules.sys.dto.SysMenuDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysMenuEntity;
 import com.cloud.erp.admin.modules.sys.service.SysMenuService;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.sys.vo.SysMenuVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;

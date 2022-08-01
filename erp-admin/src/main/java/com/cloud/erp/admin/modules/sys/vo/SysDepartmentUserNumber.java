@@ -18,7 +18,7 @@ public class SysDepartmentUserNumber implements Serializable {
 
     private String  departmentId;
 
-    private Integer userNumber;
+    private String userId;
 
 
 }

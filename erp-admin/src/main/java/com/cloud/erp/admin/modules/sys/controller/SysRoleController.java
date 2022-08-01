@@ -3,7 +3,7 @@ package com.cloud.erp.admin.modules.sys.controller;
 import com.cloud.erp.admin.modules.sys.entity.SysRoleEntity;
 import com.cloud.erp.admin.modules.sys.service.SysRoleService;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.ApiResult;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

@@ -25,7 +25,7 @@ import com.comm.core.constant.ThirdConstants;
 import com.comm.core.utils.BeanMapperUtils;
 import com.comm.core.utils.password.PassEntity;
 import com.comm.core.utils.password.PassHandler;
-import com.erp.common.dto.PagingDTO;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.*;
