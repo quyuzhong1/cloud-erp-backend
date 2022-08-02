@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.105.216
+        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
+      config:
+        server-addr: 172.16.105.216
+        namespace: 448d9ec3-91a1-4551-93d3-5f66d0f8bc18
+        file-extension: yml
+        shared-configs: gateway.yml,common.yml
+#    gateway:
+#      routes:
+#        - id: admin_route
+#          uri: lb://erp-admin
+#          predicates:
+#            - Path=/api/sys/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*), /$\{segment}
+

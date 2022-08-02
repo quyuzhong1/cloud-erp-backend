@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-third-party
   profiles:
-    active: dev
+    active: test
 server:
   port: 9030
 
