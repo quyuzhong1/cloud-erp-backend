@@ -6,9 +6,12 @@ import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
+import com.common.message.service.MailService;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.email.EmailDTO;
+import com.erp.common.dto.email.EmailVerifyCodeDTO;
 import com.erp.common.modules.sys.dto.SysUserThirdDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 
@@ -36,6 +40,10 @@ public class SysUserInfoController extends BaseController {
 
     @Autowired
     private SysUserThirdService sysUserThirdService;
+
+
+    @Resource
+    private MailService mailService;
 
     /**
      * 列表
@@ -121,6 +129,18 @@ public class SysUserInfoController extends BaseController {
     @RequestMapping("/updatePassword")
     public ApiResult updatePassword(@RequestBody @Validated UpdatePasswordDTO updatePasswordDTO) {
         sysUserInfoService.updatePassword(updatePasswordDTO);
+        return success();
+    }
+
+    @RequestMapping("/bindingEmail")
+    public ApiResult bindingEmail(@RequestBody SysUserThirdDTO dto) {
+        sysUserInfoService.bindingThirdParty(dto);
+        return success();
+    }
+
+    @RequestMapping("/sedEmail")
+    public ApiResult sedEmail(@RequestBody EmailDTO<EmailVerifyCodeDTO> dto) {
+        mailService.sedVerifyCode(dto);
         return success();
     }
 

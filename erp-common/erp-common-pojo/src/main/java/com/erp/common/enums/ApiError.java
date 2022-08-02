@@ -34,6 +34,7 @@ public enum ApiError implements Serializable {
     ERROR_1003(1003, "id不能为空"),
     ERROR_1004(1004, "未授权访问！"),
     ERROR_1005(1005, "登录失败!"),
+    ERROR_1006(1006, "邮箱模板不存在!"),
 
 
     /**
@@ -53,6 +54,7 @@ public enum ApiError implements Serializable {
     ERROR_9020(9020, "改账号已经绑定"),
     ERROR_9021(9021, "角色不存在"),
     ERROR_9022(9022, "搜索类型有误"),
+
 
 
 

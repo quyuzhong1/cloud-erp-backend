@@ -33,6 +33,9 @@ public interface MailService{
     void sendHtmlMail(String to, String subject, String content, String... cc) throws MessagingException;
 
 
+    void batchSendHtmlMail(String[] to, String subject, String content, String... cc) throws MessagingException;
+
+
     /**
      * 发送带附件的邮件
      *
@@ -46,7 +49,5 @@ public interface MailService{
     void sendAttachmentMail(String to, String subject, String content, String filePath, String... cc) throws MessagingException;
 
 
-
-
-
+    void sedVerifyCode(com.erp.common.dto.email.EmailDTO<com.erp.common.dto.email.EmailVerifyCodeDTO> dto);
 }

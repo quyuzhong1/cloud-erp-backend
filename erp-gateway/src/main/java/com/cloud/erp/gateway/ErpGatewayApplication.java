@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
+@ComponentScan("com.common.web")
 public class ErpGatewayApplication {
 
     public static void main(String[] args) {
