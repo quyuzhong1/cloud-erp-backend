@@ -1,4 +1,4 @@
-package com.comm.core.enums;
+package com.common.core.enums;
 
 /**
  * @Classname ThirdpartyPlatform

@@ -1,6 +1,6 @@
 
 
-package com.comm.core.utils;
+package com.common.core.utils;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;

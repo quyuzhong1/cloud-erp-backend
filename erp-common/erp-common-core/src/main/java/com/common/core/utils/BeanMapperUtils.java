@@ -1,4 +1,4 @@
-package com.comm.core.utils;
+package com.common.core.utils;
 
 import ma.glasnost.orika.MapperFacade;
 import ma.glasnost.orika.MapperFactory;

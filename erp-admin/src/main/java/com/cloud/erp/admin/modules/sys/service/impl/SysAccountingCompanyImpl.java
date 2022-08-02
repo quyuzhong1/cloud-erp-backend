@@ -9,7 +9,7 @@ import com.cloud.erp.admin.modules.sys.dto.SysAccountingCompanyDTO;
 import com.cloud.erp.admin.modules.sys.entity.SysAccountingCompanyEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysAccountingCompanyMapper;
 import com.cloud.erp.admin.modules.sys.service.SysAccountingCompanyService;
-import com.comm.core.utils.BeanMapperUtils;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.BatchStateDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.StateDTO;

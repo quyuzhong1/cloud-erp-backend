@@ -1,4 +1,4 @@
-package com.comm.core.constant;
+package com.common.core.constant;
 
 /**
  * @Classname SecurityConstants

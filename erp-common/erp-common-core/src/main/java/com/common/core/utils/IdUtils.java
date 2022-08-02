@@ -1,4 +1,4 @@
-package com.comm.core.utils;
+package com.common.core.utils;
 
 /**
  * ID生成器工具类

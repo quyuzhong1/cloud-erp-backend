@@ -11,7 +11,7 @@ import com.cloud.erp.admin.modules.sys.service.SysDepartmentUserService;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentTreeVO;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentUserNumber;
 import com.cloud.erp.admin.modules.sys.vo.SysDepartmentVO;
-import com.comm.core.utils.BeanMapperUtils;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 

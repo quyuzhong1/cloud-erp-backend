@@ -1,4 +1,4 @@
-package com.comm.core.utils.password;
+package com.common.core.utils.password;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

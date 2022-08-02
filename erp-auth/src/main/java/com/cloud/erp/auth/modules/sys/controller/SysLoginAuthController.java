@@ -3,8 +3,8 @@ package com.cloud.erp.auth.modules.sys.controller;
 
 import com.cloud.erp.auth.modules.sys.feign.SysUserFeign;
 import com.cloud.erp.auth.modules.web.server.AuthTokenService;
-import com.comm.core.constant.TokenConstants;
-import com.comm.core.utils.IpUtils;
+import com.common.core.constant.TokenConstants;
+import com.common.core.utils.IpUtils;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;

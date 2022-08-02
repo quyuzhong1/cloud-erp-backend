@@ -1,7 +1,7 @@
 package com.cloud.erp.admin.modules.sys.controller.feign;
 
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
-import com.comm.core.constant.UserStateConstants;
+import com.common.core.constant.UserStateConstants;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;

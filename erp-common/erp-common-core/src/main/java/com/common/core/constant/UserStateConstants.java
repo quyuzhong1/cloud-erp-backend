@@ -1,4 +1,4 @@
-package com.comm.core.constant;
+package com.common.core.constant;
 
 /**
  * @Classname 用戶的常量

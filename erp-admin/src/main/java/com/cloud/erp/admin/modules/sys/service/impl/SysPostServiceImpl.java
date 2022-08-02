@@ -9,7 +9,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysPostEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysPostMapper;
 import com.cloud.erp.admin.modules.sys.service.SysPostService;
 import com.cloud.erp.admin.modules.sys.service.SysPostUserService;
-import com.comm.core.utils.BeanMapperUtils;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.BasePagingSearchDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;

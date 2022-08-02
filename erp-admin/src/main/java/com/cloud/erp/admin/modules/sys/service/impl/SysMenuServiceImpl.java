@@ -9,7 +9,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysMenuEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysMenuMapper;
 import com.cloud.erp.admin.modules.sys.service.SysMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
-import com.comm.core.utils.BeanMapperUtils;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.vo.SysMenuVO;
