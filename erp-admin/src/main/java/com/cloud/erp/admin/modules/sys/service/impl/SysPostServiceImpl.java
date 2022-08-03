@@ -137,6 +137,7 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
             queryWrapper.like(SysPostEntity::getPostName, dto.getSearchKeyword());
         }
+        queryWrapper.orderByDesc(SysPostEntity::getUpdateTime);
         return this.list(queryWrapper);
     }
 }
