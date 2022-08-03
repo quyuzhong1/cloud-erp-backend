@@ -4,8 +4,8 @@ package com.common.message.service.impl;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.ThymeleafUtil;
 import com.common.message.service.MailService;
-import com.erp.common.dto.email.EmailDTO;
-import com.erp.common.dto.email.EmailVerifyCodeDTO;
+import com.erp.common.modules.email.dto.EmailDTO;
+import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import lombok.AllArgsConstructor;
@@ -141,11 +141,6 @@ public class MailServiceImpl implements MailService {
         return helper;
     }
 
-    @Override
-    public void sendAttachmentMail(String to, String subject, String content, String filePath, String... cc) throws MessagingException {
-
-    }
-
 
     /**
      * 发送邮箱验证码
@@ -157,19 +152,23 @@ public class MailServiceImpl implements MailService {
      */
 
     @Override
-    public void sedVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto) {
+    public Boolean sedVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto) {
+        Boolean flag = true;
+        EmailVerifyCodeDTO emailDTO = dto.getData();
         //读取邮件模板
         String html = this.extractTemplate(dto.getTemplate());
         if (StringUtils.isBlank(html)) {
             throw new ServiceException(ApiError.ERROR_1006);
         }
-        String content= ThymeleafUtil.generateTemplate(html,dto.getData());
+        String content = ThymeleafUtil.generateTemplate(html, emailDTO);
         try {
-            this.batchSendHtmlMail(dto.getRecipients(),dto.getSubject(),content,null);
+            this.batchSendHtmlMail(dto.getRecipients(), dto.getSubject(), content, null);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            flag = false;
+            throw new ServiceException(ApiError.ERROR_1010);
         }
 
+        return flag;
     }
 
 

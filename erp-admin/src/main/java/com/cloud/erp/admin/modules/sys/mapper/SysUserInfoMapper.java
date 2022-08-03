@@ -26,7 +26,7 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
     List<SysUserVO> findList(@Param("searchKeyword") String q,@Param("roleId") String roleId);
 
-    IPage<SysUserManageVO> paging(Page query, @Param("params") SysUserPagingSearchDTO params);
+    IPage<SysUserManageVO> paging(Page query, @Param("params") SysUserPagingSearchDTO params,@Param("roleIds") List<String> roleIds);
 
     List<SysUserVO> findRoleIfExistList(@Param("searchKeyword") String q,@Param("roleId") String roleId);
 

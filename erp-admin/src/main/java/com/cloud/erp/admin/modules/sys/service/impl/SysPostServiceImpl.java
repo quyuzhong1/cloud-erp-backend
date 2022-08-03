@@ -13,6 +13,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.BasePagingSearchDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname SysPostServiceImpl
@@ -45,10 +48,25 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
 
     @Override
     public boolean savePost(SysPostDTO dto) {
+        String postName = dto.getPostName();
+        SysPostEntity postEntity=getPostEntityByName(postName);
+        if(!Objects.isNull(postEntity)){
+            throw new ServiceException(ApiError.ERROR_9023);
+        }
         SysPostEntity entity = new SysPostEntity();
         BeanMapperUtils.copy(dto, entity);
         return this.save(entity);
     }
+
+
+    public SysPostEntity getPostEntityByName(String postName) {
+        LambdaQueryWrapper<SysPostEntity> queryWrapper = new LambdaQueryWrapper<SysPostEntity>();
+        queryWrapper.eq(SysPostEntity::getPostName,postName);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+
+    }
+
 
     /**
      * 修改 部门信息
@@ -116,8 +134,8 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
     @Override
     public List<SysPostEntity> findPost(BaseSearchDTO dto) {
         LambdaQueryWrapper<SysPostEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if(StringUtils.isNotBlank(dto.getSearchKeyword())){
-            queryWrapper.like(SysPostEntity::getPostName,dto.getSearchKeyword());
+        if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
+            queryWrapper.like(SysPostEntity::getPostName, dto.getSearchKeyword());
         }
         return this.list(queryWrapper);
     }

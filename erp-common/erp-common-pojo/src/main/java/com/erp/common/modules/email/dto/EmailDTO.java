@@ -1,9 +1,10 @@
-package com.erp.common.dto.email;
+package com.erp.common.modules.email.dto;
 
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -35,6 +36,7 @@ public class EmailDTO<T> implements Serializable {
     /**
      * 邮件内容参数
      */
+    @NotNull(message = "参数不能为空")
     protected T data;
 
 

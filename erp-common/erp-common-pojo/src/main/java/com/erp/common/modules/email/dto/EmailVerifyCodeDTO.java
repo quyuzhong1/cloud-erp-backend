@@ -1,4 +1,4 @@
-package com.erp.common.dto.email;
+package com.erp.common.modules.email.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,10 +18,10 @@ public class EmailVerifyCodeDTO implements Serializable {
     //邮箱
     private String email;
 
+    private String verifyCode;
 
-    private String templateId;
+    private String date;
 
-    private String code;
 
-    private String title;
+
 }

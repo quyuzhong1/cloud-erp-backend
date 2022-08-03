@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Classname SysUserPagingSearchDTO
@@ -17,7 +18,7 @@ import java.util.Date;
 public class SysUserPagingSearchDTO   {
 
     //角色id
-    private String roleId;
+    private List<String> roleIds;
 
     //搜素类型 mobile，real_name，user_name
     @NotBlank(message = "探索类型不能为空")

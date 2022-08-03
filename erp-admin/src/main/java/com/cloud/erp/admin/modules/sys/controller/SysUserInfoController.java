@@ -4,16 +4,10 @@ package com.cloud.erp.admin.modules.sys.controller;
 import com.cloud.erp.admin.modules.sys.dto.*;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
-import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
-import com.common.message.service.MailService;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.dto.email.EmailDTO;
-import com.erp.common.dto.email.EmailVerifyCodeDTO;
-import com.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -22,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
 import java.util.List;
 
 
@@ -38,12 +31,7 @@ public class SysUserInfoController extends BaseController {
     @Autowired
     private SysUserInfoService sysUserInfoService;
 
-    @Autowired
-    private SysUserThirdService sysUserThirdService;
 
-
-    @Resource
-    private MailService mailService;
 
     /**
      * 列表
@@ -82,7 +70,7 @@ public class SysUserInfoController extends BaseController {
     }
 
     /**
-     * 添加用户
+     * 修改用户
      */
     @RequestMapping("/update")
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
@@ -106,43 +94,6 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
-    @RequestMapping("/bindingThirdParty")
-    public ApiResult binding(@RequestBody SysUserThirdDTO dto) {
-        sysUserInfoService.bindingThirdParty(dto);
-        return success();
-    }
-
-
-    @RequestMapping("/myCenter")
-    public ApiResult myCenter() {
-        LoginUser loginUser= sysUserInfoService.myCenter();
-        return success(loginUser);
-    }
-
-    @RequestMapping("/removeThirdParty")
-    public ApiResult removeThirdParty(String bindingThird) {
-        boolean flag=sysUserThirdService.removeThirdParty(bindingThird);
-        return flag==true?success():failure();
-    }
-
-
-    @RequestMapping("/updatePassword")
-    public ApiResult updatePassword(@RequestBody @Validated UpdatePasswordDTO updatePasswordDTO) {
-        sysUserInfoService.updatePassword(updatePasswordDTO);
-        return success();
-    }
-
-    @RequestMapping("/bindingEmail")
-    public ApiResult bindingEmail(@RequestBody SysUserThirdDTO dto) {
-        sysUserInfoService.bindingThirdParty(dto);
-        return success();
-    }
-
-    @RequestMapping("/sedEmail")
-    public ApiResult sedEmail(@RequestBody EmailDTO<EmailVerifyCodeDTO> dto) {
-        mailService.sedVerifyCode(dto);
-        return success();
-    }
 
 
 

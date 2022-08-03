@@ -7,16 +7,18 @@
         FROM sys_post sp
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                AND sac.post_name LIKE concat('%',#{params.searchKeyword},'%')
+                AND sp.post_name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
         </where>
 
         <if test="params.startTime!=null">
-            AND sac.create_time &gt;=#{params.startTime}
+            AND sp.create_time &gt;=#{params.startTime}
         </if>
         <if test="params.endTime!=null">
-            AND sac.create_time &lt;=#{params.startTime}
+            AND sp.update_time &lt;=#{params.endTime}
         </if>
+
+        ORDER BY sp.update_time DESC
 
     </select>
 </mapper>

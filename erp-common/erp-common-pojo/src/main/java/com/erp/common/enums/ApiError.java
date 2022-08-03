@@ -35,6 +35,10 @@ public enum ApiError implements Serializable {
     ERROR_1004(1004, "未授权访问！"),
     ERROR_1005(1005, "登录失败!"),
     ERROR_1006(1006, "邮箱模板不存在!"),
+    ERROR_1007(1007, "邮箱验证码不正确!"),
+    ERROR_1008(1008, "邮箱格式不正确!"),
+    ERROR_1009(1009, "发送邮件频繁 请稍后再试!"),
+    ERROR_1010(1010, "发送邮件失败!"),
 
 
     /**
@@ -54,6 +58,8 @@ public enum ApiError implements Serializable {
     ERROR_9020(9020, "改账号已经绑定"),
     ERROR_9021(9021, "角色不存在"),
     ERROR_9022(9022, "搜索类型有误"),
+    ERROR_9023(9023, "部门名已存在"),
+    ERROR_9024(9024, "邮箱已存在"),
 
 
 

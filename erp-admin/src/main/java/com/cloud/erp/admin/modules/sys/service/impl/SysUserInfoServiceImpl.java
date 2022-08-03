@@ -19,29 +19,42 @@ import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleUserService;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
+import com.cloud.erp.admin.modules.sys.vo.SysUserBaseVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserManageVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
+import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.DateUtil;
+import com.common.core.utils.RedisKeyUtil;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.password.PassEntity;
 import com.common.core.utils.password.PassHandler;
+import com.common.message.service.MailService;
+import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.email.dto.EmailDTO;
+import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
+import com.erp.common.modules.email.enums.EmailTemplate;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -62,6 +75,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private ThirdFeign thirdFeign;
+
+    @Resource
+    private RedisService redisService;
+
+    @Resource
+    private MailService mailService;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
@@ -204,7 +223,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public PagingVO paging(PagingDTO<SysUserPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysUserPagingSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        IPage pageData = baseMapper.paging(query, params, params.getRoleIds());
         List<SysUserManageVO> list = pageData.getRecords();
         List<String> userIds = list.stream().map(SysUserManageVO::getUid).collect(Collectors.toList());
         List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
@@ -252,9 +271,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             String uid = loginUser.getUid();
 
             boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
-             if(ifBinding){
-                 throw new ServiceException(ApiError.ERROR_9020);
-             }
+            if (ifBinding) {
+                throw new ServiceException(ApiError.ERROR_9020);
+            }
             sysUserThirdService.bindingThirdParty(uid, flagId, bindingPlatform);
         }
 
@@ -377,22 +396,167 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 个人中心
-     * @author yl
-     * @date 2022-07-26 14:15
+     *
      * @param
      * @return com.cloud.erp.common.common.token.vo.LoginUser
+     * @author yl
+     * @date 2022-07-26 14:15
      */
 
     @Override
-    public LoginUser myCenter() {
-        LoginUser  loginUser= SysInterceptor.threadLocal.get();
-        SysUserThirdEntity sysUserThirdEntity=sysUserThirdService.findByUserId(loginUser.getUid());
-        String bindingPlatform="";
-        if(!Objects.isNull(sysUserThirdEntity)){
-            bindingPlatform=sysUserThirdEntity.getThirdPartyType();
+    public SysUserBaseVO myCenter() {
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        SysUserBaseVO vo = new SysUserBaseVO();
+        SysUserThirdEntity sysUserThirdEntity = sysUserThirdService.findByUserId(loginUser.getUid());
+        SysUserInfoEntity entity = this.getById(loginUser.getUid());
+        String bindingPlatform = "";
+        if (!Objects.isNull(sysUserThirdEntity)) {
+            bindingPlatform = sysUserThirdEntity.getThirdPartyType();
         }
-        loginUser.setBindingPlatform(bindingPlatform);
-        return loginUser;
+        BeanMapperUtils.copy(entity, vo);
+        vo.setThirdPartyType(bindingPlatform);
+        return vo;
+    }
+
+
+    /**
+     * 修改基础信息
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-08-02 14:50
+     */
+
+    @Override
+    public void updateBase(SysUserBaseDTO dto) {
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        SysUserInfoEntity entity = this.getById(loginUser.getUid());
+        if (!Objects.isNull(entity)) {
+            entity.setRealName(dto.getRealName());
+        }
+        this.updateById(entity);
+    }
+
+
+    /**
+     * 绑定邮箱
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-08-02 16:48
+     */
+    @Override
+    public void bindingEmail(EmailVerifyCodeDTO dto) {
+        String email = dto.getEmail();
+        boolean flag = ValidatorUtil.isEmail(email);
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_1008);
+        }
+        //检查邮箱是否存在
+        checkEmailIfExist(email);
+        //检查 验证码是否i正确
+        checkMobileCode(dto.getEmail(), dto.getVerifyCode());
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        if (!Objects.isNull(loginUser)) {
+            SysUserInfoEntity entity = this.getById(loginUser.getUid());
+            entity.setEmail(email);
+            this.updateById(entity);
+        }
+
+    }
+
+    /**
+     * 发送邮箱
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-08-03 11:14
+     */
+
+    @Override
+    public void sedEmail(EmailVerifyCodeDTO dto) {
+        String email = dto.getEmail();
+        boolean flag = ValidatorUtil.isEmail(email);
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_1008);
+        }
+//        String emailCodeKey = RedisKeyUtil.getEmailCodeCacheKey(email);
+//        String redisCode = redisService.getCacheObject(emailCodeKey);
+//        if (StringUtils.isNotBlank(redisCode)) {
+//            throw new ServiceException(ApiError.ERROR_1009);
+//        }
+        EmailDTO<EmailVerifyCodeDTO> emailDTO = new EmailDTO();
+        String code = RandomStringUtils.randomNumeric(4);
+        LocalDate localDate = LocalDate.now();
+        dto.setVerifyCode(code);
+        dto.setDate(DateUtil.getCnDate(localDate));
+        emailDTO.setData(dto);
+        String[] recipients = {email};
+        emailDTO.setRecipients(recipients);
+        emailDTO.setSubject("验证码");
+        emailDTO.setTemplate(EmailTemplate.VERIFY_CODE);
+        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        if (sendResult) {
+            redisService.setCacheObject(RedisKeyUtil.getEmailCodeCacheKey(email), code, RedisCacheConstants.EMAIL_CODE_EXPIRATION, TimeUnit.MINUTES);
+        }
+    }
+
+    
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-08-03 11:55
+     解除 邮箱
+     * @return void
+     */
+    @Override
+    public void removeEmail() {
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        if (!Objects.isNull(loginUser)) {
+            SysUserInfoEntity entity = this.getById(loginUser.getUid());
+            entity.setEmail("");
+            this.updateById(entity);
+        }
+    }
+
+    /**
+     * 检查邮箱验证码是否正确
+     *
+     * @param email
+     * @param verifyCode
+     * @return void
+     * @author yl
+     * @date 2022-08-02 17:04
+     */
+    private void checkMobileCode(String email, String verifyCode) {
+        String emailCodeKey = RedisKeyUtil.getEmailCodeCacheKey(email);
+        String code = redisService.getCacheObject(emailCodeKey);
+        if (StringUtils.isBlank(code) || !verifyCode.equals(code)) {
+            throw new ServiceException(ApiError.ERROR_1007);
+        }
+
+
+    }
+
+
+    /**
+     * 检查是否存在
+     *
+     * @param mail
+     * @return void
+     * @author yl
+     * @date 2022-08-02 16:51
+     */
+    private void checkEmailIfExist(String mail) {
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserInfoEntity::getEmail, mail);
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_9024);
+        }
     }
 
     public SysUserInfoEntity findByAccount(String account) {
@@ -402,7 +566,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         return entity;
-
     }
 
 

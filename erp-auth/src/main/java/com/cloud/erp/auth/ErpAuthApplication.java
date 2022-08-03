@@ -10,7 +10,6 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableFeignClients
 @EnableDiscoveryClient
-@ComponentScan("com.common.web")
 public class ErpAuthApplication {
 
     public static void main(String[] args) {

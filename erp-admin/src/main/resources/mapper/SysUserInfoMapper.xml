@@ -15,7 +15,7 @@
 
     <select id="paging" resultType="com.cloud.erp.admin.modules.sys.vo.SysUserManageVO">
         SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon,
-        last_login_ip,login_count,user_account,create_time,update_time,mail
+        last_login_ip,login_count,user_account,create_time,update_time,email
         FROM sys_user_info sui
         WHERE delete_state=1
         <if test="params.state !=null">
@@ -31,8 +31,13 @@
             AND last_login_time &lt;=#{params.endTime}
         </if>
 
-        <if test="params.roleId !=null">
-            AND EXISTS (SELECT 1 FROM sys_role_user sru WHERE sui.uid=sru.user_id)
+        <if test="roleIds !=null  and  roleIds.size()>0">
+            AND uid in
+            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
+                <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    #{roleId}
+                </foreach>
+            ))
         </if>
 
         ORDER BY update_time DESC

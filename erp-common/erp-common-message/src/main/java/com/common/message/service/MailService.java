@@ -1,5 +1,8 @@
 package com.common.message.service;
 
+import com.erp.common.modules.email.dto.EmailDTO;
+import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
+
 import javax.mail.MessagingException;
 
 /**
@@ -36,18 +39,7 @@ public interface MailService{
     void batchSendHtmlMail(String[] to, String subject, String content, String... cc) throws MessagingException;
 
 
-    /**
-     * 发送带附件的邮件
-     *
-     * @param to       收件人地址
-     * @param subject  邮件主题
-     * @param content  邮件内容
-     * @param filePath 附件地址
-     * @param cc       抄送地址
-     * @throws MessagingException 邮件发送异常
-     */
-    void sendAttachmentMail(String to, String subject, String content, String filePath, String... cc) throws MessagingException;
 
 
-    void sedVerifyCode(com.erp.common.dto.email.EmailDTO<com.erp.common.dto.email.EmailVerifyCodeDTO> dto);
+    Boolean sedVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto);
 }

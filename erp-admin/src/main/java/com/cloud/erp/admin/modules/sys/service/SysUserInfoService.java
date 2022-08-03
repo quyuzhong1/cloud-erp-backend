@@ -3,8 +3,10 @@ package com.cloud.erp.admin.modules.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.dto.*;
 import com.cloud.erp.admin.modules.sys.entity.SysUserInfoEntity;
+import com.cloud.erp.admin.modules.sys.vo.SysUserBaseVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
@@ -70,6 +72,14 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     SysUserDTO scanCodeLogin(SysUserThirdDTO dto);
 
-    LoginUser myCenter();
+    SysUserBaseVO myCenter();
+
+    void updateBase(SysUserBaseDTO dto);
+
+    void bindingEmail(EmailVerifyCodeDTO dto);
+
+    void sedEmail(EmailVerifyCodeDTO dto);
+
+    void removeEmail();
 }
 
