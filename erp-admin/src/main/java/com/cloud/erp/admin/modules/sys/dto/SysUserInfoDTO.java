@@ -24,11 +24,11 @@ public class SysUserInfoDTO implements Serializable {
     private String uid;
 
     @NotBlank(message = "用户名不能为空",  groups = {AddGroup.class})
-    @Size(max = 25,message = "用户名最大长度为25")
+   // @Size(max = 25,message = "用户名最大长度为25")
     private String userName;
 
     @NotBlank(message = "真实名不能为空",groups = {AddGroup.class, UpdateGroup.class})
-    @Size(max = 10,message = "真实名最大长度为10")
+    //@Size(max = 10,message = "真实名最大长度为10")
     private String realName;
 
     //电话
