@@ -39,6 +39,7 @@ public enum ApiError implements Serializable {
     ERROR_1008(1008, "邮箱格式不正确!"),
     ERROR_1009(1009, "发送邮件频繁 请稍后再试!"),
     ERROR_1010(1010, "发送邮件失败!"),
+    ERROR_1011(1011, "账户已禁用!"),
 
 
     /**

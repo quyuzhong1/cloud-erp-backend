@@ -34,8 +34,8 @@ public class SysRoleMenuController extends BaseController {
 
     @RequestMapping("/tree")
     public ApiResult roleMenuTree(String roleId) {
-        List<SysRoleMenuVO> roleMenuTreeList = sysRoleMenuService.findRoleMenuTree(roleId);
-        return success(roleMenuTreeList);
+        SysRoleMenuVO  vo=sysRoleMenuService.findRoleMenuTreeByRoleId(roleId);
+        return success(vo);
     }
 
 

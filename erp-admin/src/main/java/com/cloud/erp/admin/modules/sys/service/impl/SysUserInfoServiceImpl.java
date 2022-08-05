@@ -24,6 +24,7 @@ import com.cloud.erp.admin.modules.sys.vo.SysUserManageVO;
 import com.cloud.erp.admin.modules.sys.vo.SysUserVO;
 import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
+import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.DateUtil;
 import com.common.core.utils.RedisKeyUtil;
@@ -161,6 +162,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
         if (!passwordFlag) {
             return null;
+        }
+        Integer userState=entity.getUserState();
+        //表示禁用
+        if(UserStateConstants.USER_DISABLE==userState){
+            throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
@@ -378,7 +384,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserInfoEntity userEntity = this.getById(entity.getUserId());
         if (Objects.isNull(userEntity)) {
-            return null;
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+       Integer userState=userEntity.getUserState();
+        //表示禁用
+        if(UserStateConstants.USER_DISABLE==userState){
+            throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(userEntity, vo);

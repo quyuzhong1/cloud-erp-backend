@@ -9,6 +9,7 @@ import com.cloud.erp.admin.modules.sys.entity.SysRoleMenuEntity;
 import com.cloud.erp.admin.modules.sys.mapper.SysRoleMenuMapper;
 import com.cloud.erp.admin.modules.sys.service.SysMenuService;
 import com.cloud.erp.admin.modules.sys.service.SysRoleMenuService;
+import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuTreeVO;
 import com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
@@ -56,31 +57,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     }
 
 
-    /**
-     * 根据角色id 查询到对应的权限列表
-     *
-     * @param roleId
-     * @return java.util.List<com.cloud.erp.admin.modules.sys.vo.SysRoleMenuVO>
-     * @author yl
-     * @date 2022-07-19 17:38
-     */
-
-    @Override
-    public List<SysRoleMenuVO> findRoleMenuTree(String roleId) {
-        List<String> menuIds = getMenuIdByRoleId(roleId);
-        List<SysMenuEntity> allList = sysMenuService.list();
-        List<SysRoleMenuVO> menuList = BeanMapperUtils.copyList(SysRoleMenuVO.class, allList);
-        List<SysRoleMenuVO> treeList = menuList.stream().
-                filter(item -> "0".equals(item.getParentId())).
-                map(item -> {
-                    item.setParentName("");
-                    item.setSelectState(false);
-                    item.setChildrenList(getChildrenList(item, menuList, menuIds));
-                    return item;
-                }).collect(Collectors.toList());
-        return treeList;
-    }
-
 
     //根据角色id 获取菜单id
     public List<String> getMenuIdByRoleId(String roleId) {
@@ -109,14 +85,18 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         Set<String> menuIds = batchDTO.getMenuIdList();
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
-        for (String menuId : menuIds) {
-            SysRoleMenuEntity entity = new SysRoleMenuEntity();
-            entity.setMenuId(menuId);
-            entity.setRoleId(roleId);
-            batchList.add(entity);
+        if (CollectionUtils.isNotEmpty(menuIds)) {
+            for (String menuId : menuIds) {
+                SysRoleMenuEntity entity = new SysRoleMenuEntity();
+                entity.setMenuId(menuId);
+                entity.setRoleId(roleId);
+                batchList.add(entity);
+            }
+            return this.saveBatch(batchList);
         }
         removeByRoleId(roleId);
-        return this.saveBatch(batchList);
+        return true;
+
     }
 
     /**
@@ -233,6 +213,28 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     }
 
+    @Override
+    public SysRoleMenuVO findRoleMenuTreeByRoleId(String roleId) {
+        SysRoleMenuVO roleMenuVO = new SysRoleMenuVO();
+        List<String> menuIds = getMenuIdByRoleId(roleId);
+        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysRoleMenuTreeVO> menuList = BeanMapperUtils.copyList(SysRoleMenuTreeVO.class, allList);
+        List<SysRoleMenuTreeVO> treeList = menuList.stream().
+                filter(item -> "0".equals(item.getParentId())).
+                map(item -> {
+                    item.setParentName("");
+                    item.setSelectState(false);
+                    item.setChildrenList(getChildrenList(item, menuList, menuIds));
+                    return item;
+                }).collect(Collectors.toList());
+
+        roleMenuVO.setSysRoleMenuTrees(treeList);
+        roleMenuVO.setSelectedMenuIds(menuIds);
+        roleMenuVO.setTotalMenu(allList.size());
+        return roleMenuVO;
+
+    }
+
 
     /**
      * 获取到子菜单
@@ -255,8 +257,8 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         return CollectionUtils.isEmpty(collectList) ? null : collectList;
     }
 
-    private List<SysRoleMenuVO> getChildrenList(SysRoleMenuVO item, List<SysRoleMenuVO> menuList, List<String> menuIds) {
-        List<SysRoleMenuVO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
+    private List<SysRoleMenuTreeVO> getChildrenList(SysRoleMenuTreeVO item, List<SysRoleMenuTreeVO> menuList, List<String> menuIds) {
+        List<SysRoleMenuTreeVO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
                 .map(m -> {
                     m.setParentName(item.getMenuName());
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");

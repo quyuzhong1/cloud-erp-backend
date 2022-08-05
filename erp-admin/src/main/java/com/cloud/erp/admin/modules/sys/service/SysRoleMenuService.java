@@ -21,7 +21,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     void removeByMenuIds(List<String> menuIds);
 
 
-    List<SysRoleMenuVO> findRoleMenuTree(String roleId);
+
 
     boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO);
 
@@ -34,5 +34,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     void removeRefByRoleIds(List<String> roleIds);
 
     void copyRoleMenu(String copyRoleId, String newRoleId);
+
+    SysRoleMenuVO findRoleMenuTreeByRoleId(String roleId);
 }
 
