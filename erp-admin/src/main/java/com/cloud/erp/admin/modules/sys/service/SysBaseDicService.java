@@ -1,18 +1,19 @@
 package com.cloud.erp.admin.modules.sys.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.cloud.erp.admin.modules.sys.entity.SysBaseDicEntity;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseDicDTO;
 
 import java.util.List;
 
 /**
- * @Classname SysBaseDicService
- * @Description TODO
- * @Date 2022-07-20 16:58
- * @Created by yl
+ * <p>
+ *  服务类
+ * </p>
+ *
+ * @author yl
+ * @since 2022-08-09
  */
-
 public interface SysBaseDicService extends IService<SysBaseDicEntity> {
     List<SysBaseDicEntity> listByDicType(BaseDicDTO dto);
 }

@@ -25,6 +25,8 @@
         <module>erp-third-party</module>
         <module>erp-common</module>
         <module>erp-merchant</module>
+        <module>erp-generate</module>
+        <module>erp-workflow</module>
     </modules>
 
     <properties>
@@ -35,7 +37,6 @@
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <mybatis-version>3.4.2</mybatis-version>
     </properties>
-
 
     <dependencies>
 

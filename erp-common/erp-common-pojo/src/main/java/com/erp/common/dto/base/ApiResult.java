@@ -6,12 +6,14 @@ import com.erp.common.exception.ServiceException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 数据结果返回的封装
  */
 @Data
 @NoArgsConstructor
-public class ApiResult<T> {
+public class ApiResult<T>  implements Serializable {
 
     /**
      * 响应消息

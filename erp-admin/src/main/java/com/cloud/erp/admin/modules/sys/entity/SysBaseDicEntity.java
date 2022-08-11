@@ -1,25 +1,48 @@
 package com.cloud.erp.admin.modules.sys.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * @Classname SysBaseDicEntity
- * @Description TODO
- * @Date 2022-07-20 16:50
- * @Created by yl
+ * <p>
+ * 
+ * </p>
+ *
+ * @author yl
+ * @since 2022-08-09
  */
 @Data
+@EqualsAndHashCode(callSuper = false)
 @TableName("sys_base_dic")
-public class SysBaseDicEntity {
+public class SysBaseDicEntity implements Serializable {
 
+    private static final long serialVersionUID = 1L;
 
-    private Long id;
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private Integer id;
 
-    private String dicValue;
-
+    /**
+     * 字典属性
+     */
+    @TableField("dic_type")
     private String dicType;
 
+    /**
+     * 对应的值
+     */
+    @TableField("dic_value")
+    private String dicValue;
+
+    /**
+     * 标题
+     */
+    @TableField("dic_title")
     private String dicTitle;
+
 
 }
