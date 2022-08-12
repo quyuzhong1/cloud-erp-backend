@@ -147,22 +147,7 @@ public class OkHttpUtils {
     }
 
 
-    public static void main(String[] args) {
-        String url = "https://passport.feishu.cn/suite/passport/oauth/token";
-        Map<String, Object> map = new HashMap<>();
-        map.put("grant_type", "authorization_code");
-        map.put("code", "766i6190b5ee4f9582f5ffbf91354dd9");
-        map.put("client_secret", "VJJKhsIg05R8HgO2JJgbteYvwDb5325z");
-        map.put("client_id", "cli_a2c644b09af9500d");
-        map.put("redirect_uri", "https://www.baidu.com");
 
-        String ss = OkHttpUtils.doPost(url, map, null);
-        String url1 = "https://passport.feishu.cn/suite/passport/oauth/userinfo";
-        Map<String, String> headers1 = new HashMap<>();
-        headers1.put("Authorization", "Bearer 2mgyLV5Dx1OEpCTBMApI8Tkkjgyhk543Xo000g680Kzq");
-        String cc = OkHttpUtils.doGet(url1, null, headers1);
-        System.out.println(cc);
-    }
 
 
 }

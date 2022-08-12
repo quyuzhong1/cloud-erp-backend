@@ -1,7 +1,7 @@
-package com.cloud.erp.workflow.service;
+package com.cloud.erp.workflow.modules.workflow.service;
 
-import com.cloud.erp.workflow.dto.ApproveProcessRejectDTO;
-import com.cloud.erp.workflow.dto.StartProcessDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.ApproveProcessRejectDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.StartProcessDTO;
 
 /**
  * @Classname ProcessInstanceService

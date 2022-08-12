@@ -1,28 +1,18 @@
-package com.cloud.erp.workflow.controller;
+package com.cloud.erp.workflow.modules.workflow.controller;
 
-import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.workflow.dto.*;
-import com.cloud.erp.workflow.service.ProcessDefinitionService;
-import com.cloud.erp.workflow.service.ProcessInstanceService;
-import com.cloud.erp.workflow.service.ProcessTaskService;
-import com.cloud.erp.workflow.vo.TaskVO;
+import com.cloud.erp.workflow.modules.workflow.dto.*;
+import com.cloud.erp.workflow.modules.workflow.service.ProcessDefinitionService;
+import com.cloud.erp.workflow.modules.workflow.service.ProcessInstanceService;
+import com.cloud.erp.workflow.modules.workflow.service.ProcessTaskService;
+import com.cloud.erp.workflow.modules.workflow.vo.TaskVO;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import org.camunda.bpm.engine.RepositoryService;
-import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
-import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
-import org.camunda.bpm.engine.repository.Deployment;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname ReimbursementController
@@ -97,7 +87,7 @@ public class ReimbursementController extends BaseController {
 
     //单个任务
     @GetMapping("/taskInfo")
-    public ApiResult queryTaskInfo(@RequestBody @Validated ProcessBaseDTO  dto) {
+    public ApiResult queryTaskInfo(@RequestBody @Validated ProcessBaseDTO dto) {
         TaskVO vo=processTaskService.queryTaskInfo(dto);
         return success(vo);
     }

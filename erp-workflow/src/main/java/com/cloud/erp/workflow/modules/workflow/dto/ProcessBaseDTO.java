@@ -1,4 +1,4 @@
-package com.cloud.erp.workflow.dto;
+package com.cloud.erp.workflow.modules.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

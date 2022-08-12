@@ -1,17 +1,19 @@
-package com.cloud.erp.workflow.service.impl;
+package com.cloud.erp.workflow.modules.workflow.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.workflow.dto.ApproveProcessPassDTO;
-import com.cloud.erp.workflow.dto.ProcessBaseDTO;
-import com.cloud.erp.workflow.service.ProcessTaskService;
-import com.cloud.erp.workflow.vo.TaskVO;
+import com.cloud.erp.workflow.modules.workflow.dto.ActivityDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.ApproveProcessPassDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.ProcessBaseDTO;
+import com.cloud.erp.workflow.modules.workflow.service.ActHistoryActivityService;
+import com.cloud.erp.workflow.modules.workflow.service.ProcessTaskService;
+import com.cloud.erp.workflow.modules.workflow.vo.TaskVO;
+
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.TaskService;
 
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
-import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     @Autowired
     private HistoryService historyService;
+
+    @Autowired
+    private ActHistoryActivityService actHistoryActivityService;
 
     /**
      * 查询我的任务待办
@@ -66,8 +71,12 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      */
     @Override
     public void taskPass(ApproveProcessPassDTO dto) {
+        String processInstanceId=dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
         String taskId = dto.getTaskId();
+        Task task = taskService.createTaskQuery().
+                taskId(taskId).singleResult();
+        String nowActivityId = task.getTaskDefinitionKey();
         //添加审批意见
         taskService.createComment(taskId, dto.getProcessInstanceId(), dto.getComment());
         if (map != null&&!map.isEmpty()) {
@@ -76,6 +85,11 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             taskService.complete(taskId);
         }
 
+        ActivityDTO activityDTO=new ActivityDTO();
+        activityDTO.setNowActivityId(nowActivityId);
+        activityDTO.setProcessInstanceId(processInstanceId);
+        //审批通过后 需要保存流程节点信息
+        actHistoryActivityService.saveActivity(activityDTO);
 
     }
 

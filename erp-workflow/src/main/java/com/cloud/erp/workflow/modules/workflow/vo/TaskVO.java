@@ -1,4 +1,4 @@
-package com.cloud.erp.workflow.vo;
+package com.cloud.erp.workflow.modules.workflow.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -10,13 +10,12 @@ import java.util.List;
 /**
  * @Classname TaskVO
  * @Description TODO
- * @Date 2022-08-11 12:06
+ * @Date 2022-08-12 11:16
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
 public class TaskVO implements Serializable {
-
     private String taskId;
 
     private String assignee;
@@ -30,4 +29,5 @@ public class TaskVO implements Serializable {
     //意见
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<String> comments;
+
 }

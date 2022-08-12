@@ -1,9 +1,10 @@
-package com.cloud.erp.workflow.service.impl;
+package com.cloud.erp.workflow.modules.workflow.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.cloud.erp.workflow.dto.ApproveProcessRejectDTO;
-import com.cloud.erp.workflow.dto.StartProcessDTO;
-import com.cloud.erp.workflow.service.ProcessInstanceService;
+import com.cloud.erp.workflow.modules.workflow.dto.ApproveProcessRejectDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.StartProcessDTO;
+import com.cloud.erp.workflow.modules.workflow.service.ActHistoryActivityService;
+import com.cloud.erp.workflow.modules.workflow.service.ProcessInstanceService;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.IdentityService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -12,6 +13,7 @@ import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +40,9 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
 
     @Autowired
     private HistoryService historyService;
+
+    @Autowired
+    private ActHistoryActivityService actHistoryActivityService;
 
     /**
      * 开启一个流程
@@ -70,12 +75,11 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
      * @author yl
      * @date 2022-08-11 10:25
      */
-
     @Override
     public void reject(ApproveProcessRejectDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         //添加意见
-        //   taskService.createComment(dto.getTaskId(), processInstanceId, dto.getComment());
+        taskService.createComment(dto.getTaskId(), processInstanceId, dto.getComment());
         //获取当前环节实例
         ActivityInstance activity = runtimeService.getActivityInstance(processInstanceId);
         List<HistoricActivityInstance> historyList = historyService
@@ -86,41 +90,45 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
                 .orderByHistoricActivityInstanceEndTime()
                 .desc()
                 .list();
-        System.out.println(JSONObject.toJSONString(historyList));
         HistoricActivityInstance last = historyList.get(0);
-        System.out.println(last);
         String activityId = last.getActivityId();
-//        runtimeService.createProcessInstanceModification(processInstanceId)
-//                .cancelActivityInstance(activity.getId())
-//                .setAnnotation("驳回")
-//                .startBeforeActivity(activityId)
-//                .execute();
+        runtimeService.createProcessInstanceModification(processInstanceId)
+                .cancelActivityInstance(activity.getId())
+                .setAnnotation("驳回")
+                .startBeforeActivity(activityId)
+                .execute();
     }
 
 
+    /**
+     * 驳回流程 驳回到上一个节点
+     *
+     * @param dto processInstanceId 进程实例id
+     * @param dto nodeId
+     * @return void
+     * @author yl
+     * @date 2022-08-11 10:25
+     */
     @Override
     public void rejectBack(ApproveProcessRejectDTO dto) {
-        // 新建一个有序不重复集合
-        LinkedHashSet linkedHashSet = new LinkedHashSet();
-
         String processInstanceId = dto.getProcessInstanceId();
-
-        List<HistoricTaskInstance> historyList = historyService
-                .createHistoricTaskInstanceQuery()
+        //添加意见
+        taskService.createComment(dto.getTaskId(), processInstanceId, dto.getComment());
+        //获取当前环节实例
+        ActivityInstance activity = runtimeService.getActivityInstance(processInstanceId);
+        //获取到当前任务
+        Task task = taskService.createTaskQuery()
                 .processInstanceId(processInstanceId)
-                .orderByHistoricTaskInstanceEndTime()
-                .desc()
-                .list();
-        historyList.stream().forEach(h -> {
-            linkedHashSet.add(h.getTaskDefinitionKey());
-        });
-        // 遍历到当前的任务节点后,取上一次遍历的值
-        Iterator<String> iterator = linkedHashSet.iterator();
-        while (iterator.hasNext()) {
-            String nowTask = iterator.next();
+                .active()
+                .singleResult();
+        String nowActivityId = task.getTaskDefinitionKey();
+        String activityId = actHistoryActivityService.getProActivityId(processInstanceId, nowActivityId);
+        runtimeService.createProcessInstanceModification(processInstanceId)
+                .cancelActivityInstance(activity.getId())
+                .setAnnotation("驳回")
+                .startBeforeActivity(activityId)
+                .execute();
 
-            System.out.println(nowTask);
-        }
 
     }
 }

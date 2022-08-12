@@ -1,10 +1,7 @@
-package com.cloud.erp.workflow.dto;
+package com.cloud.erp.workflow.modules.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 
 /**
  * @Classname 驳回的参数
