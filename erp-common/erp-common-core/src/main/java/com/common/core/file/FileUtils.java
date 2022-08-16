@@ -5,7 +5,6 @@
  */
 package com.common.core.file;
 
-import cloud.erp.common.utils.R;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.http.HttpHeaders;
@@ -59,7 +58,7 @@ public class FileUtils {
 			os.write(content);
 			os.flush();
 		} catch (IOException e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		} finally {
 			IOUtils.closeQuietly(fos, os);
 		}
@@ -81,7 +80,7 @@ public class FileUtils {
 				result.append(System.lineSeparator()).append(s);
 			}
 		} catch (Exception e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		} finally {
 			IOUtils.closeQuietly(br);
 		}
@@ -113,7 +112,7 @@ public class FileUtils {
 			}
 			buffer = bos.toByteArray();
 		} catch (IOException e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		} finally {
 			IOUtils.closeQuietly(fis, bos);
 		}
@@ -175,7 +174,7 @@ public class FileUtils {
 		try {
 			saveFile(path, content, "UTF-8");
 		} catch (Exception e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -215,7 +214,7 @@ public class FileUtils {
 //        try {
 //            FileUtils.saveFile(path, key + "," + content + "," + cost + "\n", "UTF-8", true);
 //        } catch (Exception e) {
-//            R.runError(e);
+//            throw new RuntimeException(e);
 //        }
 	}
 
@@ -233,7 +232,7 @@ public class FileUtils {
 		try {
 			FileUtils.saveFile(path, key + "," + content + "," + cost + "\n", "UTF-8", true);
 		} catch (Exception e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -315,7 +314,7 @@ public class FileUtils {
 			File myFilePath = new File(filePath);
 			myFilePath.delete();        // 删除空文件夹
 		} catch (Exception e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -329,7 +328,7 @@ public class FileUtils {
 			File myFilePath = new File(filePath);
 			myFilePath.delete();        // 删除文件
 		} catch (Exception e) {
-			R.runError(e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -503,7 +502,7 @@ public class FileUtils {
 
 			return new ResponseEntity<byte[]>(IOUtils.toByteArray(stream), headers, HttpStatus.CREATED);
 		} catch (IOException e) {
-			R.runError("文件下载处理异常!", e);
+			throw new RuntimeException("文件下载处理异常!", e);
 		} finally {
 			IOUtils.closeQuietly(stream);
 			if (CollectionUtils.isNotEmpty(files)) {
@@ -512,7 +511,5 @@ public class FileUtils {
 				}
 			}
 		}
-
-		return null;
 	}
 }

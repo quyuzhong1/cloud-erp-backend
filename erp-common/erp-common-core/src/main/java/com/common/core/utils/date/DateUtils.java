@@ -1,4 +1,4 @@
-package com.common.core.utils;
+package com.common.core.utils.date;
 
 
 import com.baomidou.mybatisplus.extension.api.R;
@@ -21,9 +21,9 @@ import org.joda.time.format.DateTimeFormat;
  * @Date 2022-08-02 16:10
  * @Created by yl
  */
-public class DateUtil {
+public class DateUtils {
 
-    private DateUtil() {
+    private DateUtils() {
 
     }
 
@@ -308,6 +308,15 @@ public class DateUtil {
         System.out.println("dayOfWeek:" + dayWeek);
         cal.add(Calendar.DATE, 7 - dayWeek);
         return sdf.format(cal.getTime());
+    }
+
+    /**
+     * 字符串转换成日期,,格式 yyyy-MM-dd
+     *
+     * @param strDate 日期字符串,格式：Date
+     */
+    public static Date stringToDate(String strDate) {
+        return EnumTimePattern.parseDate(strDate);
     }
 
 }

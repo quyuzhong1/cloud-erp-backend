@@ -5,29 +5,17 @@ import com.cloud.erp.admin.modules.sys.dto.UpdatePasswordDTO;
 import com.cloud.erp.admin.modules.sys.service.SysUserInfoService;
 import com.cloud.erp.admin.modules.sys.service.SysUserThirdService;
 import com.cloud.erp.admin.modules.sys.vo.SysUserBaseVO;
-import com.common.core.constant.RedisCacheConstants;
-import com.common.core.utils.DateUtil;
-import com.common.core.utils.RedisKeyUtil;
-import com.common.message.service.MailService;
-import com.common.web.service.RedisService;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.modules.email.dto.EmailDTO;
 import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
-import com.erp.common.modules.email.enums.EmailTemplate;
 import com.erp.common.modules.sys.dto.SysUserThirdDTO;
-import com.erp.common.vo.LoginUser;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname MyCenterController

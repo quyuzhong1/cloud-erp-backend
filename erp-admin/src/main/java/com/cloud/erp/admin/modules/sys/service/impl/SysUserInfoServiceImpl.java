@@ -26,7 +26,7 @@ import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
 import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.DateUtil;
+import com.common.core.utils.date.DateUtils;
 import com.common.core.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.password.PassEntity;
@@ -505,7 +505,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String code = RandomStringUtils.randomNumeric(4);
         LocalDate localDate = LocalDate.now();
         dto.setVerifyCode(code);
-        dto.setDate(DateUtil.getCnDate(localDate));
+        dto.setDate(DateUtils.getCnDate(localDate));
         emailDTO.setData(dto);
         String[] recipients = {email};
         emailDTO.setRecipients(recipients);
