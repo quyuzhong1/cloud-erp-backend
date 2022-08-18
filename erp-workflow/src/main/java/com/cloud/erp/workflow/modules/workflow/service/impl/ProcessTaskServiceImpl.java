@@ -1,13 +1,15 @@
 package com.cloud.erp.workflow.modules.workflow.service.impl;
 
 import com.cloud.erp.workflow.modules.workflow.dto.ActivityDTO;
-import com.cloud.erp.workflow.modules.workflow.dto.ApproveProcessPassDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.ApproveProcessDTO;
 import com.cloud.erp.workflow.modules.workflow.dto.ProcessBaseDTO;
+import com.cloud.erp.workflow.modules.workflow.dto.QueryProcessDTO;
 import com.cloud.erp.workflow.modules.workflow.service.ActHistoryActivityService;
 import com.cloud.erp.workflow.modules.workflow.service.ProcessTaskService;
 import com.cloud.erp.workflow.modules.workflow.vo.TaskVO;
 
 import org.camunda.bpm.engine.HistoryService;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
@@ -36,6 +38,10 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     @Autowired
     private ActHistoryActivityService actHistoryActivityService;
+
+
+    @Autowired
+    private RuntimeService runtimeService;
 
     /**
      * 查询我的任务待办
@@ -69,7 +75,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
-    public void taskPass(ApproveProcessPassDTO dto) {
+    public void taskPass(ApproveProcessDTO dto) {
         String processInstanceId=dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
         String taskId = dto.getTaskId();
@@ -96,15 +102,15 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     /**
      * 我的已办  任务历史
      *
-     * @param userId
+     * @param dto userId
      * @return java.util.List<org.camunda.bpm.engine.history.HistoricTaskInstance>
      * @author yl
      * @date 2022-08-10 17:26
      */
     @Override
-    public List<HistoricTaskInstance> historicTaskInstances(String userId) {
+    public List<HistoricTaskInstance> historicTaskInstances(QueryProcessDTO dto) {
         List<HistoricTaskInstance> historicTaskInstances = historyService.createHistoricTaskInstanceQuery().
-                taskAssignee(userId).finished().list();
+                taskAssignee(dto.getUserId()).finished().list();
         return historicTaskInstances;
     }
 
@@ -132,7 +138,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-11 12:17
      */
     @Override
-    public TaskVO queryTaskInfo(ProcessBaseDTO dto){
+    public TaskVO queryTaskInfo(ApproveProcessDTO dto){
         Task task = taskService.createTaskQuery().taskId(dto.getTaskId()).singleResult();
         TaskVO vo = new TaskVO();
         if (!Objects.isNull(task)) {
@@ -151,4 +157,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
         return vo;
     }
+
+
+
 }

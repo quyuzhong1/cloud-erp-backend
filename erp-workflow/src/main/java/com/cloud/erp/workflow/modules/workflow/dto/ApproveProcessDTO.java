@@ -13,11 +13,11 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-public class ApproveProcessPassDTO extends ProcessBaseDTO {
+public class ApproveProcessDTO extends ProcessBaseDTO {
 
 
 
-
+    private String taskId;
     //参数
     private Map<String, Object> parameterMap;
 }

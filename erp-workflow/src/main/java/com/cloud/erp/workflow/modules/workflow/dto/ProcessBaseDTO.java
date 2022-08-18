@@ -18,12 +18,14 @@ public class ProcessBaseDTO implements Serializable {
 
 
     //流程id
+    @NotBlank(message = "用户id不能为空")
+    private String userId;
+
+    //流程id
     @NotBlank(message = "流程id不能为空")
     private String processInstanceId;
 
 
-    @NotBlank(message = "任务id不能为空")
-    private String taskId;
 
 
     //评论 意见

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.erp.workflow.modules.workflow.mapper.WorkflowMapper">
+
+    <delete id="deleteTaskByIdArray">
+        DELETE FROM ACT_RU_TASK WHERE ID_ IN
+        <foreach collection="taskIdLit" item="t" open="(" close=")">
+            #{t}
+        </foreach>
+    </delete>
+
+    <delete id="deleteExecutionByProcInstIdAndActInstIdArray">
+        DELETE FROM ACT_RU_EXECUTION  WHERE PROC_INST_ID_ =#{procId}
+        AND  ACT_INST_ID_  IN
+        <foreach collection="actInstIdList" item="t" open="(" close=")">
+            #{t}
+        </foreach>
+    </delete>
+
+    <update id="updateHiTaskInstByIdArray">
+       UPDATE ACT_HI_TASKINST  SET END_TIME_ =${endTime} , DELETE_REASON_ = 'deleted' "
+       WHERE ID_  IN
+       <foreach collection="taskIdLit" item="t" open="(" close=")">
+             #{t}
+       </foreach>
+
+    </update>
+
+
+    <update id="updateHiActInstById">
+       UPDATE ACT_HI_ACTINST SET END_TIME_ =#{endTime} WHERE ID_ in
+       <foreach collection="actInstIdList" item="t" open="(" close=")">
+          #{t}
+       </foreach>
+    </update>
+
+
+</mapper>

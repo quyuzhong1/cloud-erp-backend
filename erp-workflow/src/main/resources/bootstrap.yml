@@ -5,3 +5,9 @@ spring:
     active: dev
 server:
   port: 9040
+
+logback:
+  filePath: /data/log/code/cloud-erp/logs/workflow.%d{yyyy-MM-dd}.%i.log
+  maxHistory: 356
+  maxFileSize: 100MB
+  totalSizeCap: 10GB

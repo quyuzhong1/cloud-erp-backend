@@ -3,16 +3,18 @@ package com.cloud.erp.workflow.modules.workflow.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
- * @Classname 驳回的参数
+ * @Classname RejectNodeDTO
  * @Description TODO
- * @Date 2022-08-11 11:51
+ * @Date 2022-08-17 11:55
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class ApproveProcessRejectDTO extends ProcessBaseDTO {
+public class RejectNodeDTO extends ProcessBaseDTO {
 
-
-
+    //节点id
+    private String activityId;
 }

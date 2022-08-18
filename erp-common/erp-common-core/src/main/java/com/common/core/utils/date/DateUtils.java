@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -27,9 +29,9 @@ public class DateUtils {
 
     }
 
-    private static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
+    public static final String fmt = "yyyy-MM-dd HH:mm:ss", fmt_day = "yyyy-MM-dd", fmt_recent = "MM-dd HH:mm", fmt_num = "yyMMdd", fmt_year = "yy", fmt_md = "MMdd";
 
-    private final static String FMT_YEAR4 = "yyyy",DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm",DATE_PATTERN_SHORT_YEAR_NO_SP= "yyMMdd";
+    private final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyMMdd";
 
 
     public static LocalDateTime nowDay() {
@@ -50,7 +52,7 @@ public class DateUtils {
         int dayOfYear = date.getYear();
         int dayOfMonth = date.getDayOfMonth();
         int monthValue = date.getMonthOfYear();
-        StringBuffer sb=new StringBuffer();
+        StringBuffer sb = new StringBuffer();
         sb.append(dayOfYear).append("年");
         sb.append(monthValue).append("月");
         sb.append(dayOfMonth).append("日");
@@ -305,7 +307,6 @@ public class DateUtils {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         int dayWeek = cal.get(Calendar.DAY_OF_WEEK);// 获得当前日期是一个星期的第几天
-        System.out.println("dayOfWeek:" + dayWeek);
         cal.add(Calendar.DATE, 7 - dayWeek);
         return sdf.format(cal.getTime());
     }
@@ -319,4 +320,52 @@ public class DateUtils {
         return EnumTimePattern.parseDate(strDate);
     }
 
+
+    public static LocalDate getCurrentTime() {
+
+        return LocalDate.now();
+    }
+
+
+    public static String conversionDate(Date date, String fmt) {
+        if (date != null) {
+            if (StringUtils.isBlank(fmt)) {
+                fmt = DateUtils.fmt;
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat(fmt);
+            return sdf.format(date.getTime());
+        }
+        return "";
+    }
+
+
+    /**
+     * 获取两个时间相差多少
+     *
+     * @param endDate
+     * @param startDate
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-08-18 14:45
+     */
+    public static String discrepancy(Date endDate, Date startDate) {
+        if (endDate != null && startDate != null) {
+            long nd = 1000 * 24 * 60 * 60;
+            long nh = 1000 * 60 * 60;
+            long nm = 1000 * 60;
+            long ns = 1000;
+            // 获得两个时间的毫秒时间差异
+            long diff = endDate.getTime() - startDate.getTime();
+            // 计算差多少天
+            long day = diff / nd;
+            // 计算差多少小时
+            long hour = diff % nd / nh;
+            // 计算差多少分钟
+            long min = diff % nd % nh / nm;
+            // 计算差多少秒//输出结果
+            long sec = diff % nd % nh % nm / ns;
+            return day + "天" + hour + "小时" + min + "分钟" + sec + "秒";
+        }
+        return "";
+    }
 }

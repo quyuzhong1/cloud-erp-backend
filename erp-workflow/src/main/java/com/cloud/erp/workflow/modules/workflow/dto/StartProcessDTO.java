@@ -26,8 +26,9 @@ public class StartProcessDTO implements Serializable {
 
     @NotBlank(message = "发起人不能为空")
     //业务发起人
-    private String initiator;
+    private String userId;
+
+    private Map<String,Object> parameterMap;
 
 
-    private Map<String,Object> map;
 }

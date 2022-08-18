@@ -3,6 +3,7 @@ package com.cloud.erp.workflow.modules.workflow.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 
@@ -15,14 +16,15 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class DeployDTO implements Serializable {
+public class DeployProcessDTO implements Serializable {
 
-    //流程名字
-    @NotEmpty(message = "流程名不能为空")
-    private String name;
 
-    @NotEmpty(message = "目录下的流程图不能为空")
-    private String resource;
+    //流程bpmn 名
+    @NotBlank(message = "流程名不能为空")
+    private String bpmnName;
+
+    @NotBlank(message = "目录下的流程图不能为空")
+    private String businessName;
 
 
 }

@@ -11,6 +11,7 @@ spring:
         shared-configs: common.yml,db-workflow.yml
 
 
+
 camunda:
   bpm:
     admin-user:

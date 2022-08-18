@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration  scan="true" scanPeriod="10 seconds">
+
+    <contextName>logback</contextName>
+    <property name="LOG_PATTERN1" value="[%d{yyyy-MM-dd HH:mm:ss}][%highlight(%level)] %class:%line - %msg%n" />
+    <property name="LOG_PATTERN2" value="[%d{yyyy-MM-dd HH:mm:ss}][%X{sessionTokenId}][%level] %class:%line - %msg%n" />
+    <springProperty scope="context" name="FILE_PATH" source="logback.filePath"/>
+    <springProperty scope="context" name="MAX_HISTORY" source="logback.maxHistory"/>
+    <springProperty scope="context" name="MAX_FILE_SIZE" source="logback.maxFileSize"/>
+    <springProperty scope="context" name="TOTAL_SIZE_CAP" source="logback.totalSizeCap"/>
+
+    <!-- 控制台输出日志 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN1}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 输出日志至文件 -->
+    <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${FILE_PATH}</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- 日志文件的最大大小 -->
+                <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!-- 超出删除老文件 -->
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN2}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="console" />
+        <appender-ref ref="rollingFile" />
+    </root>
+
+</configuration>
