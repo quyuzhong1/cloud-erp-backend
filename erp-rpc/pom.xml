@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cloud-erp</artifactId>
+        <groupId>com.cloud.erp</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+
+    <artifactId>erp-rpc</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>erp-rpc-auth</module>
+        <module>erp-rpc-sys</module>
+    </modules>
+
+   <dependencies>
+       <!--openfeign-->
+       <dependency>
+           <groupId>org.springframework.cloud</groupId>
+           <artifactId>spring-cloud-starter-openfeign</artifactId>
+           <version>2.2.6.RELEASE</version>
+       </dependency>
+       <dependency>
+           <groupId>com.cloud.erp</groupId>
+           <artifactId>erp-common-pojo</artifactId>
+           <version>0.0.1-SNAPSHOT</version>
+           <scope>compile</scope>
+       </dependency>
+
+   </dependencies>
+
+
+
+</project>

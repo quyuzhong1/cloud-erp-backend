@@ -18,14 +18,15 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>erp-auth</module>
+
         <module>erp-gateway</module>
-        <module>erp-admin</module>
-        <module>erp-third-party</module>
         <module>erp-common</module>
-        <module>erp-merchant</module>
         <module>erp-generate</module>
-        <module>erp-workflow</module>
+        <module>erp-model</module>
+        <module>erp-rpc</module>
+        <module>erp-server</module>
+        <module>erp-server</module>
+        <module>erp-sdk</module>
     </modules>
 
     <properties>

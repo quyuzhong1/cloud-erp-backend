@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: erp-auth
-  profiles:
-    active: dev
-
-server:
-  port: 9020

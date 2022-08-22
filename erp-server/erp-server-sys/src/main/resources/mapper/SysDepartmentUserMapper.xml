@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.SysDepartmentUserMapper">
+
+    <select id="findDepartmentUser" resultType="com.erp.model.sys.dto.SysDepartmentUserDTO">
+        SELECT sdu.id AS flagId,sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
+        sdu.lead_state,sui.user_state,sd.name AS departmentName
+        FROM sys_department_user sdu
+        INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
+        INNER JOIN sys_department sd ON sd.id=sdu.department_id
+        WHERE sdu.department_id IN
+        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+            #{departmentId}
+        </foreach>
+        AND sui.delete_state=1
+        <if test="params.state !=null">
+            AND sui.user_state=#{params.state}
+        </if>
+        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
+            AND  sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+
+        ORDER BY sui.update_time DESC
+
+    </select>
+
+    <select id="findUserNumber" resultType="com.erp.model.sys.dto.SysDepartmentUserNumberDTO">
+        SELECT sdu.department_id,sdu.user_id
+        FROM sys_department_user  sdu INNER
+        JOIN sys_user_info sui ON sdu.user_id = sui.uid
+        WHERE sui.delete_state=1;
+    </select>
+</mapper>

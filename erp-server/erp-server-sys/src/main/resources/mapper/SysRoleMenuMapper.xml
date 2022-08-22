@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.SysRoleMenuMapper">
+
+    <select id="findMenuIdsByRoleIds" resultType="String">
+        SELECT DISTINCT menu_id FROM sys_role_menu WHERE
+        role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </select>
+
+    <select id="findMenuCodeByRoleIds" resultType="String">
+            SELECT  DISTINCT sm.menu_code  FROM sys_role_menu srm
+            JOIN sys_menu sm ON srm.menu_id= sm.menu_id
+            WHERE sm.type=#{type} AND
+            srm.role_id IN
+            <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                #{roleId}
+            </foreach>
+
+    </select>
+
+
+    <select id="findAllMenuCode" resultType="String">
+        SELECT  DISTINCT menu_code  FROM sys_menu
+        WHERE type=#{type}
+    </select>
+
+
+</mapper>

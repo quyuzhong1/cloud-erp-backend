@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.SysRoleUserMapper">
+
+    <select id="findRoleUser" resultType="com.erp.model.sys.dto.UserDTO">
+        SELECT sru.id AS flagId,sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile
+        ,sui.user_state
+        FROM sys_role_user sru JOIN sys_user_info sui ON sru.user_id=sui.uid
+        WHERE sru.role_id=#{params.flagId}
+        AND delete_state=1
+        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
+            sui.user_name LIKE concat('%',#{params.searchKeyword},'%') OR
+            sui.real_name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+
+    </select>
+</mapper>
