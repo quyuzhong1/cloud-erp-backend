@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.SysUserPagingSearchDTO;
+import com.erp.model.sys.dto.UserDTO;
 import com.erp.model.sys.dto.UserManageDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -26,15 +27,15 @@ import java.util.List;
 public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
 
 
-    List<SysUserDTO> findList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
 
     IPage<UserManageDTO> paging(Page query, @Param("params") SysUserPagingSearchDTO params, @Param("roleIds") List<String> roleIds);
 
-    List<SysUserDTO> findRoleIfExistList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
+    List<UserDTO> findRoleIfExistList(@Param("searchKeyword") String q, @Param("roleId") String roleId);
 
-    List<SysUserDTO> findPostIfExistList(@Param("searchKeyword") String q, @Param("postId") String postId);
+    List<UserDTO> findPostIfExistList(@Param("searchKeyword") String q, @Param("postId") String postId);
 
-    List<SysUserDTO> findDepartmentIfExistList(@Param("searchKeyword") String searchKeyWord, @Param("departmentId") String flagId);
+    List<UserDTO> findDepartmentIfExistList(@Param("searchKeyword") String searchKeyWord, @Param("departmentId") String flagId);
 
     void setLoginIp(@Param("params") SysLoginIpDTO dto);
 }

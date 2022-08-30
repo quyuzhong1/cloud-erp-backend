@@ -56,7 +56,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.cloud.erp.admin.modules.sys.vo.SysUserVO>
      */
 
-    List<SysUserDTO> findList(SysSearchUserDTO dto);
+    List<UserDTO> findList(SysSearchUserDTO dto);
 
     PagingVO paging(PagingDTO<SysUserPagingSearchDTO> dto);
 

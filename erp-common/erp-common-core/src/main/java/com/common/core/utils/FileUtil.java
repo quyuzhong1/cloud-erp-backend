@@ -117,6 +117,30 @@ public class FileUtil {
         }
     }
 
+
+
+    public static void write(String filePath,byte[] fileBytes){
+        try {
+            String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+            File dir = new File(dirPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            File f = new File(filePath);
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream("a.xls"));
+            bos.write(fileBytes);
+            bos.flush();
+            bos.close();
+
+        }catch (Exception e){
+
+        }
+
+    }
     /**
      * 读入TXT文件
      */

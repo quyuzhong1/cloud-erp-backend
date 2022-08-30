@@ -11,9 +11,6 @@
 
     <artifactId>erp-common-pojo</artifactId>
 
-
-
-
     <!--   数据校验     -->
     <dependencies>
         <dependency>

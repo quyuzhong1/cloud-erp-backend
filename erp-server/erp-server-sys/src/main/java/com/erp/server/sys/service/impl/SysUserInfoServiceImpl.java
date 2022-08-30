@@ -197,7 +197,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @date 2022-07-12 18:13
      */
     @Override
-    public List<SysUserDTO> findList(SysSearchUserDTO dto) {
+    public List<UserDTO> findList(SysSearchUserDTO dto) {
         Integer sysType = dto.getSysType();
         //角色的
         if (sysType == 1) {

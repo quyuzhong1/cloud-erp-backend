@@ -7,10 +7,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.sys.dto.SysSearchUserDTO;
-import com.erp.model.sys.dto.SysUserInfoDTO;
-import com.erp.model.sys.dto.SysUserPagingSearchDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +39,7 @@ public class SysUserInfoController extends BaseController {
      */
     @RequestMapping("/list")
     public ApiResult list(@RequestBody SysSearchUserDTO dto) {
-        List<SysUserDTO> list = sysUserInfoService.findList(dto);
+        List<UserDTO> list = sysUserInfoService.findList(dto);
         return success(list);
     }
 
