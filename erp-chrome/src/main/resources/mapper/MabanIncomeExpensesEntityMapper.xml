@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.erp.chrome.mapper.MabanIncomeExpensesMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.MabanIncomeExpensesEntity">
+        <id column="id" property="id" />
+        <result column="order_no" property="orderNo" />
+        <result column="trade_no" property="tradeNo" />
+        <result column="shops_name" property="shopsName" />
+        <result column="country_name" property="countryName" />
+        <result column="sku_info" property="skuInfo" />
+        <result column="invoice_date" property="invoiceDate" />
+        <result column="platform" property="platform" />
+        <result column="exchange_rate" property="exchangeRate" />
+        <result column="income" property="income" />
+        <result column="expenditure " property="expenditure " />
+        <result column="gross_profit" property="grossProfit" />
+        <result column="gross_profit_rate" property="grossProfitRate" />
+        <result column="currency" property="currency" />
+    </resultMap>
+
+</mapper>
