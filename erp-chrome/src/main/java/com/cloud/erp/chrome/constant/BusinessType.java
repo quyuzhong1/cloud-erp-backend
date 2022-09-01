@@ -8,7 +8,9 @@ package com.cloud.erp.chrome.constant;
  */
 public interface BusinessType {
 
-    public static final String ORDER="order";
+    String ORDER="order";
 
-    public static final String SHIPMENTS="shipmentsInfo";
+    String SHIPMENTS="shipmentsInfo";
+
+    String YXKORDER="yxkOrder";
 }

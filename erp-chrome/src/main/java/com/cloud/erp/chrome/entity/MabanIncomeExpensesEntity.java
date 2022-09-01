@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("mabang_income_expenses")
+@TableName("chrome_mabang_income_expenses")
 public class MabanIncomeExpensesEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -11,4 +11,6 @@ public class ErpPlatform {
     public static final String MABANG="MaBang";
 
     public static final String GYY="Gyy";
+
+    public static final String YXK="Yxk";
 }

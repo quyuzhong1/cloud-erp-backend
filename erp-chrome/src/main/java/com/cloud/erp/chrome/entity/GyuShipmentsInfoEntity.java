@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("gyy_shipments_info")
+@TableName("chrome_gyu_shipments")
 public class GyuShipmentsInfoEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -140,6 +140,10 @@ public class GyuShipmentsInfoEntity implements Serializable {
     @TableField("logistics_company")
     @Alias("物流公司")
     private String logisticsCompany;
+
+    @TableField("order_type")
+    @Alias("订单类型")
+    private String orderType;
 
     /**
      * 币种

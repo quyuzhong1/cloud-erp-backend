@@ -40,12 +40,10 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
      */
     @Override
     public List<ChromeTaskInfoEntity> getChromeTaskList(FindTaskDTO  dto) {
-        List<String> list= Arrays.asList(ErpPlatform.GYY,ErpPlatform.MABANG);
+        List<String> list= Arrays.asList(ErpPlatform.GYY,ErpPlatform.MABANG,ErpPlatform.YXK);
         if(!list.contains(dto.getPlatform())){
             throw new ServiceException(1,"平台类型有误");
         }
-
-
         LambdaQueryWrapper<ChromeTaskInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChromeTaskInfoEntity::getTaskStatus, TaskState.NOT_START);
         queryWrapper.eq(ChromeTaskInfoEntity::getPlatform,dto.getPlatform());

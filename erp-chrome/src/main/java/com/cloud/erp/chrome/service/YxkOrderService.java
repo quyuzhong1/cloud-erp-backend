@@ -1,5 +1,6 @@
 package com.cloud.erp.chrome.service;
 
+import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.dto.YxkOrderDTO;
 import com.cloud.erp.chrome.entity.YxkOrderEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -17,4 +18,5 @@ public interface YxkOrderService extends IService<YxkOrderEntity> {
 
     void saveYxkOrder(YxkOrderDTO dto);
 
+    void saveOrder(MabangOrderDTO dto);
 }

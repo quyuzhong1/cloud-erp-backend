@@ -1,16 +1,14 @@
 package com.cloud.erp.chrome.controller;
 
 
+import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.dto.YxkOrderDTO;
 import com.cloud.erp.chrome.service.YxkOrderService;
 import com.erp.common.dto.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.erp.common.controller.BaseController;
 
 /**
@@ -23,14 +21,21 @@ import com.erp.common.controller.BaseController;
  */
 @RestController
 @RequestMapping("yxk/api")
+@CrossOrigin(origins = "*")
 public class YxkOrderController extends BaseController {
 
     @Autowired
     private YxkOrderService  yxkOrderService;
 
+//    @PostMapping("/importFile")
+//    public ApiResult importFile(@RequestBody @Validated YxkOrderDTO dto){
+//        yxkOrderService.saveYxkOrder(dto);
+//        return success();
+//    }
+
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestBody @Validated YxkOrderDTO dto){
-        yxkOrderService.saveYxkOrder(dto);
+    public ApiResult importFile(@ModelAttribute  MabangOrderDTO dto){
+        yxkOrderService.saveOrder(dto);
         return success();
     }
 

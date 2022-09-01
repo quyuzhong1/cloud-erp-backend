@@ -6,8 +6,13 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: admin@viji
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
 server:
   port: 7040
+
 
 
 xxl:
@@ -35,7 +40,5 @@ xxl:
 gyy:
   fieldsText: 店铺名称,发货单号,平台编号,发货时间,会员名称,商品类别,品牌,商品代码,商品名称,商品简称,规格代码,规格名称,数量,商品单位,成本单价,成本金额,实际单价,实际金额,仓库名称,订单标记,预计发货时间,让利金额,让利后金额,物流费用,商品税率,商品条码,物流公司,订单制单人,家装服务内容,支付时间,发票抬头,订单类型,供应商,赠品,审核人,其他服务费,物流单号,配货时间,分销商名称,币别,供应商货号,商品备注,批次,波次号,货主名称,包材,数据同步状态,母运单号,主播信息
   fieldsName: shopName,deliveryCode,platformCode,deliveryDateStr,vipName,categoryName,itemBrandName,itemCode,itemName,itemSname,itemSkuCode,itemSkuName,qtyStr,itemUnit,costPriceStr,costPriceAmountStr,priceStr,amountStr,warehouseName,tagName,planDeliveryDateStr,discountFeeStr,amountAfterStr,postFeeStr,taxRateStr,barcode,expressName,orderCreateName,jzContent,payTimeStr,invoiceTitle,orderTypeName,supplierName,isGift,approveName,otherServiceFeeStr,mailNo,distributionDateStr,drpName,currencyName,supplierOuterId,note,batchInfo,waveCode,shipperName,packageMaterialStr,syncStatusStr,parentMailNo,anchorInfo
-
-
 
 

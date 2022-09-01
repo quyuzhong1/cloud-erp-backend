@@ -1,6 +1,8 @@
 package com.cloud.erp.chrome.entity;
 
 import java.math.BigDecimal;
+
+import cn.hutool.core.annotation.Alias;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -19,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("yxk_order")
+@TableName("chrome_yxk_order")
 public class YxkOrderEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -36,6 +38,7 @@ public class YxkOrderEntity implements Serializable {
     /**
      * 单据编号
      */
+
     @TableField("document_no")
     private String documentNo;
 
