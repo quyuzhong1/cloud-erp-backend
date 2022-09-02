@@ -22,7 +22,7 @@ public class GyySearchParamDTO implements Serializable {
       private String mailNo="";
       private String platformCode="";
       //一年的开始
-      private String createBeginDate="2022-01-01 00:00:00";
+      private String createBeginDate="2021-01-01 00:00:00";
       //一年的结束
       private String createEndDate="";
       private String deliveryBeginDate="";
