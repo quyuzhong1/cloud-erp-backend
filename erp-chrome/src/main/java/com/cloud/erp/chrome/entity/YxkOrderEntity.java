@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("chrome_yxk_order")
+@TableName("order_yxk_shipments")
 public class YxkOrderEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

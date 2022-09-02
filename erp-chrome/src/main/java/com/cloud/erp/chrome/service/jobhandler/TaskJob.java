@@ -6,9 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.cloud.erp.chrome.constant.BusinessType;
 import com.cloud.erp.chrome.constant.ErpPlatform;
 import com.cloud.erp.chrome.constant.TimeType;
-import com.cloud.erp.chrome.dto.GyyShipmentsParamDTO;
-import com.cloud.erp.chrome.dto.GyyShipmentsSearchParamDTO;
-import com.cloud.erp.chrome.dto.MabangOrderParamDTO;
+import com.cloud.erp.chrome.dto.*;
 import com.cloud.erp.chrome.entity.ChromeTaskInfoEntity;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -76,35 +74,103 @@ public class TaskJob {
 
     }
 
-     /**
-      * 生成管易云的任务  每天 00:15
-      * @author yl
-      * @date 2022-08-30 14:37
-      * @param
-      * @return void
-      */
+//     /**
+//      * 生成管易云的任务  每天 00:15
+//      * @author yl
+//      * @date 2022-08-30 14:37
+//      * @param
+//      * @return void
+//      */
+//    @XxlJob("addGyyTask")
+//    public void addGyyTask() {
+//        try {
+//            GyyShipmentsParamDTO dto = new GyyShipmentsParamDTO();
+//            DateTime yesterday = DateUtil.yesterday();
+//            //获取今天开始时间
+//            DateTime startTime=DateUtil.beginOfDay(yesterday);
+//            DateTime endTime=DateUtil.endOfDay(yesterday);
+//            Date nowDate=new Date();
+//            //今年第一天
+//            DateTime yearStartDay = DateUtil.beginOfYear(nowDate);
+//            DateTime yearStartTime=DateUtil.beginOfDay(yearStartDay);
+//            String yearStartTimeStr=yearStartTime.toString("yyyy-MM-dd HH:mm:ss");
+//            //今年最后一天
+//            DateTime yearLastDay = DateUtil.endOfYear(nowDate);
+//            DateTime yearLastTime=DateUtil.endOfDay(yearLastDay);
+//            String yearEndTimeStr=yearLastTime.toString("yyyy-MM-dd HH:mm:ss");
+//
+//            String startTimeStr=startTime.toString("yyyy-MM-dd HH:mm:ss");
+//            String endTimeStr=endTime.toString("yyyy-MM-dd HH:mm:ss");
+//            dto.setFieldsName(fieldsName);
+//            dto.setFieldsText(fieldsText);
+//            //这个是对应需要的参数
+//            GyyShipmentsSearchParamDTO searchParam=new GyyShipmentsSearchParamDTO();
+////            searchParam.setDeliveryBeginDate(startTimeStr);
+////            searchParam.setDeliveryEndDate(endTimeStr);
+////            //今年开始的时间
+////            searchParam.setCreateBeginDate(yearStartTimeStr);
+////            searchParam.setCreateEndDate(yearEndTimeStr);
+//
+//            searchParam.setBeginTime(startTimeStr);
+//            searchParam.setEndTime(endTimeStr);
+//            dto.setSearchParams(searchParam);
+//            ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
+//            entity.setBusinessType(BusinessType.SHIPMENTS);
+//            entity.setParameter(JSONObject.toJSONString(dto));
+//            entity.setPlatform(ErpPlatform.GYY);
+//            entity.setCreateTime(nowDate);
+//            entity.setUpdateTime(nowDate);
+//            chromeTaskInfoService.save(entity);
+//        } catch (Exception e) {
+//            log.error("addMaBanTask 出错了 e==",e);
+//        }
+//
+//    }
+
+
+    /**
+     * 生成管易云的任务  每天 00:15
+     * @author yl
+     * @date 2022-08-30 14:37
+     * @param
+     * @return void
+     */
     @XxlJob("addGyyTask")
     public void addGyyTask() {
         try {
-            GyyShipmentsParamDTO dto = new GyyShipmentsParamDTO();
+            GyyParamDTO dto = new GyyParamDTO();
             DateTime yesterday = DateUtil.yesterday();
-            //获取开始时间
+            //获取今天开始时间
             DateTime startTime=DateUtil.beginOfDay(yesterday);
             DateTime endTime=DateUtil.endOfDay(yesterday);
+            Date nowDate=new Date();
+            //今年第一天
+//            DateTime yearStartDay = DateUtil.beginOfYear(nowDate);
+//            DateTime yearStartTime=DateUtil.beginOfDay(yearStartDay);
+//            String yearStartTimeStr=yearStartTime.toString("yyyy-MM-dd HH:mm:ss");
+            //今年最后一天
+//            DateTime yearLastDay = DateUtil.endOfYear(nowDate);
+//            DateTime yearLastTime=DateUtil.endOfDay(yearLastDay);
+//            String yearEndTimeStr=yearLastTime.toString("yyyy-MM-dd HH:mm:ss");
+
             String startTimeStr=startTime.toString("yyyy-MM-dd HH:mm:ss");
             String endTimeStr=endTime.toString("yyyy-MM-dd HH:mm:ss");
             dto.setFieldsName(fieldsName);
             dto.setFieldsText(fieldsText);
             //这个是对应需要的参数
-            GyyShipmentsSearchParamDTO searchParam=new GyyShipmentsSearchParamDTO();
-            searchParam.setBeginTime(startTimeStr);
-            searchParam.setEndTime(endTimeStr);
+            GyySearchParamDTO searchParam=new GyySearchParamDTO();
+            searchParam.setDeliveryBeginDate(startTimeStr);
+            searchParam.setDeliveryEndDate(endTimeStr);
+
+            searchParam.setCreateEndDate(endTimeStr);
+
+            searchParam.setDeliveryBeginDate(startTimeStr);
+            searchParam.setDeliveryEndDate(endTimeStr);
             dto.setSearchParams(searchParam);
             ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
             entity.setBusinessType(BusinessType.SHIPMENTS);
             entity.setParameter(JSONObject.toJSONString(dto));
             entity.setPlatform(ErpPlatform.GYY);
-            Date nowDate=DateUtil.date();
             entity.setCreateTime(nowDate);
             entity.setUpdateTime(nowDate);
             chromeTaskInfoService.save(entity);
@@ -138,5 +204,12 @@ public class TaskJob {
             log.error("addMaBanTask 出错了 e==",e);
         }
 
+    }
+
+    public static void main(String[] args) {
+        DateTime yearStartDay = DateUtil.beginOfYear(new Date());
+           DateTime yearStartTime=DateUtil.beginOfDay(yearStartDay);
+           String yearStartTimeStr=yearStartTime.toString("yyyy-MM-dd HH:mm:ss");
+        System.out.println(yearStartTimeStr);
     }
 }

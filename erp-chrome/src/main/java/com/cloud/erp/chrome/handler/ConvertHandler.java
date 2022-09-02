@@ -3,7 +3,9 @@ package com.cloud.erp.chrome.handler;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname ConvertHandler
@@ -22,7 +24,11 @@ public class ConvertHandler {
         for (int i = 0; i < forSize; i++) {
             int flagNum = i * limit;
             if (i == 0) {
-                list.add(dataList.subList(i, limit));
+                if(dataSize>limit){
+                    list.add(dataList.subList(i, limit));
+                }else{
+                    list.add(dataList);
+                }
             } else {
                 if (i == forSize - 1) {
                     list.add(dataList.subList(flagNum, dataSize));
@@ -34,4 +40,5 @@ public class ConvertHandler {
         }
         return list;
     }
+
 }

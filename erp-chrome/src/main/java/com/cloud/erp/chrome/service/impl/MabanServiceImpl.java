@@ -54,7 +54,7 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
             List<MabanIncomeExpensesEntity> saveList = csvServer.getObjectListByMultipartFile(file, MabanIncomeExpensesEntity.class);
             if (CollectionUtils.isNotEmpty(saveList)) {
                 List<List<MabanIncomeExpensesEntity>> lists = convertHandler.splitList(saveList, 1000);
-                for(List<MabanIncomeExpensesEntity> list:lists){
+                for (List<MabanIncomeExpensesEntity> list : lists) {
                     this.saveBatch(list);
                 }
             }

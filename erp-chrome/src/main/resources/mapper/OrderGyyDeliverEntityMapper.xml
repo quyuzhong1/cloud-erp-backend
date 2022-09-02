@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.erp.chrome.mapper.OrderGyyDeliverMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.OrderGyyDeliverEntity">
+        <id column="id" property="id" />
+        <result column="deliver_time" property="deliverTime" />
+        <result column="platform_type" property="platformType" />
+        <result column="order_type" property="orderType" />
+        <result column="shop_name" property="shopName" />
+        <result column="platform_no" property="platformNo" />
+        <result column="sku_no" property="skuNo" />
+        <result column="goods_name" property="goodsName" />
+        <result column="quantity" property="quantity" />
+        <result column="cost_price" property="costPrice" />
+        <result column="amount" property="amount" />
+        <result column="order_number" property="orderNumber" />
+    </resultMap>
+
+</mapper>

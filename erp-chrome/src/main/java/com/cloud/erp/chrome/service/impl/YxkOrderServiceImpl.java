@@ -157,9 +157,7 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
             e.printStackTrace();
             throw new ServiceException(1, "云星空保存数据失败  通过参数无法获取到数据");
         }
-
-        //chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
-
+        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
 
     }
 

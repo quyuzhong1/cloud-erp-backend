@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("chrome_gyu_shipments")
+@TableName("order_gyu_shipments")
 public class GyuShipmentsInfoEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -88,28 +88,28 @@ public class GyuShipmentsInfoEntity implements Serializable {
     /**
      * 成本单价
      */
-    @TableField("unit_cost")
+    @TableField("cost_price")
     @Alias("成本单价")
     private BigDecimal unitCost;
 
     /**
      * 成本价
      */
-    @TableField("cost_price")
+    @TableField("cost_amount")
     @Alias("成本金额")
     private BigDecimal costPrice;
 
     /**
      * 实践单价
      */
-    @TableField("reality_unit_price")
+    @TableField("reality_price")
     @Alias("实际单价")
     private BigDecimal realityUnitPrice;
 
     /**
      * 实际金额
      */
-    @TableField("reality_price")
+    @TableField("reality_amount")
     @Alias("实际金额")
     private BigDecimal realityPrice;
 
