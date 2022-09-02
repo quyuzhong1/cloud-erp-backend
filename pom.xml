@@ -20,11 +20,11 @@
     <modules>
         <module>erp-gateway</module>
         <module>erp-common</module>
-        <module>erp-generate</module>
         <module>erp-model</module>
         <module>erp-rpc</module>
         <module>erp-server</module>
         <module>erp-sdk</module>
+        <module>erp-chrome</module>
     </modules>
 
     <properties>
