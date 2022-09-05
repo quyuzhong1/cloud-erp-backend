@@ -2,9 +2,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.105.216
+        server-addr: 192.168.31.86
         namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
       config:
-        server-addr: 172.16.105.216
+        server-addr: 192.168.31.86
         namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
         shared-configs: common.yml,erp-auth.yml
