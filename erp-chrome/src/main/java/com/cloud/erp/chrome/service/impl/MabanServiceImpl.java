@@ -1,21 +1,22 @@
 package com.cloud.erp.chrome.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.entity.MabanIncomeExpensesEntity;
-import com.cloud.erp.chrome.entity.YxkOrderEntity;
 import com.cloud.erp.chrome.handler.ConvertHandler;
 import com.cloud.erp.chrome.mapper.MabanIncomeExpensesMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.MabanService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -29,14 +30,14 @@ import java.util.List;
 public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, MabanIncomeExpensesEntity> implements MabanService {
 
 
-    @Autowired
+    @Resource
     private CsvServer csvServer;
 
-    @Autowired
+    @Resource
     private ChromeTaskInfoService chromeTaskInfoService;
 
 
-    @Autowired
+    @Resource
     private ConvertHandler convertHandler;
 
     /**
@@ -51,18 +52,20 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
     public void importIncomeExpensesCsv(MabangOrderDTO dto) {
         try {
             MultipartFile file = dto.getFile();
-            List<MabanIncomeExpensesEntity> saveList = csvServer.getObjectListByMultipartFile(file, MabanIncomeExpensesEntity.class);
-            if (CollectionUtils.isNotEmpty(saveList)) {
-                List<List<MabanIncomeExpensesEntity>> lists = convertHandler.splitList(saveList, 1000);
-                for (List<MabanIncomeExpensesEntity> list : lists) {
-                    this.saveBatch(list);
+            List<MabanIncomeExpensesEntity> convertList = csvServer.getObjectListByMultipartFile(file, MabanIncomeExpensesEntity.class);
+            if (CollectionUtils.isNotEmpty(convertList)) {
+                List<MabanIncomeExpensesEntity> saveList = convertList.stream().filter(m -> !"合计".equals(m.getOrderNo())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(saveList)) {
+                    List<List<MabanIncomeExpensesEntity>> lists = convertHandler.splitList(saveList, 1000);
+                    for (List<MabanIncomeExpensesEntity> list : lists) {
+                        this.saveBatch(list);
+                    }
                 }
             }
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             log.error("importIncomeExpensesCsv  出错了 e==" + e);
         }
-
-
     }
+
 }

@@ -10,6 +10,7 @@ import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.OrderGyyDeliverService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,11 +53,13 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
             String csvPath = reportPath + ("\\csv");
             file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), FileUtil.newFile(csvPath));
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
-            this.saveBatch(saveList);
+            if (CollectionUtils.isNotEmpty(saveList)) {
+                this.saveBatch(saveList);
+            }
         } catch (Exception e) {
             log.error("saveDeliverCsvByUrl 出错了 e " + e);
         } finally {
-            if(file!=null){
+            if (file != null) {
                 file.delete();
             }
         }

@@ -14,6 +14,7 @@ import com.cloud.erp.chrome.mapper.GyuShipmentsInfoMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.GyyShipmentsInfoService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,16 +71,16 @@ public class GyyShipmentsInfoServiceImpl extends ServiceImpl<GyuShipmentsInfoMap
             String csvPath = reportPath + ("\\csv");
             File file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), FileUtil.newFile(csvPath));
             List<GyuShipmentsInfoEntity> saveList = csvServer.getObjectListByFile(file, GyuShipmentsInfoEntity.class);
-            List<List<GyuShipmentsInfoEntity>> lists = convertHandler.splitList(saveList, 1000);
-            for (List<GyuShipmentsInfoEntity> list : lists) {
-                this.saveBatch(list);
+            if (CollectionUtils.isNotEmpty(saveList)) {
+                List<List<GyuShipmentsInfoEntity>> lists = convertHandler.splitList(saveList, 1000);
+                for (List<GyuShipmentsInfoEntity> list : lists) {
+                    this.saveBatch(list);
+                }
+                chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
             }
-            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
             file.delete();
         } catch (Exception e) {
             log.error("getShipmentsCsvByUrl 出错了 e" + e);
         }
-
     }
-
 }
