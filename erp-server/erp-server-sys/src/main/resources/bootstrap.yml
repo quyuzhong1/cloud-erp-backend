@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-sys
   profiles:
-    active: dev
+    active: test
 server:
   port: 9020
 
