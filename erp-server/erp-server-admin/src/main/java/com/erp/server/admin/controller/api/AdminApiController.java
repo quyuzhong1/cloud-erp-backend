@@ -7,6 +7,7 @@ import com.erp.model.admin.dto.SysFindMenuDTO;
 import com.erp.model.admin.dto.SysMenuDTO;
 import com.erp.model.admin.entity.MenuEntity;
 import com.erp.server.admin.service.MenuService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,7 +26,7 @@ import java.util.List;
 @RequestMapping("admin/menu")
 public class AdminApiController  extends BaseController {
 
-
+    @Autowired
     public MenuService menuService;
 
 
