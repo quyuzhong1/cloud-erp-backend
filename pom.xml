@@ -215,6 +215,14 @@
 
     </dependencyManagement>
 
+    <repositories>
+        <repository>
+            <id>nexus</id>
+            <name>Internal Maven Server</name>
+            <url>http://192.168.1.5:8089/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
 
     <build>
         <pluginManagement>
