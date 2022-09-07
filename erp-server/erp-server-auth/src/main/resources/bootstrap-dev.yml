@@ -3,8 +3,8 @@ spring:
     nacos:
       discovery:
         server-addr: 192.168.31.86
-        namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
+        namespace: dev
       config:
         server-addr: 192.168.31.86
-        namespace: cf70ccd2-65ab-4fc7-9a4b-2297ffa39858
+        namespace: dev
         shared-configs: common.yml,erp-auth.yml
