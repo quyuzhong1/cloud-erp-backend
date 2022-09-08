@@ -32,7 +32,7 @@ xxl:
 
 
 gyy:
-  fieldsText: 店铺名称,发货单号,平台编号,发货时间,会员名称,商品类别,品牌,商品代码,商品名称,商品简称,规格代码,规格名称,数量,商品单位,成本单价,成本金额,实际单价,实际金额,仓库名称,订单标记,预计发货时间,让利金额,让利后金额,物流费用,商品税率,商品条码,物流公司,订单制单人,家装服务内容,支付时间,发票抬头,订单类型,供应商,赠品,审核人,其他服务费,物流单号,配货时间,分销商名称,币别,供应商货号,商品备注,批次,波次号,货主名称,包材,数据同步状态,母运单号,主播信息
-  fieldsName: shopName,deliveryCode,platformCode,deliveryDateStr,vipName,categoryName,itemBrandName,itemCode,itemName,itemSname,itemSkuCode,itemSkuName,qtyStr,itemUnit,costPriceStr,costPriceAmountStr,priceStr,amountStr,warehouseName,tagName,planDeliveryDateStr,discountFeeStr,amountAfterStr,postFeeStr,taxRateStr,barcode,expressName,orderCreateName,jzContent,payTimeStr,invoiceTitle,orderTypeName,supplierName,isGift,approveName,otherServiceFeeStr,mailNo,distributionDateStr,drpName,currencyName,supplierOuterId,note,batchInfo,waveCode,shipperName,packageMaterialStr,syncStatusStr,parentMailNo,anchorInfo
+  fieldsText: 付款时间,制单时间,发货时间,订单编号,店铺类型,订单类型,店铺名称,平台单号,会员名称,会员代码,商品类别,商品税率,商品代码,商品名称,商品简称,数量,总重量,代理售价,成本单价,折扣,标准单价,标准金额,实际单价,实际金额,让利金额,让利后金额,成本总价,物流费用,分销商物流费用,物流成本,商品标准利润,商品实际利润,订单编号,到账,到账时间,买家备注,卖家备注,二次备注,订单标记,仓库名称,业务员,物流公司,物流单号,地区信息,收货地址,商品税额,商品重量,总体积,是否货到付款,到付金额,买家支付金额,平台支付金额,外仓单据,唯一码总实际进价,平台商品名称,平台规格名称,明细备注,其他服务费
+  fieldsName: paytimeStr,orderCreateDateStr,deliveryDateStr,code,shopType,orderTypeName,shopName,platformCode,vipName,vipCode,categoryName,taxRateStr,itemCode,itemName,simpleName,qtyStr,totalWeightStr,agentPriceStr,costPriceStr,discountStr,originPriceStr,originAmountStr,priceStr,detailAmountStr,discountFeeStr,amountAfterStr,costTotalStr,postFeeStr,distributionPostFeeStr,postCostStr,itemOriginProfitStr,itemActualProfitStr,orderCode,arrivalStr,arrivalTimeStr,buyerMemo,sellerMemo,sellerMemoLate,tagName,warehouseName,businessManName,expressName,mailNo,areaName,receiverAddress,taxAmountStr,weightStr,volumeStr,codStr,codFeeStr,buyPayment,platformPayment,wmsStr,uniqueCostPriceStr,platformItemName,platformSkuName,memo,otherServiceFeeStr
 
 

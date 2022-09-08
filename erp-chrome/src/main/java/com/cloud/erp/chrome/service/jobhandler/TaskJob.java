@@ -193,8 +193,10 @@ public class TaskJob {
         try {
             ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
             entity.setBusinessType(BusinessType.YXKORDER);
-            //对应的参数 默认昨天的
-            entity.setParameter(TimeType.YESTERDAY);
+            //对应的参数 默认昨天的数据
+            DateTime yesterday = DateUtil.yesterday();
+            String yesterdayStr=yesterday.toString("yyyy-MM-dd");
+            entity.setParameter(yesterdayStr);
             entity.setPlatform(ErpPlatform.YXK);
             Date nowDate=DateUtil.date();
             entity.setCreateTime(nowDate);
