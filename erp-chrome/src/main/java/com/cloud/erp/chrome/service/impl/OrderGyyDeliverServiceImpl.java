@@ -1,6 +1,13 @@
 package com.cloud.erp.chrome.service.impl;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.resource.ResourceUtil;
+import cn.hutool.core.lang.Console;
+import cn.hutool.core.text.csv.CsvData;
+import cn.hutool.core.text.csv.CsvReader;
+import cn.hutool.core.text.csv.CsvRow;
+import cn.hutool.core.text.csv.CsvUtil;
+import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.http.HttpUtil;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.GyyShipmentsDTO;
@@ -13,9 +20,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.io.File;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,28 +61,36 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
     public void saveDeliverCsvByUrl(GyyShipmentsDTO dto) {
         File file = null;
         try {
-            File directory = new File("erp-chrome/src/main/resources");
-            String reportPath = directory.getCanonicalPath();
-            String csvPath = reportPath + ("\\csv");
-            File tempFile=new File(csvPath+System.currentTimeMillis()+".csv");
-            if(tempFile.exists()){
-                tempFile.createNewFile();
-            }
+//            CsvReader csvReader = CsvUtil.getReader();
+//            CsvData data = csvReader.read(file);
+//            List<CsvRow> rows = data.getRows();
+//            List<OrderGyyDeliverEntity> saveList=new ArrayList<>(rows.size());
+//            if(CollectionUtils.isNotEmpty(rows)){
+//                for(CsvRow item:rows){
+//                    OrderGyyDeliverEntity entity=new OrderGyyDeliverEntity();
+//                    entity.setAmount(item.get(25));
+//                }
+//
+//            }
+            ClassPathResource classPathResource = new ClassPathResource("csv/temp.csv");
+
+            String path=   classPathResource.getPath();
+            File tempFile=new File(path);
 
             file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), tempFile);
+
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
             if (CollectionUtils.isNotEmpty(saveList)) {
                 this.saveBatch(saveList);
             }
         } catch (Exception e) {
-            log.error("saveDeliverCsvByUrl 出错了 e " + e);
+            e.printStackTrace();
             throw new ServiceException(1, "管易云保存数据失败");
-
         } finally {
             if (file != null) {
-                file.delete();
+               // file.delete();
             }
         }
-        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
+       chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
     }
 }

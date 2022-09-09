@@ -16,6 +16,7 @@ import com.erp.common.exception.ServiceException;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -65,6 +66,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         UpdateWrapper<ChromeTaskInfoEntity> updateWrapper=new UpdateWrapper<>();
         updateWrapper.lambda().eq(ChromeTaskInfoEntity::getId,taskId);
         updateWrapper.lambda().set(ChromeTaskInfoEntity::getTaskStatus,taskState);
+        updateWrapper.lambda().set(ChromeTaskInfoEntity::getUpdateTime,new Date());
         this.update(updateWrapper);
 
     }
