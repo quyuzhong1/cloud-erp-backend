@@ -10,6 +10,7 @@ import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.OrderGyyDeliverService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -51,13 +52,20 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
             File directory = new File("erp-chrome/src/main/resources");
             String reportPath = directory.getCanonicalPath();
             String csvPath = reportPath + ("\\csv");
-            file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), FileUtil.newFile(csvPath));
+            File tempFile=new File(csvPath+System.currentTimeMillis()+".csv");
+            if(tempFile.exists()){
+                tempFile.createNewFile();
+            }
+
+            file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), tempFile);
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
             if (CollectionUtils.isNotEmpty(saveList)) {
                 this.saveBatch(saveList);
             }
         } catch (Exception e) {
             log.error("saveDeliverCsvByUrl 出错了 e " + e);
+            throw new ServiceException(1, "管易云保存数据失败");
+
         } finally {
             if (file != null) {
                 file.delete();
