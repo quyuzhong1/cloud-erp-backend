@@ -1,14 +1,7 @@
 package com.cloud.erp.chrome.service.impl;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.resource.ResourceUtil;
-import cn.hutool.core.lang.Console;
-import cn.hutool.core.text.csv.CsvData;
-import cn.hutool.core.text.csv.CsvReader;
-import cn.hutool.core.text.csv.CsvRow;
-import cn.hutool.core.text.csv.CsvUtil;
-import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.GyyShipmentsDTO;
 import com.cloud.erp.chrome.entity.OrderGyyDeliverEntity;
@@ -16,18 +9,15 @@ import com.cloud.erp.chrome.mapper.OrderGyyDeliverMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.OrderGyyDeliverService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.io.File;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -72,14 +62,17 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
 //                }
 //
 //            }
+            Resource resource = new ClassPathResource("");
+            String path=resource.getFile().getPath();
             ClassPathResource classPathResource = new ClassPathResource("csv/temp.csv");
 
-            String path=   classPathResource.getPath();
-            File tempFile=new File(path);
+
+            File tempFile=new File(path+"\\csv\\"+"System.currentTimeMillis().csv");
 
             file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), tempFile);
 
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
+            System.out.println(saveList.size());
             if (CollectionUtils.isNotEmpty(saveList)) {
                 this.saveBatch(saveList);
             }
@@ -92,5 +85,11 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
             }
         }
        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
+    }
+
+    public static void main(String[] args) throws IOException {
+        Resource resource = new ClassPathResource("");
+        String path=resource.getFile().getPath();
+        System.out.println(path+"\\csv");
     }
 }
