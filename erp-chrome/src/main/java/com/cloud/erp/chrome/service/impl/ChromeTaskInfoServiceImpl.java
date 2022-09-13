@@ -48,7 +48,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         LambdaQueryWrapper<ChromeTaskInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChromeTaskInfoEntity::getTaskStatus, TaskState.NOT_START);
         queryWrapper.eq(ChromeTaskInfoEntity::getPlatform,dto.getPlatform());
-        queryWrapper.orderByDesc(ChromeTaskInfoEntity::getCreateTime);
+        queryWrapper.orderByDesc(ChromeTaskInfoEntity::getId);
         queryWrapper.last("LIMIT 1");
         return baseMapper.selectList(queryWrapper);
     }
