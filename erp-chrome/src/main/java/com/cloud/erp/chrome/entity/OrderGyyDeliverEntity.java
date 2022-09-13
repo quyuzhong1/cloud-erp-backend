@@ -93,6 +93,13 @@ public class OrderGyyDeliverEntity implements Serializable {
     private BigDecimal costPrice;
 
     /**
+     * 实际单价
+     */
+    @TableField("sales_price")
+    @Alias("实际单价")
+    private BigDecimal salesPrice;
+
+    /**
      * 金额
      */
     @TableField("amount")
