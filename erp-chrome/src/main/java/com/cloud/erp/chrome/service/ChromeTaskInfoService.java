@@ -1,7 +1,7 @@
 package com.cloud.erp.chrome.service;
 
 import com.cloud.erp.chrome.dto.FindTaskDTO;
-import com.cloud.erp.chrome.entity.ChromeTaskInfoEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -14,9 +14,9 @@ import java.util.List;
  * @author yl
  * @since 2022-08-25
  */
-public interface ChromeTaskInfoService extends IService<ChromeTaskInfoEntity> {
+public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
 
-    List<ChromeTaskInfoEntity> getChromeTaskList(FindTaskDTO dto);
+    List<ScheduleTaskEntity> getChromeTaskList(FindTaskDTO dto);
 
     void updateTaskState(Integer taskId, Integer finish);
 }

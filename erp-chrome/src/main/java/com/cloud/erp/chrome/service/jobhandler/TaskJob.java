@@ -5,20 +5,16 @@ import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.cloud.erp.chrome.constant.BusinessType;
 import com.cloud.erp.chrome.constant.ErpPlatform;
-import com.cloud.erp.chrome.constant.TimeType;
 import com.cloud.erp.chrome.dto.*;
-import com.cloud.erp.chrome.entity.ChromeTaskInfoEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.ptg.MemAreaPtg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Classname TaskJob
@@ -60,7 +56,7 @@ public class TaskJob {
             String endTimeStr=endTime.toString("yyyy-MM-dd HH:mm:ss");
             dto.setExpresstimeTimeStart(startTimeStr);
             dto.setExpresstimeTimeEnd(endTimeStr);
-            ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
+            ScheduleTaskEntity entity=new ScheduleTaskEntity();
             entity.setBusinessType(BusinessType.ORDER);
             entity.setParameter(JSONObject.toJSONString(dto));
             entity.setPlatform(ErpPlatform.MABANG);
@@ -167,7 +163,7 @@ public class TaskJob {
             searchParam.setDeliveryBeginDate(startTimeStr);
             searchParam.setDeliveryEndDate(endTimeStr);
             dto.setSearchParams(searchParam);
-            ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
+            ScheduleTaskEntity entity=new ScheduleTaskEntity();
             entity.setBusinessType(BusinessType.SHIPMENTS);
             entity.setParameter(JSONObject.toJSONString(dto));
             entity.setPlatform(ErpPlatform.GYY);
@@ -191,7 +187,7 @@ public class TaskJob {
     @XxlJob("addYxkTask")
     public void addYxkTask() {
         try {
-            ChromeTaskInfoEntity entity=new ChromeTaskInfoEntity();
+            ScheduleTaskEntity entity=new ScheduleTaskEntity();
             entity.setBusinessType(BusinessType.YXKORDER);
             //对应的参数 默认昨天的数据
             DateTime yesterday = DateUtil.yesterday();

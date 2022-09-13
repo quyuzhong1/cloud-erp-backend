@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("order_yxk_shipments")
+@TableName("sales_order_yunxingkong")
 public class YxkOrderEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

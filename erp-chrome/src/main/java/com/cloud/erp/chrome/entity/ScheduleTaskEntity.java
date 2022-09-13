@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("chrome_task_info")
-public class ChromeTaskInfoEntity implements Serializable {
+@TableName("schedule_task")
+public class ScheduleTaskEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

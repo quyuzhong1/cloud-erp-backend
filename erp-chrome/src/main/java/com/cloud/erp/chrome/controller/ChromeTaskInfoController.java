@@ -2,7 +2,7 @@ package com.cloud.erp.chrome.controller;
 
 
 import com.cloud.erp.chrome.dto.FindTaskDTO;
-import com.cloud.erp.chrome.entity.ChromeTaskInfoEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.erp.common.dto.base.ApiResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class ChromeTaskInfoController extends BaseController {
     //获取到任务列表
     @PostMapping("/findTaskList")
     public ApiResult getChromeList(@RequestBody @Validated FindTaskDTO dto) {
-        List<ChromeTaskInfoEntity> list = chromeTaskInfoService.getChromeTaskList(dto);
+        List<ScheduleTaskEntity> list = chromeTaskInfoService.getChromeTaskList(dto);
         return success(list);
     }
 

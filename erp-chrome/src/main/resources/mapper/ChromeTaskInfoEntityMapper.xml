@@ -3,7 +3,7 @@
 <mapper namespace="com.cloud.erp.chrome.mapper.ChromeTaskInfoMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.ChromeTaskInfoEntity">
+    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.ScheduleTaskEntity">
         <id column="id" property="id" />
         <result column="platform" property="platform" />
         <result column="business_type" property="businessType" />

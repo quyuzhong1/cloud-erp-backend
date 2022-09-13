@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("order_mabang_income_expenses")
+@TableName("sales_order_mabang")
 public class MabanIncomeExpensesEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

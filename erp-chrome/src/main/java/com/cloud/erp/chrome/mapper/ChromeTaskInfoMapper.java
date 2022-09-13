@@ -1,6 +1,6 @@
 package com.cloud.erp.chrome.mapper;
 
-import com.cloud.erp.chrome.entity.ChromeTaskInfoEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2022-08-25
  */
 @Mapper
-public interface ChromeTaskInfoMapper extends BaseMapper<ChromeTaskInfoEntity> {
+public interface ChromeTaskInfoMapper extends BaseMapper<ScheduleTaskEntity> {
 
 }
