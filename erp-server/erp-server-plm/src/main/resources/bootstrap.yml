@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: erp-plm
+  profiles:
+    active: dev
+server:
+  port: 9050
+
+
+
+
+
+

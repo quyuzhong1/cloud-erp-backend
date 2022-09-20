@@ -1,0 +1,23 @@
+package com.erp.server.plm.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/**
+ * <p>
+ * 产品信息表 Mapper 接口
+ * </p>
+ *
+ * @author yl
+ * @since 2022-09-13
+ */
+@Mapper
+public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
+
+    IPage paging(Page query,@Param("params") ProductSearchDTO params);
+}

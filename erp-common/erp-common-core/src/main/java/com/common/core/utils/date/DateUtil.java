@@ -1,8 +1,6 @@
 package com.common.core.utils.date;
 
 
-import com.baomidou.mybatisplus.extension.api.R;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 //import java.time.LocalDate;
@@ -14,7 +12,6 @@ import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
 //import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -23,9 +20,9 @@ import org.joda.time.format.DateTimeFormat;
  * @Date 2022-08-02 16:10
  * @Created by yl
  */
-public class DateUtils {
+public class DateUtil {
 
-    private DateUtils() {
+    private DateUtil() {
 
     }
 
@@ -330,7 +327,7 @@ public class DateUtils {
     public static String conversionDate(Date date, String fmt) {
         if (date != null) {
             if (StringUtils.isBlank(fmt)) {
-                fmt = DateUtils.fmt;
+                fmt = DateUtil.fmt;
             }
             SimpleDateFormat sdf = new SimpleDateFormat(fmt);
             return sdf.format(date.getTime());
@@ -368,4 +365,6 @@ public class DateUtils {
         }
         return "";
     }
+
+
 }

@@ -17,6 +17,7 @@
         <module>erp-model-sys</module>
         <module>erp-model-merchant</module>
         <module>erp-model-workflow</module>
+        <module>erp-model-plm</module>
     </modules>
 
     <dependencies>

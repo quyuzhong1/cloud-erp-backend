@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectTaskSysMapper">
+
+    <select id="paging" resultType="com.erp.model.plm.dto.SysTaskPagingDTO">
+        SELECT id,name,type,person_in_charge_id,person_in_charge,
+        COALESCE((SELECT name FROM project_task_sys t WHERE t.id=pts.pre_task_id ),'') preTaskName,
+        pre_task_id,plan_start_time,plan_end_time,priority,
+        COALESCE((SELECT name FROM sys_project_phase sp WHERE SP.id=pts.phase_id ),'') AS phaseName,
+        description,is_sys,create_user_id,create_user_name,create_time
+        FROM project_task_sys pts
+        <where>
+            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+                AND name LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getSysTaskDocsNames" resultType="com.erp.model.plm.dto.SysTaskPagingDTO">
+       SELECT sd.name,ps.id FROM sys_docs sd
+       JOIN task_ref_docs td ON sd.id=td.docs_id
+       JOIN project_task_sys ps ON  ps.id=td.task_id
+
+    </select>
+
+</mapper>

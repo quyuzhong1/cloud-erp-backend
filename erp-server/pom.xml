@@ -15,5 +15,6 @@
         <module>erp-server-admin</module>
         <module>erp-server-sys</module>
         <module>erp-server-workflow</module>
+        <module>erp-server-plm</module>
     </modules>
 </project>

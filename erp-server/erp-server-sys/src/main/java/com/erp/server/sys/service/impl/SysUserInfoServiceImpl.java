@@ -13,7 +13,7 @@ import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtils;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.password.PassEntity;
 import com.common.core.utils.password.PassHandler;
 import com.common.message.service.MailService;
@@ -502,7 +502,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String code = RandomStringUtils.randomNumeric(4);
         LocalDate localDate = LocalDate.now();
         dto.setVerifyCode(code);
-        dto.setDate(DateUtils.getCnDate(localDate));
+        dto.setDate(DateUtil.getCnDate(localDate));
         emailDTO.setData(dto);
         String[] recipients = {email};
         emailDTO.setRecipients(recipients);

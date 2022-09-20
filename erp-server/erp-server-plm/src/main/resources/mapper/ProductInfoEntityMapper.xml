@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductInfoMapper">
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+
+        SELECT p.id AS product_id, p.name,p.grade,p.person_in_charge AS ProductInCharge,p.project_status,p.brand,
+        p.approval_status,pi.responsible AS projectInCharge ,pi.end_time FROM product_info p LEFT JOIN project_info pi
+        ON p.id=pi.product_id
+
+
+    </select>
+
+</mapper>

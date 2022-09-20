@@ -3,7 +3,7 @@ package com.erp.server.workflow.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 
 import com.common.core.enums.ProcessInstanceStateEnum;
-import com.common.core.utils.date.DateUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.workflow.dto.*;
@@ -358,9 +358,9 @@ public class WorkflowServiceImpl implements WorkflowService {
             vo.setActivityType(matching(item.getActivityType()));
             vo.setComment(taskComments.size()>0?taskComments.get(0).getFullMessage():"");
             vo.setHandleUserName(StringUtils.isBlank(item.getAssignee())?"无":item.getAssignee());
-            vo.setStartTime(DateUtils.conversionDate(item.getStartTime(),DateUtils.fmt));
-            vo.setEndTime(DateUtils.conversionDate(item.getEndTime(),DateUtils.fmt));
-            vo.setHandleTime(DateUtils.discrepancy(item.getEndTime(),item.getStartTime()));
+            vo.setStartTime(DateUtil.conversionDate(item.getStartTime(), DateUtil.fmt));
+            vo.setEndTime(DateUtil.conversionDate(item.getEndTime(), DateUtil.fmt));
+            vo.setHandleTime(DateUtil.discrepancy(item.getEndTime(),item.getStartTime()));
             resultList.add(vo);
         }
 

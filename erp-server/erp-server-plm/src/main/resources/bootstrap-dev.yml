@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.31.86
+        namespace: dev
+      config:
+        server-addr: 192.168.31.86
+        namespace: dev
+        file-extension: yml
+        shared-configs: common.yml,db-plm.yml
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+
+
+
+
+
