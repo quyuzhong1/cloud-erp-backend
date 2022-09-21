@@ -136,5 +136,45 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    /**
+     * spu
+     */
+    @TableField("spu")
+    private Integer spu;
 
+    /**
+     * 产品卖点
+     */
+    @TableField("product_sell_spot")
+    private Integer productSellSpot;
+
+    /**
+     * 产品功能描述
+     */
+    @TableField("product_function_desc")
+    private Integer productFunctionDesc;
+
+    /**
+     * 产品用途
+     */
+    @TableField("product_use")
+    private Integer productUse;
+
+    /**
+     * 存在侵权风险 1：有侵权风险 2：无侵权风险
+     */
+    @TableField("tort_risk")
+    private Integer tortRisk;
+
+    /**
+     * 主要材质
+     */
+    @TableField("main_materials")
+    private Integer mainMaterials;
+
+    /**
+     * 规格类型  1：无规格  2：多规格
+     */
+    @TableField("specType")
+    private Integer spec_type;
 }
