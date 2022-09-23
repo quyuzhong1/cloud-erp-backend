@@ -1,0 +1,56 @@
+package com.erp.server.plm.service.impl;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.ProductCertificateDTO;
+import com.erp.model.plm.dto.ProductCertificateShowDTO;
+import com.erp.model.plm.entity.ProductCertificateEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.server.plm.mapper.ProductCertificateMapper;
+import com.erp.server.plm.service.ProductCertificateService;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ *
+ */
+@Service
+public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificateMapper, ProductCertificateEntity>
+    implements ProductCertificateService {
+
+    @Resource
+    private ProductCertificateMapper productCertificateMapper;
+
+    /**
+     * @Description 产品证书信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductCertificateShowDTO>
+     **/
+    @Override
+    public List<ProductCertificateShowDTO> list(String productId) {
+        return productCertificateMapper.list(productId);
+    }
+
+    /**
+     * @Description 保存/修改产品证书信息
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param productCertificateDTO 产品证书信息表
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdate(ProductCertificateDTO productCertificateDTO) {
+        ProductCertificateEntity certificateEntity = new ProductCertificateEntity();
+        BeanMapper.copy(productCertificateDTO, certificateEntity);
+        return this.saveOrUpdate(certificateEntity);
+    }
+}
+
+
+
+

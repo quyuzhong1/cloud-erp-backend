@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductCertificateMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductCertificateEntity">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
+        <result property="certificateImg" column="certificate_img" jdbcType="VARCHAR"/>
+        <result property="certificateValidTime" column="certificate_valid_time" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,sku_id,certificate_img,
+        certificate_valid_time,create_time,create_user_id,
+        update_time,update_user_id
+    </sql>
+
+    <select id="list" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
+        SELECT
+        pd.sku,
+        pd.images_url,
+        <include refid="Base_Column_List"/>
+        FROM product_detail pd
+        LEFT JOIN product_certificate pc ON pc.sku_id = pd."id"
+        WHERE pd.product_id = #{productId}
+    </select>
+</mapper>
