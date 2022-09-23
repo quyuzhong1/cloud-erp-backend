@@ -27,7 +27,7 @@ public class ProductDetailDTO implements Serializable {
     private String name;
 
     @ApiModelProperty(value = "属性")
-    private String attribute;
+    private String property;
 
     @ApiModelProperty(value = "计划上市时间")
     private Date planListingTime;

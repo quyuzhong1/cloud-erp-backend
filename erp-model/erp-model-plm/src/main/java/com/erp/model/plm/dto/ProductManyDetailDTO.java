@@ -61,5 +61,5 @@ public class ProductManyDetailDTO {
     private String materials;
 
     @ApiModelProperty(value = "产品多规格详情sku信息")
-    private List<ProductDetailDTO> productManySkuDetailList;
+    private List<ProductDetailEntity> productManySkuDetailList;
 }
