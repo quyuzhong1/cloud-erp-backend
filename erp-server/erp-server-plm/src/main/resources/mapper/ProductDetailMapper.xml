@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductDetailEntity">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="productId" column="product_id" jdbcType="VARCHAR"/>
+        <result property="sku" column="sku" jdbcType="VARCHAR"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="property" column="property" jdbcType="VARCHAR"/>
+        <result property="planListingTime" column="plan_listing_time" jdbcType="DATE"/>
+        <result property="unitId" column="unit_id" jdbcType="VARCHAR"/>
+        <result property="productState" column="product_state" jdbcType="SMALLINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+        <result property="imagesUrl" column="images_url" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,product_id,sku,
+        name,property,plan_listing_time,
+        unit_id,product_state,create_time,
+        create_user_id,update_time,update_user_id,
+        images_url
+    </sql>
+
+    <select id="list" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
+        SELECT
+            pd."id",
+            pd.images_url,
+            pi.spu,
+            pd.sku,
+            pd."name",
+            pp.actual_arrival_num,
+            pp.arrival_state,
+            pi.pirate_risk,
+            pc.retail_price,
+            pd.product_state,
+            pd.create_user_id,
+            pd.create_time,
+            pd.spec_type
+        FROM product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
+        WHERE pi.spu LIKE concat('%',#{sku},'%')
+        OR pd.sku LIKE concat('%',#{sku},'%')
+    </select>
+
+    <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
+        SELECT
+            pi."id",
+            pd.images_url,
+            pd.sku,
+            pd.product_state,
+            pi."name",
+            pi.charge_name,
+            pi.brand_name,
+            pi.property,
+            pi.grade,
+            pi.category,
+            pi.sale_method,
+            pi.product_sell_spot,
+            pi.product_function_desc,
+            pi.usage_desc,
+            pi.pirate_risk,
+            pi.materials,
+            pd.plan_listing_time,
+            pd.unit_id,
+            pd.product_state
+        FROM product_info pi
+        INNER JOIN product_detail pd on pi.id = pd.product_id
+        WHERE pi.id = #{productId}
+    </select>
+
+    <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManyDetailDTO">
+        SELECT
+            pi."id",
+            pd.images_url,
+            pi.spu,
+            pi."name",
+            pi.charge_name,
+            pi.brand_name,
+            pi.property,
+            pi.grade,
+            pi.category,
+            pi.sale_method,
+            pi.product_sell_spot,
+            pi.product_function_desc,
+            pi.usage_desc,
+            pi.pirate_risk,
+            pi.materials
+        FROM product_info pi
+        INNER JOIN product_detail pd on pi.id = pd.product_id
+        WHERE pi.id = #{productId}
+    </select>
+</mapper>
