@@ -6,11 +6,13 @@ import com.common.core.utils.BeanMapper;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +52,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductImagesService productImagesService;
 
     /**
      * @Description 产品信息查询列表
@@ -93,7 +98,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
-     * @Description 保存/修改产品sku信息表数据
+     * @Description 保存/修改产品sku信息表数据-无规格
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
      * @param productNoSpecDTO 新增产品无规格sku信息请求参数
@@ -107,6 +112,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @Description 保存/修改产品sku信息表数据-批量
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param productDetailList 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
+        List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    /**
      * @Description 新增无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
@@ -117,6 +135,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
         //1.修改产品表 主表信息
         productInfoService.updateSpec(productNoSpecDTO.getProductInfoDTO());
+        //如果是修改sku图片 还需要修改图片表
+        if(!StringUtils.isBlank(productNoSpecDTO.getImagesUrl())){
+            ProductImagesDTO productImagesDTO = new ProductImagesDTO();
+            productImagesDTO.setSkuId(productNoSpecDTO.getId());
+            productImagesDTO.setProductId(productNoSpecDTO.getProductId());
+            productImagesDTO.setImagesUrl(productNoSpecDTO.getImagesUrl());
+            productImagesService.updateProductImage(productImagesDTO);
+        }
         //2.修改/新增 sku信息
         this.saveOrUpdate(productNoSpecDTO);
         //3.修改/新增 成本信息
@@ -143,14 +169,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
-
-        //TODO 1.校验产品名称是否存在
-        //TODO 2.需要修改产品主表信息
-        //TODO 3.需要修改或者新增产品sku信息
-        //TODO 4.校验属性重复项：同个SPU，属性值不能重复
-        //TODO 5.校验SPU重复：已存在SPU:{SPU名称}
-        //TODO 6.校验SKU重复：已存在SKU:{SKU名称}
-        return null;
+        //1.修改产品表 主表信息
+        productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
+        //2.修改/新增 sku信息
+        this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
+        //3.修改/新增 成本信息
+        productCostService.saveOrUpdateBatch(productManySpecDTO.getProductCostList());
+        //4.修改/新增 采购信息
+        productPurchaseService.saveOrUpdateBatch(productManySpecDTO.getProductPurchaseList());
+        //5.修改/新增 销售信息
+        productSaleService.saveOrUpdateBatch(productManySpecDTO.getProductSaleList());
+        //6.修改/新增 物流信息
+        productLogisticsService.saveOrUpdateBatch(productManySpecDTO.getProductLogisticsList());
+        //7.修改/新增 包装信息
+        productPackService.saveOrUpdateBatch(productManySpecDTO.getProductPackList());
+        //8.修改/新增 证书信息
+        productCertificateService.saveOrUpdateBatch(productManySpecDTO.getProductCertificateList());
+        return true;
     }
 
     /**
@@ -161,37 +196,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
+    public List<ProductDetailEntity> InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
-        List<String> tempList = new ArrayList<>();
+        List<String> varianTempList = new ArrayList<>();
         Boolean flag = true;
         for (VarianRefPropertyDTO req : varianRefPropertyList) {
             List<String> varianList = req.getVarianList();
             if (flag) {
-                tempList.addAll(varianList);
+                varianTempList.addAll(varianList);
             } else {
-                for (int i = 0; i < tempList.size(); i++) {
+                for (int i = 0; i < varianList.size(); i++) {
                     for (String varian : varianList) {
-                        tempList.set(i, tempList.get(i) + varian);
+                        varianTempList.set(i, varianTempList.get(i) + "," + varian);
                     }
                 }
             }
             flag = false;
         }
-        return null;
-    }
-
-    public static void main(String[] args) {
-        List<String> strList = new ArrayList<>();
-        strList.add("a");
-        strList.add("b");
-        strList.add("c");
-        strList.add("d");
-        strList.forEach(req -> {
-            req = req+"!";
+        List<ProductDetailEntity> list = new ArrayList<>();
+        varianTempList.forEach(req -> {
+            ProductDetailEntity productDetailEntity = new ProductDetailEntity();
+            productDetailEntity.setProperty(req);
+            list.add(productDetailEntity);
         });
-
-        System.out.println(strList);
+        List<ProductDetailEntity> detailEntityList = this.queryByProductId(variantAutoAddDTO.getProductId());
+        detailEntityList.forEach(req -> {
+            if (list.contains(req.getProperty())) {
+                list.remove(req.getProperty());
+            }
+        });
+        boolean bool = this.saveBatch(list);
+        if(!bool){
+            throw new ServiceException(1, "新增sku明细失败！");
+        }
+        return this.queryByProductId(variantAutoAddDTO.getProductId());
     }
 
     /**
@@ -203,9 +241,36 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean delete(String skuId){
-        //TODO 1.校验SKU状态，封样后不可删除
-        //TODO 2.需要同时删除关联表的所以信息
-        return null;
+        //1.删除证书信息
+        productCertificateService.remove(skuId);
+        //2.删除包装信息
+        productPackService.remove(skuId);
+        //3.删除物流信息
+        productLogisticsService.remove(skuId);
+        //4.删除销售信息
+        productSaleService.remove(skuId);
+        //5.删除采购信息
+        productPurchaseService.remove(skuId);
+        //6.删除成本信息
+        productCostService.remove(skuId);
+        //7.删除sku信息
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductDetailEntity:: getId, skuId);
+        return this.remove(queryWrapper);
+    }
+
+    /**
+     * @Description 根据产品主键id查询sku明细
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:25
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    @Override
+    public List<ProductDetailEntity> queryByProductId(String productId){
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductDetailEntity::getProductId, productId);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -220,7 +285,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         queryWrapper.eq(ProductDetailEntity::getSku, sku);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(/*ApiError.ERROR_95012*/);
+            throw new ServiceException(ApiError.ERROR_95012);
         }
     }
 

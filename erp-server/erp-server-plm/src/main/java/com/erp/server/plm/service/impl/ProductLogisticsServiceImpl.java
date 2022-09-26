@@ -1,11 +1,13 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
 import com.erp.server.plm.service.ProductLogisticsService;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,33 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
         return this.saveOrUpdate(logisticsEntity);
+    }
+
+    /**
+     * @Description 保存/修改产品物流信息-批量操作
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:15
+     * @param productLogisticsList 产品物流信息表
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList) {
+        List<ProductLogisticsEntity> list = BeanMapper.copyList(productLogisticsList, ProductLogisticsEntity.class);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    /**
+     * @Description 删除产品物流信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean remove(String skuId) {
+        LambdaQueryWrapper<ProductLogisticsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductLogisticsEntity:: getSkuId, skuId);
+        return this.remove(queryWrapper);
     }
 }
 

@@ -3,6 +3,7 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
@@ -56,6 +57,9 @@ public class ProductDetailController extends BaseController {
     @Resource
     private ProductVariantPropertyService productVariantPropertyService;
 
+    @Resource
+    private ProductImagesService productImagesService;
+
     @ApiOperation(value = "产品信息-主页列表-查询")
     @GetMapping("/list")
     @ApiImplicitParams({
@@ -89,20 +93,26 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-    @ApiOperation(value = "产品信息-多规格-新增")
+    @ApiOperation(value = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     public ApiResult saveOrUpdateManySpec(@RequestBody ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
 
-    @ApiOperation(value = "产品信息-多规格-自动生成")
-    @PostMapping("/InsertManySpecSku")
-    public ApiResult InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
-        Boolean flag = productDetailService.InsertManySpecAuto(variantAutoAddDTO);
+    @ApiOperation(value = "产品信息-无规格-基础信息上传图片")
+    @PostMapping("/insertProductImage")
+    public ApiResult insertProductImage(@RequestBody ProductImagesDTO productImagesDTO) {
+        Boolean flag = productImagesService.insertProductImage(productImagesDTO);
         return flag == true ? this.success() : this.failure();
     }
 
+    @ApiOperation(value = "产品信息-多规格-自动生成")
+    @PostMapping("/InsertManySpecSku")
+    public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
+        List<ProductDetailEntity> list = productDetailService.InsertManySpecAuto(variantAutoAddDTO);
+        return this.success(list);
+    }
 
     @ApiOperation(value = "产品信息-多规格sku-删除")
     @PostMapping("/delete")
@@ -232,7 +242,6 @@ public class ProductDetailController extends BaseController {
         Boolean flag = productVariantPropertyService.saveOrUpdate(dto);
         return flag == true ? this.success() : this.failure();
     }
-
 
     @ApiOperation(value = "产品信息-变体管理-变体值-删除")
     @PostMapping("/deleteVariantProperty")

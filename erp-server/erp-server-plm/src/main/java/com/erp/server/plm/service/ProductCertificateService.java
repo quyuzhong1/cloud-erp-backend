@@ -32,4 +32,22 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @return java.lang.Boolean
      **/
     Boolean saveOrUpdate(ProductCertificateDTO productCertificateDTO);
+
+    /**
+     * @Description 保存/修改产品证书信息-批量操作
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param productCertificateList 产品证书信息表
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateBatch(List<ProductCertificateDTO> productCertificateList);
+
+    /**
+     * @Description 删除产品证书信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    Boolean remove(String skuId);
 }

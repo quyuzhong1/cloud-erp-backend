@@ -51,7 +51,7 @@ public class ProductManySpecDTO {
 
     @NotNull(message = "产品基础信息不能为空")
     @ApiModelProperty(value = "产品基础信息",required = true)
-    private List<ProductInfoDTO> productInfoList;
+    private ProductInfoDTO productInfoDTO;
 
     @NotNull(message = "成本信息不能为空")
     @ApiModelProperty(value = "成本信息",required = true)

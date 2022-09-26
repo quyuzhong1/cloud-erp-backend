@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
 
 import java.util.List;
 
@@ -43,6 +44,15 @@ public interface ProductDetailService {
     Boolean saveOrUpdate(ProductNoSpecDTO productNoSpecDTO);
 
     /**
+     * @Description 保存/修改产品sku信息表数据-批量
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param productDetailList 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList);
+
+    /**
     * @Description 新增无规格sku信息
     * @Author Luo_WG
     * @Date 2022/9/21 16:31
@@ -67,7 +77,7 @@ public interface ProductDetailService {
      * @param variantAutoAddDTO:自动生成请求参数
      * @return java.lang.Boolean
      **/
-    Boolean InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
+    List<ProductDetailEntity> InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
 
     /**
     * @Description 删除多规格sku信息
@@ -77,4 +87,13 @@ public interface ProductDetailService {
     * @return java.lang.Boolean
     **/
     Boolean delete(String skuId);
+
+    /**
+     * @Description 根据产品主键id查询sku明细
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:25
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<ProductDetailEntity> queryByProductId(String productId);
 }

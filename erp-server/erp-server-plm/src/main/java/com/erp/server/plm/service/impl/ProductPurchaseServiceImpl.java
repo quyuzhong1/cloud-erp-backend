@@ -1,11 +1,13 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
@@ -41,14 +43,41 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     * @Description 保存/修改产品采购信息
     * @Author Luo_WG
     * @Date 2022/9/23 11:48
-    * @param productPurchaseDTO 产品采购信息表请求参数
+    * @param purchaseDTO 产品采购信息表请求参数
     * @return java.lang.Boolean 
     **/
     @Override
-    public Boolean saveOrUpdate(ProductPurchaseDTO productPurchaseDTO) {
+    public Boolean saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
         ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
-        BeanMapper.copy(productPurchaseDTO, purchaseEntity);
+        BeanMapper.copy(purchaseDTO, purchaseEntity);
         return this.saveOrUpdate(purchaseEntity);
+    }
+
+    /**
+     * @Description 保存/修改产品采购信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:05
+     * @param purchaseList 产品成本信息表
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductPurchaseDTO> purchaseList) {
+        List<ProductPurchaseEntity> list = BeanMapper.copyList(purchaseList, ProductPurchaseEntity.class);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    /**
+     * @Description 删除产品采购信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean remove(String skuId) {
+        LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductPurchaseEntity:: getSkuId, skuId);
+        return this.remove(queryWrapper);
     }
 }
 

@@ -1,10 +1,12 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.plm.mapper.ProductSaleMapper;
 import com.erp.server.plm.service.ProductSaleService;
@@ -50,6 +52,32 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         return this.saveOrUpdate(saleEntity);
     }
 
+    /**
+     * @Description 保存/修改产品销售信息-批量操作
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:11
+     * @param productSaleList 产品销售信息表请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductSaleDTO> productSaleList){
+        List<ProductSaleEntity> list = BeanMapper.copyList(productSaleList, ProductSaleEntity.class);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    /**
+     * @Description 删除产品销售信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean remove(String skuId) {
+        LambdaQueryWrapper<ProductSaleEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductSaleEntity:: getSkuId, skuId);
+        return this.remove(queryWrapper);
+    }
 }
 
 

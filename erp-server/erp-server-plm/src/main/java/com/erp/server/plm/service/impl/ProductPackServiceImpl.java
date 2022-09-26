@@ -1,9 +1,12 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
+import com.erp.model.plm.entity.ProductCertificateEntity;
+import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.server.plm.mapper.ProductPackMapper;
@@ -49,6 +52,33 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
         return this.saveOrUpdate(packEntity);
+    }
+
+    /**
+     * @Description 保存/修改产品包装信息-批量操作
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:16
+     * @param productPackList 产品包装信息表
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductPackDTO> productPackList) {
+        List<ProductPackEntity> list = BeanMapper.copyList(productPackList, ProductPackEntity.class);
+        return this.saveOrUpdateBatch(list);
+    }
+
+    /**
+     * @Description 删除产品包装信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean remove(String skuId) {
+        LambdaQueryWrapper<ProductPackEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductPackEntity:: getSkuId, skuId);
+        return this.remove(queryWrapper);
     }
 }
 

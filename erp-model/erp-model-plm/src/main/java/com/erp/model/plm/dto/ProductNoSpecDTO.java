@@ -60,6 +60,9 @@ public class ProductNoSpecDTO {
     @ApiModelProperty(value = "产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发",required = true)
     private Integer productState;
 
+    @ApiModelProperty(value = "产品图片")
+    private String imagesUrl;
+
     @NotNull(message = "产品基础信息不能为空")
     @ApiModelProperty(value = "产品基础信息",required = true)
     private ProductInfoDTO productInfoDTO;

@@ -30,4 +30,22 @@ public interface ProductCostService extends IService<ProductCostEntity> {
     * @return java.lang.Boolean
     **/
     Boolean saveOrUpdate(ProductCostDTO productCostDTO);
+
+    /**
+     * @Description 保存/修改产品成本信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:05
+     * @param productCostList 产品成本信息表
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateBatch(List<ProductCostDTO> productCostList);
+
+    /**
+     * @Description 删除产品成本信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 18:42
+     * @param skuId 产品sku明细表id
+     * @return java.lang.Boolean
+     **/
+    Boolean remove(String skuId);
 }
