@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProjectInfoMapper">
-
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProjectInfoEntity">
-        <id column="id" property="id" />
-        <result column="product_id" property="productId" />
-        <result column="item_responsible_name" property="itemResponsibleName" />
-        <result column="item_responsible_id" property="itemResponsibleId" />
-        <result column="item_start_time" property="itemStartTime" />
-        <result column="item_end_time" property="itemEndTime" />
-        <result column="item_details" property="itemDetails" />
-        <result column="item_describe" property="itemDescribe" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
-    </resultMap>
+    <select id="listMap" resultType="map">
+        SELECT id,product_name AS name FROM  project_info
+    </select>
 
 </mapper>

@@ -18,7 +18,9 @@ public class SysLoginUserVO implements Serializable {
 
     private String accessToken;
 
-    private List<SysMenuVO> menuList;
+    private List<SysMenuVO> overallMenuList;
+
+    private List<SysMenuVO> leftMenuList;
 
 
     private List<String> permissionList;

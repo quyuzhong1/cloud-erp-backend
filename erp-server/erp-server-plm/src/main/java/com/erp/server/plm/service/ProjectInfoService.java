@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 产品项目表 服务类
@@ -19,4 +22,6 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
 
     Boolean startProject(StartProjectDTO dto);
+
+    List<Map<String,Object>> listMap();
 }

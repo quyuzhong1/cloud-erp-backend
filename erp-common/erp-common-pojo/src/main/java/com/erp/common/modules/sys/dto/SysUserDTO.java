@@ -48,8 +48,12 @@ public class SysUserDTO implements Serializable {
     private String headIcon;
 
 
-    //菜单的列表 后面还会改
-    private List<SysMenuVO> menuList;
+    //全局 菜单的列表 后面还会改
+    private List<SysMenuVO> overallMenuList;
+
+    //左侧 菜单的列表 后面还会改
+    private List<SysMenuVO> leftMenuList;
+
 
     //菜单的列表 后面还会改
     private List<String> permissionList;

@@ -172,10 +172,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //后面还有编写
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> menuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        List<SysMenuVO> leftMenuList=sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
-        vo.setMenuList(menuList);
+        vo.setOverallMenuList(overallMenuList);
+        vo.setLeftMenuList(leftMenuList);
         SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
         Integer bindingState = 0;
         String bindingPlatform = "";
@@ -395,10 +397,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //后面还有编写
         String uid = userEntity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> menuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        //全局菜单
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
-        vo.setMenuList(menuList);
+        vo.setOverallMenuList(overallMenuList);
+        vo.setLeftMenuList(leftMenuList);
         vo.setBindingState(SysConstant.YES_STATE);
         vo.setBindingPlatform(bindingPlatform);
         return vo;

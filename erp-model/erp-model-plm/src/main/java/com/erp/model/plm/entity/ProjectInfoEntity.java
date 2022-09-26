@@ -37,6 +37,11 @@ public class ProjectInfoEntity implements Serializable {
     private String productId;
 
 
+
+    @TableField("product_name")
+    private String productName;
+
+
     //对应的id
     @TableField("flag_id")
     private String flagId;
@@ -46,16 +51,17 @@ public class ProjectInfoEntity implements Serializable {
     private Integer sourceType;
 
     /**
-     * 项目负责人
-     */
-    @TableField("responsible_name")
-    private String responsibleName;
-
-    /**
+     *
      * 项目负责人id
      */
-    @TableField("responsible_id")
-    private String responsibleId;
+    @TableField("charge_id")
+    private String chargeId;
+
+    /**
+     *项目负责人
+     */
+    @TableField("charge_name")
+    private String chargeName;
 
     /**
      * 项目计划开始时间

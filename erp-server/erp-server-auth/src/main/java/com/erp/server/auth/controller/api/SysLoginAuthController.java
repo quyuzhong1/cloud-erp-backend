@@ -61,9 +61,10 @@ public class SysLoginAuthController extends BaseController {
             String accessToken = authTokenService.createToken(info);
             SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
             sysLoginUserVO.setAccessToken(accessToken);
-            sysLoginUserVO.setMenuList(info.getMenuList());
+            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
             sysLoginUserVO.setPermissionList(info.getPermissionList());
             sysLoginUserVO.setUserName(info.getUserName());
+            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
             sysLoginUserVO.setHeadIcon(info.getHeadIcon());
             sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
             sysLoginUserVO.setBindingState(info.getBindingState());
@@ -93,7 +94,8 @@ public class SysLoginAuthController extends BaseController {
             String accessToken = authTokenService.createToken(info);
             SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
             sysLoginUserVO.setAccessToken(accessToken);
-            sysLoginUserVO.setMenuList(info.getMenuList());
+            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
+            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
             sysLoginUserVO.setPermissionList(info.getPermissionList());
             sysLoginUserVO.setUserName(info.getUserName());
             sysLoginUserVO.setHeadIcon(info.getHeadIcon());

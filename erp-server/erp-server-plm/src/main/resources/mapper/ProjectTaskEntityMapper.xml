@@ -2,6 +2,44 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
 
-
+    <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name FROM project_task WHERE product_id=#{productId}
+        <if test="phaseId !=null and phaseId!=''">
+            AND phase_id=#{phaseId}
+        </if>
+        <if test="searchList !=null and searchList.size>0">
+            <foreach collection="searchList" item="item">
+                <if test="item.searchType=='name'">
+                    <if test="item.searchKeyword != null and item.searchKeyword!=''">
+                        AND name LIKE concat('%',#{item.searchKeyword},'%')
+                    </if>
+                </if>
+                <if test="item.searchType=='priority'">
+                    <if test="item.priority != null ">
+                        AND priority =#{item.priority}
+                    </if>
+                </if>
+                <if test="item.searchType=='personInCharge'">
+                    <if test="item.personInChargeId != null ">
+                        AND person_in_charge_id =#{item.personInChargeId}
+                    </if>
+                </if>
+                <if test="item.searchType=='status'">
+                    <if test="item.status != null ">
+                        AND status =#{item.status}
+                    </if>
+                </if>
+                <if test="item.searchType=='createTime'">
+                    <if test="item.startTime != null ">
+                        AND create_time &gt;=#{item.startTime}
+                    </if>
+                    <if test="item.endTime != null ">
+                        AND create_time &gt;=#{item.endTime}
+                    </if>
+                </if>
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -82,7 +83,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryDTO> getTree() {
         List<BasicCategoryEntity> list = this.list();
-        List<BasicCategoryDTO> allList = BeanMapperUtils.copyList(BasicCategoryDTO.class, list);
+        List<BasicCategoryDTO> allList = BeanMapper.copyList(list,BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {

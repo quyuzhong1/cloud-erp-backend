@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,4 +26,6 @@ public interface SysDocsService extends IService<SysDocsEntity> {
     Boolean updateState(StateDTO dto);
 
     PagingVO paging(PagingDTO<BaseSearchDTO> dto);
+
+    List<DocsDTO> getDocsNames(Integer yes);
 }

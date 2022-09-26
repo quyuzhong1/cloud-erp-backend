@@ -33,4 +33,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
 
     Boolean saveTemplate(SaveProductTemplateDTO dto);
+
+    void updateProjectStatus(String productId, Integer state);
 }

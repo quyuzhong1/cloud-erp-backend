@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TaskDocsMapper">
+
+    <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
+        SELECT task_id,count(*) AS count FROM task_delivery_docs
+        <where>
+            <if test="taskIds !=null and taskIds.size>0">
+                AND task_id IN
+                <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY task_id
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+       SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
+       COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+       COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+       COALESCE(f.file_size,0) fileSize,
+       f.create_time submitTime,f.file_url,f.create_user AS submitUserName
+       FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
+       where d.product_id=#{params.flagId}
+       <if test="params.searchKeyword !='' and params.searchKeyword!=null">
+            AND name LIKE concat('%',#{params.searchKeyword},'%')
+       </if>
+
+    </select>
+
+    <select id="getByTaskId" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+        SELECT d.id, f.id AS finishDocsId, d.docs_name deliveryDocsName ,d.task_id,
+        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+        COALESCE(f.file_size,0) fileSize,
+        f.create_time submitTime,f.file_url,f.create_user AS submitUserName
+        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
+        where d.task_id=#{taskId}
+    </select>
+
+</mapper>

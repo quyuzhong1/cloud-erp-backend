@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -22,6 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -97,7 +99,8 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      */
     @Override
     public Boolean updateState(StateDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();        LambdaUpdateWrapper<SysDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LambdaUpdateWrapper<SysDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysDocsEntity::getStartState, dto.getState());
         updateWrapper.set(SysDocsEntity::getUpdateUser, loginUser.getUserName());
         updateWrapper.set(SysDocsEntity::getUpdateUserId, loginUser.getUid());
@@ -120,5 +123,16 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         BaseSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
         return new PagingVO(pageData);
+    }
+
+
+    @Override
+    public List<DocsDTO> getDocsNames(Integer state) {
+        LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysDocsEntity::getId,SysDocsEntity::getName);
+        queryWrapper.eq(SysDocsEntity::getStartState,state);
+        List<SysDocsEntity> list=this.list(queryWrapper);
+        return BeanMapper.copyList(list,DocsDTO.class);
+
     }
 }

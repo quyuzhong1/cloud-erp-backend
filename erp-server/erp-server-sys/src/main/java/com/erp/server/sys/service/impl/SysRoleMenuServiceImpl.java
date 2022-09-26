@@ -233,7 +233,59 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         roleMenuVO.setSelectedMenuIds(menuIds);
         roleMenuVO.setTotalMenu(allList.size());
         return roleMenuVO;
+    }
 
+    
+    /**
+     *  获取到左侧菜单
+     * @author yl
+     * @date 2022-09-26 9:44
+     * @param roleIds
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     */
+    @Override
+    public List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return new ArrayList<>();
+        }
+        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
+        List<String> menuIds;
+        if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
+            menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
+        } else {
+            menuIds = baseMapper.findMenuIdsByRoleIds(roleIds);
+        }
+        List<SysMenuVO> resultList = menuList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
+                map(item -> {
+                    item.setParentName("");
+                    item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds,SysConstant.FUNCTION_TYPE,SysConstant.BUTTON_TYPE));
+                    return item;
+                }).collect(Collectors.toList());
+        return resultList;
+    }
+
+    /**
+     * 获取详情的菜单
+     * @author yl
+     * @date 2022-09-26 9:54
+     * @param item
+     * @param treeList
+     * @param menuIds
+     * @param functionType
+     * @param buttonType
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     */
+    private List<SysMenuVO> getRoleChildrenLeftList(SysMenuVO item, List<SysMenuVO> treeList, List<String> menuIds, Integer functionType, Integer buttonType) {
+        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId())&& menu.getType()!=functionType && menu.getType()!=buttonType)).
+                map(m -> {
+                    m.setParentName(item.getMenuName());
+                    m.setChildrenList(getRoleChildrenLeftList(m, treeList, menuIds,functionType,buttonType));
+                    return m;
+                }).collect(Collectors.toList());
+
+        return CollectionUtils.isEmpty(collectList) ? null : collectList;
     }
 
 
@@ -248,7 +300,8 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @date 2022-07-20 11:30
      */
     private List<SysMenuVO> getRoleChildrenList(SysMenuVO item, List<SysMenuVO> treeList, List<String> menuIds) {
-        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) && menu.getType() != SysConstant.FUNCTION_TYPE)).
+        //menu.getType() != SysConstant.FUNCTION_TYPE
+        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) )).
                 map(m -> {
                     m.setParentName(item.getMenuName());
                     m.setChildrenList(getRoleChildrenList(m, treeList, menuIds));

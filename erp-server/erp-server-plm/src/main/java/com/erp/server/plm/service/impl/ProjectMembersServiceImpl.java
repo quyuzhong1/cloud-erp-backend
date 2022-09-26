@@ -28,8 +28,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<ProjectMembersEntity> addList = new LinkedList<>();
         for (ProjectMemberDTO item : members) {
             ProjectMembersEntity entity = new ProjectMembersEntity();
-            entity.setMemberId(item.getMemberId());
-            entity.setMemberName(item.getMemberName());
+            entity.setMemberId(item.getUserId());
+            entity.setMemberName(item.getUsetName());
             entity.setProjectId(projectId);
             entity.setProductId(productId);
             addList.add(entity);
@@ -56,8 +56,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             }
             this.saveBatch(list);
         }
-
-
     }
 
 
@@ -99,6 +97,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     }
 
+
+
+    @Override
     public List<ProjectMembersEntity> getListByProductId(String productId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectMembersEntity::getProductId, productId);

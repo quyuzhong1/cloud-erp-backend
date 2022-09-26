@@ -12,8 +12,10 @@ public enum TaskStateEnum {
     NOT_START(1, "未开始"),
     ING(2, "进行中"),
     FINISH(3, "已完成"),
-    CLOSE(4, "已关闭"),
-    APPROVAL_NO_PASS(5, "审核不通过");
+    FINISH_WAIT_CONFIRM(4, "完成待确认"),
+    APPROVAL_ING(5, "审核中"),
+    APPROVAL_PASS(6, "审核通过"),
+    APPROVAL_NO_PASS(7, "审核不通过");
 
     private Integer code;
     private String name;

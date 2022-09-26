@@ -51,14 +51,14 @@ public class ProductInfoEntity implements Serializable {
     /**
      * 产品负责人
      */
-    @TableField("person_in_charge")
-    private String personInCharge;
+    @TableField("charge_name")
+    private String chargeName;
 
     /**
      * 负责人id
      */
-    @TableField("in_charge_id")
-    private String inChargeId;
+    @TableField("charge_id")
+    private String chargeId;
 
     /**
      * 产品等级
@@ -69,14 +69,14 @@ public class ProductInfoEntity implements Serializable {
     /**
      * 产品品牌
      */
-    @TableField("brand")
-    private String brand;
+    @TableField("brand_name")
+    private String brandName;
 
     /**
      * 项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
      */
     @TableField("project_status")
-    private Integer itemStatus;
+    private Integer projectStatus;
 
     /**
      * 立项状态 0 待规划 1 调研中  3：ID设计中  4::已立项  5：已终止
@@ -90,11 +90,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("sys_field")
     private String sysField;
 
-    /**
-     * 产品图片地址
-     */
-    @TableField("images_url")
-    private String imagesUrl;
 
     /**
      * 产品属性id
@@ -102,11 +97,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("property_id")
     private String propertyId;
 
-    /**
-     * 关联产品id
-     */
-    @TableField("ref_product_id")
-    private String refProductId;
 
     /**
      * 品牌id

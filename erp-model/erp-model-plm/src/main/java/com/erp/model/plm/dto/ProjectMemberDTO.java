@@ -15,7 +15,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ProjectMemberDTO implements Serializable {
 
-    private String memberId;
+    private String userId;
 
-    private String memberName;
+    private String usetName;
 }

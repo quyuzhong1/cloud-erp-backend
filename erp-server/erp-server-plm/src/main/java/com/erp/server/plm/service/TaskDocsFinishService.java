@@ -1,7 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,7 @@ import com.erp.model.plm.entity.TaskDocsFinishEntity;
  */
 public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
+    List<TaskDocsFinishEntity> getByTaskIds(List<String> taskIds);
+
+    Boolean uploadFile(TaskUploadFileDTO dto);
 }

@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.SysTaskDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -29,4 +30,20 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<ProjectTaskEntity> getByProductId(String productId);
 
     void copyTaskByProject(String saveProductId, String saveProjectId,String  flagProjectId);
+
+    void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId);
+
+    void copyTaskBySys(String productId, String projectId);
+
+    PagingVO paging(PagingDTO<TaskPagingDTO> dto);
+
+    Boolean save(ProjectTaskDTO dto);
+
+    List<Map<String, Object>> getTaskListByProductId(BasicProductIdDTO dto);
+
+    Boolean removeTask(String id);
+
+    Boolean setPreTask(setPreTaskDTO dto);
+
+
 }

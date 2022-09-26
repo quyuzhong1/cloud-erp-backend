@@ -73,10 +73,10 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         List<TaskPhaseDTO> list = dto.getTaskPhases();
         String productId = dto.getProductId();
         //获取到任务阶段的
-        List<TaskPhaseDTO> taskPhaseList = list.stream().filter(t -> IsConstant.NO == t.getIsSys()).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(taskPhaseList)) {
+
+        if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
-            List<String> phaseNames = taskPhaseList.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
+            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
             //获取产品加系统的阶段名
             List<String> dbPhaseNames = getDbTaskPhaseNames(productId);
             //获取交集
@@ -86,7 +86,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                 throw new ServiceException(1, intersectionName + " 阶段名已存在,不可重复提交");
             }
             List<ProjectPhaseEntity> updateList = new LinkedList<>();
-            for (TaskPhaseDTO item : taskPhaseList) {
+            for (TaskPhaseDTO item : list) {
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setId(item.getId());
                 entity.setName(item.getName());

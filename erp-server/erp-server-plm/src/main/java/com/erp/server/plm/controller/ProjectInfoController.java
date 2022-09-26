@@ -35,7 +35,7 @@ public class ProjectInfoController extends BaseController {
 
     @GetMapping("/list")
     public ApiResult getList() {
-        return success(projectInfoService.list());
+        return success(projectInfoService.listMap());
     }
 
 

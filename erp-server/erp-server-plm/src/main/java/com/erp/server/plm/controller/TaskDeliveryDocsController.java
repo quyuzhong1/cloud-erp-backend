@@ -1,0 +1,48 @@
+package com.erp.server.plm.controller;
+
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.DeliveryDocsDTO;
+import com.erp.model.plm.dto.setDocsPowerDTO;
+import com.erp.server.plm.service.TaskDeliveryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * @Classname TaskDocsController
+ * @Description TODO
+ * @Date 2022-09-22 11:36
+ * @Created by yl
+ */
+@RestController
+@RequestMapping("/plm/taskDocs")
+public class TaskDeliveryDocsController extends BaseController {
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
+    @PostMapping("/paging")
+    public ApiResult paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO pagingVO = taskDeliveryService.paging(dto);
+        return success(pagingVO);
+    }
+
+    @GetMapping("/list")
+    public ApiResult list(@RequestBody @Validated BaseIdDTO dto) {
+        List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto);
+        return success(list);
+    }
+
+    @PostMapping("/setPower")
+    public ApiResult setPower(@RequestBody @Validated setDocsPowerDTO dto) {
+        taskDeliveryService.setPower(dto);
+        return success();
+    }
+}

@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * @Classname 任务阶段
  * @Description TODO
@@ -16,9 +18,10 @@ public class TaskPhaseDTO {
 
     private String id;
 
+    @NotBlank(message = "阶段名不能为空")
     private String name;
 
-    private Integer isSys;
+
 
 
 

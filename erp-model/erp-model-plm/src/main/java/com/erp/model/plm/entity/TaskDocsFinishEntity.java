@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Date;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,7 +22,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("task_docs_finish")
+@TableName("task_finish_docs")
 public class TaskDocsFinishEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -28,8 +30,8 @@ public class TaskDocsFinishEntity implements Serializable {
     /**
      * 任务文档关联表id
      */
-    @TableId(value = "task_ref_docs_id", type = IdType.ASSIGN_ID)
-    private String taskRefDocsId;
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
 
     /**
      * 文件名
@@ -47,19 +49,41 @@ public class TaskDocsFinishEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
+    private Date createTime;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "file_type")
+    private String fileType;
+
+    /**
+     * 文件后缀
+     */
+    @TableField(value = "file_suffix")
+    private String fileSuffix;
 
     /**
      * 创建人
      */
-    @TableField("create_user")
-    private String createUser;
+    @TableField("create_user_name")
+    private String createUserName;
+
+    @TableField("file_size")
+    private Double fileSize;
 
     /**
      * 创建人id
      */
     @TableField("create_user_id")
     private String createUserId;
+
+    @TableField("task_id")
+    private String taskId;
+
+    @TableField("task_docs_id")
+    private String taskDocsId;
+
 
 
 }

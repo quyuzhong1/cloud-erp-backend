@@ -22,10 +22,10 @@ public class StartProjectDTO implements Serializable {
 
 
     @NotBlank(message = "负责人不能为空")
-    private String  responsible;
+    private String  chargeName;
 
     @NotBlank(message = "负责人id不能为空")
-    private String  responsibleId;
+    private String  chargeId;
 
     @NotBlank(message = "产品id不能为空")
     private String  productId;
@@ -41,7 +41,7 @@ public class StartProjectDTO implements Serializable {
     private String describe;
 
 
-    @StateEnumValue(intValues = {0, 1,3}, message = "来源类型不能为空")
+    @StateEnumValue(intValues = {0,1,2}, message = "来源类型不能为空")
     private Integer sourceType;
 
     private String flagId;

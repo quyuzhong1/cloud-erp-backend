@@ -93,10 +93,10 @@ public class ProjectTaskSysEntity implements Serializable {
     private Integer property;
 
     /**
-     * 是否是系统任务 1 是  2  不是
+     * 是否是固定任务 1 是  2  不是
      */
-    @TableField("is_sys")
-    private Integer isSys;
+    @TableField("is_fixed")
+    private Integer isFixed;
 
     /**
      * 任务描述

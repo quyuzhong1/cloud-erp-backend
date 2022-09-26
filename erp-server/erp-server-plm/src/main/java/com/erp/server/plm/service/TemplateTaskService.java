@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 
+import java.util.List;
+
 /**
  * @Classname TemplateTaskService
  * @Description TODO
@@ -10,5 +12,8 @@ import com.erp.model.plm.entity.TemplateTaskEntity;
  * @Created by yl
  */
 public interface TemplateTaskService extends IService<TemplateTaskEntity> {
+
     void saveTemplateTask(String templateId, String productId);
+
+    List<TemplateTaskEntity> getTaskByTemplateId(String flagTemplateId);
 }

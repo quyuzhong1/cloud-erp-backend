@@ -1,8 +1,8 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.ProductRefTemplateEntity;
 import com.erp.server.plm.mapper.ProductRefTemplateMapper;
-import com.erp.server.plm.service.ProductRefTemplateService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +15,6 @@ import org.springframework.stereotype.Service;
  * @since 2022-09-13
  */
 @Service
-public class ProductRefTemplateServiceImpl extends ServiceImpl<ProductRefTemplateMapper, ProductRefTemplateEntity> implements ProductRefTemplateService {
+public class ProductRefTemplateServiceImpl extends ServiceImpl<ProductRefTemplateMapper, ProductRefTemplateEntity> implements IService<ProductRefTemplateEntity> {
 
 }

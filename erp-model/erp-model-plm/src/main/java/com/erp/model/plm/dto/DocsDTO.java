@@ -19,4 +19,6 @@ public class DocsDTO {
 
     @NotBlank(message = "文档名不能为空")
     private String name;
+
+    private Integer isSys;
 }

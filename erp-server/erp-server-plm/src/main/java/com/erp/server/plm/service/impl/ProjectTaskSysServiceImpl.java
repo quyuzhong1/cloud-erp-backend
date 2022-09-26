@@ -1,34 +1,30 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.finishDocsDTO;
-import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.ProjectTaskSysService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.server.plm.service.SysTaskPhaseService;
-import com.erp.server.plm.service.TaskRefDocsService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -42,9 +38,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper, ProjectTaskSysEntity> implements ProjectTaskSysService {
 
-
-    @Autowired
-    private TaskRefDocsService taskRefDocsService;
 
     @Autowired
     private SysTaskPhaseService sysTaskPhaseService;
@@ -68,10 +61,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         List<finishDocsDTO> docsList = dto.getFinishDocsList();
         boolean flag = this.saveOrUpdate(entity);
-        if (CollectionUtils.isNotEmpty(docsList) && flag) {
-            //保存对应的关系
-            taskRefDocsService.batchRef(entity.getId(), docsList);
-        }
         return flag;
     }
 
@@ -120,5 +109,37 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Override
     public Boolean removeTask(String taskId) {
         return null;
+    }
+
+
+    /**
+     * 根据任务属性 查询对应的项目任务
+     *
+     * @param property
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskSysEntity>
+     * @author yl
+     * @date 2022-09-21 9:12
+     */
+    @Override
+    public List<ProjectTaskSysEntity> getListByProperty(Integer property) {
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskSysEntity::getProperty, property);
+        return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 获取系统任务名
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-09-22 16:43
+     */
+    @Override
+    public List<String> getSysTaskNames() {
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectTaskSysEntity::getName);
+        return this.listObjs(queryWrapper, Object::toString);
     }
 }

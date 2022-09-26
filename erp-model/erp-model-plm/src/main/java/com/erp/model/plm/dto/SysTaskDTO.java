@@ -78,6 +78,11 @@ public class SysTaskDTO implements Serializable {
     private String phaseId;
 
     /**
+     * 任务阶段名
+     */
+    private String phaseName;
+
+    /**
      * 是否是系统任务 1 是  0 不是
      */
     private Integer isSys;

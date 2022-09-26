@@ -41,10 +41,10 @@ public class ProductDTO implements Serializable {
 
     //产品分属性id
     @NotBlank(message = "产品负责人不能为空")
-    private String personInCharge;
+    private String chargeName;
 
     @NotBlank(message = "产品负责人id不能为空")
-    private String inChargeId;
+    private String chargeId;
 
     @NotBlank(message = "产品等级不能为空")
     private String  grade;
@@ -52,11 +52,10 @@ public class ProductDTO implements Serializable {
     private String  gradeId;
 
     @NotBlank(message = "产品品牌不能为空")
-    private String  brand;
+    private String  brandName;
 
     private String  brandId;
 
-    private String refProductId;
 
     @NotNull(message = "产品类型不能为空")
     @StateEnumValue(intValues = {2, 1}, message = "产品类型有误")

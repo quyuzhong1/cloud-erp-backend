@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.enums.ApiError;
@@ -11,6 +12,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.enums.ProductInfoStateEnum;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.ProductInfoService;
@@ -18,10 +20,13 @@ import com.erp.server.plm.service.ProjectInfoService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.ProjectTaskService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -63,19 +68,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             throw new ServiceException(ApiError.ERROR_95010);
         }
         ProjectInfoDTO result = new ProjectInfoDTO();
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
         //产品名
         result.setProductName(entity.getName());
-
-        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-        //完成任务数
-        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        //未完成任务数
-        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        //总任务数
-        int totalTaskCount = taskList.size();
-        Date nowDate = new Date();
-        //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> nowDate.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        Map<String, Integer> taskMap = getTaskCount(productId,taskList,new Date());
+        Integer totalTaskCount=taskMap.get("totalTaskCount");
+        Integer finishTaskCount=taskMap.get("finishTaskCount");
+        Integer postponeTaskCount=taskMap.get("postponeTaskCount");
+        Integer unfinishedTaskCount=taskMap.get("unfinishedTaskCount");
         int finishRatio = 0;
         int postponeRatio = 0;
         if (totalTaskCount != 0) {
@@ -97,6 +97,29 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         return result;
     }
 
+
+    //获取到任务的数量
+    public Map<String, Integer> getTaskCount(String productId,List<ProjectTaskEntity> taskList, Date date) {
+        if(CollectionUtils.isEmpty(taskList)&& StringUtils.isNotBlank(productId)){
+            taskList = projectTaskService.getByProductId(productId);
+        }
+        //完成任务数
+        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //未完成任务数
+        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //总任务数
+        int totalTaskCount = taskList.size();
+        //延期的任务数
+        int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        Map<String, Integer> map = new HashMap<>(4);
+        map.put("finishTaskCount", finishTaskCount);
+        map.put("unfinishedTaskCount", unfinishedTaskCount);
+        map.put("totalTaskCount", totalTaskCount);
+        map.put("postponeTaskCount", postponeTaskCount);
+        return map;
+
+    }
+
     /**
      * 启动项目
      *
@@ -106,37 +129,51 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-09-20 16:05
      */
     @Override
+    @Transactional
     public Boolean startProject(StartProjectDTO dto) {
-
+        String productId = dto.getProductId();
+        ProductInfoEntity product = productInfoService.getById(productId);
+        if (Objects.isNull(product)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
         ProjectInfoEntity entity = new ProjectInfoEntity();
         BeanMapper.copy(dto, entity);
+        entity.setProductName(product.getName());
         boolean flag = save(entity);
-        String productId=dto.getProductId();
         Integer sourceType = dto.getSourceType();
         if (flag) {
             String projectId = entity.getId();
             String flagId = dto.getFlagId();
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
-                projectMembersService.add(productId,projectId, dto.getMembers());
+                projectMembersService.add(productId, projectId, dto.getMembers());
+                //从复制系统项目任务
+                projectTaskService.copyTaskBySys(productId, projectId);
             }
             //如果是 从项目复制 那么从项目表 里面复制 复制成员
             if (SourceType.PROJECT.equals(sourceType)) {
-
-                projectMembersService.saveMemberByProject(productId,projectId, flagId);
-                projectTaskService.copyTaskByProject(productId,projectId,flagId);
+                projectMembersService.saveMemberByProject(productId, projectId, flagId);
+                projectTaskService.copyTaskByProject(productId, projectId, flagId);
             }
 
             //如果是 从模板复制 那么从项目表 里面复制 复制成员
             if (SourceType.PROJECT.equals(sourceType)) {
-                projectMembersService.saveMemberByTemplate(productId,projectId, flagId);
+                projectMembersService.saveMemberByTemplate(productId, projectId, flagId);
+                projectTaskService.copyTaskByTemplate(productId, projectId, flagId);
             }
 
+            //修改产品状态
+            productInfoService.updateProjectStatus(productId, ProjectStateEnum.YES_START.getState());
 
         }
+
         return flag;
+    }
 
+    @Override
+    public List<Map<String, Object>> listMap() {
 
+        return baseMapper.listMap();
     }
 
 
@@ -221,16 +258,24 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     private List<Map<String, Object>> getPhaseStateList(List<ProjectTaskEntity> groupList) {
         List<Map<String, Object>> list = new LinkedList<>();
-        //这是审核的任务
-        List<ProjectTaskEntity> approvalTasks = groupList.stream().filter(t -> IsConstant.YES.equals(t.getType())).collect(Collectors.toList());
-        //一般任务
-        List<ProjectTaskEntity> generalTasks = groupList.stream().filter(t -> IsConstant.NO.equals(t.getType())).collect(Collectors.toList());
-
+        //待发布
         Integer toBeReleased = TaskStateEnum.TO_BE_RELEASED.getCode();
+        //未启动
         Integer notStart = TaskStateEnum.NOT_START.getCode();
-        Integer ingCode = TaskStateEnum.ING.getCode();
+        //进行中
+        Integer ing = TaskStateEnum.ING.getCode();
+        //已完成
         Integer finish = TaskStateEnum.FINISH.getCode();
+
+        //完成待确认
+        Integer waitConfirm = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+        //审核中
+        Integer approvalIng = TaskStateEnum.APPROVAL_PASS.getCode();
+        //审核不通过
         Integer noPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        //审核通过
+        Integer pass = TaskStateEnum.APPROVAL_PASS.getCode();
+
         int toBeReleasedValue = 0;
         int notStartValue = 0;
         int ingValue = 0;
@@ -240,29 +285,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         int waitConfirmValue = 0;
         int approvalPassValue = 0;
         //这是 审核任务的
-        for (ProjectTaskEntity item : approvalTasks) {
-            Integer status = item.getTaskApprovalStatus();
-            //待发布
-            if (toBeReleased.equals(status)) {
-                toBeReleasedValue++;
-            }
-            //未开始
-            if (notStart.equals(status)) {
-                notStartValue++;
-            }
-
-            if (ingCode.equals(status)) {
-                approvalIngValue++;
-            }
-            if (finish.equals(status)) {
-                approvalPassValue++;
-            }
-            if (noPass.equals(status)) {
-                approvalNoPassValue++;
-            }
-        }
-        //这是一般任务的
-        for (ProjectTaskEntity item : generalTasks) {
+        for (ProjectTaskEntity item : groupList) {
             Integer status = item.getStatus();
             //待发布
             if (toBeReleased.equals(status)) {
@@ -272,17 +295,27 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (notStart.equals(status)) {
                 notStartValue++;
             }
-
-            //进行中
-            if (ingCode.equals(status)) {
+            if (ing.equals(status)) {
                 ingValue++;
             }
-            //已完成
             if (finish.equals(status)) {
                 finishValue++;
             }
+            if (waitConfirm.equals(status)) {
+                waitConfirmValue++;
+            }
+            if (noPass.equals(status)) {
+                approvalNoPassValue++;
+            }
+            if (approvalIng.equals(status)) {
+                approvalIngValue++;
+            }
+            if (pass.equals(status)) {
+                approvalPassValue++;
+            }
 
         }
+
         Map<String, Object> WaitReleasedMap = new HashMap<>();
         WaitReleasedMap.put("name", ProductInfoStateEnum.TO_BE_RELEASED.getName());
         WaitReleasedMap.put("value", toBeReleasedValue);

@@ -3,9 +3,12 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+
 import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -45,14 +48,14 @@ public class ProjectTaskEntity implements Serializable {
     /**
      * 负责人id
      */
-    @TableField("person_in_charge_id")
-    private String personInChargeId;
+    @TableField("charge_id")
+    private String chargeId;
 
     /**
      * 负责人名
      */
-    @TableField("person_in_charge")
-    private String personInCharge;
+    @TableField("charge_name")
+    private String chargeName;
 
     /**
      * 前置任务id
@@ -88,16 +91,15 @@ public class ProjectTaskEntity implements Serializable {
     private String phaseName;
 
 
-
     /**
-     * 是否是系统任务 1 是  2  不是
+     * 是否是固定任务 1是  0  不是
      */
-    @TableField("is_sys")
-    private Integer isSys;
+    @TableField("is_fixed")
+    private Integer isFixed;
 
 
     /**
-     * 任务状态 0:待发布 1:未开始 2:进行中 3 已完成,4.已关闭
+     * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
      */
     @TableField("status")
     private Integer status;
@@ -114,7 +116,6 @@ public class ProjectTaskEntity implements Serializable {
      */
     @TableField("project_id")
     private String projectId;
-
 
 
     /**
@@ -153,12 +154,12 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("property")
     private Integer property;
 
-    //审核任务状态 0:待发布,1:待审核(未开始)，2:进行中 3 审核通过 4.审核不通过  5 关闭
-    @TableField("task_approval_status")
-    private Integer taskApprovalStatus;
 
     @TableField("task_finish_time")
-    private Date  taskFinishTime;
+    private Date taskFinishTime;
+
+    @TableField("pid")
+    private String pid;
 
 
 }

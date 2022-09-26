@@ -1,34 +1,40 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.dto.base.BaseSearchDTO;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.SysTaskDTO;
-import com.erp.model.plm.dto.finishDocsDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
+import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
-import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.plm.service.ProjectTaskSysService;
-import com.erp.server.plm.service.TaskRefDocsService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -45,6 +51,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectTaskSysService projectTaskSysService;
 
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private TaskDocsFinishService finishService;
+
 
     /**
      * 添加系统的产品任务
@@ -57,7 +72,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     @Override
     public void addSysTask(String productId) {
-        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.list();
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
             List<ProjectTaskEntity> saveList = new LinkedList<>();
             for (ProjectTaskSysEntity item : sysTaskList) {
@@ -136,12 +151,242 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
                 entity.setStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
-                entity.setTaskApprovalStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
             }
             this.saveBatch(list);
 
         }
 
+    }
+
+    /**
+     * 从模板 复制数据
+     *
+     * @param saveProductId
+     * @param saveProjectId
+     * @param flagTemplateId
+     * @return void
+     * @author yl
+     * @date 2022-09-21 9:49
+     */
+    @Override
+    public void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId) {
+        List<TemplateTaskEntity> templateTasks = templateTaskService.getTaskByTemplateId(flagTemplateId);
+        for (TemplateTaskEntity item : templateTasks) {
+            List<ProjectTaskEntity> saveList = new LinkedList<>();
+            ProjectTaskEntity entity = new ProjectTaskEntity();
+            BeanMapper.copy(item, entity);
+            entity.setProductId(saveProductId);
+            entity.setProjectId(saveProjectId);
+            saveList.add(entity);
+            this.saveBatch(saveList);
+        }
+    }
+
+    /**
+     * 新建项目的话 需要查看系统是否设置了任务
+     * 如果有就要复制项目任务
+     *
+     * @param saveProductId
+     * @param saveProjectId
+     * @return void
+     * @author yl
+     * @date 2022-09-21 9:08
+     */
+    @Override
+    public void copyTaskBySys(String saveProductId, String saveProjectId) {
+        //从系统拿到 项目任务
+        List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
+        if (CollectionUtils.isNotEmpty(sysTaskList)) {
+            List<ProjectTaskEntity> saveList = new LinkedList<>();
+            for (ProjectTaskSysEntity item : sysTaskList) {
+                ProjectTaskEntity entity = new ProjectTaskEntity();
+                BeanMapper.copy(item, entity);
+                entity.setQuoteSysTaskId(item.getId());
+                entity.setProductId(saveProductId);
+                entity.setProjectId(saveProjectId);
+                saveList.add(entity);
+            }
+            this.saveBatch(saveList);
+        }
 
     }
+
+    /**
+     * 分页获取
+     *
+     * @param dto
+     * @return com.erp.common.vo.PagingVO
+     * @author yl
+     * @date 2022-09-21 14:51
+     */
+    @Override
+    public PagingVO paging(PagingDTO<TaskPagingDTO> dto) {
+        TaskPagingDTO params = dto.getParams();
+        Integer taskFlag = params.getTaskFlag();
+        String phaseId = params.getPhaseId();
+        String productId = params.getProductId();
+        List<TaskSearchDTO> searchList = params.getSearchList();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = null;
+        //这个是我完成的任务
+        if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
+            pageData = baseMapper.paging(query, productId, phaseId, searchList);
+        }
+        if (pageData != null) {
+            List<TaskPagingShowDTO> list = pageData.getRecords();
+            //获取到任务id 集合
+            List<String> taskIds = list.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //获取总的任务数
+            List<TaskDocsCountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            for (TaskPagingShowDTO item : list) {
+                String taskId = item.getId();
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                TaskDocsCountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+
+
+            }
+        }
+
+        return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 项目任务 保存任务
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-09-22 15:33
+     */
+    @Override
+    @Transactional
+    public Boolean save(ProjectTaskDTO dto) {
+        checkTaskName(dto.getProductId(), dto.getName());
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+
+        ProjectTaskEntity taskEntity = new ProjectTaskEntity();
+        BeanMapper.copy(dto, taskEntity);
+        List<ProjectMemberDTO> members = dto.getChargeList();
+        List<String> userIds = members.stream().map(ProjectMemberDTO::getUserId).collect(Collectors.toList());
+        List<String> userNames = members.stream().map(ProjectMemberDTO::getUsetName).collect(Collectors.toList());
+        taskEntity.setChargeId(String.join(",", userIds));
+        taskEntity.setChargeName(String.join(",", userNames));
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        boolean flag = this.save(taskEntity);
+        if (flag) {
+            //保存交付文档
+            taskDeliveryService.saveDeliveryDocs(loginUser.getUid(),taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+        }
+        return flag;
+    }
+
+
+    /**
+     * 根据产品id 获取任务id 和名字
+     *
+     * @param dto
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-09-22 17:40
+     */
+    @Override
+    public List<Map<String, Object>> getTaskListByProductId(BasicProductIdDTO dto) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectTaskEntity::getId, ProjectTaskEntity::getName);
+        queryWrapper.eq(ProjectTaskEntity::getProductId, dto.getProductId());
+        return this.listMaps(queryWrapper);
+    }
+
+
+    /**
+     * 删除项目任务
+     *
+     * @param id
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-09-22 18:00
+     */
+    @Override
+    public Boolean removeTask(String id) {
+        ProjectTaskEntity entity = this.getById(id);
+        Integer IsFixed = entity.getIsFixed();
+        //如果是固定任务
+        if (IsConstant.YES.equals(IsFixed)) {
+            throw new ServiceException(ApiError.ERROR_95014);
+        }
+        LambdaQueryWrapper<ProjectTaskEntity> updateWrapper = new LambdaQueryWrapper<>();
+        updateWrapper.eq(ProjectTaskEntity::getPid, id);
+        this.remove(updateWrapper);
+        return this.removeById(id);
+    }
+
+
+    /**
+     * 设置前置任务
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-09-22 18:37
+     */
+    @Override
+    public Boolean setPreTask(setPreTaskDTO dto) {
+        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(ProjectTaskEntity::getPreTaskId, dto.getPreTaskId());
+        updateWrapper.eq(ProjectTaskEntity::getId, dto.getTaskId());
+        return this.update(updateWrapper);
+    }
+
+    
+
+    /**
+     * 检查任务名是否重复
+     *
+     * @param productId
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2022-09-22 16:36
+     */
+    private void checkTaskName(String productId, String name) {
+        List<ProjectTaskEntity> taskList = getByProductId(productId);
+        List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
+        List<String> sysTaskNames = projectTaskSysService.getSysTaskNames();
+        taskNames.addAll(sysTaskNames);
+        if (taskNames.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95013);
+        }
+    }
+
+    //获取预警信息
+    public String getWarning(Integer state, Integer finishState, Date planEndTime) {
+        Date nowDay = new Date();
+        String warning = "-";
+        //状态
+        if (!finishState.equals(state)) {
+            int difference = DateUtil.getDiffDay(planEndTime, nowDay);
+            if (difference > 0) {
+                warning = "过期" + difference + "天";
+            } else {
+                if (difference >= -2) {
+                    warning = Math.abs(difference) + 1 + "天后过期";
+                }
+            }
+        }
+        return warning;
+    }
+
 }

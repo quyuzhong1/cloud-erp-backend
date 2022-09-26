@@ -7,6 +7,8 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 系统任务 服务类
@@ -22,4 +24,8 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
     PagingVO paging(PagingDTO<BaseSearchDTO> dto);
 
     Boolean removeTask(String taskId);
+
+    List<ProjectTaskSysEntity> getListByProperty(Integer state);
+
+    List<String> getSysTaskNames();
 }

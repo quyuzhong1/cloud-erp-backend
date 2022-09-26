@@ -58,10 +58,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectMembersService membersService;
 
     @Autowired
-    private ProjectPhaseService  phaseService;
+    private ProjectPhaseService phaseService;
 
     @Autowired
-    private TemplateTaskService  templateTaskService;
+    private TemplateTaskService templateTaskService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -242,21 +242,39 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean saveTemplate(SaveProductTemplateDTO dto) {
         //模板名
         String templateName = dto.getTemplateName();
-        String productId=dto.getProductId();
+        String productId = dto.getProductId();
         //保存模板
         String templateId = templateService.saveTemplate(templateName);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
-            membersService.saveMember(templateId,productId);
+            membersService.saveMember(templateId, productId);
 
             //任务阶段
-            phaseService.savePhase(templateId,productId);
+            phaseService.savePhase(templateId, productId);
 
             //保存模板任务
-            templateTaskService.saveTemplateTask(templateId,productId);
+            templateTaskService.saveTemplateTask(templateId, productId);
         }
 
         return true;
+    }
+
+
+    /**
+     * 更改产品的状态
+     *
+     * @param productId
+     * @param state
+     * @return void
+     * @author yl
+     * @date 2022-09-21 11:17
+     */
+    @Override
+    public void updateProjectStatus(String productId, Integer state) {
+        LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProductInfoEntity::getId, productId);
+        updateWrapper.set(ProductInfoEntity::getProjectStatus, state);
+        this.update(updateWrapper);
     }
 
 }

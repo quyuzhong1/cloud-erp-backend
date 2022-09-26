@@ -9,9 +9,20 @@ spring:
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-plm.yml
+#显示日期的
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+
+fdfs:
+  connect-timeout: 600
+  so-timeout: 1500
+  tracker-list:
+    - 192.168.31.86:22122
+
+
+
+
 
 
 
