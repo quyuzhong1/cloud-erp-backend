@@ -31,4 +31,13 @@ public interface ProductVariantService extends IService<ProductVariantEntity> {
      * @return java.lang.Boolean
      **/
     Boolean saveOrUpdate(ProductVariantDTO productVariantDTO);
+
+    /**
+     * @Description 删除产品变体类型值信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 16:13
+     * @param variantId:变体类型表主键Id
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteVariant(String variantId);
 }

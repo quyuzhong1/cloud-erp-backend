@@ -47,6 +47,20 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
         BeanMapper.copy(productVariantDTO, variantEntity);
         return this.saveOrUpdate(variantEntity);
     }
+
+    /**
+     * @Description 删除产品变体类型值信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 16:13
+     * @param variantId:变体类型表主键Id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean deleteVariant(String variantId) {
+        LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductVariantEntity::getId, variantId);
+        return this.remove(queryWrapper);
+    }
 }
 
 

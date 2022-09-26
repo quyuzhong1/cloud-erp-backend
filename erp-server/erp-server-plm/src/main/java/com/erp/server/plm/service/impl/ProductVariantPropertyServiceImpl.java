@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
+import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.mapper.ProductVariantPropertyMapper;
 import com.erp.server.plm.service.ProductVariantPropertyService;
@@ -45,6 +46,20 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
         ProductVariantPropertyEntity variantPropertyEntity = new ProductVariantPropertyEntity();
         BeanMapper.copy(dto, variantPropertyEntity);
         return this.saveOrUpdate(variantPropertyEntity);
+    }
+
+    /**
+     * @Description 删除产品变体类型值信息
+     * @Author Luo_WG
+     * @Date 2022/9/26 16:13
+     * @param variantId:变体类型表主键Id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean deleteVariant(String variantId) {
+        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductVariantPropertyEntity::getId, variantId);
+        return this.remove(queryWrapper);
     }
 }
 
