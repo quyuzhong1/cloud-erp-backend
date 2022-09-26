@@ -10,6 +10,7 @@ import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.MabanService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,7 +55,7 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
             MultipartFile file = dto.getFile();
             List<MabanIncomeExpensesEntity> convertList = csvServer.getObjectListByMultipartFile(file, MabanIncomeExpensesEntity.class);
             if (CollectionUtils.isNotEmpty(convertList)) {
-                List<MabanIncomeExpensesEntity> saveList = convertList.stream().filter(m -> !"合计".equals(m.getOrderNo())).collect(Collectors.toList());
+                List<MabanIncomeExpensesEntity> saveList = convertList.stream().filter(m -> StringUtils.isNotBlank(m.getSkuInfo())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(saveList)) {
                     List<List<MabanIncomeExpensesEntity>> lists = convertHandler.splitList(saveList, 1000);
                     for (List<MabanIncomeExpensesEntity> list : lists) {

@@ -31,6 +31,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -72,6 +73,7 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
             file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), tempFile);
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
             if (CollectionUtils.isNotEmpty(saveList)) {
+                saveList=saveList.stream().filter(o->StringUtils.isNotBlank(o.getSkuNo())).collect(Collectors.toList());
                 this.saveBatch(saveList);
             }
         } catch (Exception e) {

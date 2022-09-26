@@ -151,6 +151,7 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
                 }
             }
             nonEmptyList.addAll(vacancyList);
+            nonEmptyList=nonEmptyList.stream().filter(n->   StringUtils.isNotBlank(n.getSku())).collect(Collectors.toList());
             List<List<YxkOrderEntity>> lists = convertHandler.splitList(nonEmptyList, 1000);
             for (List<YxkOrderEntity> listSub : lists) {
                 this.saveBatch(listSub);
