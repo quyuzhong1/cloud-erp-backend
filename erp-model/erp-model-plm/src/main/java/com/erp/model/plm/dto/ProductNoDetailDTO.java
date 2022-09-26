@@ -30,8 +30,14 @@ public class ProductNoDetailDTO {
     @ApiModelProperty(value = "产品经理")
     private String chargeName;
 
+    @ApiModelProperty(value = "产品经理Id")
+    private String chargeId;
+
     @ApiModelProperty(value = "品牌")
     private String brandName;
+
+    @ApiModelProperty(value = "品牌id")
+    private String brandId;
 
     @ApiModelProperty(value = "产品属性")
     private String property;

@@ -2,15 +2,21 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -87,6 +93,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @Description 保存/修改产品sku信息表数据
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param productNoSpecDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdate(ProductNoSpecDTO productNoSpecDTO) {
+        ProductDetailEntity detailEntity = new ProductDetailEntity();
+        BeanMapper.copy(productNoSpecDTO, detailEntity);
+        return this.saveOrUpdate(detailEntity);
+    }
+
+    /**
      * @Description 新增无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
@@ -95,26 +115,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
-
         //1.修改产品表 主表信息
-
-        //2.修改/新增 成本信息
+        productInfoService.updateSpec(productNoSpecDTO.getProductInfoDTO());
+        //2.修改/新增 sku信息
+        this.saveOrUpdate(productNoSpecDTO);
+        //3.修改/新增 成本信息
         productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
-        //3.修改/新增 采购信息
+        //4.修改/新增 采购信息
         productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-        //4.修改/新增 销售信息
+        //5.修改/新增 销售信息
         productSaleService.saveOrUpdate(productNoSpecDTO.getProductSaleDTO());
-        //5.修改/新增 物流信息
+        //6.修改/新增 物流信息
         productLogisticsService.saveOrUpdate(productNoSpecDTO.getProductLogisticsDTO());
-        //6.修改/新增 包装信息
+        //7.修改/新增 包装信息
         productPackService.saveOrUpdate(productNoSpecDTO.getProductPackDTO());
-        //7.修改/新增 证书信息
+        //8.修改/新增 证书信息
         productCertificateService.saveOrUpdate(productNoSpecDTO.getProductCertificateDTO());
-
-        //如果没有id表示新增
-        ProductDetailEntity productDetail = new ProductDetailEntity();
-        BeanUtils.copyProperties(productNoSpecDTO, ProductDetailEntity.class);
-        return null;
+        return true;
     }
 
     /**
@@ -125,7 +142,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean insertProductManySpec(ProductManySpecDTO productManySpecDTO) {
+    public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
+
         //TODO 1.校验产品名称是否存在
         //TODO 2.需要修改产品主表信息
         //TODO 3.需要修改或者新增产品sku信息
@@ -133,6 +151,47 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //TODO 5.校验SPU重复：已存在SPU:{SPU名称}
         //TODO 6.校验SKU重复：已存在SKU:{SKU名称}
         return null;
+    }
+
+    /**
+     * @Description 多规格自动生成
+     * @Author Luo_WG
+     * @Date 2022/9/26 14:54
+     * @param variantAutoAddDTO:自动生成请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
+        List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
+        List<String> tempList = new ArrayList<>();
+        Boolean flag = true;
+        for (VarianRefPropertyDTO req : varianRefPropertyList) {
+            List<String> varianList = req.getVarianList();
+            if (flag) {
+                tempList.addAll(varianList);
+            } else {
+                for (int i = 0; i < tempList.size(); i++) {
+                    for (String varian : varianList) {
+                        tempList.set(i, tempList.get(i) + varian);
+                    }
+                }
+            }
+            flag = false;
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        List<String> strList = new ArrayList<>();
+        strList.add("a");
+        strList.add("b");
+        strList.add("c");
+        strList.add("d");
+        strList.forEach(req -> {
+            req = req+"!";
+        });
+
+        System.out.println(strList);
     }
 
     /**

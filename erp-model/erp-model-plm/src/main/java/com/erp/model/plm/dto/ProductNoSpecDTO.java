@@ -22,14 +22,14 @@ public class ProductNoSpecDTO {
     @ApiModelProperty(value = "产品信息表id",required = true)
     private String productId;
 
-    @ApiModelProperty(value = "spu",required = true)
-    private String spu;
+    @ApiModelProperty(value = "sku",required = true)
+    private String sku;
 
     @ApiModelProperty(value = "产品名称(品名)",required = true)
     private String name;
 
-    @ApiModelProperty(value = "销售方式",required = true)
-    private List<String> saleMethod;
+    @ApiModelProperty(value = "销售方式 多个用,拼接",required = true)
+    private String saleMethod;
 
     @ApiModelProperty(value = "产品分类id")
     private String categoryId;
@@ -60,6 +60,10 @@ public class ProductNoSpecDTO {
     @ApiModelProperty(value = "产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发",required = true)
     private Integer productState;
 
+    @NotNull(message = "产品基础信息不能为空")
+    @ApiModelProperty(value = "产品基础信息",required = true)
+    private ProductInfoDTO productInfoDTO;
+
     @NotNull(message = "成本信息不能为空")
     @ApiModelProperty(value = "成本信息",required = true)
     private ProductCostDTO productCostDTO;
@@ -79,5 +83,4 @@ public class ProductNoSpecDTO {
 
     @ApiModelProperty(value = "产品证书信息")
     private ProductCertificateDTO productCertificateDTO;
-
 }

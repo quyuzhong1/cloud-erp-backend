@@ -35,4 +35,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     Boolean saveTemplate(SaveProductTemplateDTO dto);
 
     void updateProjectStatus(String productId, Integer state);
+
+    /**
+     * @Description 无规格sku修改产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/21 18:44
+     * @param dto:产品基础信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSpec(ProductInfoDTO dto);
 }

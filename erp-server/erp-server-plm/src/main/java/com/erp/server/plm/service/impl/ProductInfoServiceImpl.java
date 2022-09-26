@@ -277,4 +277,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         this.update(updateWrapper);
     }
 
+    /**
+     * @Description 无规格sku修改产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/21 18:44
+     * @param dto:产品基础信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean updateSpec(ProductInfoDTO dto) {
+        ProductInfoEntity productInfoEntity = new ProductInfoEntity();
+        BeanMapper.copy(dto, productInfoEntity);
+        return this.saveOrUpdate(productInfoEntity);
+    }
+
 }

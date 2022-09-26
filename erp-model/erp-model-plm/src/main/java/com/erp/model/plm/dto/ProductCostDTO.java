@@ -24,6 +24,9 @@ public class ProductCostDTO implements Serializable {
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
+    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
+    private String skuId;
+
     @NotNull(message = "目标含税成本不能为空")
     @ApiModelProperty(value = "目标含税成本", required = true)
     private BigDecimal targetTaxCost;

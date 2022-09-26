@@ -34,6 +34,15 @@ public interface ProductDetailService {
     ProductManyDetailDTO getManySpecDetailById(String productId);
 
     /**
+     * @Description 保存/修改产品sku信息表数据
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param productNoSpecDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdate(ProductNoSpecDTO productNoSpecDTO);
+
+    /**
     * @Description 新增无规格sku信息
     * @Author Luo_WG
     * @Date 2022/9/21 16:31
@@ -49,7 +58,16 @@ public interface ProductDetailService {
     * @param productManySpecDTO:新增产品多规格sku信息请求参数
     * @return java.lang.Boolean
     **/
-    Boolean insertProductManySpec(ProductManySpecDTO productManySpecDTO);
+    Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO);
+
+    /**
+     * @Description 多规格自动生成
+     * @Author Luo_WG
+     * @Date 2022/9/26 14:54
+     * @param variantAutoAddDTO:自动生成请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
 
     /**
     * @Description 删除多规格sku信息

@@ -3,6 +3,9 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductVariantEntity;
+import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.service.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -32,6 +35,9 @@ public class ProductDetailController extends BaseController {
     private ProductPurchaseService productPurchaseService;
 
     @Resource
+    private ProductPurchaseRemarkService productPurchaseRemarkService;
+
+    @Resource
     private ProductSaleService productSaleService;
 
     @Resource
@@ -43,7 +49,13 @@ public class ProductDetailController extends BaseController {
     @Resource
     private ProductCertificateService productCertificateService;
 
-    @ApiOperation(value = "产品信息-主页列表")
+    @Resource
+    private ProductVariantService productVariantService;
+
+    @Resource
+    private ProductVariantPropertyService productVariantPropertyService;
+
+    @ApiOperation(value = "产品信息-主页列表-查询")
     @GetMapping("/list")
     @ApiImplicitParams({
         @ApiImplicitParam(name="sku",value="sku/spu"),
@@ -55,7 +67,7 @@ public class ProductDetailController extends BaseController {
 
     @ApiOperation(value = "产品信息-无规格-产品详情")
     @GetMapping("/getNoSpecDetailById")
-    @ApiImplicitParam(name="productId",value="产品信息表id")
+    @ApiImplicitParam(name="productId",value="产品信息表id", required = true)
     public ApiResult<ProductNoDetailDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId){
         ProductNoDetailDTO list = productDetailService.getNoSpecDetailById(productId);
         return this.success(list);
@@ -63,7 +75,7 @@ public class ProductDetailController extends BaseController {
 
     @ApiOperation(value = "产品信息-多规格-产品详情")
     @GetMapping("/getManySpecDetailById")
-    @ApiImplicitParam(name="productId",value="产品信息表id")
+    @ApiImplicitParam(name="productId",value="产品信息表id", required = true)
     public ApiResult<ProductManyDetailDTO> getManySpecDetailById(@RequestParam(value = "productId") String productId){
         ProductManyDetailDTO list = productDetailService.getManySpecDetailById(productId);
         return this.success(list);
@@ -77,77 +89,136 @@ public class ProductDetailController extends BaseController {
     }
 
     @ApiOperation(value = "产品信息-多规格-新增")
-    @PostMapping("/insertProductManySpec")
-    public ApiResult insertProductManySpec(@RequestBody ProductManySpecDTO productManySpecDTO){
-        Boolean flag = productDetailService.insertProductManySpec(productManySpecDTO);
+    @PostMapping("/saveOrUpdateManySpec")
+    public ApiResult saveOrUpdateManySpec(@RequestBody ProductManySpecDTO productManySpecDTO){
+        Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
 
-    @ApiOperation(value = "产品信息-多规格-删除sku")
+    @ApiOperation(value = "产品信息-多规格-自动生成")
+    @PostMapping("/InsertManySpecSku")
+    public ApiResult InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO){
+        Boolean flag = productDetailService.InsertManySpecAuto(variantAutoAddDTO);
+        return flag == true ? this.success() : this.failure();
+    }
+
+
+    @ApiOperation(value = "产品信息-多规格sku-删除")
     @PostMapping("/delete")
-    @ApiImplicitParam(name="skuId",value="sku信息表id")
+    @ApiImplicitParam(name="skuId",value="sku信息表id", required = true)
     public ApiResult delete(@RequestBody String skuId){
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
     }
 
-    @ApiOperation(value = "成本信息-主页列表")
+    @ApiOperation(value = "成本信息-主页列表-查询")
     @GetMapping("/listCost")
     @ApiImplicitParams({
-        @ApiImplicitParam(name="productId",value="产品信息表id"),
+        @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductCostShowDTO>> listCost(@RequestParam(value = "productId") String productId){
         List<ProductCostShowDTO> list = productCostService.list(productId);
         return this.success(list);
     }
 
-    @ApiOperation(value = "采购信息-主页列表")
+    @ApiOperation(value = "采购信息-主页列表-查询")
     @GetMapping("/listProductPurchase")
     @ApiImplicitParams({
-            @ApiImplicitParam(name="productId",value="产品信息表id"),
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductPurchaseShowDTO>> listPurchase(@RequestParam(value = "productId") String productId){
         List<ProductPurchaseShowDTO> list = productPurchaseService.list(productId);
         return this.success(list);
     }
 
-    @ApiOperation(value = "销售信息-主页列表")
+    @ApiOperation(value = "销售信息-主页列表-查询")
     @GetMapping("/listSale")
     @ApiImplicitParams({
-            @ApiImplicitParam(name="productId",value="产品信息表id"),
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductSaleShowDTO>> listSale(@RequestParam(value = "productId") String productId){
         List<ProductSaleShowDTO> list = productSaleService.list(productId);
         return this.success(list);
     }
 
-    @ApiOperation(value = "物流信息-报关信息-列表")
+    @ApiOperation(value = "物流信息-报关信息列表-查询")
     @GetMapping("/listLogistics")
     @ApiImplicitParams({
-            @ApiImplicitParam(name="productId",value="产品信息表id"),
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductLogisticsShowDTO>> listLogistics(@RequestParam(value = "productId") String productId){
         List<ProductLogisticsShowDTO> list = productLogisticsService.list(productId);
         return this.success(list);
     }
 
-    @ApiOperation(value = "物流信息-包装信息-列表")
+    @ApiOperation(value = "物流信息-包装信息列表-查询")
     @GetMapping("/listPack")
     @ApiImplicitParams({
-            @ApiImplicitParam(name="productId",value="产品信息表id"),
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductPackShowDTO>> listPack(@RequestParam(value = "productId") String productId){
         List<ProductPackShowDTO> list = productPackService.list(productId);
         return this.success(list);
     }
 
-    @ApiOperation(value = "证书信息-主页列表")
+    @ApiOperation(value = "证书信息-主页列表-查询")
     @GetMapping("/listCertificate")
     @ApiImplicitParams({
-            @ApiImplicitParam(name="productId",value="产品信息表id"),
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
     })
     public ApiResult<List<ProductCertificateShowDTO>> listCertificate(@RequestParam(value = "productId") String productId){
         List<ProductCertificateShowDTO> list = productCertificateService.list(productId);
         return this.success(list);
+    }
+
+    @ApiOperation(value = "采购信息-主页备注信息列表-查询")
+    @GetMapping("/listPurchaseRemark")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="purchaseId",value="产品采购信息表id", required = true),
+    })
+    public ApiResult<List<ProductPurchaseRemarkEntity>> listPurchaseRemark(@RequestParam(value = "purchaseId") String purchaseId){
+        List<ProductPurchaseRemarkEntity> list = productPurchaseRemarkService.list(purchaseId);
+        return this.success(list);
+    }
+
+    @ApiOperation(value = "采购信息-备注信息-新增")
+    @PostMapping("/saveOrUpdatePurchaseRemark")
+    public ApiResult saveOrUpdatePurchaseRemark(ProductPurchaseRemarkDTO dto){
+        Boolean flag = productPurchaseRemarkService.saveOrUpdate(dto);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    @ApiOperation(value = "产品信息-变体管理-下拉列表-查询")
+    @GetMapping("/listVariant")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="productId",value="产品信息表id", required = true),
+    })
+    public ApiResult<List<ProductVariantEntity>> listVariant(@RequestParam(value = "productId") String productId){
+        List<ProductVariantEntity> list = productVariantService.list(productId);
+        return this.success(list);
+    }
+
+    @ApiOperation(value = "产品信息-变体管理-下拉列表-新增/修改")
+    @PostMapping("/saveOrUpdateVariant")
+    public ApiResult saveOrUpdateVariant(ProductVariantDTO productVariantDTO){
+        Boolean flag = productVariantService.saveOrUpdate(productVariantDTO);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    @ApiOperation(value = "产品信息-变体管理-变体值-查询")
+    @GetMapping("/listVariantProperty")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="variantId",value="变体类型表id", required = true),
+    })
+    public ApiResult<List<ProductVariantPropertyEntity>> listVariantProperty(@RequestParam(value = "variantId") String variantId){
+        List<ProductVariantPropertyEntity> list = productVariantPropertyService.list(variantId);
+        return this.success(list);
+    }
+
+    @ApiOperation(value = "产品信息-变体管理-变体值-新增/修改")
+    @PostMapping("/saveOrUpdateVariantProperty")
+    public ApiResult saveOrUpdateVariantProperty(ProductVariantPropertyDTO dto){
+        Boolean flag = productVariantPropertyService.saveOrUpdate(dto);
+        return flag == true ? this.success() : this.failure();
     }
 }

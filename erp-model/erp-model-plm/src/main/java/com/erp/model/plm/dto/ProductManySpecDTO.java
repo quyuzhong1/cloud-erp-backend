@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -15,17 +16,17 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductManySpecDTO {
 
-    @ApiModelProperty(value = "产品信息表id",required = true)
+    @ApiModelProperty(value = "产品信息表id", required = true)
     private String productId;
 
-    @ApiModelProperty(value = "spu",required = true)
+    @ApiModelProperty(value = "spu", required = true)
     private String spu;
 
-    @ApiModelProperty(value = "产品名称(品名)",required = true)
+    @ApiModelProperty(value = "产品名称(品名)", required = true)
     private String name;
 
-    @ApiModelProperty(value = "销售方式",required = true)
-    private List<String> saleMethod;
+    @ApiModelProperty(value = "销售方式", required = true)
+    private String saleMethod;
 
     @ApiModelProperty(value = "产品分类id")
     private String categoryId;
@@ -47,4 +48,28 @@ public class ProductManySpecDTO {
 
     @ApiModelProperty(value = "SKU信息明细")
     private List<ProductDetailDTO>  productDetailList;
+
+    @NotNull(message = "产品基础信息不能为空")
+    @ApiModelProperty(value = "产品基础信息",required = true)
+    private List<ProductInfoDTO> productInfoList;
+
+    @NotNull(message = "成本信息不能为空")
+    @ApiModelProperty(value = "成本信息",required = true)
+    private List<ProductCostDTO> productCostList;
+
+    @ApiModelProperty(value = "采购信息信息")
+    private List<ProductPurchaseDTO> productPurchaseList;
+
+    @NotNull(message = "产品销售不能为空")
+    @ApiModelProperty(value = "产品销售信息")
+    private List<ProductSaleDTO> productSaleList;
+
+    @ApiModelProperty(value = "产品物流信息")
+    private List<ProductLogisticsDTO> productLogisticsList;
+
+    @ApiModelProperty(value = "产品包装信息")
+    private List<ProductPackDTO> productPackList;
+
+    @ApiModelProperty(value = "产品证书信息")
+    private List<ProductCertificateDTO> productCertificateList;
 }

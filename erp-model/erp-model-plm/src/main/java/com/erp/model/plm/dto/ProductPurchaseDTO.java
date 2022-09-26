@@ -26,6 +26,9 @@ public class ProductPurchaseDTO implements Serializable {
     @ApiModelProperty(value = "主键id")
     private String id;
 
+    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
+    private String skuId;
+
     @ApiModelProperty(value = "EAN码")
     private Integer ean;
 

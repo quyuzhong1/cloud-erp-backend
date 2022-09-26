@@ -90,7 +90,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("sys_field")
     private String sysField;
 
-
     /**
      * 产品属性id
      */
@@ -112,7 +111,6 @@ public class ProductInfoEntity implements Serializable {
 
     @TableField("delete_state")
     private Integer deleteState;
-
 
     /**
      * 创建时间
@@ -147,32 +145,27 @@ public class ProductInfoEntity implements Serializable {
     /**
      * 产品用途
      */
-    @TableField("product_use")
-    private String productUse;
+    @TableField("usage_desc")
+    private String usageDesc;
 
     /**
      * 存在侵权风险 1：有侵权风险 2：无侵权风险
      */
-    @TableField("tort_risk")
-    private Integer tortRisk;
+    @TableField("pirate_risk")
+    private Integer pirateRisk;
 
     /**
      * 主要材质
      */
-    @TableField("main_materials")
-    private String mainMaterials;
+    @TableField("materials")
+    private String materials;
 
     /**
      * 规格类型  1：无规格  2：多规格
      */
-    @TableField("specType")
-    private Integer spec_type;
+    @TableField("spec_type")
+    private Integer specType;
 
-    /**
-     * 产品状态 1：开发中 2：已封样 3：暂停开发
-     */
-    @TableField("product_state")
-    private Integer productState;
 
     /**
      * 销售方式

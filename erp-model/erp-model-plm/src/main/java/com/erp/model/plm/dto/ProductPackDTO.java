@@ -16,6 +16,9 @@ public class ProductPackDTO implements Serializable {
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
+    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
+    private String skuId;
+
     @ApiModelProperty(value = "产品尺寸")
     private BigDecimal productSize;
 
