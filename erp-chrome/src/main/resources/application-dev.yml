@@ -10,8 +10,17 @@ spring:
     multipart:
       enabled: true
       max-file-size: 50MB
+      max-request-size: 500MB
 server:
   port: 7040
+
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-value: 0
+      logic-not-delete-value: 1
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #开启sql日志
 
 
 

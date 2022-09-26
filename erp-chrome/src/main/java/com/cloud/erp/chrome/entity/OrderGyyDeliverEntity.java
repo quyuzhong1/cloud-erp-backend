@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Date;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -113,5 +115,11 @@ public class OrderGyyDeliverEntity implements Serializable {
     @Alias("订单编号")
     private String orderNumber;
 
+    /**
+     * 订单日期
+     */
+    @TableField("order_date")
+    @Alias("发货时间")
+    private Date orderDate;
 
 }

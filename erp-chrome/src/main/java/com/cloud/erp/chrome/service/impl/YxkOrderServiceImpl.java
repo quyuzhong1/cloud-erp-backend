@@ -131,6 +131,7 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
             excelReader.addHeaderAlias("金额", "money");
             excelReader.addHeaderAlias("价税合计", "taxMoney");
             excelReader.addHeaderAlias("订单单号", "orderNumber");
+            excelReader.addHeaderAlias("日期", "orderDate");
             List<YxkOrderEntity> list = excelReader.read(0, 1, excelReader.getRowCount() - 1, YxkOrderEntity.class);
             //获取到空的 集合
             List<YxkOrderEntity> vacancyList = list.stream().filter(y -> StringUtils.isBlank(y.getDocumentNo())).collect(Collectors.toList());
@@ -142,6 +143,7 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
                     YxkOrderEntity entity = nonEmptyList.stream().filter(k -> k.getOrderNumber().equals(orderNumber)).findFirst().orElse(null);
                     if (!Objects.isNull(entity)) {
                         item.setShipmentDate(entity.getShipmentDate());
+                        item.setOrderDate(entity.getOrderDate());
                         item.setDocumentNo(entity.getDocumentNo());
                         item.setCustomers(entity.getCustomers());
                         item.setSalesDepartments(entity.getSalesDepartments());
