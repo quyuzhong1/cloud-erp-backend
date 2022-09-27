@@ -180,7 +180,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //1.修改产品表 主表信息
         productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
         //检查sku是否重复
-        List<String> skuList = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getSku).collect(Collectors.toList());
+        List<String> skuList = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getSkuNo).collect(Collectors.toList());
         this.checkSku(skuList);
         //2.修改/新增 sku信息
         this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
@@ -292,7 +292,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     private void checkSku(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.in(ProductDetailEntity::getSku, skuList);
+        queryWrapper.in(ProductDetailEntity::getSkuNo, skuList);
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95015);
