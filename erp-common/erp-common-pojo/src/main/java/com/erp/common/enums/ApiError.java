@@ -97,6 +97,7 @@ public enum ApiError implements Serializable {
     ERROR_95012(95012, "文档名已存在,不可重复提交"),
     ERROR_95013(95013, "任务名已存在,不可重复提交"),
     ERROR_95014(95014, "固定任务不能删除"),
+    ERROR_95015(95015, "SKU已存在，请确保SKU的唯一性"),
 
 
 

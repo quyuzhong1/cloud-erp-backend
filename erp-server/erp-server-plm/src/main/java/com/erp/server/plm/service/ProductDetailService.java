@@ -11,7 +11,7 @@ public interface ProductDetailService {
     * @Description 产品信息查询列表
     * @Author Luo_WG
     * @Date 2022/9/22 10:28
-    * @param sku:此处可能是spu，需求界面只有一个输入框可输入spu或者sku查询
+    * @param sku:此处可能是spu，需求界面只有一个输入框可输入spuNo或者skuNo查询
     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
     **/
     List<ProductDetailShowDTO> list(String sku);

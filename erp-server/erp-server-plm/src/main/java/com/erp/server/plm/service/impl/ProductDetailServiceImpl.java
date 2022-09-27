@@ -8,8 +8,10 @@ import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.server.plm.mapper.ProductDetailMapper;
+import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 产品明细信息服务类
@@ -56,11 +59,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductImagesService productImagesService;
 
+    @Resource
+    private ProductInfoMapper productInfoMapper;
+
     /**
      * @Description 产品信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param sku:此处可能是spu，需求界面只有一个输入框可输入spu或者sku查询
+     * @param sku:此处可能是spu，需求界面只有一个输入框可输入spuNo或者skuNo查询
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
     @Override
@@ -169,8 +175,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
+        //检查sku产品名称是否重复
+        this.checkName(productManySpecDTO.getProductInfoDTO().getName());
         //1.修改产品表 主表信息
         productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
+        //检查sku是否重复
+        List<String> skuList = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getSku).collect(Collectors.toList());
+        this.checkSku(skuList);
         //2.修改/新增 sku信息
         this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
         //3.修改/新增 成本信息
@@ -274,34 +285,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
-     * @param sku
-     * @return void
      * @Description 检查sku是否重复
      * @Author Luo_WG
-     * @Date 2022/9/21 18:23
+     * @Date 2022/9/27 9:17
+     * @param skuList:sku集合
      **/
-    private void checkSku(String sku) {
+    private void checkSku(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductDetailEntity::getSku, sku);
+        queryWrapper.in(ProductDetailEntity::getSku, skuList);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95012);
+            throw new ServiceException(ApiError.ERROR_95015);
         }
     }
 
     /**
-     * @param sku
-     * @return void
-     * @Description 检查产品名称是否重复
+     * @Description 检查sku产品名称是否重复
      * @Author Luo_WG
-     * @Date 2022/9/21 18:23
+     * @Date 2022/9/27 9:28
+     * @param name:产品名称集合
+     * @return void
      **/
-    private void checkName(String sku) {
-        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductDetailEntity::getName, sku);
-        int count = this.count(queryWrapper);
+    private void checkName(String name) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(ProductInfoEntity::getName, name);
+        Integer count = productInfoMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(/*ApiError.ERROR_95012*/);
+            throw new ServiceException(ApiError.ERROR_95007);
         }
     }
 }

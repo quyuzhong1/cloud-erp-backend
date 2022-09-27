@@ -29,8 +29,8 @@ public class ProductCostShowDTO implements Serializable {
     @ApiModelProperty(value = "产品sku图片")
     private String imagesUrl;
 
-    @ApiModelProperty(value = "sku")
-    private String sku;
+    @ApiModelProperty(value = "skuNo")
+    private String skuNo;
 
     @ApiModelProperty(value = "目标含税成本")
     private BigDecimal targetTaxCost;

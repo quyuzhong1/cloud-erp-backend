@@ -22,8 +22,8 @@ public class ProductNoSpecDTO {
     @ApiModelProperty(value = "产品信息表id",required = true)
     private String productId;
 
-    @ApiModelProperty(value = "sku",required = true)
-    private String sku;
+    @ApiModelProperty(value = "skuNo",required = true)
+    private String skuNo;
 
     @ApiModelProperty(value = "产品名称(品名)",required = true)
     private String name;

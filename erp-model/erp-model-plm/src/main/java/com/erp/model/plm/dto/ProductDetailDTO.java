@@ -20,8 +20,8 @@ public class ProductDetailDTO implements Serializable {
     @ApiModelProperty(value = "产品表id")
     private String productId;
 
-    @ApiModelProperty(value = "sku")
-    private String sku;
+    @ApiModelProperty(value = "skuNo")
+    private String skuNo;
 
     @ApiModelProperty(value = "产品sku名称")
     private String name;

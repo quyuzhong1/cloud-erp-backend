@@ -18,9 +18,6 @@ public class ProductInfoDTO {
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
-    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
-    private String skuId;
-
     /**
      * 产品名
      */
@@ -79,10 +76,10 @@ public class ProductInfoDTO {
     private String categoryId;
 
     /**
-     * spu
+     * spuNo
      */
-    @ApiModelProperty(value = "spu")
-    private String spu;
+    @ApiModelProperty(value = "spuNo")
+    private String spuNo;
 
     /**
      * 产品卖点

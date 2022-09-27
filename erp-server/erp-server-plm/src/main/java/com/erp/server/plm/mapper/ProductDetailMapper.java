@@ -15,7 +15,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     * @Description
     * @Author Luo_WG
     * @Date 2022/9/22 10:47
-    * @param sku:此处可能是spu，需求界面只有一个输入框可输入spu或者sku查询
+    * @param sku:此处可能是spu，需求界面只有一个输入框可输入spuNo或者skuNo查询
     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
     **/
     List<ProductDetailShowDTO> list(@Param("sku") String sku);

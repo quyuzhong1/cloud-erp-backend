@@ -32,11 +32,11 @@ public class ProductDetailEntity implements Serializable {
     private String productId;
 
     /**
-     * sku
+     * sku_no
      */
-    @TableField(value = "sku")
-    @ApiModelProperty(value = "sku")
-    private String sku;
+    @TableField(value = "sku_no")
+    @ApiModelProperty(value = "skuNo")
+    private String skuNo;
 
     /**
      * 产品名称

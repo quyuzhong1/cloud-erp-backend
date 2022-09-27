@@ -125,10 +125,10 @@ public class ProductInfoEntity implements Serializable {
     private Date updateTime;
 
     /**
-     * spu
+     * spuNo
      */
-    @TableField("spu")
-    private String spu;
+    @TableField("spu_no")
+    private String spuNo;
 
     /**
      * 产品卖点

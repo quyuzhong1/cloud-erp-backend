@@ -63,10 +63,10 @@ public class ProductDetailController extends BaseController {
     @ApiOperation(value = "产品信息-主页列表-查询")
     @GetMapping("/list")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "sku", value = "sku/spu"),
+            @ApiImplicitParam(name = "no", value = "skuNo/spuNo"),
     })
-    public ApiResult<List<ProductDetailShowDTO>> list(@RequestParam(value = "sku") String sku) {
-        List<ProductDetailShowDTO> list = productDetailService.list(sku);
+    public ApiResult<List<ProductDetailShowDTO>> list(@RequestParam(value = "no") String no) {
+        List<ProductDetailShowDTO> list = productDetailService.list(no);
         return this.success(list);
     }
 

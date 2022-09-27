@@ -23,7 +23,7 @@
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCertificateShowDTO">
         SELECT
-        pd.sku,
+        pd.sku_no,
         pd.images_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd

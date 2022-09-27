@@ -21,8 +21,8 @@ public class ProductManyDetailDTO {
     @ApiModelProperty(value = "产品图片")
     private String imagesUrl;
 
-    @ApiModelProperty(value = "spu")
-    private String spu;
+    @ApiModelProperty(value = "spuNo")
+    private String spuNo;
 
     @ApiModelProperty(value = "产品名称")
     private String name;

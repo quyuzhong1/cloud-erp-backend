@@ -25,8 +25,8 @@ public class ProductPackShowDTO implements Serializable {
     @ApiModelProperty(value = "产品sku图片")
     private String imagesUrl;
 
-    @ApiModelProperty(value = "sku")
-    private String sku;
+    @ApiModelProperty(value = "skuNo")
+    private String skuNo;
 
     @ApiModelProperty(value = "产品尺寸")
     private BigDecimal productSize;

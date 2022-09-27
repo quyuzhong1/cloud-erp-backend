@@ -7,7 +7,7 @@
     <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductDetailEntity">
         <id property="id" column="id" jdbcType="VARCHAR"/>
         <result property="productId" column="product_id" jdbcType="VARCHAR"/>
-        <result property="sku" column="sku" jdbcType="VARCHAR"/>
+        <result property="skuNo" column="sku_no" jdbcType="VARCHAR"/>
         <result property="name" column="name" jdbcType="VARCHAR"/>
         <result property="property" column="property" jdbcType="VARCHAR"/>
         <result property="planListingTime" column="plan_listing_time" jdbcType="DATE"/>
@@ -21,7 +21,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,product_id,sku,
+        id,product_id,sku_no,
         name,property,plan_listing_time,
         unit_id,product_state,create_time,
         create_user_id,update_time,update_user_id,
@@ -32,8 +32,8 @@
         SELECT
             pd."id",
             pd.images_url,
-            pi.spu,
-            pd.sku,
+            pi.spu_no,
+            pd.sku_no,
             pd."name",
             pp.actual_arrival_num,
             pp.arrival_state,
@@ -47,15 +47,15 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        WHERE pi.spu LIKE concat('%',#{sku},'%')
-        OR pd.sku LIKE concat('%',#{sku},'%')
+        WHERE pi.spu_no LIKE concat('%',#{sku},'%')
+        OR pd.sku_no LIKE concat('%',#{sku},'%')
     </select>
 
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT
             pi."id",
             pd.images_url,
-            pd.sku,
+            pd.sku_no,
             pd.product_state,
             pi."name",
             pi.charge_name,
@@ -81,7 +81,7 @@
         SELECT
             pi."id",
             pd.images_url,
-            pi.spu,
+            pi.spu_no,
             pi."name",
             pi.charge_name,
             pi.brand_name,

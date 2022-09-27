@@ -21,11 +21,11 @@ public class ProductDetailShowDTO implements Serializable {
     @ApiModelProperty(value = "图片")
     private String imagesUrl;
 
-    @ApiModelProperty(value = "spu")
-    private String spu;
+    @ApiModelProperty(value = "spuNo")
+    private String spuNo;
 
-    @ApiModelProperty(value = "sku")
-    private String sku;
+    @ApiModelProperty(value = "skuNo")
+    private String skuNo;
 
     @ApiModelProperty(value = "产品名称")
     private String name;

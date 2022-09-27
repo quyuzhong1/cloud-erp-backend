@@ -19,8 +19,8 @@ public class ProductManySpecDTO {
     @ApiModelProperty(value = "产品信息表id", required = true)
     private String productId;
 
-    @ApiModelProperty(value = "spu", required = true)
-    private String spu;
+    @ApiModelProperty(value = "spuNo", required = true)
+    private String spuNo;
 
     @ApiModelProperty(value = "产品名称(品名)", required = true)
     private String name;
