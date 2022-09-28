@@ -70,6 +70,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     @Override
     public void addSysTask(String productId) {
+        // 这是任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
             List<ProjectTaskEntity> saveList = new LinkedList<>();
@@ -82,6 +83,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
             this.saveBatch(saveList);
         }
+
+
 
 
     }

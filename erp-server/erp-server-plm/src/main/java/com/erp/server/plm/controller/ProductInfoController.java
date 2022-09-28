@@ -46,7 +46,7 @@ public class ProductInfoController extends BaseController {
     }
 
 
-    @PostMapping("/info")
+    @PostMapping("/productInfo")
     public ApiResult info(@RequestBody @Validated BaseIdDTO dto) {
         ProductDTO product = productInfoService.info(dto.getId());
         return success(product);

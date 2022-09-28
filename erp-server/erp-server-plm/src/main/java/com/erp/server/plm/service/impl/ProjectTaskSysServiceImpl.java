@@ -18,6 +18,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.ProjectTaskSysService;
 import com.erp.server.plm.service.SysTaskPhaseService;
+import com.erp.server.plm.service.TaskDeliveryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,9 @@ import java.util.stream.Collectors;
 @Service
 public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper, ProjectTaskSysEntity> implements ProjectTaskSysService {
 
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
 
     @Autowired
     private SysTaskPhaseService sysTaskPhaseService;
@@ -61,6 +65,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         List<finishDocsDTO> docsList = dto.getFinishDocsList();
         boolean flag = this.saveOrUpdate(entity);
+        //表示保存成功
+        if(flag){
+            taskDeliveryService.saveSysDeliveryDocs(entity.getId(),docsList);
+        }
         return flag;
     }
 

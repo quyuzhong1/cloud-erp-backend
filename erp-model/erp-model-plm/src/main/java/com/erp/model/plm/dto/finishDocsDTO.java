@@ -23,5 +23,5 @@ public class finishDocsDTO  implements Serializable {
     @NotBlank(message = "文档名不能为空")
     private String docsName;
 
-    private String lcId;
+
 }

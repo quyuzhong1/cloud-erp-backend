@@ -5,10 +5,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.DeliveryDocsDTO;
-import com.erp.model.plm.dto.DocsDTO;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
-import com.erp.model.plm.dto.setDocsPowerDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 
 import java.util.List;
@@ -29,4 +26,6 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     void setPower(setDocsPowerDTO dto);
 
     List<DeliveryDocsDTO> getByTaskId(BaseIdDTO dto);
+
+    void saveSysDeliveryDocs(String id, List<finishDocsDTO> docsList);
 }
