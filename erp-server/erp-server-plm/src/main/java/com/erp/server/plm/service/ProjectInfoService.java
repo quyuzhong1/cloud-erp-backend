@@ -1,6 +1,8 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 
@@ -24,4 +26,8 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     Boolean startProject(StartProjectDTO dto);
 
     List<Map<String,Object>> listMap();
+
+    void updateCharge(String projectId, String useName, String userId,Boolean isUpdate);
+
+    PagingVO paging(PagingDTO<ProductSearchDTO> dto);
 }

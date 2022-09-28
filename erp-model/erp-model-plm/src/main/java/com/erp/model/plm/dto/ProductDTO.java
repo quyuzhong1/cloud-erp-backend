@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Classname ProductDTO
@@ -60,6 +61,10 @@ public class ProductDTO implements Serializable {
     @NotNull(message = "产品类型不能为空")
     @StateEnumValue(intValues = {2, 1}, message = "产品类型有误")
     private Integer type;
+
+    //产品分类id集合
+    private List<String>   categoryIdList;
+
 
 
 }

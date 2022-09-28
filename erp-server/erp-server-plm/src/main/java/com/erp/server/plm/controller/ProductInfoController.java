@@ -2,6 +2,7 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
@@ -16,6 +17,8 @@ import com.erp.common.controller.BaseController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -35,11 +38,18 @@ public class ProductInfoController extends BaseController {
     @Autowired
     private ProjectInfoService projectInfoService;
 
-
+    //普通分页
     @PostMapping("/paging")
     public ApiResult paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
+    }
+
+
+    @PostMapping("/info")
+    public ApiResult info(@RequestBody @Validated BaseIdDTO dto) {
+        ProductDTO product = productInfoService.info(dto.getId());
+        return success(product);
     }
 
 
@@ -76,6 +86,12 @@ public class ProductInfoController extends BaseController {
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();
+    }
+
+    @GetMapping("/list")
+    public ApiResult list() {
+        List<Map<String, Object>> list = productInfoService.getListObjs();
+        return success(list);
     }
 
 

@@ -4,9 +4,19 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
 
-        SELECT p.id AS product_id, p.name,p.grade,p.person_in_charge AS ProductInCharge,p.project_status,p.brand,
-        p.approval_status,pi.responsible AS projectInCharge ,pi.end_time FROM product_info p LEFT JOIN project_info pi
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,p.project_status,p.brand_name,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
+        WHERE P.category_id=#{params.categoryId}
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND P.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
 
 
     </select>

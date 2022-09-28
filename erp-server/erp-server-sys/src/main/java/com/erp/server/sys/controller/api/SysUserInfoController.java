@@ -1,9 +1,9 @@
 package com.erp.server.sys.controller.api;
 
 
-
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.PagingVO;
@@ -31,7 +31,6 @@ public class SysUserInfoController extends BaseController {
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
-
 
 
     /**
@@ -94,7 +93,11 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
-
+    @RequestMapping("/findList")
+    public ApiResult findList(@RequestBody @Validated BaseSearchDTO dto) {
+        List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
+        return success(list);
+    }
 
 
 }

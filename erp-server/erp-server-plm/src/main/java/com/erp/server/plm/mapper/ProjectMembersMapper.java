@@ -1,8 +1,12 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProjectMembersMapper extends BaseMapper<ProjectMembersEntity> {
 
+    IPage paging(Page query,@Param("params") MemberPagingDTO params);
 }

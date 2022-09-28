@@ -18,6 +18,7 @@ import com.common.core.utils.password.PassEntity;
 import com.common.core.utils.password.PassHandler;
 import com.common.message.service.MailService;
 import com.common.web.service.RedisService;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -50,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -162,9 +164,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!passwordFlag) {
             return null;
         }
-        Integer userState=entity.getUserState();
+        Integer userState = entity.getUserState();
         //表示禁用
-        if(UserStateConstants.USER_DISABLE==userState){
+        if (UserStateConstants.USER_DISABLE == userState) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -173,7 +175,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
-        List<SysMenuVO> leftMenuList=sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
         List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
@@ -387,9 +389,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (Objects.isNull(userEntity)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
-       Integer userState=userEntity.getUserState();
+        Integer userState = userEntity.getUserState();
         //表示禁用
-        if(UserStateConstants.USER_DISABLE==userState){
+        if (UserStateConstants.USER_DISABLE == userState) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -522,10 +524,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     
     /**
      * 方法说明
+     *
+     * @return void
      * @author yl
      * @date 2022-08-03 11:55
-     解除 邮箱
-     * @return void
+     * 解除 邮箱
      */
     @Override
     public void removeEmail() {
@@ -535,6 +538,41 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             entity.setEmail("");
             this.updateById(entity);
         }
+    }
+
+    /**
+     * 获取所有用户信息
+     *
+     * @param
+     * @return java.util.List<com.erp.model.sys.dto.FindUserDTO>
+     * @author yl
+     * @date 2022-09-27 15:58
+     */
+    @Override
+    public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
+        List<FindUserDTO> resultList = new LinkedList<>();
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        FindUserDTO user = new FindUserDTO();
+        user.setIsMyState(1);
+        user.setUserId(loginUser.getUid());
+        user.setUserName(loginUser.getUserName());
+        resultList.add(user);
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysUserInfoEntity::getUid);
+        queryWrapper.select(SysUserInfoEntity::getUserName);
+        queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
+        if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
+            queryWrapper.like(SysUserInfoEntity::getUserName, dto.getSearchKeyword());
+        }
+        List<SysUserInfoEntity> list = this.list(queryWrapper);
+        for (SysUserInfoEntity item : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(item.getUid());
+            userDTO.setUserName(item.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
     }
 
     /**

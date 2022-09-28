@@ -19,8 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -83,7 +82,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryDTO> getTree() {
         List<BasicCategoryEntity> list = this.list();
-        List<BasicCategoryDTO> allList = BeanMapper.copyList(list,BasicCategoryDTO.class);
+        List<BasicCategoryDTO> allList = BeanMapper.copyList(list, BasicCategoryDTO.class);
         List<BasicCategoryDTO> treeList = allList.stream().
                 filter(item -> "0".equals(item.getPid())).
                 map(c -> {
@@ -107,6 +106,46 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public Boolean deleteById(String id) {
         checkId(id);
         return this.removeById(id);
+    }
+
+    /**
+     * 根据分类id 找出父类的id
+     *
+     * @param categoryId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-09-28 10:36
+     */
+    @Override
+    public List<String> getPidList(String categoryId) {
+        List<String> resultList = new LinkedList<>();
+        BasicCategoryEntity category = this.getById(categoryId);
+        resultList.add(categoryId);
+        List<BasicCategoryEntity> list = this.list();
+        if (!category.getPid().equals("0")) {
+            getPids(category.getPid(), resultList, list);
+        }
+        Collections.reverse(resultList);
+        return resultList;
+    }
+
+    /**
+     * 获取父级id 集合
+     *
+     * @param id
+     * @param resultList
+     * @return void
+     * @author yl
+     * @date 2022-09-28 10:52
+     */
+    private void getPids(String id, List<String> resultList, List<BasicCategoryEntity> list) {
+        resultList.add(id);
+        BasicCategoryEntity entity = list.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
+        if(!Objects.isNull(entity)&&!entity.getPid().equals("0")){
+            getPids(entity.getPid(),resultList,list);
+        }
+
+
     }
 
 

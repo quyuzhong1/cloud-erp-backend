@@ -1,16 +1,29 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.erp.model.plm.dto.ProjectMemberDTO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
+import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.server.plm.service.ProjectTaskService;
+
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -22,6 +35,14 @@ import java.util.List;
  */
 @Service
 public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper, ProjectMembersEntity> implements ProjectMembersService {
+
+
+    @Autowired
+    private ProjectInfoService projectInfoService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
 
     @Override
     public void add(String productId, String projectId, List<ProjectMemberDTO> members) {
@@ -98,11 +119,88 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     }
 
 
-
     @Override
     public List<ProjectMembersEntity> getListByProductId(String productId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
+
+
+    @Override
+    @Transactional
+    public Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto) {
+        Boolean flag = false;
+        String id = dto.getId();
+        ProjectMembersEntity entity = new ProjectMembersEntity();
+        entity.setProductId(dto.getProductId());
+        entity.setProjectId(dto.getProjectId());
+        entity.setMemberName(dto.getUseName());
+        entity.setMemberId(dto.getUserId());
+        entity.setRoleId(dto.getRoleId());
+        entity.setId(id);
+        Integer isCharge = dto.getIsCharge();
+        flag = this.saveOrUpdate(entity);
+        //当保存成功且是项目负责人 就要去更改项目负责人
+        Boolean isUpdate = false;
+        if (StringUtils.isNotBlank(id) && flag) {
+            isUpdate = true;
+        }
+        if (IsConstant.YES.equals(isCharge) && flag) {
+            projectInfoService.updateCharge(dto.getProjectId(), dto.getUseName(), dto.getUserId(), isUpdate);
+        }
+
+        return flag;
+
+    }
+
+
+    /**
+     * 分页获取项目成员
+     *
+     * @param dto
+     * @return com.erp.common.vo.PagingVO
+     * @author yl
+     * @date 2022-09-26 18:29
+     */
+    @Override
+    public PagingVO paging(PagingDTO<MemberPagingDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        MemberPagingDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+        List<MemberPagingShowDTO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            ProjectInfoEntity projectInfo = projectInfoService.getById(params.getProjectId());
+            String chargeId = projectInfo.getChargeId();
+            //获取到任务处理的情况
+            List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProjectId());
+            for (MemberPagingShowDTO item : list) {
+                //如果包含该员工 就是 项目负责二年
+                if (chargeId.contains(item.getMemberId())) {
+                    item.setIsCharge(IsConstant.YES);
+                } else {
+                    item.setIsCharge(IsConstant.NO);
+                }
+                TaskConductDTO taskConduct = conductList.stream().filter(c -> c.getMembersId().equals(item.getMemberId())).findFirst().orElse(null);
+                Integer totalTaskCount = 0;
+                Integer finishTaskCount = 0;
+                Integer ingTaskCount = 0;
+                Integer postponeTaskCount = 0;
+                if (!Objects.isNull(taskConduct)) {
+                    totalTaskCount = taskConduct.getTotalTaskCount();
+                    finishTaskCount = taskConduct.getFinishTaskCount();
+                    ingTaskCount = taskConduct.getIngTaskCount();
+                    postponeTaskCount = taskConduct.getPostponeTaskCount();
+                }
+                item.setTotalTaskCount(totalTaskCount);
+                item.setFinishTaskCount(finishTaskCount);
+                item.setIngTaskCount(ingTaskCount);
+                item.setPostponeTaskCount(postponeTaskCount);
+            }
+        }
+        return new PagingVO(pageData);
+
+    }
+
+
 }

@@ -14,8 +14,8 @@ import java.util.Date;
  * @Created by yl
  */
 @Data
-@TableName("sys_product_field")
-public class SysProductFieldEntity implements Serializable {
+@TableName("product_field")
+public class ProductFieldEntity implements Serializable {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
@@ -42,6 +42,13 @@ public class SysProductFieldEntity implements Serializable {
 
     @TableField("content")
     private String content;
+
+    @TableField("is_sys")
+    private Integer isSys;
+
+
+    @TableField("product_id")
+    private String productId;
 
 
     @TableField("create_user_id")

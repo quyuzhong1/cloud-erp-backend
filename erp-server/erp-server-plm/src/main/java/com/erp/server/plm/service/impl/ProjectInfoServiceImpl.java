@@ -1,16 +1,21 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.SourceType;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ProductInfoStateEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
@@ -71,11 +76,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
         //产品名
         result.setProductName(entity.getName());
-        Map<String, Integer> taskMap = getTaskCount(productId,taskList,new Date());
-        Integer totalTaskCount=taskMap.get("totalTaskCount");
-        Integer finishTaskCount=taskMap.get("finishTaskCount");
-        Integer postponeTaskCount=taskMap.get("postponeTaskCount");
-        Integer unfinishedTaskCount=taskMap.get("unfinishedTaskCount");
+        Map<String, Integer> taskMap = getTaskCount(productId, taskList, new Date());
+        Integer totalTaskCount = taskMap.get("totalTaskCount");
+        Integer finishTaskCount = taskMap.get("finishTaskCount");
+        Integer postponeTaskCount = taskMap.get("postponeTaskCount");
+        Integer unfinishedTaskCount = taskMap.get("unfinishedTaskCount");
         int finishRatio = 0;
         int postponeRatio = 0;
         if (totalTaskCount != 0) {
@@ -99,8 +104,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
 
     //获取到任务的数量
-    public Map<String, Integer> getTaskCount(String productId,List<ProjectTaskEntity> taskList, Date date) {
-        if(CollectionUtils.isEmpty(taskList)&& StringUtils.isNotBlank(productId)){
+    public Map<String, Integer> getTaskCount(String productId, List<ProjectTaskEntity> taskList, Date date) {
+        if (CollectionUtils.isEmpty(taskList) && StringUtils.isNotBlank(productId)) {
             taskList = projectTaskService.getByProductId(productId);
         }
         //完成任务数
@@ -178,7 +183,82 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
 
     /**
-     * 方法说明
+     * 修改项目负责人 望里面添加
+     *
+     * @param projectId
+     * @param useName
+     * @param userId
+     * @return void
+     * @author yl
+     * @date 2022-09-26 18:20
+     */
+    @Override
+    public void updateCharge(String projectId, String useName, String userId, Boolean isUpdate) {
+        ProjectInfoEntity entity = this.getById(projectId);
+        if (!Objects.isNull(entity)) {
+            //当是修改的时候直接覆盖
+            if (isUpdate) {
+                entity.setChargeName(useName);
+                entity.setChargeId(userId);
+            } else {
+                String chargeId = entity.getChargeId();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    chargeId = chargeId + "," + userId;
+                }
+                String chargeName = entity.getChargeName();
+                if (StringUtils.isNotBlank(chargeName)) {
+                    chargeName = chargeName + "," + useName;
+                }
+                entity.setChargeName(chargeName);
+                entity.setChargeId(chargeId);
+            }
+            this.updateById(entity);
+        }
+    }
+
+
+    /**
+     * 项目分页
+     * @author yl
+     * @date 2022-09-28 10:06
+     * @param dto
+     * @return com.erp.common.vo.PagingVO
+     */
+
+    @Override
+    public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        ProductSearchDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+        List<ProductShowDTO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            //获取到所有出产品id
+            List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
+            for (ProductShowDTO item : list) {
+                //这是立项任务
+                int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                //这是项目任务
+                int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                //总的任务数
+                int taskCount = approvalTaskCount + projectTaskCount;
+                item.setTaskCount(taskCount);
+                int approvalProgress = 0;
+                int projectProgress = 0;
+                if (taskCount != 0) {
+                    approvalProgress = (approvalTaskCount / taskCount) * 100;
+                    projectProgress = (projectTaskCount / taskCount) * 100;
+                }
+                item.setApprovalProgress(approvalProgress);
+                item.setProjectProgress(projectProgress);
+            }
+        }
+        return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 获取近三十天 数据
      *
      * @param days
      * @param taskList

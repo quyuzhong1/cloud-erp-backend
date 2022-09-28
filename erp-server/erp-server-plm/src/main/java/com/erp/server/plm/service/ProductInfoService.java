@@ -8,6 +8,8 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -36,6 +38,9 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     void updateProjectStatus(String productId, Integer state);
 
+    List<Map<String, Object>> getListObjs();
+
+    ProductDTO info(String id);
     /**
      * @Description 无规格sku修改产品信息
      * @Author Luo_WG

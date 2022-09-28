@@ -26,14 +26,12 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -288,7 +286,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.save(taskEntity);
         if (flag) {
             //保存交付文档
-            taskDeliveryService.saveDeliveryDocs(loginUser.getUid(),taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+            taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
         }
         return flag;
     }
@@ -351,6 +349,60 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     
+    /**
+     * 根据产品id 获取到任务处理情况
+     *
+     * @param projectId
+     * @return java.util.List<com.erp.model.plm.dto.TaskConductDTO>
+     * @author yl
+     * @date 2022-09-27 9:47
+     */
+    @Override
+    public List<TaskConductDTO> getTaskConductList(String projectId) {
+        Date date = new Date();
+        List<TaskConductDTO> resultList = new LinkedList<>();
+        List<ProjectTaskEntity> list = this.getByProjectId(projectId);
+        //以成员分组
+        Map<String, List<ProjectTaskEntity>> map = list.stream().
+                collect(Collectors.groupingBy(ProjectTaskEntity::getChargeId));
+        for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
+            TaskConductDTO dto = new TaskConductDTO();
+            dto.setMembersId(item.getKey());
+            List<ProjectTaskEntity> taskList = list.stream().filter(t->t.getChargeId().equals(item.getKey())).collect(Collectors.toList());
+
+            //完成任务数
+            int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+            //进行中
+            int ingTaskCount = taskList.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+            //总任务数
+            int totalTaskCount = taskList.size();
+            //延期的任务数
+            int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+
+            dto.setTotalTaskCount(totalTaskCount);
+            dto.setFinishTaskCount(finishTaskCount);
+            dto.setIngTaskCount(ingTaskCount);
+            dto.setPostponeTaskCount(postponeTaskCount);
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 根据项目id 获取列表
+     *
+     * @param projectId
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
+     * @author yl
+     * @date 2022-09-27 11:12
+     */
+    private List<ProjectTaskEntity> getByProjectId(String projectId) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getProjectId, projectId);
+        return this.list(queryWrapper);
+    }
+
 
     /**
      * 检查任务名是否重复

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.model.plm.entity.SysProductFieldEntity;
+import com.erp.model.plm.entity.ProductFieldEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,6 +15,8 @@ import org.apache.ibatis.annotations.Param;
  * @Created by yl
  */
 @Mapper
-public interface SysProductFieldMapper extends BaseMapper<SysProductFieldEntity> {
-    IPage paging(Page query, @Param("params") BaseSearchDTO params,@Param("flagState") Integer state);
+public interface ProductFieldMapper extends BaseMapper<ProductFieldEntity> {
+    IPage sysPaging(Page query, @Param("params") BaseSearchDTO params,@Param("flagState") Integer state);
+
+    IPage paging(Page query,@Param("params") BaseSearchDTO params, @Param("flagState")Integer state);
 }

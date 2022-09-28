@@ -44,6 +44,10 @@ public class SysMenuVO implements Serializable {
     private String menuCode;
 
 
+    //高亮显示id
+    private String selectLightId;
+
+
     /**
      * 菜单链接
      */

@@ -5,4 +5,20 @@
         SELECT id,product_name AS name FROM  project_info
     </select>
 
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,p.project_status,p.brand_name,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p INNER JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE P.category_id=#{params.categoryId}
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND P.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+    </select>
+
 </mapper>

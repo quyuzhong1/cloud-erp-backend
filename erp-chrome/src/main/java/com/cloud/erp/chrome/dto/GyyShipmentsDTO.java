@@ -3,7 +3,6 @@ package com.cloud.erp.chrome.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.annotation.security.DenyAll;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 

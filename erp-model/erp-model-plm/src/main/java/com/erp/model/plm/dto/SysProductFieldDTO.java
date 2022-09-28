@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SysProductFieldDTO  {
+public class SysProductFieldDTO {
 
 
     private String id;

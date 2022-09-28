@@ -25,4 +25,6 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     List<BasicCategoryDTO> getTree();
 
     Boolean deleteById(String id);
+
+    List<String> getPidList(String categoryId);
 }

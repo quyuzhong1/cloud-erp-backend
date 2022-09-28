@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -21,9 +22,10 @@ import java.util.Map;
 /**
  * FastDFS文件上传下载工具类
  */
+@Slf4j
 public class FastDFSClientUtil {
 
-	private static final String CONFIG_FILENAME = "config.properties";
+	private static final String CONFIG_FILENAME = "config/fastdfs-client.properties";
 	private static StorageClient1 storageClient1 = null;
 
 	// 初始化FastDFS Client
@@ -72,8 +74,9 @@ public class FastDFSClientUtil {
 			return uploadFile(fileName, metaList, buff);
 
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			log.error("uploadFile  ",e);
 		}
+		return null;
 	}
 
 	private static String uploadFile(String fileName, Map<String, String> metaList, byte[] buff) throws IOException, MyException {

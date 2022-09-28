@@ -21,7 +21,7 @@ public class SysMenuEntity implements Serializable {
 	/**
 	 * $column.comments
 	 */
-	@TableId(type = IdType.INPUT)
+	@TableId(type = IdType.ASSIGN_ID)
 	private String menuId;
 	/**
 	 * 父id
@@ -59,6 +59,8 @@ public class SysMenuEntity implements Serializable {
 	 * 类型 1：目录   2：菜单   3：按钮  4：功能
 	 */
 	private Integer type;
+
+	private String selectLightId;
 
 
 

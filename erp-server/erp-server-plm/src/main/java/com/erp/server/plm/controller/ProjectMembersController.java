@@ -2,12 +2,15 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.saveOrUpdateProjectMemberDTO;
+import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.erp.common.controller.BaseController;
 
 /**
@@ -23,12 +26,23 @@ import com.erp.common.controller.BaseController;
 public class ProjectMembersController extends BaseController {
 
     @Autowired
-    private ProjectMembersService  projectMembersService;
+    private ProjectMembersService projectMembersService;
 
     @GetMapping("/list")
-    public ApiResult getList(String productId){
-
+    public ApiResult getList(String productId) {
         return success(projectMembersService.getListByProductId(productId));
+    }
+
+    @PostMapping("/paging")
+    public ApiResult paging(@RequestBody @Validated PagingDTO<MemberPagingDTO> dto) {
+        PagingVO pagingVO = projectMembersService.paging(dto);
+        return success(pagingVO);
+    }
+
+    @PostMapping("/saveOrUpdate")
+    public ApiResult save(@RequestBody @Validated saveOrUpdateProjectMemberDTO dto) {
+        Boolean flag = projectMembersService.saveOrUpdateMember(dto);
+        return flag == true ? success() : failure();
     }
 }
 

@@ -2,14 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProjectMembersMapper">
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProjectMembersEntity">
-        <id column="id" property="id" />
-        <result column="member_id" property="memberId" />
-        <result column="member_name" property="memberName" />
-        <result column="item_id" property="itemId" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
-    </resultMap>
+    <select id="paging" resultType="com.erp.model.plm.dto.MemberPagingShowDTO">
+
+        SELECT pm.id, pm.member_id,pm.member_name,pr.name AS roleName,pr.id AS roleId,pm.create_time
+        FROM project_members pm
+        LEFT JOIN project_role pr on pm.role_id=pr.id
+        WHERE pm.project_id =#{params.projectId}
+        <if test="params.projectRoleId !='' and params.projectRoleId!=null">
+          pm.role_id=#{params.projectRoleId}
+        </if>
+
+    </select>
 
 </mapper>

@@ -5,16 +5,15 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldDTO;
-import com.erp.server.plm.service.SysProductFieldService;
+import com.erp.server.plm.service.ProductFieldService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 系统设置字段
@@ -27,23 +26,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class SysProductFieldController extends BaseController {
 
     @Autowired
-    private SysProductFieldService sysProductFieldService;
+    private ProductFieldService productFieldService;
 
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated SysProductFieldDTO dto) {
-        Boolean flag = sysProductFieldService.saveOrUpdateField(dto);
+        Boolean flag = productFieldService.saveOrUpdateSysField(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
-        Boolean flag = sysProductFieldService.updateState(dto);
+        Boolean flag = productFieldService.updateState(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/paging")
     public ApiResult paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
-        PagingVO pagingVO = sysProductFieldService.paging(dto);
+        PagingVO pagingVO = productFieldService.sysPaging(dto);
         return success(pagingVO);
+    }
+
+    @GetMapping("/list")
+    public ApiResult paging() {
+       List<Map<String,Object>> list=productFieldService.sysList();
+        return success(list);
     }
 }

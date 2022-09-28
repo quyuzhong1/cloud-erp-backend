@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private BasicCategoryService basicCategoryService ;
 
     /**
      * 查询 分类id 下有多少产品
@@ -284,6 +288,36 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param dto:产品基础信息请求参数
      * @return java.lang.Boolean
      **/
+    @Override
+    public List<Map<String, Object>> getListObjs() {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProductInfoEntity::getId, ProductInfoEntity::getName);
+        return this.listMaps(queryWrapper);
+    }
+
+
+    /**
+     * 获取产品信息
+     *
+     * @param id
+     * @return com.erp.model.plm.dto.ProductDTO
+     * @author yl
+     * @date 2022-09-28 10:21
+     */
+    @Override
+    public ProductDTO info(String id) {
+        ProductInfoEntity entity = this.getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        ProductDTO result=new ProductDTO();
+        BeanMapper.copy(entity,result);
+        String categoryId=result.getCategoryId();
+        List<String> categoryIdList=basicCategoryService.getPidList(categoryId);
+        result.setCategoryIdList(categoryIdList);
+        return result;
+    }
+
     @Override
     public Boolean updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();

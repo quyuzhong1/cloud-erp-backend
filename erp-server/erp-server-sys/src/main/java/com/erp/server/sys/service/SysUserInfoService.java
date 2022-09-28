@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.email.dto.EmailVerifyCodeDTO;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;
@@ -79,5 +80,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void sedEmail(EmailVerifyCodeDTO dto);
 
     void removeEmail();
+
+    List<FindUserDTO> getUserList(BaseSearchDTO dto);
 }
 

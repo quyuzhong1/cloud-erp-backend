@@ -22,9 +22,10 @@ public class ProductShowDTO implements Serializable {
     private Integer approvalStatus;
     private Integer projectStatus;
     private Date endTime;
-    private String projectInCharge;
-    private String productInCharge;
-    private String brand;
+    private String projectChargeName;
+
+    private String productChargeName;
+    private String brandName;
     private Integer approvalProgress;
     private Integer projectProgress;
     private Integer taskCount;

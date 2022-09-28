@@ -1,6 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.saveOrUpdateProjectMemberDTO;
+import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.model.plm.dto.ProjectMemberDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 
@@ -25,4 +29,8 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     void saveMemberByTemplate(String productId,String projectId, String flagId);
 
     List<ProjectMembersEntity> getListByProductId(String productId);
+
+    Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto);
+
+    PagingVO paging(PagingDTO<MemberPagingDTO> dto);
 }
