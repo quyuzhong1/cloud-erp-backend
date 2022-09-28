@@ -12,6 +12,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -65,7 +66,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private TemplateTaskService templateTaskService;
 
     @Autowired
-    private BasicCategoryService basicCategoryService ;
+    private BasicCategoryService basicCategoryService;
+
+    @Autowired
+    private ProjectInfoService projectInfoService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -256,7 +260,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //任务阶段
             phaseService.savePhase(templateId, productId);
 
-            //保存模板任务
+            //保存模板任务 同时保存了对应交付文档
             templateTaskService.saveTemplateTask(templateId, productId);
         }
 
@@ -282,11 +286,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     /**
+     * @param :产品基础信息请求参数
+     * @return java.lang.Boolean
      * @Description 无规格sku修改产品信息
      * @Author Luo_WG
      * @Date 2022/9/21 18:44
-     * @param dto:产品基础信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     public List<Map<String, Object>> getListObjs() {
@@ -307,13 +311,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public ProductDTO info(String id) {
         ProductInfoEntity entity = this.getById(id);
-        if(Objects.isNull(entity)){
+        if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-        ProductDTO result=new ProductDTO();
-        BeanMapper.copy(entity,result);
-        String categoryId=result.getCategoryId();
-        List<String> categoryIdList=basicCategoryService.getPidList(categoryId);
+        ProductDTO result = new ProductDTO();
+        BeanMapper.copy(entity, result);
+        String categoryId = result.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
         result.setCategoryIdList(categoryIdList);
         return result;
     }
@@ -323,6 +327,60 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
         return this.saveOrUpdate(productInfoEntity);
+    }
+
+
+    /**
+     * 产品列表编辑数据
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-09-28 17:27
+     */
+    @Override
+    public void updateProduct(UpdateProductDTO dto) {
+        ProductInfoEntity product = this.getById(dto.getProductId());
+        if (!Objects.isNull(product)) {
+            String grade = dto.getGrade();
+            String productChargeId = dto.getProductChargeId();
+            String productChargeName = dto.getProductChargeId();
+            Integer approvalStatus = dto.getApprovalStatus();
+            Integer projectStatus = dto.getProjectStatus();
+            if (StringUtils.isNotBlank(grade)) {
+                product.setGrade(grade);
+            }
+            if (StringUtils.isNotBlank(productChargeId)) {
+                product.setChargeId(productChargeId);
+            }
+            if (StringUtils.isNotBlank(productChargeName)) {
+                product.setChargeName(productChargeName);
+            }
+            if (approvalStatus != null) {
+                product.setApprovalStatus(approvalStatus);
+            }
+            if (projectStatus != null) {
+                product.setProjectStatus(projectStatus);
+            }
+            this.updateById(product);
+        }
+
+        //项目信息
+        if (StringUtils.isNotBlank(dto.getProjectId())) {
+            ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
+            if (!Objects.isNull(project)) {
+                String projectChargeId = dto.getProjectChargeId();
+                String projectChargeName = dto.getProjectChargeName();
+                if (StringUtils.isNotBlank(projectChargeId)) {
+                    project.setChargeId(projectChargeId);
+                }
+                if (StringUtils.isNotBlank(projectChargeName)) {
+                    project.setChargeName(projectChargeName);
+                }
+                projectInfoService.updateById(project);
+            }
+        }
+
     }
 
 }

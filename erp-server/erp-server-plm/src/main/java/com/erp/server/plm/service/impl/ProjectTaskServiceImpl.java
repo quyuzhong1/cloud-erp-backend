@@ -58,6 +58,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private TaskDocsFinishService finishService;
 
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+
 
     /**
      * 添加系统的产品任务
@@ -70,21 +73,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     @Override
     public void addSysTask(String productId) {
-        // 这是任务
+        // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
+        //添加立项阶段
+        String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<ProjectTaskEntity> saveList = new LinkedList<>();
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(productId);
-                saveList.add(entity);
+                entity.setPhaseId(taskPhaseId);
+                entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
+                boolean flag = this.save(entity);
+                if (flag) {
+                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId());
+                }
             }
-            this.saveBatch(saveList);
+
         }
-
-
 
 
     }
@@ -351,7 +358,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return this.update(updateWrapper);
     }
 
-    
+
     /**
      * 根据产品id 获取到任务处理情况
      *
@@ -371,7 +378,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
             TaskConductDTO dto = new TaskConductDTO();
             dto.setMembersId(item.getKey());
-            List<ProjectTaskEntity> taskList = list.stream().filter(t->t.getChargeId().equals(item.getKey())).collect(Collectors.toList());
+            List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().equals(item.getKey())).collect(Collectors.toList());
 
             //完成任务数
             int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();

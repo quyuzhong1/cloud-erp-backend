@@ -52,6 +52,12 @@ public class ProductInfoController extends BaseController {
         return success(product);
     }
 
+    @PostMapping("/updateProduct")
+    public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
+      productInfoService.updateProduct(dto);
+        return success();
+    }
+
 
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
@@ -92,6 +98,13 @@ public class ProductInfoController extends BaseController {
     public ApiResult list() {
         List<Map<String, Object>> list = productInfoService.getListObjs();
         return success(list);
+    }
+
+
+    //导出数据
+    @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
+    public void exportProductData() {
+
     }
 
 

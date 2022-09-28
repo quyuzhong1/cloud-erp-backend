@@ -28,4 +28,6 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<DeliveryDocsDTO> getByTaskId(BaseIdDTO dto);
 
     void saveSysDeliveryDocs(String id, List<finishDocsDTO> docsList);
+
+    void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId);
 }

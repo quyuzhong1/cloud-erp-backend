@@ -49,4 +49,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateSpec(ProductInfoDTO dto);
+
+    void updateProduct(UpdateProductDTO dto);
 }

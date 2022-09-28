@@ -39,6 +39,10 @@ public class ProjectPhaseEntity implements Serializable {
     @TableField("name")
     private String name;
 
+
+     //是否来源系统
+    @TableField("is_source_sys")
+    private Integer isSourceSys;
     /**
      * 创建时间
      */

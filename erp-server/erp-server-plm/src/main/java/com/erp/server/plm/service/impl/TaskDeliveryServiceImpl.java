@@ -157,6 +157,50 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
 
     /**
+     * 添加产品的时候 复制产品任务过来
+     *
+     * @param productId
+     * @param taskId
+     * @param sysTaskId
+     * @return void
+     * @author yl
+     * @date 2022-09-28 15:32
+     */
+    @Override
+    public void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId) {
+        //根据系统的任务id 获取到交付文档
+        List<TaskDeliveryDocsEntity> list = getListByTaskId(sysTaskId);
+        List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
+        for (TaskDeliveryDocsEntity item : list) {
+            TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
+            entity.setProductId(productId);
+            entity.setDocsNameId(item.getDocsNameId());
+            entity.setDocsName(item.getDocsName());
+            entity.setTaskId(taskId);
+            entity.setIsSys(item.getIsSys());
+            saveList.add(entity);
+        }
+        this.saveBatch(saveList);
+
+    }
+
+    /**
+     * 根据任务id 获取对应要交付的文档
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.TaskDeliveryDocsEntity>
+     * @author yl
+     * @date 2022-09-28 15:42
+     */
+    public List<TaskDeliveryDocsEntity> getListByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
+
+    }
+
+
+    /**
      * 根据任务id 删除 文档
      *
      * @param taskId

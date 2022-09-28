@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProjectTaskService taskService;
 
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
     /**
      * 保存模板任务
      *
@@ -42,14 +46,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public void saveTemplateTask(String templateId, String productId) {
         List<ProjectTaskEntity> projectTaskList = taskService.getByProductId(productId);
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
-            List<TemplateTaskEntity> saveList = new LinkedList<>();
             for (ProjectTaskEntity item : projectTaskList) {
                 TemplateTaskEntity entity = new TemplateTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
-                saveList.add(entity);
+                this.save(entity);
+                taskDeliveryService.saveTaskDeliveryDocs("",entity.getId(),item.getId());
+
             }
-            this.saveBatch(saveList);
+
         }
 
     }

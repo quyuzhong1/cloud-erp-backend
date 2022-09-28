@@ -46,11 +46,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     @Override
     public List<TaskPhaseDTO> findList(BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = new ArrayList<>();
-        //先从系统里面取
-        List<TaskPhaseDTO> sysList = sysTaskPhaseService.getSysTaskPhase();
-        if (CollectionUtils.isNotEmpty(sysList)) {
-            resultList.addAll(sysList);
-        }
         String productId = dto.getProductId();
         //根据产品id 获取到对应的阶段名
         List<TaskPhaseDTO> productList = getTaskPhaseByProductId(productId);
@@ -118,6 +113,25 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             this.saveBatch(list);
         }
 
+    }
+
+    
+    /**
+     * 添加立项阶段
+     * @author yl
+     * @date 2022-09-28 16:30
+     * @param productId
+     * @param phaseName
+     * @return java.lang.String
+     */
+    @Override
+    public String saveTaskPhase(String productId, String phaseName,Integer isSourceSys) {
+        ProjectPhaseEntity entity=new ProjectPhaseEntity();
+        entity.setProductId(productId);
+        entity.setName(phaseName);
+        entity.setIsSourceSys(isSourceSys);
+        this.save(entity);
+        return entity.getId();
     }
 
 
