@@ -303,13 +303,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         this.update(updateWrapper);
     }
 
-    /**
-     * @param :产品基础信息请求参数
-     * @return java.lang.Boolean
-     * @Description 无规格sku修改产品信息
-     * @Author Luo_WG
-     * @Date 2022/9/21 18:44
-     **/
     @Override
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -340,14 +333,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return result;
     }
 
+    /**
+     * @param :产品基础信息请求参数
+     * @return java.lang.Boolean
+     * @Description 无规格sku修改产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/21 18:44
+     **/
     @Override
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
+        //检查名字是否重复
+        checkName(dto.getName());
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }
-
     /**
      * 产品列表编辑数据
      *
