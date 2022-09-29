@@ -360,7 +360,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
-     * 根据产品id 获取到任务处理情况
+     * 根据产品id 获取到成员任务处理情况
      *
      * @param projectId
      * @return java.util.List<com.erp.model.plm.dto.TaskConductDTO>
@@ -400,6 +400,35 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
+     * 根据产品id 获取到任务完成情况
+     *
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.dto.TaskConductDTO>
+     * @author yl
+     * @date 2022-09-27 9:47
+     */
+    @Override
+    public TaskConductDTO getTaskConduct(String productId) {
+        Date date = new Date();
+        List<ProjectTaskEntity> list = this.getByProductId(productId);
+        TaskConductDTO dto = new TaskConductDTO();
+        //完成任务数
+        int finishTaskCount = list.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //进行中
+        int ingTaskCount = list.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //总任务数
+        int totalTaskCount = list.size();
+        //延期的任务数
+        int postponeTaskCount = list.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        dto.setTotalTaskCount(totalTaskCount);
+        dto.setFinishTaskCount(finishTaskCount);
+        dto.setIngTaskCount(ingTaskCount);
+        dto.setPostponeTaskCount(postponeTaskCount);
+        return dto;
+    }
+
+
+    /**
      * 根据产品id 集合获取到导出的任务集合
      *
      * @param productIds
@@ -413,7 +442,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         for (TaskExcelDTO item : list) {
             String taskState = item.getTaskState();
             Integer state = Integer.parseInt(taskState);
-            String stateName =TaskStateEnum.getName(state);
+            String stateName = TaskStateEnum.getName(state);
             item.setTaskState(stateName);
         }
         return list;

@@ -45,14 +45,14 @@ public class ProjectTaskSysEntity implements Serializable {
     /**
      * 负责人id
      */
-    @TableField("person_in_charge_id")
-    private String personInChargeId;
+    @TableField("charge_id")
+    private String chargeId;
 
     /**
      * 负责人名
      */
-    @TableField("person_in_charge")
-    private String personInCharge;
+    @TableField("charge_name")
+    private String chargeName;
 
     /**
      * 前置任务id

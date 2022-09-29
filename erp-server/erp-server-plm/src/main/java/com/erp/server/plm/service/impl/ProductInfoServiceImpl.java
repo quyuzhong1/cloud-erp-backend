@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -8,6 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -18,6 +22,8 @@ import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.ApprovalStatusEnum;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +38,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -75,6 +85,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired(required = false)
     private HttpServletResponse response;
+
+    @Autowired
+    private RedisService redisService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -403,41 +416,135 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //产品id集合
         List<String> productIds = dto.getProductIds();
         String exportData = dto.getExportData();
+        String fileName = getFileName(exportData);
         //获取所有的
         if (exportData.equals("all")) {
+            List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
+            List<ProductExcelDTO> productList = getProductExcelList(productIds);
+            exportExcel(fileName, taskExcelList, productList);
 
         }
         //获取任务
         if (exportData.equals("task")) {
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
-            ExcelUtil.export("2022-09-29","任务列表",taskExcelList,TaskExcelDTO.class,response);
+            ExcelUtil.export(fileName, "任务列表", taskExcelList, TaskExcelDTO.class, response);
         }
 
         //获取产品
         if (exportData.equals("product")) {
-
-            // ExcelUtil.export("2022-09-29","任务列表",taskExcelList,TaskExcelDTO.class,response);
+            List<ProductExcelDTO> productList = getProductExcelList(productIds);
+            ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
         }
 
 
     }
 
+    /**
+     * 获取文件名
+     *
+     * @param exportData
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-09-29 16:36
+     */
+    private String getFileName(String exportData) {
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        if ("all".equals(exportData)) {
+            sb.append("产品管理");
+        }
+        if ("task".equals(exportData)) {
+            sb.append("任务管理");
+        }
+        if ("product".equals(exportData)) {
+            sb.append("产品管理");
+        }
+        sb.append(date);
+        String redisKey="file:name:"+date;
+        String last=redisService.getCacheObject(redisKey);
+        String lastNo="1";
+        if(StringUtils.isBlank(last)){
+        }
+       // redisService.setCacheObject(redisKey,lastNo,1, TimeUnit.DAYS);
 
-    
+        return sb.toString();
+
+
+    }
+
+    /**
+     * 导出数据
+     *
+     * @param taskExcelList
+     * @param productList
+     * @return void
+     * @author yl
+     * @date 2022-09-29 14:55
+     */
+    private void exportExcel(String fileName, List<TaskExcelDTO> taskExcelList, List<ProductExcelDTO> productList) {
+        response.setStatus(200);
+        response.setCharacterEncoding("utf-8");
+
+        OutputStream outputStream = null;
+        ExcelWriter excelWriter = null;
+        fileName = fileName.concat(".xlsx");
+        try {
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "utf-8"));
+            outputStream = response.getOutputStream();
+            excelWriter = EasyExcel.write(outputStream)
+                    .build();
+            WriteSheet productSheet = EasyExcel.writerSheet("产品列表").head(ProductExcelDTO.class).build();
+            excelWriter.write(productList, productSheet);
+            WriteSheet taskSheet = EasyExcel.writerSheet("任务列表").head(TaskExcelDTO.class).build();
+            excelWriter.write(taskExcelList, taskSheet);
+        } catch (Exception e) {
+            log.error(" exportExcel", e);
+            e.printStackTrace();
+        } finally {
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.flush();
+                    outputStream.close();
+                } catch (IOException e) {
+                    log.error("导出数据关闭流异常", e);
+                }
+            }
+        }
+
+    }
+
+
     /**
      * 获取到产品导出的信息
-     * @author yl
-     * @date 2022-09-29 12:27
+     *
      * @param productIds
      * @return java.util.List<com.erp.model.plm.dto.ProductExcelDTO>
+     * @author yl
+     * @date 2022-09-29 12:27
      */
-    public List<ProductExcelDTO> getProductExcelList(List<String> productIds){
+    public List<ProductExcelDTO> getProductExcelList(List<String> productIds) {
         List<ProductExcelDTO> productExcelList = baseMapper.getExportProduct(productIds);
-        for(ProductExcelDTO  item:productExcelList){
-            String productStatus=item.getProductStatus();
+        for (ProductExcelDTO item : productExcelList) {
+            String productStatus = item.getProductStatus();
+            Integer status = Integer.parseInt(productStatus);
+            String productStatusNmae = ApprovalStatusEnum.getName(status);
+            item.setProductStatus(productStatusNmae);
+            //项目状态
+            String projectStatus = item.getProjectStatus();
+
+            Integer projectState = Integer.parseInt(projectStatus);
+            String projectStateName = ProjectStateEnum.getName(projectState);
+            item.setProjectStatus(projectStateName);
+            TaskConductDTO conduct = projectTaskService.getTaskConduct(item.getProductId());
+            item.setTaskCount(conduct.getTotalTaskCount());
+            item.setTaskFinishCount(conduct.getFinishTaskCount());
 
         }
-        return null;
+        return productExcelList;
     }
+
 
 }

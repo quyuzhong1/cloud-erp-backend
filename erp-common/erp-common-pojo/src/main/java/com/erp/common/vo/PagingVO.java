@@ -12,7 +12,7 @@ import java.util.List;
  * @Date 2022-07-12 11:19
  * @Created by yl
  */
-public class PagingVO<T> extends Page<T> {
+public class PagingVO implements Serializable {
 
     /**
      * 总记录数

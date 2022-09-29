@@ -38,13 +38,13 @@ public class SysTaskPagingDTO implements Serializable {
      * 负责人id
      */
     @NotBlank(message = "负责人id 不能为空")
-    private String personInChargeId;
+    private String chargeId;
 
     /**
      * 负责人名
      */
     @NotBlank(message = "负责人不能为空")
-    private String personInCharge;
+    private String chargeName;
 
     /**
      * 前置任务id
@@ -80,9 +80,9 @@ public class SysTaskPagingDTO implements Serializable {
     private String phaseId;
 
     /**
-     * 是否是系统任务 1 是  0 不是
+     * 是否是固定任务 1 是  0 不是
      */
-    private Integer isSys;
+    private Integer isFixed;
 
     /**
      * 任务描述

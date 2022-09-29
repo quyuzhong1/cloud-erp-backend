@@ -1,37 +1,39 @@
 package com.erp.server.plm.enums;
 
 /**
- * @Classname 项目状态
+ * @Classname  立项状态
  * @Description TODO
- * @Date 2022-09-21 11:12
+ * @Date 2022-09-29 14:13
  * @Created by yl
  */
-public enum ProjectStateEnum {
+public enum ApprovalStatusEnum {
 
-    NOT_START(0, "未启动"),
-    YES_START(1, "已启动"),
-    ING(2, "进行中"),
-    FINISH(3, "已完成"),
-    STOP(4, "已终止");
+    WAIT(0,"待规划"),
+    PROBE(1,"调研中"),
+    ID_DESIGN_ING(2,"ID设计中"),
+    APPROVAL(3,"已立项"),
+    TERMINATE(4,"已终止");
 
     private Integer state;
+
     private String name;
 
 
-    ProjectStateEnum(Integer state, String name) {
-        this.state = state;
+    ApprovalStatusEnum(Integer colourState, String name) {
+        this.state = colourState;
         this.name = name;
     }
 
     public Integer getState() {
         return state;
     }
+
     public String getName() {
         return name;
     }
 
     public static String getName(Integer code) {
-        for (ProjectStateEnum state : ProjectStateEnum.values()) {
+        for (ApprovalStatusEnum state : ApprovalStatusEnum.values()) {
             if (code.equals(state.getState())) {
                 return state.getName();
             }

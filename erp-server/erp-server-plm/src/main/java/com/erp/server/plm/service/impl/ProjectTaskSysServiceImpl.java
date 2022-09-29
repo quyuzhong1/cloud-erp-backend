@@ -88,8 +88,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 item.setDocsNames("");
             }
         }
-
-
         return new PagingVO(pageData);
     }
 
