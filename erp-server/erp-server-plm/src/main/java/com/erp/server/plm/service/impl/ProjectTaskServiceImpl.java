@@ -400,6 +400,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
+     * 根据产品id 集合获取到导出的任务集合
+     *
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.dto.TaskExcelDTO>
+     * @author yl
+     * @date 2022-09-29 9:32
+     */
+    @Override
+    public List<TaskExcelDTO> getExportTask(List<String> productIds) {
+        List<TaskExcelDTO> list = baseMapper.getExportTask(productIds);
+        for (TaskExcelDTO item : list) {
+            String taskState = item.getTaskState();
+            Integer state = Integer.parseInt(taskState);
+            String stateName =TaskStateEnum.getName(state);
+            item.setTaskState(stateName);
+        }
+        return list;
+    }
+
+
+    /**
      * 根据项目id 获取列表
      *
      * @param projectId

@@ -103,8 +103,8 @@ public class ProductInfoController extends BaseController {
 
     //导出数据
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
-    public void exportProductData() {
-
+    public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
+        productInfoService.exportProductData(dto);
     }
 
 

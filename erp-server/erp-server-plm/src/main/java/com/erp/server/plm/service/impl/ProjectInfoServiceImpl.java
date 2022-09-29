@@ -269,13 +269,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     private List<Map<String, Object>> getFinishTaskTrend(int days, List<ProjectTaskEntity> taskList) {
         DateTime dateTime = new DateTime(new Date());
         List<Map<String, Object>> finishTaskTrend = new LinkedList<>();
-
         String fmt = DateUtil.fmt_day;
         SimpleDateFormat sdf = new SimpleDateFormat(fmt);
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
             Date date = dateTime.plusDays(-i).toDate();
-            long count = taskList.stream().filter(t -> t.getTaskFinishTime() != null && DateUtils.isSameDay(date, t.getTaskFinishTime())).count();
+            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, t.getRealityEndTime())).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);
             finishTaskTrend.add(finishTaskMap);

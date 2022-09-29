@@ -20,5 +20,16 @@
 
 
     </select>
+    <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
+        SELECT pi.name AS productName,pi.charge_name AS productChargeName,
+        pj.charge_name AS projectChargeName,pj.start_time AS planStartTime,
+        pj.end_time AS planEndTime, pj.project_status,pi.approval_status AS productStatus
+        FROM product_info pi
+        LEFT JOIN project_info pj ON pi.id=pj.product_id
+        WHERE pi.id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </select>
 
 </mapper>

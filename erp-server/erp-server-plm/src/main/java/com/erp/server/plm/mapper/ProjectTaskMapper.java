@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.model.plm.dto.TaskExcelDTO;
 import com.erp.model.plm.dto.TaskSearchDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -24,5 +25,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
     IPage paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList);
+
+    List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 }
 

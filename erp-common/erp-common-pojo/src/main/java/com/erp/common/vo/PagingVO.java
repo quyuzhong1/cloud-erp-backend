@@ -1,6 +1,7 @@
 package com.erp.common.vo;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
  * @Date 2022-07-12 11:19
  * @Created by yl
  */
-public class PagingVO implements Serializable {
+public class PagingVO<T> extends Page<T> {
 
     /**
      * 总记录数

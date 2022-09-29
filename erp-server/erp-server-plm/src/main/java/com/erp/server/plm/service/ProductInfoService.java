@@ -51,4 +51,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     Boolean updateSpec(ProductInfoDTO dto);
 
     void updateProduct(UpdateProductDTO dto);
+
+    void exportProductData(ExportProductDataDTO dto);
 }

@@ -31,4 +31,13 @@ public enum TaskStateEnum {
     public String getName() {
         return name;
     }
+
+    public static String getName(Integer code) {
+        for (TaskStateEnum state : TaskStateEnum.values()) {
+            if (code.equals(state.getCode())) {
+                return state.getName();
+            }
+        }
+        return "";
+    }
 }

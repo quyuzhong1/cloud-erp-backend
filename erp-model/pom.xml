@@ -37,6 +37,11 @@
             <artifactId>hibernate-validator</artifactId>
             <version>7.0.0.Final</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+        </dependency>
     </dependencies>
 
 

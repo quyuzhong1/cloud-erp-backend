@@ -155,8 +155,11 @@ public class ProjectTaskEntity implements Serializable {
     private Integer property;
 
 
-    @TableField("task_finish_time")
-    private Date taskFinishTime;
+    @TableField("reality_start_time")
+    private Date realityStartTime;
+
+    @TableField("reality_end_time")
+    private Date realityEndTime;
 
     @TableField("pid")
     private String pid;

@@ -1,11 +1,13 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -70,6 +72,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectInfoService projectInfoService;
+
+    @Autowired(required = false)
+    private HttpServletResponse response;
 
     /**
      * 查询 分类id 下有多少产品
@@ -281,7 +286,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public void updateProjectStatus(String productId, Integer state) {
         LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductInfoEntity::getId, productId);
-        updateWrapper.set(ProductInfoEntity::getProjectStatus, state);
+        //updateWrapper.set(ProductInfoEntity::getProjectStatus, state);
         this.update(updateWrapper);
     }
 
@@ -346,7 +351,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             String productChargeId = dto.getProductChargeId();
             String productChargeName = dto.getProductChargeId();
             Integer approvalStatus = dto.getApprovalStatus();
-            Integer projectStatus = dto.getProjectStatus();
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
             }
@@ -359,9 +363,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (approvalStatus != null) {
                 product.setApprovalStatus(approvalStatus);
             }
-            if (projectStatus != null) {
-                product.setProjectStatus(projectStatus);
-            }
+
             this.updateById(product);
         }
 
@@ -369,6 +371,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (StringUtils.isNotBlank(dto.getProjectId())) {
             ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
             if (!Objects.isNull(project)) {
+                Integer projectStatus = dto.getProjectStatus();
                 String projectChargeId = dto.getProjectChargeId();
                 String projectChargeName = dto.getProjectChargeName();
                 if (StringUtils.isNotBlank(projectChargeId)) {
@@ -377,10 +380,64 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (StringUtils.isNotBlank(projectChargeName)) {
                     project.setChargeName(projectChargeName);
                 }
+                if (projectStatus != null) {
+                    project.setProjectStatus(projectStatus);
+                }
                 projectInfoService.updateById(project);
             }
         }
 
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-09-28 18:18
+     */
+    @Override
+    public void exportProductData(ExportProductDataDTO dto) {
+        //产品id集合
+        List<String> productIds = dto.getProductIds();
+        String exportData = dto.getExportData();
+        //获取所有的
+        if (exportData.equals("all")) {
+
+        }
+        //获取任务
+        if (exportData.equals("task")) {
+            List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
+            ExcelUtil.export("2022-09-29","任务列表",taskExcelList,TaskExcelDTO.class,response);
+        }
+
+        //获取产品
+        if (exportData.equals("product")) {
+
+            // ExcelUtil.export("2022-09-29","任务列表",taskExcelList,TaskExcelDTO.class,response);
+        }
+
+
+    }
+
+
+    
+    /**
+     * 获取到产品导出的信息
+     * @author yl
+     * @date 2022-09-29 12:27
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.dto.ProductExcelDTO>
+     */
+    public List<ProductExcelDTO> getProductExcelList(List<String> productIds){
+        List<ProductExcelDTO> productExcelList = baseMapper.getExportProduct(productIds);
+        for(ProductExcelDTO  item:productExcelList){
+            String productStatus=item.getProductStatus();
+
+        }
+        return null;
     }
 
 }

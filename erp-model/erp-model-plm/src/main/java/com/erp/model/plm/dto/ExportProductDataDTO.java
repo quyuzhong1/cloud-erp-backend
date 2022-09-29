@@ -21,8 +21,8 @@ public class ExportProductDataDTO implements Serializable {
     @NotNull(message = "产品id集合不能为空")
     private List<String> productIds;
 
-    @StateEnumValue(intValues = {0, 1, 2}, message = "导出数据 选择有误")
-    private Integer exportData;
+    @StateEnumValue(strValues = {"all","product", "task"}, message = "导出数据 选择有误")
+    private String exportData;
 
 
 }

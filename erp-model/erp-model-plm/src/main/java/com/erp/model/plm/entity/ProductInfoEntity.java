@@ -72,11 +72,7 @@ public class ProductInfoEntity implements Serializable {
     @TableField("brand_name")
     private String brandName;
 
-    /**
-     * 项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
-     */
-    @TableField("project_status")
-    private Integer projectStatus;
+
 
     /**
      * 立项状态 0 待规划 1 调研中  3：ID设计中  4::已立项  5：已终止
