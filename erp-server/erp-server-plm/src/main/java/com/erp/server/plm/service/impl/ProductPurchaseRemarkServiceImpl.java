@@ -47,6 +47,19 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
         BeanMapper.copy(dto, packEntity);
         return this.saveOrUpdate(packEntity);
     }
+
+    /**
+     * @Description 保存/修改产品采购备注信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param dto 产品采购备注信息表请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto) {
+        List<ProductPurchaseRemarkEntity> productPurchaseRemarkEntities = BeanMapper.copyList(dto, ProductPurchaseRemarkEntity.class);
+        return this.saveOrUpdateBatch(productPurchaseRemarkEntities);
+    }
 }
 
 

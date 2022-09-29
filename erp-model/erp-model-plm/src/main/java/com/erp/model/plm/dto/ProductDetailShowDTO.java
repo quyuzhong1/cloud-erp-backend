@@ -18,6 +18,9 @@ public class ProductDetailShowDTO implements Serializable {
     @ApiModelProperty(value = "产品sku信息表id")
     private String id;
 
+    @ApiModelProperty(value = "产品sku信息表id")
+    private String skuId;
+
     @ApiModelProperty(value = "图片")
     private String imagesUrl;
 

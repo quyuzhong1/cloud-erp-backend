@@ -1,10 +1,15 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -18,10 +23,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -62,16 +74,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductInfoMapper productInfoMapper;
 
+    @Resource
+    private ProductPurchaseRemarkService productPurchaseRemarkService;
+
     /**
      * @Description 产品信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param sku:此处可能是spu，需求界面只有一个输入框可输入spuNo或者skuNo查询
+     * @param pagingDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
     @Override
-    public List<ProductDetailShowDTO> list(String sku) {
-        return productDetailMapper.list(sku);
+    public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
+    }
+
+    /**
+     * @Description 条件查询产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param name:产品名称
+     * @return ProductDetailShowDTO
+     **/
+    @Override
+    public ProductDetailShowDTO getProductByName(String name){
+        return productDetailMapper.listProduct(name);
     }
 
     /**
@@ -97,7 +126,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public ProductManyDetailDTO getManySpecDetailById(String productId) {
         ProductManyDetailDTO productManyDetail = productDetailMapper.getManySpecDetailById(productId);
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductDetailEntity::getProperty, productId);
+        queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
         productManyDetail.setProductManySkuDetailList(list);
         return productManyDetail;
@@ -107,14 +136,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Description 保存/修改产品sku信息表数据-无规格
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productNoSpecDTO 新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
+     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.String
      **/
     @Override
-    public Boolean saveOrUpdate(ProductNoSpecDTO productNoSpecDTO) {
+    public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
-        BeanMapper.copy(productNoSpecDTO, detailEntity);
-        return this.saveOrUpdate(detailEntity);
+        BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
+        this.saveOrUpdate(detailEntity);
+        return detailEntity.getId();
     }
 
     /**
@@ -140,29 +170,74 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
         //1.修改产品表 主表信息
-        productInfoService.updateSpec(productNoSpecDTO.getProductInfoDTO());
+        String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
+
+        //2.修改/新增 sku信息
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
-        if(!StringUtils.isBlank(productNoSpecDTO.getImagesUrl())){
+        if(StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())){
             ProductImagesDTO productImagesDTO = new ProductImagesDTO();
-            productImagesDTO.setSkuId(productNoSpecDTO.getId());
-            productImagesDTO.setProductId(productNoSpecDTO.getProductId());
-            productImagesDTO.setImagesUrl(productNoSpecDTO.getImagesUrl());
+            productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
+            productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
+            productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
             productImagesService.updateProductImage(productImagesDTO);
         }
-        //2.修改/新增 sku信息
-        this.saveOrUpdate(productNoSpecDTO);
+        String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
+        if(StringUtils.isBlank(productSkuBaseInfoDTO.getId())){
+            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
+            skuId = productIdBySku.getId();
+        }
+
         //3.修改/新增 成本信息
-        productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
+            ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
+            productCostDTO.setSkuId(skuId);
+            productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
+        }
+
         //4.修改/新增 采购信息
-        productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
+            ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
+            productPurchaseDTO.setSkuId(skuId);
+            String purchaseId = productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+            //新增/修改采购备注信息
+            if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList())) {
+                List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList();
+                productPurchaseRemarkList.forEach(req -> {
+                    req.setPurchaseId(purchaseId);
+                });
+                productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
+            }
+        }
+
         //5.修改/新增 销售信息
-        productSaleService.saveOrUpdate(productNoSpecDTO.getProductSaleDTO());
+        ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
+        if (!ObjectUtils.isEmpty(productSaleDTO)) {
+            productSaleDTO.setSkuId(skuId);
+            productSaleService.saveOrUpdate(productSaleDTO);
+        }
         //6.修改/新增 物流信息
-        productLogisticsService.saveOrUpdate(productNoSpecDTO.getProductLogisticsDTO());
+        ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
+        if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
+            productLogisticsDTO.setSkuId(skuId);
+            productLogisticsService.saveOrUpdate(productLogisticsDTO);
+        }
+
         //7.修改/新增 包装信息
-        productPackService.saveOrUpdate(productNoSpecDTO.getProductPackDTO());
+        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+        if (!ObjectUtils.isEmpty(productPackDTO)) {
+            productPackDTO.setSkuId(skuId);
+            productPackService.saveOrUpdate(productPackDTO);
+        }
+
         //8.修改/新增 证书信息
-        productCertificateService.saveOrUpdate(productNoSpecDTO.getProductCertificateDTO());
+        ProductCertificateDTO productCertificateDTO = productNoSpecDTO.getProductCertificateDTO();
+        if (!ObjectUtils.isEmpty(productCertificateDTO)) {
+            productCertificateDTO.setSkuId(skuId);
+            productCertificateService.saveOrUpdate(productCertificateDTO);
+        }
+
         return true;
     }
 
@@ -175,13 +250,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
-        //检查sku产品名称是否重复
-        this.checkName(productManySpecDTO.getProductInfoDTO().getName());
+        //检查spu编号是否重复
+        if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
+
+        //如果是修改允许保留原来的产品名称不变
+        ProductDetailShowDTO productDetailShowDTO = this.getProductByName(productManySpecDTO.getProductInfoDTO().getName());
+        if (StringUtils.isNotBlank(productManySpecDTO.getProductInfoDTO().getId())) {
+            if (!productDetailShowDTO.getId().equals(productManySpecDTO.getProductInfoDTO().getId())) {
+                throw new ServiceException(ApiError.ERROR_95007);
+            }
+        } else {//如果是新增直接判断产品名称是否存在
+            if (!ObjectUtils.isEmpty(productDetailShowDTO)) {
+                throw new ServiceException(ApiError.ERROR_95007);
+            }
+        }
+
         //1.修改产品表 主表信息
         productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
         //检查sku是否重复
         List<String> skuList = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getSkuNo).collect(Collectors.toList());
-        this.checkSku(skuList);
+        if (this.checkSkuNos(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95015);
+        }
         //2.修改/新增 sku信息
         this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
         //3.修改/新增 成本信息
@@ -224,23 +316,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             flag = false;
         }
+
+        //把变体属性放入实体类
         List<ProductDetailEntity> list = new ArrayList<>();
-        varianTempList.forEach(req -> {
+        for (String req : varianTempList) {
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
-            productDetailEntity.setProperty(req);
+            productDetailEntity.setVariantProperty(req);
+            productDetailEntity.setProductId(variantAutoAddDTO.getProductId());
+            productDetailEntity.setName(variantAutoAddDTO.getProductName());
             list.add(productDetailEntity);
-        });
+        }
+
+        //过滤掉重复的变体属性
         List<ProductDetailEntity> detailEntityList = this.queryByProductId(variantAutoAddDTO.getProductId());
-        detailEntityList.forEach(req -> {
-            if (list.contains(req.getProperty())) {
-                list.remove(req.getProperty());
+        for (ProductDetailEntity req : detailEntityList) {
+            if (list.contains(req.getVariantProperty())) {
+                list.remove(req.getVariantProperty());
             }
-        });
+        }
         boolean bool = this.saveBatch(list);
         if(!bool){
             throw new ServiceException(1, "新增sku明细失败！");
         }
         return this.queryByProductId(variantAutoAddDTO.getProductId());
+    }
+
+    public static void main(String[] args) {
+        Set<String> set = new HashSet<>();
+        set.add("a");
+        set.add("a");
+        set.add("b");
+        System.out.println(set);
+        set.forEach(req -> {
+            System.out.println(req);
+        });
     }
 
     /**
@@ -284,34 +393,169 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.list(queryWrapper);
     }
 
+    @Override
+    public List<ProductDetailEntity> importProductFile(MultipartFile file, HttpServletRequest request) {
+
+
+        return null;
+    }
+
     /**
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
      * @param skuList:sku集合
      **/
-    private void checkSku(List<String> skuList) {
+    public Boolean checkSkuNos(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getSkuNo, skuList);
         int count = this.count(queryWrapper);
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95015);
+        if(count > 0){
+            return true;
         }
+        return false;
+    }
+    /**
+     * @Description 检查sku是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:17
+     * @param sku:sku
+     **/
+    public Boolean checkSkuNo(String sku) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductDetailEntity::getSkuNo, sku);
+        int count = this.count(queryWrapper);
+        if(count > 0){
+            return true;
+        }
+        return false;
     }
 
     /**
-     * @Description 检查sku产品名称是否重复
+     * @Description 检查spu编号是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:28
-     * @param name:产品名称集合
+     * @param spuNo:spu编号
      * @return void
      **/
-    private void checkName(String name) {
+    public Boolean checkSpuNo(String spuNo) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.in(ProductInfoEntity::getName, name);
+        queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
         Integer count = productInfoMapper.selectCount(queryWrapper);
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95007);
+        if(count > 0){
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * @Description 根据sku查询sku表信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 17:04
+     * @param sku：sku
+     * @return com.erp.model.plm.entity.ProductDetailEntity
+     **/
+    public ProductDetailEntity getProductIdBySku(String sku) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductDetailEntity::getSkuNo, sku);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
+    /**
+     * @Description 新增无规格sku信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:55
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
+        //1.新增产品表 主表信息
+        String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
+
+        //2.修改/新增 sku信息
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        productSkuBaseInfoDTO.setProductId(id);
+        //如果是修改sku图片 还需要修改图片表
+        if(StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())){
+            ProductImagesDTO productImagesDTO = new ProductImagesDTO();
+            productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
+            productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
+            productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
+            productImagesService.updateProductImage(productImagesDTO);
+        }
+        String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
+        if(StringUtils.isBlank(productSkuBaseInfoDTO.getId())){
+            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
+            skuId = productIdBySku.getId();
+        }
+
+        ProductKeyDTO productKey = productDetailMapper.getProductKey(skuId);
+
+        //3.修改/新增 成本信息
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
+            ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
+            if (ObjectUtils.isNotEmpty(productKey)) {
+                productCostDTO.setId(productKey.getCostId());
+            }
+            productCostDTO.setSkuId(skuId);
+            productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
+        }
+
+        //4.修改/新增 采购信息
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
+            ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
+            if (ObjectUtils.isNotEmpty(productKey)) {
+                productPurchaseDTO.setId(productKey.getPurchaseId());
+            }
+            productPurchaseDTO.setSkuId(skuId);
+            String purchaseId = productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+            //新增/修改采购备注信息
+            if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList())) {
+                List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList();
+                productPurchaseRemarkList.forEach(req -> {
+                    req.setPurchaseId(purchaseId);
+                });
+                productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
+            }
+        }
+
+        //5.修改/新增 销售信息
+        ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
+        if (!ObjectUtils.isEmpty(productSaleDTO)) {
+            if (ObjectUtils.isNotEmpty(productKey)) {
+                productSaleDTO.setId(productKey.getSaleId());
+            }
+            productSaleDTO.setSkuId(skuId);
+            productSaleService.saveOrUpdate(productSaleDTO);
+        }
+        //6.修改/新增 物流信息
+        ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
+        if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
+            if (ObjectUtils.isNotEmpty(productKey)) {
+                productLogisticsDTO.setId(productKey.getLogisticsId());
+            }
+            productLogisticsDTO.setSkuId(skuId);
+            productLogisticsService.saveOrUpdate(productLogisticsDTO);
+        }
+
+        //7.修改/新增 包装信息
+        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
+        if (!ObjectUtils.isEmpty(productPackDTO)) {
+            if (ObjectUtils.isNotEmpty(productKey)) {
+                productPackDTO.setId(productKey.getPackId());
+            }
+            productPackDTO.setSkuId(skuId);
+            productPackService.saveOrUpdate(productPackDTO);
+        }
+
+        //8.修改/新增 证书信息
+        /*ProductCertificateDTO productCertificateDTO = productNoSpecDTO.getProductCertificateDTO();
+        if (!ObjectUtils.isEmpty(productCertificateDTO)) {
+            productCertificateDTO.setSkuId(skuId);
+            productCertificateService.saveOrUpdate(productCertificateDTO);
+        }*/
+        return true;
     }
 }

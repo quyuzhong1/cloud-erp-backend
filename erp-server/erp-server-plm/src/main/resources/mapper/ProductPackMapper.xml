@@ -20,7 +20,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,sku_id,product_size,
+        product_size,
         gross_weight,net_weight,box_size,
         box_weight,box_qty,create_time,
         create_user_id,update_time,update_user_id
@@ -28,7 +28,9 @@
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductPackShowDTO">
         SELECT
+        pp.id
         pd.sku_no,
+        pd.id AS sku_id,
         pd.images_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd

@@ -34,4 +34,13 @@ public interface ProductPurchaseRemarkService extends IService<ProductPurchaseRe
      * @return java.lang.Boolean
      **/
     Boolean saveOrUpdate(ProductPurchaseRemarkDTO dto);
+
+    /**
+     * @Description 保存/修改产品采购备注信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/23 10:13
+     * @param dto 产品采购备注信息表请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto);
 }

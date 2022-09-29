@@ -341,12 +341,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     @Override
-    public Boolean updateSpec(ProductInfoDTO dto) {
+    public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
-        return this.saveOrUpdate(productInfoEntity);
+        this.saveOrUpdate(productInfoEntity);
+        return productInfoEntity.getId();
     }
-
 
     /**
      * 产品列表编辑数据

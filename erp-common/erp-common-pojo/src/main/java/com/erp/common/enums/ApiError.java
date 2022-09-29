@@ -99,6 +99,7 @@ public enum ApiError implements Serializable {
     ERROR_95014(95014, "固定任务不能删除"),
     ERROR_95015(95015, "SKU已存在，请确保SKU的唯一性"),
     ERROR_95016(95016, "项目角色名已存在，不可重复提交"),
+    ERROR_95017(95017, "SPU已存在，请确保SPU的唯一性"),
 
 
 

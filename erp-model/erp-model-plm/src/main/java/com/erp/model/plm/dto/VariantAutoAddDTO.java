@@ -18,6 +18,9 @@ public class VariantAutoAddDTO {
     @ApiModelProperty(value = "产品信息表id",required = true)
     private String productId;
 
+    @ApiModelProperty(value = "产品名称(款名)",required = true)
+    private String productName;
+
     @ApiModelProperty(value = "变体属性",required = true)
     private List<VarianRefPropertyDTO> varianRefPropertyList;
 }

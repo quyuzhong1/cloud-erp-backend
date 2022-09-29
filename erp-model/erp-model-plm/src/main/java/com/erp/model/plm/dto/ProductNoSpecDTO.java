@@ -16,56 +16,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ProductNoSpecDTO {
-    @ApiModelProperty(value = "产品sku表id 无id：新增 有id：修改")
-    private String id;
-
-    @ApiModelProperty(value = "产品信息表id",required = true)
-    private String productId;
-
-    @ApiModelProperty(value = "skuNo",required = true)
-    private String skuNo;
-
-    @ApiModelProperty(value = "产品名称(品名)",required = true)
-    private String name;
-
-    @ApiModelProperty(value = "销售方式 多个用,拼接",required = true)
-    private String saleMethod;
-
-    @ApiModelProperty(value = "产品分类id")
-    private String categoryId;
-
-    @ApiModelProperty(value = "产品卖点")
-    private String productSellSpot;
-
-    @ApiModelProperty(value = "产品功能描述")
-    private String productFunctionDesc;
-
-    @ApiModelProperty(value = "产品用途")
-    private String usageDesc;
-
-    @StateEnumValue(intValues = {1, 2}, message = "是否存在侵权风险1或者2")
-    @ApiModelProperty(value = "存在侵权风险 1：有侵权风险 2：无侵权风险")
-    private String pirateRisk;
-
-    @ApiModelProperty(value = "主要材质")
-    private String materials;
-
-    @ApiModelProperty(value = "计划上市时间")
-    private String planListedTime;
-
-    @ApiModelProperty(value = "单位表id")
-    private String unitId;
-
-    @StateEnumValue(intValues = {1, 2, 3, 4, 5}, message = "产品状态错误")
-    @ApiModelProperty(value = "产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发",required = true)
-    private Integer productState;
-
-    @ApiModelProperty(value = "产品图片")
-    private String imagesUrl;
 
     @NotNull(message = "产品基础信息不能为空")
     @ApiModelProperty(value = "产品基础信息",required = true)
-    private ProductInfoDTO productInfoDTO;
+    private ProductBaseInfoDTO productBaseInfoDTO;
 
     @NotNull(message = "成本信息不能为空")
     @ApiModelProperty(value = "成本信息",required = true)

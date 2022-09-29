@@ -46,9 +46,9 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @Author Luo_WG
      * @Date 2022/9/21 18:44
      * @param dto:产品基础信息请求参数
-     * @return java.lang.Boolean
+     * @return java.lang.String
      **/
-    Boolean updateSpec(ProductInfoDTO dto);
+    String updateSpec(ProductInfoDTO dto);
 
     void updateProduct(UpdateProductDTO dto);
 

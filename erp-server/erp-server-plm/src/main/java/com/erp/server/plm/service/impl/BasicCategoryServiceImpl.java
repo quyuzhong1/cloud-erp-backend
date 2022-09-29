@@ -221,4 +221,18 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             throw new ServiceException(ApiError.ERROR_95000);
         }
     }
+
+    /**
+     * @Description 根据类别名称查询类别信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 18:51
+     * @param categoryName：类别名称
+     * @return BasicCategoryEntity
+     **/
+    public BasicCategoryEntity getCategoryByName(String categoryName) {
+        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
 }

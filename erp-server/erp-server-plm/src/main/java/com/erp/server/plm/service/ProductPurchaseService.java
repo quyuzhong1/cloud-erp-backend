@@ -30,9 +30,9 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
     * @Author Luo_WG
     * @Date 2022/9/23 11:36
     * @param purchaseDTO:产品采购信息表
-    * @return java.lang.Boolean
+    * @return java.lang.String
     **/
-    Boolean saveOrUpdate(ProductPurchaseDTO purchaseDTO);
+    String saveOrUpdate(ProductPurchaseDTO purchaseDTO);
 
     /**
      * @Description 保存/修改产品采购信息-批量

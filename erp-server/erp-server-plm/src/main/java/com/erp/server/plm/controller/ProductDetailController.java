@@ -1,20 +1,27 @@
 package com.erp.server.plm.controller;
 
+import com.alibaba.excel.EasyExcel;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductVariantEntity;
-import com.erp.model.plm.entity.ProductVariantPropertyEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.List;
 
 /**
@@ -26,6 +33,9 @@ import java.util.List;
 @RestController
 @RequestMapping("plm/product/detail")
 public class ProductDetailController extends BaseController {
+
+    @Resource
+    private ProductInfoService productInfoService;
 
     @Resource
     private ProductDetailService productDetailService;
@@ -60,14 +70,20 @@ public class ProductDetailController extends BaseController {
     @Resource
     private ProductImagesService productImagesService;
 
+    @Resource
+    private ProductUnitService productUnitService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
+    @Resource
+    private BasicDictService basicDictService;
+
     @ApiOperation(value = "产品信息-主页列表-查询")
-    @GetMapping("/list")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "no", value = "skuNo/spuNo"),
-    })
-    public ApiResult<List<ProductDetailShowDTO>> list(@RequestParam(value = "no") String no) {
-        List<ProductDetailShowDTO> list = productDetailService.list(no);
-        return this.success(list);
+    @PostMapping("/list")
+    public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
+        PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
+        return this.success(paging);
     }
 
     @ApiOperation(value = "产品信息-无规格-产品详情")
@@ -194,7 +210,7 @@ public class ProductDetailController extends BaseController {
 
     @ApiOperation(value = "采购信息-备注信息-新增")
     @PostMapping("/saveOrUpdatePurchaseRemark")
-    public ApiResult saveOrUpdatePurchaseRemark(ProductPurchaseRemarkDTO dto) {
+    public ApiResult saveOrUpdatePurchaseRemark(@RequestBody ProductPurchaseRemarkDTO dto) {
         Boolean flag = productPurchaseRemarkService.saveOrUpdate(dto);
         return flag == true ? this.success() : this.failure();
     }
@@ -211,7 +227,7 @@ public class ProductDetailController extends BaseController {
 
     @ApiOperation(value = "产品信息-变体管理-下拉列表-新增/修改")
     @PostMapping("/saveOrUpdateVariant")
-    public ApiResult saveOrUpdateVariant(ProductVariantDTO productVariantDTO) {
+    public ApiResult saveOrUpdateVariant(@RequestBody ProductVariantDTO productVariantDTO) {
         Boolean flag = productVariantService.saveOrUpdate(productVariantDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -238,15 +254,70 @@ public class ProductDetailController extends BaseController {
 
     @ApiOperation(value = "产品信息-变体管理-变体值-新增/修改")
     @PostMapping("/saveOrUpdateVariantProperty")
-    public ApiResult saveOrUpdateVariantProperty(ProductVariantPropertyDTO dto) {
-        Boolean flag = productVariantPropertyService.saveOrUpdate(dto);
+    public ApiResult saveOrUpdateVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
+        Boolean flag = productVariantPropertyService.saveOrUpdate(productVariantPropertyDTO);
         return flag == true ? this.success() : this.failure();
     }
 
     @ApiOperation(value = "产品信息-变体管理-变体值-删除")
     @PostMapping("/deleteVariantProperty")
-    public ApiResult deleteVariantProperty(ProductVariantPropertyDTO dto) {
-        Boolean flag = productVariantPropertyService.saveOrUpdate(dto);
+    public ApiResult deleteVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
+        Boolean flag = productVariantPropertyService.saveOrUpdate(productVariantPropertyDTO);
         return flag == true ? this.success() : this.failure();
+    }
+
+    @ApiOperation(value = "产品信息-单位管理-新增|修改")
+    @PostMapping("/saveOrUpdateProductUnit")
+    public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
+        Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    @ApiOperation(value = "产品信息-单位管理-查询")
+    @GetMapping("/listProductUnit")
+    public ApiResult<List<ProductUnitEntity>> listProductUnit() {
+        List<ProductUnitEntity> list = productUnitService.list();
+        return this.success(list);
+    }
+
+    @ApiOperation(value = "产品信息-单位管理--删除")
+    @PostMapping("/deleteProductUnit")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "单位列表id", required = true),
+    })
+    public ApiResult deleteProductUnit(String id) {
+        Boolean flag = productUnitService.delete(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * @Description 导入产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     * @param excelFile 文件流
+     * @param importType 请求类型
+     * @param response 响应
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "Excel导入产品信息")
+    @PostMapping("/importProductFile")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "excelFile", value = "文件流", required = true),
+            @ApiImplicitParam(name = "importType", value = "请求类型 1：导入新增  2：导入修改", required = true),
+    })
+    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) throws Exception{
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
+        EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        System.out.println(importType);
+        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+        if(list.size() > 0){
+            response.setContentType("application/vnd.ms-excel");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("测试", "UTF-8");
+            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+            EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);
+        }
+        return this.success();
+
     }
 }

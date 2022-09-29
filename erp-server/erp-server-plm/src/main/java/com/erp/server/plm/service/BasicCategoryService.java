@@ -27,4 +27,13 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     Boolean deleteById(String id);
 
     List<String> getPidList(String categoryId);
+
+    /**
+     * @Description 根据类别名称查询类别信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 18:51
+     * @param categoryName：类别名称
+     * @return BasicCategoryEntity
+     **/
+    BasicCategoryEntity getCategoryByName(String categoryName);
 }

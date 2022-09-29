@@ -15,7 +15,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 @NoArgsConstructor
 public class ProductInfoDTO {
-    @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
+    @ApiModelProperty(value = "主键id", required = true)
     private String id;
 
     /**
@@ -36,6 +36,12 @@ public class ProductInfoDTO {
      */
     @ApiModelProperty(value = "产品属性")
     private String property;
+
+    /**
+     * 产品属性id
+     */
+    @ApiModelProperty(value = "产品属性id")
+    private String propertyId;
 
     /**
      * 产品负责人
@@ -121,7 +127,9 @@ public class ProductInfoDTO {
     /**
      * 销售方式
      */
-    @StateEnumValue(intValues = {1, 2, 3}, message = "规格类型1或者2")
+    @StateEnumValue(intValues = {1, 2, 3}, message = "销售方式1或者2或者3")
     @ApiModelProperty(value = "销售方式 1：商品 2：赠品 3：包材", required = true)
     private String saleMethod;
+
+    private Integer approvalStatus;
 }

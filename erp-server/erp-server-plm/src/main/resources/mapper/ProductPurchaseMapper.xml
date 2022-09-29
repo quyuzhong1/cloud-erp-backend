@@ -26,17 +26,18 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,sku_id,ean,
-        plan_order_qty,place_order_time,plan_arrival_time,
+        ean,plan_order_qty,place_order_time,plan_arrival_time,
         moq,delivery_cycle,actual_arrival_time,
-        arrival_state,purchase_user_id,main_supplier_id,
-        second_supplier_id,create_time,create_user_id,
+        arrival_state,purchase_user_id,main_supplier,
+        second_supplier,create_time,create_user_id,
         update_time,update_user_id,actual_arrival_qty
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductPurchaseShowDTO">
         SELECT
+        pp.id
         pd.sku_no,
+        pd.id AS sku_id,
         pd.images_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd

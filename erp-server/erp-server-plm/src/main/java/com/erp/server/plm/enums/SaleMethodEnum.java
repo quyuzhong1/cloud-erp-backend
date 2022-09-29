@@ -35,7 +35,7 @@ public enum SaleMethodEnum {
         return name;
     }
 
-    public static String getTypeById(Integer code) {
+    public static String getNameByCode(Integer code) {
         SaleMethodEnum[] saleMethodEnums = values();
         for (SaleMethodEnum saleMethodEnum : saleMethodEnums) {
             if (saleMethodEnum.getCode() == code) {
@@ -55,7 +55,7 @@ public enum SaleMethodEnum {
         return null;
     }
 
-    public static Integer getIdByType(String name) {
+    public static Integer getCodeByName(String name) {
         SaleMethodEnum[] saleMethodEnums = values();
         for (SaleMethodEnum saleMethodEnum : saleMethodEnums) {
             if (saleMethodEnum.getName().equals(name)) {

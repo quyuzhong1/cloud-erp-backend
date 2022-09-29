@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品采购信息表请求参数
@@ -72,6 +73,9 @@ public class ProductPurchaseDTO implements Serializable {
 
     @ApiModelProperty(value = "实际首批到货量")
     private Integer actualArrivalQty;
+
+    @ApiModelProperty(value = "采购备注信息")
+    private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

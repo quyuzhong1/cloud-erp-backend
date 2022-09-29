@@ -44,13 +44,14 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     * @Author Luo_WG
     * @Date 2022/9/23 11:48
     * @param purchaseDTO 产品采购信息表请求参数
-    * @return java.lang.Boolean 
+    * @return java.lang.String
     **/
     @Override
-    public Boolean saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
+    public String saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
         ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
         BeanMapper.copy(purchaseDTO, purchaseEntity);
-        return this.saveOrUpdate(purchaseEntity);
+        this.saveOrUpdate(purchaseEntity);
+        return purchaseEntity.getId();
     }
 
     /**

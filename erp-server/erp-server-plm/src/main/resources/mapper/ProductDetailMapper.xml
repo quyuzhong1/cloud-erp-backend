@@ -9,7 +9,7 @@
         <result property="productId" column="product_id" jdbcType="VARCHAR"/>
         <result property="skuNo" column="sku_no" jdbcType="VARCHAR"/>
         <result property="name" column="name" jdbcType="VARCHAR"/>
-        <result property="property" column="property" jdbcType="VARCHAR"/>
+        <result property="variantProperty" column="variant_property" jdbcType="VARCHAR"/>
         <result property="planListingTime" column="plan_listing_time" jdbcType="DATE"/>
         <result property="unitId" column="unit_id" jdbcType="VARCHAR"/>
         <result property="productState" column="product_state" jdbcType="SMALLINT"/>
@@ -18,37 +18,99 @@
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
         <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
         <result property="imagesUrl" column="images_url" jdbcType="VARCHAR"/>
+        <result property="unitName" column="unit_name" jdbcType="VARCHAR"/>
+        <result property="chargeId" column="charge_id" jdbcType="VARCHAR"/>
+        <result property="chargeName" column="charge_name" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,product_id,sku_no,
-        name,property,plan_listing_time,
+        name,variant_property,plan_listing_time,
         unit_id,product_state,create_time,
         create_user_id,update_time,update_user_id,
-        images_url
+        images_url,unit_name,charge_id,charge_name
     </sql>
 
-    <select id="list" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
         SELECT
             pd."id",
+            pd.id AS sku_id,
             pd.images_url,
             pi.spu_no,
             pd.sku_no,
             pd."name",
-            pp.actual_arrival_num,
+            pp.actual_arrival_qty,
             pp.arrival_state,
             pi.pirate_risk,
             pc.retail_price,
             pd.product_state,
             pd.create_user_id,
             pd.create_time,
-            pd.spec_type
+            pi.spec_type
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        WHERE pi.spu_no LIKE concat('%',#{sku},'%')
-        OR pd.sku_no LIKE concat('%',#{sku},'%')
+        <where>
+            <if test="params.no != '' and params.no != null">
+                AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
+            </if>
+            <if test="params.stateList.size() > 0 and params.stateList != null">
+                AND pd.product_state in
+                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY pd.create_time DESC
+    </select>
+
+    <select id="listProduct" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
+        SELECT
+        pd."id",
+        pd.id AS sku_id,
+        pd.images_url,
+        pi.spu_no,
+        pd.sku_no,
+        pd."name",
+        pp.actual_arrival_qty,
+        pp.arrival_state,
+        pi.pirate_risk,
+        pc.retail_price,
+        pd.product_state,
+        pd.create_user_id,
+        pd.create_time,
+        pi.spec_type
+        FROM product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
+        <where>
+            <if test="name != '' and name != null">
+                AND pi."name" = #{name}
+            </if>
+        </where>
+        LIMIT 1
+    </select>
+
+    <select id="getProductKey" resultType="com.erp.model.plm.dto.ProductKeyDTO">
+        SELECT
+        pi."id",
+        pd.id AS sku_id,
+        pp.id AS purchase_id,
+        pc.id AS cost_id,
+        ps.id AS sale_id,
+        ppk.id AS pack_id,
+        pl.id AS logistics_id
+        FROM product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
+        LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
+        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
+        LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
+        WHERE pd.id = #{skuId}
+        LIMIT 1
     </select>
 
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
@@ -64,7 +126,7 @@
             pi.grade,
             pi.category,
             pi.sale_method,
-            pi.product_sell_spot,
+            pi.sell_spot,
             pi.product_function_desc,
             pi.usage_desc,
             pi.pirate_risk,
@@ -89,7 +151,7 @@
             pi.grade,
             pi.category,
             pi.sale_method,
-            pi.product_sell_spot,
+            pi.sell_spot,
             pi.product_function_desc,
             pi.usage_desc,
             pi.pirate_risk,

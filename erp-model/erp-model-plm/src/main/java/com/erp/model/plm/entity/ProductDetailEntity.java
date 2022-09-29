@@ -48,9 +48,9 @@ public class ProductDetailEntity implements Serializable {
     /**
      * 属性
      */
-    @TableField(value = "property")
+    @TableField(value = "variant_property")
     @ApiModelProperty(value = "属性")
-    private String property;
+    private String variantProperty;
 
     /**
      * 计划上市时间
@@ -107,6 +107,27 @@ public class ProductDetailEntity implements Serializable {
     @TableField(value = "images_url")
     @ApiModelProperty(value = "sku图片")
     private String imagesUrl;
+
+    /**
+     * 单位名称
+     */
+    @TableField(value = "unit_name")
+    @ApiModelProperty(value = "单位名称")
+    private String unitName;
+
+    /**
+     * 产品负责人Id
+     */
+    @TableField(value = "charge_id")
+    @ApiModelProperty(value = "产品负责人Id")
+    private String chargeId;
+
+    /**
+     * 产品负责人姓名
+     */
+    @TableField(value = "charge_name")
+    @ApiModelProperty(value = "产品负责人姓名")
+    private String chargeName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

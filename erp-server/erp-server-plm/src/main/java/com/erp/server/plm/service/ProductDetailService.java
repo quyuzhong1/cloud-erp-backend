@@ -1,8 +1,14 @@
 package com.erp.server.plm.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface ProductDetailService {
@@ -11,10 +17,19 @@ public interface ProductDetailService {
     * @Description 产品信息查询列表
     * @Author Luo_WG
     * @Date 2022/9/22 10:28
-    * @param sku:此处可能是spu，需求界面只有一个输入框可输入spuNo或者skuNo查询
-    * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
+    * @param pagingDTO:查询参数
+    * @return PagingVO
     **/
-    List<ProductDetailShowDTO> list(String sku);
+    PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO);
+
+    /**
+    * @Description 条件查询产品信息
+    * @Author Luo_WG
+    * @Date 2022/9/22 10:28
+    * @param name:产品名称
+    * @return ProductDetailShowDTO
+    **/
+    ProductDetailShowDTO getProductByName(String name);
     
     /**
     * @Description 无规格产品信息明细
@@ -38,10 +53,10 @@ public interface ProductDetailService {
      * @Description 保存/修改产品sku信息表数据
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productNoSpecDTO 新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
+     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.String
      **/
-    Boolean saveOrUpdate(ProductNoSpecDTO productNoSpecDTO);
+    String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO);
 
     /**
      * @Description 保存/修改产品sku信息表数据-批量
@@ -96,4 +111,57 @@ public interface ProductDetailService {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> queryByProductId(String productId);
+
+    /**
+     * @Description 检查sku是否重复-集合
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:17
+     * @param skuList:sku集合
+     **/
+    Boolean checkSkuNos(List<String> skuList);
+
+    /**
+     * @Description 检查sku是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:17
+     * @param sku:sku
+     **/
+    Boolean checkSkuNo(String sku);
+
+    /**
+     * @Description 检查spu编号是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
+     * @param spuNo:spu编号
+     * @return void
+     **/
+    Boolean checkSpuNo(String spuNo);
+
+    /**
+     * @Description 根据sku查询sku表信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 17:04
+     * @param sku：sku
+     * @return com.erp.model.plm.entity.ProductDetailEntity
+     **/
+    ProductDetailEntity getProductIdBySku(String sku);
+
+    /**
+     * @Description 新增无规格sku信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:55
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
+
+    /**
+     * @Description 根据产品主键id查询sku明细
+     * @Author Luo_WG
+     * @Date 2022/9/27 16:41
+     * @param [file, request]
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     **/
+    List<ProductDetailEntity> importProductFile(MultipartFile file, HttpServletRequest request);
+
 }

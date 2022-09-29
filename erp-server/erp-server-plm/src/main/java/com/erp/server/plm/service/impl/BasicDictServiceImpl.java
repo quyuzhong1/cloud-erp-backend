@@ -52,4 +52,20 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
         queryWrapper.orderByDesc(BasicDictEntity::getCreateTime);
         return this.list(queryWrapper);
     }
+
+    /**
+     * @Description 根据名称查询字段是否存在
+     * @Author Luo_WG
+     * @Date 2022/9/29 11:02
+     * @param type:字典类型
+     * @param value:字典值
+     * @return com.erp.model.plm.entity.BasicDictEntity
+     **/
+    public BasicDictEntity checkBasicDict(String type, String value) {
+        LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BasicDictEntity::getType, type);
+        queryWrapper.eq(BasicDictEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
 }

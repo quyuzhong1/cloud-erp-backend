@@ -23,7 +23,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,sku_id,product_property,
+        product_property,
         product_property_id,declare_chinese_name,declare_english_name,
         declare_price,customs_code,declare_element,
         english_material,english_usage,create_time,
@@ -32,7 +32,9 @@
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductLogisticsShowDTO">
         SELECT
+        pl.id
         pd.sku_no,
+        pd.id AS sku_id,
         pd.images_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd

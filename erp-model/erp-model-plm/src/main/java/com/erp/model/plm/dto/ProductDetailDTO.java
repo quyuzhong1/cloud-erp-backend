@@ -26,8 +26,8 @@ public class ProductDetailDTO implements Serializable {
     @ApiModelProperty(value = "产品sku名称")
     private String name;
 
-    @ApiModelProperty(value = "属性")
-    private String property;
+    @ApiModelProperty(value = "变体属性")
+    private String variantProperty;
 
     @ApiModelProperty(value = "计划上市时间")
     private Date planListingTime;
@@ -46,6 +46,15 @@ public class ProductDetailDTO implements Serializable {
 
     @ApiModelProperty(value = "sku图片")
     private String imagesUrl;
+
+    @ApiModelProperty(value = "单位名称")
+    private String unitName;
+
+    @ApiModelProperty(value = "产品负责人id")
+    private String chargeId;
+
+    @ApiModelProperty(value = "产品负责人姓名")
+    private String chargeName;
 
     private static final long serialVersionUID = 1L;
 }
