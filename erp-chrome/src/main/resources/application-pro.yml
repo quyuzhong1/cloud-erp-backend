@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://192.168.31.86:5432/erp_chrome_prod?useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:postgresql://172.16.110.12:5432/erp_chrome_prod?useSSL=false&serverTimezone=GMT%2B8
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: admin@viji
@@ -15,7 +15,7 @@ xxl:
   job:
     admin:
       #调度中心部署根地址 [选填]：如调度中心集群部署存在多个地址则用逗号分隔。执行器将会使用该地址进行"执行器心跳注册"和"任务结果回调"；为空则关闭自动注册；
-      addresses: http://192.168.31.86:7080/job-admin
+      addresses: http://172.16.110.12:7080/job-admin
     #行器通讯TOKEN [选填]：非空时启用；
     accessToken: 7A3224E0B086038B
     executor:
