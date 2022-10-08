@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
@@ -53,12 +54,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         ProductCertificateEntity certificateEntity = new ProductCertificateEntity();
         BeanMapper.copy(productCertificateDTO, certificateEntity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        if (StringUtils.isBlank(productCertificateDTO.getId())) {
-            certificateEntity.setCreateUserId(loginUser.getUid());
-            certificateEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            certificateEntity.setUpdateUserId(loginUser.getUid());
-            certificateEntity.setUpdateUserName(loginUser.getUserName());
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(productCertificateDTO.getId())) {
+                certificateEntity.setCreateUserId(loginUser.getUid());
+                certificateEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                certificateEntity.setUpdateUserId(loginUser.getUid());
+                certificateEntity.setUpdateUserName(loginUser.getUserName());
+            }
         }
         return this.saveOrUpdate(certificateEntity);
     }

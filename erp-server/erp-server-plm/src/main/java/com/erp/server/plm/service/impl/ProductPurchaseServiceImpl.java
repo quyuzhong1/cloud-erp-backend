@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -54,12 +55,14 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
         BeanMapper.copy(purchaseDTO, purchaseEntity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        if (StringUtils.isBlank(purchaseDTO.getId())) {
-            purchaseEntity.setCreateUserId(loginUser.getUid());
-            purchaseEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            purchaseEntity.setUpdateUserId(loginUser.getUid());
-            purchaseEntity.setUpdateUserName(loginUser.getUserName());
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(purchaseDTO.getId())) {
+                purchaseEntity.setCreateUserId(loginUser.getUid());
+                purchaseEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                purchaseEntity.setUpdateUserId(loginUser.getUid());
+                purchaseEntity.setUpdateUserName(loginUser.getUserName());
+            }
         }
         this.saveOrUpdate(purchaseEntity);
         return purchaseEntity.getId();

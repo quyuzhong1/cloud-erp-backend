@@ -15,7 +15,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 public class ProductDetailShowDTO implements Serializable {
-    @ApiModelProperty(value = "产品sku信息表id")
+    @ApiModelProperty(value = "产品信息表id")
     private String id;
 
     @ApiModelProperty(value = "产品sku信息表id")

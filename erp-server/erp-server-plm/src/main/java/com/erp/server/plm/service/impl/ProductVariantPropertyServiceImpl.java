@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
@@ -49,12 +50,14 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
         ProductVariantPropertyEntity variantPropertyEntity = new ProductVariantPropertyEntity();
         BeanMapper.copy(dto, variantPropertyEntity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        if (StringUtils.isBlank(dto.getId())) {
-            variantPropertyEntity.setCreateUserId(loginUser.getUid());
-            variantPropertyEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            variantPropertyEntity.setUpdateUserId(loginUser.getUid());
-            variantPropertyEntity.setUpdateUserName(loginUser.getUserName());
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(dto.getId())) {
+                variantPropertyEntity.setCreateUserId(loginUser.getUid());
+                variantPropertyEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                variantPropertyEntity.setUpdateUserId(loginUser.getUid());
+                variantPropertyEntity.setUpdateUserName(loginUser.getUserName());
+            }
         }
         return this.saveOrUpdate(variantPropertyEntity);
     }

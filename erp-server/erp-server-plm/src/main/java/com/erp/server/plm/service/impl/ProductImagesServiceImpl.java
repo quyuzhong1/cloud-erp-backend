@@ -1,12 +1,16 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductImagesDTO;
 import com.erp.model.plm.entity.ProductImagesEntity;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductImagesMapper;
 import com.erp.server.plm.service.ProductImagesService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -29,6 +33,16 @@ public class ProductImagesServiceImpl extends ServiceImpl<ProductImagesMapper, P
     public Boolean insertProductImage(ProductImagesDTO productImagesDTO) {
         ProductImagesEntity productImagesEntity = new ProductImagesEntity();
         BeanMapper.copy(productImagesDTO, productImagesEntity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(productImagesDTO.getId())) {
+                productImagesEntity.setCreateUserId(loginUser.getUid());
+                productImagesEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                productImagesEntity.setUpdateUserId(loginUser.getUid());
+                productImagesEntity.setUpdateUserName(loginUser.getUserName());
+            }
+        }
         return this.save(productImagesEntity);
     }
 

@@ -21,6 +21,8 @@
         <result property="unitName" column="unit_name" jdbcType="VARCHAR"/>
         <result property="chargeId" column="charge_id" jdbcType="VARCHAR"/>
         <result property="chargeName" column="charge_name" jdbcType="VARCHAR"/>
+        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
+        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -33,7 +35,7 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
         SELECT
-        pd."id",
+        pi."id",
         pd.id AS sku_id,
         pd.images_url,
         pi.spu_no,
@@ -67,7 +69,7 @@
 
     <select id="listProduct" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
         SELECT
-        pd."id",
+        pi."id",
         pd.id AS sku_id,
         pd.images_url,
         pi.spu_no,
@@ -130,7 +132,7 @@
         pi.category,
         pi.sale_method,
         pi.sell_spot,
-        pi.product_function_desc,
+        pi.function_desc,
         pi.usage_desc,
         pi.pirate_risk,
         pi.materials,
@@ -155,7 +157,7 @@
         pi.category,
         pi.sale_method,
         pi.sell_spot,
-        pi.product_function_desc,
+        pi.function_desc,
         pi.usage_desc,
         pi.pirate_risk,
         pi.materials

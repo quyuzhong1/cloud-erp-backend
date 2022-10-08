@@ -22,6 +22,8 @@
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
         <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
         <result property="dataUrl" column="data_url" jdbcType="VARCHAR"/>
+        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
+        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -29,8 +31,8 @@
         year_sale_amount,month_sale_qty,month_sale_amount,
         sale_country,listing_time,delisting_time,
         is_finished_img,is_finished_video,sale_state,
-        create_time,create_user_id,update_time,
-        update_user_id,data_url
+        pd.create_time,pd.create_user_id,pd.update_time,
+        pd.update_user_id,data_url
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">

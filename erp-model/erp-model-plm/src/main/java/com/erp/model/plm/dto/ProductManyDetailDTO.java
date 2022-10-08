@@ -49,7 +49,7 @@ public class ProductManyDetailDTO {
     private String productSellSpot;
 
     @ApiModelProperty(value = "产品功能描述")
-    private String productFunctionDesc;
+    private String functionDesc;
 
     @ApiModelProperty(value = "产品用途")
     private String usageDesc;

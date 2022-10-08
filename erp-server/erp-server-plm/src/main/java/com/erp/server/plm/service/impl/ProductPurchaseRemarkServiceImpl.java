@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
@@ -62,13 +63,15 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
     public Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<ProductPurchaseRemarkEntity> productPurchaseRemarkEntities = BeanMapper.copyList(dto, ProductPurchaseRemarkEntity.class);
-        for (ProductPurchaseRemarkEntity productPurchaseRemarkEntity : productPurchaseRemarkEntities) {
-            if (StringUtils.isBlank(productPurchaseRemarkEntity.getId())) {
-                productPurchaseRemarkEntity.setCreateUserId(loginUser.getUid());
-                productPurchaseRemarkEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                productPurchaseRemarkEntity.setUpdateUserId(loginUser.getUid());
-                productPurchaseRemarkEntity.setUpdateUserName(loginUser.getUserName());
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            for (ProductPurchaseRemarkEntity productPurchaseRemarkEntity : productPurchaseRemarkEntities) {
+                if (StringUtils.isBlank(productPurchaseRemarkEntity.getId())) {
+                    productPurchaseRemarkEntity.setCreateUserId(loginUser.getUid());
+                    productPurchaseRemarkEntity.setCreateUserName(loginUser.getUserName());
+                } else {
+                    productPurchaseRemarkEntity.setUpdateUserId(loginUser.getUid());
+                    productPurchaseRemarkEntity.setUpdateUserName(loginUser.getUserName());
+                }
             }
         }
         return this.saveOrUpdateBatch(productPurchaseRemarkEntities);

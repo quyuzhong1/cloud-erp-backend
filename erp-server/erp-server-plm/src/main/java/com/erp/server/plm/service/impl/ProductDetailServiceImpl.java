@@ -139,6 +139,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
+        //检查sku是否重复
+        if (this.checkSkuNo(productSkuBaseInfoDTO.getSkuNo())) {
+            throw new ServiceException(ApiError.ERROR_95015);
+        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -181,11 +185,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
             productImagesService.updateProductImage(productImagesDTO);
         }
+
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        if(StringUtils.isBlank(productSkuBaseInfoDTO.getId())){
-            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
-            skuId = productIdBySku.getId();
-        }
 
         //3.修改/新增 成本信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {

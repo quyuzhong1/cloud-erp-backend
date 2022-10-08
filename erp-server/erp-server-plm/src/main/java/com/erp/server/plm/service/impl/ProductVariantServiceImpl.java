@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
@@ -49,12 +50,14 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
         ProductVariantEntity variantEntity = new ProductVariantEntity();
         BeanMapper.copy(productVariantDTO, variantEntity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        if (StringUtils.isBlank(productVariantDTO.getId())) {
-            variantEntity.setCreateUserId(loginUser.getUid());
-            variantEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            variantEntity.setUpdateUserId(loginUser.getUid());
-            variantEntity.setUpdateUserName(loginUser.getUserName());
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(productVariantDTO.getId())) {
+                variantEntity.setCreateUserId(loginUser.getUid());
+                variantEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                variantEntity.setUpdateUserId(loginUser.getUid());
+                variantEntity.setUpdateUserName(loginUser.getUserName());
+            }
         }
         return this.saveOrUpdate(variantEntity);
     }

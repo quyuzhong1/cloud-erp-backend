@@ -5,14 +5,16 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductImagesMapper">
 
     <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductImagesEntity">
-            <id property="id" column="id" jdbcType="VARCHAR"/>
-            <result property="productId" column="product_id" jdbcType="VARCHAR"/>
-            <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-            <result property="imagesUrl" column="images_url" jdbcType="VARCHAR"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="productId" column="product_id" jdbcType="VARCHAR"/>
+        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
+        <result property="imagesUrl" column="images_url" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
+        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">

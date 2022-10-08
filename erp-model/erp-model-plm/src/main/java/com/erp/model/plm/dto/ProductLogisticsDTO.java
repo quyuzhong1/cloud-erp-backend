@@ -51,11 +51,5 @@ public class ProductLogisticsDTO implements Serializable {
     @ApiModelProperty(value = "英文用途")
     private String englishUsage;
 
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
     private static final long serialVersionUID = 1L;
 }

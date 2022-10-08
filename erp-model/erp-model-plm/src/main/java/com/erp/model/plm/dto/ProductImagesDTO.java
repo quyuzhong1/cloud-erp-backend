@@ -26,11 +26,5 @@ public class ProductImagesDTO implements Serializable {
     @ApiModelProperty(value = "图片地址")
     private String imagesUrl;
 
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
     private static final long serialVersionUID = 1L;
 }

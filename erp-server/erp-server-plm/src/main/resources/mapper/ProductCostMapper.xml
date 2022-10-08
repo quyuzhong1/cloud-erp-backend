@@ -27,14 +27,14 @@
         target_tax_cost,
         target_no_tax_cost,actual_tax_cost,actual_no_tax_cost,
         retail_price,target_gpm,actual_gpm_cny,
-        actual_gpm_usd,create_time,create_user_id,
-        create_user_name,update_time,update_user_id,
-        update_user_name
+        actual_gpm_usd,pd.create_time,pd.create_user_id,
+        pd.create_user_name,pd.update_time,pd.update_user_id,
+        pd.update_user_name
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCostShowDTO">
         SELECT
-        pc.id
+        pc.id,
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,
