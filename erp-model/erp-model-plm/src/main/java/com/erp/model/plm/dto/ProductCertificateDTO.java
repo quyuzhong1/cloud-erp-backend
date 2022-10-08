@@ -29,11 +29,5 @@ public class ProductCertificateDTO implements Serializable {
     @ApiModelProperty(value = "证书有效期")
     private Date certificateValidTime;
 
-    @TableField(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
     private static final long serialVersionUID = 1L;
 }

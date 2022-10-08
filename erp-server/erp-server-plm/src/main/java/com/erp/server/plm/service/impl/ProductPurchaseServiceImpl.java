@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -50,6 +53,14 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     public String saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
         ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
         BeanMapper.copy(purchaseDTO, purchaseEntity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (StringUtils.isBlank(purchaseDTO.getId())) {
+            purchaseEntity.setCreateUserId(loginUser.getUid());
+            purchaseEntity.setCreateUserName(loginUser.getUserName());
+        } else {
+            purchaseEntity.setUpdateUserId(loginUser.getUid());
+            purchaseEntity.setUpdateUserName(loginUser.getUserName());
+        }
         this.saveOrUpdate(purchaseEntity);
         return purchaseEntity.getId();
     }

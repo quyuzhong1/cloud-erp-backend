@@ -63,6 +63,20 @@ public class ProductPurchaseRemarkEntity implements Serializable {
     @ApiModelProperty(value = "修改人id")
     private String updateUserId;
 
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "update_user_name")
+    @ApiModelProperty(value = "修改人名称")
+    private String createUserName;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    @ApiModelProperty(value = "修改人名称")
+    private String updateUserName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

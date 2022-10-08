@@ -24,18 +24,6 @@ public class ProductVariantDTO implements Serializable {
     @ApiModelProperty(value = "变体属性类型")
     private String propertyType;
 
-    @ApiModelProperty(value = "创建时间")
-    private Date createTime;
-
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "修改时间")
-    private Date updateTime;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
     @ApiModelProperty(value = "产品表id")
     private String productId;
 

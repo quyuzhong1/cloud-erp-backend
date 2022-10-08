@@ -32,9 +32,9 @@ public class ProductSkuBaseInfoDTO {
     private String imagesUrl;
 
     @ApiModelProperty(value = "产品负责人id")
-    private String charge_id;
+    private String chargeId;
 
     @ApiModelProperty(value = "产品负责人名称")
-    private String charge_name;
+    private String chargeName;
 
 }

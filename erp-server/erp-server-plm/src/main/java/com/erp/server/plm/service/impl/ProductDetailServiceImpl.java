@@ -9,19 +9,23 @@ import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -160,7 +164,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
+
         //1.修改产品表 主表信息
         String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
 

@@ -58,16 +58,4 @@ public class ProductCostDTO implements Serializable {
     @NotNull(message = "实际毛利率（美元）不能为空")
     @ApiModelProperty(value = "实际毛利率（美元）", required = true)
     private BigDecimal actualGpmUsd;
-
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "创建人名称")
-    private String createUserName;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
-    @ApiModelProperty(value = "修改人名称")
-    private String updateUserName;
 }

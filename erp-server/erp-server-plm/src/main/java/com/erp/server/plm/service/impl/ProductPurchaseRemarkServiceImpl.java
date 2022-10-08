@@ -3,12 +3,15 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
 import com.erp.model.plm.dto.ProductPurchaseRemarkShowDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductPurchaseRemarkMapper;
 import com.erp.server.plm.service.ProductPurchaseRemarkService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -57,7 +60,17 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto) {
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<ProductPurchaseRemarkEntity> productPurchaseRemarkEntities = BeanMapper.copyList(dto, ProductPurchaseRemarkEntity.class);
+        for (ProductPurchaseRemarkEntity productPurchaseRemarkEntity : productPurchaseRemarkEntities) {
+            if (StringUtils.isBlank(productPurchaseRemarkEntity.getId())) {
+                productPurchaseRemarkEntity.setCreateUserId(loginUser.getUid());
+                productPurchaseRemarkEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                productPurchaseRemarkEntity.setUpdateUserId(loginUser.getUid());
+                productPurchaseRemarkEntity.setUpdateUserName(loginUser.getUserName());
+            }
+        }
         return this.saveOrUpdateBatch(productPurchaseRemarkEntities);
     }
 }

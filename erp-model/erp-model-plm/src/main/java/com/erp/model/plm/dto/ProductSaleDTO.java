@@ -91,18 +91,6 @@ public class ProductSaleDTO implements Serializable {
     private Integer saleState;
 
     /**
-     * 创建人id
-     */
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    /**
-     * 修改人id
-     */
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
-    /**
      * 产品上市（含培训）资料链接
      */
     @ApiModelProperty(value = "产品上市（含培训）资料链接")

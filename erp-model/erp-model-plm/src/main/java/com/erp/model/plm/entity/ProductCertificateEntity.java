@@ -62,6 +62,18 @@ public class ProductCertificateEntity implements Serializable {
     @TableField(value = "update_user_id")
     private String updateUserId;
 
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name")
+    private String createUserName;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    private String updateUserName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -122,6 +122,18 @@ public class ProductPurchaseEntity implements Serializable {
     @TableField(value = "actual_arrival_qty")
     private Integer actualArrivalQty;
 
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name")
+    private String createUserName;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    private String updateUserName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -3,13 +3,16 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
 import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.ProductCertificateService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +52,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     public Boolean saveOrUpdate(ProductCertificateDTO productCertificateDTO) {
         ProductCertificateEntity certificateEntity = new ProductCertificateEntity();
         BeanMapper.copy(productCertificateDTO, certificateEntity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (StringUtils.isBlank(productCertificateDTO.getId())) {
+            certificateEntity.setCreateUserId(loginUser.getUid());
+            certificateEntity.setCreateUserName(loginUser.getUserName());
+        } else {
+            certificateEntity.setUpdateUserId(loginUser.getUid());
+            certificateEntity.setUpdateUserName(loginUser.getUserName());
+        }
         return this.saveOrUpdate(certificateEntity);
     }
 

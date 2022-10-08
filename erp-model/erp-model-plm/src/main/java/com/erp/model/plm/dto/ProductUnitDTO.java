@@ -19,17 +19,5 @@ public class ProductUnitDTO implements Serializable {
     @ApiModelProperty(value = "单位名称")
     private String name;
 
-    @ApiModelProperty(value = "创建人id")
-    private String createUserId;
-
-    @ApiModelProperty(value = "创建人名称")
-    private String createUserName;
-
-    @ApiModelProperty(value = "修改人id")
-    private String updateUserId;
-
-    @ApiModelProperty(value = "修改人名称")
-    private String updateUserName;
-
     private static final long serialVersionUID = 1L;
 }
