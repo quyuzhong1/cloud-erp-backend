@@ -24,7 +24,7 @@ public class Knife4jConfiguration {
                         .termsOfServiceUrl("http://www.xx.com/")
                         .version("1.0")
                         .build())
-                .groupName("优蓝子科技ERP系统PLM")
+//                .groupName("优蓝子科技ERP系统PLM")
                 .select()
                 //这里指定Controller扫描包路径
                 .apis(RequestHandlerSelectors.basePackage("com.erp.server.plm.controller"))
