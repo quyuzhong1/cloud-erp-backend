@@ -91,8 +91,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return ProductDetailShowDTO
      **/
     @Override
-    public ProductDetailShowDTO getProductByName(String name){
-        return productDetailMapper.listProduct(name);
+    public ProductDetailShowDTO getProductBy(String name, String skuNo){
+        return productDetailMapper.listProduct(name, skuNo);
     }
 
     /**
@@ -248,7 +248,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //如果是修改允许保留原来的产品名称不变
-        ProductDetailShowDTO productDetailShowDTO = this.getProductByName(productManySpecDTO.getProductInfoDTO().getName());
+        ProductDetailShowDTO productDetailShowDTO = this.getProductBy(productManySpecDTO.getProductInfoDTO().getName(), "");
         if (StringUtils.isNotBlank(productManySpecDTO.getProductInfoDTO().getId())) {
             if (!productDetailShowDTO.getId().equals(productManySpecDTO.getProductInfoDTO().getId())) {
                 throw new ServiceException(ApiError.ERROR_95007);
@@ -464,7 +464,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
         //根据产品名称查询产品信息
-        ProductDetailShowDTO productByName = getProductByName(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo());
+        ProductDetailShowDTO productByName = getProductBy(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), "");
         if (!ObjectUtils.isEmpty(productByName)) {
             if (!productByName.getSkuNo().equals(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo())) {
                 throw new ServiceException(ApiError.ERROR_95007);

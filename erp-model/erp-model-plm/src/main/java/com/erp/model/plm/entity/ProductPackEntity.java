@@ -31,7 +31,7 @@ public class ProductPackEntity implements Serializable {
      * 产品尺寸
      */
     @TableField(value = "product_size")
-    private BigDecimal productSize;
+    private String productSize;
 
     /**
      * 毛重
@@ -49,7 +49,7 @@ public class ProductPackEntity implements Serializable {
      * 箱规
      */
     @TableField(value = "box_size")
-    private BigDecimal boxSize;
+    private String boxSize;
 
     /**
      * 单箱重量

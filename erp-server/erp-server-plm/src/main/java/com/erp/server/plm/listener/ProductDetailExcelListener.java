@@ -62,22 +62,22 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             list.add(dto);
             return;
         }
-
+        ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
         //根据产品名称查询产品信息
-        ProductDetailShowDTO productDetailShow = productDetailService.getProductByName(dto.getName());
+        ProductDetailShowDTO productDetailShow = productDetailService.getProductBy(dto.getName(), "");
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
 
-            productInfoDTO.setId(productDetailShow.getId());
-            productSkuBaseInfoDTO.setId(productDetailShow.getSkuId());
-            if (!productDetailService.checkSkuNo(dto.getSkuNo())) {
+            productSkuBaseInfoDTO.setId(productBy.getSkuId());
+            if (ObjectUtils.isEmpty(productBy)) {
                 dto.setErrorMsg("sku不存在，请选择导入新增");
                 list.add(dto);
                 return;
             }
+            productInfoDTO.setId(productBy.getId());
             if (!ObjectUtils.isEmpty(productDetailShow)) {
                 if (productDetailShow.getName().equals(dto.getName())) {
                     dto.setErrorMsg(ApiError.ERROR_95007.msg);

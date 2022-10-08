@@ -29,7 +29,7 @@ public class ProductPackShowDTO implements Serializable {
     private String skuNo;
 
     @ApiModelProperty(value = "产品尺寸")
-    private BigDecimal productSize;
+    private String productSize;
 
     @ApiModelProperty(value = "毛重")
     private BigDecimal grossWeight;
@@ -38,7 +38,7 @@ public class ProductPackShowDTO implements Serializable {
     private BigDecimal netWeight;
 
     @ApiModelProperty(value = "箱规")
-    private BigDecimal boxSize;
+    private String boxSize;
 
     @ApiModelProperty(value = "单箱重量")
     private BigDecimal boxWeight;

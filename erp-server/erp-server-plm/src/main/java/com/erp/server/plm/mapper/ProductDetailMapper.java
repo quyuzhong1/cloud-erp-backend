@@ -28,7 +28,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param name:产品名称
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
-    ProductDetailShowDTO listProduct(@Param("name") String name);
+    ProductDetailShowDTO listProduct(@Param("name") String name, @Param("skuNo") String skuNo);
 
     /**
      * @Description 根据skuid获取产品主键信息

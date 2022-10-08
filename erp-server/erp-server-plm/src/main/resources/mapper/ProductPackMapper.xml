@@ -7,10 +7,10 @@
     <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductPackEntity">
         <id property="id" column="id" jdbcType="VARCHAR"/>
         <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="productSize" column="product_size" jdbcType="NUMERIC"/>
+        <result property="productSize" column="product_size" jdbcType="VARCHAR"/>
         <result property="grossWeight" column="gross_weight" jdbcType="NUMERIC"/>
         <result property="netWeight" column="net_weight" jdbcType="NUMERIC"/>
-        <result property="boxSize" column="box_size" jdbcType="NUMERIC"/>
+        <result property="boxSize" column="box_size" jdbcType="VARCHAR"/>
         <result property="boxWeight" column="box_weight" jdbcType="NUMERIC"/>
         <result property="boxQty" column="box_qty" jdbcType="NUMERIC"/>
         <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>

@@ -29,7 +29,7 @@ public interface ProductDetailService {
      * @param name:产品名称
      * @return ProductDetailShowDTO
      **/
-    ProductDetailShowDTO getProductByName(String name);
+    ProductDetailShowDTO getProductBy(String name, String skuNo);
 
     /**
      * @Description 无规格产品信息明细

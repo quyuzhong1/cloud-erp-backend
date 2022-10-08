@@ -89,6 +89,9 @@
             <if test="name != '' and name != null">
                 AND pi."name" = #{name}
             </if>
+            <if test="skuNo != '' and skuNo != null">
+                AND pd.sku_no = #{skuNo}
+            </if>
         </where>
         LIMIT 1
     </select>

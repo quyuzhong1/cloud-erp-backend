@@ -136,7 +136,7 @@ public class ProductDetailExcelDTO {
     private String englishUsage;
 
     @ExcelProperty(value = "产品尺寸", index = 40)
-    private BigDecimal productSize;
+    private String productSize;
 
     @ExcelProperty(value = "毛重", index = 41)
     private BigDecimal grossWeight;
@@ -145,7 +145,7 @@ public class ProductDetailExcelDTO {
     private BigDecimal netWeight;
 
     @ExcelProperty(value = "箱规", index = 43)
-    private BigDecimal boxSize;
+    private String boxSize;
 
     @ExcelProperty(value = "单箱重量", index = 44)
     private BigDecimal boxWeight;
