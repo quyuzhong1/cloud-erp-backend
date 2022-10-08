@@ -126,7 +126,7 @@ public class ProductDetailController extends BaseController {
     @ApiOperation(value = "产品信息-多规格-自动生成")
     @PostMapping("/InsertManySpecSku")
     public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
-        List<ProductDetailEntity> list = productDetailService.InsertManySpecAuto(variantAutoAddDTO);
+        List<ProductDetailEntity> list = productDetailService.insertManySpecAuto(variantAutoAddDTO);
         return this.success(list);
     }
 

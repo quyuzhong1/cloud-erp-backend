@@ -93,12 +93,6 @@ public class ProductPurchaseEntity implements Serializable {
     private Integer secondSupplier;
 
     /**
-     * 采购异常备注表id
-     */
-    @TableField(value = "remark_id")
-    private String remarkId;
-
-    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)

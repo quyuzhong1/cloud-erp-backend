@@ -92,7 +92,7 @@ public interface ProductDetailService {
      * @param variantAutoAddDTO:自动生成请求参数
      * @return java.lang.Boolean
      **/
-    List<ProductDetailEntity> InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
+    List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
 
     /**
      * @Description 删除多规格sku信息

@@ -97,7 +97,7 @@ public class ProductInfoDTO {
      * 产品功能描述
      */
     @ApiModelProperty(value = "产品功能描述")
-    private String productFunctionDesc;
+    private String functionDesc;
 
     /**
      * 产品用途

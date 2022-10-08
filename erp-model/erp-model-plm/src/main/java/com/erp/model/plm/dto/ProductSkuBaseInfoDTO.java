@@ -21,10 +21,20 @@ public class ProductSkuBaseInfoDTO {
     @ApiModelProperty(value = "单位表id")
     private String unitId;
 
+    @ApiModelProperty(value = "单位名称")
+    private String unitName;
+
     @StateEnumValue(intValues = {1, 2, 3, 4, 5}, message = "产品状态错误")
     @ApiModelProperty(value = "产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发",required = true)
     private Integer productState;
 
     @ApiModelProperty(value = "产品图片")
     private String imagesUrl;
+
+    @ApiModelProperty(value = "产品负责人id")
+    private String charge_id;
+
+    @ApiModelProperty(value = "产品负责人名称")
+    private String charge_name;
+
 }

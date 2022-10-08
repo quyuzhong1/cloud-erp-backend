@@ -108,7 +108,7 @@
 
         <!--引入FastDFS工具类-->
         <dependency>
-            <groupId>org.csource</groupId>
+            <groupId>cn.aghost</groupId>
             <artifactId>fastdfs-client-java</artifactId>
         </dependency>
 

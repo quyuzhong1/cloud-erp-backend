@@ -344,8 +344,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
-        //检查名字是否重复
-        checkName(dto.getName());
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }

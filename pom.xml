@@ -177,9 +177,9 @@
 
             <!--引入FastDFS工具类-->
             <dependency>
-                <groupId>org.csource</groupId>
+                <groupId>cn.aghost</groupId>
                 <artifactId>fastdfs-client-java</artifactId>
-                <version>1.29</version>
+                <version>1.29.0</version>
             </dependency>
 
             <!-- excel导入工具 -->
@@ -236,7 +236,7 @@
         <repository>
             <id>nexus</id>
             <name>Internal Maven Server</name>
-            <url>http://192.168.1.5:8089/repository/maven-public/</url>
+            <url>http://172.16.110.11:8089/repository/maven-public/</url>
         </repository>
     </repositories>
 

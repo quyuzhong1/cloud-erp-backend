@@ -8,6 +8,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.enums.SaleMethodEnum;
 import com.erp.server.plm.service.BasicCategoryService;
@@ -63,26 +64,22 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         //根据产品名称查询产品信息
-        ProductDetailShowDTO productByName = productDetailService.getProductByName(dto.getName());
+        ProductDetailShowDTO productDetailShow = productDetailService.getProductByName(dto.getName());
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
-            if (ObjectUtils.isEmpty(productByName)) {
-                dto.setErrorMsg("没有找到这个sku，请导入新增");
-                list.add(dto);
-                return;
-            }
-            productInfoDTO.setId(productByName.getId());
-            productSkuBaseInfoDTO.setId(productByName.getSkuId());
+
+            productInfoDTO.setId(productDetailShow.getId());
+            productSkuBaseInfoDTO.setId(productDetailShow.getSkuId());
             if (!productDetailService.checkSkuNo(dto.getSkuNo())) {
                 dto.setErrorMsg("sku不存在，请选择导入新增");
                 list.add(dto);
                 return;
             }
-            if (ObjectUtils.isEmpty(productByName)) {
-                if (!productByName.getSkuNo().equals(dto.getSkuNo())) {
+            if (!ObjectUtils.isEmpty(productDetailShow)) {
+                if (productDetailShow.getName().equals(dto.getName())) {
                     dto.setErrorMsg(ApiError.ERROR_95007.msg);
                     list.add(dto);
                     return;
@@ -96,7 +93,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 list.add(dto);
                 return;
             }
-            if (!ObjectUtils.isEmpty(productByName)) {
+            if (!ObjectUtils.isEmpty(productDetailShow)) {
                 dto.setErrorMsg(ApiError.ERROR_95007.msg);
                 list.add(dto);
             }
@@ -150,6 +147,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         //产品等级 没有
         productInfoDTO.setGrade("");
+        productInfoDTO.setFunctionDesc(dto.getProductFunctionDesc());
+        productInfoDTO.setProductSellSpot(dto.getProductSellSpot());
+        productInfoDTO.setSaleMethod(dto.getSaleMethod());
+        productInfoDTO.setUsageDesc(dto.getUsageDesc());
 
         BasicDictEntity productBrand = basicDictService.checkBasicDict("productBrand", dto.getBrandName());
         if (ObjectUtils.isEmpty(productBrand)) {

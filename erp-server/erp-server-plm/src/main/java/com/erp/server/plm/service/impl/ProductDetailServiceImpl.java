@@ -291,7 +291,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
-    public List<ProductDetailEntity> InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
+    public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
         List<String> varianTempList = new ArrayList<>();
         Boolean flag = true;
@@ -463,6 +463,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
+        //根据产品名称查询产品信息
+        ProductDetailShowDTO productByName = getProductByName(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo());
+        if (!ObjectUtils.isEmpty(productByName)) {
+            if (!productByName.getSkuNo().equals(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo())) {
+                throw new ServiceException(ApiError.ERROR_95007);
+            }
+        }
+
         //1.新增产品表 主表信息
         String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
 
