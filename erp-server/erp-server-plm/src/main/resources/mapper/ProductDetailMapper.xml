@@ -33,20 +33,20 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductDetailShowDTO">
         SELECT
-            pd."id",
-            pd.id AS sku_id,
-            pd.images_url,
-            pi.spu_no,
-            pd.sku_no,
-            pd."name",
-            pp.actual_arrival_qty,
-            pp.arrival_state,
-            pi.pirate_risk,
-            pc.retail_price,
-            pd.product_state,
-            pd.create_user_id,
-            pd.create_time,
-            pi.spec_type
+        pd."id",
+        pd.id AS sku_id,
+        pd.images_url,
+        pi.spu_no,
+        pd.sku_no,
+        pd."name",
+        pp.actual_arrival_qty,
+        pp.arrival_state,
+        pi.pirate_risk,
+        pc.retail_price,
+        pd.product_state,
+        pd.create_user_id,
+        pd.create_time,
+        pi.spec_type
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
@@ -115,25 +115,25 @@
 
     <select id="getNoSpecDetailById" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
         SELECT
-            pi."id",
-            pd.images_url,
-            pd.sku_no,
-            pd.product_state,
-            pi."name",
-            pi.charge_name,
-            pi.brand_name,
-            pi.property,
-            pi.grade,
-            pi.category,
-            pi.sale_method,
-            pi.sell_spot,
-            pi.product_function_desc,
-            pi.usage_desc,
-            pi.pirate_risk,
-            pi.materials,
-            pd.plan_listing_time,
-            pd.unit_id,
-            pd.product_state
+        pi."id",
+        pd.images_url,
+        pd.sku_no,
+        pd.product_state,
+        pi."name",
+        pi.charge_name,
+        pi.brand_name,
+        pi.property,
+        pi.grade,
+        pi.category,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.product_function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials,
+        pd.plan_listing_time,
+        pd.unit_id,
+        pd.product_state
         FROM product_info pi
         INNER JOIN product_detail pd on pi.id = pd.product_id
         WHERE pi.id = #{productId}
@@ -141,21 +141,21 @@
 
     <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManyDetailDTO">
         SELECT
-            pi."id",
-            pd.images_url,
-            pi.spu_no,
-            pi."name",
-            pi.charge_name,
-            pi.brand_name,
-            pi.property,
-            pi.grade,
-            pi.category,
-            pi.sale_method,
-            pi.sell_spot,
-            pi.product_function_desc,
-            pi.usage_desc,
-            pi.pirate_risk,
-            pi.materials
+        pi."id",
+        pd.images_url,
+        pi.spu_no,
+        pi."name",
+        pi.charge_name,
+        pi.brand_name,
+        pi.property,
+        pi.grade,
+        pi.category,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.product_function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials
         FROM product_info pi
         INNER JOIN product_detail pd on pi.id = pd.product_id
         WHERE pi.id = #{productId}

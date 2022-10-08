@@ -1,7 +1,7 @@
 package com.erp.common.vo;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,28 +12,33 @@ import java.util.List;
  * @Date 2022-07-12 11:19
  * @Created by yl
  */
-public class PagingVO implements Serializable {
+public class PagingVO<T> implements Serializable {
 
     /**
      * 总记录数
      */
+    @ApiModelProperty(value = "总记录数")
     private int totalCount;
     /**
      * 每页记录数
      */
+    @ApiModelProperty(value = "每页记录数")
     private int pageSize;
     /**
      * 总页数
      */
+    @ApiModelProperty(value = "总页数")
     private int totalPage;
     /**
      * 当前页数
      */
+    @ApiModelProperty(value = "当前页数")
     private int currPage;
     /**
      * 列表数据
      */
-    private List<?> list;
+    @ApiModelProperty(value = "列表数据")
+    private List<T> list;
 
     /**
      * 分页
@@ -43,7 +48,7 @@ public class PagingVO implements Serializable {
      * @param pageSize   每页记录数
      * @param currPage   当前页数
      */
-    public PagingVO(List<?> list, int totalCount, int pageSize, int currPage) {
+    public PagingVO(List<T> list, int totalCount, int pageSize, int currPage) {
         this.list = list;
         this.totalCount = totalCount;
         this.pageSize = pageSize;
@@ -54,7 +59,7 @@ public class PagingVO implements Serializable {
     /**
      * 分页
      */
-    public PagingVO(IPage<?> page) {
+    public PagingVO(IPage<T> page) {
         this.list = page.getRecords();
         this.totalCount = (int) page.getTotal();
         this.pageSize = (int) page.getSize();
@@ -99,7 +104,7 @@ public class PagingVO implements Serializable {
         return list;
     }
 
-    public void setList(List<?> list) {
+    public void setList(List<T> list) {
         this.list = list;
     }
 }

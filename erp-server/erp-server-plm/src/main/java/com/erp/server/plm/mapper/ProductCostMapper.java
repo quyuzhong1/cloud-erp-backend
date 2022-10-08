@@ -18,3 +18,4 @@ public interface ProductCostMapper extends BaseMapper<ProductCostEntity> {
      **/
     List<ProductCostShowDTO> list(@Param("productId") String productId);
 }
+ 

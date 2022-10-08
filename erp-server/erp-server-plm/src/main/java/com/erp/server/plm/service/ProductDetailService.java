@@ -14,39 +14,39 @@ import java.util.List;
 public interface ProductDetailService {
 
     /**
-    * @Description 产品信息查询列表
-    * @Author Luo_WG
-    * @Date 2022/9/22 10:28
-    * @param pagingDTO:查询参数
-    * @return PagingVO
-    **/
+     * @Description 产品信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param pagingDTO:查询参数
+     * @return PagingVO
+     **/
     PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO);
 
     /**
-    * @Description 条件查询产品信息
-    * @Author Luo_WG
-    * @Date 2022/9/22 10:28
-    * @param name:产品名称
-    * @return ProductDetailShowDTO
-    **/
+     * @Description 条件查询产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param name:产品名称
+     * @return ProductDetailShowDTO
+     **/
     ProductDetailShowDTO getProductByName(String name);
-    
+
     /**
-    * @Description 无规格产品信息明细
-    * @Author Luo_WG
-    * @Date 2022/9/22 12:05
-    * @param productId:产品信息表id
-    * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
-    **/
+     * @Description 无规格产品信息明细
+     * @Author Luo_WG
+     * @Date 2022/9/22 12:05
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
+     **/
     ProductNoDetailDTO getNoSpecDetailById(String productId);
-    
+
     /**
-    * @Description 多规格产品信息明细
-    * @Author Luo_WG
-    * @Date 2022/9/22 12:05
-    * @param productId:产品信息表id
-    * @return java.util.List<com.erp.model.plm.dto.ProductVariantShowDTO> 
-    **/
+     * @Description 多规格产品信息明细
+     * @Author Luo_WG
+     * @Date 2022/9/22 12:05
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductVariantShowDTO>
+     **/
     ProductManyDetailDTO getManySpecDetailById(String productId);
 
     /**
@@ -68,21 +68,21 @@ public interface ProductDetailService {
     Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList);
 
     /**
-    * @Description 新增无规格sku信息
-    * @Author Luo_WG
-    * @Date 2022/9/21 16:31
-    * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-    * @return java.lang.Boolean
-    **/
+     * @Description 新增无规格sku信息
+     * @Author Luo_WG
+     * @Date 2022/9/21 16:31
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
     Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO);
 
     /**
-    * @Description 新增多规格sku信息
-    * @Author Luo_WG
-    * @Date 2022/9/22 10:52
-    * @param productManySpecDTO:新增产品多规格sku信息请求参数
-    * @return java.lang.Boolean
-    **/
+     * @Description 新增多规格sku信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:52
+     * @param productManySpecDTO:新增产品多规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
     Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO);
 
     /**
@@ -95,12 +95,12 @@ public interface ProductDetailService {
     List<ProductDetailEntity> InsertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO);
 
     /**
-    * @Description 删除多规格sku信息
-    * @Author Luo_WG
-    * @Date 2022/9/22 11:32
-    * @param skuId:产品sku表主键id
-    * @return java.lang.Boolean
-    **/
+     * @Description 删除多规格sku信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 11:32
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
+     **/
     Boolean delete(String skuId);
 
     /**

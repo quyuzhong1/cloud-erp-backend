@@ -466,7 +466,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String lastNo="1";
         if(StringUtils.isBlank(last)){
         }
-       // redisService.setCacheObject(redisKey,lastNo,1, TimeUnit.DAYS);
+        // redisService.setCacheObject(redisKey,lastNo,1, TimeUnit.DAYS);
 
         return sb.toString();
 
