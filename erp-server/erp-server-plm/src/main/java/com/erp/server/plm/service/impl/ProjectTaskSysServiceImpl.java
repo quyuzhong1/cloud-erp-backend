@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -147,5 +148,21 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectTaskSysEntity::getName);
         return this.listObjs(queryWrapper, Object::toString);
+    }
+
+
+    /**
+     * 系统任务获取前置任务
+     *
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.String>>
+     * @author yl
+     * @date 2022-10-08 10:57
+     */
+    @Override
+    public List<Map<String, Object>> taskList() {
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
+
+        return this.listMaps(queryWrapper);
     }
 }

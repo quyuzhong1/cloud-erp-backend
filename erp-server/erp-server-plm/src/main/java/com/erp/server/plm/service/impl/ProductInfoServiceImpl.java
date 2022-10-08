@@ -303,6 +303,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         this.update(updateWrapper);
     }
 
+    /**
+     * @param :产品基础信息请求参数
+     * @return java.lang.Boolean
+     * @Description 无规格sku修改产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/21 18:44
+     **/
     @Override
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -436,6 +443,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
 
 
+    }
+
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-10-08 14:46
+     * @param dto
+     * @return com.erp.common.vo.PagingVO
+     */
+    @Override
+    public PagingVO archivePaging(PagingDTO<ProductSearchDTO> dto) {
+        return null;
     }
 
     /**

@@ -93,11 +93,7 @@ public class SysUserInfoController extends BaseController {
         return success();
     }
 
-    @RequestMapping("/findList")
-    public ApiResult findList(@RequestBody @Validated BaseSearchDTO dto) {
-        List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
-        return success(list);
-    }
+
 
 
 }

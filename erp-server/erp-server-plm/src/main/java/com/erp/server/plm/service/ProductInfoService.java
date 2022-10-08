@@ -53,4 +53,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     void updateProduct(UpdateProductDTO dto);
 
     void exportProductData(ExportProductDataDTO dto);
+
+    PagingVO archivePaging(PagingDTO<ProductSearchDTO> dto);
 }

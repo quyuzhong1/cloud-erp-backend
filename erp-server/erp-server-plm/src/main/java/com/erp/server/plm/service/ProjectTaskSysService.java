@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -28,4 +29,6 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
     List<ProjectTaskSysEntity> getListByProperty(Integer state);
 
     List<String> getSysTaskNames();
+
+    List<Map<String, Object>> taskList();
 }

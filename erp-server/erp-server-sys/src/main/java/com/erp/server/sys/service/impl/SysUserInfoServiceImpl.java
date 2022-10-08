@@ -521,7 +521,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
     }
 
-    
+
     /**
      * 方法说明
      *
@@ -551,16 +551,21 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
+        //先添加自己
         LoginUser loginUser = SysInterceptor.threadLocal.get();
-        FindUserDTO user = new FindUserDTO();
-        user.setIsMyState(1);
-        user.setUserId(loginUser.getUid());
-        user.setUserName(loginUser.getUserName());
-        resultList.add(user);
+        Boolean flag = !Objects.isNull(loginUser);
+        if (flag) {
+            FindUserDTO user = new FindUserDTO();
+            user.setIsMyState(1);
+            user.setUserId(loginUser.getUid());
+            user.setUserName(loginUser.getUserName());
+            resultList.add(user);
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysUserInfoEntity::getUid);
-        queryWrapper.select(SysUserInfoEntity::getUserName);
-        queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
+        queryWrapper.select(SysUserInfoEntity::getUid,SysUserInfoEntity::getUserName);
+        if (flag) {
+            queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
+        }
         if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
             queryWrapper.like(SysUserInfoEntity::getUserName, dto.getSearchKeyword());
         }

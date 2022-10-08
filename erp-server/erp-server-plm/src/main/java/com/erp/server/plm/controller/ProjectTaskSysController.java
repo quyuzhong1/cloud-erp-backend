@@ -10,12 +10,12 @@ import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.ProjectTaskSysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.erp.common.controller.BaseController;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -49,6 +49,12 @@ public class ProjectTaskSysController extends BaseController {
     public ApiResult paging(String taskId) {
         Boolean flag=projectTaskSysService.removeTask(taskId);
         return flag==true?success():failure();
+    }
+
+    @GetMapping("/list")
+    public ApiResult list() {
+        List<Map<String,Object>> list= projectTaskSysService.taskList();
+        return success(list);
     }
 
 }
