@@ -7,10 +7,11 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.entity.ProductArchiveEntity;
 import com.erp.server.plm.mapper.ProductArchiveMapper;
 import com.erp.server.plm.service.ProductArchiveService;
+import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,6 +36,9 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
     @Autowired
     private TaskDocsFinishService finishService;
 
+    @Autowired
+    private ProductInfoService productInfoService;
+
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -43,21 +47,23 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
         List<ProductArchiveDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //根据产品id 获取到对应的要交付的文档数
-            List<TaskDocsCountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
+            List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
             //根据产品id 获取到对应完成的文档数
-            List<TaskDocsCountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
+            List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
+            //   获取到 产品迭代的数量
+            List<CountDTO> productRelevance=productInfoService.getProductRelevanceList();
 
             for(ProductArchiveDTO item:list){
                 String productId=item.getProductId();
                 //总的文档数
-                TaskDocsCountDTO totalDocsDTO=productDocs.stream().filter(p->productId.equals(p.getFlagId())).findFirst().orElse(null);
+                CountDTO totalDocsDTO=productDocs.stream().filter(p->productId.equals(p.getFlagId())).findFirst().orElse(null);
                 if(totalDocsDTO!=null){
                     item.setTotalDocsCount(totalDocsDTO.getCount());
                 }else{
                     item.setTotalDocsCount(0);
                 }
                 //完成的
-                TaskDocsCountDTO finishDocsDTO=productFinishDocs.stream().filter(p->productId.equals(p.getFlagId())).findFirst().orElse(null);
+                CountDTO finishDocsDTO=productFinishDocs.stream().filter(p->productId.equals(p.getFlagId())).findFirst().orElse(null);
                 if(finishDocsDTO!=null){
                     item.setFinishDocsCount(finishDocsDTO.getCount());
                 }else{

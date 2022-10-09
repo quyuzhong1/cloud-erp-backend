@@ -1,9 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.core.utils.BeanMapper;
@@ -26,7 +24,6 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,7 +242,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取到任务id 集合
             List<String> taskIds = list.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
             //获取总的任务数
-            List<TaskDocsCountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
 
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
@@ -254,7 +251,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
                 Integer totalDocsCount = 0;
-                TaskDocsCountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
                     totalDocsCount = countDTO.getCount();
                 }

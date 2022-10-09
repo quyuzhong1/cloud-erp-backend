@@ -1,7 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 
@@ -21,5 +21,5 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
     Boolean uploadFile(TaskUploadFileDTO dto);
 
-    List<TaskDocsCountDTO> getTaskDocsCountByProductId();
+    List<CountDTO> getTaskDocsCountByProductId();
 }

@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.ProductExcelDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
@@ -26,4 +27,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     IPage<ProductShowDTO> paging(IPage query, @Param("params") ProductSearchDTO params);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
+
+    List<CountDTO> getProductRelevanceList();
 }

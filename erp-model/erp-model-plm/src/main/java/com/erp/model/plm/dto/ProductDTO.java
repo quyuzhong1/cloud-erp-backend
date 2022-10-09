@@ -20,47 +20,92 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductDTO implements Serializable {
 
+    /**
+     * 产品id
+     */
     private String id;
 
+    /**
+     * 产品名称
+     */
     @NotBlank(message = "产品名不能为空")
     @Size(max = 50,message = "最大50字符")
     private String name;
 
-    //产品分类
+
+    /**
+     * 产品分类
+     */
     @NotBlank(message = "产品分类不能为空")
     private String category;
 
-    //产品分类id
+
+    /**
+     * 产品分类id
+     */
     private String categoryId;
 
-    //产品分属性
+
+
+    /**
+     * 产品属性
+     */
     @NotBlank(message = "产品属性不能为空")
     private String property;
 
-    //产品分属性id
+
+    /**
+     * 产品属性id
+     */
     private String propertyId;
 
-    //产品分属性id
+    /**
+     * 产品负责人
+     */
     @NotBlank(message = "产品负责人不能为空")
     private String chargeName;
 
+    /**
+     * 产品负责人id
+     */
     @NotBlank(message = "产品负责人id不能为空")
     private String chargeId;
 
+
+    /**
+     * 产品等级
+     */
     @NotBlank(message = "产品等级不能为空")
     private String  grade;
 
+    /**
+     * 产品等级id
+     */
     private String  gradeId;
 
+    /**
+     * 产品品牌
+     */
     @NotBlank(message = "产品品牌不能为空")
     private String  brandName;
 
+    /**
+     * 产品品牌id
+     */
     private String  brandId;
 
 
+    /**
+     * 产品类型 1 新产品 2 迭代产品
+     */
     @NotNull(message = "产品类型不能为空")
     @StateEnumValue(intValues = {2, 1}, message = "产品类型有误")
     private Integer type;
+
+    /**
+     * 关联产品id
+     */
+    private String relevanceProductId;
 
     //产品分类id集合
     private List<String>   categoryIdList;

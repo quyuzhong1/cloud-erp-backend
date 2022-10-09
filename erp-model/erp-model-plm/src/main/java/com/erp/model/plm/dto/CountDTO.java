@@ -11,7 +11,7 @@ import java.io.Serializable;
  * @Created by yl
  */
 @Data
-public class TaskDocsCountDTO  implements Serializable {
+public class CountDTO implements Serializable {
 
 
     //任务id 或者产品id

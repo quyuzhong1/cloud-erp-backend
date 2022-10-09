@@ -448,11 +448,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
         }
-
-
+        
     }
 
-
+    /**
+     * 获取产品迭代数量
+     * @author yl
+     * @date 2022-10-09 12:16
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.CountDTO>
+     */
+    @Override
+    public List<CountDTO> getProductRelevanceList() {
+        return baseMapper.getProductRelevanceList();
+    }
 
 
     /**

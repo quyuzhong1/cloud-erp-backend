@@ -1,7 +1,7 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -18,5 +18,5 @@ import java.util.List;
 @Mapper
 public interface TaskDocsFinishMapper extends BaseMapper<TaskDocsFinishEntity> {
 
-    List<TaskDocsCountDTO> getTaskDocsCountByProductId();
+    List<CountDTO> getTaskDocsCountByProductId();
 }

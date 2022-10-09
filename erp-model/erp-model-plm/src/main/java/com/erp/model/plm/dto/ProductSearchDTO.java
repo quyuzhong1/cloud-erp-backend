@@ -20,10 +20,15 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductSearchDTO implements Serializable {
 
-    //搜索关键字
+
+    /**
+     * 搜索关键字
+     */
     private String searchKeyword;
 
-    //分类id
+    /**
+     * 分类id
+     */
     @NotBlank(message = "分类id不能为空")
     private String categoryId;
     //状态列表

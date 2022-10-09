@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -21,11 +21,11 @@ import java.util.List;
 @Mapper
 public interface TaskDocsMapper  extends BaseMapper<TaskDeliveryDocsEntity> {
 
-    List<TaskDocsCountDTO> getTaskDocsCount(@Param("taskIds") List<String> taskIds);
+    List<CountDTO> getTaskDocsCount(@Param("taskIds") List<String> taskIds);
 
     IPage paging(Page query, @Param("params") BaseSearchDTO params,@Param("ids") List<String> ids);
 
     List<DeliveryDocsDTO> getByTaskId(@Param("taskId") String taskId);
 
-    List<TaskDocsCountDTO> getTaskDocsCountByProductId();
+    List<CountDTO> getTaskDocsCountByProductId();
 }

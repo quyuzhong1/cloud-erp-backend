@@ -44,7 +44,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-22 9:54
      */
     @Override
-    public List<TaskDocsCountDTO> getTaskDocsCount(List<String> taskId) {
+    public List<CountDTO> getTaskDocsCount(List<String> taskId) {
         return baseMapper.getTaskDocsCount(taskId);
     }
 
@@ -201,7 +201,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @return java.util.List<com.erp.model.plm.dto.TaskDocsCountDTO>
      */
     @Override
-    public List<TaskDocsCountDTO> getTaskDocsCountByProductId() {
+    public List<CountDTO> getTaskDocsCountByProductId() {
         return baseMapper.getTaskDocsCountByProductId();
     }
 

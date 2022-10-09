@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.server.plm.service.ProductArchiveService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * @Classname 产品归档
+import java.util.List;
+
+/** 产品归档管理
+ * @Classname
  * @Description TODO
  * @Date 2022-10-08 14:59
  * @Created by yl
@@ -26,9 +29,14 @@ public class ProductArchiveController extends BaseController {
     @Autowired
     private ProductArchiveService productArchiveService;
 
+    /**
+     * 分页获取
+     * @param dto
+     * @return
+     */
     @PostMapping("/paging")
-    public ApiResult paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
-        PagingVO pagingVO = productArchiveService.paging(dto);
+    public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+        PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);
         return success(pagingVO);
     }
 }

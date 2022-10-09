@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.TaskDocsMapper">
 
-    <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
+    <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT task_id  AS flagId ,count(*) AS count FROM task_delivery_docs
         <where>
             <if test="taskIds !=null and taskIds.size>0">
@@ -42,7 +42,7 @@
 
 
 
-    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
+    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
         WHERE product_id !='' GROUP BY product_id
     </select>

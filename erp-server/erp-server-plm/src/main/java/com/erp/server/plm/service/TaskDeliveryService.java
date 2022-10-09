@@ -17,7 +17,7 @@ import java.util.List;
  * @Created by yl
  */
 public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
-    List<TaskDocsCountDTO> getTaskDocsCount(List<String> taskId);
+    List<CountDTO> getTaskDocsCount(List<String> taskId);
 
     void saveDeliveryDocs(String userId,String taskId,String productId, List<DocsDTO> deliveryDocsList);
 
@@ -34,5 +34,5 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     void removeByTaskId(String taskId);
 
 
-    List<TaskDocsCountDTO> getTaskDocsCountByProductId();
+    List<CountDTO> getTaskDocsCountByProductId();
 }

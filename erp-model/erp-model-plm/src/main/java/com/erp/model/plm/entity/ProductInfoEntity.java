@@ -176,4 +176,11 @@ public class ProductInfoEntity implements Serializable {
     @TableField("sale_method")
     private String saleMethod;
 
+
+    /**
+     * 关联产品id
+     */
+    @TableField("relevance_product_id")
+    private String relevanceProductId;
+
 }

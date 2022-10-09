@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.TaskDocsFinishMapper">
 
     <!-- 通用查询映射结果 -->
-    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
+    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_finish_docs
         WHERE product_id !='' GROUP BY product_id
    </select>

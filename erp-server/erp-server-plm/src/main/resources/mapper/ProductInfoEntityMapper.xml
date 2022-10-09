@@ -31,5 +31,8 @@
             #{productId}
         </foreach>
     </select>
+    <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.DocsDTO">
+
+    </select>
 
 </mapper>

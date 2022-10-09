@@ -55,4 +55,5 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     void exportProductData(ExportProductDataDTO dto);
 
 
+    List<CountDTO> getProductRelevanceList();
 }

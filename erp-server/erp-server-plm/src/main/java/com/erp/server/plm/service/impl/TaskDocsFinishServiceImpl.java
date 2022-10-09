@@ -6,7 +6,7 @@ import com.common.core.utils.FileUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
-import com.erp.model.plm.dto.TaskDocsCountDTO;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.server.plm.constant.TaskConstant;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +92,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     }
 
     @Override
-    public List<TaskDocsCountDTO> getTaskDocsCountByProductId() {
+    public List<CountDTO> getTaskDocsCountByProductId() {
         return baseMapper.getTaskDocsCountByProductId();
 }
 
