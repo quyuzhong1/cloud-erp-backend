@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
@@ -15,6 +16,7 @@ import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.ProjectTaskSysService;
 import com.erp.server.plm.service.SysTaskPhaseService;
@@ -50,10 +52,16 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
+        //当前登录人
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();
         //获取到任务阶段
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
+        if (!Objects.isNull(loginUser)) {
+            entity.setCreateUserId(loginUser.getUid());
+            entity.setCreateUserName(loginUser.getUserName());
+        }
         if (!Objects.isNull(phaseEntity)) {
             entity.setPhaseName(phaseEntity.getName());
             //如果是立项任务
@@ -67,8 +75,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<finishDocsDTO> docsList = dto.getFinishDocsList();
         boolean flag = this.saveOrUpdate(entity);
         //表示保存成功
-        if(flag){
-            taskDeliveryService.saveSysDeliveryDocs(entity.getId(),docsList);
+        if (flag) {
+            taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
         }
         return flag;
     }
@@ -116,8 +124,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Override
     @Transactional
     public Boolean removeTask(String taskId) {
-        Boolean flag=this.removeById(taskId);
-        if(flag){
+        Boolean flag = this.removeById(taskId);
+        if (flag) {
             taskDeliveryService.removeByTaskId(taskId);
         }
         return flag;
