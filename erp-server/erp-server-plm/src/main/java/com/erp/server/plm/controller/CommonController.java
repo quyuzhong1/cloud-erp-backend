@@ -27,8 +27,13 @@ public class CommonController  extends BaseController {
     @Resource
     private SysUserFeign sysUserFeign;
 
+    /**
+     * 获取用户
+     * @param dto
+     * @return
+     */
     @PostMapping("/findUserList")
-    public ApiResult findUserList(@RequestBody  BaseSearchDTO dto){
+    public ApiResult<List<FindUserDTO>> findUserList(@RequestBody  BaseSearchDTO dto){
         return sysUserFeign.userList(dto);
     }
 
