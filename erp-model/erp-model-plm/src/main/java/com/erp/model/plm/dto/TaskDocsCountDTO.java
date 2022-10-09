@@ -14,8 +14,8 @@ import java.io.Serializable;
 public class TaskDocsCountDTO  implements Serializable {
 
 
-    //任务id
-    private String taskId;
+    //任务id 或者产品id
+    private String flagId;
 
     //数量
     private Integer count;

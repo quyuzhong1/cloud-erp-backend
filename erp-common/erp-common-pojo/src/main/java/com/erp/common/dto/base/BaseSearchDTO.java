@@ -15,6 +15,13 @@ import java.io.Serializable;
 @Data
 public class BaseSearchDTO implements Serializable {
 
+    /**
+     * 搜索关键字
+     * @author yl
+     * @date 2022-10-09 10:38
+     * @param null
+     * @return
+     */
     private String searchKeyword;
 
     private String flagId;

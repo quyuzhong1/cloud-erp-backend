@@ -9,6 +9,8 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>
- * 产品信息表 前端控制器
- * </p>
- *
+ *产品开发管理
  * @author yl
  * @since 2022-09-13
  */
@@ -38,10 +37,17 @@ public class ProductInfoController extends BaseController {
     @Autowired
     private ProjectInfoService projectInfoService;
 
-    //普通分页
+
+    /**
+     * 产品列表-普通分页
+     * @author yl
+     * @date 2022-10-09 10:17
+     * @param dto
+     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>>
+     */
     @PostMapping("/paging")
-    public ApiResult paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
-        PagingVO pagingVO = productInfoService.paging(dto);
+    public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+        PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
     }
 

@@ -20,6 +20,9 @@ import java.util.Date;
 @NoArgsConstructor
 public class SysTaskPagingDTO implements Serializable {
 
+    /**
+     * 任务id
+     */
     private String id;
 
     /**
@@ -91,15 +94,27 @@ public class SysTaskPagingDTO implements Serializable {
 
 
 
+    /**
+     * 文档名称
+     */
     private String docsNames;
 
 
 
+    /**
+     * 创建人id
+     */
     private String createUserId;
 
 
+    /**
+     * 创建人名
+     */
     private String createUserName;
 
+    /**
+     * 创建时间
+     */
     private Date createTime;
 
 }

@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.TaskDocsMapper">
 
     <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
-        SELECT task_id,count(*) AS count FROM task_delivery_docs
+        SELECT task_id  AS flagId ,count(*) AS count FROM task_delivery_docs
         <where>
             <if test="taskIds !=null and taskIds.size>0">
                 AND task_id IN
@@ -37,6 +37,14 @@
         f.create_time submitTime,f.file_url,f.create_user AS submitUserName
         FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
         where d.task_id=#{taskId}
+    </select>
+
+
+
+
+    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.TaskDocsCountDTO">
+        SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
+        WHERE product_id !='' GROUP BY product_id
     </select>
 
 </mapper>

@@ -74,7 +74,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     }
 
     @Override
-    public PagingVO paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<SysTaskPagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
@@ -114,8 +114,13 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      * @date 2022-09-15 19:19
      */
     @Override
+    @Transactional
     public Boolean removeTask(String taskId) {
-        return null;
+        Boolean flag=this.removeById(taskId);
+        if(flag){
+            taskDeliveryService.removeByTaskId(taskId);
+        }
+        return flag;
     }
 
 
@@ -162,7 +167,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public List<Map<String, Object>> taskList() {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
-
         return this.listMaps(queryWrapper);
     }
 }

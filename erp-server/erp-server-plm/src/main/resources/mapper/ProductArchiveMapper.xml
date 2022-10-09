@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductArchiveMapper">
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductArchiveDTO">
+
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,p.project_status,
+        pi.charge_name AS projectChargeName,p.create_time  productCreateTime,pa.archive_time
+        FROM product_info p LEFT JOIN project_info pi
+        ON p.id=pi.product_id
+        INNER JOIN product_archive pa
+        WHERE P.category_id=#{params.categoryId}
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+
+    </select>
+
+
+</mapper>
+

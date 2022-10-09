@@ -207,6 +207,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     }
 
+    /**
+     *@description
+     *@parms
+     *@return
+     *@author yl
+     *@date 2022-10-09
+     */
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -446,17 +453,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
 
-    /**
-     * 方法说明
-     * @author yl
-     * @date 2022-10-08 14:46
-     * @param dto
-     * @return com.erp.common.vo.PagingVO
-     */
-    @Override
-    public PagingVO archivePaging(PagingDTO<ProductSearchDTO> dto) {
-        return null;
-    }
+
 
     /**
      * 获取文件名

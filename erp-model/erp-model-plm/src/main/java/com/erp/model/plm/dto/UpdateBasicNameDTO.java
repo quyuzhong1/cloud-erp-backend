@@ -17,9 +17,22 @@ import javax.validation.constraints.NotBlank;
 @Validated
 public class UpdateBasicNameDTO {
 
-
+    /**
+     * 表id
+     * @author yl
+     * @date 2022-10-09 10:45
+     * @param null
+     * @return
+     */
     private String id;
 
+    /**
+     * 名称
+     * @author yl
+     * @date 2022-10-09 10:45
+     * @param null
+     * @return
+     */
     @NotBlank(message = "名称不能为空")
     private String name;
 }

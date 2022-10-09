@@ -15,7 +15,8 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 public class ProductShowDTO implements Serializable {
-    //产品名
+
+
     private String productId;
     private String name;
     private String grade;

@@ -5,6 +5,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 
@@ -25,7 +26,9 @@ public interface SysDocsService extends IService<SysDocsEntity> {
 
     Boolean updateState(StateDTO dto);
 
-    PagingVO paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<DocsShowDTO> paging(PagingDTO<BaseSearchDTO> dto);
 
     List<DocsDTO> getDocsNames(Integer yes);
+
+    List<Map<String, Object>> sysDocsNames();
 }

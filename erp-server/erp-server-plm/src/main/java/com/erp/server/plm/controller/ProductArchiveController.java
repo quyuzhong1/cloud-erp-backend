@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.server.plm.service.ProductArchiveService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -23,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("plm/product/archive")
 public class ProductArchiveController extends BaseController {
     @Autowired
-    private ProductInfoService productInfoService;
+    private ProductArchiveService productArchiveService;
 
     @PostMapping("/paging")
     public ApiResult paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
-        PagingVO pagingVO = productInfoService.archivePaging(dto);
+        PagingVO pagingVO = productArchiveService.paging(dto);
         return success(pagingVO);
     }
 }

@@ -13,6 +13,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -118,7 +120,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      * @date 2022-09-15 10:43
      */
     @Override
-    public PagingVO paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<DocsShowDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
@@ -129,10 +131,25 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     @Override
     public List<DocsDTO> getDocsNames(Integer state) {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysDocsEntity::getId,SysDocsEntity::getName);
-        queryWrapper.eq(SysDocsEntity::getStartState,state);
-        List<SysDocsEntity> list=this.list(queryWrapper);
-        return BeanMapper.copyList(list,DocsDTO.class);
+        queryWrapper.select(SysDocsEntity::getId, SysDocsEntity::getName);
+        queryWrapper.eq(SysDocsEntity::getStartState, state);
+        List<SysDocsEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, DocsDTO.class);
 
+    }
+
+    /**
+     * 获取系统文档名
+     *
+     * @param
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-10-08 16:05
+     */
+    @Override
+    public List<Map<String, Object>> sysDocsNames() {
+        LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.select(SysDocsEntity::getName,SysDocsEntity::getId);
+        return this.listMaps(queryWrapper);
     }
 }

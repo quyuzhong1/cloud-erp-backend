@@ -3,7 +3,10 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
+import com.erp.model.plm.dto.TaskDocsCountDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.server.plm.constant.TaskConstant;
@@ -14,6 +17,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -65,31 +69,33 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Override
     public Boolean uploadFile(TaskUploadFileDTO dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        try {
-            MultipartFile multipartFile = dto.getFile();
-            double size=multipartFile.getSize();
-            double fileSize=size/(1024*1024);
-            fileSize=(double)Math.round(fileSize*100)/100;
-            String fileName = dto.getFile().getOriginalFilename().toLowerCase();
-            String fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-            File file = FileUtil.multiToFile(multipartFile);
-            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-            TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
-            finishEntity.setCreateUserName(loginUser.getUserName());
-            finishEntity.setFileName(fileName);
-            finishEntity.setTaskDocsId(dto.getTaskDocsId());
-            finishEntity.setTaskId(dto.getTaskId());
-            finishEntity.setFileUrl(fileUrl);
-            finishEntity.setFileType(TaskConstant.FILE_TYPE);
-            finishEntity.setFileSuffix(fileSuffix);
-            finishEntity.setFileSize(fileSize);
-            return this.save(finishEntity);
-        } catch (Exception e) {
-            log.error("uploadFile  " + e);
+        MultipartFile multipartFile = dto.getFile();
+        double size = multipartFile.getSize();
+        double fileSize = size / (1024 * 1024);
+        fileSize = (double) Math.round(fileSize * 100) / 100;
+        String fileName = dto.getFile().getOriginalFilename().toLowerCase();
+        String fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+        File file = FileUtil.multiToFile(multipartFile);
+        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+        if (StringUtils.isBlank(fileUrl)) {
+            throw new ServiceException(ApiError.ERROR_95018);
         }
-
-        return false;
+        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
+        finishEntity.setCreateUserName(loginUser.getUserName());
+        finishEntity.setFileName(fileName);
+        finishEntity.setTaskDocsId(dto.getTaskDocsId());
+        finishEntity.setTaskId(dto.getTaskId());
+        finishEntity.setFileUrl(fileUrl);
+        finishEntity.setFileType(TaskConstant.FILE_TYPE);
+        finishEntity.setFileSuffix(fileSuffix);
+        finishEntity.setFileSize(fileSize);
+        return this.save(finishEntity);
     }
+
+    @Override
+    public List<TaskDocsCountDTO> getTaskDocsCountByProductId() {
+        return baseMapper.getTaskDocsCountByProductId();
+}
 
 
 }

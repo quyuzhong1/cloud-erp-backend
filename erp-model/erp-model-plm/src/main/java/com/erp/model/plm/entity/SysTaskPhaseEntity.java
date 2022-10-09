@@ -19,12 +19,28 @@ import java.util.Date;
 @TableName("sys_project_phase")
 public class SysTaskPhaseEntity  implements Serializable {
 
+
+    /**
+     * 表id
+     * @author yl
+     * @date 2022-10-09 10:47
+     */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
+    /**
+     * 阶段名
+     * @author yl
+     * @date 2022-10-09 10:47
+     */
     @TableField("name")
     private String name;
 
+    /**
+     * 是否是立项阶段 0 不是 1 是
+     * @author yl
+     * @date 2022-10-09 10:47
+     */
     @TableField("is_project_approval")
     private Integer isProjectApproval;
 

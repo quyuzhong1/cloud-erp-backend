@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("sys_docs")
+@TableName("sys_docs_name")
 public class SysDocsEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

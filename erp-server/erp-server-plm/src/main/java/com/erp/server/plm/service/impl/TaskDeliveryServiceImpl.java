@@ -184,6 +184,27 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     }
 
+    @Override
+    public void removeByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId,taskId);
+        this.remove(queryWrapper);
+
+    }
+
+
+    /**
+     * 根据产品id 分组获取到对应的需要交付的文档数
+     * @author yl
+     * @date 2022-10-08 19:51
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.TaskDocsCountDTO>
+     */
+    @Override
+    public List<TaskDocsCountDTO> getTaskDocsCountByProductId() {
+        return baseMapper.getTaskDocsCountByProductId();
+    }
+
     /**
      * 根据任务id 获取对应要交付的文档
      *

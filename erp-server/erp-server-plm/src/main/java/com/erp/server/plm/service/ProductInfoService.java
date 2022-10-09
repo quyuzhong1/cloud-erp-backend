@@ -31,7 +31,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     void exportTemplate(HttpServletRequest request, HttpServletResponse response);
 
-    PagingVO paging(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO> dto);
 
 
     Boolean saveTemplate(SaveProductTemplateDTO dto);
@@ -54,5 +54,5 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     void exportProductData(ExportProductDataDTO dto);
 
-    PagingVO archivePaging(PagingDTO<ProductSearchDTO> dto);
+
 }

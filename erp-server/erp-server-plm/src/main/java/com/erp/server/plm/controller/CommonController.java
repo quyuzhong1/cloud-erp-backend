@@ -14,8 +14,8 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.util.List;
 
-/**
- * @Classname plm 公共接口
+/** 公共接口
+ * @Classname plm
  * @Description TODO
  * @Date 2022-10-08 14:59
  * @Created by yl

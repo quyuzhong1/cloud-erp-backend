@@ -254,7 +254,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
                 Integer totalDocsCount = 0;
-                TaskDocsCountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getTaskId().equals(taskId)).findFirst().orElse(null);
+                TaskDocsCountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
                     totalDocsCount = countDTO.getCount();
                 }
