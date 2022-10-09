@@ -54,12 +54,20 @@ public class ProductInfoController extends BaseController {
     }
 
 
+    /**
+     * 产品列表-编辑时候详情
+     *
+     */
     @PostMapping("/productInfo")
-    public ApiResult info(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<ProductDTO> info(@RequestBody @Validated BaseIdDTO dto) {
         ProductDTO product = productInfoService.info(dto.getId());
         return success(product);
     }
 
+    /**
+     * 产品列表-更改对应数据
+     *
+     */
     @PostMapping("/updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);
@@ -67,18 +75,30 @@ public class ProductInfoController extends BaseController {
     }
 
 
+    /**
+     * 产品列表-新建产品
+     *
+     */
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
         Boolean flag = productInfoService.saveOrUpdateProduct(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 产品列表-移动分类
+     *
+     */
     @PostMapping("/updateCategory")
     public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
         Boolean flag = productInfoService.updateCategory(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 产品列表-删除产品
+     *
+     */
     @PostMapping("/remove")
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);

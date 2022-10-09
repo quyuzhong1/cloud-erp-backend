@@ -117,4 +117,15 @@ public class SysTaskPagingDTO implements Serializable {
      */
     private Date createTime;
 
+
+    /**
+     * 流程id
+     */
+    private String processId;
+
+    /**
+     * 阶段名
+     */
+    private String phaseName;
+
 }

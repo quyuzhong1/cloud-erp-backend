@@ -29,7 +29,7 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
     void updateCharge(String projectId, String useName, String userId,Boolean isUpdate);
 
-    PagingVO paging(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto);
 
     void checkProjectFinish(String productId);
 }

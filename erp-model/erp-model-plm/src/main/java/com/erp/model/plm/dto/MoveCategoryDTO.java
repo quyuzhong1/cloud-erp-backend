@@ -18,9 +18,15 @@ import java.util.List;
 @NoArgsConstructor
 public class MoveCategoryDTO implements Serializable {
 
+    /**
+     * 产品id 集合
+     */
     @NotNull(message = "产品id集合不能为空")
     private List<String> productIds;
 
+    /**
+     * 分类id
+     */
     @NotBlank(message = "分类id 不能为空")
     private String  categoryId;
 }

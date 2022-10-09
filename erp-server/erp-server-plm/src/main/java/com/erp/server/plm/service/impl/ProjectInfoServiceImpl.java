@@ -20,11 +20,8 @@ import com.erp.server.plm.enums.ProductInfoStateEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProjectInfoService;
+import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.plm.service.ProjectMembersService;
-import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -56,6 +53,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Autowired
     private ProductInfoService productInfoService;
+
+    @Autowired
+    private ProductArchiveService archiveService;
 
 
     /**
@@ -227,10 +227,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
 
     @Override
-    public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        List<String> archiveProductIds=archiveService.getArchiveProductIds();
+
+        IPage pageData = baseMapper.paging(query, params,archiveProductIds);
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id

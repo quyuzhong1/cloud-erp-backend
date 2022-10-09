@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,32 +17,60 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class UpdateProductDTO  implements Serializable {
 
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id不能为空")
     private String productId;
 
 
-    //等级
+
+    /**
+     * 等级
+     */
     private String grade;
 
-    //产品负责人
+
+    /**
+     * 产品负责人
+     */
     private String productChargeId;
 
-    //产品负责人名
+
+    /**
+     * 产品负责人名
+     */
     private String productChargeName;
 
 
+    /**
+     * 项目id
+     */
     private String projectId;
 
-    //项目负责人
+
+    /**
+     * 项目负责人
+     */
     private String projectChargeId;
 
-    //项目负责人名
+
+    /**
+     * 项目负责人名
+     */
     private String projectChargeName;
 
-    //项目状态
+    /**
+     * 项目状态
+     */
+    @StateEnumValue(intValues = {0,1,2,3,4}, message = "项目状态有误")
     private Integer projectStatus;
 
-    //立项状态状态
+
+    /**
+     * 立项状态
+     */
+    @StateEnumValue(intValues = {0,1,2,3,4}, message = "立项状态有误")
     private Integer approvalStatus;
 
 }

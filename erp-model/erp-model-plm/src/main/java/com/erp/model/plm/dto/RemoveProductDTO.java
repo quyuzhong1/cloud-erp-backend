@@ -16,10 +16,15 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class RemoveProductDTO implements Serializable {
 
-
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id 不能为空")
     private String productId;
 
+    /**
+     * 产品名
+     */
     @NotBlank(message = "产品名 不能为空")
     private String productName;
 }
