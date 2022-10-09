@@ -3,7 +3,7 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.110.12
-        namespace: dev-lwg
+        namespace: dev
       config:
         server-addr: 172.16.110.12
         namespace: dev
