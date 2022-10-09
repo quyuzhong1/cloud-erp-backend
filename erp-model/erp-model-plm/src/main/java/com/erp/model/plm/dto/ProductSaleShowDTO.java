@@ -19,67 +19,130 @@ import java.util.Date;
 @NoArgsConstructor
 public class ProductSaleShowDTO implements Serializable {
 
+    /**
+     * 主键id 无id：新增 有id：修改
+     */
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
+    /**
+     * 产品sku表id
+     */
     @ApiModelProperty(value = "产品sku表id")
     private String skuId;
 
+    /**
+     * 产品sku图片
+     */
     @ApiModelProperty(value = "产品sku图片")
     private String imagesUrl;
 
+    /**
+     * skuNo
+     */
     @ApiModelProperty(value = "skuNo")
     private String skuNo;
 
+    /**
+     * 年目标销售量
+     */
     @ApiModelProperty(value = "年目标销售量")
     private Integer yearSaleQty;
 
+    /**
+     * 年目标销售额
+     */
     @ApiModelProperty(value = "年目标销售额")
     private BigDecimal yearSaleAmount;
 
+    /**
+     * 月目标销售量
+     */
     @ApiModelProperty(value = "月目标销售量")
     private Integer monthSaleQty;
 
+    /**
+     * 月目标销售额
+     */
     @ApiModelProperty(value = "月目标销售额")
     private BigDecimal monthSaleAmount;
 
+    /**
+     * 销售国家
+     */
     @ApiModelProperty(value = "销售国家")
     private String saleCountry;
 
+    /**
+     * 上市时间
+     */
     @ApiModelProperty(value = "上市时间")
     private Date listingTime;
 
+    /**
+     * 退市时间
+     */
     @ApiModelProperty(value = "退市时间")
     private Date delistingTime;
 
+    /**
+     * 图片是否完成 1.是 2.否
+     */
     @StateEnumValue(intValues = {1, 2}, message = "图片是否完成0或者1")
     @ApiModelProperty(value = "图片是否完成")
     private Integer isFinishedImg;
 
+    /**
+     * 视频是否完成 1.是 2.否
+     */
     @ApiModelProperty(value = "视频是否完成 1.是 2.否")
     private Integer isFinishedVideo;
 
+    /**
+     * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
+     */
     @ApiModelProperty(value = "销售状态 1.未销售 2.销售中 3.清仓中 4.已下架")
     private Integer saleState;
 
+    /**
+     * 产品上市（含培训）资料链接
+     */
     @ApiModelProperty(value = "产品上市（含培训）资料链接")
     private String dataUrl;
 
+    /**
+     * 创建时间
+     */
     @ApiModelProperty(value = "创建时间")
     private Date createTime;
 
+    /**
+     * 创建人id
+     */
     @ApiModelProperty(value = "创建人id")
     private String createUserId;
 
+    /**
+     * 创建人名称
+     */
     @ApiModelProperty(value = "创建人名称")
     private String createUserName;
 
+    /**
+     * 修改时间
+     */
     @ApiModelProperty(value = "修改时间")
     private Date updateTime;
 
+    /**
+     * 修改人id
+     */
     @ApiModelProperty(value = "修改人id")
     private String updateUserId;
 
+    /**
+     * 修改人名称
+     */
     @ApiModelProperty(value = "修改人名称")
     private String updateUserName;
 

@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
@@ -22,10 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Date;
 import java.util.List;
 
 /**
- * @Description 产品明细表 前端控制器
+ * 产品管理
  * @Author Luo_WG
  * @Date 2022/9/22 11:48
  **/
@@ -79,6 +82,13 @@ public class ProductDetailController extends BaseController {
     @Resource
     private BasicDictService basicDictService;
 
+    /**
+     * 产品信息-主页列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:15
+     * @param pagingDTO pagingDTO
+     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductDetailShowDTO>>
+     **/
     @ApiOperation(value = "产品信息-主页列表-查询")
     @PostMapping("/list")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
@@ -86,14 +96,28 @@ public class ProductDetailController extends BaseController {
         return this.success(paging);
     }
 
+    /**
+     * 产品信息-无规格-产品详情
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     **/
     @ApiOperation(value = "产品信息-无规格-产品详情")
     @GetMapping("/getNoSpecDetailById")
     @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true)
-    public ApiResult<ProductNoDetailDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId) {
-        ProductNoDetailDTO list = productDetailService.getNoSpecDetailById(productId);
+    public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId) {
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(productId);
         return this.success(list);
     }
 
+    /**
+     * 产品信息-多规格-产品详情
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:22
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
+     **/
     @ApiOperation(value = "产品信息-多规格-产品详情")
     @GetMapping("/getManySpecDetailById")
     @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true)
@@ -102,6 +126,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 产品信息-无规格-新增/修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:22
+     * @param productNoSpecDTO 新增产品无规格sku信息请求参数
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-无规格-新增/修改")
     @PostMapping("/saveOrUpdateNoSpec")
     public ApiResult saveOrUpdateNoSpec(@RequestBody ProductNoSpecDTO productNoSpecDTO) {
@@ -109,6 +140,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-多规格-新增/修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:23
+     * @param productManySpecDTO 新增产品多规格sku信息请求参数
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     public ApiResult saveOrUpdateManySpec(@RequestBody ProductManySpecDTO productManySpecDTO) {
@@ -116,6 +154,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-无规格-基础信息上传图片
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:23
+     * @param productImagesDTO 产品图片信息请求参数
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-无规格-基础信息上传图片")
     @PostMapping("/insertProductImage")
     public ApiResult insertProductImage(@RequestBody ProductImagesDTO productImagesDTO) {
@@ -123,6 +168,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-多规格-自动生成
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:23
+     * @param variantAutoAddDTO 商品管理-产品信息-多规格-自动生成 请求参数
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductDetailEntity>>
+     **/
     @ApiOperation(value = "产品信息-多规格-自动生成")
     @PostMapping("/InsertManySpecSku")
     public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
@@ -130,14 +182,27 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 产品信息-多规格sku-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:42
+     * @param skuId sku表id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-多规格sku-删除")
     @PostMapping("/delete")
-    @ApiImplicitParam(name = "skuId", value = "sku信息表id", required = true)
-    public ApiResult delete(@RequestBody String skuId) {
+    public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 成本信息-主页列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:24
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>>
+     **/
     @ApiOperation(value = "成本信息-主页列表-查询")
     @GetMapping("/listCost")
     @ApiImplicitParams({
@@ -148,6 +213,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 采购信息-主页列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:24
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>>
+     **/
     @ApiOperation(value = "采购信息-主页列表-查询")
     @GetMapping("/listProductPurchase")
     @ApiImplicitParams({
@@ -158,6 +230,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 销售信息-主页列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:24
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>>
+     **/
     @ApiOperation(value = "销售信息-主页列表-查询")
     @GetMapping("/listSale")
     @ApiImplicitParams({
@@ -168,6 +247,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 物流信息-报关信息列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:24
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>>
+     **/
     @ApiOperation(value = "物流信息-报关信息列表-查询")
     @GetMapping("/listLogistics")
     @ApiImplicitParams({
@@ -178,6 +264,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 物流信息-包装信息列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:25
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductPackShowDTO>>
+     **/
     @ApiOperation(value = "物流信息-包装信息列表-查询")
     @GetMapping("/listPack")
     @ApiImplicitParams({
@@ -188,6 +281,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 证书信息-主页列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:25
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductCertificateShowDTO>>
+     **/
     @ApiOperation(value = "证书信息-主页列表-查询")
     @GetMapping("/listCertificate")
     @ApiImplicitParams({
@@ -198,6 +298,44 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 证书信息-主页列表-新增|修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:25
+     * @param productCertificateDTO 产品证书表
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "证书信息-主页列表-新增|修改")
+    @GetMapping("/saveOrUpdateCertificate")
+    public ApiResult saveOrUpdateCertificate(@RequestBody List<ProductCertificateDTO> productCertificateDTO) {
+        Boolean flag = productCertificateService.saveOrUpdateBatch(productCertificateDTO);
+        return  flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 证书信息-主页列表-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:25
+     * @param id 证书信息id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "证书信息-主页列表-删除")
+    @GetMapping("/removeCertificate")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "证书信息id", required = true),
+    })
+    public ApiResult removeCertificate(@RequestParam("id") String id) {
+        Boolean flag = productCertificateService.removeCertificate(id);
+        return  flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 采购信息-主页备注信息列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param purchaseId 产品采购信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
+     **/
     @ApiOperation(value = "采购信息-主页备注信息列表-查询")
     @GetMapping("/listPurchaseRemark")
     @ApiImplicitParams({
@@ -208,6 +346,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 采购信息-备注信息-新增
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param dto 产品采购备注信息列表（VO）
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "采购信息-备注信息-新增")
     @PostMapping("/saveOrUpdatePurchaseRemark")
     public ApiResult saveOrUpdatePurchaseRemark(@RequestBody ProductPurchaseRemarkDTO dto) {
@@ -215,6 +360,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-变体管理-下拉列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
+     **/
     @ApiOperation(value = "产品信息-变体管理-下拉列表-查询")
     @GetMapping("/listVariant")
     @ApiImplicitParams({
@@ -225,6 +377,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 产品信息-变体管理-下拉列表-新增/修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param productVariantDTO 产品变体类型属性表
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-变体管理-下拉列表-新增/修改")
     @PostMapping("/saveOrUpdateVariant")
     public ApiResult saveOrUpdateVariant(@RequestBody ProductVariantDTO productVariantDTO) {
@@ -232,6 +391,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-变体管理-下拉列表-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
+     * @param variantId 变体类型表主键Id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-变体管理-下拉列表-删除")
     @PostMapping("/deleteVariant")
     @ApiImplicitParams({
@@ -242,6 +408,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-变体管理-变体值-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
+     * @param variantId 变体类型表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantPropertyEntity>>
+     **/
     @ApiOperation(value = "产品信息-变体管理-变体值-查询")
     @GetMapping("/listVariantProperty")
     @ApiImplicitParams({
@@ -252,6 +425,13 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+    /**
+     * 产品信息-变体管理-变体值-新增/修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
+     * @param productVariantPropertyDTO 产品变体属性值表
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-变体管理-变体值-新增/修改")
     @PostMapping("/saveOrUpdateVariantProperty")
     public ApiResult saveOrUpdateVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
@@ -259,6 +439,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-变体管理-变体值-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
+     * @param productVariantPropertyDTO 产品变体属性值表
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-变体管理-变体值-删除")
     @PostMapping("/deleteVariantProperty")
     public ApiResult deleteVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
@@ -266,6 +453,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-单位管理-新增|修改
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:28
+     * @param productUnitList productUnitList
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @ApiOperation(value = "产品信息-单位管理-新增|修改")
     @PostMapping("/saveOrUpdateProductUnit")
     public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
@@ -273,6 +467,12 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
+    /**
+     * 产品信息-单位管理-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:28
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductUnitEntity>>
+     **/
     @ApiOperation(value = "产品信息-单位管理-查询")
     @GetMapping("/listProductUnit")
     public ApiResult<List<ProductUnitEntity>> listProductUnit() {
@@ -280,7 +480,14 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-    @ApiOperation(value = "产品信息-单位管理--删除")
+    /**
+     * 产品信息-单位管理--删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:28
+     * @param id 单位列表id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "产品信息-单位管理-删除")
     @PostMapping("/deleteProductUnit")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "id", value = "单位列表id", required = true),
@@ -291,7 +498,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * @Description 导入产品信息
+     * excel导入产品信息
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      * @param excelFile 文件流
@@ -308,7 +515,6 @@ public class ProductDetailController extends BaseController {
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) throws Exception{
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
         EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        System.out.println(importType);
         List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
         if(list.size() > 0){
             response.setContentType("application/vnd.ms-excel");
@@ -318,6 +524,20 @@ public class ProductDetailController extends BaseController {
             EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);
         }
         return this.success();
-
     }
+
+    /**
+     * excel导出产品信息
+     * @Author Luo_WG
+     * @Date 2022/10/9 11:49
+     * @param productSkuDTO productSkuDTO
+     * @param response response
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "excel导出产品信息")
+    @PostMapping(value = "/exportProduct", produces = "application/octet-stream")
+    public void exportProduct(@RequestBody ProductSkuDTO productSkuDTO, HttpServletResponse response) {
+        productDetailService.exportProduct(productSkuDTO, response);
+    }
+
 }

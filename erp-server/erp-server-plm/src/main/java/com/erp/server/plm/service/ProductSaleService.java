@@ -49,5 +49,5 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @param skuId 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean remove(String skuId);
+    Boolean removeSale(String skuId);
 }

@@ -28,13 +28,13 @@
         product_property,
         product_property_id,declare_chinese_name,declare_english_name,
         declare_price,customs_code,declare_element,
-        english_material,english_usage,create_time,
-        create_user_id,update_time,update_user_id
+        english_material,english_usage,pl.create_time,
+        pl.create_user_id,pl.update_time,pl.update_user_id
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductLogisticsShowDTO">
         SELECT
-        pl.id
+        pl.id,
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,

@@ -13,33 +13,63 @@ import java.math.BigDecimal;
 @Data
 public class ProductPackDTO implements Serializable {
 
+    /**
+     * 主键id 无id：新增 有id：修改
+     */
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
-    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
+    /**
+     * sku表id
+     */
+    @ApiModelProperty(value = "sku表id")
     private String skuId;
 
+    /**
+     * 产品尺寸
+     */
     @ApiModelProperty(value = "产品尺寸")
     private String productSize;
 
+    /**
+     * 毛重
+     */
     @ApiModelProperty(value = "毛重")
     private BigDecimal grossWeight;
 
+    /**
+     * 净重
+     */
     @ApiModelProperty(value = "净重")
     private BigDecimal netWeight;
 
+    /**
+     * 箱规
+     */
     @ApiModelProperty(value = "箱规")
     private String boxSize;
 
+    /**
+     * 单箱重量
+     */
     @ApiModelProperty(value = "单箱重量")
     private BigDecimal boxWeight;
 
+    /**
+     * 单箱数量
+     */
     @ApiModelProperty(value = "单箱数量")
     private BigDecimal boxQty;
 
+    /**
+     * 创建人id
+     */
     @ApiModelProperty(value = "创建人id")
     private String createUserId;
 
+    /**
+     * 修改人id
+     */
     @ApiModelProperty(value = "修改人id")
     private String updateUserId;
 

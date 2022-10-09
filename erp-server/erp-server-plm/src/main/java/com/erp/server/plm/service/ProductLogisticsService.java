@@ -49,5 +49,5 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @param skuId 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean remove(String skuId);
+    Boolean removeLogistics(String skuId);
 }

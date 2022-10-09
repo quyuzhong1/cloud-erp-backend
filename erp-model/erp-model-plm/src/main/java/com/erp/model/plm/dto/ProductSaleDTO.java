@@ -26,7 +26,10 @@ public class ProductSaleDTO implements Serializable {
     @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
-    @ApiModelProperty(value = "sku表id 无id：新增 有id：修改")
+    /**
+     * sku表id
+     */
+    @ApiModelProperty(value = "sku表id")
     private String skuId;
 
     /**
@@ -96,6 +99,5 @@ public class ProductSaleDTO implements Serializable {
     @ApiModelProperty(value = "产品上市（含培训）资料链接")
     private String dataUrl;
 
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

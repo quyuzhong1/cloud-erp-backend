@@ -46,8 +46,8 @@ public interface ProductCertificateService extends IService<ProductCertificateEn
      * @Description 删除产品证书信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuId skuId
      * @return java.lang.Boolean
      **/
-    Boolean remove(String skuId);
+    Boolean removeCertificate(String skuId);
 }

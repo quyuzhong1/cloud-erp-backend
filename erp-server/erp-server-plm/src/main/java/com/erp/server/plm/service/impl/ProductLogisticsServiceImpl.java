@@ -88,9 +88,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean remove(String skuId) {
+    public Boolean removeLogistics(String skuId) {
         LambdaQueryWrapper<ProductLogisticsEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductLogisticsEntity:: getSkuId, skuId);
+        queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
 }

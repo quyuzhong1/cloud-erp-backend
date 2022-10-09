@@ -37,7 +37,7 @@
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">
         SELECT
-        ps.id
+        ps.id,
         pd.sku_no,
         pd.id AS sku_id,
         pd.images_url,

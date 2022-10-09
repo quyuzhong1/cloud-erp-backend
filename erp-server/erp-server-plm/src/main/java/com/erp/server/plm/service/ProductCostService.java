@@ -47,5 +47,5 @@ public interface ProductCostService extends IService<ProductCostEntity> {
      * @param skuId 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean remove(String skuId);
+    Boolean removeCost(String skuId);
 }

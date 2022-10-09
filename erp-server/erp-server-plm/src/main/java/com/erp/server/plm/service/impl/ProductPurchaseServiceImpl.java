@@ -89,9 +89,9 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean remove(String skuId) {
+    public Boolean removePurchase(String skuId) {
         LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductPurchaseEntity:: getSkuId, skuId);
+        queryWrapper.eq(ProductPurchaseEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
 }

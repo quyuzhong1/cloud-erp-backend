@@ -15,12 +15,21 @@ import java.util.List;
 @NoArgsConstructor
 public class VariantAutoAddDTO {
 
+    /**
+     * 产品信息表id
+     */
     @ApiModelProperty(value = "产品信息表id",required = true)
     private String productId;
 
+    /**
+     * 产品名称(款名)
+     */
     @ApiModelProperty(value = "产品名称(款名)",required = true)
     private String productName;
 
+    /**
+     * 变体属性
+     */
     @ApiModelProperty(value = "变体属性",required = true)
     private List<VarianRefPropertyDTO> varianRefPropertyList;
 }

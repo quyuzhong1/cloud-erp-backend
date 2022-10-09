@@ -15,6 +15,9 @@ import javax.validation.constraints.NotBlank;
 @Data
 @NoArgsConstructor
 public class ProductInfoDTO {
+    /**
+     * 主键id
+     */
     @ApiModelProperty(value = "主键id", required = true)
     private String id;
 

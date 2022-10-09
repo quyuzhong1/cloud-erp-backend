@@ -18,12 +18,21 @@ import java.util.Date;
 @NoArgsConstructor
 public class ProductVariantDTO implements Serializable {
 
+    /**
+     * 主键id
+     */
     @ApiModelProperty(value = "主键id")
     private String id;
 
+    /**
+     * 变体属性类型
+     */
     @ApiModelProperty(value = "变体属性类型")
     private String propertyType;
 
+    /**
+     * 产品表id
+     */
     @ApiModelProperty(value = "产品表id")
     private String productId;
 

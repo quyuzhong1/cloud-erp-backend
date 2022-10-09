@@ -17,27 +17,48 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductNoSpecDTO {
 
+    /**
+     * 产品基础信息
+     */
     @NotNull(message = "产品基础信息不能为空")
     @ApiModelProperty(value = "产品基础信息",required = true)
     private ProductBaseInfoDTO productBaseInfoDTO;
 
+    /**
+     * 成本信息
+     */
     @NotNull(message = "成本信息不能为空")
     @ApiModelProperty(value = "成本信息",required = true)
     private ProductCostDTO productCostDTO;
 
+    /**
+     * 采购信息信息
+     */
     @ApiModelProperty(value = "采购信息信息")
     private ProductPurchaseDTO productPurchaseDTO;
 
+    /**
+     * 产品销售信息
+     */
     @NotNull(message = "产品销售不能为空")
     @ApiModelProperty(value = "产品销售信息")
     private ProductSaleDTO productSaleDTO;
 
+    /**
+     * 产品物流信息
+     */
     @ApiModelProperty(value = "产品物流信息")
     private ProductLogisticsDTO productLogisticsDTO;
 
+    /**
+     * 产品包装信息
+     */
     @ApiModelProperty(value = "产品包装信息")
     private ProductPackDTO productPackDTO;
 
+    /**
+     * 产品证书信息
+     */
     @ApiModelProperty(value = "产品证书信息")
     private ProductCertificateDTO productCertificateDTO;
 }

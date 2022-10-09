@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface ProductDetailService {
@@ -38,7 +39,7 @@ public interface ProductDetailService {
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      **/
-    ProductNoDetailDTO getNoSpecDetailById(String productId);
+    ProductNoSpecDetailAllDTO getNoSpecDetailById(String productId);
 
     /**
      * @Description 多规格产品信息明细
@@ -163,5 +164,16 @@ public interface ProductDetailService {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> importProductFile(MultipartFile file, HttpServletRequest request);
+
+    /**
+     * 导出excel的sku数据
+     * @Author Luo_WG
+     * @Date 2022/10/9 11:49
+     * @param productSkuDTO productSkuDTO
+     * @param response response
+     * @return void
+     **/
+    void exportProduct(ProductSkuDTO productSkuDTO, HttpServletResponse response);
+    
 
 }

@@ -13,12 +13,21 @@ import java.util.Date;
 @Data
 public class ProductPurchaseRemarkDTO implements Serializable {
 
+    /**
+     * 主键id
+     */
     @ApiModelProperty(value = "主键id")
     private String id;
 
+    /**
+     * 产品采购信息表id
+     */
     @ApiModelProperty(value = "产品采购信息表id")
     private String purchaseId;
 
+    /**
+     * 备注
+     */
     @ApiModelProperty(value = "备注")
     private String remark;
 

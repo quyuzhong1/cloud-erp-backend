@@ -165,4 +165,77 @@
         INNER JOIN product_detail pd on pi.id = pd.product_id
         WHERE pi.id = #{productId}
     </select>
+
+    <select id="getExportSkuExcelDTO" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
+        SELECT
+        pi.spu,
+		pi."name",
+		pi.sale_method,
+		pi.category,
+		pi.sell_spot,
+		pi.function_desc,
+		pi.usage_desc,
+		pi.pirate_risk,
+		pi.materials,
+		pi.property,
+		pi.brand_name,
+		pd.variant_property,
+		pd.sku_no,
+		pd."name" sku_name,
+		pd.plan_listing_time,
+		pd.unit_name,
+		pd.charge_name,
+		pd.product_state,
+		target_tax_cost,
+		target_no_tax_cost,
+		actual_tax_cost,
+		actual_no_tax_cost,
+		retail_price,
+		target_gpm,
+		actual_gpm_cny,
+		actual_gpm_usd
+		year_sale_qty,
+		year_sale_amount,
+		month_sale_qty,
+		month_sale_amount,
+		sale_country,
+		listing_time,
+		delisting_time,
+		is_finished_img,
+		is_finished_video,
+		sale_state,
+		product_size,
+		gross_weight,
+		net_weight,
+		box_size,
+		box_weight,
+		box_qty,
+		product_property,
+		product_property_id,
+		declare_chinese_name,
+		declare_english_name,
+		declare_price,
+		customs_code,
+		declare_element,
+		english_material,
+		english_usage
+        FROM product_info pi
+        INNER JOIN product_detail pd ON pi.id = pd.product_id
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
+        LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
+        LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
+        LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
+        <where>
+            <if test="params.no != '' and params.no != null">
+                AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
+            </if>
+            <if test="params.stateList.size() > 0 and params.stateList != null">
+                AND pd.product_state in
+                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

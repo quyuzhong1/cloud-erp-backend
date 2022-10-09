@@ -87,9 +87,9 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean remove(String skuId) {
+    public Boolean removeCost(String skuId) {
         LambdaQueryWrapper<ProductCostEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductCostEntity:: getSkuId, skuId);
+        queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
 }

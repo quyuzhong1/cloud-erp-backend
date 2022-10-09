@@ -31,9 +31,9 @@ public class ProductPurchaseRemarkEntity implements Serializable {
     /**
      * 备注
      */
-    @TableField(value = "note")
+    @TableField(value = "remark")
     @ApiModelProperty(value = "备注")
-    private String note;
+    private String remark;
 
     /**
      * 创建时间
