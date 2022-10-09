@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.UserAddProductEntityMapper">
+
+     <select id="listByUserId" resultType="map">
+           SELECT pi.id,pi.name FROM user_add_product up
+           INNER JOIN  product_info pi ON pi.id=up.product_id
+           WHERE pi.delete_state=0
+     </select>
+</mapper>

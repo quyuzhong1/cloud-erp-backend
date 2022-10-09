@@ -3,14 +3,12 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import com.erp.server.plm.service.UserAddProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +35,9 @@ public class ProductInfoController extends BaseController {
 
     @Autowired
     private ProjectInfoService projectInfoService;
+
+
+
 
 
     /**
@@ -110,18 +111,28 @@ public class ProductInfoController extends BaseController {
         productInfoService.exportTemplate(request, response);
     }
 
+    /**
+     * 概述
+     */
     @GetMapping("/info")
-    public ApiResult projectInfo(String productId) {
+    public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);
     }
 
-    @GetMapping("/saveTemplate")
+
+    /**
+     * 保存模板
+     */
+    @PostMapping("/saveTemplate")
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 新建产品-获取关联产品
+     */
     @GetMapping("/list")
     public ApiResult list() {
         List<Map<String, Object>> list = productInfoService.getListObjs();
@@ -129,7 +140,9 @@ public class ProductInfoController extends BaseController {
     }
 
 
-    //导出数据
+    /**
+     * 数据导出
+     */
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
@@ -148,6 +161,9 @@ public class ProductInfoController extends BaseController {
         boolean flag = productInfoService.archive(productId);
         return flag==true?success():failure();
     }
+
+
+
 
 
 }

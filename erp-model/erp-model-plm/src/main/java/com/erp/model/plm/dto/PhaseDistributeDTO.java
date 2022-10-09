@@ -17,9 +17,16 @@ import java.util.Map;
 @NoArgsConstructor
 public class PhaseDistributeDTO  implements Serializable {
 
-    //状态列表
+
+    /**
+     * 状态列表
+     */
     private List<Map<String,Object>> statusList;
 
-    //任务阶段
+
+
+    /**
+     * 任务阶段
+     */
     private List<Map<String,List<Map<String,Object>>>> phaseList;
 }

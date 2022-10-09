@@ -16,9 +16,15 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SaveProductTemplateDTO implements Serializable {
 
+    /**
+     * 模板名称
+     */
     @NotBlank(message = "模板名不能为空")
     private String templateName;
 
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id不能为空")
     private String productId;
 }

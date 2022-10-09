@@ -440,18 +440,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             exportExcel(fileName, taskExcelList, productList);
-
+            return;
         }
         //获取任务
         if (exportData.equals("task")) {
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
             ExcelUtil.export(fileName, "任务列表", taskExcelList, TaskExcelDTO.class, response);
+            return;
         }
 
         //获取产品
         if (exportData.equals("product")) {
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
+            return;
         }
 
     }
@@ -510,14 +512,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         sb.append(date);
         String redisKey = "file:name:" + date;
-        String last = redisService.getCacheObject(redisKey);
-        String lastNo = "1";
-        if (StringUtils.isBlank(last)) {
+        Integer last = redisService.getCacheObject(redisKey);
+        Integer lastNo = 1;
+        if (last!=null) {
+            lastNo=last+1;
         }
-        // redisService.setCacheObject(redisKey,lastNo,1, TimeUnit.DAYS);
-
-        return sb.toString();
-
+        redisService.setCacheObject(redisKey,lastNo, (long) 1, TimeUnit.DAYS);
+        return sb.append(lastNo).toString();
 
     }
 

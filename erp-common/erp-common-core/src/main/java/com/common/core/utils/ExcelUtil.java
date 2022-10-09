@@ -45,11 +45,11 @@ public class ExcelUtil {
                 throw new RuntimeException("'filename' 不能为空");
             }
             String fileName = filename.concat(".xlsx");
-            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "utf-8"));
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             outputStream = response.getOutputStream();
-
             excelWriter = getExportExcelWriter(outputStream);
-
             WriteTable writeTable = EasyExcel.writerTable(0).head(clazz).needHead(true).build();
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
             // 写出数据
@@ -102,15 +102,11 @@ public class ExcelUtil {
         headWriteCellStyle.setWriteFont(headWriteFont);
         //设置头居中
         headWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
-
         // 内容策略
         WriteCellStyle writeCellStyle = new WriteCellStyle();
         // 设置内容水平居中
         writeCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
         return new HorizontalCellStyleStrategy(headWriteCellStyle, writeCellStyle);
     }
-
-
-
 
 }
