@@ -103,6 +103,30 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         return resultList;
     }
 
+    /**
+     * 删除阶段名
+     *
+     * @param id
+     * @return boolean
+     * @author yl
+     * @date 2022-10-09 15:57
+     */
+    @Override
+    public boolean removeSysTaskPhase(String id) {
+        SysTaskPhaseEntity taskPhase = this.getById(id);
+        if (!Objects.isNull(taskPhase) && IsConstant.YES.equals(taskPhase.getIsProjectApproval())) {
+            throw new ServiceException(ApiError.ERROR_95020);
+        }
+        return this.removeById(id);
+    }
+
+    @Override
+    public List<SysTaskPhaseEntity> getSysTaskPhaseList() {
+        LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(SysTaskPhaseEntity::getIsProjectApproval);
+        return this.list(queryWrapper);
+    }
+
 
     /**
      * 获取系统的 任务阶段名

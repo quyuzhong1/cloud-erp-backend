@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProjectInfoMapper">
     <select id="listMap" resultType="map">
-        SELECT id,product_name AS name FROM  project_info
+        SELECT id,name FROM  project_info
     </select>
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">

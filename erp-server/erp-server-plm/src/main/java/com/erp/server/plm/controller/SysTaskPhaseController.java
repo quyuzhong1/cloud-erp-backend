@@ -16,6 +16,7 @@ import java.util.List;
 
 /**
  * 产品系统通用设置
+ *
  * @Classname
  * @Description TODO
  * @Date 2022-09-13 16:28
@@ -32,10 +33,11 @@ public class SysTaskPhaseController extends BaseController {
 
     /**
      * 新建任务-批量保存或者修改阶段名
-     * @author yl
-     * @date 2022-10-09 10:27
+     *
      * @param list
      * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2022-10-09 10:27
      */
     @PostMapping("/batchSaveOrUpdate")
     public ApiResult add(@RequestBody @Validated List<UpdateBasicNameDTO> list) {
@@ -46,9 +48,10 @@ public class SysTaskPhaseController extends BaseController {
 
     /**
      * 新建任务-修改阶段名
+     *
+     * @return com.erp.common.dto.base.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
-     * @return com.erp.common.dto.base.ApiResult
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
@@ -56,16 +59,30 @@ public class SysTaskPhaseController extends BaseController {
         return success();
     }
 
+    /**
+     * 新建任务-删除阶段名
+     *
+     * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2022-10-09 10:27
+     */
+    @PostMapping("/remove")
+    public ApiResult remove(String id) {
+        boolean flag = sysTaskPhaseService.removeSysTaskPhase(id);
+        return flag==true?success():failure();
+    }
+
 
     /**
      * 新建任务-获取阶段名称列表
+     *
+     * @return com.erp.common.dto.base.ApiResult
      * @author yl
      * @date 2022-10-09 10:27
-     * @return com.erp.common.dto.base.ApiResult
      */
     @GetMapping("/list")
     public ApiResult<List<SysTaskPhaseEntity>> list() {
-        return success( sysTaskPhaseService.list());
+        return success(sysTaskPhaseService.getSysTaskPhaseList());
     }
 
 }

@@ -143,7 +143,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
         ProjectInfoEntity entity = new ProjectInfoEntity();
         BeanMapper.copy(dto, entity);
-        entity.setProductName(product.getName());
+        entity.setName(product.getName());
         boolean flag = save(entity);
         Integer sourceType = dto.getSourceType();
         if (flag) {
@@ -219,10 +219,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     /**
      * 项目分页
-     * @author yl
-     * @date 2022-09-28 10:06
+     *
      * @param dto
      * @return com.erp.common.vo.PagingVO
+     * @author yl
+     * @date 2022-09-28 10:06
      */
 
     @Override
@@ -254,6 +255,25 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             }
         }
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 检查项目是否完成
+     *
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-10-09 14:54
+     */
+    @Override
+    public void checkProjectFinish(String productId) {
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
+        queryWrapper.eq(ProjectInfoEntity::getProjectStatus, ProjectStateEnum.FINISH.getState());
+        ProjectInfoEntity entity = baseMapper.selectOne(queryWrapper);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95019);
+        }
     }
 
 

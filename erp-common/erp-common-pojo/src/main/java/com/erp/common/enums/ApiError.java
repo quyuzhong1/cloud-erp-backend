@@ -101,6 +101,8 @@ public enum ApiError implements Serializable {
     ERROR_95016(95016, "项目角色名已存在，不可重复提交"),
     ERROR_95017(95017, "SPU已存在，请确保SPU的唯一性"),
     ERROR_95018(95018, "上传文件失败"),
+    ERROR_95019(95019, "项目尚未完成，不可归档"),
+    ERROR_95020(95020, "立项阶段名不能删除"),
 
 
 

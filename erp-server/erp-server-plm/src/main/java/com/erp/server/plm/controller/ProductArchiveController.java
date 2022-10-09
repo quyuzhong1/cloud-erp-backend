@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** 产品归档管理
+/**
+ * 产品归档管理
+ *
  * @Classname
  * @Description TODO
  * @Date 2022-10-08 14:59
@@ -31,6 +33,7 @@ public class ProductArchiveController extends BaseController {
 
     /**
      * 分页获取
+     *
      * @param dto
      * @return
      */
@@ -38,5 +41,14 @@ public class ProductArchiveController extends BaseController {
     public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 重新激活
+     */
+    @PostMapping("/activate")
+    public ApiResult activate(String productId) {
+        boolean flag = productArchiveService.activate(productId);
+        return flag==true?success():failure("激活失败");
     }
 }

@@ -22,4 +22,8 @@ public interface SysTaskPhaseService extends IService<SysTaskPhaseEntity> {
     List<TaskPhaseDTO> getSysTaskPhase();
 
     List<String> getSysTaskPhaseNames();
+
+    boolean removeSysTaskPhase(String id);
+
+    List<SysTaskPhaseEntity> getSysTaskPhaseList();
 }

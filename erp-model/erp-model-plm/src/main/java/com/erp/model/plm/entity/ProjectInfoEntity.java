@@ -38,8 +38,8 @@ public class ProjectInfoEntity implements Serializable {
 
 
 
-    @TableField("product_name")
-    private String productName;
+    @TableField("name")
+    private String name;
 
 
     //对应的id

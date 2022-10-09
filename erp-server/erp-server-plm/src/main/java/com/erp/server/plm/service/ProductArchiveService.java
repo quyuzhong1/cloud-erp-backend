@@ -3,8 +3,11 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.entity.ProductArchiveEntity;
+
+import java.util.List;
 
 /**
  * @Classname ProductArchiveService
@@ -13,5 +16,11 @@ import com.erp.model.plm.entity.ProductArchiveEntity;
  * @Created by yl
  */
 public interface ProductArchiveService extends IService<ProductArchiveEntity> {
-    PagingVO paging(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<List<ProductArchiveDTO>> paging(PagingDTO<ProductSearchDTO> dto);
+
+    boolean activate(String productId);
+
+    Boolean saveArchive(String productId);
+
+    List<String> getArchiveProductIds();
 }

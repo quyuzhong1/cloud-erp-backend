@@ -24,7 +24,7 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(IPage query, @Param("params") ProductSearchDTO params);
+    IPage<ProductShowDTO> paging(IPage query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 

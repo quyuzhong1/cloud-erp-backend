@@ -56,4 +56,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
 
     List<CountDTO> getProductRelevanceList();
+
+    boolean archive(String productId);
 }

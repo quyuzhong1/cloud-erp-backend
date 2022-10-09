@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *产品开发管理
+ * 产品开发管理
+ *
  * @author yl
  * @since 2022-09-13
  */
@@ -40,10 +41,11 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-普通分页
+     *
+     * @param dto
+     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
      * @author yl
      * @date 2022-10-09 10:17
-     * @param dto
-     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>>
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
@@ -60,7 +62,7 @@ public class ProductInfoController extends BaseController {
 
     @PostMapping("/updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
-      productInfoService.updateProduct(dto);
+        productInfoService.updateProduct(dto);
         return success();
     }
 
@@ -111,6 +113,20 @@ public class ProductInfoController extends BaseController {
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
+    }
+
+    /**
+     * 产品列表-项目归档
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-10-09 14:38
+     */
+    @PostMapping("/archive")
+    public ApiResult archive(@RequestParam(value = "productId") String productId) {
+        boolean flag = productInfoService.archive(productId);
+        return flag==true?success():failure();
     }
 
 

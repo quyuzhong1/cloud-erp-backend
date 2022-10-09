@@ -89,6 +89,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private ProductArchiveService archiveService;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -208,17 +211,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     /**
-     *@description
-     *@parms
-     *@return
-     *@author yl
-     *@date 2022-10-09
+     * @return
+     * @description
+     * @parms
+     * @author yl
+     * @date 2022-10-09
      */
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        List<String> archiveProductIds=archiveService.getArchiveProductIds();
+        IPage pageData = baseMapper.paging(query, params,archiveProductIds);
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
@@ -361,6 +365,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }
+
     /**
      * 产品列表编辑数据
      *
@@ -448,15 +453,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
         }
-        
+
     }
 
     /**
      * 获取产品迭代数量
-     * @author yl
-     * @date 2022-10-09 12:16
+     *
      * @param
      * @return java.util.List<com.erp.model.plm.dto.CountDTO>
+     * @author yl
+     * @date 2022-10-09 12:16
      */
     @Override
     public List<CountDTO> getProductRelevanceList() {
@@ -465,6 +471,24 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
 
     /**
+     * 归档产品
+     *
+     * @param productId
+     * @return boolean
+     * @author yl
+     * @date 2022-10-09 14:44
+     */
+    @Override
+    public boolean archive(String productId) {
+        //检查项目完成情况
+        projectInfoService.checkProjectFinish(productId);
+        //添加归档信息
+        Boolean flag = archiveService.saveArchive(productId);
+        return flag;
+    }
+
+    /**
+     * /**
      * 获取文件名
      *
      * @param exportData
@@ -485,10 +509,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sb.append("产品管理");
         }
         sb.append(date);
-        String redisKey="file:name:"+date;
-        String last=redisService.getCacheObject(redisKey);
-        String lastNo="1";
-        if(StringUtils.isBlank(last)){
+        String redisKey = "file:name:" + date;
+        String last = redisService.getCacheObject(redisKey);
+        String lastNo = "1";
+        if (StringUtils.isBlank(last)) {
         }
         // redisService.setCacheObject(redisKey,lastNo,1, TimeUnit.DAYS);
 
