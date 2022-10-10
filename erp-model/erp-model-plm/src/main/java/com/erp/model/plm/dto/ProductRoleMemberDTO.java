@@ -28,5 +28,5 @@ public class ProductRoleMemberDTO implements Serializable {
     /**
      * 产品数量
      */
-    private String productCount ;
+    private Integer productCount ;
 }

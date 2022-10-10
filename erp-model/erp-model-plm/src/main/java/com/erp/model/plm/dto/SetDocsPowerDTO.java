@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class setDocsPowerDTO implements Serializable {
+public class SetDocsPowerDTO implements Serializable {
 
 
 

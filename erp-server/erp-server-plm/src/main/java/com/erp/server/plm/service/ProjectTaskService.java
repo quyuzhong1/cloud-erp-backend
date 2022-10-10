@@ -1,7 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -43,7 +42,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean removeTask(String id);
 
-    Boolean setPreTask(setPreTaskDTO dto);
+    Boolean setPreTask(SetPreTaskDTO dto);
 
 
     List<TaskConductDTO> getTaskConductList(String projectId);

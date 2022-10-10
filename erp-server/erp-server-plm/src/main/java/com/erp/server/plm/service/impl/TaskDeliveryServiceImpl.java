@@ -100,7 +100,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     @Override
-    public void setPower(setDocsPowerDTO dto) {
+    public void setPower(SetDocsPowerDTO dto) {
         //保存他的权限
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
         for (String userId : dto.getUserIds()) {
@@ -138,12 +138,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:07
      */
     @Override
-    public void saveSysDeliveryDocs(String taskId, List<finishDocsDTO> docsList) {
+    public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
         //先删除文档
         removeTaskDocsByTaskId(taskId);
         //保存交付文档
         List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
-        for (finishDocsDTO item : docsList) {
+        for (FinishDocsDTO item : docsList) {
             TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
             entity.setDocsName(item.getDocsName());
             entity.setTaskId(taskId);

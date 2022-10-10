@@ -7,7 +7,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
-import com.erp.model.plm.dto.setDocsPowerDTO;
+import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -41,7 +41,7 @@ public class TaskDeliveryDocsController extends BaseController {
     }
 
     @PostMapping("/setPower")
-    public ApiResult setPower(@RequestBody @Validated setDocsPowerDTO dto) {
+    public ApiResult setPower(@RequestBody @Validated SetDocsPowerDTO dto) {
         taskDeliveryService.setPower(dto);
         return success();
     }

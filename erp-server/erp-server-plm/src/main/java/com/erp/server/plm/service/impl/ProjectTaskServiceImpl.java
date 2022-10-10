@@ -348,7 +348,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-09-22 18:37
      */
     @Override
-    public Boolean setPreTask(setPreTaskDTO dto) {
+    public Boolean setPreTask(SetPreTaskDTO dto) {
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(ProjectTaskEntity::getPreTaskId, dto.getPreTaskId());
         updateWrapper.eq(ProjectTaskEntity::getId, dto.getTaskId());

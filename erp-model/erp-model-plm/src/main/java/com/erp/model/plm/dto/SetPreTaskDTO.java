@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class setPreTaskDTO implements Serializable {
+public class SetPreTaskDTO implements Serializable {
 
 
     @NotBlank(message = "任务id 不能为空")

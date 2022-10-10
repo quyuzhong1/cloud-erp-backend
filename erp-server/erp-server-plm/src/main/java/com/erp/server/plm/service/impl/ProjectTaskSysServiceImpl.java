@@ -11,7 +11,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
-import com.erp.model.plm.dto.finishDocsDTO;
+import com.erp.model.plm.dto.FinishDocsDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -72,7 +72,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
 
         }
-        List<finishDocsDTO> docsList = dto.getFinishDocsList();
+        List<FinishDocsDTO> docsList = dto.getFinishDocsList();
         boolean flag = this.saveOrUpdate(entity);
         //表示保存成功
         if (flag) {

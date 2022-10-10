@@ -28,5 +28,5 @@ public class PhaseDistributeDTO  implements Serializable {
     /**
      * 任务阶段
      */
-    private List<Map<String,List<Map<String,Object>>>> phaseList;
+    private List<ProductPhaseDistributeDTO> phaseList;
 }

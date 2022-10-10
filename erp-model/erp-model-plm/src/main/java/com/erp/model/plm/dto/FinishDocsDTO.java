@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class finishDocsDTO  implements Serializable {
+public class FinishDocsDTO implements Serializable {
 
     @NotBlank(message = "文档id不能为空")
     private String docsId;

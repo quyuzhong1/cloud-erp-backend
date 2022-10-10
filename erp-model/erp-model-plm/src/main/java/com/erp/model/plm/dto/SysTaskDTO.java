@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -9,7 +8,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -105,5 +103,5 @@ public class SysTaskDTO implements Serializable {
 
 
 
-    private List<finishDocsDTO> finishDocsList;
+    private List<FinishDocsDTO> finishDocsList;
 }

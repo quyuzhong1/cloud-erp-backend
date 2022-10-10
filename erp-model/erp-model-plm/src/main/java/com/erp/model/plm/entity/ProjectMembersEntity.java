@@ -60,8 +60,6 @@ public class ProjectMembersEntity implements Serializable {
     @TableField("flag_id")
     private String flagId;
 
-    @TableField("role_id")
-    private String roleId;
 
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;

@@ -8,6 +8,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
+import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.ProjectInfoService;
@@ -15,6 +16,7 @@ import com.erp.server.plm.service.ProjectMembersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.server.plm.service.ProjectTaskService;
 
+import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -42,6 +46,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private RoleRefMemberService roleRefMemberService;
 
 
     @Override
@@ -137,7 +144,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         entity.setProjectId(dto.getProjectId());
         entity.setMemberName(dto.getUseName());
         entity.setMemberId(dto.getUserId());
-        entity.setRoleId(dto.getRoleId());
         entity.setId(id);
         Integer isCharge = dto.getIsCharge();
         flag = this.saveOrUpdate(entity);
@@ -145,6 +151,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         Boolean isUpdate = false;
         if (StringUtils.isNotBlank(id) && flag) {
             isUpdate = true;
+        }
+        //保存成功就要去保存关系表
+        if(flag){
+            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(),entity.getId(),dto.getRoleId());
         }
         if (IsConstant.YES.equals(isCharge) && flag) {
             projectInfoService.updateCharge(dto.getProjectId(), dto.getUseName(), dto.getUserId(), isUpdate);
@@ -164,7 +174,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
      * @date 2022-09-26 18:29
      */
     @Override
-    public PagingVO paging(PagingDTO<MemberPagingDTO> dto) {
+    public PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         MemberPagingDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
@@ -200,6 +210,44 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         }
         return new PagingVO(pageData);
 
+    }
+
+
+    /**
+     * 根据成员id 获取到 成员名 以及它参与了多少项目
+     *
+     * @param memberList
+     * @return java.util.List<com.erp.model.plm.dto.ProductRoleMemberDTO>
+     * @author yl
+     * @date 2022-10-10 11:37
+     */
+    @Override
+    public List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList) {
+        List<ProductRoleMemberDTO> resultList = new LinkedList<>();
+        //当不为空
+        if (CollectionUtils.isNotEmpty(memberList)) {
+            LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectMembersEntity::getMemberId, memberList);
+            List<ProjectMembersEntity> list = this.list(queryWrapper);
+            //以成员id 分类
+            Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));
+            for (Map.Entry<String, List<ProjectMembersEntity>> item : memberMap.entrySet()) {
+                ProductRoleMemberDTO dto = new ProductRoleMemberDTO();
+                String memberId = item.getKey();
+                dto.setMemberId(memberId);
+                ProjectMembersEntity filterEntity = item.getValue().stream().filter(p -> memberId.equals(p.getMemberId())).findFirst().orElse(null);
+                if (filterEntity != null) {
+                    dto.setMemberName(filterEntity.getMemberName());
+                } else {
+                    dto.setMemberName("");
+                }
+                dto.setProductCount(item.getValue().size());
+                resultList.add(dto);
+            }
+        }
+
+
+        return resultList;
     }
 
 

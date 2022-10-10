@@ -319,20 +319,20 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //以阶段名分组
         Map<String, List<ProjectTaskEntity>> map = taskList.parallelStream().
                 collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
-
-        //阶段的 集合  以阶段名作为key 以对应结果为值
-        List<Map<String, List<Map<String, Object>>>> phaseList = new LinkedList<>();
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
+        //阶段的 集合  以阶段名作为key 以对应结果为值
+        List<ProductPhaseDistributeDTO> phaseDistributeList=new LinkedList<>();
         for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
-            Map<String, List<Map<String, Object>>> phaseMap = new HashMap<>();
+            ProductPhaseDistributeDTO  phaseDistributeDTO=new ProductPhaseDistributeDTO();
             //阶段名
             String phaseName = item.getKey();
+            phaseDistributeDTO.setPhaseName(phaseName);
             //分类后的任务
             List<ProjectTaskEntity> groupList = item.getValue();
             List<Map<String, Object>> phaseStateList = getPhaseStateList(groupList);
-            phaseMap.put(phaseName, phaseStateList);
-            phaseList.add(phaseMap);
+            phaseDistributeDTO.setPhaseDataList(phaseStateList);
+            phaseDistributeList.add(phaseDistributeDTO);
         }
         //获取枚举的所有值
         for (ProductInfoStateEnum e : ProductInfoStateEnum.values()) {
@@ -341,7 +341,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             statusMap.put("colourState", e.getColourState());
             statusList.add(statusMap);
         }
-        phaseDistribute.setPhaseList(phaseList);
+        phaseDistribute.setPhaseList(phaseDistributeList);
         phaseDistribute.setStatusList(statusList);
 
 

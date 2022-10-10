@@ -7,7 +7,6 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.ProjectTaskSysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -63,14 +62,14 @@ public class ProjectTaskController extends BaseController {
     }
 
     @PostMapping("/setPreTask")
-    public ApiResult setPreTask(@RequestBody @Validated setPreTaskDTO dto) {
+    public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
         Boolean flag = taskService.setPreTask(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/removePreTask")
     public ApiResult removePreTask(@RequestBody @Validated BaseIdDTO dto) {
-        setPreTaskDTO taskDTO = new setPreTaskDTO();
+        SetPreTaskDTO taskDTO = new SetPreTaskDTO();
         taskDTO.setTaskId(dto.getId());
         taskDTO.setPreTaskId("");
         Boolean flag = taskService.setPreTask(taskDTO);

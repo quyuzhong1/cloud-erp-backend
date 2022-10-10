@@ -1,46 +1,46 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
+import lombok.Data;
 
 /**
- * @Classname RoleEntity
- * @Description TODO
- * @Date 2022-10-09 19:44
- * @Created by yl
+ * 
+ * @TableName role_ref_members
  */
+@TableName(value ="role_ref_members")
 @Data
-@EqualsAndHashCode(callSuper = false)
-@TableName("role")
-public class RoleEntity implements Serializable {
-
+public class RoleRefMemberEntity implements Serializable {
     /**
-     * id
+     * 
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 角色名
+     * 成员表id
      */
-    @TableField("name")
-    private String name;
-
+    private String membersId;
 
     /**
-     * 创建时间
+     * 项目角色表id
+     */
+    private String roleId;
+
+    /**
+     * 
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 
-
     /**
-     * 更新时间
+     * 
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
+
+    @TableField(exist = false)
+    private static final long serialVersionUID = 1L;
 }

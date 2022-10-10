@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class RoleDTO implements Serializable {
+public class ProjectRoleDTO implements Serializable {
 
     @NotBlank(message = "角色名不能为空")
     private String name;

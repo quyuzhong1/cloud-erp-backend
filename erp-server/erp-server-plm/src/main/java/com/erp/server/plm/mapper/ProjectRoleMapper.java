@@ -1,8 +1,12 @@
 package com.erp.server.plm.mapper;
 
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.plm.entity.RoleEntity;
+import com.erp.model.plm.dto.ProductRoleDTO;
+import com.erp.model.plm.entity.ProjectRoleEntity;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * @Classname RoleMapper
@@ -11,5 +15,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @Created by yl
  */
 @Mapper
-public interface RoleMapper extends BaseMapper<RoleEntity> {
+public interface ProjectRoleMapper extends BaseMapper<ProjectRoleEntity> {
+
 }

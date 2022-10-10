@@ -23,11 +23,11 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     PagingVO paging(PagingDTO<BaseSearchDTO> dto);
 
-    void setPower(setDocsPowerDTO dto);
+    void setPower(SetDocsPowerDTO dto);
 
     List<DeliveryDocsDTO> getByTaskId(BaseIdDTO dto);
 
-    void saveSysDeliveryDocs(String id, List<finishDocsDTO> docsList);
+    void saveSysDeliveryDocs(String id, List<FinishDocsDTO> docsList);
 
     void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId);
 
