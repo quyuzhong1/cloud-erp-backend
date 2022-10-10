@@ -6,6 +6,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.model.plm.dto.UploadImgDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,13 +43,13 @@ public class CommonController  extends BaseController {
      * 上传图片
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
-     * @param multipartFileList 图片流
+     * @param uploadImgDTO 图片流
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @GetMapping("/upload")
-    public ApiResult upload(@RequestParam(value = "multipartFile") List<MultipartFile> multipartFileList){
+    @PostMapping("/upload")
+    public ApiResult upload(@RequestBody UploadImgDTO uploadImgDTO){
         List<String> list = new ArrayList<>();
-        for (MultipartFile multipartFile : multipartFileList) {
+        for (MultipartFile multipartFile : uploadImgDTO.getMultipartFileList()) {
             String filePath = FastDFSClientUtil.uploadFile(multipartFile);
             list.add(filePath);
         }
