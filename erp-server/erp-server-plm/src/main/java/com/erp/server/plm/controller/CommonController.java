@@ -45,7 +45,7 @@ public class CommonController  extends BaseController {
      * @param multipartFileList 图片流
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @PostMapping("/upload")
+    @GetMapping("/upload")
     public ApiResult upload(@RequestParam(value = "multipartFile") List<MultipartFile> multipartFileList){
         List<String> list = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFileList) {
