@@ -60,5 +60,5 @@ public class ProductNoSpecDTO {
      * 产品证书信息
      */
     @ApiModelProperty(value = "产品证书信息")
-    private ProductCertificateDTO productCertificateDTO;
+    private List<ProductCertificateDTO> productCertificateList;
 }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 产品变体类型属性表
@@ -35,6 +36,13 @@ public class ProductVariantDTO implements Serializable {
      */
     @ApiModelProperty(value = "产品表id")
     private String productId;
+
+    /**
+     * 变体值
+     */
+    @ApiModelProperty(value = "变体值")
+    private List<ProductVariantPropertyDTO> productVariantPropertyList;
+
 
     private static final long serialVersionUID = 1L;
 }

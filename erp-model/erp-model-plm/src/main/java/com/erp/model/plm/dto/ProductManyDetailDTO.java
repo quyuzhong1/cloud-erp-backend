@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -111,4 +112,45 @@ public class ProductManyDetailDTO {
      */
     @ApiModelProperty(value = "产品多规格详情sku信息")
     private List<ProductDetailEntity> productManySkuDetailList;
+
+    /**
+     * 产品成本信息
+     */
+    @ApiModelProperty(value = "产品成本信息")
+    private List<ProductCostShowDTO> productCostShowDTOList;
+
+    /**
+     * 产品采购信息
+     */
+    @ApiModelProperty(value = "产品采购信息")
+    private List<ProductPurchaseShowDTO> productPurchaseShowDTOList;
+
+    /**
+     * 产品采购信息
+     */
+    @ApiModelProperty(value = "产品采购信息")
+    private List<ProductPurchaseRemarkEntity> remarkEntityList;
+
+    /**
+     * 产品包装信息
+     */
+    private List<ProductSaleShowDTO> productSaleShowDTOList;
+
+    /**
+     * 产品包装信息
+     */
+    @ApiModelProperty(value = "产品包装信息")
+    private List<ProductPackShowDTO> productPackShowDTOS;
+
+    /**
+     * 产品物流信息
+     */
+    @ApiModelProperty(value = "产品物流信息")
+    private List<ProductLogisticsShowDTO> productLogisticsShowDTOList;
+
+    /**
+     * 产品证书信息
+     */
+    @ApiModelProperty(value = "产品证书信息")
+    private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 }

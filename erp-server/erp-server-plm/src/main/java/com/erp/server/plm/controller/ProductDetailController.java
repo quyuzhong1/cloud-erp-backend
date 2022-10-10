@@ -18,11 +18,8 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
@@ -378,6 +375,23 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 产品信息-变体管理-下拉列表-查询
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
+     **/
+    @ApiOperation(value = "产品信息-变体管理-编辑-查询")
+    @GetMapping("/listVariantAndProperty")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true),
+    })
+    public ApiResult<List<ProductVariantEntity>> listVariantAndProperty(@RequestParam(value = "productId") String productId) {
+        List<ProductVariantEntity> list = productVariantService.list(productId);
+        return this.success(list);
+    }
+
+    /**
      * 产品信息-变体管理-下拉列表-新增/修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
@@ -443,13 +457,16 @@ public class ProductDetailController extends BaseController {
      * 产品信息-变体管理-变体值-删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
-     * @param productVariantPropertyDTO 产品变体属性值表
+     * @param variantPropertyId 变体值表id
      * @return com.erp.common.dto.base.ApiResult
      **/
     @ApiOperation(value = "产品信息-变体管理-变体值-删除")
-    @PostMapping("/deleteVariantProperty")
-    public ApiResult deleteVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
-        Boolean flag = productVariantPropertyService.saveOrUpdate(productVariantPropertyDTO);
+    @GetMapping("/deleteVariantProperty")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "variantPropertyId", value = "变体值表id", required = true),
+    })
+    public ApiResult deleteVariantProperty(@RequestBody String variantPropertyId) {
+        Boolean flag = productVariantPropertyService.deleteVariant(variantPropertyId);
         return flag == true ? this.success() : this.failure();
     }
 
@@ -481,7 +498,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-单位管理--删除
+     * 产品信息-单位管理-删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      * @param id 单位列表id
@@ -517,11 +534,21 @@ public class ProductDetailController extends BaseController {
         EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
         if(list.size() > 0){
+            StringBuffer sb = new StringBuffer();
+            String fileName = URLEncoder.encode("产品管理", "UTF-8");
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(fileName);
+            sb.append(date);
             response.setContentType("application/vnd.ms-excel");
+            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+            ExcelUtil.export(sb.toString(), "商品列表", list, ProductDetailExcelDTO.class, response);
+
+            /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
             response.setCharacterEncoding("utf-8");
             String fileName = URLEncoder.encode("测试", "UTF-8");
-            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
-            EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);
+            String s = new String("测试".getBytes("UTF-8"), "ISO-8859-1");
+            response.setHeader("Content-disposition", "attachment;filename=" + s + ".xlsx");
+            EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);*/
         }
         return this.success();
     }
@@ -539,5 +566,4 @@ public class ProductDetailController extends BaseController {
     public void exportProduct(@RequestBody ProductSkuDTO productSkuDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuDTO, response);
     }
-
 }

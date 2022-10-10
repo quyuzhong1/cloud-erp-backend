@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -60,6 +61,31 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
             }
         }
         return this.saveOrUpdate(variantPropertyEntity);
+    }
+
+    /**
+     * @Description 保存/修改产品变体类型值信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/26 10:13
+     * @param dto 产品变体值信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean saveOrUpdateBatch(List<ProductVariantPropertyDTO> dto) {
+        List<ProductVariantPropertyEntity> variantPropertyEntityList = BeanMapper.copyList(dto, ProductVariantPropertyEntity.class);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            variantPropertyEntityList.forEach(req -> {
+                if (StringUtils.isBlank(req.getId())) {
+                    req.setCreateUserId(loginUser.getUid());
+                    req.setCreateUserName(loginUser.getUserName());
+                } else {
+                    req.setUpdateUserId(loginUser.getUid());
+                    req.setUpdateUserName(loginUser.getUserName());
+                }
+            });
+        }
+        return this.saveOrUpdateBatch(variantPropertyEntityList);
     }
 
     /**

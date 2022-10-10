@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class ExportSkuExcelDTO implements Serializable {
     @ExcelProperty(value = "spu", index = 0)
-    private String spu;
+    private String spuNo;
 
     @ExcelProperty(value = "产品名称", index = 1)
     private String name;
@@ -154,9 +154,9 @@ public class ExportSkuExcelDTO implements Serializable {
     @ExcelProperty(value = "申报要素", index = 47)
     private String declareElement;
 
-    @ExcelProperty(value = "英文用途", index = 48)
+    @ExcelProperty(value = "英文材质", index = 48)
     private String englishMaterial;
 
-    @ExcelProperty(value = "产品id", index = 49)
+    @ExcelProperty(value = "英文用途", index = 49)
     private String englishUsage;
 }

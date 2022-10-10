@@ -64,6 +64,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 预计首批到货时间
      */
+
     @ApiModelProperty(value = "预计首批到货时间")
     private Date planArrivalTime;
 

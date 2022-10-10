@@ -88,7 +88,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         } else {
             //sku重复
-            if (productDetailService.checkSkuNo(dto.getSkuNo())) {
+            if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
                 dto.setErrorMsg(ApiError.ERROR_95015.msg);
                 list.add(dto);
                 return;
@@ -200,10 +200,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
         productNoSpecDTO.setProductPackDTO(productPackDTO);
-        //产品证书信息
+        /*//产品证书信息
         ProductCertificateDTO productCertificateDTO = new ProductCertificateDTO();
         BeanMapper.copy(dto, productCertificateDTO);
-        productNoSpecDTO.setProductCertificateDTO(productCertificateDTO);
+        productNoSpecDTO.setProductCertificateDTO(productCertificateDTO);*/
         productDetailService.inportExcel(productNoSpecDTO);
     }
 

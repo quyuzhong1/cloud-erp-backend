@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /** 公共接口
@@ -37,12 +38,20 @@ public class CommonController  extends BaseController {
         return sysUserFeign.userList(dto);
     }
 
+    /**
+     * 上传图片
+     * @Author Luo_WG
+     * @Date 2022/10/9 17:35
+     * @param multipartFileList 图片流
+     * @return com.erp.common.dto.base.ApiResult
+     **/
     @PostMapping("/upload")
-    public ApiResult upload(@RequestParam(value = "multipartFile") MultipartFile multipartFile, @RequestParam(value = "fileName") String fileName){
-        File file = FileUtil.multiToFile(multipartFile);
-        String filePath = FastDFSClientUtil.uploadFile(file, fileName);
-        return this.success(filePath);
+    public ApiResult upload(@RequestParam(value = "multipartFile") List<MultipartFile> multipartFileList){
+        List<String> list = new ArrayList<>();
+        for (MultipartFile multipartFile : multipartFileList) {
+            String filePath = FastDFSClientUtil.uploadFile(multipartFile);
+            list.add(filePath);
+        }
+        return this.success(list);
     }
-
-
 }

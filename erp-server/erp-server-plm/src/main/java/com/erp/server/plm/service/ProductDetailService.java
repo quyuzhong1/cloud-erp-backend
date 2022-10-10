@@ -125,18 +125,30 @@ public interface ProductDetailService {
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
-     * @param sku:sku
+     * @param sku sku
      **/
-    Boolean checkSkuNo(String sku);
+    Boolean checkSkuNo(String sku, String id);
 
     /**
      * @Description 检查spu编号是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:28
-     * @param spuNo:spu编号
+     * @param spuNo spu编号
+     * @param id 主键id
      * @return void
      **/
-    Boolean checkSpuNo(String spuNo);
+    Boolean checkSpuNo(String spuNo, String id);
+
+    /**
+     * @Description 检查spu编号是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
+     * @param name spu编号
+     * @param id 主键id
+     * @return void
+     **/
+    Boolean checkName(String name, String id);
+
 
     /**
      * @Description 根据sku查询sku表信息

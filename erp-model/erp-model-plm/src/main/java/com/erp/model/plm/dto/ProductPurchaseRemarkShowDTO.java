@@ -16,24 +16,45 @@ import java.util.Date;
 @Data
 public class ProductPurchaseRemarkShowDTO implements Serializable {
 
+    /**
+     * 主键id
+     */
     @ApiModelProperty(value = "主键id")
     private String id;
 
+    /**
+     * 产品采购信息表id
+     */
     @ApiModelProperty(value = "产品采购信息表id")
     private String purchaseId;
 
+    /**
+     * 备注
+     */
     @ApiModelProperty(value = "备注")
     private String remark;
 
+    /**
+     * 创建时间
+     */
     @ApiModelProperty(value = "创建时间")
     private Date createTime;
 
+    /**
+     * 创建人id
+     */
     @ApiModelProperty(value = "创建人id")
     private String createUserId;
 
+    /**
+     * 修改时间
+     */
     @ApiModelProperty(value = "修改时间")
     private Date updateTime;
 
+    /**
+     * 修改人id
+     */
     @ApiModelProperty(value = "修改人id")
     private String updateUserId;
 

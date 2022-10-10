@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -57,6 +58,18 @@ public class FastDFSClientUtil {
 	 * @return
 	 */
 	public synchronized static String uploadFile(File file, String fileName) {
+		return uploadFile(file, fileName, null);
+	}
+
+	/**
+	 * 上传文件
+	 *
+	 * @param multipartFile     文件对象
+	 * @return
+	 */
+	public synchronized static String uploadFile(MultipartFile multipartFile) {
+		String fileName = multipartFile.getOriginalFilename().toLowerCase();
+		File file = FileUtil.multiToFile(multipartFile);
 		return uploadFile(file, fileName, null);
 	}
 

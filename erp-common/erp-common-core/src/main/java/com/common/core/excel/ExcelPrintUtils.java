@@ -2,6 +2,7 @@ package com.common.core.excel;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -21,13 +22,16 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.UUID;
 import java.util.*;
@@ -105,7 +109,7 @@ public class ExcelPrintUtils {
 	 * @return
 	 */
 	private InputStream getTemplate(String fileName) {
-		final String JXLS_EXCEL = "excel/print/";
+		final String JXLS_EXCEL = "excel/";
 		InputStream stream = null;
 		try {
 			String name = JXLS_EXCEL + fileName;
@@ -601,6 +605,60 @@ public class ExcelPrintUtils {
 		contentWriteCellStyle.setBorderTop(BorderStyle.THIN);
 
 		return new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
+	}
+
+
+	/**
+	 * 复制模板导出excel数据
+	 * @Author Luo_WG
+	 * @Date 2022/10/10 12:08
+	 * @param list 数据集
+	 * @param response response
+	 * @param excelPath 模板路径
+	 * @return void
+	 **/
+	public void patchExport(List<?> list, HttpServletResponse response, String fileName, String excelPath) throws IOException {
+		OutputStream out = null;
+		BufferedOutputStream bos = null;
+		try {
+			//模板的路径
+			ClassPathResource classPathResource = new ClassPathResource(excelPath);
+			InputStream inputStream = classPathResource.getInputStream();
+			getOutputStream(fileName, response);
+			out = response.getOutputStream();
+			bos = new BufferedOutputStream(out);
+			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+			WriteSheet writeSheet = EasyExcel.writerSheet().build();
+			//列表数据
+			excelWriter.fill(list, writeSheet);
+			excelWriter.finish();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			out.flush();
+			out.close();
+			bos.flush();
+		}
+	}
+
+	/**
+	 * 这是ExcelUtil.getOutputStream
+	 * @Author Luo_WG
+	 * @Date 2022/10/10 11:27
+	 * @param fileName fileName
+	 * @param response response
+	 * @return java.io.OutputStream
+	 **/
+	public static OutputStream getOutputStream(String fileName, HttpServletResponse response) throws Exception {
+		// 这里文件名如果涉及中文一定要使用URL编码,否则会乱码
+		String exportFileName = URLEncoder.encode(fileName+ ExcelTypeEnum.XLSX.getValue(), StandardCharsets.UTF_8.toString());
+		response.setContentType("application/force-download");
+		response.setHeader("Content-Disposition", "attachment;filename=" + exportFileName);
+
+		//导出的文件名
+//        String excelFileName = URLEncoder.encode(fileName, "utf-8");
+//        response.setHeader("Content-disposition", "attachment; filename=" + new String(excelFileName.getBytes("UTF-8"), "ISO-8859-1"));
+		return response.getOutputStream();
 	}
 
 }

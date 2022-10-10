@@ -166,9 +166,9 @@
         WHERE pi.id = #{productId}
     </select>
 
-    <select id="getExportSkuExcelDTO" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
+    <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
         SELECT
-        pi.spu,
+        pi.spu_no,
 		pi."name",
 		pi.sale_method,
 		pi.category,
@@ -211,7 +211,6 @@
 		box_weight,
 		box_qty,
 		product_property,
-		product_property_id,
 		declare_chinese_name,
 		declare_english_name,
 		declare_price,

@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
@@ -64,7 +65,8 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param productSkuDTO productSkuDTO
      * @return java.util.List<com.erp.model.plm.dto.ExportSkuExcelDTO>
      **/
-    List<ExportSkuExcelDTO> getExportSkuExcelDTO(@Param("params") ProductSkuDTO productSkuDTO);
+    List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuDTO productSkuDTO);
+
 }
 
 

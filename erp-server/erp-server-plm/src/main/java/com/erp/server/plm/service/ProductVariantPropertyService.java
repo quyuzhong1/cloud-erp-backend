@@ -33,6 +33,15 @@ public interface ProductVariantPropertyService extends IService<ProductVariantPr
     Boolean saveOrUpdate(ProductVariantPropertyDTO dto);
 
     /**
+     * @Description 保存/修改产品变体类型值信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/26 10:13
+     * @param dto 产品变体值信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean saveOrUpdateBatch(List<ProductVariantPropertyDTO> dto);
+
+    /**
      * @Description 删除产品变体类型值信息
      * @Author Luo_WG
      * @Date 2022/9/26 16:13

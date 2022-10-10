@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 产品变体类型属性表
@@ -77,6 +78,8 @@ public class ProductVariantEntity implements Serializable {
     @ApiModelProperty(value = "产品表id")
     @TableField(value = "product_id")
     private String productId;
+
+    private List<ProductVariantPropertyEntity> ProductVariantPropertyEntityList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

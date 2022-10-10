@@ -1,10 +1,21 @@
 package com.erp.server.plm.service.impl;
 
+import ch.qos.logback.core.util.FileUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.enums.WriteDirectionEnum;
+import com.alibaba.excel.support.ExcelTypeEnum;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.excel.write.metadata.fill.FillWrapper;
+import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
@@ -21,15 +32,28 @@ import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
+import com.github.xiaoymin.knife4j.core.util.CommonUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.beans.Transient;
+import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -143,6 +167,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
         productManyDetail.setProductManySkuDetailList(list);
+        List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
+        List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
+        List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);
+        List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
+        List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
+        productManyDetail.setProductCostShowDTOList(costShowDTOList);
+        productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
+        productManyDetail.setRemarkEntityList(remarkEntityList);
+        productManyDetail.setProductSaleShowDTOList(saleShowDTOList);
+        productManyDetail.setProductPackShowDTOS(packShowDTOList);
+        productManyDetail.setProductLogisticsShowDTOList(logisticsShowDTOList);
+        productManyDetail.setProductCertificateShowDTOList(certificateShowDTOList);
         return productManyDetail;
     }
 
@@ -157,18 +195,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
-
-        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
-            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
-            if (!productIdBySku.getId().equals(productSkuBaseInfoDTO.getId())) {
-                throw new ServiceException(ApiError.ERROR_95015);
-            }
-        } else {
-            //检查sku是否重复
-            if (this.checkSkuNo(productSkuBaseInfoDTO.getSkuNo())) {
-                throw new ServiceException(ApiError.ERROR_95015);
-            }
-        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -196,7 +222,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
-
+        //检查sku编号是否重复
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
+        //如果是修改允许保留原来的产品名称不变
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
         //1.修改产品表 主表信息
         String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
 
@@ -215,14 +248,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
 
         //3.修改/新增 成本信息
-        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
+        if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductCostDTO())) {
             ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
             productCostDTO.setSkuId(skuId);
             productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
         }
 
         //4.修改/新增 采购信息
-        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
+        if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
             productPurchaseDTO.setSkuId(skuId);
             String purchaseId = productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
@@ -238,31 +271,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //5.修改/新增 销售信息
         ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
-        if (!ObjectUtils.isEmpty(productSaleDTO)) {
+        if (ObjectUtils.isNotEmpty(productSaleDTO)) {
             productSaleDTO.setSkuId(skuId);
             productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
         ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
-        if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
+        if (ObjectUtils.isNotEmpty(productLogisticsDTO)) {
             productLogisticsDTO.setSkuId(skuId);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
         //7.修改/新增 包装信息
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
-        if (!ObjectUtils.isEmpty(productPackDTO)) {
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
             productPackDTO.setSkuId(skuId);
             productPackService.saveOrUpdate(productPackDTO);
         }
 
         //8.修改/新增 证书信息
-        ProductCertificateDTO productCertificateDTO = productNoSpecDTO.getProductCertificateDTO();
-        if (!ObjectUtils.isEmpty(productCertificateDTO)) {
-            productCertificateDTO.setSkuId(skuId);
-            productCertificateService.saveOrUpdate(productCertificateDTO);
+        List<ProductCertificateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
+        if (ObjectUtils.isNotEmpty(productCertificateList)) {
+            productCertificateList.forEach(req -> {
+                req.setSkuId(skuId);
+            });
+            productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
-
         return true;
     }
 
@@ -276,43 +310,67 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
         //检查spu编号是否重复
-        if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo())) {
+        if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo(), productManySpecDTO.getProductInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
 
         //如果是修改允许保留原来的产品名称不变
-        ProductDetailShowDTO productDetailShowDTO = this.getProductBy(productManySpecDTO.getProductInfoDTO().getName(), "");
-        if (StringUtils.isNotBlank(productManySpecDTO.getProductInfoDTO().getId())) {
-            if (!productDetailShowDTO.getId().equals(productManySpecDTO.getProductInfoDTO().getId())) {
-                throw new ServiceException(ApiError.ERROR_95007);
-            }
-        } else {//如果是新增直接判断产品名称是否存在
-            if (!ObjectUtils.isEmpty(productDetailShowDTO)) {
-                throw new ServiceException(ApiError.ERROR_95007);
+        if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
+        List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
+        //检查sku是否重复
+        for (int i = 0; i < productDetailList.size(); i++) {
+            if (this.checkSkuNo(productDetailList.get(i).getSkuNo(), productDetailList.get(i).getId())) {
+                throw new ServiceException(ApiError.ERROR_95015.code,ApiError.ERROR_95015.msg + " 第"+ (i+1) +"行");
             }
         }
 
         //1.修改产品表 主表信息
-        productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
-        //检查sku是否重复
-        List<String> skuList = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getSkuNo).collect(Collectors.toList());
-        if (this.checkSkuNos(skuList)) {
-            throw new ServiceException(ApiError.ERROR_95015);
+        ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
+        if (ObjectUtils.isNotEmpty(productInfoDTO)) {
+            productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
         }
+
         //2.修改/新增 sku信息
-        this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
+        List<ProductDetailDTO> productDetailLists = productManySpecDTO.getProductDetailList();
+        if (productDetailLists.size() > 0) {
+            this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
+        }
+
         //3.修改/新增 成本信息
-        productCostService.saveOrUpdateBatch(productManySpecDTO.getProductCostList());
+        List<ProductCostDTO> productCostList = productManySpecDTO.getProductCostList();
+        if (productCostList.size() > 0) {
+            productCostService.saveOrUpdateBatch(productManySpecDTO.getProductCostList());
+        }
+
         //4.修改/新增 采购信息
-        productPurchaseService.saveOrUpdateBatch(productManySpecDTO.getProductPurchaseList());
+        List<ProductPurchaseDTO> productPurchaseList = productManySpecDTO.getProductPurchaseList();
+        if (productPurchaseList.size() > 0) {
+            productPurchaseService.saveOrUpdateBatch(productManySpecDTO.getProductPurchaseList());
+        }
         //5.修改/新增 销售信息
-        productSaleService.saveOrUpdateBatch(productManySpecDTO.getProductSaleList());
+        List<ProductSaleDTO> productSaleList = productManySpecDTO.getProductSaleList();
+        if (productSaleList.size() > 0) {
+            productSaleService.saveOrUpdateBatch(productSaleList);
+        }
+
         //6.修改/新增 物流信息
-        productLogisticsService.saveOrUpdateBatch(productManySpecDTO.getProductLogisticsList());
+        List<ProductLogisticsDTO> productLogisticsList = productManySpecDTO.getProductLogisticsList();
+        if (productLogisticsList.size() > 0) {
+            productLogisticsService.saveOrUpdateBatch(productLogisticsList);
+        }
         //7.修改/新增 包装信息
-        productPackService.saveOrUpdateBatch(productManySpecDTO.getProductPackList());
+        List<ProductPackDTO> productPackList = productManySpecDTO.getProductPackList();
+        if (productPackList.size() > 0) {
+            productPackService.saveOrUpdateBatch(productPackList);
+        }
+
         //8.修改/新增 证书信息
-        productCertificateService.saveOrUpdateBatch(productManySpecDTO.getProductCertificateList());
+        List<ProductCertificateDTO> productCertificateList = productManySpecDTO.getProductCertificateList();
+        if (productCertificateList.size() > 0) {
+            productCertificateService.saveOrUpdateBatch(productCertificateList);
+        }
         return true;
     }
 
@@ -385,7 +443,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
-    //@Transactional
+    @Transactional
     public Boolean delete(String skuId){
         System.out.println(skuId);
         //1.删除证书信息
@@ -448,9 +506,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Date 2022/9/27 9:17
      * @param sku:sku
      **/
-    public Boolean checkSkuNo(String sku) {
+    public Boolean checkSkuNo(String sku, String id) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getSkuNo, sku);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(ProductDetailEntity::getId, id);
+        }
         int count = this.count(queryWrapper);
         if(count > 0){
             return true;
@@ -462,12 +523,37 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Description 检查spu编号是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:28
+     * @param id:主键id
      * @param spuNo:spu编号
      * @return void
      **/
-    public Boolean checkSpuNo(String spuNo) {
+    public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(ProductInfoEntity::getId, id);
+        }
+        Integer count = productInfoMapper.selectCount(queryWrapper);
+        if(count > 0){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @Description 检查产品名称是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
+     * @param name:产品名称
+     * @param id:主键id
+     * @return void
+     **/
+    public Boolean checkName(String name, String id) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(ProductInfoEntity::getName, name);
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.ne(ProductInfoEntity::getId, id);
+        }
         Integer count = productInfoMapper.selectCount(queryWrapper);
         if(count > 0){
             return true;
@@ -594,15 +680,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return true;
     }
 
-
+    /**
+     * 获取数据导出excel
+     * @Author Luo_WG
+     * @Date 2022/10/10 12:09
+     * @param productSkuDTO productSkuDTO
+     * @param response response
+     * @return void
+     **/
     @Override
     public void exportProduct(ProductSkuDTO productSkuDTO,HttpServletResponse response) {
+        List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuDTO);
         StringBuffer sb = new StringBuffer();
-        List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcelDTO(productSkuDTO);
-        String fileName = "产品管理";
+        String excelPath = "excel/productSkuDetail.xlsx";
+        String name = "产品sku明细表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(fileName);
         sb.append(date);
-        ExcelUtil.export(sb.toString(), "商品列表", exportSkuExcelDTO, ProductNoSpecDetailAllDTO.class, response);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(exportSkuExcelDTO, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
+
+
 }
