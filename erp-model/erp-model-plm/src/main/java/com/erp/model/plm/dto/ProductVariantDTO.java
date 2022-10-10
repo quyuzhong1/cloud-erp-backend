@@ -32,12 +32,6 @@ public class ProductVariantDTO implements Serializable {
     private String propertyType;
 
     /**
-     * 产品表id
-     */
-    @ApiModelProperty(value = "产品表id")
-    private String productId;
-
-    /**
      * 变体值
      */
     @ApiModelProperty(value = "变体值")
