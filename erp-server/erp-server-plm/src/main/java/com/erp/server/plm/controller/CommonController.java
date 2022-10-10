@@ -10,8 +10,10 @@ import com.erp.model.plm.dto.UploadImgDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,14 +45,16 @@ public class CommonController  extends BaseController {
      * 上传图片
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
-     * @param multipartFile 图片流
+     * @param files 图片流
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @GetMapping("/upload")
-    public ApiResult upload(@RequestParam(value = "multipartFile") MultipartFile[] multipartFile){
+    @PostMapping("/upload")
+    public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request){
+        MultipartHttpServletRequest httpservletrequest = (MultipartHttpServletRequest) request;
+        List<MultipartFile> lists = httpservletrequest.getFiles("multipartFile");
         List<String> list = new ArrayList<>();
-        for (int i = 0; i < multipartFile.length; i++) {
-            String filePath = FastDFSClientUtil.uploadFile(multipartFile[i]);
+        for (MultipartFile file : multipartFile) {
+            String filePath = FastDFSClientUtil.uploadFile(file);
             list.add(filePath);
         }
         return this.success(list);

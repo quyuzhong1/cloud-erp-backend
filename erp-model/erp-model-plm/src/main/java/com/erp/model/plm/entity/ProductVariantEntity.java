@@ -72,8 +72,6 @@ public class ProductVariantEntity implements Serializable {
     @TableField(value = "update_user_name")
     private String updateUserName;
 
-    private List<ProductVariantPropertyEntity> ProductVariantPropertyEntityList;
-
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

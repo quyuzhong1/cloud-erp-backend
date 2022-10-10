@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantDTO;
+import com.erp.model.plm.dto.ProductVariantPropertyDTO;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -48,13 +50,14 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
     @Override
-    public List<ProductVariantEntity> listVariantAndProperty() {
+    public List<ProductVariantDTO> listVariantAndProperty() {
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
-        List<ProductVariantEntity> list = this.list(queryWrapper);
-        for (ProductVariantEntity variantEntity : list) {
+        List<ProductVariantEntity> variantEntityList = this.list(queryWrapper);
+        List<ProductVariantDTO> list = BeanMapper.copyList(variantEntityList, ProductVariantDTO.class);
+        for (ProductVariantDTO variantEntity : list) {
             LambdaQueryWrapper<ProductVariantPropertyEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
             lambdaQueryWrapper.eq(ProductVariantPropertyEntity::getVariantId, variantEntity.getId());
-            variantEntity.setProductVariantPropertyEntityList(productVariantPropertyService.list(lambdaQueryWrapper));
+            variantEntity.setProductVariantPropertyList(BeanMapper.copyList(productVariantPropertyService.list(lambdaQueryWrapper), ProductVariantPropertyDTO.class));
         }
         return list;
     }

@@ -28,7 +28,7 @@ public interface ProductVariantService extends IService<ProductVariantEntity> {
      * @Date 2022/9/26 14:06
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
-    List<ProductVariantEntity> listVariantAndProperty();
+    List<ProductVariantDTO> listVariantAndProperty();
 
     /**
      * @Description 保存/修改产品变体类型信息
