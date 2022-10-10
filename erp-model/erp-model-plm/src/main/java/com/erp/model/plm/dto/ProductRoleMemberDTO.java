@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Classname ProductRoleMemberDTO
@@ -29,4 +30,9 @@ public class ProductRoleMemberDTO implements Serializable {
      * 产品数量
      */
     private Integer productCount ;
+
+    /**
+     * 产品id 集合
+     */
+    private List<String> productIds ;
 }

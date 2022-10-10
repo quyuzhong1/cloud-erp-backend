@@ -117,8 +117,8 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
             BeanMapper.copy(entity, productFieldEntity);
             productFieldEntity.setIsSys(IsConstant.NO);
             productFieldEntity.setProductId(dto.getProductId());
-            productFieldEntity.setId(IdWorker.getIdStr());
             productFieldEntity.setScope(IsConstant.NO);
+            productFieldEntity.setIfRequired(dto.getIfRequired());
             return this.save(productFieldEntity);
         }
         return false;

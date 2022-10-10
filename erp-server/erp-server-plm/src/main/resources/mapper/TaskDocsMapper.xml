@@ -24,7 +24,7 @@
        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
        where d.product_id=#{params.flagId}
        <if test="params.searchKeyword !='' and params.searchKeyword!=null">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
        </if>
        <if test="ids !=null and ids.size()>0">
            AND d.id in

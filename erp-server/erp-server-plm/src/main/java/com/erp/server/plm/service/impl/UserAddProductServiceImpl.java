@@ -67,6 +67,20 @@ public class UserAddProductServiceImpl extends ServiceImpl<UserAddProductEntityM
 
         return baseMapper.listByUserId(loginUser.getUid());
     }
+
+    /**
+     * 根据用户id 获取到产品id
+     * @author yl
+     * @date 2022-10-10 17:43
+     * @param userId
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> getMyCollectProductIds(String userId) {
+        LambdaQueryWrapper<UserAddProductEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserAddProductEntity::getUserId,userId);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
 }
 
 

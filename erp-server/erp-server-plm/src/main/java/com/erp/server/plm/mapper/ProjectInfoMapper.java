@@ -25,4 +25,6 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
     List<Map<String, Object>> listMap();
 
     IPage paging(Page query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+
+    IPage myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 }

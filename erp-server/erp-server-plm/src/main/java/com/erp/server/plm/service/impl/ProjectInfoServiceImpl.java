@@ -8,6 +8,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
@@ -19,6 +20,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ProductInfoStateEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -56,6 +58,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Autowired
     private ProductArchiveService archiveService;
+
+    @Autowired
+    private UserAddProductService userAddProductService;
 
 
     /**
@@ -230,9 +235,24 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
-        List<String> archiveProductIds=archiveService.getArchiveProductIds();
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
 
-        IPage pageData = baseMapper.paging(query, params,archiveProductIds);
+        IPage pageData = new Page();
+        //如果是我的收藏
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
+            LoginUser loginUser = PlmInterceptor.threadLocal.get();
+            String userId = "";
+            if (loginUser != null) {
+                userId = loginUser.getUid();
+            }
+            //根据当前登录人id 获取收藏的列表
+            List<String> productIds = userAddProductService.getMyCollectProductIds(userId);
+            if (CollectionUtils.isNotEmpty(productIds)) {
+                pageData = baseMapper.myCollectPaging(query, params, productIds, archiveProductIds);
+            }
+        } else {
+            pageData = baseMapper.paging(query, params, archiveProductIds);
+        }
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
@@ -322,9 +342,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
         //阶段的 集合  以阶段名作为key 以对应结果为值
-        List<ProductPhaseDistributeDTO> phaseDistributeList=new LinkedList<>();
+        List<ProductPhaseDistributeDTO> phaseDistributeList = new LinkedList<>();
         for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
-            ProductPhaseDistributeDTO  phaseDistributeDTO=new ProductPhaseDistributeDTO();
+            ProductPhaseDistributeDTO phaseDistributeDTO = new ProductPhaseDistributeDTO();
             //阶段名
             String phaseName = item.getKey();
             phaseDistributeDTO.setPhaseName(phaseName);

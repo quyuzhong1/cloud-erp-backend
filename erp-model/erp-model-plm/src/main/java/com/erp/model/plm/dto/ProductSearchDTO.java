@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import io.swagger.models.auth.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,6 +23,11 @@ public class ProductSearchDTO implements Serializable {
 
 
     /**
+     * 我的收藏 true 是
+     */
+    private Boolean isMyCollect;
+
+    /**
      * 搜索关键字
      */
     private String searchKeyword;
@@ -31,8 +37,12 @@ public class ProductSearchDTO implements Serializable {
      */
     @NotBlank(message = "分类id不能为空")
     private String categoryId;
+
     //状态列表
     private List<Integer> stateList;
+
+    //项目列表
+    private List<String> productIds;
 
 
 }

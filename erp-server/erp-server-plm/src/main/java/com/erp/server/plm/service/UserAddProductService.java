@@ -17,4 +17,6 @@ public interface UserAddProductService extends IService<UserAddProductEntity> {
     boolean userCancelProduct(String productId);
 
     List<Map<String, Object>> listByUserId();
+
+    List<String> getMyCollectProductIds(String userId);
 }

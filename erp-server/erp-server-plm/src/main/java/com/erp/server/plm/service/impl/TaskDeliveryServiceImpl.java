@@ -16,10 +16,12 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.DocsPermissionService;
+import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,6 +36,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private DocsPermissionService docsPermissionService;
+
+    @Autowired
+    private RoleRefMemberService roleRefMemberService;
 
     /**
      * 获取任务的需要交付的文档数
@@ -93,7 +98,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         String userId = "";
         if (loginUser != null) {
-            userId=loginUser.getUid();
+            userId = loginUser.getUid();
         }
         //根据当前登录人 查看它能查看的文档
         List<String> ids = docsPermissionService.getDocsIdsByUserId(userId);
@@ -107,10 +112,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public void setPower(SetDocsPowerDTO dto) {
         //保存他的权限
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-        for (String userId : dto.getUserIds()) {
+        List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(dto.getReoleId()));
+        String docsId = dto.getId();
+        for (RoleRefMemberDTO item : refMembers) {
             DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-            docsPermission.setDeliveryDocsId(dto.getId());
-            docsPermission.setQueryUserId(userId);
+            docsPermission.setQueryUserId(item.getMembersId());
+            docsPermission.setDeliveryDocsId(docsId);
             docsPermissionList.add(docsPermission);
         }
         docsPermissionService.saveBatch(docsPermissionList);
