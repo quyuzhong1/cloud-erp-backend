@@ -20,11 +20,17 @@
        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
        COALESCE(f.file_size,0) fileSize,
-       f.create_time submitTime,f.file_url,f.create_user AS submitUserName
+       f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
        where d.product_id=#{params.flagId}
        <if test="params.searchKeyword !='' and params.searchKeyword!=null">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
+       </if>
+       <if test="ids !=null and ids.size()>0">
+           AND d.id in
+           <foreach collection="ids" item="id" open="(" separator="," close=")">
+               #{id}
+           </foreach>
        </if>
 
     </select>

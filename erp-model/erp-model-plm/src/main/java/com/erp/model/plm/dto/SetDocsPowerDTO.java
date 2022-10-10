@@ -18,9 +18,14 @@ import java.util.List;
 public class SetDocsPowerDTO implements Serializable {
 
 
-
+    /**
+     * 文档id
+     */
     @NotBlank(message = "文档id不能为空")
     private String id;
 
+    /**
+     * 用户id
+     */
     private List<String> userIds;
 }

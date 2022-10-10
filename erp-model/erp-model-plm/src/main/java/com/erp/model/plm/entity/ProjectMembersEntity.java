@@ -61,6 +61,16 @@ public class ProjectMembersEntity implements Serializable {
     private String flagId;
 
 
+    /**
+     * 产品id
+     */
+    @TableField("create_user_id")
+    private String createUserId;
+
+    @TableField("create_user_name")
+    private String createUserName;
+
+
     @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 

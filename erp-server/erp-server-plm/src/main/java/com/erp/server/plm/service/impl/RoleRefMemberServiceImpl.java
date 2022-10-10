@@ -1,12 +1,16 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.server.plm.mapper.RoleRefMemberMapper;
 import com.erp.server.plm.service.RoleRefMemberService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,21 +37,43 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(RoleRefMemberEntity::getRoleId, roleIds);
         List<RoleRefMemberEntity> list = this.list(queryWrapper);
-        return BeanMapper.copyList(list,RoleRefMemberDTO.class);
+        return BeanMapper.copyList(list, RoleRefMemberDTO.class);
     }
 
     /**
      * 添加或者修改 关系表
-     * @author yl
-     * @date 2022-10-10 15:01
+     *
      * @param roleRefMemberId
      * @param memberId
      * @param roleId
      * @return void
+     * @author yl
+     * @date 2022-10-10 15:01
      */
     @Override
     public void saveOrUpdateRef(String roleRefMemberId, String memberId, String roleId) {
-        
+        //表示 是修改
+        if (StringUtils.isNotBlank(roleRefMemberId)) {
+            //如果修改  先查出来原来用没有
+            LambdaUpdateWrapper<RoleRefMemberEntity> queryWrapper = new LambdaUpdateWrapper<>();
+            queryWrapper.eq(RoleRefMemberEntity::getId, roleRefMemberId);
+            queryWrapper.set(RoleRefMemberEntity::getRoleId, roleId);
+            queryWrapper.set(RoleRefMemberEntity::getMembersId, memberId);
+            this.update(queryWrapper);
+        } else {
+            LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
+            queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
+            RoleRefMemberEntity entity = this.getOne(queryWrapper);
+            if (entity != null) {
+                throw new ServiceException(ApiError.ERROR_95021);
+            }
+            RoleRefMemberEntity ref = new RoleRefMemberEntity();
+            ref.setMembersId(memberId);
+            ref.setRoleId(roleId);
+            this.save(entity);
+        }
+
     }
 }
 

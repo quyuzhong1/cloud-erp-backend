@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.ProjectMembersService;
@@ -137,6 +139,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto) {
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
         Boolean flag = false;
         String id = dto.getId();
         ProjectMembersEntity entity = new ProjectMembersEntity();
@@ -145,6 +148,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         entity.setMemberName(dto.getUseName());
         entity.setMemberId(dto.getUserId());
         entity.setId(id);
+        if (loginUser != null) {
+            entity.setCreateUserId(loginUser.getUid());
+            entity.setCreateUserName(loginUser.getUserName());
+        }
         Integer isCharge = dto.getIsCharge();
         flag = this.saveOrUpdate(entity);
         //当保存成功且是项目负责人 就要去更改项目负责人
@@ -153,8 +160,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             isUpdate = true;
         }
         //保存成功就要去保存关系表
-        if(flag){
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(),entity.getId(),dto.getRoleId());
+        if (flag) {
+            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getId(), dto.getRoleId());
         }
         if (IsConstant.YES.equals(isCharge) && flag) {
             projectInfoService.updateCharge(dto.getProjectId(), dto.getUseName(), dto.getUserId(), isUpdate);
@@ -185,7 +192,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             //获取到任务处理的情况
             List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProjectId());
             for (MemberPagingShowDTO item : list) {
-                //如果包含该员工 就是 项目负责二年
+                //如果包含该员工 就是 项目负责人
                 if (chargeId.contains(item.getMemberId())) {
                     item.setIsCharge(IsConstant.YES);
                 } else {

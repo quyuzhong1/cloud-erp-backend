@@ -8,7 +8,7 @@ import java.util.Date;
 
 /**
  * @Classname 交付物
- * @Description TODO
+ *  TODO
  * @Date 2022-09-23 10:28
  * @Created by yl
  */
@@ -17,32 +17,63 @@ import java.util.Date;
 public class DeliveryDocsDTO implements Serializable {
 
 
+    /**
+     *id
+     */
     private String id;
 
 
-    //完成的文档id
+
+    /**
+     * 完成的文档id
+     */
     private String finishDocsId;
-    //任务id
+
+    /**
+     * 任务id
+     */
     private String taskId;
 
+    /**
+     * 任务名
+     */
     private String taskName;
 
-    //类型
+
+
+    /**
+     * 文件类型
+     */
     private String fileType;
 
-    //交付文档名
+
+    /**
+     * 交付文档名
+     */
     private String deliveryDocsName;
 
-    //完成的交付名
+
+    /**
+     * 交付文档名
+     */
     private String fileName;
 
-    //文件大小
+
+    /**
+     * 文件大小
+     */
     private Integer fileSize;
 
-    //提交时间
+
+    /**
+     * 文提交时间
+     */
     private Date submitTime;
 
-    //提交人
+
+    /**
+     * 提交人
+     */
     private Date submitUserName;
 
 

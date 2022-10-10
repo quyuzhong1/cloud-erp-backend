@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
- * @Classname ProjectRoleDTO
+ *  ProjectRoleDTO
  * @Description TODO
  * @Date 2022-09-26 16:45
  * @Created by yl
@@ -16,12 +16,22 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ProjectRoleDTO implements Serializable {
 
+
+    /**
+     * 角色名
+     */
     @NotBlank(message = "角色名不能为空")
     private String name;
 
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id不能为空")
     private String productId;
 
-    @NotBlank(message = "项目id不能为空")
+
+    /**
+     * 项目id
+     */
     private String projectId;
 }

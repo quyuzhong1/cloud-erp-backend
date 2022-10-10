@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * @Classname TaskDocsController
+/**  产品开发管理
+ *  TaskDocsController
  * @Description TODO
  * @Date 2022-09-22 11:36
  * @Created by yl
@@ -28,9 +28,14 @@ public class TaskDeliveryDocsController extends BaseController {
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
+    /**
+     * 输出物-输出物列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/paging")
-    public ApiResult paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
-        PagingVO pagingVO = taskDeliveryService.paging(dto);
+    public ApiResult<PagingVO<List<DeliveryDocsDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<List<DeliveryDocsDTO>> pagingVO = taskDeliveryService.paging(dto);
         return success(pagingVO);
     }
 
@@ -40,6 +45,11 @@ public class TaskDeliveryDocsController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 输出物-权限
+     * @param dto
+     * @return
+     */
     @PostMapping("/setPower")
     public ApiResult setPower(@RequestBody @Validated SetDocsPowerDTO dto) {
         taskDeliveryService.setPower(dto);

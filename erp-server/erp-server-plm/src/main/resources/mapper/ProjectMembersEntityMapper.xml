@@ -3,10 +3,11 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectMembersMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.MemberPagingShowDTO">
-
-        SELECT pm.id, pm.member_id,pm.member_name,pr.name AS roleName,pr.id AS roleId,pm.create_time
+        SELECT  ref.id AS roleRefMemberId,pr.id AS roleId,pr.name AS roleName,
+        pm.member_id,pm.member_name,pm.create_time,pm.create_user_id,pm.create_user_name
         FROM project_members pm
-        LEFT JOIN project_role pr on pm.role_id=pr.id
+        LEFT JOIN role_ref_members ref  on ref.members_id=pm.id
+        LEFT JOIN project_role pr on ref.role_id=pr.id
         WHERE pm.project_id =#{params.projectId}
         <if test="params.projectRoleId !='' and params.projectRoleId!=null">
           pm.role_id=#{params.projectRoleId}

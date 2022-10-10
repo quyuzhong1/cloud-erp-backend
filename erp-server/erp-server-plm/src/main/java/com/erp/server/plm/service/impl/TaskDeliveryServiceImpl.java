@@ -89,10 +89,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-23 10:59
      */
     @Override
-    public PagingVO paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        String userId = "";
+        if (loginUser != null) {
+            userId=loginUser.getUid();
+        }
         //根据当前登录人 查看它能查看的文档
-        List<String> ids = docsPermissionService.getDocsIdsByUserId(loginUser.getUid());
+        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, ids);
@@ -187,7 +191,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public void removeByTaskId(String taskId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId,taskId);
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
         this.remove(queryWrapper);
 
     }
@@ -195,10 +199,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     /**
      * 根据产品id 分组获取到对应的需要交付的文档数
-     * @author yl
-     * @date 2022-10-08 19:51
+     *
      * @param
      * @return java.util.List<com.erp.model.plm.dto.TaskDocsCountDTO>
+     * @author yl
+     * @date 2022-10-08 19:51
      */
     @Override
     public List<CountDTO> getTaskDocsCountByProductId() {

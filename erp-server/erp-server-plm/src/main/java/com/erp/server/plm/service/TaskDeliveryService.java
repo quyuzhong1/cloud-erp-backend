@@ -21,7 +21,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     void saveDeliveryDocs(String userId,String taskId,String productId, List<DocsDTO> deliveryDocsList);
 
-    PagingVO paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto);
 
     void setPower(SetDocsPowerDTO dto);
 

@@ -31,10 +31,7 @@ public class ProjectMembersController extends BaseController {
     @Autowired
     private ProjectMembersService projectMembersService;
 
-    @GetMapping("/list")
-    public ApiResult getList(String productId) {
-        return success(projectMembersService.getListByProductId(productId));
-    }
+
 
     /**
      * 设置-项目成员
@@ -47,6 +44,11 @@ public class ProjectMembersController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 保存或者修改项目成员
+     * @param dto
+     * @return
+     */
     @PostMapping("/saveOrUpdate")
     public ApiResult save(@RequestBody @Validated saveOrUpdateProjectMemberDTO dto) {
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
