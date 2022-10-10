@@ -25,7 +25,7 @@ public class SetDocsPowerDTO implements Serializable {
     private String id;
 
     /**
-     * 用户id
+     * 角色id
      */
-    private List<String> userIds;
+    private String reoleId;
 }

@@ -20,6 +20,44 @@
             </foreach>
         </if>
 
+        <if test="params.productIds !=null and params.productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="archiveProductIds !=null and archiveProductIds.size()>0">
+            AND pi.id NOT IN
+            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+    </select>
+
+
+    <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,pi.project_status,p.brand_name,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p INNER JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE P.category_id=#{params.categoryId}
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND pi.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="productIds !=null and productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
         <if test="archiveProductIds !=null and archiveProductIds.size()>0">
             AND pi.id NOT IN
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">

@@ -15,6 +15,7 @@ import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
@@ -24,6 +25,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -91,6 +93,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProductArchiveService archiveService;
+
+    @Autowired
+    private UserAddProductService userAddProductService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -221,8 +226,26 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
+        //获取到归档的产品id
         List<String> archiveProductIds=archiveService.getArchiveProductIds();
-        IPage pageData = baseMapper.paging(query, params,archiveProductIds);
+        //如果是我的收藏
+        IPage pageData=new Page();
+        if(params.getIsMyCollect()){
+            LoginUser loginUser= PlmInterceptor.threadLocal.get();
+            String userId="";
+            if(loginUser!=null){
+                userId=loginUser.getUid();
+            }
+            //根据当前登录人id 获取收藏的列表
+            List<String> productIds=userAddProductService.getMyCollectProductIds(userId);
+            if(CollectionUtils.isNotEmpty(productIds)){
+                pageData=baseMapper.myCollectPaging(query,params,productIds,archiveProductIds);
+            }
+        }else{
+             pageData = baseMapper.paging(query, params,archiveProductIds);
+        }
+
+
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id

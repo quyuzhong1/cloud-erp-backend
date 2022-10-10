@@ -29,4 +29,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 
     List<CountDTO> getProductRelevanceList();
+
+    IPage myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 }
