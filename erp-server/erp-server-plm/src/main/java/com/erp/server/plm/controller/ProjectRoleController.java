@@ -65,8 +65,8 @@ public class ProjectRoleController extends BaseController {
      * @date 2022-10-09 19:33
      */
     @GetMapping("/list")
-    public ApiResult<List<ProjectRoleEntity>> list(String projectId) {
-        return success(projectRoleService.listByProjectId(projectId));
+    public ApiResult<List<ProjectRoleEntity>> list(String productId) {
+        return success(projectRoleService.listByProductId(productId));
     }
 }
 

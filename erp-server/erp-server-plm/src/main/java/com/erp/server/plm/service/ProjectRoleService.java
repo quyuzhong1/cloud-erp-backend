@@ -17,7 +17,7 @@ public interface ProjectRoleService extends IService<ProjectRoleEntity> {
 
     Boolean saveRole(ProjectRoleDTO dto);
 
-    List<ProjectRoleEntity> listByProjectId(String id);
+    List<ProjectRoleEntity> listByProductId(String projectId);
 
     List<ProductRoleDTO> roleSortList();
 }

@@ -60,15 +60,15 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     /**
      * 根据产品id 获取角色列表
      *
-     * @param projectId
+     * @param productId
      * @return java.util.List<com.erp.model.plm.entity.ProjectRoleEntity>
      * @author yl
      * @date 2022-09-26 17:29
      */
     @Override
-    public List<ProjectRoleEntity> listByProjectId(String projectId) {
+    public List<ProjectRoleEntity> listByProductId(String productId) {
         LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectRoleEntity::getProjectId, projectId);
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
 
