@@ -21,18 +21,30 @@ public class TaskPagingDTO  implements Serializable {
 
 
      //产品id
+     /**
+      * 产品id
+      */
      @NotBlank(message = "产品id不能为空")
      private String productId;
 
-     //阶段id 如果没有就是全部
+
+     /**
+      * 阶段id 如果没有就是全部
+      */
      private String phaseId;
 
-     //任务类型
-     @StateEnumValue(intValues = {0, 1}, message = "任务表示有误")
+
+     /**
+      * 任务类型
+      */
+     @StateEnumValue(intValues = {0, 1}, message = "任务类型有误")
      private Integer taskFlag;
 
 
      //赛选条件
+     /**
+      * 筛选条件
+      */
      List<TaskSearchDTO>  searchList;
 
 

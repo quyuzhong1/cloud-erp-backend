@@ -37,4 +37,10 @@ public interface SysUserFeign {
     //获取用户列表
     @PostMapping("sys/feign/user/findList")
     ApiResult<List<FindUserDTO>> userList(@RequestBody BaseSearchDTO dto);
+
+    //获取用户列表
+    @GetMapping("sys/feign/user/getUserList")
+    List<FindUserDTO> getUserList();
+
+
 }

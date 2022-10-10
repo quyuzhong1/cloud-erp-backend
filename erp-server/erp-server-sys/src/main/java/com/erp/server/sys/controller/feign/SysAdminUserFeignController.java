@@ -9,10 +9,7 @@ import com.erp.common.modules.sys.dto.*;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -67,6 +64,12 @@ public class SysAdminUserFeignController extends BaseController {
     public ApiResult<List<FindUserDTO>> findList(@RequestBody @Validated BaseSearchDTO dto) {
         List<FindUserDTO> list = sysUserInfoService.getUserList(dto);
         return success(list);
+    }
+
+    @GetMapping("/getUserList")
+    public List<FindUserDTO> getUserList() {
+        List<FindUserDTO> list = sysUserInfoService.getAllUserList();
+        return list;
     }
 
 

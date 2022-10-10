@@ -71,7 +71,7 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
             RoleRefMemberEntity ref = new RoleRefMemberEntity();
             ref.setMembersId(memberId);
             ref.setRoleId(roleId);
-            this.save(entity);
+            this.save(ref);
         }
 
     }

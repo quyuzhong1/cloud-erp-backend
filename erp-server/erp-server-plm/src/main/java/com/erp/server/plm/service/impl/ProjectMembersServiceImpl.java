@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectRoleEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
@@ -51,6 +53,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private RoleRefMemberService roleRefMemberService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
 
     @Override
@@ -140,12 +145,18 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Transactional
     public Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         Boolean flag = false;
         String id = dto.getId();
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
         entity.setProjectId(dto.getProjectId());
-        entity.setMemberName(dto.getUseName());
+        FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
+        String userName = "";
+        if (userDto != null) {
+            userName = userDto.getUserName();
+        }
+        entity.setMemberName(userName);
         entity.setMemberId(dto.getUserId());
         entity.setId(id);
         if (loginUser != null) {
@@ -164,7 +175,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getId(), dto.getRoleId());
         }
         if (IsConstant.YES.equals(isCharge) && flag) {
-            projectInfoService.updateCharge(dto.getProjectId(), dto.getUseName(), dto.getUserId(), isUpdate);
+            projectInfoService.updateCharge(dto.getProjectId(), userName, dto.getUserId(), isUpdate);
         }
 
         return flag;
@@ -242,7 +253,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 ProductRoleMemberDTO dto = new ProductRoleMemberDTO();
                 String memberId = item.getKey();
                 dto.setMemberId(memberId);
-                List<ProjectMembersEntity> projectMembers=item.getValue();
+                List<ProjectMembersEntity> projectMembers = item.getValue();
                 ProjectMembersEntity filterEntity = projectMembers.stream().filter(p -> memberId.equals(p.getMemberId())).findFirst().orElse(null);
                 if (filterEntity != null) {
                     dto.setMemberName(filterEntity.getMemberName());

@@ -34,7 +34,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     void copyTaskBySys(String productId, String projectId);
 
-    PagingVO paging(PagingDTO<TaskPagingDTO> dto);
+    PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);
 
     Boolean save(ProjectTaskDTO dto);
 

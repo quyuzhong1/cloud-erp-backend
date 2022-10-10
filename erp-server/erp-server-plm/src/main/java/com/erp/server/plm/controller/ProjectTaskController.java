@@ -17,9 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>
- * 产品任务表 前端控制器
- * </p>
+  产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -31,9 +29,14 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private ProjectTaskService taskService;
 
+    /**
+     * 项目任务-分页列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/paging")
-    public ApiResult paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
-        PagingVO pagingVO = taskService.paging(dto);
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
     }
 

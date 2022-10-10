@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * @Classname TaskPagingShowDTO
- * @Description TODO
  * @Date 2022-09-21 15:37
  * @Created by yl
  */
@@ -19,12 +18,21 @@ import java.util.List;
 public class TaskPagingShowDTO  implements Serializable {
 
 
+    /**
+     * 任务id
+     */
     private String id;
 
-    //任务名
+
+    /**
+     * 任务名
+     */
     private String name;
 
-    //任务类型 0 一般任务 1：审核任务
+
+    /**
+     * 任务类型 0 一般任务 1：审核任务
+     */
     private Integer type;
 
     /**

@@ -79,5 +79,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     void removeEmail();
 
     List<FindUserDTO> getUserList(BaseSearchDTO dto);
+
+    List<FindUserDTO> getAllUserList();
 }
 

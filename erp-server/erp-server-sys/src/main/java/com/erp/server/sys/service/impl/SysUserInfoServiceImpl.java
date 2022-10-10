@@ -562,7 +562,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             resultList.add(user);
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(SysUserInfoEntity::getUid,SysUserInfoEntity::getUserName);
+        queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
         }
@@ -570,6 +570,20 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             queryWrapper.like(SysUserInfoEntity::getUserName, dto.getSearchKeyword());
         }
         List<SysUserInfoEntity> list = this.list(queryWrapper);
+        for (SysUserInfoEntity item : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(item.getUid());
+            userDTO.setUserName(item.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<FindUserDTO> getAllUserList() {
+        List<FindUserDTO> resultList = new LinkedList<>();
+        List<SysUserInfoEntity> list = this.list();
         for (SysUserInfoEntity item : list) {
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
