@@ -239,7 +239,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         IPage pageData = new Page();
         //如果是我的收藏
-        if (params.getIsMyCollect()) {
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
             LoginUser loginUser = PlmInterceptor.threadLocal.get();
             String userId = "";
             if (loginUser != null) {

@@ -28,7 +28,7 @@ public interface ProductFieldService extends IService<ProductFieldEntity> {
 
     Boolean saveField(ProductFieldDTO dto);
 
-    PagingVO paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<SysProductFieldPagingDTO> paging(PagingDTO<BaseSearchDTO> dto);
 
     List<Map<String, Object>> sysList();
 }

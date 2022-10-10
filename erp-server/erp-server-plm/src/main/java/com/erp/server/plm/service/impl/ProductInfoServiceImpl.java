@@ -230,7 +230,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> archiveProductIds=archiveService.getArchiveProductIds();
         //如果是我的收藏
         IPage pageData=new Page();
-        if(params.getIsMyCollect()){
+        if(params.getIsMyCollect()!=null&&params.getIsMyCollect()){
             LoginUser loginUser= PlmInterceptor.threadLocal.get();
             String userId="";
             if(loginUser!=null){
