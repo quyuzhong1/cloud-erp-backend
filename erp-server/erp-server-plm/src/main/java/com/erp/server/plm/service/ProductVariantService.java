@@ -18,19 +18,17 @@ public interface ProductVariantService extends IService<ProductVariantEntity> {
      * @Description 产品变体类型查询列表
      * @Author Luo_WG
      * @Date 2022/9/26 14:06
-     * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
-    List<ProductVariantEntity> list(String productId);
+    List<ProductVariantEntity> list();
 
     /**
      * @Description 获取变体类型和变体值
      * @Author Luo_WG
      * @Date 2022/9/26 14:06
-     * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
-    List<ProductVariantEntity> listVariantAndProperty(String productId);
+    List<ProductVariantEntity> listVariantAndProperty();
 
     /**
      * @Description 保存/修改产品变体类型信息

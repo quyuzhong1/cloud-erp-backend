@@ -72,13 +72,6 @@ public class ProductVariantEntity implements Serializable {
     @TableField(value = "update_user_name")
     private String updateUserName;
 
-    /**
-     * 产品表id
-     */
-    @ApiModelProperty(value = "产品表id")
-    @TableField(value = "product_id")
-    private String productId;
-
     private List<ProductVariantPropertyEntity> ProductVariantPropertyEntityList;
 
     @TableField(exist = false)

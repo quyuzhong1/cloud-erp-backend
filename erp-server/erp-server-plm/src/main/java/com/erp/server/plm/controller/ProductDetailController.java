@@ -357,37 +357,30 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-    /**
+/*    *//**
      * 产品信息-变体管理-下拉列表-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      * @param productId 产品信息表id
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
-     **/
+     **//*
     @ApiOperation(value = "产品信息-变体管理-下拉列表-查询")
     @GetMapping("/listVariant")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true),
-    })
-    public ApiResult<List<ProductVariantEntity>> listVariant(@RequestParam(value = "productId") String productId) {
-        List<ProductVariantEntity> list = productVariantService.list(productId);
+    public ApiResult<List<ProductVariantEntity>> listVariant() {
+        List<ProductVariantEntity> list = productVariantService.list();
         return this.success(list);
-    }
+    }*/
 
     /**
      * 产品信息-变体管理-下拉列表-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
-     * @param productId 产品信息表id
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
      **/
     @ApiOperation(value = "产品信息-变体管理-编辑-查询")
     @GetMapping("/listVariantAndProperty")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true),
-    })
-    public ApiResult<List<ProductVariantEntity>> listVariantAndProperty(@RequestParam(value = "productId") String productId) {
-        List<ProductVariantEntity> list = productVariantService.list(productId);
+    public ApiResult<List<ProductVariantEntity>> listVariantAndProperty() {
+        List<ProductVariantEntity> list = productVariantService.list();
         return this.success(list);
     }
 
@@ -422,13 +415,13 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-    /**
+/*    *//**
      * 产品信息-变体管理-变体值-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      * @param variantId 变体类型表id
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantPropertyEntity>>
-     **/
+     **//*
     @ApiOperation(value = "产品信息-变体管理-变体值-查询")
     @GetMapping("/listVariantProperty")
     @ApiImplicitParams({
@@ -437,21 +430,21 @@ public class ProductDetailController extends BaseController {
     public ApiResult<List<ProductVariantPropertyEntity>> listVariantProperty(@RequestParam(value = "variantId") String variantId) {
         List<ProductVariantPropertyEntity> list = productVariantPropertyService.list(variantId);
         return this.success(list);
-    }
+    }*/
 
-    /**
+/*    *//**
      * 产品信息-变体管理-变体值-新增/修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      * @param productVariantPropertyDTO 产品变体属性值表
      * @return com.erp.common.dto.base.ApiResult
-     **/
+     **//*
     @ApiOperation(value = "产品信息-变体管理-变体值-新增/修改")
     @PostMapping("/saveOrUpdateVariantProperty")
     public ApiResult saveOrUpdateVariantProperty(@RequestBody ProductVariantPropertyDTO productVariantPropertyDTO) {
         Boolean flag = productVariantPropertyService.saveOrUpdate(productVariantPropertyDTO);
         return flag == true ? this.success() : this.failure();
-    }
+    }*/
 
     /**
      * 产品信息-变体管理-变体值-删除

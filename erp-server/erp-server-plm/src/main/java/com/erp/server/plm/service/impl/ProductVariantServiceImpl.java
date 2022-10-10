@@ -33,13 +33,11 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
      * @Description 产品变体类型查询列表
      * @Author Luo_WG
      * @Date 2022/9/26 14:06
-     * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
     @Override
-    public List<ProductVariantEntity> list(String productId) {
+    public List<ProductVariantEntity> list() {
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductVariantEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
 
@@ -47,13 +45,11 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
      * @Description 获取变体类型和变体值
      * @Author Luo_WG
      * @Date 2022/9/26 14:06
-     * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductVariantEntity>
      **/
     @Override
-    public List<ProductVariantEntity> listVariantAndProperty(String productId) {
+    public List<ProductVariantEntity> listVariantAndProperty() {
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductVariantEntity::getProductId, productId);
         List<ProductVariantEntity> list = this.list(queryWrapper);
         for (ProductVariantEntity variantEntity : list) {
             LambdaQueryWrapper<ProductVariantPropertyEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
