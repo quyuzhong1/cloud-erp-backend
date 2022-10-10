@@ -43,14 +43,14 @@ public class CommonController  extends BaseController {
      * 上传图片
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
-     * @param uploadImgDTO 图片流
+     * @param multipartFile 图片流
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @PostMapping("/upload")
-    public ApiResult upload(@RequestBody UploadImgDTO uploadImgDTO){
+    @GetMapping("/upload")
+    public ApiResult upload(@RequestParam(value = "multipartFile") MultipartFile[] multipartFile){
         List<String> list = new ArrayList<>();
-        for (MultipartFile multipartFile : uploadImgDTO.getMultipartFileList()) {
-            String filePath = FastDFSClientUtil.uploadFile(multipartFile);
+        for (int i = 0; i < multipartFile.length; i++) {
+            String filePath = FastDFSClientUtil.uploadFile(multipartFile[i]);
             list.add(filePath);
         }
         return this.success(list);
