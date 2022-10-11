@@ -59,7 +59,12 @@ public class ProjectTaskController extends BaseController {
         return success(list);
     }
 
-    @PostMapping("/remove")
+    /**
+     *  删除子任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/removeTask")
     public ApiResult remove(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = taskService.removeTask(dto.getId());
         return flag == true ? success() : failure();

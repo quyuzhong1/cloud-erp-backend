@@ -51,4 +51,5 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
     ProjectTaskDetailsDTO getTaskDetails(String taskId);
+
 }

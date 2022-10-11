@@ -35,13 +35,12 @@ public class ProductSearchDTO implements Serializable {
     /**
      * 分类id
      */
-    @NotBlank(message = "分类id不能为空")
     private String categoryId;
 
     //状态列表
     private List<Integer> stateList;
 
-    //项目列表
+    //产品id 集合
     private List<String> productIds;
 
 

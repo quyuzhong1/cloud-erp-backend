@@ -326,23 +326,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 删除项目任务
      *
-     * @param id
+     * @param taskId
      * @return java.lang.Boolean
      * @author yl
      * @date 2022-09-22 18:00
      */
     @Override
-    public Boolean removeTask(String id) {
-        ProjectTaskEntity entity = this.getById(id);
+    public Boolean removeTask(String taskId) {
+        ProjectTaskEntity entity = this.getById(taskId);
         Integer IsFixed = entity.getIsFixed();
         //如果是固定任务
         if (IsConstant.YES.equals(IsFixed)) {
             throw new ServiceException(ApiError.ERROR_95014);
         }
-        LambdaQueryWrapper<ProjectTaskEntity> updateWrapper = new LambdaQueryWrapper<>();
-        updateWrapper.eq(ProjectTaskEntity::getPid, id);
-        this.remove(updateWrapper);
-        return this.removeById(id);
+        //检查是否是子任务
+        checkTaskIfExistPid(taskId);
+        return this.removeById(entity);
     }
 
 
@@ -482,6 +481,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setChildTasks(childTasks);
         detailsDTO.setOutputDocsList(taskDeliveryService.getByTaskId(taskId));
         return detailsDTO;
+    }
+
+
+
+
+    private void checkTaskIfExistPid(String taskId) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
+        ProjectTaskEntity entity = baseMapper.selectOne(queryWrapper);
+        if (entity != null) {
+            throw new ServiceException(ApiError.ERROR_95024);
+        }
     }
 
 
