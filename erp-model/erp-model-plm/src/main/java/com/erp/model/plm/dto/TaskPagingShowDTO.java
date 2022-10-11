@@ -47,13 +47,24 @@ public class TaskPagingShowDTO  implements Serializable {
     private Date planEndTime;
 
 
-    //预警
+
+    /**
+     * 预警
+     */
     private String warning;
 
-    //总的文档数
+
+
+    /**
+     * 总的文档数
+     */
     private Integer totalDocsCount;
 
-    //已完成文档数
+
+
+    /**
+     * 已完成文档数
+     */
     private Integer finishDocsCount;
 
     /**
@@ -66,9 +77,16 @@ public class TaskPagingShowDTO  implements Serializable {
      */
     private Integer status;
 
+
+    /**
+     * 负责人
+     */
     private String chargeName;
 
 
+    /**
+     * 子 任务
+     */
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<TaskPagingShowDTO>  childList;
 

@@ -52,6 +52,13 @@ public class ProjectMembersEntity implements Serializable {
     private String projectId;
 
     /**
+     * 是否是负责人 0 不是 1 是
+     */
+    @TableField("is_charge")
+    private Integer isCharge;
+
+
+    /**
      * 产品id
      */
     @TableField("product_id")

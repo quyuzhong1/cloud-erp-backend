@@ -34,7 +34,7 @@ public class ProjectMembersController extends BaseController {
 
 
     /**
-     * 设置-项目成员
+     * 设置-项目成员分页列表
      * @param dto
      * @return
      */

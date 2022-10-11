@@ -150,7 +150,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         String id = dto.getId();
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
-        entity.setProjectId(dto.getProjectId());
         FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
         String userName = "";
         if (userDto != null) {
@@ -159,25 +158,16 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         entity.setMemberName(userName);
         entity.setMemberId(dto.getUserId());
         entity.setId(id);
+        entity.setIsCharge(dto.getIsCharge());
         if (loginUser != null) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
         }
-        Integer isCharge = dto.getIsCharge();
         flag = this.saveOrUpdate(entity);
-        //当保存成功且是项目负责人 就要去更改项目负责人
-        Boolean isUpdate = false;
-        if (StringUtils.isNotBlank(id) && flag) {
-            isUpdate = true;
-        }
         //保存成功就要去保存关系表
         if (flag) {
             roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getId(), dto.getRoleId());
         }
-        if (IsConstant.YES.equals(isCharge) && flag) {
-            projectInfoService.updateCharge(dto.getProjectId(), userName, dto.getUserId(), isUpdate);
-        }
-
         return flag;
 
     }

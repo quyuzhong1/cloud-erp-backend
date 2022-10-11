@@ -4,7 +4,7 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name FROM project_task WHERE product_id=#{productId}
+        charge_name FROM project_task WHERE product_id=#{productId} AND charge_id=#{userId}
         <if test="phaseId !=null and phaseId!=''">
             AND phase_id=#{phaseId}
         </if>
