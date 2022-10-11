@@ -24,6 +24,8 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -229,7 +231,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         String userId = "";
         if (loginUser != null) {
-            userId=loginUser.getUid();
+            userId = loginUser.getUid();
         }
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
@@ -240,7 +242,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         IPage pageData = null;
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList,userId);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -452,15 +454,86 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 获取任务详情
-     * @author yl
-     * @date 2022-10-11 11:24
+     *
      * @param taskId
      * @return com.erp.model.plm.dto.ProjectTaskDetailsDTO
+     * @author yl
+     * @date 2022-10-11 11:24
      */
     @Override
     public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
-        ProjectTaskDetailsDTO detailsDTO=baseMapper.getTaskDetails(taskId);
-        return null;
+        ProjectTaskDetailsDTO detailsDTO = baseMapper.getTaskDetails(taskId);
+        //前置任务id 多个以逗号分割
+        String preTaskId = detailsDTO.getPreTaskId();
+        //前置任务
+        List<RefTaskInfoDTO> preTasks = new ArrayList<>();
+        //子任务
+        List<RefTaskInfoDTO> childTasks = new ArrayList<>();
+        if (StringUtils.isNotBlank(preTaskId)) {
+            List<String> preTaskIds = Arrays.asList(preTaskId.split(","));
+            preTasks = getRefTask(preTaskIds);
+        }
+        detailsDTO.setPreTasks(preTasks);
+        //获取到当前任务id 的子任务
+        List<String> childTaskIds = getChildTaskIds(taskId, detailsDTO.getProductId());
+        if (CollectionUtils.isNotEmpty(childTaskIds)) {
+            childTasks = getRefTask(childTaskIds);
+        }
+        detailsDTO.setChildTasks(childTasks);
+        detailsDTO.setOutputDocsList(taskDeliveryService.getByTaskId(taskId));
+        return detailsDTO;
+    }
+
+
+    /**
+     * 根据任务id 获取到 他子的任务id
+     *
+     * @param taskId
+     * @return
+     */
+    private List<String> getChildTaskIds(String taskId, String productId) {
+        List<String> resultList = new LinkedList<>();
+        //根据产品id 获取到产品任务
+        List<ProjectTaskEntity> taskList = getByProductId(productId);
+        ProjectTaskEntity pidTask = taskList.stream().filter(t -> taskId.equals(t.getPid())).findFirst().orElse(null);
+        if (pidTask != null) {
+            resultList.add(pidTask.getId());
+            //递归获取他的子任务id
+            getChilds(pidTask.getId(), taskList, resultList);
+        }
+        return resultList;
+
+    }
+
+
+    /**
+     * 递归获取该任务的 子任务id
+     *
+     * @param taskId
+     * @param taskList
+     * @param resultList
+     * @return void
+     * @author yl
+     * @date 2022-10-11 14:46
+     */
+
+    private void getChilds(String taskId, List<ProjectTaskEntity> taskList, List<String> resultList) {
+        ProjectTaskEntity item = taskList.stream().filter(t -> taskId.equals(t.getPid())).findFirst().orElse(null);
+        if (item != null) {
+            resultList.add(item.getId());
+            getChilds(item.getId(), taskList, resultList);
+        }
+    }
+
+    /**
+     * 获取到关联的任务信息
+     *
+     * @param taskIds
+     * @return
+     */
+    public List<RefTaskInfoDTO> getRefTask(List<String> taskIds) {
+        List<RefTaskInfoDTO> refTaskList = baseMapper.getRefTask(taskIds);
+        return refTaskList;
     }
 
 

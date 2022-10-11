@@ -63,7 +63,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/remove")
-    public ApiResult rmove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
+    public ApiResult remove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
         Boolean flag = projectMembersService.removeMembers(dto);
         return flag == true ? success() : failure();
     }

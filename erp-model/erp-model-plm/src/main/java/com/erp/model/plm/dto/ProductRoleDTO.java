@@ -20,12 +20,12 @@ public class ProductRoleDTO implements Serializable {
     /**
      * 角色下的人数
      */
-    private Integer roleMemberCount;
+    private Integer count;
 
     /**
      * 产品角色名
      */
-    private String roleName;
+    private String name;
 
 
     /**

@@ -95,10 +95,10 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
             List<ProjectRoleEntity> roleList = item.getValue();
             //获取到对应的角色id
             List<String> roleIds = roleList.stream().map(ProjectRoleEntity::getId).collect(Collectors.toList());
-            roleDTO.setRoleName(roleName);
+            roleDTO.setName(roleName);
             //根据角色id 集合 获取到对应的人
             List<RoleRefMemberDTO> roleRefList = roleRefMemberService.getByRoleIds(roleIds);
-            roleDTO.setRoleMemberCount(roleRefList.size());
+            roleDTO.setCount(roleRefList.size());
             List<String> memberList=roleRefList.stream().map(RoleRefMemberDTO::getMembersId).collect(Collectors.toList());
             //根据成员id 获取到参与了多少项目
             List<ProductRoleMemberDTO> productMemberList=projectMembersService.getProductCountByMemberList(memberList);

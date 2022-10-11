@@ -55,8 +55,31 @@
         </foreach>
     </select>
 
-    <select id="getTaskDetails">
+    <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
+        SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,t.plan_start_time,
+        t.pre_task_id,t.create_time,t.phase_name,t.update_time,t.create_user_name,
+        t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,t.pre_task_id,
+        t.product_id,
+        pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
+        pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName
+        FROM   project_task t
+        INNER JOIN product_info pi ON pi.id=t.product_id
+        INNER JOIN project_info pj ON pj.id=t.project_id
+        WHERE t.id=#{taskId}
+    </select>
 
+
+    <select id="getRefTask" resultType="com.erp.model.plm.dto.RefTaskInfoDTO">
+        SELECT name AS taskName,charge_name AS taskChargeName,type AS taskType,
+        status AS taskStatus FROM project_task
+        <where>
+            <if test="taskIds !=null and taskIds.size()>0">
+                 id IN
+                <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+        </where>
     </select>
 
 </mapper>

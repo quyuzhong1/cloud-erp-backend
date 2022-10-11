@@ -25,7 +25,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     void setPower(SetDocsPowerDTO dto);
 
-    List<DeliveryDocsDTO> getByTaskId(BaseIdDTO dto);
+    List<DeliveryDocsDTO> getByTaskId(String taskId);
 
     void saveSysDeliveryDocs(String id, List<FinishDocsDTO> docsList);
 

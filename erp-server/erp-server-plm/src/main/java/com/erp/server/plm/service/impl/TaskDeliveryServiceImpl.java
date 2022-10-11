@@ -128,14 +128,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     /**
      * 根据任务id 获取到对应的要上交的文档
      *
-     * @param dto
+     * @param taskId
      * @return java.util.List<com.erp.model.plm.dto.DeliveryDocsDTO>
      * @author yl
      * @date 2022-09-23 15:46
      */
     @Override
-    public List<DeliveryDocsDTO> getByTaskId(BaseIdDTO dto) {
-        return baseMapper.getByTaskId(dto.getId());
+    public List<DeliveryDocsDTO> getByTaskId(String taskId) {
+        return baseMapper.getByTaskId(taskId);
     }
 
 

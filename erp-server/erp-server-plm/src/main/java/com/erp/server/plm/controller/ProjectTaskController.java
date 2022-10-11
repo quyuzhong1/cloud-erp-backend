@@ -87,7 +87,7 @@ public class ProjectTaskController extends BaseController {
      * @param taskId
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProjectTaskDetailsDTO>
      */
-    @PostMapping("/details")
+    @GetMapping("/details")
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
         return success(detailsDTO);

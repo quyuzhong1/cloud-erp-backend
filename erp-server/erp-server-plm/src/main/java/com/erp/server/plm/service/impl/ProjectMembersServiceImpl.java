@@ -232,15 +232,14 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             for (Map.Entry<String, List<ProjectMembersEntity>> item : memberMap.entrySet()) {
                 ProductRoleMemberDTO dto = new ProductRoleMemberDTO();
                 String memberId = item.getKey();
-                dto.setMemberId(memberId);
                 List<ProjectMembersEntity> projectMembers = item.getValue();
                 ProjectMembersEntity filterEntity = projectMembers.stream().filter(p -> memberId.equals(p.getMemberId())).findFirst().orElse(null);
                 if (filterEntity != null) {
-                    dto.setMemberName(filterEntity.getMemberName());
+                    dto.setName(filterEntity.getMemberName());
                 } else {
-                    dto.setMemberName("");
+                    dto.setName("");
                 }
-                dto.setProductCount(projectMembers.size());
+                dto.setCount(projectMembers.size());
                 dto.setProductIds(projectMembers.stream().map(ProjectMembersEntity::getProductId).collect(Collectors.toList()));
                 resultList.add(dto);
             }

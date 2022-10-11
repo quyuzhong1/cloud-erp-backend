@@ -16,20 +16,17 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductRoleMemberDTO implements Serializable {
 
-    /**
-     * 成员id
-     */
-    private String memberId;
+
 
     /**
      * 成员名
      */
-    private String memberName;
+    private String name;
 
     /**
      * 产品数量
      */
-    private Integer productCount ;
+    private Integer count ;
 
     /**
      * 产品id 集合

@@ -15,9 +15,7 @@ import com.erp.common.controller.BaseController;
 import java.util.List;
 
 /**
- * <p>
- * plm 字典表 前端控制器
- * </p>
+   产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -41,6 +39,15 @@ public class BasicDictController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 新增产品 产品属性，产品等级，品牌 列表
+     *
+     * @author yl
+     * @date 2022-10-11 14:34
+     * @param type
+     * @return com.erp.common.dto.base.ApiResult
+     */
+    
     @GetMapping("/list")
     public ApiResult list(String type) {
         List<BasicDictEntity> list = basicDictService.listByType(type);

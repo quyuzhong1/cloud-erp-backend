@@ -41,7 +41,7 @@ public class TaskDeliveryDocsController extends BaseController {
 
     @GetMapping("/list")
     public ApiResult list(@RequestBody @Validated BaseIdDTO dto) {
-        List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto);
+        List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
     }
 

@@ -18,6 +18,10 @@ import java.util.List;
 public class ProjectTaskDetailsDTO implements Serializable {
 
 
+    /**
+     *  产品id
+     */
+    private String productId;
 
     /**
      *  产品经理id
@@ -28,6 +32,16 @@ public class ProjectTaskDetailsDTO implements Serializable {
      *  产品经理
      */
     private String productChargeName;
+
+    /**
+     *  项目负责人id
+     */
+    private String projectChargeId;
+
+    /**
+     *  项目负人
+     */
+    private String projectChargeName;
 
 
     /**
@@ -77,6 +91,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String productName;
 
+    /**
+     * 前置任务id
+     *
+     */
+    private String preTaskId;
+
 
     /**
      * 创建时间
@@ -106,12 +126,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
     /**
      * 前置任务
      */
-    private RefTaskInfoDTO preTask;
+    private List<RefTaskInfoDTO> preTasks;
 
     /**
      * 子 任务
      */
-    private RefTaskInfoDTO childTask;
+    private List<RefTaskInfoDTO> childTasks;
 
     /**
      * 输出文档 列表
