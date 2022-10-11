@@ -1,8 +1,12 @@
 package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProjectTemplateMapper extends BaseMapper<ProjectTemplateEntity> {
 
+    List<StartItemSourceDTO> getStartItemSource(@Param("sourceType") Integer sourceType);
 }

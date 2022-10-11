@@ -35,6 +35,8 @@
             </foreach>
         </if>
 
+        ORDER BY p.create_time DESC
+
 
     </select>
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">

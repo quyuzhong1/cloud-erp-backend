@@ -25,11 +25,13 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
     Boolean startProject(StartProjectDTO dto);
 
-    List<Map<String,Object>> listMap();
+
 
     void updateCharge(String projectId, String useName, String userId,Boolean isUpdate);
 
     PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto);
 
     void checkProjectFinish(String productId);
+
+    List<StartItemSourceDTO> getStartItemSourceList();
 }

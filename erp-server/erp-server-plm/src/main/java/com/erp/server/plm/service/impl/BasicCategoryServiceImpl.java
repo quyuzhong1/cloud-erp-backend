@@ -120,12 +120,15 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public List<String> getPidList(String categoryId) {
         List<String> resultList = new LinkedList<>();
         BasicCategoryEntity category = this.getById(categoryId);
-        resultList.add(categoryId);
-        List<BasicCategoryEntity> list = this.list();
-        if (!category.getPid().equals("0")) {
-            getPids(category.getPid(), resultList, list);
+        if (category != null) {
+            resultList.add(categoryId);
+            List<BasicCategoryEntity> list = this.list();
+            if (!category.getPid().equals("0")) {
+                getPids(category.getPid(), resultList, list);
+            }
+            Collections.reverse(resultList);
         }
-        Collections.reverse(resultList);
+
         return resultList;
     }
 
@@ -141,8 +144,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     private void getPids(String id, List<String> resultList, List<BasicCategoryEntity> list) {
         resultList.add(id);
         BasicCategoryEntity entity = list.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
-        if(!Objects.isNull(entity)&&!entity.getPid().equals("0")){
-            getPids(entity.getPid(),resultList,list);
+        if (!Objects.isNull(entity) && !entity.getPid().equals("0")) {
+            getPids(entity.getPid(), resultList, list);
         }
 
 
@@ -223,11 +226,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
     /**
+     * @param categoryName：类别名称
+     * @return BasicCategoryEntity
      * @Description 根据类别名称查询类别信息
      * @Author Luo_WG
      * @Date 2022/9/28 18:51
-     * @param categoryName：类别名称
-     * @return BasicCategoryEntity
      **/
     public BasicCategoryEntity getCategoryByName(String categoryName) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();

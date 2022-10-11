@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,7 +23,7 @@ import java.util.Map;
 @Mapper
 public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
 
-    List<Map<String, Object>> listMap();
+    List<StartItemSourceDTO> listMap(@Param("sourceType") Integer sourceType);
 
     IPage paging(Page query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 

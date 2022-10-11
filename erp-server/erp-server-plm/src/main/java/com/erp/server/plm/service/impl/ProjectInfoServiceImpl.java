@@ -62,6 +62,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private UserAddProductService userAddProductService;
 
+    @Autowired
+    private ProjectTemplateService templateService;
+
 
     /**
      * 项目概述
@@ -180,11 +183,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         return flag;
     }
 
-    @Override
-    public List<Map<String, Object>> listMap() {
 
-        return baseMapper.listMap();
-    }
 
 
     /**
@@ -296,6 +295,38 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95019);
         }
+    }
+
+
+    /**
+     * 获取启动项目的来源 树形结构
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.StartItemSourceDTO>
+     * @author yl
+     * @date 2022-10-11 18:56
+     */
+    @Override
+    public List<StartItemSourceDTO> getStartItemSourceList() {
+        List<StartItemSourceDTO> resultList = new ArrayList<>();
+        //这个是新建
+        StartItemSourceDTO newAdd = new StartItemSourceDTO();
+        newAdd.setSourceType(SourceType.NEW);
+        newAdd.setSourceName("自定义新建");
+        resultList.add(newAdd);
+
+        StartItemSourceDTO project = new StartItemSourceDTO();
+        project.setSourceType(SourceType.PROJECT);
+        project.setSourceName("从项目中复制");
+        project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
+        resultList.add(project);
+
+        StartItemSourceDTO template = new StartItemSourceDTO();
+        template.setSourceType(SourceType.TEMPLATE);
+        template.setSourceName("从模板中复制");
+        template.setChildrenList(templateService.startItemSource(SourceType.TEMPLATE));
+        resultList.add(template);
+        return resultList;
     }
 
 

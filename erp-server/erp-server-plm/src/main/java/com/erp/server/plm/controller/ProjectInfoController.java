@@ -6,6 +6,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
+import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.dto.StartProjectDTO;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +41,16 @@ public class ProjectInfoController extends BaseController {
     }
 
 
-    @GetMapping("/list")
-    public ApiResult getList() {
-        return success(projectInfoService.listMap());
+
+
+    /**
+     * 启动项目时候 来源树形结构
+     * @return
+     */
+    @GetMapping("/startItemList")
+    public ApiResult<List<StartItemSourceDTO>> getList() {
+        List<StartItemSourceDTO> resultList=projectInfoService.getStartItemSourceList();
+        return success(resultList);
     }
 
     /**

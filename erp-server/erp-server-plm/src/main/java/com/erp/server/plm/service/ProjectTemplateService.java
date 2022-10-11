@@ -1,7 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,4 +17,6 @@ import com.erp.model.plm.entity.ProjectTemplateEntity;
 public interface ProjectTemplateService extends IService<ProjectTemplateEntity> {
 
     String saveTemplate(String templateName);
+
+    List<StartItemSourceDTO> startItemSource(Integer sourceType);
 }
