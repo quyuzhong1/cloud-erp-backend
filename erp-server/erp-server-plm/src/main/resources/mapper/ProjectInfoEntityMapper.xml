@@ -10,7 +10,10 @@
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p INNER JOIN project_info
         pi
         ON p.id=pi.product_id
-        WHERE P.category_id=#{params.categoryId} AND P.delete_state=0
+        WHERE   P.delete_state=0
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id=#{params.categoryId}
+        </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
@@ -42,7 +45,10 @@
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p INNER JOIN project_info
         pi
         ON p.id=pi.product_id
-        WHERE P.category_id=#{params.categoryId} AND P.delete_state=0
+        WHERE  P.delete_state=0
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id=#{params.categoryId}
+        </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND P.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
