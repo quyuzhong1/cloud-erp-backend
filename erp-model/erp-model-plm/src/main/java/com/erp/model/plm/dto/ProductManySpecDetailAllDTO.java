@@ -14,7 +14,7 @@ import java.util.List;
 **/
 @Data
 @NoArgsConstructor
-public class ProductNoSpecDetailAllDTO {
+public class ProductManySpecDetailAllDTO {
     /**
      * 产品基础信息
      */
