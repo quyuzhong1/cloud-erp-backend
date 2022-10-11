@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
-  产品开发管理
+ * 产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -31,6 +31,7 @@ public class ProjectTaskController extends BaseController {
 
     /**
      * 项目任务-分页列表
+     *
      * @param dto
      * @return
      */
@@ -79,12 +80,18 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 任务详情
+     * @author yl
+     * @date 2022-10-11 11:23
+     * @param taskId
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProjectTaskDetailsDTO>
+     */
     @PostMapping("/details")
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
-      return success();
+        ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
+        return success(detailsDTO);
     }
-
-
 
 
 }

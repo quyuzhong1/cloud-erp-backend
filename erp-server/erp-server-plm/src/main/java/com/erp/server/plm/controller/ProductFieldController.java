@@ -6,6 +6,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProductFieldDTO;
+import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldPagingDTO;
 import com.erp.server.plm.service.ProductFieldService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,15 @@ public class ProductFieldController  extends BaseController {
     public ApiResult<PagingVO<SysProductFieldPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SysProductFieldPagingDTO> pagingVO = productFieldService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 修改字段状态
+     */
+    @PostMapping("/updateState")
+    public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
+        Boolean flag = productFieldService.updateState(dto);
+        return flag == true ? success() : failure();
     }
 
     /**

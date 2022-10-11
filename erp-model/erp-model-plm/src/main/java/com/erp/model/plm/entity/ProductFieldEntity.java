@@ -50,6 +50,8 @@ public class ProductFieldEntity implements Serializable {
     @TableField("product_id")
     private String productId;
 
+    @TableField("quote_sys_id")
+    private String quoteSysId;
 
     @TableField("create_user_id")
     private String createUserId;

@@ -53,7 +53,9 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
+    </select>
 
+    <select id="getTaskDetails">
 
     </select>
 

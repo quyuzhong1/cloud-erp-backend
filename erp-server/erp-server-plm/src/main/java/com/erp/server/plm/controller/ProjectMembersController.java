@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.MemberPagingShowDTO;
+import com.erp.model.plm.dto.RemoveProjectMemberDTO;
 import com.erp.model.plm.dto.SaveOrUpdateProjectMemberDTO;
 import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.server.plm.service.ProjectMembersService;
@@ -52,6 +53,18 @@ public class ProjectMembersController extends BaseController {
     @PostMapping("/saveOrUpdate")
     public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 移除成员
+     * @param
+     * @return
+     */
+    @PostMapping("/remove")
+    public ApiResult rmove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
+        Boolean flag = projectMembersService.removeMembers(dto);
         return flag == true ? success() : failure();
     }
 }
