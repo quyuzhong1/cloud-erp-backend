@@ -25,7 +25,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     implements ProductOperateRecordService {
 
     /**
-     * @Description 产品采购备注信息查询列表
+     * @Description 产品操作日志信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/23 14:06
      * @param productId:产品信息表id
@@ -39,7 +39,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     }
 
     /**
-     * @Description 保存/修改产品采购备注信息
+     * @Description 保存/修改产品操作日志信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
      * @param dto 产品采购备注信息表请求参数
@@ -63,7 +63,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     }
 
     /**
-     * @Description 保存/修改产品采购备注信息-批量
+     * @Description 保存/修改产品操作日志信息-批量
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
      * @param dto 产品采购备注信息表请求参数
