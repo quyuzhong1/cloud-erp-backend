@@ -120,12 +120,6 @@ public class ProductPurchaseDTO implements Serializable {
     @ApiModelProperty(value = "实际首批到货量")
     private Integer actualArrivalQty;
 
-    /**
-     * 采购备注信息
-     */
-    @ApiModelProperty(value = "采购备注信息")
-    private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
-
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

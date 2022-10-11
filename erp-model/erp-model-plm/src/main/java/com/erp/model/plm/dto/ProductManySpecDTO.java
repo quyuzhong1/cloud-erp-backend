@@ -126,4 +126,10 @@ public class ProductManySpecDTO {
      */
     @ApiModelProperty(value = "产品证书信息")
     private List<ProductCertificateDTO> productCertificateList;
+
+    /**
+     * 采购备注信息
+     */
+    @ApiModelProperty(value = "采购备注信息")
+    private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
 }

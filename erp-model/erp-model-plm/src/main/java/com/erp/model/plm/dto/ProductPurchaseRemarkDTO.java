@@ -22,8 +22,8 @@ public class ProductPurchaseRemarkDTO implements Serializable {
     /**
      * 产品采购信息表id
      */
-    @ApiModelProperty(value = "产品采购信息表id")
-    private String purchaseId;
+    @ApiModelProperty(value = "产品信息表id")
+    private String productId;
 
     /**
      * 备注

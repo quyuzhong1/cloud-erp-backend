@@ -330,16 +330,16 @@ public class ProductDetailController extends BaseController {
      * 采购信息-主页备注信息列表-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
-     * @param purchaseId 产品采购信息表id
+     * @param productId:产品信息表id
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
      **/
     @ApiOperation(value = "采购信息-主页备注信息列表-查询")
     @GetMapping("/listPurchaseRemark")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "purchaseId", value = "产品采购信息表id", required = true),
+            @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true),
     })
-    public ApiResult<List<ProductPurchaseRemarkEntity>> listPurchaseRemark(@RequestParam(value = "purchaseId") String purchaseId) {
-        List<ProductPurchaseRemarkEntity> list = productPurchaseRemarkService.list(purchaseId);
+    public ApiResult<List<ProductPurchaseRemarkEntity>> listPurchaseRemark(@RequestParam(value = "productId") String productId) {
+        List<ProductPurchaseRemarkEntity> list = productPurchaseRemarkService.list(productId);
         return this.success(list);
     }
 
@@ -354,6 +354,20 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/saveOrUpdatePurchaseRemark")
     public ApiResult saveOrUpdatePurchaseRemark(@RequestBody ProductPurchaseRemarkDTO dto) {
         Boolean flag = productPurchaseRemarkService.saveOrUpdate(dto);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 采购信息-备注信息-新增-批量
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
+     * @param dto 产品采购备注信息列表（VO）
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @ApiOperation(value = "采购信息-备注信息-新增")
+    @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
+    public ApiResult saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
+        Boolean flag = productPurchaseRemarkService.saveOrUpdateBatch(dto);
         return flag == true ? this.success() : this.failure();
     }
 
@@ -379,9 +393,9 @@ public class ProductDetailController extends BaseController {
      **/
     @ApiOperation(value = "产品信息-变体管理-编辑-查询")
     @GetMapping("/listVariantAndProperty")
-    public ApiResult<List<ProductVariantEntity>> listVariantAndProperty() {
-        List<ProductVariantEntity> list = productVariantService.list();
-        return this.success(list);
+    public ApiResult<List<ProductVariantDTO>> listVariantAndProperty() {
+        List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
+        return this.success(productVariantDTOS);
     }
 
     /**
@@ -458,7 +472,7 @@ public class ProductDetailController extends BaseController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "variantPropertyId", value = "变体值表id", required = true),
     })
-    public ApiResult deleteVariantProperty(@RequestBody String variantPropertyId) {
+    public ApiResult deleteVariantProperty(@RequestParam(value = "variantPropertyId") String variantPropertyId) {
         Boolean flag = productVariantPropertyService.deleteVariant(variantPropertyId);
         return flag == true ? this.success() : this.failure();
     }

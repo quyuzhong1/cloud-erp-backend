@@ -28,13 +28,13 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
      * @Description 产品采购备注信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/23 14:06
-     * @param purchaseId:产品采购信息表id
+     * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseRemarkShowDTO>
      **/
     @Override
-    public List<ProductPurchaseRemarkEntity> list(String purchaseId) {
+    public List<ProductPurchaseRemarkEntity> list(String productId) {
         LambdaQueryWrapper<ProductPurchaseRemarkEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductPurchaseRemarkEntity::getPurchaseId, purchaseId);
+        queryWrapper.eq(ProductPurchaseRemarkEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
 
@@ -47,9 +47,19 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
      **/
     @Override
     public Boolean saveOrUpdate(ProductPurchaseRemarkDTO dto) {
-        ProductPurchaseRemarkEntity packEntity = new ProductPurchaseRemarkEntity();
-        BeanMapper.copy(dto, packEntity);
-        return this.saveOrUpdate(packEntity);
+        ProductPurchaseRemarkEntity remarkEntity = new ProductPurchaseRemarkEntity();
+        BeanMapper.copy(dto, remarkEntity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            if (StringUtils.isBlank(dto.getId())) {
+                remarkEntity.setCreateUserId(loginUser.getUid());
+                remarkEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                remarkEntity.setUpdateUserId(loginUser.getUid());
+                remarkEntity.setUpdateUserName(loginUser.getUserName());
+            }
+        }
+        return this.saveOrUpdate(remarkEntity);
     }
 
     /**
