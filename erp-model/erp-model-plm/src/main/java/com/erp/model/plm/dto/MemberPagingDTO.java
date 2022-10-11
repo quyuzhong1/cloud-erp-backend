@@ -16,8 +16,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class MemberPagingDTO  implements Serializable {
 
-    @NotBlank(message = "项目id 不能为空")
-    private String projectId;
+    @NotBlank(message = "产品id 不能为空")
+    private String productId;
 
     //项目角色id
     private String projectRoleId;

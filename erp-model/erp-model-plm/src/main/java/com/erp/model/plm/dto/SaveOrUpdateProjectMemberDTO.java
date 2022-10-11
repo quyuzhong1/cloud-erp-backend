@@ -15,7 +15,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class saveOrUpdateProjectMemberDTO implements Serializable {
+public class SaveOrUpdateProjectMemberDTO implements Serializable {
 
     /**
      * 表id

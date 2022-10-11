@@ -28,7 +28,7 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     List<ProjectMembersEntity> getListByProductId(String productId);
 
-    Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto);
+    Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto);
 
     PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto);
 

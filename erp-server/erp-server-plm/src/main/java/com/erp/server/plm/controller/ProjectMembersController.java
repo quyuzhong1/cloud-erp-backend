@@ -5,7 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.MemberPagingShowDTO;
-import com.erp.model.plm.dto.saveOrUpdateProjectMemberDTO;
+import com.erp.model.plm.dto.SaveOrUpdateProjectMemberDTO;
 import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
-    public ApiResult save(@RequestBody @Validated saveOrUpdateProjectMemberDTO dto) {
+    public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
         return flag == true ? success() : failure();
     }

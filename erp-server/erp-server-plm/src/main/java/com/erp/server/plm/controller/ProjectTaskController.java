@@ -79,6 +79,13 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    @PostMapping("/details")
+    public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
+      return success();
+    }
+
+
+
 
 }
 

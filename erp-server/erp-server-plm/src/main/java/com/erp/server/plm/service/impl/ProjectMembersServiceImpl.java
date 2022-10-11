@@ -10,7 +10,6 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
-import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -22,7 +21,6 @@ import com.erp.server.plm.service.ProjectTaskService;
 
 import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,7 +141,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Override
     @Transactional
-    public Boolean saveOrUpdateMember(saveOrUpdateProjectMemberDTO dto) {
+    public Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         Boolean flag = false;
@@ -188,17 +186,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         IPage pageData = baseMapper.paging(query, params);
         List<MemberPagingShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            ProjectInfoEntity projectInfo = projectInfoService.getById(params.getProjectId());
-            String chargeId = projectInfo.getChargeId();
             //获取到任务处理的情况
-            List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProjectId());
+            List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
             for (MemberPagingShowDTO item : list) {
-                //如果包含该员工 就是 项目负责人
-                if (chargeId.contains(item.getMemberId())) {
-                    item.setIsCharge(IsConstant.YES);
-                } else {
-                    item.setIsCharge(IsConstant.NO);
-                }
                 TaskConductDTO taskConduct = conductList.stream().filter(c -> c.getMembersId().equals(item.getMemberId())).findFirst().orElse(null);
                 Integer totalTaskCount = 0;
                 Integer finishTaskCount = 0;

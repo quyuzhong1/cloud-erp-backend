@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Classname ProjectTaskDetailsDTO
@@ -100,6 +101,23 @@ public class ProjectTaskDetailsDTO implements Serializable {
      *
      */
     private String createUserName;
+
+
+    /**
+     * 前置任务
+     */
+    private RefTaskInfoDTO preTask;
+
+    /**
+     * 子 任务
+     */
+    private RefTaskInfoDTO childTask;
+
+    /**
+     * 输出文档 列表
+     *
+     */
+    private List<DeliveryDocsDTO> outputDocsList ;
 
 
 
