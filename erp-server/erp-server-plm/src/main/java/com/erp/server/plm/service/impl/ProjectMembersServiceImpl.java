@@ -144,8 +144,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     public Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        Boolean flag = false;
         String id = dto.getId();
+        roleRefMemberService.checkRoleMember(dto.getRoleId(),dto.getUserId());
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
         FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
@@ -161,10 +161,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
         }
-        flag = this.saveOrUpdate(entity);
+        Boolean  flag = this.saveOrUpdate(entity);
         //保存成功就要去保存关系表
         if (flag) {
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getId(), dto.getRoleId());
+            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId());
         }
         return flag;
 

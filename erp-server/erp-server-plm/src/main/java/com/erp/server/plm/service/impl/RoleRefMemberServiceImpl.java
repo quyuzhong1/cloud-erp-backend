@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.server.plm.mapper.RoleRefMemberMapper;
 import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -61,19 +62,32 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
             queryWrapper.set(RoleRefMemberEntity::getMembersId, memberId);
             this.update(queryWrapper);
         } else {
-            LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
-            queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
-            RoleRefMemberEntity entity = this.getOne(queryWrapper);
-            if (entity != null) {
-                throw new ServiceException(ApiError.ERROR_95021);
-            }
+            //检查
+            checkRoleMember(roleId,memberId);
             RoleRefMemberEntity ref = new RoleRefMemberEntity();
             ref.setMembersId(memberId);
             ref.setRoleId(roleId);
-            this.save(ref);
+           this.save(ref);
         }
 
+    }
+    
+    /**
+     * 检查角色id 与成员id 是否存在
+     * @author yl
+     * @date 2022-10-11 11:02
+     * @param
+     * @return void
+     */
+    @Override
+    public void checkRoleMember(String roleId,String memberId){
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
+        queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
+        RoleRefMemberEntity entity = this.getOne(queryWrapper);
+        if (entity != null) {
+            throw new ServiceException(ApiError.ERROR_95021);
+        }
     }
 }
 

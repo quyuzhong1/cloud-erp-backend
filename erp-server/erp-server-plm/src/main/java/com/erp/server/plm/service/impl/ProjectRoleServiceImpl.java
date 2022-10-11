@@ -48,12 +48,12 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     @Override
     public Boolean saveRole(ProjectRoleDTO dto) {
         String name = dto.getName();
-        String projectId = dto.getProjectId();
-        checkRoleName(name, projectId);
+        String productId = dto.getProductId();
+        checkRoleName(name, productId);
         ProjectRoleEntity entity = new ProjectRoleEntity();
         entity.setName(name);
         entity.setProductId(dto.getProductId());
-        entity.setProjectId(projectId);
+        entity.setProjectId(dto.getProjectId());
         return this.save(entity);
     }
 
@@ -113,15 +113,15 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
      * 检查角色名是否重复
      *
      * @param name
-     * @param projectId
+     * @param productId
      * @return void
      * @author yl
      * @date 2022-09-26 17:00
      */
-    private void checkRoleName(String name, String projectId) {
+    private void checkRoleName(String name, String productId) {
         LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectRoleEntity::getName, name);
-        queryWrapper.eq(ProjectRoleEntity::getProjectId, projectId);
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
         queryWrapper.last("LIMIT 1");
         int count = baseMapper.selectCount(queryWrapper);
         if (count > 0) {
