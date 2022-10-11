@@ -144,10 +144,9 @@
         WHERE pi.id = #{productId}
     </select>
 
-    <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManyDetailDTO">
+    <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManySpecBaseDTO">
         SELECT
         pi."id",
-        pd.images_url,
         pi.spu_no,
         pi."name",
         pi.charge_name,
@@ -162,7 +161,6 @@
         pi.pirate_risk,
         pi.materials
         FROM product_info pi
-        INNER JOIN product_detail pd on pi.id = pd.product_id
         WHERE pi.id = #{productId}
     </select>
 

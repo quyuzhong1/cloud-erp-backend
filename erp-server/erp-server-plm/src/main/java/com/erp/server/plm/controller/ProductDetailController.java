@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -178,6 +179,36 @@ public class ProductDetailController extends BaseController {
     public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
         List<ProductDetailEntity> list = productDetailService.insertManySpecAuto(variantAutoAddDTO);
         return this.success(list);
+    }
+
+    @ApiOperation(value = "产品信息-多规格-自动生成")
+    @PostMapping("/InsertManySpecSkuTest")
+    public ApiResult insertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
+        //1.保存产品表 基础信息获取产品id
+        String id = productInfoService.updateSpec(variantAutoAddDTO.getProductSpuBaseInfoDTO());
+
+        List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
+        List<String> mainList = new ArrayList<>();
+        List<String> varianTempList = new ArrayList<>();
+        Boolean flag = true;
+        Integer count = 1;
+        for (VarianRefPropertyDTO varianRefPropertyDTO : varianRefPropertyList) {
+            count = count * varianRefPropertyDTO.getVarianList().size();
+        }
+        for (VarianRefPropertyDTO req : varianRefPropertyList) {//颜色 - 尺寸
+            List<String> varianList = req.getVarianList();
+            if (flag) {
+                mainList.addAll(varianList);
+            } else {
+                for (int i = 0; i < mainList.size(); i++) {
+                    for (int j = 0; j < varianList.size(); j++) {
+                        varianTempList.add(i, mainList.get(i) + "," + varianList.get(j));
+                    }
+                }
+            }
+            flag = false;
+        }
+        return this.success(varianTempList);
     }
 
     /**
@@ -543,7 +574,7 @@ public class ProductDetailController extends BaseController {
         List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
         if(list.size() > 0){
             StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productSkuDetail.xlsx";
+            String excelPath = "excel/productNoSpecDetail.xlsx";
             String name = "导入产品明细表";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
             sb.append(date);

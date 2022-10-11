@@ -1,10 +1,11 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.*;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -18,49 +19,59 @@ public class ProductManySpecDetailAllDTO {
     /**
      * 产品基础信息
      */
-    @ApiModelProperty(value = "产品基础信息")
-    private ProductNoDetailDTO productNoDetailDTO;
+    @NotNull(message = "产品基础信息不能为空")
+    @ApiModelProperty(value = "产品基础信息", required = true)
+    private ProductInfoEntity productInfoEntity;
 
     /**
-     * 产品成本信息
+     * SKU信息明细
      */
-    @ApiModelProperty(value = "产品成本信息")
-    private List<ProductCostShowDTO> productCostShowDTOList;
+    @ApiModelProperty(value = "SKU信息明细")
+    private List<ProductDetailEntity> productDetailList;
 
     /**
-     * 产品采购信息
+     * 成本信息
      */
-    @ApiModelProperty(value = "产品采购信息")
-    private List<ProductPurchaseShowDTO> productPurchaseShowDTOList;
+    @NotNull(message = "成本信息不能为空")
+    @ApiModelProperty(value = "成本信息", required = true)
+    private List<ProductCostEntity> productCostList;
 
     /**
-     * 产品采购信息
+     * 采购信息信息
      */
-    @ApiModelProperty(value = "产品采购信息")
-    private List<ProductPurchaseRemarkEntity> remarkEntityList;
+    @ApiModelProperty(value = "采购信息信息")
+    private List<ProductPurchaseEntity> productPurchaseList;
 
     /**
-     * 产品包装信息
+     * 产品销售信息
      */
-    private List<ProductSaleShowDTO> productSaleShowDTOList;
-
-    /**
-     * 产品包装信息
-     */
-    @ApiModelProperty(value = "产品包装信息")
-    private List<ProductPackShowDTO> productPackShowDTOS;
+    @NotNull(message = "产品销售不能为空")
+    @ApiModelProperty(value = "产品销售信息")
+    private List<ProductSaleEntity> productSaleList;
 
     /**
      * 产品物流信息
      */
     @ApiModelProperty(value = "产品物流信息")
-    private List<ProductLogisticsShowDTO> productLogisticsShowDTOList;
+    private List<ProductLogisticsEntity> productLogisticsList;
+
+    /**
+     * 产品包装信息
+     */
+    @ApiModelProperty(value = "产品包装信息")
+    private List<ProductPackEntity> productPackList;
 
     /**
      * 产品证书信息
      */
     @ApiModelProperty(value = "产品证书信息")
-    private List<ProductCertificateShowDTO> productCertificateShowDTOList;
+    private List<ProductCertificateEntity> productCertificateList;
+
+    /**
+     * 采购备注信息
+     */
+    @ApiModelProperty(value = "采购备注信息")
+    private List<ProductPurchaseRemarkEntity> productPurchaseRemarkList;
 
 
 }

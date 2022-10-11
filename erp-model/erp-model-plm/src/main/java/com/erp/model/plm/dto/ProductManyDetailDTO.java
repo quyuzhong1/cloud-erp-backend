@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,94 +19,10 @@ import java.util.List;
 public class ProductManyDetailDTO {
 
     /**
-     * 产品信息列表id
+     *产品spu基础信息表
      */
-    @ApiModelProperty(value = "产品信息列表id")
-    private String id;
-
-    /**
-     * 产品图片
-     */
-    @ApiModelProperty(value = "产品图片")
-    private String imagesUrl;
-
-    /**
-     * spuNo
-     */
-    @ApiModelProperty(value = "spuNo")
-    private String spuNo;
-
-    /**
-     * 产品名称
-     */
-    @ApiModelProperty(value = "产品名称")
-    private String name;
-
-    /**
-     * 产品经理
-     */
-    @ApiModelProperty(value = "产品经理")
-    private String chargeName;
-
-    /**
-     * 品牌
-     */
-    @ApiModelProperty(value = "品牌")
-    private String brandName;
-
-    /**
-     * 产品属性
-     */
-    @ApiModelProperty(value = "产品属性")
-    private String property;
-
-    /**
-     * 产品等级
-     */
-    @ApiModelProperty(value = "产品等级")
-    private String grade;
-
-    /**
-     * 产品类别
-     */
-    @ApiModelProperty(value = "产品类别")
-    private String category;
-
-    /**
-     * 销售方式
-     */
-    @ApiModelProperty(value = "销售方式")
-    private String saleMethod;
-
-    /**
-     * 产品卖点
-     */
-    @ApiModelProperty(value = "产品卖点")
-    private String productSellSpot;
-
-    /**
-     * 产品功能描述
-     */
-    @ApiModelProperty(value = "产品功能描述")
-    private String functionDesc;
-
-    /**
-     * 产品用途
-     */
-    @ApiModelProperty(value = "产品用途")
-    private String usageDesc;
-
-    /**
-     * 存在侵权风险 1：有侵权风险 2：无侵权风险
-     */
-    @ApiModelProperty(value = "存在侵权风险 1：有侵权风险 2：无侵权风险")
-    private String pirateRisk;
-
-    /**
-     * 主要材质
-     */
-    @ApiModelProperty(value = "主要材质")
-    private String materials;
+    @ApiModelProperty(value = "产品spu基础信息表")
+    private ProductManySpecBaseDTO productManySpecBaseDTO;
 
     /**
      * 产品多规格详情sku信息
@@ -153,4 +70,12 @@ public class ProductManyDetailDTO {
      */
     @ApiModelProperty(value = "产品证书信息")
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
+
+    /**
+     * 产品选中的变体信息
+     */
+    @ApiModelProperty(value = "产品选中的变体信息")
+    private List<ProductVariantOptionEntity> productVariantOptionEntityList;
+
+
 }

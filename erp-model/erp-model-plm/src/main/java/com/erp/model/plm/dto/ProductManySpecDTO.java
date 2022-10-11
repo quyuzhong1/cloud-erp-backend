@@ -15,67 +15,6 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ProductManySpecDTO {
-
-    /**
-     * 产品信息表id
-     */
-    @ApiModelProperty(value = "产品信息表id", required = true)
-    private String productId;
-
-    /**
-     * spuNo
-     */
-    @ApiModelProperty(value = "spuNo", required = true)
-    private String spuNo;
-
-    /**
-     * 产品名称(品名)
-     */
-    @ApiModelProperty(value = "产品名称(品名)", required = true)
-    private String name;
-
-    /**
-     * 销售方式
-     */
-    @ApiModelProperty(value = "销售方式", required = true)
-    private String saleMethod;
-
-    /**
-     * 产品分类id
-     */
-    @ApiModelProperty(value = "产品分类id")
-    private String categoryId;
-
-    /**
-     * 产品卖点
-     */
-    @ApiModelProperty(value = "产品卖点")
-    private String productSellSpot;
-
-    /**
-     * 产品功能描述
-     */
-    @ApiModelProperty(value = "产品功能描述")
-    private String productFunctionDesc;
-
-    /**
-     * 产品用途
-     */
-    @ApiModelProperty(value = "产品用途")
-    private String usageDesc;
-
-    /**
-     * 存在侵权风险
-     */
-    @ApiModelProperty(value = "存在侵权风险 1：有侵权风险 2：无侵权风险")
-    private String pirateRisk;
-
-    /**
-     * 主要材质
-     */
-    @ApiModelProperty(value = "主要材质")
-    private String materials;
-
     /**
      * SKU信息明细
      */
