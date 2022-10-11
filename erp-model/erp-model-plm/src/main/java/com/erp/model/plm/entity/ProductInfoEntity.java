@@ -67,6 +67,12 @@ public class ProductInfoEntity implements Serializable {
     private String grade;
 
     /**
+     * 产品等级id
+     */
+    @TableField("grade_id")
+    private String gradeId;
+
+    /**
      * 产品品牌
      */
     @TableField("brand_name")

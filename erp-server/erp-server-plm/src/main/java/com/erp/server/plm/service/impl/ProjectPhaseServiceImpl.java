@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicProductIdDTO;
 import com.erp.model.plm.dto.BatchTaskPhaseDTO;
@@ -109,6 +110,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectPhaseEntity item : list) {
                 item.setProductId(flagId);
+                item.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);
         }

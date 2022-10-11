@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
@@ -86,6 +87,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity entity : list) {
                 entity.setFlagId(flagId);
+                entity.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);
         }

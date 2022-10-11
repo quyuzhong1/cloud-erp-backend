@@ -15,12 +15,15 @@ import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
@@ -44,10 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -97,6 +97,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private UserAddProductService userAddProductService;
 
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -124,16 +127,46 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public Boolean saveOrUpdateProduct(ProductDTO dto) {
+
         //检查名字是否重复
-        checkName(dto.getName());
+        checkName(dto.getName(),dto.getId());
         ProductInfoEntity entity = new ProductInfoEntity();
+        //负责人ids
+        List<String> chargeIds = dto.getChargeIds();
+        String chargeId = StringUtils.join(chargeIds);
+        String chargeName = getUserName(chargeIds);
         BeanMapper.copy(dto, entity);
+        entity.setChargeId(chargeId);
+        entity.setChargeName(chargeName);
         Boolean flag = this.saveOrUpdate(entity);
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             projectTaskService.addSysTask(entity.getId());
         }
         return flag;
+    }
+
+
+    /**
+     * 获取用户名
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-11 17:48
+     */
+    public String getUserName(List<String> userIds) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> names = new ArrayList<>();
+        for (String userId : userIds) {
+            FindUserDTO findUser = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+            if (findUser != null) {
+                names.add(findUser.getUserName());
+            } else {
+                names.add("");
+            }
+        }
+        return StringUtils.join(names, ",");
     }
 
 
@@ -147,8 +180,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean updateCategory(MoveCategoryDTO dto) {
+        BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
+        if (Objects.isNull(category)) {
+            throw new ServiceException(ApiError.ERROR_95025);
+        }
         LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(ProductInfoEntity::getCategoryId, dto.getCategoryId());
+        updateWrapper.set(ProductInfoEntity::getCategory, category.getName());
         updateWrapper.in(ProductInfoEntity::getId, dto.getProductIds());
         return this.update(updateWrapper);
     }
@@ -227,22 +265,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
         //获取到归档的产品id
-        List<String> archiveProductIds=archiveService.getArchiveProductIds();
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
         //如果是我的收藏
-        IPage pageData=new Page();
-        if(params.getIsMyCollect()!=null&&params.getIsMyCollect()){
-            LoginUser loginUser= PlmInterceptor.threadLocal.get();
-            String userId="";
-            if(loginUser!=null){
-                userId=loginUser.getUid();
+        IPage pageData = new Page();
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
+            LoginUser loginUser = PlmInterceptor.threadLocal.get();
+            String userId = "";
+            if (loginUser != null) {
+                userId = loginUser.getUid();
             }
             //根据当前登录人id 获取收藏的列表
-            List<String> productIds=userAddProductService.getMyCollectProductIds(userId);
-            if(CollectionUtils.isNotEmpty(productIds)){
-                pageData=baseMapper.myCollectPaging(query,params,productIds,archiveProductIds);
+            List<String> productIds = userAddProductService.getMyCollectProductIds(userId);
+            if (CollectionUtils.isNotEmpty(productIds)) {
+                pageData = baseMapper.myCollectPaging(query, params, productIds, archiveProductIds);
             }
-        }else{
-             pageData = baseMapper.paging(query, params,archiveProductIds);
+        } else {
+            pageData = baseMapper.paging(query, params, archiveProductIds);
         }
 
 
@@ -281,9 +319,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @author yl
      * @date 2022-09-16 17:16
      */
-    private void checkName(String name) {
+    private void checkName(String name,String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
+        if(StringUtils.isNotBlank(id)){
+            queryWrapper.ne(ProductInfoEntity::getId,id);
+        }
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95007);
@@ -299,6 +340,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-20 14:24
      */
     @Override
+    @Transactional
     public Boolean saveTemplate(SaveProductTemplateDTO dto) {
         //模板名
         String templateName = dto.getTemplateName();
@@ -370,6 +412,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         BeanMapper.copy(entity, result);
         String categoryId = result.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getPidList(categoryId);
+        String chargeId = entity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            result.setChargeIds(Arrays.asList(chargeId.split(",")));
+        } else {
+            result.setChargeIds(new ArrayList<>());
+        }
+        String chargeName = entity.getChargeName();
+        if (StringUtils.isNotBlank(chargeName)) {
+            result.setChargeNames(Arrays.asList(chargeName.split(",")));
+        } else {
+            result.setChargeNames(new ArrayList<>());
+        }
         result.setCategoryIdList(categoryIdList);
         return result;
     }
@@ -456,24 +510,26 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public void exportProductData(ExportProductDataDTO dto) {
         //产品id集合
         List<String> productIds = dto.getProductIds();
-        String exportData = dto.getExportData();
-        String fileName = getFileName(exportData);
+        List<Integer> exportDataList = dto.getExportDataList();
+        int size = exportDataList.size();
+        Integer flag = exportDataList.get(0);
+        String fileName = getFileName(exportDataList);
         //获取所有的
-        if (exportData.equals("all")) {
+        if (size == 2) {
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             exportExcel(fileName, taskExcelList, productList);
             return;
         }
         //获取任务
-        if (exportData.equals("task")) {
+        if (flag == IsConstant.YES) {
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
             ExcelUtil.export(fileName, "任务列表", taskExcelList, TaskExcelDTO.class, response);
             return;
         }
 
         //获取产品
-        if (exportData.equals("product")) {
+        if (flag == IsConstant.NO) {
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
             return;
@@ -516,31 +572,33 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * /**
      * 获取文件名
      *
-     * @param exportData
+     * @param exportDatas
      * @return java.lang.String
      * @author yl
      * @date 2022-09-29 16:36
      */
-    private String getFileName(String exportData) {
+    private String getFileName(List<Integer> exportDatas) {
+        int size = exportDatas.size();
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        if ("all".equals(exportData)) {
+        if (size == 2) {
             sb.append("产品管理");
-        }
-        if ("task".equals(exportData)) {
-            sb.append("任务管理");
-        }
-        if ("product".equals(exportData)) {
-            sb.append("产品管理");
+        } else {
+            Integer flag = exportDatas.get(0);
+            if (IsConstant.NO == flag) {
+                sb.append("产品列表");
+            } else {
+                sb.append("任务列表");
+            }
         }
         sb.append(date);
         String redisKey = "file:name:" + date;
         Integer last = redisService.getCacheObject(redisKey);
         Integer lastNo = 1;
-        if (last!=null) {
-            lastNo=last+1;
+        if (last != null) {
+            lastNo = last + 1;
         }
-        redisService.setCacheObject(redisKey,lastNo, (long) 1, TimeUnit.DAYS);
+        redisService.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
         return sb.append(lastNo).toString();
 
     }

@@ -62,14 +62,14 @@ public class ProductDTO implements Serializable {
     /**
      * 产品负责人
      */
-    @NotBlank(message = "产品负责人不能为空")
-    private String chargeName;
+    private List<String> chargeNames;
 
     /**
      * 产品负责人id
      */
-    @NotBlank(message = "产品负责人id不能为空")
-    private String chargeId;
+    @NotNull(message = "产品负责人id不能为空")
+    @Size(min=1,message = "产品负责人id 不能为空")
+    private List<String> chargeIds;
 
 
     /**

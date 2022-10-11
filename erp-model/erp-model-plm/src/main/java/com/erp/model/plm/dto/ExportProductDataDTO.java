@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -27,10 +28,12 @@ public class ExportProductDataDTO implements Serializable {
 
     /**
      * 导出数据 类型
-     * all 全部  product 产品列表  task 任务列表
+     * 0，产品列表
+     * 1. 任务列表
      */
-    @StateEnumValue(strValues = {"all","product", "task"}, message = "导出数据 选择有误")
-    private String exportData;
+    @NotNull(message = "导出类型不能为空")
+    @Size(min=1,max = 2,message = "导出数据必须勾选")
+    private List<Integer> exportDataList;
 
 
 }

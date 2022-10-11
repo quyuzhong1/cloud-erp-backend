@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
@@ -84,6 +85,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(productId);
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
+                entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId());
