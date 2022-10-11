@@ -226,6 +226,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        String userId = "";
+        if (loginUser != null) {
+            userId=loginUser.getUid();
+        }
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -235,7 +240,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         IPage pageData = null;
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList,userId);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -447,10 +452,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
-
-
-
-    /**
+     * /**
      * 根据项目id 获取列表
      *
      * @param projectId

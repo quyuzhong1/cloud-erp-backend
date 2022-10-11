@@ -16,6 +16,11 @@ import java.util.Date;
 @NoArgsConstructor
 public class MemberPagingShowDTO implements Serializable {
 
+
+    /**
+     * 项目成员表id
+     */
+    private String id;
     /**
      * 角色成员关系表id
      */

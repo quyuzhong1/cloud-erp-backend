@@ -64,7 +64,7 @@ public class SysProductFieldController extends BaseController {
     }
 
     /**
-     * 修改字段状态
+     * 获取 产品开发管理-设置-新增字段-系统字段列表
      */
     @GetMapping("/list")
     public ApiResult paging() {

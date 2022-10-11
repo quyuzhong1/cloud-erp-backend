@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectMembersMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.MemberPagingShowDTO">
-        SELECT  ref.id AS roleRefMemberId,pr.id AS roleId,pr.name AS roleName,
+        SELECT pm.id, ref.id AS roleRefMemberId,pr.id AS roleId,pr.name AS roleName,
         pm.member_id,pm.member_name,pm.create_time,pm.create_user_id,pm.create_user_name
         FROM project_members pm
         LEFT JOIN role_ref_members ref  on ref.members_id=pm.id

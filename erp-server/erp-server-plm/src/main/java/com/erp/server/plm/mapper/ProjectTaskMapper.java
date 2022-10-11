@@ -24,7 +24,7 @@ import java.util.List;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList);
+    IPage paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,@Param("userId") String userId);
 
     List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 }

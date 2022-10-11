@@ -40,11 +40,7 @@ public class saveOrUpdateProjectMemberDTO implements Serializable {
     @NotBlank(message = "产品id不能为空")
     private String productId;
 
-    /**
-     * 项目id
-     */
-    @NotBlank(message = "项目id不能为空")
-    private String projectId;
+
 
     /**
      * 角色id
