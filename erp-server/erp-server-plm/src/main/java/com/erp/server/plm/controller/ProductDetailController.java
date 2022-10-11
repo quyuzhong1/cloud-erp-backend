@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.controller.BaseController;
@@ -542,14 +543,12 @@ public class ProductDetailController extends BaseController {
         List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
         if(list.size() > 0){
             StringBuffer sb = new StringBuffer();
-            String fileName = URLEncoder.encode("产品管理", "UTF-8");
+            String excelPath = "excel/productSkuDetail.xlsx";
+            String name = "导入产品明细表";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(fileName);
             sb.append(date);
-            response.setContentType("application/vnd.ms-excel");
-            response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
-            ExcelUtil.export(sb.toString(), "商品列表", list, ProductDetailExcelDTO.class, response);
-
+            sb.append(name);
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
             /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
             response.setCharacterEncoding("utf-8");
             String fileName = URLEncoder.encode("测试", "UTF-8");

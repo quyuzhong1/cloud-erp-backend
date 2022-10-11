@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantDTO;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
@@ -15,9 +17,12 @@ import com.erp.server.plm.mapper.ProductVariantMapper;
 import com.erp.server.plm.service.ProductVariantService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品变体信息服务类
@@ -70,6 +75,7 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional
     public Boolean saveOrUpdate(ProductVariantDTO productVariantDTO) {
         ProductVariantEntity variantEntity = new ProductVariantEntity();
         BeanMapper.copy(productVariantDTO, variantEntity);
@@ -84,10 +90,26 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
             }
         }
         boolean flag = this.saveOrUpdate(variantEntity);
-        productVariantDTO.getProductVariantPropertyList().forEach(req -> {
+        List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
+
+        List<ProductVariantPropertyDTO> distinctList = productVariantPropertyList.stream().collect(
+                Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(
+                        Comparator.comparing(ProductVariantPropertyDTO::getPropertyValue))), ArrayList::new));
+
+        List<String> collect = distinctList.stream().map(ProductVariantPropertyDTO::getPropertyValue).collect(Collectors.toList());
+
+        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductVariantPropertyEntity::getVariantId, variantEntity.getId());
+        queryWrapper.in(ProductVariantPropertyEntity::getPropertyValue, collect);
+        List<ProductVariantPropertyEntity> list = productVariantPropertyService.list(queryWrapper);
+        if (!ListUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95023);
+        }
+        productVariantPropertyList.forEach(req -> {
             req.setVariantId(variantEntity.getId());
         });
-        productVariantPropertyService.saveOrUpdateBatch(productVariantDTO.getProductVariantPropertyList());
+
+        productVariantPropertyService.saveOrUpdateBatch(productVariantPropertyList);
         return flag;
     }
 

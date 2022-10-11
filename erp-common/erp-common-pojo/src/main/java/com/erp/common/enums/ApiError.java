@@ -105,6 +105,7 @@ public enum ApiError implements Serializable {
     ERROR_95020(95020, "立项阶段名不能删除"),
     ERROR_95021(95021, "该成员已有该角色"),
     ERROR_95022(95022, "该项目已有该字段"),
+    ERROR_95023(95023, "同一个变体类型的变体值，不可重复"),
 
 
 
