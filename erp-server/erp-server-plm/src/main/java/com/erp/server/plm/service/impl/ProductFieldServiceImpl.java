@@ -111,6 +111,8 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
     @Override
     public Boolean saveField(ProductFieldDTO dto) {
         String fieldId = dto.getSysFieldId();
+        //检查是否已有字段
+        checkField(fieldId, dto.getProductId());
         ProductFieldEntity entity = this.getById(fieldId);
         if (!Objects.isNull(entity)) {
             ProductFieldEntity productFieldEntity = new ProductFieldEntity();
@@ -119,11 +121,31 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
             productFieldEntity.setProductId(dto.getProductId());
             productFieldEntity.setScope(IsConstant.NO);
             productFieldEntity.setIfRequired(dto.getIfRequired());
+            productFieldEntity.setQuoteSysId(fieldId);
             //设置id
             productFieldEntity.setId(IdWorker.getIdStr());
             return this.save(productFieldEntity);
         }
         return false;
+    }
+
+    /**
+     * 检查是否已引用该字段
+     *
+     * @param fieldId
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-10-11 11:39
+     */
+    private void checkField(String fieldId, String productId) {
+        LambdaQueryWrapper<ProductFieldEntity> queryWrapper = new LambdaQueryWrapper<ProductFieldEntity>();
+        queryWrapper.eq(ProductFieldEntity::getQuoteSysId, fieldId);
+        queryWrapper.eq(ProductFieldEntity::getProductId, productId);
+        ProductFieldEntity entity = this.getOne(queryWrapper);
+        if (entity != null) {
+           throw new ServiceException(ApiError.ERROR_95022);
+        }
     }
 
     /**
@@ -145,9 +167,9 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
     @Override
     public List<Map<String, Object>> sysList() {
         LambdaQueryWrapper<ProductFieldEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProductFieldEntity::getId,ProductFieldEntity::getName);
-        queryWrapper.eq(ProductFieldEntity::getScope,IsConstant.NO);
-        queryWrapper.eq(ProductFieldEntity::getIsSys,IsConstant.YES);
+        queryWrapper.select(ProductFieldEntity::getId, ProductFieldEntity::getName);
+        queryWrapper.eq(ProductFieldEntity::getScope, IsConstant.NO);
+        queryWrapper.eq(ProductFieldEntity::getIsSys, IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 

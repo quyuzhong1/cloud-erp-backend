@@ -33,4 +33,8 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto);
 
     List<ProductRoleMemberDTO> getProductCountByMemberList(List<String> memberList);
+
+
+
+    Boolean removeMembers(RemoveProjectMemberDTO dto);
 }

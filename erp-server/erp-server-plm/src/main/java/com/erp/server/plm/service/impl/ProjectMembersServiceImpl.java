@@ -145,7 +145,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleId(),dto.getUserId());
+        roleRefMemberService.checkRoleMember(dto.getRoleId(), dto.getUserId());
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
         FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
@@ -161,7 +161,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
         }
-        Boolean  flag = this.saveOrUpdate(entity);
+        Boolean flag = this.saveOrUpdate(entity);
         //保存成功就要去保存关系表
         if (flag) {
             roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId());
@@ -248,6 +248,23 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
 
         return resultList;
+    }
+
+    /**
+     * 删除成员
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-10-11 11:50
+     */
+
+    @Override
+    @Transactional
+    public Boolean removeMembers(RemoveProjectMemberDTO dto) {
+        boolean flag = this.removeById(dto.getId());
+        roleRefMemberService.removeById(dto.getRoleRefMemberId());
+        return flag;
     }
 
 

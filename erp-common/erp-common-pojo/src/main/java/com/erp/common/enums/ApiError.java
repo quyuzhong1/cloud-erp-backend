@@ -104,6 +104,7 @@ public enum ApiError implements Serializable {
     ERROR_95019(95019, "项目尚未完成，不可归档"),
     ERROR_95020(95020, "立项阶段名不能删除"),
     ERROR_95021(95021, "该成员已有该角色"),
+    ERROR_95022(95022, "该项目已有该字段"),
 
 
 

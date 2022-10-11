@@ -450,6 +450,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return list;
     }
 
+    /**
+     * 获取任务详情
+     * @author yl
+     * @date 2022-10-11 11:24
+     * @param taskId
+     * @return com.erp.model.plm.dto.ProjectTaskDetailsDTO
+     */
+    @Override
+    public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
+        ProjectTaskDetailsDTO detailsDTO=baseMapper.getTaskDetails(taskId);
+        return null;
+    }
+
 
     /**
      * /**
