@@ -83,8 +83,12 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
                 variantEntity.setUpdateUserName(loginUser.getUserName());
             }
         }
+        boolean flag = this.saveOrUpdate(variantEntity);
+        productVariantDTO.getProductVariantPropertyList().forEach(req -> {
+            req.setVariantId(variantEntity.getId());
+        });
         productVariantPropertyService.saveOrUpdateBatch(productVariantDTO.getProductVariantPropertyList());
-        return this.saveOrUpdate(variantEntity);
+        return flag;
     }
 
     /**

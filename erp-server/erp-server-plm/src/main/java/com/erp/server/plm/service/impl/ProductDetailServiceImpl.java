@@ -258,15 +258,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
             productPurchaseDTO.setSkuId(skuId);
-            String purchaseId = productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-            //新增/修改采购备注信息
-            if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList())) {
-                List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList();
-                productPurchaseRemarkList.forEach(req -> {
-                    req.setPurchaseId(purchaseId);
-                });
-                productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
-            }
+            productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+
+        }
+        //新增/修改采购备注信息
+        if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
+            List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseRemarkList();
+            productPurchaseRemarkList.forEach(req -> {
+                req.setProductId(id);
+            });
+            productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
         }
 
         //5.修改/新增 销售信息
@@ -349,6 +350,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (productPurchaseList.size() > 0) {
             productPurchaseService.saveOrUpdateBatch(productManySpecDTO.getProductPurchaseList());
         }
+        //新增/修改采购备注信息
+        if (!ListUtils.isEmpty(productManySpecDTO.getProductPurchaseRemarkList())) {
+            List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productManySpecDTO.getProductPurchaseRemarkList();
+            productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
+        }
+
         //5.修改/新增 销售信息
         List<ProductSaleDTO> productSaleList = productManySpecDTO.getProductSaleList();
         if (productSaleList.size() > 0) {
@@ -576,7 +583,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
-     * @Description 新增无规格sku信息
+     * @Description 导入无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
@@ -631,17 +638,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productPurchaseDTO.setId(productKey.getPurchaseId());
             }
             productPurchaseDTO.setSkuId(skuId);
-            String purchaseId = productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-            //新增/修改采购备注信息
-            if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList())) {
-                List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseDTO().getProductPurchaseRemarkList();
-                productPurchaseRemarkList.forEach(req -> {
-                    req.setPurchaseId(purchaseId);
-                });
-                productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
-            }
+            productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
         }
-
+        //新增/修改采购备注信息
+        if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
+            List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseRemarkList();
+            productPurchaseRemarkList.forEach(req -> {
+                req.setProductId(id);
+            });
+            productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
+        }
         //5.修改/新增 销售信息
         ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
         if (!ObjectUtils.isEmpty(productSaleDTO)) {

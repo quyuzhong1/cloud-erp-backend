@@ -38,6 +38,12 @@ public class ProductNoSpecDTO {
     private ProductPurchaseDTO productPurchaseDTO;
 
     /**
+     * 采购备注信息
+     */
+    @ApiModelProperty(value = "采购备注信息")
+    private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
+
+    /**
      * 产品销售信息
      */
     @NotNull(message = "产品销售不能为空")

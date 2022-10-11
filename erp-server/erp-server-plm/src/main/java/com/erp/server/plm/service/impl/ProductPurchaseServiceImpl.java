@@ -51,7 +51,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     * @return java.lang.String
     **/
     @Override
-    public String saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
+    public Boolean saveOrUpdate(ProductPurchaseDTO purchaseDTO) {
         ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
         BeanMapper.copy(purchaseDTO, purchaseEntity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
@@ -64,8 +64,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
                 purchaseEntity.setUpdateUserName(loginUser.getUserName());
             }
         }
-        this.saveOrUpdate(purchaseEntity);
-        return purchaseEntity.getId();
+        return this.saveOrUpdate(purchaseEntity);
     }
 
     /**
