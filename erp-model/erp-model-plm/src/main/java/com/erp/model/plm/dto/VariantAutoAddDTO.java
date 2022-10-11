@@ -16,16 +16,10 @@ import java.util.List;
 public class VariantAutoAddDTO {
 
     /**
-     * 产品信息表id
+     * 产品spu基础信息
      */
-    @ApiModelProperty(value = "产品信息表id",required = true)
-    private String productId;
-
-    /**
-     * 产品名称(款名)
-     */
-    @ApiModelProperty(value = "产品名称(款名)",required = true)
-    private String productName;
+    @ApiModelProperty(value = "产品spu基础信息",required = true)
+    private ProductInfoDTO productSpuBaseInfoDTO;
 
     /**
      * 变体属性

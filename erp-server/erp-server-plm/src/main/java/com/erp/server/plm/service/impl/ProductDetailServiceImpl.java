@@ -389,7 +389,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
-    public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO){
+    public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO) {
+        //1.保存产品表 基础信息获取产品id
+        String id = productInfoService.updateSpec(variantAutoAddDTO.getProductSpuBaseInfoDTO());
+
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
         List<String> varianTempList = new ArrayList<>();
         Boolean flag = true;
@@ -412,13 +415,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         for (String req : varianTempList) {
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
-            productDetailEntity.setProductId(variantAutoAddDTO.getProductId());
-            productDetailEntity.setName(variantAutoAddDTO.getProductName());
+            productDetailEntity.setProductId(id);
+            productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             list.add(productDetailEntity);
         }
 
         //过滤掉重复的变体属性
-        List<ProductDetailEntity> detailEntityList = this.queryByProductId(variantAutoAddDTO.getProductId());
+        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
         for (ProductDetailEntity req : detailEntityList) {
             if (list.contains(req.getVariantProperty())) {
                 list.remove(req.getVariantProperty());
@@ -428,7 +431,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if(!bool){
             throw new ServiceException(1, "新增sku明细失败！");
         }
-        return this.queryByProductId(variantAutoAddDTO.getProductId());
+        return this.queryByProductId(id);
     }
 
     public static void main(String[] args) {
