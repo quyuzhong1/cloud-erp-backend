@@ -26,10 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,12 +55,19 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
 
     @Override
-    public void add(String productId, String projectId, List<ProjectMemberDTO> members) {
+    public void add(String productId, String projectId, List<String> members) {
         List<ProjectMembersEntity> addList = new LinkedList<>();
-        for (ProjectMemberDTO item : members) {
+        List<FindUserDTO> findUsers = sysUserFeign.getUserList();
+        for (String item : members) {
             ProjectMembersEntity entity = new ProjectMembersEntity();
-            entity.setMemberId(item.getUserId());
-            entity.setMemberName(item.getUsetName());
+            String userId = item;
+            entity.setMemberId(userId);
+            FindUserDTO user = findUsers.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+            if(!Objects.isNull(user)){
+                entity.setMemberName(user.getUserName());
+            }else{
+                entity.setMemberName("");
+            }
             entity.setProjectId(projectId);
             entity.setProductId(productId);
             addList.add(entity);

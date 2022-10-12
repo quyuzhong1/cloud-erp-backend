@@ -61,6 +61,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectPhaseService projectPhaseService;
 
+    @Autowired
+    private ProductInfoService  productInfoService;
+
 
     /**
      * 添加系统的产品任务
@@ -292,11 +295,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        List<ProjectMemberDTO> members = dto.getChargeList();
-        List<String> userIds = members.stream().map(ProjectMemberDTO::getUserId).collect(Collectors.toList());
-        List<String> userNames = members.stream().map(ProjectMemberDTO::getUsetName).collect(Collectors.toList());
-        taskEntity.setChargeId(String.join(",", userIds));
-        taskEntity.setChargeName(String.join(",", userNames));
+        List<String> chargeIdList = dto.getChargeList();
+        String chargeName = productInfoService.getNameByIds(chargeIdList);
+        taskEntity.setChargeId(String.join(",", chargeIdList));
+        taskEntity.setChargeName(chargeName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);

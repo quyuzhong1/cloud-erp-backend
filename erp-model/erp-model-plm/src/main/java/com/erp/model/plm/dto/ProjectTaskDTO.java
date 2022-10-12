@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -62,7 +63,8 @@ public class ProjectTaskDTO implements Serializable {
      * 负责人id
      */
     @NotNull(message = "负责人不能为空")
-    private List<ProjectMemberDTO> chargeList;
+    @Size(min = 0,message = "负责人不能为空")
+    private List<String> chargeList;
 
     /**
      * 前置任务id

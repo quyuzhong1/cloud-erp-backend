@@ -18,7 +18,7 @@ import java.util.List;
  */
 public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
-    void add(String productId,String projectId, List<ProjectMemberDTO> members);
+    void add(String productId,String projectId, List<String> members);
 
     void saveMember(String flagId, String productId);
 

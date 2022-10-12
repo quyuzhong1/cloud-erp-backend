@@ -144,18 +144,29 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     @Transactional
     public Boolean startProject(StartProjectDTO dto) {
-        String productId = dto.getProductId();
-        ProductInfoEntity product = productInfoService.getById(productId);
-        if (Objects.isNull(product)) {
-            throw new ServiceException(ApiError.ERROR_95010);
+        //项目id
+        String projectId = dto.getProjectId();
+        ProjectInfoEntity project = this.getById(projectId);
+        if (Objects.isNull(project)) {
+            throw new ServiceException(ApiError.ERROR_95026);
         }
-        ProjectInfoEntity entity = new ProjectInfoEntity();
-        BeanMapper.copy(dto, entity);
-        entity.setName(product.getName());
-        boolean flag = save(entity);
+        List<String> chargeIdList = dto.getChargeIdList();
+        String chargeName = productInfoService.getNameByIds(chargeIdList);
+        //负责人id
+        project.setChargeId(StringUtils.join(chargeIdList, ","));
+        project.setChargeName(chargeName);
+        //来源
+        project.setSourceType(dto.getSourceType());
+        //开始时间
+        project.setStartTime(dto.getStartTime());
+        //结束时间
+        project.setEndTime(dto.getEndTime());
+        project.setDescribe(dto.getDescribe());
+        project.setProjectStatus(ProjectStateEnum.YES_START.getState());
+        boolean flag = updateById(project);
         Integer sourceType = dto.getSourceType();
         if (flag) {
-            String projectId = entity.getId();
+            String productId = project.getProductId();
             String flagId = dto.getFlagId();
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
@@ -175,15 +186,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectTaskService.copyTaskByTemplate(productId, projectId, flagId);
             }
 
-            //修改产品状态
-            productInfoService.updateProjectStatus(productId, ProjectStateEnum.YES_START.getState());
+
 
         }
 
         return flag;
     }
-
-
 
 
     /**
@@ -260,16 +268,25 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             for (ProductShowDTO item : list) {
                 //这是立项任务
                 int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                //这是立项完成任务
+                int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
+                        .collect(Collectors.toList()).size();
                 //这是项目任务
                 int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int projectFinishTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
+                        collect(Collectors.toList()).size();
                 //总的任务数
                 int taskCount = approvalTaskCount + projectTaskCount;
                 item.setTaskCount(taskCount);
                 int approvalProgress = 0;
                 int projectProgress = 0;
-                if (taskCount != 0) {
-                    approvalProgress = (approvalTaskCount / taskCount) * 100;
-                    projectProgress = (projectTaskCount / taskCount) * 100;
+                //立项任务完成
+                if (approvalTaskCount != 0) {
+                    approvalProgress = (approvalFinishTaskCount / approvalTaskCount) * 100;
+                }
+                //项目任务完成
+                if (projectTaskCount != 0) {
+                    projectProgress = (projectFinishTaskCount / projectTaskCount) * 100;
                 }
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
@@ -327,6 +344,58 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         template.setChildrenList(templateService.startItemSource(SourceType.TEMPLATE));
         resultList.add(template);
         return resultList;
+    }
+
+    /**
+     * 产品列表 修改状态为已立项 添加产品信息
+     *
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-10-12 10:49
+     */
+    @Override
+    public void addProject(String productId, String productName) {
+        int getIfExist = getIfExist(productId);
+        if (getIfExist == 0) {
+            ProjectInfoEntity project = new ProjectInfoEntity();
+            project.setName(productName);
+            project.setProductId(productId);
+            this.save(project);
+        }
+
+
+    }
+
+    /**
+     * 根据产品id 删除项目
+     *
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-10-12 10:59
+     */
+
+    @Override
+    public void removeByProductId(String productId) {
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
+        this.remove(queryWrapper);
+
+    }
+
+
+    /**
+     * 根据产品id 查询是否存在
+     *
+     * @param productId
+     * @return
+     */
+    public int getIfExist(String productId) {
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
+        return this.count(queryWrapper);
+
     }
 
 

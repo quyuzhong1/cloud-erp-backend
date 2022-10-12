@@ -37,9 +37,6 @@ public class ProductInfoController extends BaseController {
     private ProjectInfoService projectInfoService;
 
 
-
-
-
     /**
      * 产品列表-普通分页
      *
@@ -55,11 +52,8 @@ public class ProductInfoController extends BaseController {
     }
 
 
-
-
     /**
      * 产品列表-编辑时候详情
-     *
      */
     @PostMapping("/productInfo")
     public ApiResult<ProductDTO> info(@RequestBody @Validated BaseIdDTO dto) {
@@ -69,7 +63,6 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-更改对应数据
-     *
      */
     @PostMapping("/updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
@@ -80,7 +73,6 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-新建产品
-     *
      */
     @PostMapping("/saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
@@ -90,7 +82,6 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-移动分类
-     *
      */
     @PostMapping("/updateCategory")
     public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
@@ -100,7 +91,6 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 产品列表-删除产品
-     *
      */
     @PostMapping("/remove")
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
@@ -161,11 +151,8 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/archive")
     public ApiResult archive(@RequestParam(value = "productId") String productId) {
         boolean flag = productInfoService.archive(productId);
-        return flag==true?success():failure();
+        return flag == true ? success() : failure();
     }
-
-
-
 
 
 }

@@ -58,4 +58,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     List<CountDTO> getProductRelevanceList();
 
     boolean archive(String productId);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-10-12 11:09
+     * @param chargeIdList
+     * @return java.util.List<java.lang.String>
+     */
+    String getNameByIds(List<String> chargeIdList);
 }

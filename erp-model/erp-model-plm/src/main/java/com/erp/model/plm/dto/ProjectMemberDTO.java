@@ -17,5 +17,5 @@ public class ProjectMemberDTO implements Serializable {
 
     private String userId;
 
-    private String usetName;
+
 }

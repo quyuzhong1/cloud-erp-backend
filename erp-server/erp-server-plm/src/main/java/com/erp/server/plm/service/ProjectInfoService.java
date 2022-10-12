@@ -34,4 +34,8 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     void checkProjectFinish(String productId);
 
     List<StartItemSourceDTO> getStartItemSourceList();
+
+    void addProject(String productId,String productName);
+
+    void removeByProductId(String productId);
 }

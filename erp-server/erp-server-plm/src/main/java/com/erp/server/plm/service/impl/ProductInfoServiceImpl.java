@@ -28,6 +28,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -134,7 +135,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //负责人ids
         List<String> chargeIds = dto.getChargeIds();
         String chargeId = StringUtils.join(chargeIds,",");
-        String chargeName = getUserName(chargeIds);
+        String chargeName = getNameByIds(chargeIds);
         BeanMapper.copy(dto, entity);
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
@@ -155,7 +156,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @author yl
      * @date 2022-10-11 17:48
      */
-    public String getUserName(List<String> userIds) {
+    @Override
+    public String getNameByIds(List<String> userIds) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<String> names = new ArrayList<>();
         for (String userId : userIds) {
@@ -201,6 +203,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-17 11:35
      */
     @Override
+    @Transactional
     public Boolean removeProduct(RemoveProductDTO dto) {
         String productId = dto.getProductId();
         Boolean flag = false;
@@ -214,6 +217,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //当保存成功 就要去删除对应的任务了
             if (flag) {
                 projectTaskService.removeTaskByProductId(productId);
+                //删除项目
+                projectInfoService.removeByProductId(productId);
             }
 
         }
@@ -292,16 +297,26 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             for (ProductShowDTO item : list) {
                 //这是立项任务
                 int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+
+                //这是立项完成任务
+                int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())&& TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
+                        .collect(Collectors.toList()).size();
                 //这是项目任务
                 int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int projectFinishTaskCount=taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())&&TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
+                        collect(Collectors.toList()).size();
                 //总的任务数
                 int taskCount = approvalTaskCount + projectTaskCount;
                 item.setTaskCount(taskCount);
                 int approvalProgress = 0;
                 int projectProgress = 0;
-                if (taskCount != 0) {
-                    approvalProgress = (approvalTaskCount / taskCount) * 100;
-                    projectProgress = (projectTaskCount / taskCount) * 100;
+                //立项任务完成
+                if (approvalTaskCount != 0) {
+                    approvalProgress = (approvalFinishTaskCount / approvalTaskCount) * 100;
+                }
+                //项目任务完成
+                if (projectTaskCount != 0) {
+                    projectProgress = (projectFinishTaskCount / projectTaskCount) * 100;
                 }
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
@@ -375,7 +390,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public void updateProjectStatus(String productId, Integer state) {
         LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductInfoEntity::getId, productId);
-        //updateWrapper.set(ProductInfoEntity::getProjectStatus, state);
+        updateWrapper.set(ProductInfoEntity::getApprovalStatus, state);
         this.update(updateWrapper);
     }
 
@@ -452,16 +467,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-28 17:27
      */
     @Override
+    @Transactional
     public void updateProduct(UpdateProductDTO dto) {
         ProductInfoEntity product = this.getById(dto.getProductId());
+        //是否已立项
+        Boolean yesApproval=false;
         if (!Objects.isNull(product)) {
             String grade = dto.getGrade();
+            String productName = dto.getProductName();
             String gradeId = dto.getGradeId();
             String productChargeId = dto.getProductChargeId();
             String productChargeName = dto.getProductChargeId();
             Integer approvalStatus = dto.getApprovalStatus();
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
+            }
+            if (StringUtils.isNotBlank(productName)) {
+                product.setName(productName);
             }
             if (StringUtils.isNotBlank(gradeId)) {
                 product.setGradeId(gradeId);
@@ -477,9 +499,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
             if (approvalStatus != null) {
                 product.setApprovalStatus(approvalStatus);
+                if(ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)){
+                    yesApproval=true;
+                }
             }
 
-            this.updateById(product);
+            Boolean updateFlag= this.updateById(product);
+            //当修改成功 且是已立项 就要创建项目了
+            if(yesApproval&&updateFlag){
+                projectInfoService.addProject(dto.getProductId(),product.getName());
+            }
         }
 
         //项目信息
@@ -672,10 +701,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             item.setProductStatus(productStatusNmae);
             //项目状态
             String projectStatus = item.getProjectStatus();
+            if(StringUtils.isNotBlank(projectStatus)){
+                Integer projectState = Integer.parseInt(projectStatus);
+                String projectStateName = ProjectStateEnum.getName(projectState);
+                item.setProjectStatus(projectStateName);
+            }else{
+                item.setProjectStatus("");
+            }
 
-            Integer projectState = Integer.parseInt(projectStatus);
-            String projectStateName = ProjectStateEnum.getName(projectState);
-            item.setProjectStatus(projectStateName);
             TaskConductDTO conduct = projectTaskService.getTaskConduct(item.getProductId());
             item.setTaskCount(conduct.getTotalTaskCount());
             item.setTaskFinishCount(conduct.getFinishTaskCount());
