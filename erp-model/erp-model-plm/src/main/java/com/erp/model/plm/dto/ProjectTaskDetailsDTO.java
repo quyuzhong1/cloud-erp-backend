@@ -91,11 +91,7 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String productName;
 
-    /**
-     * 前置任务id
-     *
-     */
-    private String preTaskId;
+
 
 
     /**

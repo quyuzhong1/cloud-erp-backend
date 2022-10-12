@@ -6,6 +6,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,8 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private ProjectTaskService taskService;
+    @Autowired
+    private PreTaskService preTaskService;
 
     /**
      * 项目任务-分页列表
@@ -41,6 +44,11 @@ public class ProjectTaskController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 项目任务-新建任务
+     * @param dto
+     * @return
+     */
     @PostMapping("/save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
@@ -53,6 +61,11 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-新建任务-获取前置任务列表
+     * @param dto
+     * @return
+     */
     @GetMapping("/list")
     public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
         List<Map<String, Object>> list = taskService.getTaskListByProductId(dto);
@@ -60,7 +73,7 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
-     *  删除子任务
+     *  项目任务-任务详情-删除任务
      * @param dto
      * @return
      */
@@ -70,18 +83,25 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-任务详情-关联前置任务
+     * @param dto
+     * @return
+     */
     @PostMapping("/setPreTask")
     public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
-        Boolean flag = taskService.setPreTask(dto);
+        Boolean flag = preTaskService.addPreTask(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-任务详情-移除前置任务
+     * @param dto
+     * @return
+     */
     @PostMapping("/removePreTask")
-    public ApiResult removePreTask(@RequestBody @Validated BaseIdDTO dto) {
-        SetPreTaskDTO taskDTO = new SetPreTaskDTO();
-        taskDTO.setTaskId(dto.getId());
-        taskDTO.setPreTaskId("");
-        Boolean flag = taskService.setPreTask(taskDTO);
+    public ApiResult removePreTask(@RequestBody @Validated SetPreTaskDTO dto) {
+        Boolean flag = preTaskService.removePreTask(dto);
         return flag == true ? success() : failure();
     }
 

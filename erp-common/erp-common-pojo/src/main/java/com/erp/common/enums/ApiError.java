@@ -109,6 +109,7 @@ public enum ApiError implements Serializable {
     ERROR_95024(95024, "该任务存在子任务,不能删除"),
     ERROR_95025(95025, "产品分类不存在"),
     ERROR_95026(95026, "项目不存在"),
+    ERROR_95027(95027, "任务不存在"),
 
 
 

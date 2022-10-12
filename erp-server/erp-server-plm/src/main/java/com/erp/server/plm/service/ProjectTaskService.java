@@ -42,7 +42,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean removeTask(String id);
 
-    Boolean setPreTask(SetPreTaskDTO dto);
 
 
     List<TaskConductDTO> getTaskConductList(String projectId);

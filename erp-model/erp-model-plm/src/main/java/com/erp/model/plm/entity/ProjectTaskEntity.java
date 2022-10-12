@@ -57,11 +57,7 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("charge_name")
     private String chargeName;
 
-    /**
-     * 前置任务id
-     */
-    @TableField("pre_task_id")
-    private String preTaskId;
+
 
     /**
      * 计划开始时间

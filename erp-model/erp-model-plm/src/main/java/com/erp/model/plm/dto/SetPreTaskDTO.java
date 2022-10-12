@@ -16,10 +16,15 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SetPreTaskDTO implements Serializable {
 
-
+    /**
+     * 任务id
+     */
     @NotBlank(message = "任务id 不能为空")
     private String taskId;
 
+    /**
+     * 前置任务id
+     */
     @NotBlank(message = "前置任务id 不能为空")
     private String preTaskId;
 }

@@ -62,7 +62,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private ProjectPhaseService projectPhaseService;
 
     @Autowired
-    private ProductInfoService  productInfoService;
+    private ProductInfoService productInfoService;
+
+    @Autowired
+    private PreTaskService preTaskService;
 
 
     /**
@@ -305,6 +308,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+            //保存前置任务
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
         }
         return flag;
     }
@@ -346,23 +351,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
         return this.removeById(entity);
-    }
-
-
-    /**
-     * 设置前置任务
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2022-09-22 18:37
-     */
-    @Override
-    public Boolean setPreTask(SetPreTaskDTO dto) {
-        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(ProjectTaskEntity::getPreTaskId, dto.getPreTaskId());
-        updateWrapper.eq(ProjectTaskEntity::getId, dto.getTaskId());
-        return this.update(updateWrapper);
     }
 
 
@@ -466,15 +454,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public ProjectTaskDetailsDTO getTaskDetails(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = baseMapper.getTaskDetails(taskId);
-        //前置任务id 多个以逗号分割
-        String preTaskId = detailsDTO.getPreTaskId();
+        if (Objects.isNull(detailsDTO)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        //前置任务id集合
+        List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         //前置任务
         List<RefTaskInfoDTO> preTasks = new ArrayList<>();
         //子任务
         List<RefTaskInfoDTO> childTasks = new ArrayList<>();
-        if (StringUtils.isNotBlank(preTaskId)) {
-            List<String> preTaskIds = Arrays.asList(preTaskId.split(","));
-            preTasks = getRefTask(preTaskIds);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            preTasks = getRefTask(preTaskIdList);
         }
         detailsDTO.setPreTasks(preTasks);
         //获取到当前任务id 的子任务
@@ -486,8 +476,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setOutputDocsList(taskDeliveryService.getByTaskId(taskId));
         return detailsDTO;
     }
-
-
 
 
     private void checkTaskIfExistPid(String taskId) {
