@@ -133,7 +133,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductInfoEntity entity = new ProductInfoEntity();
         //负责人ids
         List<String> chargeIds = dto.getChargeIds();
-        String chargeId = StringUtils.join(chargeIds);
+        String chargeId = StringUtils.join(chargeIds,",");
         String chargeName = getUserName(chargeIds);
         BeanMapper.copy(dto, entity);
         entity.setChargeId(chargeId);
@@ -456,9 +456,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductInfoEntity product = this.getById(dto.getProductId());
         if (!Objects.isNull(product)) {
             String grade = dto.getGrade();
+            String gradeId = dto.getGradeId();
             String productChargeId = dto.getProductChargeId();
             String productChargeName = dto.getProductChargeId();
             Integer approvalStatus = dto.getApprovalStatus();
+            if (StringUtils.isNotBlank(grade)) {
+                product.setGrade(grade);
+            }
+            if (StringUtils.isNotBlank(gradeId)) {
+                product.setGradeId(gradeId);
+            }
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
             }
