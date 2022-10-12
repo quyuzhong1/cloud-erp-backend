@@ -65,6 +65,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private ProjectTemplateService templateService;
 
+    @Autowired
+    private CommonService commonService;
+
 
     /**
      * 项目概述
@@ -151,7 +154,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             throw new ServiceException(ApiError.ERROR_95026);
         }
         List<String> chargeIdList = dto.getChargeIdList();
-        String chargeName = productInfoService.getNameByIds(chargeIdList);
+        String chargeName = commonService.getNameByIds(chargeIdList);
         //负责人id
         project.setChargeId(StringUtils.join(chargeIdList, ","));
         project.setChargeName(chargeName);

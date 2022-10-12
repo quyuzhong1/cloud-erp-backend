@@ -79,4 +79,10 @@ public class ProductShowDTO implements Serializable {
     private Integer taskCount;
 
 
+    /**
+     * 是否收藏 产品 true  收藏 false 没有
+     */
+    private Boolean ifAddProduct;
+
+
 }

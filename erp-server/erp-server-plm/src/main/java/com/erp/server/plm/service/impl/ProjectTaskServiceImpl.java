@@ -61,11 +61,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectPhaseService projectPhaseService;
 
-    @Autowired
-    private ProductInfoService productInfoService;
+
 
     @Autowired
     private PreTaskService preTaskService;
+
+    @Autowired
+    private CommonService commonService;
 
 
     /**
@@ -299,7 +301,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
         List<String> chargeIdList = dto.getChargeList();
-        String chargeName = productInfoService.getNameByIds(chargeIdList);
+        String chargeName = commonService.getNameByIds(chargeIdList);
         taskEntity.setChargeId(String.join(",", chargeIdList));
         taskEntity.setChargeName(chargeName);
         //交付文档
