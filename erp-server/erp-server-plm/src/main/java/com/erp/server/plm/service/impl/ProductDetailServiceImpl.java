@@ -1,11 +1,14 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -17,6 +20,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
+import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -30,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description: 产品明细信息服务类
@@ -226,11 +231,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95017);
         }
         //如果是修改允许保留原来的产品名称不变
-        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
+        if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        productSpuBaseInfoDTO.setApprovalStatus(4);
+        productSpuBaseInfoDTO.setSpecType(1);
+        productSpuBaseInfoDTO.setGrade("");
         //1.修改产品表 主表信息
-        String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
+        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
@@ -308,6 +317,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
         //检查spu编号是否重复
         if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo(), productManySpecDTO.getProductInfoDTO().getId())) {
@@ -315,7 +325,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //如果是修改允许保留原来的产品名称不变
-        if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
+        if (this.checkName(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
         List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
@@ -328,8 +338,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
+        productInfoDTO.setApprovalStatus(4);
+        productInfoDTO.setSpecType(2);
+        productInfoDTO.setGrade("");
+
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
-            productInfoService.updateSpec(productManySpecDTO.getProductInfoDTO());
+            productInfoService.updateSpec(productInfoDTO);
         }
 
         //2.修改/新增 sku信息
@@ -392,36 +406,44 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO) {
         //1.保存产品表 基础信息获取产品id
         String id = productInfoService.updateSpec(variantAutoAddDTO.getProductSpuBaseInfoDTO());
-
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
-        List<String> mainList = new ArrayList<>();
-        List<String> varianTempList = new ArrayList<>();
-        Boolean flag = true;
-        Integer count = 1;
+        List<ProductPropertyModelDTO> varianTempList = new ArrayList<>();
         productVariantOptionService.deleteByProductId(id);
-        for (VarianRefPropertyDTO req : varianRefPropertyList) {//颜色 - 尺寸
+        for (VarianRefPropertyDTO req : varianRefPropertyList) {
             ProductVariantOptionEntity productVariantOptionEntity = new ProductVariantOptionEntity();
             productVariantOptionEntity.setProductId(id);
             productVariantOptionEntity.setVariantType(req.getPropertyType());
-            productVariantOptionEntity.setVariantValue(StringUtils.join(req.getVarianList()));
+            productVariantOptionEntity.setVariantValue(JSONObject.toJSONString(req.getVarianList()));
             productVariantOptionService.saveOrUpdateOptionEntity(productVariantOptionEntity);
-
             List<String> varianList = req.getVarianList();
-            if (flag) {
-                mainList.addAll(varianList);
-            } else {
-                for (int i = 0; i < mainList.size(); i++) {
-                    for (int j = 0; j < varianList.size(); j++) {
-                        varianTempList.add(i, mainList.get(i) + "," + varianList.get(j));
-                    }
+            for (String varian : varianList) {
+                varianTempList.add(new ProductPropertyModelDTO(req.getPropertyType(), varian));
+            }
+        }
+
+        // 按指定字段（type）分组
+        Map<String, List<ProductPropertyModelDTO>> modelMap = varianTempList.stream().collect(Collectors.groupingBy(ProductPropertyModelDTO::getType));
+        Collection<List<ProductPropertyModelDTO>> mapValues = modelMap.values();
+        List<List<ProductPropertyModelDTO>> dimensionValue = new ArrayList<>(mapValues);    // 原List
+
+        List<List<ProductPropertyModelDTO>> result = new ArrayList<>(); // 返回集合
+        new AlgorithmUtil().descartes(dimensionValue, result, 0, new ArrayList<ProductPropertyModelDTO>());
+
+        List<String> varianList = new ArrayList<>();
+        for (List<ProductPropertyModelDTO> models : result) {
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < models.size(); i++) {
+                sb.append(models.get(i).getAuthor());
+                if (i+1 < models.size()) {
+                    sb.append(",");
                 }
             }
-            flag = false;
+            varianList.add(sb.toString());
         }
 
         //把变体属性放入实体类
         List<ProductDetailEntity> list = new ArrayList<>();
-        for (String req : varianTempList) {
+        for (String req : varianList) {
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
             productDetailEntity.setProductId(id);
@@ -433,8 +455,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //过滤掉重复的变体属性
         List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
         for (ProductDetailEntity req : detailEntityList) {
-            if (list.contains(req.getVariantProperty())) {
-                list.remove(req.getVariantProperty());
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getVariantProperty().equals(req.getVariantProperty())) {
+                    list.remove(i);
+                }
             }
         }
 
@@ -443,15 +467,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(1, "新增sku明细失败！");
         }
         return this.queryByProductId(id);
-    }
-
-    public static void main(String[] args) {
-        List<String> a = new ArrayList<>();
-        a.add("a");
-        a.add("b");
-        a.add("c");
-        a.add("d");
-        String s3 = StringUtils.join(a,",");
     }
 
     /**
@@ -496,12 +511,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.list(queryWrapper);
     }
 
-    @Override
-    public List<ProductDetailEntity> importProductFile(MultipartFile file, HttpServletRequest request) {
-
-
-        return null;
-    }
 
     /**
      * @Description 检查sku是否重复
@@ -518,6 +527,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return false;
     }
+
     /**
      * @Description 检查sku是否重复
      * @Author Luo_WG
@@ -601,6 +611,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional
     public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
         //根据产品名称查询产品信息
         ProductDetailShowDTO productByName = getProductBy(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), "");

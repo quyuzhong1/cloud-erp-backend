@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
-import io.swagger.models.auth.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

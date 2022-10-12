@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -17,25 +16,21 @@ public class ProductImagesDTO implements Serializable {
     /**
      * 主键id 无id：新增 有id：修改
      */
-    @ApiModelProperty(value = "主键id 无id：新增 有id：修改")
     private String id;
 
     /**
      * 产品表id
      */
-    @ApiModelProperty(value = "产品表id")
     private String productId;
 
     /**
      * 产品sku明细表id
      */
-    @ApiModelProperty(value = "产品sku明细表id")
     private String skuId;
 
     /**
      * 图片地址
      */
-    @ApiModelProperty(value = "图片地址")
     private String imagesUrl;
 
     private static final long serialVersionUID = 1L;

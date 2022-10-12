@@ -13,9 +13,6 @@ import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.ProductOperateRecordService;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -78,11 +75,7 @@ public class CommonController  extends BaseController {
      * @param productId 产品表id
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductOperateRecordEntity>>
      **/
-    @ApiOperation(value = "产品开发管理-项目任务-产品操作日志-查询")
     @GetMapping("/listOperateRecord")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "productId", value = "产品信息表id", required = true),
-    })
     public ApiResult<List<ProductOperateRecordEntity>> listOperateRecord(@RequestParam(value = "productId") String productId) {
         List<ProductOperateRecordEntity> list = productOperateRecordService.list(productId);
         return this.success(list);
@@ -95,7 +88,6 @@ public class CommonController  extends BaseController {
      * @param dto 产品操作记录表（VO）
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @ApiOperation(value = "产品开发管理-项目任务-产品操作日志-新增")
     @PostMapping("/saveOrUpdateOperateRecord")
     public ApiResult saveOrUpdateOperateRecord(@RequestBody ProductOperateRecordDTO dto) {
         Boolean flag = productOperateRecordService.saveOrUpdate(dto);
@@ -109,7 +101,6 @@ public class CommonController  extends BaseController {
      * @param dto 产品操作记录表
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @ApiOperation(value = "产品开发管理-项目任务-产品操作日志-批量新增")
     @PostMapping("/saveOrUpdateOperateRecordBatch")
     public ApiResult saveOrUpdateOperateRecordBatch(@RequestBody List<ProductOperateRecordDTO> dto) {
         Boolean flag = productOperateRecordService.saveOrUpdateBatch(dto);

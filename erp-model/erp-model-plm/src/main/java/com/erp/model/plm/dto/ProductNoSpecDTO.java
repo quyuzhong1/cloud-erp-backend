@@ -1,10 +1,7 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -21,50 +18,42 @@ public class ProductNoSpecDTO {
      * 产品基础信息
      */
     @NotNull(message = "产品基础信息不能为空")
-    @ApiModelProperty(value = "产品基础信息",required = true)
     private ProductBaseInfoDTO productBaseInfoDTO;
 
     /**
      * 成本信息
      */
     @NotNull(message = "成本信息不能为空")
-    @ApiModelProperty(value = "成本信息",required = true)
     private ProductCostDTO productCostDTO;
 
     /**
      * 采购信息信息
      */
-    @ApiModelProperty(value = "采购信息信息")
     private ProductPurchaseDTO productPurchaseDTO;
 
     /**
      * 采购备注信息
      */
-    @ApiModelProperty(value = "采购备注信息")
     private List<ProductPurchaseRemarkDTO> productPurchaseRemarkList;
 
     /**
      * 产品销售信息
      */
     @NotNull(message = "产品销售不能为空")
-    @ApiModelProperty(value = "产品销售信息")
     private ProductSaleDTO productSaleDTO;
 
     /**
      * 产品物流信息
      */
-    @ApiModelProperty(value = "产品物流信息")
     private ProductLogisticsDTO productLogisticsDTO;
 
     /**
      * 产品包装信息
      */
-    @ApiModelProperty(value = "产品包装信息")
     private ProductPackDTO productPackDTO;
 
     /**
      * 产品证书信息
      */
-    @ApiModelProperty(value = "产品证书信息")
     private List<ProductCertificateDTO> productCertificateList;
 }

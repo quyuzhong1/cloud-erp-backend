@@ -1,7 +1,5 @@
 package com.erp.model.plm.dto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,12 +17,10 @@ public class ProductSkuDTO {
     /**
      * sku/spu/编号
      */
-    @ApiModelProperty(value = "sku/spu/编号")
     private String no;
 
     /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
      */
-    @ApiModelProperty(value = "产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发")
     private List<Integer> stateList;
 }

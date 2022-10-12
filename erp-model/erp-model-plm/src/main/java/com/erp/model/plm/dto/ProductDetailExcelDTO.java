@@ -54,7 +54,7 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "单位", index = 12)
     private String unitName;
 
-    @ExcelProperty(value = "销售方式", index = 13)
+    @ExcelProperty(value = "产品经理", index = 13)
     private String chargeName;
 
     @ExcelProperty(value = "目标含税成本", index = 14)

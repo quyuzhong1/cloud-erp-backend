@@ -131,22 +131,19 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         productInfoDTO.setName(dto.getName());
-        productInfoDTO.setApprovalStatus(4);
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {
             productInfoDTO.setChargeId("产品类别Id");
             productInfoDTO.setCategory("产品类别");
         }*/
-
+        productInfoDTO.setApprovalStatus(4);
         productInfoDTO.setSpecType(1);
-
+        productInfoDTO.setGrade("");
         productInfoDTO.setChargeName("产品经理");
         productInfoDTO.setChargeId("产品经理id");
         productInfoDTO.setMaterials(dto.getMaterials());
 
-        //产品等级 没有
-        productInfoDTO.setGrade("");
         productInfoDTO.setFunctionDesc(dto.getProductFunctionDesc());
         productInfoDTO.setProductSellSpot(dto.getProductSellSpot());
         productInfoDTO.setSaleMethod(dto.getSaleMethod());

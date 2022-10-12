@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,12 +17,10 @@ public class VariantAutoAddDTO {
     /**
      * 产品spu基础信息
      */
-    @ApiModelProperty(value = "产品spu基础信息",required = true)
     private ProductInfoDTO productSpuBaseInfoDTO;
 
     /**
      * 变体属性
      */
-    @ApiModelProperty(value = "变体属性",required = true)
     private List<VarianRefPropertyDTO> varianRefPropertyList;
 }

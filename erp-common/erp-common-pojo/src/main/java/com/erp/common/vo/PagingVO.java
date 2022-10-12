@@ -1,7 +1,6 @@
 package com.erp.common.vo;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
 import java.util.List;
@@ -17,27 +16,22 @@ public class PagingVO<T> implements Serializable {
     /**
      * 总记录数
      */
-    @ApiModelProperty(value = "总记录数")
     private int totalCount;
     /**
      * 每页记录数
      */
-    @ApiModelProperty(value = "每页记录数")
     private int pageSize;
     /**
      * 总页数
      */
-    @ApiModelProperty(value = "总页数")
     private int totalPage;
     /**
      * 当前页数
      */
-    @ApiModelProperty(value = "当前页数")
     private int currPage;
     /**
      * 列表数据
      */
-    @ApiModelProperty(value = "列表数据")
     private List<T> list;
 
     /**

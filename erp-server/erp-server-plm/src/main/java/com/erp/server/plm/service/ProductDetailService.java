@@ -169,15 +169,6 @@ public interface ProductDetailService {
     Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
 
     /**
-     * @Description 根据产品主键id查询sku明细
-     * @Author Luo_WG
-     * @Date 2022/9/27 16:41
-     * @param [file, request]
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
-     **/
-    List<ProductDetailEntity> importProductFile(MultipartFile file, HttpServletRequest request);
-
-    /**
      * 导出excel的sku数据
      * @Author Luo_WG
      * @Date 2022/10/9 11:49

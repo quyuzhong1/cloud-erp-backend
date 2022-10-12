@@ -84,13 +84,13 @@ public class ProductPurchaseEntity implements Serializable {
      * 一级供应商
      */
     @TableField(value = "main_supplier")
-    private Integer mainSupplier;
+    private String mainSupplier;
 
     /**
      * 二级供应商
      */
     @TableField(value = "second_supplier")
-    private Integer secondSupplier;
+    private String secondSupplier;
 
     /**
      * 创建时间

@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -16,13 +15,11 @@ public class ProductUnitDTO implements Serializable {
     /**
      * 主键id 无id：修改 有id：新增
      */
-    @ApiModelProperty(value = "主键id 无id：修改 有id：新增")
     private String id;
 
     /**
      * 单位名称
      */
-    @ApiModelProperty(value = "单位名称")
     private String name;
 
     private static final long serialVersionUID = 1L;
