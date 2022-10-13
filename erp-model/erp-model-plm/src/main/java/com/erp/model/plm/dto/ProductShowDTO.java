@@ -22,6 +22,11 @@ public class ProductShowDTO implements Serializable {
     private String productId;
 
     /**
+     * 项目id
+     */
+    private String projectId;
+
+    /**
      * 产品名称
      */
     private String name;
@@ -30,6 +35,11 @@ public class ProductShowDTO implements Serializable {
      * 产品等级
      */
     private String grade;
+
+    /**
+     * 产品类型
+     */
+    private Integer type;
 
     /**
      * 产品立项状态
@@ -82,7 +92,12 @@ public class ProductShowDTO implements Serializable {
     /**
      * 是否收藏 产品 true  收藏 false 没有
      */
-    private Boolean ifAddProduct;
+    private Boolean ifAddProduct=false;
+
+    /**
+     * 是否迭代产品 true  是  false 不是
+     */
+    private Boolean ifIteration=false;
 
 
 }

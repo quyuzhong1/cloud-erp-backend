@@ -140,19 +140,6 @@ public class ProductInfoController extends BaseController {
         productInfoService.exportProductData(dto);
     }
 
-    /**
-     * 产品列表-项目归档
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2022-10-09 14:38
-     */
-    @PostMapping("/archive")
-    public ApiResult archive(@RequestParam(value = "productId") String productId) {
-        boolean flag = productInfoService.archive(productId);
-        return flag == true ? success() : failure();
-    }
 
 
 }

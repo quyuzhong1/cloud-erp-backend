@@ -55,6 +55,17 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-编辑任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
+        Boolean flag = taskService.updateTask(dto);
+        return flag == true ? success() : failure();
+    }
+
     @PostMapping("/saveSonTask")
     public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);

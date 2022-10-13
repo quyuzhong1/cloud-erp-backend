@@ -4,10 +4,12 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
 
-        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,pi.project_status,p.brand_name,
-        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p LEFT JOIN project_info pi
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,pi.id AS projectId,
+        p.type,p.approval_status,pi.charge_name AS projectChargeName,
+        pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE   P.delete_state=0
+        WHERE P.delete_state=0
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -57,10 +59,12 @@
     </select>
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
-        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,pi.project_status,p.brand_name,
-        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p LEFT JOIN project_info pi
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,p.type,pi.id AS projectId,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time
+        FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE   P.delete_state=0
+        WHERE P.delete_state=0
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>

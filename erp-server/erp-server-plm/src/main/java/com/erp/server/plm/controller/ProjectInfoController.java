@@ -33,6 +33,11 @@ public class ProjectInfoController extends BaseController {
     @Autowired
     private ProjectInfoService projectInfoService;
 
+    /**
+     * 项目列表-启动项目
+     * @param dto
+     * @return
+     */
 
     @PostMapping("/startProject")
     public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
@@ -63,6 +68,21 @@ public class ProjectInfoController extends BaseController {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 项目列表-项目归档
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-10-09 14:38
+     */
+    @PostMapping("/archive")
+    public ApiResult archive(@RequestParam(value = "productId") String productId) {
+        boolean flag = projectInfoService.archive(productId);
+        return flag == true ? success() : failure();
+    }
+
 
 
 }

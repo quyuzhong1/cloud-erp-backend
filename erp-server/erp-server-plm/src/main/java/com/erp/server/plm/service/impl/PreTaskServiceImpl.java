@@ -34,6 +34,8 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public void savePreTask(String taskId, List<String> preTaskIdList) {
+        //先删除前置任务
+        removePreTaskByTaskId(taskId, preTaskIdList);
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             List<PreTaskEntity> addList = new ArrayList<>();
             for (String preTaskId : preTaskIdList) {
@@ -45,6 +47,23 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
             this.saveBatch(addList);
         }
 
+    }
+
+
+    /**
+     * 删除前置任务
+     *
+     * @param taskId
+     * @param preTaskIdList
+     * @return void
+     * @author yl
+     * @date 2022-10-13 9:39
+     */
+    private void removePreTaskByTaskId(String taskId, List<String> preTaskIdList) {
+        LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
+        queryWrapper.in(PreTaskEntity::getPreTaskId, preTaskIdList);
+        this.remove(queryWrapper);
     }
 
     /**
@@ -73,24 +92,25 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     @Override
     public Boolean removePreTask(SetPreTaskDTO dto) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(PreTaskEntity::getTaskId,dto.getTaskId());
-        queryWrapper.eq(PreTaskEntity::getPreTaskId,dto.getPreTaskId());
+        queryWrapper.eq(PreTaskEntity::getTaskId, dto.getTaskId());
+        queryWrapper.eq(PreTaskEntity::getPreTaskId, dto.getPreTaskId());
         return remove(queryWrapper);
     }
 
     /**
      * 根据任务id 获取任务的前置任务id
-     * @author yl
-     * @date 2022-10-12 14:45
+     *
      * @param taskId
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-12 14:45
      */
     @Override
     public List<String> getPreTaskIdList(String taskId) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(PreTaskEntity::getTaskId,taskId);
+        queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
         queryWrapper.select(PreTaskEntity::getPreTaskId);
-        return this.listObjs(queryWrapper,Object::toString);
+        return this.listObjs(queryWrapper, Object::toString);
     }
 }
 

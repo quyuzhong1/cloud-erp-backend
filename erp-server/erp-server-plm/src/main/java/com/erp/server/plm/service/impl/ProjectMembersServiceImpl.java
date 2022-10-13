@@ -114,6 +114,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             for (ProjectMembersEntity entity : list) {
                 entity.setProjectId(projectId);
                 entity.setProductId(productId);
+                entity.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);
         }
@@ -130,6 +131,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             for (ProjectMembersEntity entity : list) {
                 entity.setProjectId(projectId);
                 entity.setProductId(productId);
+                entity.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);
         }

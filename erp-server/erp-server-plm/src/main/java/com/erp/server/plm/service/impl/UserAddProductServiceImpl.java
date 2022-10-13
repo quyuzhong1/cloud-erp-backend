@@ -78,6 +78,7 @@ public class UserAddProductServiceImpl extends ServiceImpl<UserAddProductEntityM
     @Override
     public List<String> getMyCollectProductIds(String userId) {
         LambdaQueryWrapper<UserAddProductEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(UserAddProductEntity::getProductId);
         queryWrapper.eq(UserAddProductEntity::getUserId,userId);
         return this.listObjs(queryWrapper,Object::toString);
     }

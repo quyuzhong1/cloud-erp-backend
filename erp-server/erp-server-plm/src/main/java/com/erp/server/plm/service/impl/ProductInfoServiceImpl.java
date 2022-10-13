@@ -22,6 +22,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
@@ -146,9 +147,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
 
-
-
-
     /**
      * 修改产品的分类
      *
@@ -245,43 +243,38 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
 
-
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         //如果是我的收藏
         IPage pageData = new Page();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        //根据当前登录人id 获取收藏的列表
+        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-            LoginUser loginUser = PlmInterceptor.threadLocal.get();
-            String userId = "";
-            if (loginUser != null) {
-                userId = loginUser.getUid();
-            }
-            //根据当前登录人id 获取收藏的列表
-            List<String> productIds = userAddProductService.getMyCollectProductIds(userId);
-            if (CollectionUtils.isNotEmpty(productIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, productIds, archiveProductIds);
+            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
+                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
             }
         } else {
             pageData = baseMapper.paging(query, params, archiveProductIds);
         }
-
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(commonService.getUserInfo().getUid());
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             for (ProductShowDTO item : list) {
-                if(CollectionUtils.isNotEmpty(myCollectProductIds)&&myCollectProductIds.contains(item.getProductId())){
+                if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
-                }else{
-                    item.setIfAddProduct(false);
                 }
+                if(ProductConstant.ITERATION_PRODUCT.equals(item.getType())){
+                    item.setIfIteration(true);
+                }
+
                 //这是立项任务
                 int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-
                 //这是立项完成任务
                 int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
                         .collect(Collectors.toList()).size();
@@ -570,23 +563,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.getProductRelevanceList();
     }
 
-
-    /**
-     * 归档产品
-     *
-     * @param productId
-     * @return boolean
-     * @author yl
-     * @date 2022-10-09 14:44
-     */
-    @Override
-    public boolean archive(String productId) {
-        //检查项目完成情况
-        projectInfoService.checkProjectFinish(productId);
-        //添加归档信息
-        Boolean flag = archiveService.saveArchive(productId);
-        return flag;
-    }
 
     /**
      * /**
