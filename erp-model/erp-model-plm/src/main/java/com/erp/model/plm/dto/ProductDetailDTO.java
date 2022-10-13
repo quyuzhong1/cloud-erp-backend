@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -41,6 +42,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 计划上市时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
     /**

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -65,12 +66,14 @@ public class ProductSaleEntity implements Serializable {
      * 上市时间
      */
     @TableField(value = "listing_time")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date listingTime;
 
     /**
      * 退市时间
      */
     @TableField(value = "delisting_time")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date delistingTime;
 
     /**

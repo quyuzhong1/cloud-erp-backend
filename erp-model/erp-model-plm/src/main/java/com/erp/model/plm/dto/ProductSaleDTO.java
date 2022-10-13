@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -54,11 +55,13 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 上市时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private Date listingTime;
 
     /**
      * 退市时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private Date delistingTime;
 
     /**

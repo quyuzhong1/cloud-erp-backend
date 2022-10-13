@@ -11,10 +11,12 @@ import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductPurchaseRemarkMapper;
+import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductPurchaseRemarkService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -23,6 +25,9 @@ import java.util.List;
 @Service
 public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchaseRemarkMapper, ProductPurchaseRemarkEntity>
     implements ProductPurchaseRemarkService {
+
+    @Resource
+    private CommonService commonService;
 
     /**
      * @Description 产品采购备注信息查询列表
@@ -49,6 +54,7 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
     public Boolean saveOrUpdate(ProductPurchaseRemarkDTO dto) {
         ProductPurchaseRemarkEntity remarkEntity = new ProductPurchaseRemarkEntity();
         BeanMapper.copy(dto, remarkEntity);
+
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(dto.getId())) {

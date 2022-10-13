@@ -470,7 +470,7 @@ public class ProductDetailController extends BaseController {
      **/
     @GetMapping("/listProductUnit")
     public ApiResult<List<ProductUnitEntity>> listProductUnit() {
-        List<ProductUnitEntity> list = productUnitService.list();
+        List<ProductUnitEntity> list = productUnitService.listProductUnit();
         return this.success(list);
     }
 
