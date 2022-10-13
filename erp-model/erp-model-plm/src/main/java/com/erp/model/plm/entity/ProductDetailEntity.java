@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -50,6 +51,7 @@ public class ProductDetailEntity implements Serializable {
      * 计划上市时间
      */
     @TableField(value = "plan_listing_time")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
     /**

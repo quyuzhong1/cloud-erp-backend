@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -53,6 +54,7 @@ public class ExportSkuExcelDTO implements Serializable {
     private String skuName;
 
     @ExcelProperty(value = "计划上市时间", index = 14)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String planListingTime;
 
     @ExcelProperty(value = "单位名称", index = 15)

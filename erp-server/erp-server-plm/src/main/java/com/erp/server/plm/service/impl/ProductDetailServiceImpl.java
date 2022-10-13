@@ -232,7 +232,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_95017);
+            throw new ServiceException(ApiError.ERROR_95007);
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setApprovalStatus(4);
@@ -326,7 +326,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
-            throw new ServiceException(ApiError.ERROR_95017);
+            throw new ServiceException(ApiError.ERROR_95007);
         }
         List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
         //检查sku是否重复
@@ -363,9 +363,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (productPurchaseList.size() > 0) {
             productPurchaseService.saveOrUpdateBatch(productManySpecDTO.getProductPurchaseList());
         }
+
         //新增/修改采购备注信息
         if (!ListUtils.isEmpty(productManySpecDTO.getProductPurchaseRemarkList())) {
             List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productManySpecDTO.getProductPurchaseRemarkList();
+            productPurchaseRemarkList.forEach(req -> {
+                req.setProductId(productInfoDTO.getId());
+            });
             productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
         }
 
@@ -404,6 +408,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public List<ProductDetailEntity> insertManySpecAuto(VariantAutoAddDTO variantAutoAddDTO) {
+        //检查spu编号是否重复
+        if (this.checkSpuNo(variantAutoAddDTO.getProductSpuBaseInfoDTO().getSpuNo(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95017);
+        }
+        //如果是修改允许保留原来的产品名称不变
+        if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95007);
+        }
+
         //1.保存产品表 基础信息获取产品id
         String id = productInfoService.updateSpec(variantAutoAddDTO.getProductSpuBaseInfoDTO());
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
@@ -613,13 +626,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
-        //根据产品名称查询产品信息
-        ProductDetailShowDTO productByName = getProductBy(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), "");
-        if (!ObjectUtils.isEmpty(productByName)) {
-            if (!productByName.getSkuNo().equals(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo())) {
-                throw new ServiceException(ApiError.ERROR_95007);
-            }
-        }
 
         //1.新增产品表 主表信息
         String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());

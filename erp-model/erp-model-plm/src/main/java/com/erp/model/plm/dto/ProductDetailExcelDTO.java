@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.alibaba.excel.annotation.ExcelProperty;
@@ -49,6 +50,7 @@ public class ProductDetailExcelDTO {
     private String variantProperty;
 
     @ExcelProperty(value = "计划上市时间", index = 11)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
     @ExcelProperty(value = "单位", index = 12)
