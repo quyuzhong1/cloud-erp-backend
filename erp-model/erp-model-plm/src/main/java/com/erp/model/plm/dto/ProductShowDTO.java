@@ -37,6 +37,11 @@ public class ProductShowDTO implements Serializable {
     private String grade;
 
     /**
+     * 产品等级id
+     */
+    private String gradeId;
+
+    /**
      * 产品类型
      */
     private Integer type;
@@ -72,6 +77,29 @@ public class ProductShowDTO implements Serializable {
      * 产品品牌
      */
     private String brandName;
+
+    /**
+     * 立项任务总数
+     */
+    private Integer approvalTaskCount;
+
+    /**
+     * 立项任务完成总数
+     */
+    private Integer approvalFinishTaskCount;
+
+    /**
+     * 项目任务总数
+     */
+    private Integer projectTaskCount;
+
+    /**
+     * 项目任务完成总数
+     */
+    private Integer projectFinishTaskCount;
+
+
+
 
     /**
      * 立项进度

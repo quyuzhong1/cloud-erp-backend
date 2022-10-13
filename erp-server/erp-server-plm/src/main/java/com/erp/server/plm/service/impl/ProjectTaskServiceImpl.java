@@ -308,9 +308,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        List<String> chargeIdList = dto.getChargeList();
-        String chargeName = commonService.getNameByIds(chargeIdList);
-        taskEntity.setChargeId(String.join(",", chargeIdList));
+        String chargeId = dto.getChargeId();
+        String chargeName = commonService.getNameById(chargeId);
+        taskEntity.setChargeId(chargeId);
         taskEntity.setChargeName(chargeName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
@@ -503,9 +503,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        List<String> chargeIdList = dto.getChargeList();
-        String chargeName = commonService.getNameByIds(chargeIdList);
-        taskEntity.setChargeId(String.join(",", chargeIdList));
+        String chargeId = dto.getChargeId();
+        String chargeName = commonService.getNameById(chargeId);
+        taskEntity.setChargeId(chargeId);
         taskEntity.setChargeName(chargeName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();

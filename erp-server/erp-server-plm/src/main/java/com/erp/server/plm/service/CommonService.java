@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 
 import java.util.List;
@@ -15,6 +16,8 @@ public interface CommonService {
     public LoginUser getUserInfo();
 
     String getNameByIds(List<String> userIds);
+
+    String getNameById (String userId);
 
 
 }

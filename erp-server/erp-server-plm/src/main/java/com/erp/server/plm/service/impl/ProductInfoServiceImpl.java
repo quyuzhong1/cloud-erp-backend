@@ -275,13 +275,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
                 //这是立项任务
                 int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                item.setApprovalTaskCount(approvalTaskCount);
                 //这是立项完成任务
                 int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
                         .collect(Collectors.toList()).size();
+                item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 //这是项目任务
                 int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 int projectFinishTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
                         collect(Collectors.toList()).size();
+
+                item.setProjectTaskCount(projectTaskCount);
+                item.setProjectFinishTaskCount(projectFinishTaskCount);
                 //总的任务数
                 int taskCount = approvalTaskCount + projectTaskCount;
                 item.setTaskCount(taskCount);
