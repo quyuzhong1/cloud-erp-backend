@@ -37,6 +37,11 @@ public class ProductShowDTO implements Serializable {
     private String grade;
 
     /**
+     * 产品等级id
+     */
+    private String gradeId;
+
+    /**
      * 产品类型
      */
     private Integer type;
