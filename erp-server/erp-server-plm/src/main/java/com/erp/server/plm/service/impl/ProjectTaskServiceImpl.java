@@ -28,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,7 +61,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private ProjectPhaseService projectPhaseService;
-
 
 
     @Autowired
@@ -139,7 +139,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     *   //根据产品很任务id 获取任务名
+     * //根据产品很任务id 获取任务名
+     *
      * @param productId
      * @return
      */
@@ -172,6 +173,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             for (ProjectTaskEntity entity : list) {
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
+                entity.setId(IdWorker.getIdStr());
                 entity.setStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
             }
             this.saveBatch(list);
@@ -193,15 +195,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId) {
         List<TemplateTaskEntity> templateTasks = templateTaskService.getTaskByTemplateId(flagTemplateId);
+        List<ProjectTaskEntity> saveList = new LinkedList<>();
         for (TemplateTaskEntity item : templateTasks) {
-            List<ProjectTaskEntity> saveList = new LinkedList<>();
             ProjectTaskEntity entity = new ProjectTaskEntity();
             BeanMapper.copy(item, entity);
             entity.setProductId(saveProductId);
             entity.setProjectId(saveProjectId);
+            entity.setId(IdWorker.getIdStr());
             saveList.add(entity);
-            this.saveBatch(saveList);
         }
+        this.saveBatch(saveList);
     }
 
     /**
@@ -226,6 +229,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
+                entity.setId(IdWorker.getIdStr());
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
@@ -300,7 +304,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean save(ProjectTaskDTO dto) {
-        checkTaskName(dto.getId(),dto.getProductId(), dto.getName());
+        checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -484,17 +488,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return detailsDTO;
     }
 
-    
+
     /**
      * 修改 任务信息
-     * @author yl
-     * @date 2022-10-13 9:25
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-10-13 9:25
      */
     @Override
     public Boolean updateTask(ProjectTaskDTO dto) {
-        checkTaskName(dto.getId(),dto.getProductId(), dto.getName());
+        checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -602,14 +607,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author yl
      * @date 2022-09-22 16:36
      */
-    private void checkTaskName(String taskId,String productId, String name) {
+    private void checkTaskName(String taskId, String productId, String name) {
         //根据产品很任务id 获取任务名
         List<ProjectTaskEntity> taskList = getByProductId(productId);
-        if(StringUtils.isNotBlank(taskId)){
-            taskList=taskList.stream().filter(t->!taskId.equals(t.getPid())).collect(Collectors.toList());
+        if (StringUtils.isNotBlank(taskId)) {
+            taskList = taskList.stream().filter(t -> !taskId.equals(t.getPid())).collect(Collectors.toList());
         }
         List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
-       //获取系统的任务名
+        //获取系统的任务名
         List<String> sysTaskNames = projectTaskSysService.getSysTaskNames();
         taskNames.addAll(sysTaskNames);
         if (taskNames.contains(name)) {
