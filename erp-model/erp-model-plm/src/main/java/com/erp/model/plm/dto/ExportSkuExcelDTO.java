@@ -106,9 +106,11 @@ public class ExportSkuExcelDTO implements Serializable {
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 31)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String listingTime;
 
     @ExcelProperty(value = "退市时间", index = 32)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 33)

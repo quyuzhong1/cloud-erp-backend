@@ -99,9 +99,11 @@ public class ProductDetailExcelDTO {
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 27)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date listingTime;
 
     @ExcelProperty(value = "退市时间", index = 28)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 29)
