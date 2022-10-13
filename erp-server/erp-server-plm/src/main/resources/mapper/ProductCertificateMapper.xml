@@ -29,7 +29,7 @@
         pd.images_url,
         <include refid="Base_Column_List"/>
         FROM product_detail pd
-        LEFT JOIN product_certificate pc ON pc.sku_id = pd."id"
+        INNER JOIN product_certificate pc ON pc.sku_id = pd."id"
         WHERE pd.product_id = #{productId}
     </select>
 </mapper>
