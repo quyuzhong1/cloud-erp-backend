@@ -28,6 +28,7 @@ public class CommonServiceImpl implements CommonService {
 
     /**
      * 获取用户信息
+     *
      * @return
      */
     @Override
@@ -35,14 +36,13 @@ public class CommonServiceImpl implements CommonService {
         String userId = "";
         String userName = "";
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        if(Objects.isNull(loginUser)){
-            loginUser=new LoginUser();
+        if (Objects.isNull(loginUser)) {
+            loginUser = new LoginUser();
             loginUser.setUid(userId);
             loginUser.setUserName(userName);
         }
         return loginUser;
     }
-
 
 
     /**
@@ -67,4 +67,16 @@ public class CommonServiceImpl implements CommonService {
         }
         return StringUtils.join(names, ",");
     }
+
+    @Override
+    public String getNameById(String userId) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+        if (!Objects.isNull(user)) {
+            return user.getUserName();
+        }
+        return "";
+    }
+
+
 }

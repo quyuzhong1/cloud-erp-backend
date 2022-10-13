@@ -255,7 +255,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         IPage pageData = new Page();
         //如果是我的收藏
         if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-
             if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
                 pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds);
             }
@@ -284,10 +283,16 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //这是立项完成任务
                 int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
                         .collect(Collectors.toList()).size();
+                item.setApprovalFinishTaskCount(approvalFinishTaskCount);
+                item.setApprovalTaskCount(approvalTaskCount);
+
                 //这是项目任务
                 int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 int projectFinishTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
                         collect(Collectors.toList()).size();
+
+                item.setProjectTaskCount(projectTaskCount);
+                item.setProjectFinishTaskCount(projectFinishTaskCount);
                 //总的任务数
                 int taskCount = approvalTaskCount + projectTaskCount;
                 item.setTaskCount(taskCount);

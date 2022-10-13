@@ -66,9 +66,9 @@ public class ProjectTaskDTO implements Serializable {
     /**
      * 负责人id
      */
-    @NotNull(message = "负责人不能为空")
-    @Size(min = 0,message = "负责人不能为空")
-    private List<String> chargeList;
+    @NotNull(message = "任务负责人不能为空")
+
+    private String chargeId;
 
     /**
      * 前置任务id
