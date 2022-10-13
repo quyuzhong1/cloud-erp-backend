@@ -138,6 +138,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return list(queryWrapper);
     }
 
+    /**
+     *   //根据产品很任务id 获取任务名
+     * @param productId
+     * @return
+     */
     @Override
     public List<ProjectTaskEntity> getByProductId(String productId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -295,9 +300,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean save(ProjectTaskDTO dto) {
-        checkTaskName(dto.getProductId(), dto.getName());
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
-
+        checkTaskName(dto.getId(),dto.getProductId(), dto.getName());
+        LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
         List<String> chargeIdList = dto.getChargeList();
@@ -408,6 +412,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public TaskConductDTO getTaskConduct(String productId) {
         Date date = new Date();
         List<ProjectTaskEntity> list = this.getByProductId(productId);
+
         TaskConductDTO dto = new TaskConductDTO();
         //完成任务数
         int finishTaskCount = list.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
@@ -477,6 +482,36 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setChildTasks(childTasks);
         detailsDTO.setOutputDocsList(taskDeliveryService.getByTaskId(taskId));
         return detailsDTO;
+    }
+
+    
+    /**
+     * 修改 任务信息
+     * @author yl
+     * @date 2022-10-13 9:25
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean updateTask(ProjectTaskDTO dto) {
+        checkTaskName(dto.getId(),dto.getProductId(), dto.getName());
+        LoginUser loginUser = commonService.getUserInfo();
+        ProjectTaskEntity taskEntity = new ProjectTaskEntity();
+        BeanMapper.copy(dto, taskEntity);
+        List<String> chargeIdList = dto.getChargeList();
+        String chargeName = commonService.getNameByIds(chargeIdList);
+        taskEntity.setChargeId(String.join(",", chargeIdList));
+        taskEntity.setChargeName(chargeName);
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        boolean flag = this.save(taskEntity);
+        if (flag) {
+            //保存交付文档
+            taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+            //保存前置任务
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+        }
+        return flag;
     }
 
 
@@ -567,9 +602,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author yl
      * @date 2022-09-22 16:36
      */
-    private void checkTaskName(String productId, String name) {
+    private void checkTaskName(String taskId,String productId, String name) {
+        //根据产品很任务id 获取任务名
         List<ProjectTaskEntity> taskList = getByProductId(productId);
+        if(StringUtils.isNotBlank(taskId)){
+            taskList=taskList.stream().filter(t->!taskId.equals(t.getPid())).collect(Collectors.toList());
+        }
         List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
+       //获取系统的任务名
         List<String> sysTaskNames = projectTaskSysService.getSysTaskNames();
         taskNames.addAll(sysTaskNames);
         if (taskNames.contains(name)) {

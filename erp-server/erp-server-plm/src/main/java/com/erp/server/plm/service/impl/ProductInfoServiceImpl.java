@@ -571,22 +571,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
 
-    /**
-     * 归档产品
-     *
-     * @param productId
-     * @return boolean
-     * @author yl
-     * @date 2022-10-09 14:44
-     */
-    @Override
-    public boolean archive(String productId) {
-        //检查项目完成情况
-        projectInfoService.checkProjectFinish(productId);
-        //添加归档信息
-        Boolean flag = archiveService.saveArchive(productId);
-        return flag;
-    }
+
 
     /**
      * /**

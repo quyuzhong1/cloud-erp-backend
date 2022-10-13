@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
@@ -333,17 +334,21 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         StartItemSourceDTO newAdd = new StartItemSourceDTO();
         newAdd.setSourceType(SourceType.NEW);
         newAdd.setSourceName("自定义新建");
+        newAdd.setSourceType(100);
+        newAdd.setFlagId(IdWorker.getIdStr());
         resultList.add(newAdd);
 
         StartItemSourceDTO project = new StartItemSourceDTO();
         project.setSourceType(SourceType.PROJECT);
         project.setSourceName("从项目中复制");
+        project.setFlagId(IdWorker.getIdStr());
         project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
         resultList.add(project);
 
         StartItemSourceDTO template = new StartItemSourceDTO();
         template.setSourceType(SourceType.TEMPLATE);
         template.setSourceName("从模板中复制");
+        template.setFlagId(IdWorker.getIdStr());
         template.setChildrenList(templateService.startItemSource(SourceType.TEMPLATE));
         resultList.add(template);
         return resultList;
@@ -385,6 +390,21 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
         this.remove(queryWrapper);
 
+    }
+
+
+    /**
+     * 归档
+     * @param productId
+     * @return
+     */
+    @Override
+    public boolean archive(String productId) {
+        //检查项目完成情况
+        checkProjectFinish(productId);
+        //添加归档信息
+        Boolean flag = archiveService.saveArchive(productId);
+        return flag;
     }
 
 

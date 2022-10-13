@@ -38,4 +38,6 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     void addProject(String productId,String productName);
 
     void removeByProductId(String productId);
+
+    boolean archive(String productId);
 }

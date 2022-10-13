@@ -25,6 +25,10 @@ import java.util.List;
 public class ProjectTaskDTO implements Serializable {
 
 
+    /**
+     * 任务id
+     */
+    private String id;
 
     /**
      * 项目id
