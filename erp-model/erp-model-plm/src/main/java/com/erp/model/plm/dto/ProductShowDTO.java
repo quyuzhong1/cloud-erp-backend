@@ -22,6 +22,11 @@ public class ProductShowDTO implements Serializable {
     private String productId;
 
     /**
+     * 项目id
+     */
+    private String projectId;
+
+    /**
      * 产品名称
      */
     private String name;
