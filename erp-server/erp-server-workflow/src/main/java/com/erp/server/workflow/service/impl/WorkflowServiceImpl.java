@@ -288,11 +288,10 @@ public class WorkflowServiceImpl implements WorkflowService {
 
             String userId = dto.getUserId();
             //流程发起人
-            identityService.setAuthenticatedUserId(dto.getUserId());
+            identityService.setAuthenticatedUserId(userId);
             //查询这个流程 需要审批的人 和对应的参数  是否需要保存 到数据库
-            Map<String, Object> map = new HashMap<>();
-            map.put("sponsor", userId);
-            ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(dto.getProcessDefinitionKey(), dto.getBusinessKey(), map);
+            Map<String, Object> parameterMap = dto.getParameterMap();
+            ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(dto.getProcessDefinitionKey(), dto.getBusinessKey(), parameterMap);
             if (Objects.isNull(processInstance)) {
                 throw new ServiceException(ApiError.ERROR_94004);
             }
@@ -304,6 +303,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             ActivityInstance activity = runtimeService.getActivityInstance(processInstanceId);
             activityDTO.setProcessInstanceId(processInstanceId);
             activityDTO.setNowActivityId(activity.getActivityId());
+
             // 需要保存流程节点信息
             actHistoryActivityService.saveActivity(activityDTO);
 
