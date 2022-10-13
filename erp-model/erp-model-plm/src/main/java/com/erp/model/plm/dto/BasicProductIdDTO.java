@@ -15,6 +15,9 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class BasicProductIdDTO {
 
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id不能为空")
     private String productId;
 }

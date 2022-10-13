@@ -247,21 +247,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        String userId = "";
-        if (loginUser != null) {
-            userId = loginUser.getUid();
-        }
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
         String productId = params.getProductId();
+        String searchKeyword = params.getSearchKeyword();
         List<TaskSearchDTO> searchList = params.getSearchList();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = null;
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
+        }
+        if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -519,6 +520,72 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return flag;
     }
 
+    /**
+     * 根据产品id 获取任务数量信息
+     *
+     * @param productId
+     * @return com.erp.model.plm.dto.ProductTaskCountDTO
+     * @author yl
+     * @date 2022-10-13 16:51
+     */
+    @Override
+    public ProductTaskCountDTO getProductTaskCount(String productId, Date date) {
+        List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+        //完成任务数
+        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //未完成任务数
+        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        //总任务数
+        int totalTaskCount = taskList.size();
+        //延期的任务数
+        int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
+        taskCountDTO.setFinishTaskCount(finishTaskCount);
+        taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
+        taskCountDTO.setTotalTaskCount(totalTaskCount);
+        taskCountDTO.setPostponeTaskCount(postponeTaskCount);
+        return taskCountDTO;
+    }
+
+    /**
+     * 更改任务基本信息
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-10-13 17:34
+     */
+    @Override
+    public Boolean updateBaseTask(UpdateTaskDTO dto) {
+        LambdaUpdateWrapper<ProjectTaskEntity> queryWrapper = new LambdaUpdateWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getId, dto.getTaskId());
+        //任务名
+        String name = dto.getName();
+        //开始时间
+        Date planStartTime = dto.getPlanStartTime();
+        //结束时间
+        Date planEndTime = dto.getPlanStartTime();
+        String chargeId = dto.getChargeId();
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.set(ProjectTaskEntity::getName, name);
+        }
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.set(ProjectTaskEntity::getName, name);
+        }
+        if (planStartTime != null) {
+            queryWrapper.set(ProjectTaskEntity::getPlanStartTime, planStartTime);
+        }
+        if (planEndTime != null) {
+            queryWrapper.set(ProjectTaskEntity::getPlanEndTime, planStartTime);
+        }
+        if (StringUtils.isNotBlank(chargeId)) {
+            queryWrapper.set(ProjectTaskEntity::getChargeId, chargeId);
+            String chargeName = commonService.getNameById(chargeId);
+            queryWrapper.set(ProjectTaskEntity::getChargeName, chargeName);
+        }
+        return this.update(queryWrapper);
+    }
+
 
     private void checkTaskIfExistPid(String taskId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -639,5 +706,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return warning;
     }
+
 
 }

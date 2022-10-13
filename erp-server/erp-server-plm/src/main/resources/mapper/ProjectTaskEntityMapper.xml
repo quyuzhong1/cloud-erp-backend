@@ -8,6 +8,12 @@
         <if test="phaseId !=null and phaseId!=''">
             AND phase_id=#{phaseId}
         </if>
+        <if test="searchKeyword !=null and searchKeyword!=''">
+           AND name LIKE concat('%',#{item.searchKeyword},'%')
+        </if>
+        <if test="userId !=null and userId!=''">
+            AND charge_id =#{userId}
+        </if>
         <if test="searchList !=null and searchList.size>0">
             <foreach collection="searchList" item="item">
                 <if test="item.searchType=='name'">
@@ -40,6 +46,8 @@
                 </if>
             </foreach>
         </if>
+        ORDER BY
+        create_time DESC
     </select>
 
     <select id="getExportTask" resultType="com.erp.model.plm.dto.TaskExcelDTO">

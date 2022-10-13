@@ -38,8 +38,9 @@ public class TaskPagingDTO  implements Serializable {
       * 任务类型
       * 0 待我完成
       * 1 待我审核
+      * 3 全部
       */
-     @StateEnumValue(intValues = {0, 1}, message = "任务类型有误")
+     @StateEnumValue(intValues = {0, 1,3}, message = "任务类型有误")
      private Integer taskFlag;
 
 
@@ -48,6 +49,12 @@ public class TaskPagingDTO  implements Serializable {
       * 筛选条件
       */
      List<TaskSearchDTO>  searchList;
+
+
+     /**
+      * 搜索关键字
+      */
+     private String searchKeyword;
 
 
 }
