@@ -276,7 +276,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String taskId = item.getId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if(StringUtils.isNotBlank(quoteSysTaskId)){
-                    item.setIfSysTask(true);
+                    item.setIsSysTask(true);
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);

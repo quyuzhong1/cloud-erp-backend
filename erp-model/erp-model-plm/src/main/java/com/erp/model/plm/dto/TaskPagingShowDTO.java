@@ -87,7 +87,7 @@ public class TaskPagingShowDTO  implements Serializable {
      * 是否是系统任务
      * true 是 false 不是
      */
-    private Boolean ifSysTask=false;
+    private Boolean isSysTask=false;
 
     /**
      * 引用的系统任务id
