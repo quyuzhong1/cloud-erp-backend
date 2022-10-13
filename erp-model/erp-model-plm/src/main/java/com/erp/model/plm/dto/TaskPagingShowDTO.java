@@ -83,6 +83,18 @@ public class TaskPagingShowDTO  implements Serializable {
      */
     private String chargeName;
 
+    /**
+     * 是否是系统任务
+     * true 是 false 不是
+     */
+    private Boolean ifSysTask=false;
+
+    /**
+     * 引用的系统任务id
+     *
+     */
+    private String quoteSysTaskId;
+
 
     /**
      * 子 任务

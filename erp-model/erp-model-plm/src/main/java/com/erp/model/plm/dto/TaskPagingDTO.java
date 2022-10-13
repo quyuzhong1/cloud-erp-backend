@@ -40,7 +40,7 @@ public class TaskPagingDTO  implements Serializable {
       * 1 待我审核
       * 3 全部
       */
-     @StateEnumValue(intValues = {0, 1,3}, message = "任务类型有误")
+     @StateEnumValue(intValues = {0, 1,2}, message = "任务类型有误")
      private Integer taskFlag;
 
 

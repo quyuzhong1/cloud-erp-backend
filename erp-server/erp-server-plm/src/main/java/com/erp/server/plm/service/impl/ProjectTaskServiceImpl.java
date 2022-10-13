@@ -262,19 +262,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
         }
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
             //获取到任务id 集合
             List<String> taskIds = list.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
-            //获取总的任务数
+            //获取总的任务文档数
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
-
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if(StringUtils.isNotBlank(quoteSysTaskId)){
+                    item.setIfSysTask(true);
+                }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
                 Integer totalDocsCount = 0;

@@ -4,7 +4,8 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name FROM project_task WHERE product_id=#{productId} AND charge_id=#{userId}
+        charge_name,quote_sys_task_id FROM project_task
+        WHERE product_id=#{productId}
         <if test="phaseId !=null and phaseId!=''">
             AND phase_id=#{phaseId}
         </if>
@@ -28,7 +29,7 @@
                 </if>
                 <if test="item.searchType=='personInCharge'">
                     <if test="item.personInChargeId != null ">
-                        AND person_in_charge_id =#{item.personInChargeId}
+                        AND charge_id =#{item.chargeId}
                     </if>
                 </if>
                 <if test="item.searchType=='status'">
@@ -41,7 +42,7 @@
                         AND create_time &gt;=#{item.startTime}
                     </if>
                     <if test="item.endTime != null ">
-                        AND create_time &gt;=#{item.endTime}
+                        AND end_time &gt;=#{item.endTime}
                     </if>
                 </if>
             </foreach>
