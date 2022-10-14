@@ -5,8 +5,10 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
+import com.erp.model.sys.dto.SysRoleMenuDTO;
 import com.erp.server.sys.service.SysRoleMenuService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,9 +40,9 @@ public class SysRoleMenuController extends BaseController {
     }
 
     @RequestMapping("/save")
-    public ApiResult save(String roleId) {
-        RoleMenuDTO vo=sysRoleMenuService.findRoleMenuTreeByRoleId(roleId);
-        return success(vo);
+    public ApiResult save(@RequestBody @Validated SysRoleMenuDTO dto) {
+        boolean flag=sysRoleMenuService.saveRoleMenu(dto);
+        return flag==true?success():failure();
     }
 
 

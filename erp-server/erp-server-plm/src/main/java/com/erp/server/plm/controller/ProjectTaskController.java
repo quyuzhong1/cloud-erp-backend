@@ -84,12 +84,12 @@ public class ProjectTaskController extends BaseController {
     /**
      * 项目任务-新建任务-获取前置任务列表
      *
-     * @param dto
+     * @param productId
      * @return
      */
     @GetMapping("/list")
-    public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
-        List<Map<String, Object>> list = taskService.getTaskListByProductId(dto);
+    public ApiResult list(String productId) {
+        List<Map<String, Object>> list = taskService.getTaskListByProductId(productId);
         return success(list);
     }
 

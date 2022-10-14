@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -73,9 +74,10 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
-            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
-            //获取产品加系统的阶段名
-            List<String> dbPhaseNames = getDbTaskPhaseNames(productId);
+            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).filter(s->!TaskConstant.APPROVAL_TASK_NAME.equals(s)).collect(Collectors.toList());
+            List<String> phaseIds=list.stream().map(TaskPhaseDTO::getId).collect(Collectors.toList());
+            //获取产品加系统的阶段名 去重后的
+            List<String> dbPhaseNames = getDbTaskPhaseNames(productId,phaseIds);
             //获取交集
             List<String> intersections = phaseNames.stream().filter(item -> dbPhaseNames.contains(item)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(intersections)) {
@@ -147,10 +149,11 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      * @author yl
      * @date 2022-09-14 17:53
      */
-    private List<String> getDbTaskPhaseNames(String productId) {
+    private List<String> getDbTaskPhaseNames(String productId,List<String> phaseIds) {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectPhaseEntity::getName);
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        queryWrapper.notIn(ProjectPhaseEntity::getId,phaseIds);
         List<String> list = this.listObjs(queryWrapper, Object::toString);
         List<String> sysList = sysTaskPhaseService.getSysTaskPhaseNames();
         List<String> results = new LinkedList<>();
@@ -160,7 +163,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(sysList)) {
             results.addAll(sysList);
         }
-        return results;
+
+        return results.stream().distinct().collect(Collectors.toList());
     }
 
 

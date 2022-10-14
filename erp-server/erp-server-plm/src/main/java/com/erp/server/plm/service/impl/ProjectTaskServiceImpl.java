@@ -261,16 +261,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String phaseId = params.getPhaseId();
         String productId = params.getProductId();
         String searchKeyword = params.getSearchKeyword();
+        List<Integer> statusList = params.getStatusList();
         List<TaskSearchDTO> searchList = params.getSearchList();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = null;
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword,statusList);
         }
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
             phaseId="";
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword,statusList);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -340,16 +341,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 根据产品id 获取任务id 和名字
      *
-     * @param dto
+     * @param productId
      * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
      * @author yl
      * @date 2022-09-22 17:40
      */
     @Override
-    public List<Map<String, Object>> getTaskListByProductId(BasicProductIdDTO dto) {
+    public List<Map<String, Object>> getTaskListByProductId(String  productId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectTaskEntity::getId, ProjectTaskEntity::getName);
-        queryWrapper.eq(ProjectTaskEntity::getProductId, dto.getProductId());
+        queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
         return this.listMaps(queryWrapper);
     }
 
