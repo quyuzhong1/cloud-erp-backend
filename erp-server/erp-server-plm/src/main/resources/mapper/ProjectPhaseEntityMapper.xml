@@ -4,7 +4,7 @@
 
 
     <select id="getTaskPhaseByProductId" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
-        SELECT ID,NAME,0 AS isSys FROM  project_phase WHERE product_id=#{productId}
+        SELECT ID,NAME FROM  project_phase WHERE product_id=#{productId}
     </select>
 
 </mapper>

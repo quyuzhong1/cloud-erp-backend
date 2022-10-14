@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.BatchTaskPhaseDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -117,18 +118,19 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     }
 
-    
+
     /**
      * 添加立项阶段
-     * @author yl
-     * @date 2022-09-28 16:30
+     *
      * @param productId
      * @param phaseName
      * @return java.lang.String
+     * @author yl
+     * @date 2022-09-28 16:30
      */
     @Override
-    public String saveTaskPhase(String productId, String phaseName,Integer isSourceSys) {
-        ProjectPhaseEntity entity=new ProjectPhaseEntity();
+    public String saveTaskPhase(String productId, String phaseName, Integer isSourceSys) {
+        ProjectPhaseEntity entity = new ProjectPhaseEntity();
         entity.setProductId(productId);
         entity.setName(phaseName);
         entity.setIsSourceSys(isSourceSys);
@@ -172,7 +174,13 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      */
 
     private List<TaskPhaseDTO> getTaskPhaseByProductId(String productId) {
-
-        return baseMapper.getTaskPhaseByProductId(productId);
+        List<TaskPhaseDTO> list = baseMapper.getTaskPhaseByProductId(productId);
+        String flagName= TaskConstant.APPROVAL_TASK_NAME;
+        for (TaskPhaseDTO item : list) {
+            if(flagName.equals(item.getName())){
+                item.setIsProjectApproval(IsConstant.YES);
+            }
+        }
+        return list;
     }
 }

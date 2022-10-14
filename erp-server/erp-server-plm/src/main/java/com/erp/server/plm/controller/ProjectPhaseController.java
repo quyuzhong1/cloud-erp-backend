@@ -33,7 +33,7 @@ public class ProjectPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
+    public ApiResult<List<TaskPhaseDTO>> list(@RequestBody @Validated BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = projectPhaseService.findList(dto);
         return success(resultList);
     }
