@@ -34,17 +34,19 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public void savePreTask(String taskId, List<String> preTaskIdList) {
-        //先删除前置任务
-        removePreTaskByTaskId(taskId, preTaskIdList);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            List<PreTaskEntity> addList = new ArrayList<>();
-            for (String preTaskId : preTaskIdList) {
-                PreTaskEntity entity = new PreTaskEntity();
-                entity.setPreTaskId(preTaskId);
-                entity.setTaskId(taskId);
-                addList.add(entity);
+        if(CollectionUtils.isNotEmpty(preTaskIdList)){
+            //先删除前置任务
+            removePreTaskByTaskId(taskId, preTaskIdList);
+            if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+                List<PreTaskEntity> addList = new ArrayList<>();
+                for (String preTaskId : preTaskIdList) {
+                    PreTaskEntity entity = new PreTaskEntity();
+                    entity.setPreTaskId(preTaskId);
+                    entity.setTaskId(taskId);
+                    addList.add(entity);
+                }
+                this.saveBatch(addList);
             }
-            this.saveBatch(addList);
         }
 
     }

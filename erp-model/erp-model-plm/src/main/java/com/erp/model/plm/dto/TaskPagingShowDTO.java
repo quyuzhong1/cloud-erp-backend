@@ -29,6 +29,13 @@ public class TaskPagingShowDTO  implements Serializable {
     private String productId;
 
 
+
+    /**
+     * 负责人id
+     */
+    private String chargeId;
+
+
     /**
      * 任务名
      */

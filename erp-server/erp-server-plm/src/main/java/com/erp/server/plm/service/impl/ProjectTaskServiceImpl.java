@@ -548,6 +548,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-13 9:25
      */
     @Override
+    @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
 
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
@@ -560,7 +561,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskEntity.setChargeName(chargeName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
-        boolean flag = this.save(taskEntity);
+        boolean flag = this.updateById(taskEntity);
         if (flag) {
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
