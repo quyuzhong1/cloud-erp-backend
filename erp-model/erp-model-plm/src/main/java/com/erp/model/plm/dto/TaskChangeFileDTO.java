@@ -5,28 +5,27 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
- * @Classname TaskUploadFileDTO
+ * @Classname 变更文档
  * @Description TODO
- * @Date 2022-09-23 17:03
+ * @Date 2022-10-14 11:48
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class TaskUploadFileDTO  implements Serializable {
+public class TaskChangeFileDTO  implements Serializable {
 
     @NotBlank(message = "任务id 不能为空")
     private String taskId;
 
-
     @NotBlank(message = "任务交付的文档id 不能为空")
     private String taskDocsId;
 
-    @NotBlank(message = "产品id 不能为空")
-    private String productId;
+    @NotBlank(message = "完成文档id 不能为空")
+    private String finishDocsId;
+
 
     private MultipartFile file;
 }

@@ -2,22 +2,18 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.tools.ant.taskdefs.Apt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.erp.common.controller.BaseController;
 
 /**
- * <p>
- * 任务文档交付表 前端控制器
- * </p>
+ *产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -29,11 +25,47 @@ public class TaskDocsFinishController extends BaseController {
     @Autowired
     private TaskDocsFinishService taskDocsFinishService;
 
+    /**
+     * 项目任务-任务详情-上传文件
+     * @author yl
+     * @date 2022-10-14 11:05
+     * @param dto
+     * @return com.erp.common.dto.base.ApiResult
+     */
     @PostMapping("/importFile")
     public ApiResult uploadFile(@ModelAttribute @Validated TaskUploadFileDTO dto) {
         Boolean flag = taskDocsFinishService.uploadFile(dto);
         return flag == true ? success() : failure();
     }
+
+
+    /**
+     * 项目任务-任务详情-删除文件
+     * @author yl
+     * @date 2022-10-14 11:05
+     * @param
+     * @return com.erp.common.dto.base.ApiResult
+     */
+    @PostMapping("/removeFile")
+    public ApiResult removeFile( String  finishDocsId) {
+        Boolean flag = taskDocsFinishService.removeById(finishDocsId);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务详情-变更文档
+     * @author yl
+     * @date 2022-10-14 11:05
+     * @param
+     * @return com.erp.common.dto.base.ApiResult
+     */
+    @PostMapping("/changeFile")
+    public ApiResult changeFile(@RequestBody @Validated TaskChangeFileDTO dto) {
+        Boolean flag = taskDocsFinishService.changeFile(dto);
+        return flag == true ? success() : failure();
+    }
+
+
 
 }
 

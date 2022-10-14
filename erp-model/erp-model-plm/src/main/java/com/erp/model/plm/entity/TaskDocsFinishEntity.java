@@ -84,6 +84,24 @@ public class TaskDocsFinishEntity implements Serializable {
     @TableField("task_docs_id")
     private String taskDocsId;
 
+    /**
+     * 产品id
+     */
+    @TableField("product_id")
+    private String productId;
+
+    /**
+     * 更改人id
+     */
+    @TableField("update_user_id")
+    private String updateUserId;
+
+    /**
+     * 更改人名
+     */
+    @TableField("update_user_name")
+    private String updateUserName;
+
 
 
 }
