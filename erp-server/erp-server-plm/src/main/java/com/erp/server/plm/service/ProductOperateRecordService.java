@@ -2,10 +2,12 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -39,4 +41,12 @@ public interface ProductOperateRecordService extends IService<ProductOperateReco
      * @return java.lang.Boolean
      **/
     Boolean saveOrUpdateBatch(List<ProductOperateRecordDTO> dto);
+
+    /**
+     * 获取字典表所有类型
+     * @Author Luo_WG
+     * @Date 2022/10/14 18:15
+     * @return java.util.List<java.lang.String>
+     **/
+    List<String> listBasicDictType();
 }

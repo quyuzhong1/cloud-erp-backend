@@ -9,12 +9,14 @@ import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.server.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductOperateRecordMapper;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -87,6 +89,21 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
         return this.saveOrUpdateBatch(productOperateRecordEntities);
     }
 
+    /**
+     * 获取字典表所有类型
+     * @Author Luo_WG
+     * @Date 2022/10/14 18:16
+     * @return java.util.List<java.lang.String>
+     **/
+    @Override
+    public List<String> listBasicDictType() {
+        BasicDictTypeEnum[] basicDictTypeEnums = BasicDictTypeEnum.ListBasicDictType();
+        List<String> list = new ArrayList<>();
+        for (BasicDictTypeEnum basicDictTypeEnum : basicDictTypeEnums) {
+            list.add(basicDictTypeEnum.getCode());
+        }
+        return list;
+    }
 }
 
 

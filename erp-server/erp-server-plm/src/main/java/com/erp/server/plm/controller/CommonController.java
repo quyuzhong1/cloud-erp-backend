@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.UploadImgDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -106,4 +107,16 @@ public class CommonController  extends BaseController {
         Boolean flag = productOperateRecordService.saveOrUpdateBatch(dto);
         return flag == true ? this.success() : this.failure();
     }
+
+    /**
+     * 获取字典表所有类型
+     * @Author Luo_WG
+     * @Date 2022/10/11 11:52
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @PostMapping("/listBasicDictType")
+    public ApiResult listBasicDictType() {
+        return this.success(productOperateRecordService.listBasicDictType());
+    }
+
 }
