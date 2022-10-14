@@ -31,6 +31,11 @@ public class SysRoleMenuEntity implements Serializable {
 	 * 角色id
 	 */
 	private String roleId;
+
+	/**
+	 * 数据权限(1-自己,2-部门,3-全部)
+	 */
+	private Integer dataScope;
 	/**
 	 * 创建时间
 	 */

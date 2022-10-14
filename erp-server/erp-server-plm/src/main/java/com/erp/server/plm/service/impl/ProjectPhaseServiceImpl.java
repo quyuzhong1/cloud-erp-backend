@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.BatchTaskPhaseDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -72,9 +74,10 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
-            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
-            //获取产品加系统的阶段名
-            List<String> dbPhaseNames = getDbTaskPhaseNames(productId);
+            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).filter(s->!TaskConstant.APPROVAL_TASK_NAME.equals(s)).collect(Collectors.toList());
+            List<String> phaseIds=list.stream().map(TaskPhaseDTO::getId).collect(Collectors.toList());
+            //获取产品加系统的阶段名 去重后的
+            List<String> dbPhaseNames = getDbTaskPhaseNames(productId,phaseIds);
             //获取交集
             List<String> intersections = phaseNames.stream().filter(item -> dbPhaseNames.contains(item)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(intersections)) {
@@ -117,18 +120,19 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     }
 
-    
+
     /**
      * 添加立项阶段
-     * @author yl
-     * @date 2022-09-28 16:30
+     *
      * @param productId
      * @param phaseName
      * @return java.lang.String
+     * @author yl
+     * @date 2022-09-28 16:30
      */
     @Override
-    public String saveTaskPhase(String productId, String phaseName,Integer isSourceSys) {
-        ProjectPhaseEntity entity=new ProjectPhaseEntity();
+    public String saveTaskPhase(String productId, String phaseName, Integer isSourceSys) {
+        ProjectPhaseEntity entity = new ProjectPhaseEntity();
         entity.setProductId(productId);
         entity.setName(phaseName);
         entity.setIsSourceSys(isSourceSys);
@@ -145,10 +149,11 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      * @author yl
      * @date 2022-09-14 17:53
      */
-    private List<String> getDbTaskPhaseNames(String productId) {
+    private List<String> getDbTaskPhaseNames(String productId,List<String> phaseIds) {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectPhaseEntity::getName);
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        queryWrapper.notIn(ProjectPhaseEntity::getId,phaseIds);
         List<String> list = this.listObjs(queryWrapper, Object::toString);
         List<String> sysList = sysTaskPhaseService.getSysTaskPhaseNames();
         List<String> results = new LinkedList<>();
@@ -158,7 +163,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(sysList)) {
             results.addAll(sysList);
         }
-        return results;
+
+        return results.stream().distinct().collect(Collectors.toList());
     }
 
 
@@ -172,7 +178,13 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      */
 
     private List<TaskPhaseDTO> getTaskPhaseByProductId(String productId) {
-
-        return baseMapper.getTaskPhaseByProductId(productId);
+        List<TaskPhaseDTO> list = baseMapper.getTaskPhaseByProductId(productId);
+        String flagName= TaskConstant.APPROVAL_TASK_NAME;
+        for (TaskPhaseDTO item : list) {
+            if(flagName.equals(item.getName())){
+                item.setIsProjectApproval(IsConstant.YES);
+            }
+        }
+        return list;
     }
 }

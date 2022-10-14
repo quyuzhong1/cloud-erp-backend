@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.model.sys.dto.RoleMenuDTO;
 import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
+import com.erp.model.sys.dto.SysRoleMenuDTO;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 
 import java.util.List;
@@ -39,5 +40,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     RoleMenuDTO findRoleMenuTreeByRoleId(String roleId);
 
     List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds);
+
+    Boolean saveRoleMenu(SysRoleMenuDTO dto);
 }
 

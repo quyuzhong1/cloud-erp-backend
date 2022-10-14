@@ -6,14 +6,21 @@
         SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id FROM project_task
         WHERE product_id=#{productId}
-        <if test="phaseId !=null and phaseId!=''">
+        <if test="phaseId !=null and phaseId !=''">
             AND phase_id=#{phaseId}
         </if>
+
         <if test="searchKeyword !=null and searchKeyword!=''">
            AND name LIKE concat('%',#{item.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
             AND charge_id =#{userId}
+        </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND status IN
+            <foreach collection="statusList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
         </if>
         <if test="searchList !=null and searchList.size>0">
             <foreach collection="searchList" item="item">
@@ -72,8 +79,8 @@
         pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName
         FROM   project_task t
-        INNER JOIN product_info pi ON pi.id=t.product_id
-        INNER JOIN project_info pj ON pj.id=t.project_id
+        LEFT JOIN product_info pi ON pi.id=t.product_id
+        LEFT JOIN project_info pj ON pj.id=t.project_id
         WHERE t.id=#{taskId}
     </select>
 

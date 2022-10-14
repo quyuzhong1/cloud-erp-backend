@@ -39,7 +39,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean save(ProjectTaskDTO dto);
 
-    List<Map<String, Object>> getTaskListByProductId(BasicProductIdDTO dto);
+    List<Map<String, Object>> getTaskListByProductId(String productId );
 
     Boolean removeTask(String id);
 
