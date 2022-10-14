@@ -6,6 +6,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -52,4 +53,8 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     ProjectTaskDetailsDTO getTaskDetails(String taskId);
 
     Boolean updateTask(ProjectTaskDTO dto);
+
+    ProductTaskCountDTO getProductTaskCount(String productId, Date date);
+
+    Boolean updateBaseTask(UpdateTaskDTO dto);
 }

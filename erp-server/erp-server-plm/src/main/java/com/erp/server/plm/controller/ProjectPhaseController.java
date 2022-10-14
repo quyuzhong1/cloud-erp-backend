@@ -15,9 +15,7 @@ import com.erp.common.controller.BaseController;
 import java.util.List;
 
 /**
- * <p>
- * 任务阶段表 前端控制器
- * </p>
+ * 产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -29,12 +27,22 @@ public class ProjectPhaseController extends BaseController {
     @Autowired
     private ProjectPhaseService projectPhaseService;
 
-    @GetMapping("/list")
-    public ApiResult list(@RequestBody BasicProductIdDTO dto) {
+    /**
+     * 项目任务-阶段列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list")
+    public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = projectPhaseService.findList(dto);
         return success(resultList);
     }
 
+    /**
+     * 项目任务-批量保存或者修改阶段
+     * @param dto
+     * @return
+     */
     @PostMapping("/batchSaveOrUpdate")
     public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
         projectPhaseService.batchSaveOrUpdate(dto);

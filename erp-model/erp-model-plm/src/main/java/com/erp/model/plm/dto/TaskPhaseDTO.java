@@ -16,8 +16,14 @@ import javax.validation.constraints.NotBlank;
 public class TaskPhaseDTO {
 
 
+    /**
+     * 阶段id
+     */
     private String id;
 
+    /**
+     * 阶段名
+     */
     @NotBlank(message = "阶段名不能为空")
     private String name;
 

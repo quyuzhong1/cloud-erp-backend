@@ -3,10 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.plm.dto.CountDTO;
-import com.erp.model.plm.dto.ProductExcelDTO;
-import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,4 +28,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<CountDTO> getProductRelevanceList();
 
     IPage myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
+
+    List<ProductProjectDTO> getProductAndProjectList();
 }

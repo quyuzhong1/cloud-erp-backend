@@ -89,11 +89,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
         //产品名
         result.setProductName(entity.getName());
-        Map<String, Integer> taskMap = getTaskCount(productId, taskList, new Date());
-        Integer totalTaskCount = taskMap.get("totalTaskCount");
-        Integer finishTaskCount = taskMap.get("finishTaskCount");
-        Integer postponeTaskCount = taskMap.get("postponeTaskCount");
-        Integer unfinishedTaskCount = taskMap.get("unfinishedTaskCount");
+        //获取产品任务情况
+        ProductTaskCountDTO taskCount =projectTaskService.getProductTaskCount(productId,new Date());
+        Integer totalTaskCount = taskCount.getTotalTaskCount();
+        Integer finishTaskCount = taskCount.getFinishTaskCount();
+        Integer postponeTaskCount = taskCount.getTotalTaskCount();
+        Integer unfinishedTaskCount = taskCount.getUnfinishedTaskCount();
         int finishRatio = 0;
         int postponeRatio = 0;
         if (totalTaskCount != 0) {
@@ -116,27 +117,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     }
 
 
-    //获取到任务的数量
-    public Map<String, Integer> getTaskCount(String productId, List<ProjectTaskEntity> taskList, Date date) {
-        if (CollectionUtils.isEmpty(taskList) && StringUtils.isNotBlank(productId)) {
-            taskList = projectTaskService.getByProductId(productId);
-        }
-        //完成任务数
-        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        //未完成任务数
-        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        //总任务数
-        int totalTaskCount = taskList.size();
-        //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
-        Map<String, Integer> map = new HashMap<>(4);
-        map.put("finishTaskCount", finishTaskCount);
-        map.put("unfinishedTaskCount", unfinishedTaskCount);
-        map.put("totalTaskCount", totalTaskCount);
-        map.put("postponeTaskCount", postponeTaskCount);
-        return map;
-
-    }
 
     /**
      * 启动项目

@@ -620,6 +620,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.getProductRelevanceList();
     }
 
+    
+    /**
+     * 获取有产品有项目的 信息
+     * @author yl
+     * @date 2022-10-13 17:14
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.ProductProjectDTO>
+     */
+    @Override
+    public List<ProductProjectDTO> getProductAndProjectList() {
+        return baseMapper.getProductAndProjectList();
+    }
+
 
     /**
      * /**

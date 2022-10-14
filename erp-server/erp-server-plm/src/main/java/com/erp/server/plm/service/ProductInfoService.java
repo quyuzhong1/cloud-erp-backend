@@ -58,5 +58,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     List<CountDTO> getProductRelevanceList();
 
 
+    List<ProductProjectDTO> getProductAndProjectList();
+
 
 }

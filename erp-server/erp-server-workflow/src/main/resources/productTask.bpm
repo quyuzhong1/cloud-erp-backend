@@ -1,38 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ttsq21" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.1.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
     <bpmn:process id="Process_plm_task" isExecutable="true">
-        <bpmn:startEvent id="StartEvent_1">
+        <bpmn:extensionElements>
+            <camunda:executionListener class="com.erp.server.workflow.listeners.ProjectTaskCountersignResultListener" event="start" />
+        </bpmn:extensionElements>
+        <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_0dvy6lv</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:sequenceFlow id="Flow_0dvy6lv" sourceRef="StartEvent_1" targetRef="Activity_0s1vrt8" />
-        <bpmn:userTask id="Activity_0s1vrt8" name="任务负责人 审核" camunda:assignee="${taskChargeId}">
-            <bpmn:incoming>Flow_0dvy6lv</bpmn:incoming>
-            <bpmn:outgoing>Flow_0kl822t</bpmn:outgoing>
-        </bpmn:userTask>
+        <bpmn:sequenceFlow id="Flow_0dvy6lv" sourceRef="StartEvent_1" targetRef="Activity_1lb9sa4" />
         <bpmn:endEvent id="Event_0uvwtyk">
-            <bpmn:incoming>Flow_0kl822t</bpmn:incoming>
+            <bpmn:incoming>Flow_1vnleji</bpmn:incoming>
         </bpmn:endEvent>
-        <bpmn:sequenceFlow id="Flow_0kl822t" sourceRef="Activity_0s1vrt8" targetRef="Event_0uvwtyk" />
+        <bpmn:sequenceFlow id="Flow_1vnleji" sourceRef="Activity_1lb9sa4" targetRef="Event_0uvwtyk" />
+        <bpmn:userTask id="Activity_1lb9sa4" name="项目成员负责人会签" camunda:assignee="${memberCharges}">
+            <bpmn:incoming>Flow_0dvy6lv</bpmn:incoming>
+            <bpmn:outgoing>Flow_1vnleji</bpmn:outgoing>
+            <bpmn:multiInstanceLoopCharacteristics camunda:collection="memberChargeList" camunda:elementVariable="memberCharges" />
+        </bpmn:userTask>
     </bpmn:process>
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
         <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_plm_task">
-            <bpmndi:BPMNEdge id="Flow_0kl822t_di" bpmnElement="Flow_0kl822t">
-                <di:waypoint x="530" y="117" />
-                <di:waypoint x="822" y="117" />
+            <bpmndi:BPMNEdge id="Flow_1vnleji_di" bpmnElement="Flow_1vnleji">
+                <di:waypoint x="510" y="117" />
+                <di:waypoint x="712" y="117" />
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNEdge id="Flow_0dvy6lv_di" bpmnElement="Flow_0dvy6lv">
                 <di:waypoint x="215" y="117" />
-                <di:waypoint x="430" y="117" />
+                <di:waypoint x="410" y="117" />
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
                 <dc:Bounds x="179" y="99" width="36" height="36" />
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="186" y="142" width="23" height="14" />
+                </bpmndi:BPMNLabel>
             </bpmndi:BPMNShape>
             <bpmndi:BPMNShape id="Event_0uvwtyk_di" bpmnElement="Event_0uvwtyk">
-                <dc:Bounds x="822" y="99" width="36" height="36" />
+                <dc:Bounds x="712" y="99" width="36" height="36" />
             </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Activity_1krfdk8_di" bpmnElement="Activity_0s1vrt8">
-                <dc:Bounds x="430" y="77" width="100" height="80" />
-                <bpmndi:BPMNLabel />
+            <bpmndi:BPMNShape id="Activity_03ndmpa_di" bpmnElement="Activity_1lb9sa4">
+                <dc:Bounds x="410" y="77" width="100" height="80" />
             </bpmndi:BPMNShape>
         </bpmndi:BPMNPlane>
     </bpmndi:BPMNDiagram>
