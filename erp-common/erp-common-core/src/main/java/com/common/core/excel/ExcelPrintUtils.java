@@ -22,12 +22,16 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
@@ -639,6 +643,36 @@ public class ExcelPrintUtils {
 			out.close();
 			bos.flush();
 		}
+	}
+
+	/**
+	 * 导出模板
+	 * @Author Luo_WG
+	 * @Date 2022/10/14 14:06
+	 * @param path excel模板路径
+	 * @param excelName excel名称
+	 * @param request request
+	 * @param response response
+	 * @return void
+	 **/
+	public void exportTemplate(String path, String excelName, HttpServletRequest request, HttpServletResponse response) {
+		ResourceLoader resourceLoader = new DefaultResourceLoader();
+		try {
+			InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+			XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+			// 输出Excel文件
+			OutputStream output = response.getOutputStream();
+			response.reset();
+			// 设置文件头
+			response.setHeader("Content-Disposition",
+					"attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+			response.setContentType("application/msexcel");
+			wb.write(output);
+			wb.close();
+		} catch (Exception e) {
+			log.error("exportTemplate ", e);
+		}
+
 	}
 
 	/**

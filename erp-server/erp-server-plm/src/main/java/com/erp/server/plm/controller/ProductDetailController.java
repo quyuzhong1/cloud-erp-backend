@@ -13,11 +13,18 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 
 /**
@@ -497,26 +504,60 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/importProductFile")
-    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) throws Exception{
+    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
-        EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
-        if(list.size() > 0){
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "导入产品明细表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-            /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
-            response.setCharacterEncoding("utf-8");
-            String fileName = URLEncoder.encode("测试", "UTF-8");
-            String s = new String("测试".getBytes("UTF-8"), "ISO-8859-1");
-            response.setHeader("Content-disposition", "attachment;filename=" + s + ".xlsx");
-            EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);*/
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+            if (list.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/productNoSpecDetail.xlsx";
+                String name = "导入产品明细表";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+                response.setCharacterEncoding("utf-8");
+                String fileName = URLEncoder.encode("测试", "UTF-8");
+                String s = new String("测试".getBytes("UTF-8"), "ISO-8859-1");
+                response.setHeader("Content-disposition", "attachment;filename=" + s + ".xlsx");
+                EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);*/
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return this.success();
+    }
+
+    /**
+     * excel导入产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     * @param request request
+     * @param response response
+     **/
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+        }
+
     }
 
     /**

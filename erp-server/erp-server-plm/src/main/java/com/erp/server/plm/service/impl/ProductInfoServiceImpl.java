@@ -119,8 +119,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.count(queryWrapper);
     }
 
-
-    private String getUpdateField(ProductDTO dto) {
+    private String getUpdateField(ProductDTO productDTO) {
+        ProductInfoEntity dto = new ProductInfoEntity();
+        BeanMapper.copy(productDTO, dto);
         List<String> list = new ArrayList<>();
         ProductInfoEntity productInfoEntity = this.getById(dto.getId());
         if (!productInfoEntity.getName().equals(dto.getName())) {
@@ -130,7 +131,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             list.add("编辑了[产品属性]由[" + productInfoEntity.getProperty() + "]改为[" + dto.getProperty() + "]");
         }
         //负责人ids
-        List<String> chargeIds = dto.getChargeIds();
+        List<String> chargeIds = productDTO.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeIds);
         if (!productInfoEntity.getChargeName().equals(chargeName)) {
             list.add("编辑了[产品负责人]由[" + productInfoEntity.getChargeName() + "]改为[" + chargeName + "]");
@@ -144,6 +145,21 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (!productInfoEntity.getCategory().equals(dto.getCategory())) {
             list.add("编辑了[产品类别]由[" + productInfoEntity.getCategory() + "]改为[" + dto.getCategory() + "]");
         }
+  /*      if (!productInfoEntity.getSpuNo().equals(dto.getSpuNo())) {
+            list.add("编辑了[spu]由[" + productInfoEntity.getCategory() + "]改为[" + dto.getCategory() + "]");
+        }
+        if (!productInfoEntity.getSellSpot().equals(dto.getSellSpot())) {
+            list.add("编辑了[产品卖点]由[" + productInfoEntity.getSellSpot() + "]改为[" + dto.getSellSpot() + "]");
+        }
+        if (!productInfoEntity.getFunctionDesc().equals(dto.getFunctionDesc())) {
+            list.add("编辑了[产品功能描述]由[" + productInfoEntity.getFunctionDesc() + "]改为[" + dto.getFunctionDesc() + "]");
+        }
+        if (!productInfoEntity.getUsageDesc().equals(dto.getUsageDesc())) {
+            list.add("编辑了[产品用途]由[" + productInfoEntity.getUsageDesc() + "]改为[" + dto.getUsageDesc() + "]");
+        }
+        if (!productInfoEntity.getMaterials().equals(dto.getMaterials())) {
+            list.add("编辑了[主要材质]由[" + productInfoEntity.getMaterials() + "]改为[" + dto.getMaterials() + "]");
+        }*/
         return JSONObject.toJSONString(list);
     }
 
@@ -423,7 +439,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(productId);
-        productOperateRecordDTO.setRemark("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]（审核不通过+原因）");
+        productOperateRecordDTO.setRemark("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]");
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         this.update(updateWrapper);
     }
@@ -504,6 +520,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
         ProductInfoEntity product = this.getById(dto.getProductId());
+
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {

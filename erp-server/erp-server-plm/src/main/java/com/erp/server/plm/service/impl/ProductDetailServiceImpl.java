@@ -26,6 +26,9 @@ import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -729,7 +732,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productSkuDetail.xlsx";
+        String excelPath = "excel/productNoSpecDetailTemplate.xlsx";
         String name = "产品sku明细表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -740,7 +743,5 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             e.printStackTrace();
         }
     }
-
-
 
 }
