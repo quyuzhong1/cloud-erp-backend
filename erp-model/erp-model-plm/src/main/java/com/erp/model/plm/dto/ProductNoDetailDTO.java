@@ -62,6 +62,11 @@ public class ProductNoDetailDTO {
     private String property;
 
     /**
+     * 产品属性Id
+     */
+    private String propertyId;
+
+    /**
      * 产品等级
      */
     private String grade;
