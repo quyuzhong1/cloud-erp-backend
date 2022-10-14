@@ -686,9 +686,9 @@ public class ExcelPrintUtils {
 	public static OutputStream getOutputStream(String fileName, HttpServletResponse response) throws Exception {
 		// 这里文件名如果涉及中文一定要使用URL编码,否则会乱码
 		String exportFileName = URLEncoder.encode(fileName+ ExcelTypeEnum.XLSX.getValue(), StandardCharsets.UTF_8.toString());
-		response.setContentType("application/force-download");
+		//response.setContentType("application/force-download");
 		response.setHeader("Content-Disposition", "attachment;filename=" + exportFileName);
-
+		response.setContentType("application/json;charset=utf-8");
 		//导出的文件名
 //        String excelFileName = URLEncoder.encode(fileName, "utf-8");
 //        response.setHeader("Content-disposition", "attachment; filename=" + new String(excelFileName.getBytes("UTF-8"), "ISO-8859-1"));

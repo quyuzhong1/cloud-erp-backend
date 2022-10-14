@@ -732,7 +732,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productNoSpecDetailTemplate.xlsx";
+        String excelPath = "excel/productSkuDetail.xlsx";
         String name = "产品sku明细表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

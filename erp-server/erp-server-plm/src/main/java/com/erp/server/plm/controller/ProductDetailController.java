@@ -512,7 +512,7 @@ public class ProductDetailController extends BaseController {
             if (list.size() > 0) {
                 StringBuffer sb = new StringBuffer();
                 String excelPath = "excel/productNoSpecDetail.xlsx";
-                String name = "导入产品明细表";
+                String name = "productNoSpecDetail";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
@@ -531,7 +531,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * excel导入产品信息
+     * 下载导出模板
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
      * @param request request
@@ -568,7 +568,7 @@ public class ProductDetailController extends BaseController {
      * @param response response
      * @return com.erp.common.dto.base.ApiResult
      **/
-    @PostMapping(value = "/exportProduct", produces = "application/octet-stream")
+    @PostMapping(value = "/exportProduct")
     public void exportProduct(@RequestBody ProductSkuDTO productSkuDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuDTO, response);
     }
