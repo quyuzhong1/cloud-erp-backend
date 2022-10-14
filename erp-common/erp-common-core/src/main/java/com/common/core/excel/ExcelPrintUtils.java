@@ -637,7 +637,7 @@ public class ExcelPrintUtils {
 			excelWriter.fill(list, writeSheet);
 			excelWriter.finish();
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.info("导出模板数据异常！");
 		} finally {
 			out.flush();
 			out.close();

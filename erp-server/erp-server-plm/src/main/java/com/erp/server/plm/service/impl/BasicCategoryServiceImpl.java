@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicCategoryDTO;
@@ -15,7 +14,6 @@ import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
