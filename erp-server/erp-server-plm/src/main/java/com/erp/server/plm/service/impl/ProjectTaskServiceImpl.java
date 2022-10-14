@@ -69,6 +69,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private ProductOperateRecordService productOperateRecordService;
 
     /**
      * 添加系统的产品任务
@@ -98,6 +100,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (flag) {
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId());
                 }
+                //新增产品操作日志
+                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+                productOperateRecordDTO.setProductId(productId);
+                productOperateRecordDTO.setRemark("新增了一个任务：[" + entity.getName() + "]");
+                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
 
         }
@@ -499,6 +506,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean updateTask(ProjectTaskDTO dto) {
+
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();

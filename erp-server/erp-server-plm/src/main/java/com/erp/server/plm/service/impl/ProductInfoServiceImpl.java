@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -100,6 +101,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private ProductOperateRecordService productOperateRecordService;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -116,6 +120,33 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
 
+    private String getUpdateField(ProductDTO dto) {
+        List<String> list = new ArrayList<>();
+        ProductInfoEntity productInfoEntity = this.getById(dto.getId());
+        if (!productInfoEntity.getName().equals(dto.getName())) {
+            list.add("编辑了[产品名称]由[" + productInfoEntity.getName() + "]改为[" + dto.getName() + "]");
+        }
+        if (!productInfoEntity.getProperty().equals(dto.getProperty())) {
+            list.add("编辑了[产品属性]由[" + productInfoEntity.getProperty() + "]改为[" + dto.getProperty() + "]");
+        }
+        //负责人ids
+        List<String> chargeIds = dto.getChargeIds();
+        String chargeName = commonService.getNameByIds(chargeIds);
+        if (!productInfoEntity.getChargeName().equals(chargeName)) {
+            list.add("编辑了[产品负责人]由[" + productInfoEntity.getChargeName() + "]改为[" + chargeName + "]");
+        }
+        if (!productInfoEntity.getGrade().equals(dto.getGrade())) {
+            list.add("编辑了[产品等级]由[" + productInfoEntity.getGrade() + "]改为[" + dto.getGrade() + "]");
+        }
+        if (!productInfoEntity.getBrandName().equals(dto.getBrandName())) {
+            list.add("编辑了[产品品牌]由[" + productInfoEntity.getBrandName() + "]改为[" + dto.getBrandName() + "]");
+        }
+        if (!productInfoEntity.getCategory().equals(dto.getCategory())) {
+            list.add("编辑了[产品类别]由[" + productInfoEntity.getCategory() + "]改为[" + dto.getCategory() + "]");
+        }
+        return JSONObject.toJSONString(list);
+    }
+
     /**
      * 保存或许修改产品信息
      *
@@ -127,7 +158,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public Boolean saveOrUpdateProduct(ProductDTO dto) {
-
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
         ProductInfoEntity entity = new ProductInfoEntity();
@@ -138,11 +168,25 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         BeanMapper.copy(dto, entity);
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
+
+        //新增产品操作日志
+        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+        String updateField = "";
+        //如果是修改判断修改了哪些字段
+        if (StringUtils.isNotBlank(dto.getId())) {
+            updateField = this.getUpdateField(dto);
+        }
+
         Boolean flag = this.saveOrUpdate(entity);
+        productOperateRecordDTO.setProductId(entity.getId());
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             projectTaskService.addSysTask(entity.getId());
+            productOperateRecordDTO.setRemark("新增了一个产品：[" + dto.getName() + "]");
+        } else {
+            productOperateRecordDTO.setRemark(updateField);
         }
+        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         return flag;
     }
 
@@ -373,6 +417,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductInfoEntity::getId, productId);
         updateWrapper.set(ProductInfoEntity::getApprovalStatus, state);
+
+        ProductInfoEntity productInfoEntity = this.getById(productId);
+        String name = ApprovalStatusEnum.getName(state);
+        //新增产品操作日志
+        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+        productOperateRecordDTO.setProductId(productId);
+        productOperateRecordDTO.setRemark("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]（审核不通过+原因）");
+        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         this.update(updateWrapper);
     }
 

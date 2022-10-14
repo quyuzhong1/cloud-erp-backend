@@ -21,6 +21,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.server.plm.controller.ProductDetailController;
+import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -722,6 +723,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public void exportProduct(ProductSkuDTO productSkuDTO,HttpServletResponse response) {
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuDTO);
+
+        exportSkuExcelDTO.forEach(req -> {
+            req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
+        });
 
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/productSkuDetail.xlsx";
