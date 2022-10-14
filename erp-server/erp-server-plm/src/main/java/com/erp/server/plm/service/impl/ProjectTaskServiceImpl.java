@@ -269,6 +269,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword);
         }
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
+            phaseId="";
             pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword);
         }
         if (pageData != null) {

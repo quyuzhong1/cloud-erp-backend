@@ -6,9 +6,11 @@
         SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id FROM project_task
         WHERE product_id=#{productId}
-        <if test="phaseId !=null and phaseId!='0'">
+        <if test="phaseId !=null and phaseId !=''">
             AND phase_id=#{phaseId}
         </if>
+
+
         <if test="searchKeyword !=null and searchKeyword!=''">
            AND name LIKE concat('%',#{item.searchKeyword},'%')
         </if>

@@ -18,6 +18,7 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -55,33 +56,33 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Override
     public void saveDeliveryDocs(String userId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
-        //先删除文档
-        removeTaskDocsByTaskId(taskId);
-        //保存交付文档
-        List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
-        for (DocsDTO item : deliveryDocsList) {
-            TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
-            entity.setProductId(productId);
-            entity.setDocsName(item.getName());
-            entity.setTaskId(taskId);
-            entity.setDocsNameId(item.getId());
-            entity.setIsSys(item.getIsSys());
-            saveList.add(entity);
-        }
-        Boolean flag = this.saveBatch(saveList);
-        if (flag) {
-            //保存他的权限
-            List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-            for (TaskDeliveryDocsEntity item : saveList) {
-                DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-                docsPermission.setDeliveryDocsId(item.getId());
-                docsPermission.setQueryUserId(userId);
-                docsPermissionList.add(docsPermission);
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            //先删除文档
+            removeTaskDocsByTaskId(taskId);
+            //保存交付文档
+            List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
+            for (DocsDTO item : deliveryDocsList) {
+                TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
+                entity.setProductId(productId);
+                entity.setDocsName(item.getName());
+                entity.setTaskId(taskId);
+                entity.setDocsNameId(item.getId());
+                entity.setIsSys(item.getIsSys());
+                saveList.add(entity);
             }
-            docsPermissionService.saveBatch(docsPermissionList);
+            Boolean flag = this.saveBatch(saveList);
+            if (flag) {
+                //保存他的权限
+                List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
+                for (TaskDeliveryDocsEntity item : saveList) {
+                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                    docsPermission.setDeliveryDocsId(item.getId());
+                    docsPermission.setQueryUserId(userId);
+                    docsPermissionList.add(docsPermission);
+                }
+                docsPermissionService.saveBatch(docsPermissionList);
+            }
         }
-
-
     }
 
 
@@ -150,20 +151,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
-        //先删除文档
-        removeTaskDocsByTaskId(taskId);
         //保存交付文档
-        List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
-        for (FinishDocsDTO item : docsList) {
-            TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
-            entity.setDocsName(item.getDocsName());
-            entity.setTaskId(taskId);
-            entity.setProductId("");
-            entity.setDocsNameId(item.getDocsId());
-            entity.setIsSys(IsConstant.YES);
-            saveList.add(entity);
+        if (CollectionUtils.isNotEmpty(docsList)) {
+            //先删除文档
+            removeTaskDocsByTaskId(taskId);
+            List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
+            for (FinishDocsDTO item : docsList) {
+                TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
+                entity.setDocsName(item.getDocsName());
+                entity.setTaskId(taskId);
+                entity.setProductId("");
+                entity.setDocsNameId(item.getDocsId());
+                entity.setIsSys(IsConstant.YES);
+                saveList.add(entity);
+            }
+            this.saveBatch(saveList);
         }
-        this.saveBatch(saveList);
+
+
     }
 
 
