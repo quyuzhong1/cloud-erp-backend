@@ -74,7 +74,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
-            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).filter(s->!TaskConstant.APPROVAL_TASK_NAME.equals(s)).collect(Collectors.toList());
+            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
             List<String> phaseIds=list.stream().map(TaskPhaseDTO::getId).collect(Collectors.toList());
             //获取产品加系统的阶段名 去重后的
             List<String> dbPhaseNames = getDbTaskPhaseNames(productId,phaseIds);
@@ -155,14 +155,14 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
         queryWrapper.notIn(ProjectPhaseEntity::getId,phaseIds);
         List<String> list = this.listObjs(queryWrapper, Object::toString);
-        List<String> sysList = sysTaskPhaseService.getSysTaskPhaseNames();
+//        List<String> sysList = sysTaskPhaseService.getSysTaskPhaseNames();
         List<String> results = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             results.addAll(list);
         }
-        if (CollectionUtils.isNotEmpty(sysList)) {
-            results.addAll(sysList);
-        }
+//        if (CollectionUtils.isNotEmpty(sysList)) {
+//            results.addAll(sysList);
+//        }
 
         return results.stream().distinct().collect(Collectors.toList());
     }

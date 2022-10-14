@@ -265,11 +265,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         IPage pageData = null;
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword,statusList);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            phaseId="";
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword,statusList);
+            phaseId = "";
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -282,7 +282,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
-                if(StringUtils.isNotBlank(quoteSysTaskId)){
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
@@ -345,7 +345,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-09-22 17:40
      */
     @Override
-    public List<Map<String, Object>> getTaskListByProductId(String  productId) {
+    public List<Map<String, Object>> getTaskListByProductId(String productId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectTaskEntity::getId, ProjectTaskEntity::getName);
         queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
@@ -508,8 +508,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[任务名]由[" + projectTaskEntity.getName() + "]改为[" + dto.getName() + "]");
         }
         if (!projectTaskEntity.getType().equals(dto.getType())) {
-            String entityType = (projectTaskEntity.getType()==0)?"一般任务":"审核任务";
-            String dtoType = (dto.getType()==0)?"一般任务":"审核任务";
+            String entityType = (projectTaskEntity.getType() == 0) ? "一般任务" : "审核任务";
+            String dtoType = (dto.getType() == 0) ? "一般任务" : "审核任务";
             list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
         }
         //负责人ids
@@ -525,8 +525,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
         }
         if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
-            String entityPriority = (projectTaskEntity.getPriority()==1)?"低级":(dto.getType()==2)?"中级":"高级";
-            String dtoPriority = (dto.getPriority()==1)?"低级":(dto.getType()==2)?"中级":"高级";
+            String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
+            String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
             list.add("编辑任务字段[任务优先级]由[" + entityPriority + "]改为[" + dtoPriority + "]");
         }
 
@@ -613,8 +613,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
-        LambdaUpdateWrapper<ProjectTaskEntity> queryWrapper = new LambdaUpdateWrapper<>();
-        queryWrapper.eq(ProjectTaskEntity::getId, dto.getTaskId());
+        ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
+        if(Objects.isNull(taskEntity)){
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
         //任务名
         String name = dto.getName();
         //开始时间
@@ -623,23 +625,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Date planEndTime = dto.getPlanStartTime();
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
-            queryWrapper.set(ProjectTaskEntity::getName, name);
-        }
-        if (StringUtils.isNotBlank(name)) {
-            queryWrapper.set(ProjectTaskEntity::getName, name);
+            checkTaskName(taskEntity.getId(),taskEntity.getProductId(),name);
+            taskEntity.setName(name);
         }
         if (planStartTime != null) {
-            queryWrapper.set(ProjectTaskEntity::getPlanStartTime, planStartTime);
+            taskEntity.setPlanStartTime(planStartTime);
         }
         if (planEndTime != null) {
-            queryWrapper.set(ProjectTaskEntity::getPlanEndTime, planStartTime);
+            taskEntity.setPlanEndTime(planStartTime);
         }
         if (StringUtils.isNotBlank(chargeId)) {
-            queryWrapper.set(ProjectTaskEntity::getChargeId, chargeId);
+            taskEntity.setChargeId(chargeId);
             String chargeName = commonService.getNameById(chargeId);
-            queryWrapper.set(ProjectTaskEntity::getChargeName, chargeName);
+            taskEntity.setChargeName(chargeName);
         }
-        return this.update(queryWrapper);
+        return this.updateById(taskEntity);
     }
 
 
@@ -734,12 +734,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //根据产品很任务id 获取任务名
         List<ProjectTaskEntity> taskList = getByProductId(productId);
         if (StringUtils.isNotBlank(taskId)) {
-            taskList = taskList.stream().filter(t -> !taskId.equals(t.getPid())).collect(Collectors.toList());
+            taskList = taskList.stream().filter(t -> !taskId.equals(t.getId())).collect(Collectors.toList());
         }
         List<String> taskNames = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.toList());
         //获取系统的任务名
         List<String> sysTaskNames = projectTaskSysService.getSysTaskNames();
-        taskNames.addAll(sysTaskNames);
+        //  taskNames.addAll(sysTaskNames);
         if (taskNames.contains(name)) {
             throw new ServiceException(ApiError.ERROR_95013);
         }
