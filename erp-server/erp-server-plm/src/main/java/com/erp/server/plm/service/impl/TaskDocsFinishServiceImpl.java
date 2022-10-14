@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
@@ -7,6 +8,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.CountDTO;
+import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
@@ -15,6 +17,7 @@ import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.DocsChangeRecordService;
+import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +52,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private DocsChangeRecordService docsChangeRecordService;
+
+    @Autowired
+    private ProductOperateRecordService productOperateRecordService;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -102,7 +108,32 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
+
+        //新增产品操作日志
+        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+        productOperateRecordDTO.setProductId(dto.getProductId());
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("上传文件：[" + fileName + "]")));
+        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
         return this.save(finishEntity);
+    }
+
+    /**
+     * 项目任务-任务详情-删除文件
+     * @Author Luo_WG
+     * @Date 2022/10/14 16:08
+     * @param id 主键
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean removeById(String id) {
+        TaskDocsFinishEntity entity = this.getById(id);
+        //新增产品操作日志
+        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+        productOperateRecordDTO.setProductId(entity.getProductId());
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("删除文件：[" + entity.getFileName() + "]")));
+        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+        return this.removeById(id);
     }
 
     @Override
@@ -158,6 +189,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             docsChangeRecordService.addRecord(sb.toString(),finishEntity.getTaskId(),finishDocsId,"");
         }
 
+        //新增产品操作日志
+        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+        productOperateRecordDTO.setProductId(finishEntity.getProductId());
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("变更文档：[" + fileName + "]")));
+        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         return flag;
     }
 

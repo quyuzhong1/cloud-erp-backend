@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,10 +14,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.ProjectTaskSysEntity;
-import com.erp.model.plm.entity.TaskDocsFinishEntity;
-import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
@@ -103,7 +101,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
                 productOperateRecordDTO.setProductId(productId);
-                productOperateRecordDTO.setRemark("新增了一个任务：[" + entity.getName() + "]");
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("新增了一个任务：[" + entity.getName() + "]")));
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
 
@@ -499,6 +497,45 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return detailsDTO;
     }
 
+    private String getUpdateField(ProjectTaskDTO dto) {
+        ProjectTaskEntity entity = new ProjectTaskEntity();
+        BeanMapper.copy(dto, entity);
+        List<String> list = new ArrayList<>();
+        ProjectTaskEntity projectTaskEntity = this.getById(dto.getId());
+        if (!projectTaskEntity.getName().equals(dto.getName())) {
+            list.add("编辑任务字段[任务名]由[" + projectTaskEntity.getName() + "]改为[" + dto.getName() + "]");
+        }
+        if (!projectTaskEntity.getType().equals(dto.getType())) {
+            String entityType = (projectTaskEntity.getType()==0)?"一般任务":"审核任务";
+            String dtoType = (dto.getType()==0)?"一般任务":"审核任务";
+            list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
+        }
+        //负责人ids
+        String chargeId = dto.getChargeId();
+        String chargeName = commonService.getNameById(chargeId);
+        if (!projectTaskEntity.getChargeName().equals(chargeName)) {
+            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeName + "]");
+        }
+        if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
+            list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
+        }
+        if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
+            list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
+        }
+        if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
+            String entityPriority = (projectTaskEntity.getPriority()==1)?"低级":(dto.getType()==2)?"中级":"高级";
+            String dtoPriority = (dto.getPriority()==1)?"低级":(dto.getType()==2)?"中级":"高级";
+            list.add("编辑任务字段[任务优先级]由[" + entityPriority + "]改为[" + dtoPriority + "]");
+        }
+
+        if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
+            list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
+        }
+        if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
+            list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
+        }
+        return JSONObject.toJSONString(list);
+    }
 
     /**
      * 修改 任务信息
@@ -527,6 +564,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(dto.getProductId());
+            productOperateRecordDTO.setRemark(getUpdateField(dto));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         }
         return flag;
     }

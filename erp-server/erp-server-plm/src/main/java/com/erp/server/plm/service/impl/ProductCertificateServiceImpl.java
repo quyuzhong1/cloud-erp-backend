@@ -66,7 +66,6 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         return this.saveOrUpdate(certificateEntity);
     }
 
-
     /**
      * @Description 保存/修改产品证书信息-批量操作
      * @Author Luo_WG

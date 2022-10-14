@@ -22,6 +22,8 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
     Boolean uploadFile(TaskUploadFileDTO dto);
 
+    Boolean removeById(String id);
+
     List<CountDTO> getTaskDocsCountByProductId();
 
     Boolean changeFile(TaskChangeFileDTO dto);

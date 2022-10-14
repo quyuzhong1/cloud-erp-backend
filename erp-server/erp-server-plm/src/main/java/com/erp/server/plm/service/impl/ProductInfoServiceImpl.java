@@ -185,22 +185,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
 
+        Boolean flag = this.saveOrUpdate(entity);
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-        String updateField = "";
-        //如果是修改判断修改了哪些字段
-        if (StringUtils.isNotBlank(dto.getId())) {
-            updateField = this.getUpdateField(dto);
-        }
-
-        Boolean flag = this.saveOrUpdate(entity);
         productOperateRecordDTO.setProductId(entity.getId());
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             projectTaskService.addSysTask(entity.getId());
-            productOperateRecordDTO.setRemark("新增了一个产品：[" + dto.getName() + "]");
+            productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("新增了一个产品：[" + dto.getName() + "]")));
         } else {
-            productOperateRecordDTO.setRemark(updateField);
+            productOperateRecordDTO.setRemark(this.getUpdateField(dto));
         }
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         return flag;
@@ -225,6 +219,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         updateWrapper.set(ProductInfoEntity::getCategoryId, dto.getCategoryId());
         updateWrapper.set(ProductInfoEntity::getCategory, category.getName());
         updateWrapper.in(ProductInfoEntity::getId, dto.getProductIds());
+
+        dto.getProductIds().forEach(req -> {
+            ProductInfoEntity productInfoEntity = this.getById(req);
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(req);
+            productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]")));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+        });
+
         return this.update(updateWrapper);
     }
 
@@ -439,7 +443,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(productId);
-        productOperateRecordDTO.setRemark("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]");
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]")));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         this.update(updateWrapper);
     }
