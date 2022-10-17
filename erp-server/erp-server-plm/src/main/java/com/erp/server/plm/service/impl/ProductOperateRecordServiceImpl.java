@@ -41,12 +41,10 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
         List<ProductOperateRecordEntity> list = this.list(queryWrapper);
         List<ProductOperateRecordEntity> entities = new ArrayList<>();
         for (ProductOperateRecordEntity req : list) {
-
             List<String> remarkList = JSONObject.parseObject(req.getRemark(), List.class);
             remarkList.forEach(remark -> {
                 ProductOperateRecordEntity operateRecordEntity = new ProductOperateRecordEntity();
-                operateRecordEntity.setId(req.getId());
-                operateRecordEntity.setProductId(req.getProductId());
+                BeanMapper.copy(req, operateRecordEntity);
                 operateRecordEntity.setRemark(remark);
                 entities.add(operateRecordEntity);
             });
