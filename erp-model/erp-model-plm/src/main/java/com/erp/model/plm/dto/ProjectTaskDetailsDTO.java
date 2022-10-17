@@ -97,6 +97,31 @@ public class ProjectTaskDetailsDTO implements Serializable {
     private Date planEndTime;
 
     /**
+     * 计划时间
+     *
+     */
+    private String planTime;
+
+
+    /**
+     * 实际开始时间
+     *
+     */
+    private Date realityStartTime;
+
+    /**
+     * 实际结束时间
+     *
+     */
+    private Date realityEndTime;
+
+    /**
+     * 实际时间
+     *
+     */
+    private String realityTime;
+
+    /**
      * 产品名称
      *
      */

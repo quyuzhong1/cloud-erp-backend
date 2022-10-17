@@ -73,7 +73,8 @@
 
     <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
         SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,
-        t.plan_start_time,t.description AS taskDescription,
+        t.plan_start_time,t.plan_end_time,t.description AS taskDescription,
+        t.reality_start_time,t.reality_end_time,
         t.create_time,t.phase_name,t.update_time,t.create_user_name,
         t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
         t.product_id,

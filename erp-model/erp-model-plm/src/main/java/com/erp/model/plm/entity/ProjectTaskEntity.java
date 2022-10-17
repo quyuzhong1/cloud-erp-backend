@@ -160,5 +160,10 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("pid")
     private String pid;
 
+    @TableField("create_user_id")
+    private String createUserId;
+
+    @TableField("create_user_name")
+    private String createUserName;
 
 }
