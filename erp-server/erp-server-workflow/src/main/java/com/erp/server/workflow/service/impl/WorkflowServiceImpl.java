@@ -284,7 +284,9 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     @Transactional
     public ProcessNodeDTO startProcess(StartProcessDTO dto) {
-        ProcessNodeDTO processNodeDTO=new ProcessNodeDTO();
+        ProcessNodeDTO processNodeDTO = new ProcessNodeDTO();
+        String processId = "";
+        String currentNodeId = "";
         try {
             String userId = dto.getUserId();
             //流程发起人
@@ -296,13 +298,13 @@ public class WorkflowServiceImpl implements WorkflowService {
                 throw new ServiceException(ApiError.ERROR_94004);
             }
             //流程 id
-            String processInstanceId = processInstance.getProcessInstanceId();
-
+            processId = processInstance.getProcessInstanceId();
             ActivityDTO activityDTO = new ActivityDTO();
             //获取当前环节实例
-            ActivityInstance activity = runtimeService.getActivityInstance(processInstanceId);
-            activityDTO.setProcessInstanceId(processInstanceId);
+            ActivityInstance activity = runtimeService.getActivityInstance(processId);
+            activityDTO.setProcessInstanceId(processId);
             activityDTO.setNowActivityId(activity.getActivityId());
+            currentNodeId=activity.getActivityId();
 
             // 需要保存流程节点信息
             actHistoryActivityService.saveActivity(activityDTO);
@@ -311,7 +313,8 @@ public class WorkflowServiceImpl implements WorkflowService {
             log.error("启动流程出错", e);
             throw new ServiceException(ApiError.ERROR_94004);
         }
-
+        processNodeDTO.setCurrentNodeId(currentNodeId);
+        processNodeDTO.setProcessId(processId);
         return processNodeDTO;
     }
 
@@ -351,36 +354,36 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .list();
         List<ApproveRecordShowDTO> resultList = new ArrayList<>(list.size());
         for (HistoricActivityInstance item : list) {
-            String taskId=item.getTaskId();
+            String taskId = item.getTaskId();
             List<Comment> taskComments = taskService.getTaskComments(taskId);
             ApproveRecordShowDTO vo = new ApproveRecordShowDTO();
             vo.setActivityName(item.getActivityName());
             vo.setActivityType(matching(item.getActivityType()));
-            vo.setComment(taskComments.size()>0?taskComments.get(0).getFullMessage():"");
-            vo.setHandleUserName(StringUtils.isBlank(item.getAssignee())?"无":item.getAssignee());
+            vo.setComment(taskComments.size() > 0 ? taskComments.get(0).getFullMessage() : "");
+            vo.setHandleUserName(StringUtils.isBlank(item.getAssignee()) ? "无" : item.getAssignee());
             vo.setStartTime(DateUtil.conversionDate(item.getStartTime(), DateUtil.fmt));
             vo.setEndTime(DateUtil.conversionDate(item.getEndTime(), DateUtil.fmt));
-            vo.setHandleTime(DateUtil.discrepancy(item.getEndTime(),item.getStartTime()));
+            vo.setHandleTime(DateUtil.discrepancy(item.getEndTime(), item.getStartTime()));
             resultList.add(vo);
         }
 
         return resultList;
     }
 
-    public String matching(String activityType){
-        String value="";
-        switch (activityType){
+    public String matching(String activityType) {
+        String value = "";
+        switch (activityType) {
             case "startEvent":
-                value="流程开始";
+                value = "流程开始";
                 break;
             case "userTask":
-                value="用户处理";
+                value = "用户处理";
                 break;
             case "noneEndEvent":
-                value="流程结束";
+                value = "流程结束";
                 break;
             default:
-                value="未知节点";
+                value = "未知节点";
                 break;
         }
         return value;
