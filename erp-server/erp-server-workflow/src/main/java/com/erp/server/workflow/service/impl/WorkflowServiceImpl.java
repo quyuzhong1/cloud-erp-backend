@@ -292,7 +292,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             //流程发起人
             identityService.setAuthenticatedUserId(userId);
             //查询这个流程 需要审批的人 和对应的参数  是否需要保存 到数据库
-            Map<String, Object> parameterMap = new HashMap<>();
+            Map<String, Object> parameterMap = dto.getParameterMap();
             ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(dto.getProcessDefinitionKey(), dto.getBusinessKey(), parameterMap);
             if (Objects.isNull(processInstance)) {
                 throw new ServiceException(ApiError.ERROR_94004);

@@ -77,21 +77,24 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      */
     @Override
     public void taskPass(ApproveProcessDTO dto) {
-        String processInstanceId=dto.getProcessInstanceId();
+        String processInstanceId = dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
         String taskId = dto.getTaskId();
         Task task = taskService.createTaskQuery().
                 taskId(taskId).singleResult();
+        if (Objects.isNull(task)) {
+            return;
+        }
         String nowActivityId = task.getTaskDefinitionKey();
         //添加审批意见
         taskService.createComment(taskId, dto.getProcessInstanceId(), dto.getComment());
-        if (map != null&&!map.isEmpty()) {
+        if (map != null && !map.isEmpty()) {
             taskService.complete(taskId, map);
         } else {
             taskService.complete(taskId);
         }
 
-        ActivityDTO activityDTO=new ActivityDTO();
+        ActivityDTO activityDTO = new ActivityDTO();
         activityDTO.setNowActivityId(nowActivityId);
         activityDTO.setProcessInstanceId(processInstanceId);
         //审批通过后 需要保存流程节点信息
@@ -139,7 +142,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-11 12:17
      */
     @Override
-    public TaskShowDTO queryTaskInfo(ApproveProcessDTO dto){
+    public TaskShowDTO queryTaskInfo(ApproveProcessDTO dto) {
         Task task = taskService.createTaskQuery().taskId(dto.getTaskId()).singleResult();
         TaskShowDTO vo = new TaskShowDTO();
         if (!Objects.isNull(task)) {
@@ -147,9 +150,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             vo.setProcessInstanceId(task.getProcessInstanceId());
             vo.setTaskId(task.getId());
             vo.setNodeId(task.getTaskDefinitionKey());
-            List<Comment> taskComments=taskService.getProcessInstanceComments(dto.getProcessInstanceId());
-            List<String> list=new ArrayList<>(taskComments.size());
-            for(Comment item:taskComments){
+            List<Comment> taskComments = taskService.getProcessInstanceComments(dto.getProcessInstanceId());
+            List<String> list = new ArrayList<>(taskComments.size());
+            for (Comment item : taskComments) {
                 list.add(item.getFullMessage());
             }
             vo.setComments(list);
@@ -158,7 +161,6 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
         return vo;
     }
-
 
 
 }

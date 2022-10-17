@@ -86,7 +86,7 @@
 
 
     <select id="getRefTask" resultType="com.erp.model.plm.dto.RefTaskInfoDTO">
-        SELECT name AS taskName,charge_name AS taskChargeName,type AS taskType,
+        SELECT  id AS flagTaskId ,name AS taskName,charge_name AS taskChargeName,type AS taskType,
         status AS taskStatus FROM project_task
         <where>
             <if test="taskIds !=null and taskIds.size()>0">
