@@ -100,7 +100,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
                 productOperateRecordDTO.setProductId(productId);
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("新增了一个任务：[" + entity.getName() + "]")));
+                List<String> remarkList = new ArrayList<>();
+                remarkList.add("新增了一个任务：[" + entity.getName() + "]");
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
 
@@ -109,6 +111,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     }
 
+    public static void main(String[] args) {
+        List<String> remarkList = new ArrayList<>();
+        remarkList.add("新增了一个产品：[2022苹果14手机壳]");
+        String s = JSONObject.toJSONString(remarkList);
+        System.out.println(s);
+        System.out.println(JSONObject.toJSONString(new ArrayList<>().add("新增了一个任务：[" +"asd" + "]")));
+    }
 
     /**
      * 根据 产品id 删除任务
