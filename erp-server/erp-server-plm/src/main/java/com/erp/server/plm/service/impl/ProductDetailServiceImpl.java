@@ -515,6 +515,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @Description 删除多规格sku信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/22 11:32
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional
+    public Boolean deleteBatch(List<String> skuId){
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(ProductDetailEntity::getId, skuId);
+        return this.remove(queryWrapper);
+    }
+
+    /**
      * @Description 根据产品主键id查询sku明细
      * @Author Luo_WG
      * @Date 2022/9/26 18:25
