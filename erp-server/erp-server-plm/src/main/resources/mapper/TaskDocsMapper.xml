@@ -37,6 +37,7 @@
 
     <select id="getByTaskId" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
         SELECT d.id, f.id AS finishDocsId, d.docs_name deliveryDocsName ,d.task_id,
+        d.is_sys,
         COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
         COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
         COALESCE(f.file_size,0) fileSize,

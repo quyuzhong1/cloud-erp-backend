@@ -14,10 +14,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.ProjectTaskSysEntity;
-import com.erp.model.plm.entity.TaskDocsFinishEntity;
-import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
@@ -326,10 +323,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
+        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+        String phaseName = "";
+        if (phaseEntity != null) {
+            phaseName = phaseEntity.getName();
+        }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
+        taskEntity.setPhaseName(phaseName);
+
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
@@ -562,10 +566,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
+        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+        String phaseName = "";
+        if (phaseEntity != null) {
+            phaseName = phaseEntity.getName();
+        }
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeName);
+        taskEntity.setPhaseName(phaseName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.updateById(taskEntity);
