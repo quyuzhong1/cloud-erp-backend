@@ -144,8 +144,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setChargeId("产品经理id");
         productInfoDTO.setMaterials(dto.getMaterials());
 
-        productInfoDTO.setFunctionDesc(dto.getProductFunctionDesc());
-        productInfoDTO.setProductSellSpot(dto.getProductSellSpot());
+        productInfoDTO.setFunctionDesc(dto.getFunctionDesc());
+        productInfoDTO.setSellSpot(dto.getSellSpot());
         productInfoDTO.setSaleMethod(dto.getSaleMethod());
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
 
