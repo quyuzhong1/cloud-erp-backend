@@ -283,14 +283,14 @@ public class WorkflowServiceImpl implements WorkflowService {
      */
     @Override
     @Transactional
-    public void startProcess(StartProcessDTO dto) {
+    public ProcessNodeDTO startProcess(StartProcessDTO dto) {
+        ProcessNodeDTO processNodeDTO=new ProcessNodeDTO();
         try {
-
             String userId = dto.getUserId();
             //流程发起人
             identityService.setAuthenticatedUserId(userId);
             //查询这个流程 需要审批的人 和对应的参数  是否需要保存 到数据库
-            Map<String, Object> parameterMap = dto.getParameterMap();
+            Map<String, Object> parameterMap = new HashMap<>();
             ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(dto.getProcessDefinitionKey(), dto.getBusinessKey(), parameterMap);
             if (Objects.isNull(processInstance)) {
                 throw new ServiceException(ApiError.ERROR_94004);
@@ -312,7 +312,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             throw new ServiceException(ApiError.ERROR_94004);
         }
 
-
+        return processNodeDTO;
     }
 
 

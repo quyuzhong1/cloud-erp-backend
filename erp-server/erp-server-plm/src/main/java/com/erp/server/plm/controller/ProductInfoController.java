@@ -49,8 +49,6 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/paging")
    // @RequestPermissions("plm:product:paging")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
-        int ss= dto.getDataScope();
-        System.out.println(ss);
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
     }

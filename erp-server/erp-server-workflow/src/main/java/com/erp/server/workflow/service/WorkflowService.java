@@ -29,7 +29,7 @@ public interface WorkflowService {
 
 
     //启动一个流程
-   void startProcess(StartProcessDTO dto);
+    ProcessNodeDTO startProcess(StartProcessDTO dto);
 
 
    //发布流程
