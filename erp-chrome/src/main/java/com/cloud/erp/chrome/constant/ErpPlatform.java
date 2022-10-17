@@ -1,9 +1,8 @@
 package com.cloud.erp.chrome.constant;
 
 /**
- * @Classname ErpPlatform
- * @Description TODO
- * @Date 2022-08-25 18:10
+ * 平台类型
+ * @Date: 2022-08-25 18:10
  * @Created by yl
  */
 public class ErpPlatform {

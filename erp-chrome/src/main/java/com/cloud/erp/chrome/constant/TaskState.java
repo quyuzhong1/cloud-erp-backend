@@ -6,7 +6,7 @@ package com.cloud.erp.chrome.constant;
  * @Date 2022-08-25 16:31
  * @Created by yl
  */
-public interface TaskState {
+public class TaskState {
 
     public static final Integer NOT_START=0;
 

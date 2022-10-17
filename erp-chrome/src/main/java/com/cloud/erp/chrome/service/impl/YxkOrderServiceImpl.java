@@ -16,6 +16,7 @@ import com.erp.common.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -57,6 +58,7 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
      */
 
     @Override
+    @Transactional
     public void saveYxkOrder(YxkOrderDTO dto) {
 
         String vurl = dto.getUrl();
@@ -103,8 +105,9 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
                 this.saveBatch(listSub);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServiceException(1, "云星空保存数据失败 无法获取到文件");
+            log.error("云星空保存数据失败 无法获取到文件",e);
+//            throw new ServiceException(1, "云星空保存数据失败 无法获取到文件");
+            throw new RuntimeException("云星空保存数据失败 无法获取到文件",e);
 
         }
 

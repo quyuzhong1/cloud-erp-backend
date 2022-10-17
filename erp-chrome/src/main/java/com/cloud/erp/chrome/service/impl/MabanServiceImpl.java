@@ -12,6 +12,7 @@ import com.cloud.erp.chrome.service.MabanService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -50,6 +51,7 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
      * @date 2022-08-24 14:04
      */
     @Override
+    @Transactional
     public void importIncomeExpensesCsv(MabangOrderDTO dto) {
         try {
             MultipartFile file = dto.getFile();
@@ -66,6 +68,7 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             log.error("importIncomeExpensesCsv  出错了 e==" + e);
+            throw new RuntimeException("importIncomeExpensesCsv  出错了 e==",e);
         }
     }
 
