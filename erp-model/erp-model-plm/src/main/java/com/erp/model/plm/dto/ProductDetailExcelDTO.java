@@ -23,10 +23,10 @@ public class ProductDetailExcelDTO {
     private String saleMethod;
 
     @ExcelProperty( value = "产品卖点", index = 2)
-    private String productSellSpot;
+    private String sellSpot;
 
     @ExcelProperty( value = "产品功能描述", index = 3)
-    private String productFunctionDesc;
+    private String functionDesc;
 
     @ExcelProperty( value = "产品用途", index = 4)
     private String usageDesc;
