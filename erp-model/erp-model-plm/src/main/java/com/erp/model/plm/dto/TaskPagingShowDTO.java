@@ -114,11 +114,17 @@ public class TaskPagingShowDTO  implements Serializable {
      */
     private String quoteSysTaskId;
 
+    /**
+     * 父级id
+     *
+     */
+    private String pid;
+
 
     /**
      * 子 任务
      */
-    @JsonInclude(value= JsonInclude.Include.NON_NULL)
+    @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
     private List<TaskPagingShowDTO>  childList;
 
 

@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ttsq21" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.1.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
-    <bpmn:process id="Process_plm_task" isExecutable="true">
+    <bpmn:process id="Process_plm_task" isExecutable="true" camunda:isStartableInTasklist="false">
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_0dvy6lv</bpmn:outgoing>
         </bpmn:startEvent>
         <bpmn:sequenceFlow id="Flow_0dvy6lv" sourceRef="StartEvent_1" targetRef="Activity_1lb9sa4" />
         <bpmn:endEvent id="Event_0uvwtyk">
+            <bpmn:extensionElements>
+                <camunda:executionListener class="com.erp.server.workflow.listeners.ProjectTaskCountersignResultListener" event="end" />
+            </bpmn:extensionElements>
             <bpmn:incoming>Flow_1vnleji</bpmn:incoming>
         </bpmn:endEvent>
         <bpmn:sequenceFlow id="Flow_1vnleji" sourceRef="Activity_1lb9sa4" targetRef="Event_0uvwtyk" />
         <bpmn:userTask id="Activity_1lb9sa4" name="项目成员负责人会签" camunda:assignee="${memberCharges}">
-            <bpmn:extensionElements>
-                <camunda:executionListener class="com.erp.server.workflow.listeners.ProjectTaskCountersignResultListener" event="end" />
-            </bpmn:extensionElements>
+            <bpmn:extensionElements />
             <bpmn:incoming>Flow_0dvy6lv</bpmn:incoming>
             <bpmn:outgoing>Flow_1vnleji</bpmn:outgoing>
-            <bpmn:multiInstanceLoopCharacteristics camunda:collection="memberChargeList" camunda:elementVariable="memberCharges">
-                <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">${nrOfInstances == nrOfCompletedInstances}</bpmn:completionCondition>
-            </bpmn:multiInstanceLoopCharacteristics>
+            <bpmn:multiInstanceLoopCharacteristics camunda:collection="memberChargeList" camunda:elementVariable="memberCharges" />
         </bpmn:userTask>
     </bpmn:process>
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
