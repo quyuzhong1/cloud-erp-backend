@@ -298,18 +298,18 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-    /**
+/*    *//**
      * 证书信息-主页列表-新增|修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      * @param productCertificateDTO 产品证书表
      * @return com.erp.common.dto.base.ApiResult
-     **/
+     **//*
     @GetMapping("/saveOrUpdateCertificate")
     public ApiResult saveOrUpdateCertificate(@RequestBody List<ProductCertificateDTO> productCertificateDTO) {
         Boolean flag = productCertificateService.saveOrUpdateBatch(productCertificateDTO);
         return  flag == true ? this.success() : this.failure();
-    }
+    }*/
 
     /**
      * 证书信息-主页列表-删除
