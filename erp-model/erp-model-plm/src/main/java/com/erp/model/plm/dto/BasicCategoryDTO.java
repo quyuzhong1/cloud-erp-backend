@@ -16,12 +16,24 @@ import java.util.List;
 @NoArgsConstructor
 public class BasicCategoryDTO {
 
+    /**
+     * 主键id
+     */
     private String id;
 
+    /**
+     * 分类名
+     */
     private String name;
 
+    /**
+     * 父 级id
+     */
     private String pid;
 
+    /**
+     * 分类集合
+     */
     @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
     private List<BasicCategoryDTO> childrenList;
 }

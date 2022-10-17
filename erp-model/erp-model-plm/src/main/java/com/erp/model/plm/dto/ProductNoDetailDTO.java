@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -77,6 +78,11 @@ public class ProductNoDetailDTO {
     private String category;
 
     /**
+     * 产品类别Id
+     */
+    private String categoryId;
+
+    /**
      * 销售方式
      */
     private String saleMethod;
@@ -109,8 +115,9 @@ public class ProductNoDetailDTO {
     /**
      * 计划上市时间
      */
-    private String planListedTime;
 
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
+    private String planListingTime;
     /**
      * 单位表id
      */

@@ -28,7 +28,7 @@ public class ProductSkuBaseInfoDTO {
      * 计划上市时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date planListedTime;
+    private Date planListingTime;
 
     /**
      * 单位表id
