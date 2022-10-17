@@ -317,10 +317,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        taskEntity.setChargeId(chargeId);
-        taskEntity.setChargeName(chargeName);
+        List<String> chargeId = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeId);
+        taskEntity.setChargeId(String.join(",", chargeId));
+        taskEntity.setChargeName(chargeNames);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
@@ -511,10 +511,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
         }
         //负责人ids
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        if (!projectTaskEntity.getChargeName().equals(chargeName)) {
-            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeName + "]");
+        List<String> chargeIds = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeIds);
+        if (!projectTaskEntity.getChargeName().equals(chargeNames)) {
+            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
         }
         if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
             list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
@@ -553,9 +553,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        taskEntity.setChargeId(chargeId);
+        List<String> chargeId = dto.getChargeIds();
+        String chargeName = commonService.getNameByIds(chargeId);
+        taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
@@ -660,7 +660,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95027);
         }
         ProjectTaskDTO resultDTO = new ProjectTaskDTO();
-        BeanMapper.copy(taskEntity,resultDTO);
+        BeanMapper.copy(taskEntity, resultDTO);
+        String chargeId = taskEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        }
         return resultDTO;
     }
 

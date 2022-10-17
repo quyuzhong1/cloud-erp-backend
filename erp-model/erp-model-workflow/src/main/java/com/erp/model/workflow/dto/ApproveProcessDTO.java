@@ -16,6 +16,7 @@ import java.util.Map;
 public class ApproveProcessDTO extends ProcessBaseDTO {
 
 
+    private String processInstanceId;
 
     private String taskId;
     //参数
