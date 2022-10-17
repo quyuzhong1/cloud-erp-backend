@@ -2,10 +2,10 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -14,19 +14,18 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskSysEntity;
+import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -615,7 +614,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
-        if(Objects.isNull(taskEntity)){
+        if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         //任务名
@@ -626,7 +625,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Date planEndTime = dto.getPlanStartTime();
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
-            checkTaskName(taskEntity.getId(),taskEntity.getProductId(),name);
+            checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
         }
         if (planStartTime != null) {
@@ -641,6 +640,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setChargeName(chargeName);
         }
         return this.updateById(taskEntity);
+    }
+
+
+    /**
+     * 根据任务di 获取 编辑的任务详情
+     *
+     * @param taskId
+     * @return com.erp.model.plm.dto.ProjectTaskDTO
+     * @author yl
+     * @date 2022-10-15 10:04
+     */
+    @Override
+    public ProjectTaskDTO taskDetails(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        ProjectTaskDTO resultDTO = new ProjectTaskDTO();
+        BeanMapper.copy(taskEntity,resultDTO);
+        return resultDTO;
     }
 
 

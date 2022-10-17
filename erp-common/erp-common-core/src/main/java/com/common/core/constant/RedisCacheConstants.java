@@ -24,4 +24,10 @@ public interface RedisCacheConstants {
      */
     public long EMAIL_CODE_EXPIRATION = 5;
 
+
+    /**
+     * 权限功能的redis 的key
+     */
+    String PERMISSIONS_CODE_KEY = "permissions_code:";
+
 }

@@ -22,7 +22,7 @@ import java.util.Objects;
  */
 @RestController
 @RequestMapping("sys/feign/user")
-public class SysAdminUserFeignController extends BaseController {
+public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
@@ -69,6 +69,17 @@ public class SysAdminUserFeignController extends BaseController {
     @GetMapping("/getUserList")
     public List<FindUserDTO> getUserList() {
         List<FindUserDTO> list = sysUserInfoService.getAllUserList();
+        return list;
+    }
+
+
+    /**
+     * 根据用户id 获取 用户的角色的权限标示
+     * @return
+     */
+    @PostMapping("/getRequestPermissionsList")
+    public List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId) {
+        List<UserRequestPermissionsDTO> list = sysUserInfoService.getRequestPermissionsList(userId);
         return list;
     }
 

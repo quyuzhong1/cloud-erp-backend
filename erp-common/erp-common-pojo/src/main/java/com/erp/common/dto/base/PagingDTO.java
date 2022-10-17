@@ -16,7 +16,7 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 @NoArgsConstructor
-public class PagingDTO<T> {
+public class PagingDTO<T> extends PermissionsDTO {
 
     @NotNull(message = "当前页码 不能为空")
     private Integer currPage = 1;

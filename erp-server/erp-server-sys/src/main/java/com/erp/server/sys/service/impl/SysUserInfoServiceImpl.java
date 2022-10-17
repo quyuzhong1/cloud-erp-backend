@@ -651,7 +651,29 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         queryWrapper.lambda().eq(SysUserInfoEntity::getUserAccount, mobile);
         int count = this.count(queryWrapper);
         return count > 0 ? true : false;
+    }
 
+    /**
+     * 根据用户id 获取到用户的权限
+     *
+     * @param userId
+     * @return java.util.List<com.erp.common.modules.sys.dto.UserRequestPermissionsDTO>
+     * @author yl
+     * @date 2022-10-15 11:22
+     */
+    public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
+        String permissionsKey = RedisCacheConstants.PERMISSIONS_CODE_KEY + userId;
+        //先从redis 获取 如果没有在从数据库获取
+        List<UserRequestPermissionsDTO> resultList = redisService.getCacheList(permissionsKey);
+        //当为空的时候 就去查
+        if (CollectionUtils.isEmpty(resultList)) {
+            resultList = baseMapper.getRequestPermissionsList(userId);
+            if (CollectionUtils.isNotEmpty(resultList)) {
+                redisService.setCacheList(permissionsKey, resultList);
+                redisService.expire(permissionsKey, 7l, TimeUnit.DAYS);
+            }
+        }
+        return resultList;
     }
 
 

@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +19,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ProductSearchDTO implements Serializable {
+public class ProductSearchDTO extends PermissionsDTO  {
 
 
     /**

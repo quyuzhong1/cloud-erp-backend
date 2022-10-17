@@ -43,7 +43,7 @@ public class ProjectTaskDTO implements Serializable {
     private String pid;
 
     /**
-     * 项目id
+     * 产品idid
      */
     @NotBlank(message = "产品id不能为空")
     private String productId;
