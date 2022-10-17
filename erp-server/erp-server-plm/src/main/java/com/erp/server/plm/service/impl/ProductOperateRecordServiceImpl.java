@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -37,7 +38,20 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     public List<ProductOperateRecordEntity> list(String productId) {
         LambdaQueryWrapper<ProductOperateRecordEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductOperateRecordEntity::getProductId, productId);
-        return this.list(queryWrapper);
+        List<ProductOperateRecordEntity> list = this.list(queryWrapper);
+        List<ProductOperateRecordEntity> entities = new ArrayList<>();
+        for (ProductOperateRecordEntity req : list) {
+
+            List<String> remarkList = JSONObject.parseObject(req.getRemark(), List.class);
+            remarkList.forEach(remark -> {
+                ProductOperateRecordEntity operateRecordEntity = new ProductOperateRecordEntity();
+                operateRecordEntity.setId(req.getId());
+                operateRecordEntity.setProductId(req.getProductId());
+                operateRecordEntity.setRemark(remark);
+                entities.add(operateRecordEntity);
+            });
+        }
+        return entities;
     }
 
     /**

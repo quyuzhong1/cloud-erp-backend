@@ -497,7 +497,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return detailsDTO;
     }
 
-    private String getUpdateField(ProjectTaskDTO dto) {
+    private List<String> getUpdateField(ProjectTaskDTO dto) {
         ProjectTaskEntity entity = new ProjectTaskEntity();
         BeanMapper.copy(dto, entity);
         List<String> list = new ArrayList<>();
@@ -534,7 +534,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
             list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
         }
-        return JSONObject.toJSONString(list);
+        return list;
     }
 
     /**
@@ -566,11 +566,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
 
-            //新增产品操作日志
-            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-            productOperateRecordDTO.setProductId(dto.getProductId());
-            productOperateRecordDTO.setRemark(getUpdateField(dto));
-            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            List<String> updateField = getUpdateField(dto);
+            if (updateField.size() > 0) {
+                //新增产品操作日志
+                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+                productOperateRecordDTO.setProductId(dto.getProductId());
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
+                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            }
         }
         return flag;
     }
