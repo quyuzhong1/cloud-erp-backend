@@ -94,6 +94,18 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
+     * 项目任务-编辑任务-获取任务详情
+     *
+     * @param taskId
+     * @return
+     */
+    @GetMapping("/taskDetails")
+    public ApiResult<ProjectTaskDTO> taskDetails(String taskId) {
+        ProjectTaskDTO taskDTO = taskService.taskDetails(taskId);
+        return success(taskDTO);
+    }
+
+    /**
      * 项目任务-任务详情-删除任务
      *
      * @param dto

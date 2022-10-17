@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -46,6 +47,7 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
+   // @RequestPermissions("plm:product:paging")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);

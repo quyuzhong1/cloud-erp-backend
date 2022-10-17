@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
+import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.model.sys.dto.SysUserPagingSearchDTO;
 import com.erp.model.sys.dto.UserDTO;
 import com.erp.model.sys.dto.UserManageDTO;
@@ -38,4 +39,6 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
     List<UserDTO> findDepartmentIfExistList(@Param("searchKeyword") String searchKeyWord, @Param("departmentId") String flagId);
 
     void setLoginIp(@Param("params") SysLoginIpDTO dto);
+
+    List<UserRequestPermissionsDTO> getRequestPermissionsList(@Param("userId") String userId);
 }

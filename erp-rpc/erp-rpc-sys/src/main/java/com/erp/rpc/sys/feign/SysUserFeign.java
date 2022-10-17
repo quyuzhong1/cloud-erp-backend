@@ -5,6 +5,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -38,9 +39,11 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/findList")
     ApiResult<List<FindUserDTO>> userList(@RequestBody BaseSearchDTO dto);
 
+    //获取用户权限
+    @PostMapping("sys/feign/user/getRequestPermissionsList")
+    List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody  String userId);
+
     //获取用户列表
     @GetMapping("sys/feign/user/getUserList")
     List<FindUserDTO> getUserList();
-
-
 }

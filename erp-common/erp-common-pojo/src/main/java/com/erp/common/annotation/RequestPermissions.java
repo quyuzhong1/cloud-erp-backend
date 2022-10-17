@@ -13,10 +13,18 @@ import java.lang.annotation.*;
 @Documented
 public @interface RequestPermissions {
 
-    // 默认错误消息
-    String message() default "没有权限";
 
-    String[] value();
+    /**
+     * 要注入的参数索引，一般为第一个，极端情况下会使用多个
+     *
+     * @return
+     */
+    int index() default 0;
+
+    String value() default "";
+
+    //这个是给那个字段赋值
+    String dataScope() default "dataScope";
 
 
 }

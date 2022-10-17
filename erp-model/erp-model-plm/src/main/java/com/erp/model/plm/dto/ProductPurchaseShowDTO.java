@@ -80,7 +80,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 采购员
      */
-    private Integer purchaseUserId;
+    private String purchaseUserId;
 
     /**
      * 一级供应商

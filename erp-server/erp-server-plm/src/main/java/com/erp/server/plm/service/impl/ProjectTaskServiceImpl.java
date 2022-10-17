@@ -2,10 +2,10 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -18,15 +18,11 @@ import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,7 +97,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
                 productOperateRecordDTO.setProductId(productId);
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("新增了一个任务：[" + entity.getName() + "]")));
+                List<String> remarkList = new ArrayList<>();
+                remarkList.add("新增了一个任务：[" + entity.getName() + "]");
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
 
@@ -268,7 +266,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            phaseId = "";
             pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
         }
         if (pageData != null) {
@@ -279,6 +276,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
+            //根据产品id 获取到所有的 任务信息
+            List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
@@ -295,12 +294,70 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-
+                item.setChildList(getChildrenList(item, allList));
 
             }
         }
 
         return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 递归获取到任务下面的子任务
+     *
+     * @param item
+     * @param allList
+     * @return java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>
+     * @author yl
+     * @date 2022-10-17 16:19
+     */
+    private List<TaskPagingShowDTO> getChildrenList(TaskPagingShowDTO item, List<TaskPagingShowDTO> allList) {
+        List<TaskPagingShowDTO> collectList = allList.stream().
+                filter(t -> item.getId().equals(t.getPid())).
+                map(p -> {
+                    p.setChildList(getChildrenList(p, allList));
+                    return p;
+                }).collect(Collectors.toList());
+        return CollectionUtils.isNotEmpty(collectList) ? collectList : new ArrayList<>();
+    }
+
+    /**
+     * 根据 产品id 获取到所有的任务信息
+     *
+     * @param productId
+     * @return
+     */
+    public List<TaskPagingShowDTO> getAllChildrenList(String productId) {
+        List<TaskPagingShowDTO> allChildrenList = baseMapper.allChildrenList(productId);
+        if (CollectionUtils.isNotEmpty(allChildrenList)) {
+            //获取到任务id 集合
+            List<String> taskIds = allChildrenList.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //获取总的任务文档数
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            for (TaskPagingShowDTO item : allChildrenList) {
+                String taskId = item.getId();
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
+                    item.setIsSysTask(true);
+                }
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+            }
+            return allChildrenList;
+        } else {
+            return new ArrayList();
+        }
     }
 
 
@@ -319,10 +376,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        taskEntity.setChargeId(chargeId);
-        taskEntity.setChargeName(chargeName);
+        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+        String phaseName = "";
+        if (phaseEntity != null) {
+            phaseName = phaseEntity.getName();
+        }
+        List<String> chargeId = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeId);
+        taskEntity.setChargeId(String.join(",", chargeId));
+        taskEntity.setChargeName(chargeNames);
+        taskEntity.setPhaseName(phaseName);
+        taskEntity.setCreateUserId(loginUser.getUid());
+        taskEntity.setCreateUserName(loginUser.getUserName());
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
@@ -479,6 +544,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        StringBuffer planTime = new StringBuffer();
+        if (detailsDTO.getPlanStartTime() != null) {
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(),DateUtil.fmt_day));
+        }
+        planTime.append(" - ");
+        if (detailsDTO.getPlanEndTime() != null) {
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanEndTime(),DateUtil.fmt_day));
+        }
+        detailsDTO.setPlanTime(planTime.toString());
+
+        StringBuffer realityTime = new StringBuffer();
+        if (detailsDTO.getRealityStartTime() != null) {
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityStartTime(),DateUtil.fmt_day));
+        }
+        realityTime.append(" - ");
+        if (detailsDTO.getRealityEndTime() != null) {
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityEndTime(),DateUtil.fmt_day));
+        }
+        detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
         List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         //前置任务
@@ -499,7 +583,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return detailsDTO;
     }
 
-    private String getUpdateField(ProjectTaskDTO dto) {
+    private List<String> getUpdateField(ProjectTaskDTO dto) {
         ProjectTaskEntity entity = new ProjectTaskEntity();
         BeanMapper.copy(dto, entity);
         List<String> list = new ArrayList<>();
@@ -513,10 +597,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
         }
         //负责人ids
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        if (!projectTaskEntity.getChargeName().equals(chargeName)) {
-            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeName + "]");
+        List<String> chargeIds = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeIds);
+        if (!projectTaskEntity.getChargeName().equals(chargeNames)) {
+            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
         }
         if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
             list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
@@ -536,7 +620,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
             list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
         }
-        return JSONObject.toJSONString(list);
+        return list;
     }
 
     /**
@@ -555,10 +639,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
-        String chargeId = dto.getChargeId();
-        String chargeName = commonService.getNameById(chargeId);
-        taskEntity.setChargeId(chargeId);
+        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+        String phaseName = "";
+        if (phaseEntity != null) {
+            phaseName = phaseEntity.getName();
+        }
+        List<String> chargeId = dto.getChargeIds();
+        String chargeName = commonService.getNameByIds(chargeId);
+        taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeName);
+        taskEntity.setPhaseName(phaseName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.updateById(taskEntity);
@@ -568,11 +658,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
 
-            //新增产品操作日志
-            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-            productOperateRecordDTO.setProductId(dto.getProductId());
-            productOperateRecordDTO.setRemark(getUpdateField(dto));
-            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            List<String> updateField = getUpdateField(dto);
+            if (updateField.size() > 0) {
+                //新增产品操作日志
+                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+                productOperateRecordDTO.setProductId(dto.getProductId());
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
+                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            }
         }
         return flag;
     }
@@ -615,7 +708,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
-        if(Objects.isNull(taskEntity)){
+        if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         //任务名
@@ -626,7 +719,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Date planEndTime = dto.getPlanStartTime();
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
-            checkTaskName(taskEntity.getId(),taskEntity.getProductId(),name);
+            checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
         }
         if (planStartTime != null) {
@@ -641,6 +734,30 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setChargeName(chargeName);
         }
         return this.updateById(taskEntity);
+    }
+
+
+    /**
+     * 根据任务di 获取 编辑的任务详情
+     *
+     * @param taskId
+     * @return com.erp.model.plm.dto.ProjectTaskDTO
+     * @author yl
+     * @date 2022-10-15 10:04
+     */
+    @Override
+    public ProjectTaskDTO taskDetails(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        ProjectTaskDTO resultDTO = new ProjectTaskDTO();
+        BeanMapper.copy(taskEntity, resultDTO);
+        String chargeId = taskEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        }
+        return resultDTO;
     }
 
 

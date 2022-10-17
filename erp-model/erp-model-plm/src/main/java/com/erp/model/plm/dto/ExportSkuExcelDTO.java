@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -55,7 +56,7 @@ public class ExportSkuExcelDTO implements Serializable {
 
     @ExcelProperty(value = "计划上市时间", index = 14)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private String planListingTime;
+    private Date planListingTime;
 
     @ExcelProperty(value = "单位名称", index = 15)
     private String unitName;

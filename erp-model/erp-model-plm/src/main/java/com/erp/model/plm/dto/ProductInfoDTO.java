@@ -80,7 +80,7 @@ public class ProductInfoDTO {
     /**
      * 产品卖点
      */
-    private String productSellSpot;
+    private String sellSpot;
 
     /**
      * 产品功能描述

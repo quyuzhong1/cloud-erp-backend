@@ -112,7 +112,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("上传文件：[" + fileName + "]")));
+        List<String> remarkList = new ArrayList<>();
+        remarkList.add("上传文件：[" + fileName + "]");
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
         return this.save(finishEntity);
@@ -131,7 +133,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(entity.getProductId());
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("删除文件：[" + entity.getFileName() + "]")));
+        List<String> remarkList = new ArrayList<>();
+        remarkList.add("删除文件：[" + entity.getFileName() + "]");
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         return this.removeById(id);
     }
@@ -192,7 +196,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(finishEntity.getProductId());
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("变更文档：[" + fileName + "]")));
+        List<String> remarkList = new ArrayList<>();
+        remarkList.add("变更文档：[" + fileName + "]");
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         return flag;
     }

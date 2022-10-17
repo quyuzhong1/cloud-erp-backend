@@ -78,7 +78,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 采购员
      */
     @TableField(value = "purchase_user_id")
-    private Integer purchaseUserId;
+    private String purchaseUserId;
 
     /**
      * 一级供应商

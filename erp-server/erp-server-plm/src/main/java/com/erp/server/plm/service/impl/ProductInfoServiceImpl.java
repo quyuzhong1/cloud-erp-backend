@@ -119,7 +119,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return this.count(queryWrapper);
     }
 
-    private String getUpdateField(ProductDTO productDTO) {
+    private List<String> getUpdateField(ProductDTO productDTO) {
         ProductInfoEntity dto = new ProductInfoEntity();
         BeanMapper.copy(productDTO, dto);
         List<String> list = new ArrayList<>();
@@ -160,7 +160,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (!productInfoEntity.getMaterials().equals(dto.getMaterials())) {
             list.add("编辑了[主要材质]由[" + productInfoEntity.getMaterials() + "]改为[" + dto.getMaterials() + "]");
         }*/
-        return JSONObject.toJSONString(list);
+        return list;
     }
 
     /**
@@ -186,17 +186,29 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeName(chargeName);
 
         Boolean flag = this.saveOrUpdate(entity);
-        //新增产品操作日志
-        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-        productOperateRecordDTO.setProductId(entity.getId());
+
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             projectTaskService.addSysTask(entity.getId());
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("新增了一个产品：[" + dto.getName() + "]")));
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(entity.getId());
+            List<String> remarkList = new ArrayList<>();
+            remarkList.add("新增了一个产品：[" + entity.getName() + "]");
+            productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         } else {
-            productOperateRecordDTO.setRemark(this.getUpdateField(dto));
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(entity.getId());
+            List<String> updateField = this.getUpdateField(dto);
+            if (updateField.size() > 0) {
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
+                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            }
+
         }
-        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
         return flag;
     }
 
@@ -225,7 +237,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(req);
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]")));
+            List<String> remarkList = new ArrayList<>();
+            remarkList.add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]");
+            productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         });
 
@@ -443,7 +457,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(productId);
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(new ArrayList<>().add("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]")));
+        List<String> remarkList = new ArrayList<>();
+        remarkList.add("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]");
+        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         this.update(updateWrapper);
     }

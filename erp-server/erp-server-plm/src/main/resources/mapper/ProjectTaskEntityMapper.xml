@@ -3,15 +3,15 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
-        WHERE product_id=#{productId}
-        <if test="phaseId !=null and phaseId !=''">
+        WHERE product_id=#{productId} AND pid='0'
+        <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
             AND phase_id=#{phaseId}
         </if>
 
         <if test="searchKeyword !=null and searchKeyword!=''">
-           AND name LIKE concat('%',#{item.searchKeyword},'%')
+            AND name LIKE concat('%',#{item.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
             AND charge_id =#{userId}
@@ -72,7 +72,9 @@
     </select>
 
     <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
-        SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,t.plan_start_time,
+        SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,
+        t.plan_start_time,t.plan_end_time,t.description AS taskDescription,
+        t.reality_start_time,t.reality_end_time,
         t.create_time,t.phase_name,t.update_time,t.create_user_name,
         t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
         t.product_id,
@@ -86,16 +88,22 @@
 
 
     <select id="getRefTask" resultType="com.erp.model.plm.dto.RefTaskInfoDTO">
-        SELECT name AS taskName,charge_name AS taskChargeName,type AS taskType,
+        SELECT id AS flagTaskId ,name AS taskName,charge_name AS taskChargeName,type AS taskType,
         status AS taskStatus FROM project_task
         <where>
             <if test="taskIds !=null and taskIds.size()>0">
-                 id IN
+                id IN
                 <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
                     #{taskId}
                 </foreach>
             </if>
         </where>
+    </select>
+
+    <select id="allChildrenList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+          SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+            charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
+            WHERE product_id=#{productId} AND pid !='0'
     </select>
 
 </mapper>

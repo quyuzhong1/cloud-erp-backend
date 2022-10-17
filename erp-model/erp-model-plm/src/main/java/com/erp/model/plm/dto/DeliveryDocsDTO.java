@@ -23,6 +23,13 @@ public class DeliveryDocsDTO implements Serializable {
     private String id;
 
 
+    /**
+     *id
+     */
+    private Integer isSys;
+
+
+
 
     /**
      * 完成的文档id

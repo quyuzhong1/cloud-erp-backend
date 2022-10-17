@@ -23,5 +23,8 @@ camunda:
     webapp:
       application-path: bpm
     auto-deployment-enabled: false
+    generic-properties:
+      properties:
+        javaSerializationFormatEnabled: true
 
 

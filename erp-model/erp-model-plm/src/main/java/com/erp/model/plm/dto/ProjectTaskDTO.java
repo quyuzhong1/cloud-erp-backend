@@ -43,7 +43,7 @@ public class ProjectTaskDTO implements Serializable {
     private String pid;
 
     /**
-     * 项目id
+     * 产品idid
      */
     @NotBlank(message = "产品id不能为空")
     private String productId;
@@ -66,9 +66,9 @@ public class ProjectTaskDTO implements Serializable {
     /**
      * 负责人id
      */
-    @NotNull(message = "任务负责人不能为空")
-
-    private String chargeId;
+    @NotNull(message = "任务负责人集合不能为空")
+    @Size(min = 1,message = "负责人至少有一个")
+    private List<String> chargeIds;
 
     /**
      * 前置任务id
@@ -83,7 +83,7 @@ public class ProjectTaskDTO implements Serializable {
     private Date planStartTime;
 
     /**
-     * j计划结束时间
+     * 计划结束时间
      */
     @NotNull(message = "计划结束时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
@@ -104,7 +104,6 @@ public class ProjectTaskDTO implements Serializable {
     /**
      * 任务阶段名
      */
-    @NotBlank(message = "阶段名 不能为空")
     private String phaseName;
 
 

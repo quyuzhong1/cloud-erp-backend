@@ -19,6 +19,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
 
 
     /**
+     *  任务id
+     */
+    private String taskId;
+
+    /**
      *  产品id
      */
     private String productId;
@@ -60,6 +65,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String taskName;
 
+    /**
+     *  任务名
+     */
+    private String taskDescription;
+
+
 
     /**
      * 任务类型 0 一般任务 1：审核任务
@@ -84,6 +95,31 @@ public class ProjectTaskDetailsDTO implements Serializable {
      *
      */
     private Date planEndTime;
+
+    /**
+     * 计划时间
+     *
+     */
+    private String planTime;
+
+
+    /**
+     * 实际开始时间
+     *
+     */
+    private Date realityStartTime;
+
+    /**
+     * 实际结束时间
+     *
+     */
+    private Date realityEndTime;
+
+    /**
+     * 实际时间
+     *
+     */
+    private String realityTime;
 
     /**
      * 产品名称

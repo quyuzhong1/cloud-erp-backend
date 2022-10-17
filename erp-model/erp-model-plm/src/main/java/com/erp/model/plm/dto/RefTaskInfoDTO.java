@@ -15,6 +15,14 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class RefTaskInfoDTO implements Serializable {
 
+
+
+    /**
+     * 子任务 对应的子任务id
+     * 前置任务 对应前置任务的id
+     */
+    private String flagTaskId;
+
     /**
      * 任务名称
      */

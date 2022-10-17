@@ -17,7 +17,7 @@ import java.io.Serializable;
 public class ProcessBaseDTO implements Serializable {
 
 
-    //流程id
+    //用户id
     @NotBlank(message = "用户id不能为空")
     private String userId;
 
