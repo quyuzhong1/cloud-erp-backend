@@ -44,10 +44,9 @@ public class BasicDictController extends BaseController {
      *
      * @author yl
      * @date 2022-10-11 14:34
-     * @param type
+     * @param type productProperty 产品属性, productGrade 产品等级, productBrand 产品品牌, declareProperty 报关属性, country 国家
      * @return com.erp.common.dto.base.ApiResult
      */
-    
     @GetMapping("/list")
     public ApiResult list(String type) {
         List<BasicDictEntity> list = basicDictService.listByType(type);
