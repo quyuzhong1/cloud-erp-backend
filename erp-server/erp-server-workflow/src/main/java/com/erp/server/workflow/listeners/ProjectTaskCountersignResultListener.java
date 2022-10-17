@@ -17,7 +17,8 @@ public class ProjectTaskCountersignResultListener  implements ExecutionListener 
 
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
-
+       String  eventName= delegateExecution.getEventName();
+        System.out.println("eventName==============="+eventName);
        String   instanceId =delegateExecution.getActivityInstanceId();
         System.out.println(LocalDate.now() +"我执行完了啊 ======"+instanceId);
     }
