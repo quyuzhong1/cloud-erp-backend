@@ -417,9 +417,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
         }
-
+        ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
+        productSpuBaseInfoDTO.setApprovalStatus(4);
+        productSpuBaseInfoDTO.setSpecType(2);
+        productSpuBaseInfoDTO.setGrade("");
         //1.保存产品表 基础信息获取产品id
-        String id = productInfoService.updateSpec(variantAutoAddDTO.getProductSpuBaseInfoDTO());
+        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
         List<ProductPropertyModelDTO> varianTempList = new ArrayList<>();
         productVariantOptionService.deleteByProductId(id);
