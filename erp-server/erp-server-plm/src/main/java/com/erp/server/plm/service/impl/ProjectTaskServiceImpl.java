@@ -108,13 +108,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     }
 
-    public static void main(String[] args) {
-        List<String> remarkList = new ArrayList<>();
-        remarkList.add("新增了一个产品：[2022苹果14手机壳]");
-        String s = JSONObject.toJSONString(remarkList);
-        System.out.println(s);
-        System.out.println(JSONObject.toJSONString(new ArrayList<>().add("新增了一个任务：[" +"asd" + "]")));
-    }
+
 
     /**
      * 根据 产品id 删除任务
@@ -283,6 +277,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
+            //根据产品id 获取到所有的 任务信息
+            List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
@@ -299,12 +295,70 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-
+                item.setChildList(getChildrenList(item, allList));
 
             }
         }
 
         return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 递归获取到任务下面的子任务
+     *
+     * @param item
+     * @param allList
+     * @return java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>
+     * @author yl
+     * @date 2022-10-17 16:19
+     */
+    private List<TaskPagingShowDTO> getChildrenList(TaskPagingShowDTO item, List<TaskPagingShowDTO> allList) {
+        List<TaskPagingShowDTO> collectList = allList.stream().
+                filter(t -> item.getId().equals(t.getPid())).
+                map(p -> {
+                    p.setChildList(getChildrenList(p, allList));
+                    return p;
+                }).collect(Collectors.toList());
+        return CollectionUtils.isNotEmpty(collectList) ? collectList : new ArrayList<>();
+    }
+
+    /**
+     * 根据 产品id 获取到所有的任务信息
+     *
+     * @param productId
+     * @return
+     */
+    public List<TaskPagingShowDTO> getAllChildrenList(String productId) {
+        List<TaskPagingShowDTO> allChildrenList = baseMapper.allChildrenList(productId);
+        if (CollectionUtils.isNotEmpty(allChildrenList)) {
+            //获取到任务id 集合
+            List<String> taskIds = allChildrenList.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //获取总的任务文档数
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            for (TaskPagingShowDTO item : allChildrenList) {
+                String taskId = item.getId();
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
+                    item.setIsSysTask(true);
+                }
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+            }
+            return allChildrenList;
+        } else {
+            return new ArrayList();
+        }
     }
 
 

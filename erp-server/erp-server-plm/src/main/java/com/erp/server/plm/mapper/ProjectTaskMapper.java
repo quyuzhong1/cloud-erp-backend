@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
-import com.erp.model.plm.dto.ProjectTaskDetailsDTO;
-import com.erp.model.plm.dto.RefTaskInfoDTO;
-import com.erp.model.plm.dto.TaskExcelDTO;
-import com.erp.model.plm.dto.TaskSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -42,5 +39,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
     List<RefTaskInfoDTO> getRefTask(@Param("taskIds") List<String> taskIds);
+
+    List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 }
 

@@ -65,6 +65,12 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String taskName;
 
+    /**
+     *  任务名
+     */
+    private String taskDescription;
+
+
 
     /**
      * 任务类型 0 一般任务 1：审核任务
