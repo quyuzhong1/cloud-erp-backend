@@ -109,7 +109,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
 
-
     /**
      * 根据 产品id 删除任务
      *
@@ -387,7 +386,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
         taskEntity.setPhaseName(phaseName);
-
+        taskEntity.setCreateUserId(loginUser.getUid());
+        taskEntity.setCreateUserName(loginUser.getUserName());
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
@@ -544,6 +544,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        StringBuffer planTime = new StringBuffer();
+        if (detailsDTO.getPlanStartTime() != null) {
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(),DateUtil.fmt_day));
+        }
+        planTime.append(" - ");
+        if (detailsDTO.getPlanEndTime() != null) {
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanEndTime(),DateUtil.fmt_day));
+        }
+        detailsDTO.setPlanTime(planTime.toString());
+
+        StringBuffer realityTime = new StringBuffer();
+        if (detailsDTO.getRealityStartTime() != null) {
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityStartTime(),DateUtil.fmt_day));
+        }
+        realityTime.append(" - ");
+        if (detailsDTO.getRealityEndTime() != null) {
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityEndTime(),DateUtil.fmt_day));
+        }
+        detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
         List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         //前置任务
