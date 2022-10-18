@@ -27,5 +27,11 @@ public class ProductSkuDTO {
     /**
      * 类别id
      */
-    private String categoryId;
+    private List<String> categoryIds;
+
+
+    /**
+     * 负责人id
+     */
+    private List<String> chargeIds;
 }

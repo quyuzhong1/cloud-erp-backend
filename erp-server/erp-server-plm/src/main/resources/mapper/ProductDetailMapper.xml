@@ -63,9 +63,17 @@
                 #{state}
             </foreach>
         </if>
-
-        <if test="params.categoryId!='' and params.categoryId!=null">
-            AND pi.category_id=#{params.categoryId}
+        <if test="params.categoryIds.size() > 0 and params.categoryIds != null">
+            AND pi.category_id in
+            <foreach collection="params.categoryIds" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <if test="params.chargeIds.size() > 0 and params.chargeIds != null">
+            AND pd.charge_id in
+            <foreach collection="params.chargeIds" item="chargeId" open="(" separator="," close=")">
+                #{chargeId}
+            </foreach>
         </if>
         ORDER BY pd.create_time DESC
     </select>
