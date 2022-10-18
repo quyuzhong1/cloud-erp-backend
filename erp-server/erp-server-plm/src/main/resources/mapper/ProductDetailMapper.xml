@@ -53,17 +53,20 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        <where>
-            <if test="params.no != '' and params.no != null">
-                AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
-            </if>
-            <if test="params.stateList.size() > 0 and params.stateList != null">
-                AND pd.product_state in
-                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-        </where>
+        WHERE pi.delete_state = 0
+        <if test="params.no != '' and params.no != null">
+            AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
+        </if>
+        <if test="params.stateList.size() > 0 and params.stateList != null">
+            AND pd.product_state in
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND pi.category_id=#{params.categoryId}
+        </if>
         ORDER BY pd.create_time DESC
     </select>
 
@@ -87,14 +90,13 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
-        <where>
+        WHERE pi.delete_state = 0
             <if test="name != '' and name != null">
                 AND pi."name" = #{name}
             </if>
             <if test="skuNo != '' and skuNo != null">
                 AND pd.sku_no = #{skuNo}
             </if>
-        </where>
         LIMIT 1
     </select>
 
@@ -114,7 +116,8 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-        WHERE pd.id = #{skuId}
+        WHERE pi.delete_state = 0
+            AND pd.id = #{skuId}
         LIMIT 1
     </select>
 
@@ -145,7 +148,8 @@
         pd.product_state
         FROM product_info pi
         INNER JOIN product_detail pd on pi.id = pd.product_id
-        WHERE pi.id = #{productId}
+        WHERE pi.delete_state = 0
+            AND pi.id = #{productId}
     </select>
 
     <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManySpecBaseDTO">
@@ -169,7 +173,8 @@
         pi.pirate_risk,
         pi.materials
         FROM product_info pi
-        WHERE pi.id = #{productId}
+        WHERE pi.delete_state = 0
+            AND pi.id = #{productId}
     </select>
 
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
@@ -231,7 +236,7 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-        <where>
+        WHERE pi.delete_state = 0
             <if test="params.no != '' and params.no != null">
                 AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
             </if>
@@ -241,6 +246,5 @@
                     #{state}
                 </foreach>
             </if>
-        </where>
     </select>
 </mapper>

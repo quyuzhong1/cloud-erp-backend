@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 public class ProductManySpecBaseDTO {
@@ -96,4 +98,9 @@ public class ProductManySpecBaseDTO {
      * 主要材质
      */
     private String materials;
+
+    /**
+     * 产品分类id集合
+     */
+    private List<String> categoryIdList;
 }

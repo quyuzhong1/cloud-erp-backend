@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
 * @Description 查询无规格明细信息实体类（VO）
 * @Author Luo_WG
@@ -122,4 +124,9 @@ public class ProductNoDetailDTO {
      * 单位表id
      */
     private String unitId;
+
+    /**
+     * 产品分类id集合
+     */
+    private List<String> categoryIdList;
 }

@@ -84,6 +84,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductVariantOptionService productVariantOptionService;
 
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
     /**
      * @Description 产品信息查询列表
      * @Author Luo_WG
@@ -122,6 +125,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailById(productId);
+        //获取多级分类
+        List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
+        noSpecDetailById.setCategoryIdList(categoryIdList);
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
@@ -159,6 +165,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductManyDetailDTO productManyDetail = new ProductManyDetailDTO();
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
+        //获取多级分类
+        List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
+        manySpecDetailById.setCategoryIdList(categoryIdList);
         productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
