@@ -53,6 +53,11 @@ public class DeliveryDocsDTO implements Serializable {
      */
     private String fileType;
 
+    /**
+     * 文件地址
+     */
+    private String fileUrl;
+
 
     /**
      * 交付文档名

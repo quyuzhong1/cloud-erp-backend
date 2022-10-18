@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
@@ -86,17 +87,29 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Override
     public Boolean uploadFile(TaskUploadFileDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        MultipartFile multipartFile = dto.getFile();
-        double size = multipartFile.getSize();
-        double fileSize = size / (1024 * 1024);
-        fileSize = (double) Math.round(fileSize * 100) / 100;
-        String fileName = dto.getFile().getOriginalFilename().toLowerCase();
-        String fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-        File file = FileUtil.multiToFile(multipartFile);
-        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-        if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+        //文件名
+        String fileName = "";
+        //文件地址
+        String fileUrl = "";
+        //文件后缀
+        String fileSuffix = "";
+        double fileSize = 0.0;
+        if (IsConstant.NO.equals(dto.getUploadType())) {
+            MultipartFile multipartFile = dto.getFile();
+            double size = multipartFile.getSize();
+            fileSize = size / (1024 * 1024);
+            fileSize = (double) Math.round(fileSize * 100) / 100;
+            fileName = dto.getFile().getOriginalFilename().toLowerCase();
+            fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+            File file = FileUtil.multiToFile(multipartFile);
+            fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
+        } else {
+            fileUrl=dto.getFileUrl();
         }
+
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
@@ -108,6 +121,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
+        finishEntity.setUploadType(dto.getUploadType());
 
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -122,10 +136,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     /**
      * 项目任务-任务详情-删除文件
-     * @Author Luo_WG
-     * @Date 2022/10/14 16:08
+     *
      * @param id 主键
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2022/10/14 16:08
      **/
     @Override
     public Boolean removeById(String id) {
@@ -156,7 +171,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Override
     @Transactional
     public Boolean changeFile(TaskChangeFileDTO dto) {
-        String finishDocsId=dto.getFinishDocsId();
+        String finishDocsId = dto.getFinishDocsId();
         TaskDocsFinishEntity finishEntity = this.getById(finishDocsId);
         if (Objects.isNull(finishEntity)) {
             throw new ServiceException(ApiError.ERROR_95028);
@@ -190,7 +205,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //当更新成功后 保存记录
         if (flag) {
             sb.append("变更为").append(fileName);
-            docsChangeRecordService.addRecord(sb.toString(),finishEntity.getTaskId(),finishDocsId,"");
+            docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
 
         //新增产品操作日志

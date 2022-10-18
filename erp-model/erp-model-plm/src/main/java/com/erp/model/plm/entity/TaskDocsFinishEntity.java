@@ -102,6 +102,10 @@ public class TaskDocsFinishEntity implements Serializable {
     @TableField("update_user_name")
     private String updateUserName;
 
+    @TableField("upload_type")
+    private Integer uploadType;
+
+
 
 
 }
