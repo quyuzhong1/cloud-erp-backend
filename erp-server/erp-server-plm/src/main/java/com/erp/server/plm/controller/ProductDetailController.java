@@ -172,41 +172,6 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-/*    public static void main(String[] args) {
-        List<ProductPropertyModelDTO> modelList = Lists.newArrayList();
-        modelList.add(new ProductPropertyModelDTO("1","1px"));
-        modelList.add(new ProductPropertyModelDTO("1","2px"));
-
-        modelList.add(new ProductPropertyModelDTO("2","大"));
-        modelList.add(new ProductPropertyModelDTO("2","红"));
-
-        modelList.add(new ProductPropertyModelDTO("3","中"));
-        modelList.add(new ProductPropertyModelDTO("3","绿"));
-
-        // 按指定字段（type）分组
-        Map<String, List<ProductPropertyModelDTO>> modelMap = modelList.stream().collect(Collectors.groupingBy(ProductPropertyModelDTO::getType));
-        Collection<List<ProductPropertyModelDTO>> mapValues = modelMap.values();
-        List<List<ProductPropertyModelDTO>> dimensionValue = new ArrayList<>(mapValues);    // 原List
-
-        List<List<ProductPropertyModelDTO>> result = new ArrayList<>(); // 返回集合
-        new AlgorithmUtil().descartes(dimensionValue, result, 0, new ArrayList<ProductPropertyModelDTO>());
-
-        List<String> list = new ArrayList<>();
-        for (List<ProductPropertyModelDTO> models : result) {
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < models.size(); i++) {
-                sb.append(models.get(i).getAuthor());
-                if (i+1 < models.size()) {
-                    sb.append(",");
-                }
-            }
-
-            list.add(sb.toString());
-        }
-        System.out.println(list.toString());
-    }*/
-
-
     /**
      * 产品信息-多规格sku-删除
      * @Author Luo_WG
@@ -298,18 +263,18 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-    /**
+/*    *//**
      * 证书信息-主页列表-新增|修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
      * @param productCertificateDTO 产品证书表
      * @return com.erp.common.dto.base.ApiResult
-     **/
+     **//*
     @GetMapping("/saveOrUpdateCertificate")
     public ApiResult saveOrUpdateCertificate(@RequestBody List<ProductCertificateDTO> productCertificateDTO) {
         Boolean flag = productCertificateService.saveOrUpdateBatch(productCertificateDTO);
         return  flag == true ? this.success() : this.failure();
-    }
+    }*/
 
     /**
      * 证书信息-主页列表-删除

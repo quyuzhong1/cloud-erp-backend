@@ -8,8 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @Classname XxlJobConfig
- * @Description TODO
+ * XXL-Job配置
  * @Date 2022-08-25 11:42
  * @Created by yl
  */

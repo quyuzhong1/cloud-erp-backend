@@ -1,14 +1,8 @@
 package com.cloud.erp.chrome.service.impl;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.resource.ResourceUtil;
-import cn.hutool.core.lang.Console;
-import cn.hutool.core.text.csv.CsvData;
-import cn.hutool.core.text.csv.CsvReader;
-import cn.hutool.core.text.csv.CsvRow;
-import cn.hutool.core.text.csv.CsvUtil;
-import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.GyyShipmentsDTO;
 import com.cloud.erp.chrome.entity.OrderGyyDeliverEntity;
@@ -16,20 +10,13 @@ import com.cloud.erp.chrome.mapper.OrderGyyDeliverMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
 import com.cloud.erp.chrome.service.OrderGyyDeliverService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.io.File;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +33,7 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
 
 
     @Autowired
-    private CsvServer csvServer;
+    private CsvServer<OrderGyyDeliverEntity> csvServer;
 
     @Autowired
     private ChromeTaskInfoService chromeTaskInfoService;
@@ -55,36 +42,35 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
     /**
      * 保存管易云发货信息表
      *
-     * @param dto
-     * @return void
+     * @param dto   参数信息
      * @author yl
      * @date 2022-09-01 18:04
      */
     @Override
+    @Transactional
     public void saveDeliverCsvByUrl(GyyShipmentsDTO dto) {
         File file = null;
         try {
             String projectPath = System.getProperty("user.dir"); //当前项目
-            String path = projectPath + "/erp-chrome/src/main/java/temp";
+//            String path = projectPath + "/erp-chrome/src/main/java/temp";
+            String path = projectPath + "/erp-chrome/attachement";
+            FileUtil.mkdir(path);
             File tempFile = new File(path);
-            if (!tempFile.exists()) {
-                tempFile.mkdirs();
-            }
             file = HttpUtil.downloadFileFromUrl(dto.getOssUrl(), tempFile);
             List<OrderGyyDeliverEntity> saveList = csvServer.getObjectListByFile(file, OrderGyyDeliverEntity.class);
             if (CollectionUtils.isNotEmpty(saveList)) {
                 saveList=saveList.stream().filter(o->StringUtils.isNotBlank(o.getSkuNo())).collect(Collectors.toList());
                 this.saveBatch(saveList);
             }
+            if (file != null) {
+                FileUtil.del(file);
+            }
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(1, "管易云保存数据失败");
-        } finally {
-            if (file != null) {
-                file.delete();
-            }
+//            throw new ServiceException(1, "管易云保存数据失败");
+            throw new RuntimeException("管易云保存数据失败",e);
         }
-        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
     }
 
 

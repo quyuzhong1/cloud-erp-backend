@@ -105,6 +105,15 @@ public interface ProductDetailService {
     Boolean delete(String skuId);
 
     /**
+     * @Description 删除多规格sku信息-批量
+     * @Author Luo_WG
+     * @Date 2022/9/22 11:32
+     * @param skuIds:产品sku表主键id
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteBatch(List<String> skuIds);
+
+    /**
      * @Description 根据产品主键id查询sku明细
      * @Author Luo_WG
      * @Date 2022/9/26 18:25
