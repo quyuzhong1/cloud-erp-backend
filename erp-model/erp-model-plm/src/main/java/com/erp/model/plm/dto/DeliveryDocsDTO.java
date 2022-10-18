@@ -81,7 +81,7 @@ public class DeliveryDocsDTO implements Serializable {
     /**
      * 提交人
      */
-    private Date submitUserName;
+    private String submitUserName;
 
 
 }

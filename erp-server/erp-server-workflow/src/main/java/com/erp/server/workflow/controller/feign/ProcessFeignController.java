@@ -2,6 +2,7 @@ package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
@@ -33,7 +34,6 @@ public class ProcessFeignController extends BaseController {
     private ProcessTaskService processTaskService;
 
 
-
     //启动流程
     @PostMapping("/startProcess")
     public ProcessNodeDTO startProcess(@RequestBody @Validated StartProcessDTO dto) {
@@ -42,11 +42,17 @@ public class ProcessFeignController extends BaseController {
     }
 
 
-
     //查看任务
     @PostMapping("/queryMyToDo")
-    public ApiResult queryMyToDo(String userId) {
+    public List<TaskShowDTO> queryMyToDo(String userId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDo(userId);
-        return success(list);
+        return list;
+    }
+
+    //审核通过任务
+    @PostMapping("/taskPass")
+    public boolean taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
+        processTaskService.taskPass(dto);
+        return true;
     }
 }

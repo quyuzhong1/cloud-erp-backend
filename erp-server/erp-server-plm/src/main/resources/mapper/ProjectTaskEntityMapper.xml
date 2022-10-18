@@ -11,7 +11,7 @@
         </if>
 
         <if test="searchKeyword !=null and searchKeyword!=''">
-            AND name LIKE concat('%',#{item.searchKeyword},'%')
+            AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
             AND charge_id =#{userId}

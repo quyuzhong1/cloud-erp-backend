@@ -47,7 +47,7 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
-   // @RequestPermissions("plm:product:paging")
+    //@RequestPermissions("plm:product:paging")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
