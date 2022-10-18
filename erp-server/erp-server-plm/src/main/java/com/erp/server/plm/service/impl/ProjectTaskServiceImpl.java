@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -546,21 +547,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         StringBuffer planTime = new StringBuffer();
         if (detailsDTO.getPlanStartTime() != null) {
-            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(),DateUtil.fmt_day));
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(), DateUtil.fmt_day));
         }
         planTime.append(" - ");
         if (detailsDTO.getPlanEndTime() != null) {
-            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanEndTime(),DateUtil.fmt_day));
+            planTime.append(DateUtil.conversionDate(detailsDTO.getPlanEndTime(), DateUtil.fmt_day));
         }
         detailsDTO.setPlanTime(planTime.toString());
 
         StringBuffer realityTime = new StringBuffer();
         if (detailsDTO.getRealityStartTime() != null) {
-            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityStartTime(),DateUtil.fmt_day));
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityStartTime(), DateUtil.fmt_day));
         }
         realityTime.append(" - ");
         if (detailsDTO.getRealityEndTime() != null) {
-            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityEndTime(),DateUtil.fmt_day));
+            realityTime.append(DateUtil.conversionDate(detailsDTO.getRealityEndTime(), DateUtil.fmt_day));
         }
         detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
@@ -758,6 +759,35 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
         return resultDTO;
+    }
+
+    /**
+     * 根据任务id 获取任务信息
+     *
+     * @param taskIds
+     * @return
+     */
+    @Override
+    public List<ProjectTaskEntity> getByTaskIds(List<String> taskIds) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getId, taskIds);
+        return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 修改 任务状态
+     *
+     * @param taskIds
+     * @param state
+     * @return
+     */
+    @Override
+    public boolean updateTaskState(List<String> taskIds, Integer state) {
+        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
+        updateWrapper.set(ProjectTaskEntity::getStatus, state);
+        updateWrapper.in(ProjectTaskEntity::getId, taskIds);
+        return this.update(updateWrapper);
     }
 
 

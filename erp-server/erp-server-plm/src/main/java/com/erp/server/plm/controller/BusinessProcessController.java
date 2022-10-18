@@ -2,13 +2,11 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.BusinessProcessDTO;
 import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.server.plm.service.BusinessProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -46,8 +44,8 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @PostMapping("/save")
-    public ApiResult saveProcess(BusinessProcessEntity entity) {
-        Boolean flag = businessProcessService.save(entity);
+    public ApiResult saveProcess(@RequestBody BusinessProcessDTO dto) {
+        Boolean flag = businessProcessService.saveProcess(dto);
         return flag == true ? success() : failure();
     }
 

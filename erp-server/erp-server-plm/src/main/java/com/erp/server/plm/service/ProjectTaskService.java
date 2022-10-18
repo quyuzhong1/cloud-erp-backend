@@ -60,4 +60,8 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
     ProjectTaskDTO taskDetails(String taskId);
+
+    List<ProjectTaskEntity> getByTaskIds(List<String> taskIds);
+
+    boolean updateTaskState(List<String> taskIds, Integer state);
 }

@@ -112,6 +112,8 @@ public enum ApiError implements Serializable {
     ERROR_95026(95026, "项目不存在"),
     ERROR_95027(95027, "任务不存在"),
     ERROR_95028(95028, "已上传的文档不存在"),
+    ERROR_95029(95029, "操作失败，存在非待发布任务"),
+    ERROR_95030(95030, "操作失败，存在非未开始的任务"),
 
 
 

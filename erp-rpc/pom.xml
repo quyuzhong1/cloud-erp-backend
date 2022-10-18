@@ -16,6 +16,7 @@
     <modules>
         <module>erp-rpc-auth</module>
         <module>erp-rpc-sys</module>
+        <module>erp-rpc-workflow</module>
     </modules>
 
    <dependencies>

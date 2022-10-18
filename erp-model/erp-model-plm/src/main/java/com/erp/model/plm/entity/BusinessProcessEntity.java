@@ -2,6 +2,8 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.io.Serializable;
 
@@ -9,6 +11,8 @@ import java.io.Serializable;
  * 业务流程
  * @TableName business_process
  */
+@TableName("business_process")
+@Data
 public class BusinessProcessEntity implements Serializable {
     /**
      * 

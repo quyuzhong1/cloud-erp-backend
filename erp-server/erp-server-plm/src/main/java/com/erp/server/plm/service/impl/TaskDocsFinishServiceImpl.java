@@ -11,15 +11,13 @@ import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.DocsChangeRecordService;
-import com.erp.server.plm.service.ProductOperateRecordService;
-import com.erp.server.plm.service.TaskDocsFinishService;
+import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -50,6 +48,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
 
     @Autowired
     private DocsChangeRecordService docsChangeRecordService;
@@ -85,7 +86,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-09-23 17:15
      */
     @Override
+    @Transactional
     public Boolean uploadFile(TaskUploadFileDTO dto) {
+        //根据任务id 获取任务信息
+        ProjectTaskEntity taskEntity = projectTaskService.getById(dto.getTaskId());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
         LoginUser loginUser = commonService.getUserInfo();
         //文件名
         String fileName = "";
@@ -94,6 +101,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //文件后缀
         String fileSuffix = "";
         double fileSize = 0.0;
+        //本地上传
         if (IsConstant.NO.equals(dto.getUploadType())) {
             MultipartFile multipartFile = dto.getFile();
             double size = multipartFile.getSize();
@@ -107,7 +115,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 throw new ServiceException(ApiError.ERROR_95018);
             }
         } else {
-            fileUrl=dto.getFileUrl();
+            fileUrl = dto.getFileUrl();
         }
 
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
@@ -130,6 +138,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         remarkList.add("上传文件：[" + fileName + "]");
         productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
 
         return this.save(finishEntity);
     }

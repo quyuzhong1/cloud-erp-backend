@@ -1,29 +1,20 @@
 package com.erp.server.plm.enums;
 
-/**
- * @Classname TaskStateEnum
+/**   任务类型
+ * @Classname
  * @Description TODO
  * @Date 2022-09-19 16:43
  * @Created by yl
  */
-public enum TaskStateEnum {
+public enum TaskTypeEnum {
 
-    TO_BE_RELEASED(0, "待发布"),
-    NOT_START(1, "待开始"),
-    WAIT_CONFIRM(2, "待审核"),
-    ING(3, "进行中"),
-    FINISH(4, "已完成"),
-    CLOSE(5, "已关闭"),
-    FINISH_WAIT_CONFIRM(6, "完成待审核"),
-    APPROVAL_ING(7, "审核中"),
-    APPROVAL_PASS(8, "审核通过"),
-    APPROVAL_NO_PASS(9, "审核不通过");
-
+    GENERAL_TASK(0, "一般任务"),
+    REVIEW_TASK(1, "审核任务");
 
     private Integer code;
     private String name;
 
-    TaskStateEnum(Integer code, String name) {
+    TaskTypeEnum(Integer code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -36,7 +27,7 @@ public enum TaskStateEnum {
     }
 
     public static String getName(Integer code) {
-        for (TaskStateEnum state : TaskStateEnum.values()) {
+        for (TaskTypeEnum state : TaskTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();
             }

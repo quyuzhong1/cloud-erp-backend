@@ -1,7 +1,7 @@
 package com.erp.server.plm.constant;
 
 /**
- * @Classname SourceType
+ * @Classname 启动项目来源
  * @Description TODO
  * @Date 2022-09-20 17:18
  * @Created by yl
