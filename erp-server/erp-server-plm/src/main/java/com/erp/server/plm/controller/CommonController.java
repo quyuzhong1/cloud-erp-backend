@@ -119,4 +119,6 @@ public class CommonController  extends BaseController {
         return this.success(productOperateRecordService.listBasicDictType());
     }
 
+
+
 }
