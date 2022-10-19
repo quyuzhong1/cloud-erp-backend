@@ -2,19 +2,16 @@ package com.erp.server.plm.aspect;
 
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.RequestPermissions;
-import com.erp.common.dto.base.PermissionsDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
-import io.netty.util.internal.ObjectUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

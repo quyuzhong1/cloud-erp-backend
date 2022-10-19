@@ -11,10 +11,16 @@ import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
+import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.BusinessProcessEnum;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.*;
@@ -29,9 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -57,6 +61,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private ProductOperateRecordService productOperateRecordService;
+
+    @Autowired
+    private BusinessProcessService businessProcessService;
+
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -153,7 +163,25 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      **/
     @Override
     public Boolean removeById(String id) {
+        //删除文档
+        //需要判断能否删除
+
         TaskDocsFinishEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.ERROR_95028);
+        }
+        String taskId = entity.getTaskId();
+        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Integer taskState=taskEntity.getStatus();
+        //如果已完成了 或者有人审核了 就不能删除
+        Integer finishState = TaskStateEnum.FINISH.getCode();
+        Integer approvalIngState = TaskStateEnum.APPROVAL_ING.getCode();
+        if(finishState.equals(taskState)||!approvalIngState.equals(taskState)){
+            throw new ServiceException(ApiError.ERROR_95040);
+        }
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(entity.getProductId());
@@ -180,6 +208,19 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Override
     @Transactional
     public Boolean changeFile(TaskChangeFileDTO dto) {
+        String taskId = dto.getTaskId();
+        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        //只有任务完成了 或者 审核通过了 才能变更流程
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer taskState = taskEntity.getStatus();
+        //当不为这两个的时候是不能变更的
+        if (!taskState.equals(finishCode) || !approvalPassCode.equals(taskState)) {
+            throw new ServiceException(ApiError.ERROR_95039);
+        }
         String finishDocsId = dto.getFinishDocsId();
         TaskDocsFinishEntity finishEntity = this.getById(finishDocsId);
         if (Objects.isNull(finishEntity)) {
@@ -188,26 +229,38 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         LoginUser loginUser = commonService.getUserInfo();
         String originalFileName = finishEntity.getFileName();
 
-        MultipartFile multipartFile = dto.getFile();
-        double size = multipartFile.getSize();
-        double fileSize = size / (1024 * 1024);
-        fileSize = (double) Math.round(fileSize * 100) / 100;
-        String fileName = dto.getFile().getOriginalFilename().toLowerCase();
-        String fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-        File file = FileUtil.multiToFile(multipartFile);
-        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-        if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+        //文件名
+        String fileName = "";
+        //文件地址
+        String fileUrl = "";
+        //文件后缀
+        String fileSuffix = "";
+        double fileSize = 0.0;
+        //本地上传
+        if (IsConstant.NO.equals(dto.getUploadType())) {
+            MultipartFile multipartFile = dto.getFile();
+            double size = multipartFile.getSize();
+            fileSize = size / (1024 * 1024);
+            fileSize = (double) Math.round(fileSize * 100) / 100;
+            fileName = dto.getFile().getOriginalFilename().toLowerCase();
+            fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+            File file = FileUtil.multiToFile(multipartFile);
+            fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
+        } else {
+            fileUrl = dto.getFileUrl();
         }
-
+        finishEntity.setOldFileUrl(finishEntity.getFileUrl());
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
         finishEntity.setUpdateUserId(loginUser.getUid());
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setUpdateUserName(loginUser.getUserName());
         finishEntity.setFileSize(fileSize);
-
-        //这里需要启动一个变更流程
+        finishEntity.setUpdateUserId(loginUser.getUid());
+        finishEntity.setUpdateUserName(loginUser.getUserName());
 
         StringBuffer sb = new StringBuffer(originalFileName);
         Boolean flag = this.updateById(finishEntity);
@@ -224,6 +277,23 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         remarkList.add("变更文档：[" + fileName + "]");
         productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
+        //这里需要启动一个变更流程
+        BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessType(BusinessProcessEnum.DOCS_CHANGE.getBusinessType());
+        StartProcessDTO startProcess = new StartProcessDTO();
+        startProcess.setUserId(loginUser.getUid());
+        startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
+        startProcess.setBusinessKey(businessProcess.getBusinessType());
+        Map<String, Object> parameterMap = new HashMap<>();
+        startProcess.setParameterMap(parameterMap);
+        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+        String processId = processResult.getProcessId();
+        if (StringUtils.isNotBlank(processId)) {
+            //更改任务的状态为未待审核 以及流程id
+            taskEntity.setProcessId(processId);
+            taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+            projectTaskService.updateById(taskEntity);
+        }
         return flag;
     }
 

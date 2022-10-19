@@ -19,7 +19,7 @@ import java.util.List;
  * @Date 2022-10-18 15:18
  * @Created by yl
  */
-@Service
+
 public class ReleaseTask implements TaskOperateStrategy {
 
 

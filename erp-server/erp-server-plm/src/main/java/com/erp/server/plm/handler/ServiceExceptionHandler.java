@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * 统一异常处理类
  *
@@ -44,4 +47,21 @@ public class ServiceExceptionHandler {
         result.setMsg(e.getBindingResult().getFieldError().getDefaultMessage());
         return result;
     }
+
+    @ExceptionHandler(value = Exception.class)
+    public ApiResult defaultErrorHandler(Exception e) {
+        ApiResult result = new ApiResult();
+        result.setCode(ApiError.ERROR_500.code);
+        result.setMsg(getExceptionMessage(e));
+        return result;
+    }
+
+    public String getExceptionMessage(Exception ex) {
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter writer = new PrintWriter(stringWriter);
+        ex.printStackTrace(writer);
+        StringBuffer buffer = stringWriter.getBuffer();
+        return buffer.toString();
+    }
+
 }

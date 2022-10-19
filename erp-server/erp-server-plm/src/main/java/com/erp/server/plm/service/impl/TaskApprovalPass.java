@@ -29,7 +29,7 @@ public class TaskApprovalPass implements TaskOperateStrategy {
      * 任务审核通过
      *
      * @param taskIds
-     * @param state
+     * @param productId
      * @param userId
      * @return java.lang.Boolean
      * @author yl

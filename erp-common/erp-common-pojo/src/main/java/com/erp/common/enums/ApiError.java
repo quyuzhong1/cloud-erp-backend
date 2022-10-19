@@ -28,6 +28,7 @@ public enum ApiError implements Serializable {
     /**
      * 通用错误
      */
+    ERROR_500(500, "系统异常"),
     ERROR_1000(1000, "参数不全或类型错误！"),
     ERROR_1001(1001, "两次密码不一致"),
     ERROR_1002(1002, "保存失败"),
@@ -122,6 +123,8 @@ public enum ApiError implements Serializable {
     ERROR_95036(95036, "操作失败，子任务有未完成的任务"),
     ERROR_95037(95037, "操作失败，存在不是待审核的任务"),
     ERROR_95038(95038, "操作失败，存在不是审核中的任务"),
+    ERROR_95039(95039, "任务未完成 不能变更文档"),
+    ERROR_95040(95040, "任务已完成或在审核中不能删除文档"),
 
 
 

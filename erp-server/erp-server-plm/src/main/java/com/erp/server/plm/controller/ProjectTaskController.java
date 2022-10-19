@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.workflow.dto.TaskOperateDTO;
 import com.erp.server.plm.service.*;
 import com.erp.server.plm.service.impl.*;
+import com.erp.server.plm.utils.ApplicationContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -199,9 +200,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/publishTask")
-    public ApiResult publishTask(@RequestBody TaskOperateDTO dto) {
+    public ApiResult publishTask(@RequestBody @Validated TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        TaskOperate taskOperate = new TaskOperate(new ReleaseTask());
+        ReleaseTask  releaseTask= new ReleaseTask();
+        ApplicationContextUtils.autowire(releaseTask);
+        TaskOperate taskOperate = new TaskOperate(releaseTask);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
     }
@@ -215,6 +218,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult cancelPublishTask(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         CancelRelease  cancelRelease=new CancelRelease();
+        ApplicationContextUtils.autowire(cancelRelease);
         TaskOperate taskOperate = new TaskOperate(cancelRelease);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
@@ -229,6 +233,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult startTask(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         StartTask startTask=new StartTask();
+        ApplicationContextUtils.autowire(startTask);
         TaskOperate taskOperate = new TaskOperate(startTask);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
@@ -243,6 +248,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult closeTask(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         CloseTask  closeTask =new CloseTask();
+        ApplicationContextUtils.autowire(closeTask);
         TaskOperate taskOperate = new TaskOperate(closeTask);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
@@ -258,6 +264,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult finishTask(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         FinishTask  finishTask =new FinishTask();
+        ApplicationContextUtils.autowire(finishTask);
         TaskOperate taskOperate = new TaskOperate(finishTask);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
@@ -272,6 +279,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult approvalPass(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         TaskApprovalPass approvalPass =new TaskApprovalPass();
+        ApplicationContextUtils.autowire(approvalPass);
         TaskOperate taskOperate = new TaskOperate(approvalPass);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();
@@ -286,6 +294,7 @@ public class ProjectTaskController extends BaseController {
     public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         TaskApprovalReject approvalReject =new TaskApprovalReject();
+        ApplicationContextUtils.autowire(approvalReject);
         TaskOperate taskOperate = new TaskOperate(approvalReject);
         Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
         return result == true ? success() : failure();

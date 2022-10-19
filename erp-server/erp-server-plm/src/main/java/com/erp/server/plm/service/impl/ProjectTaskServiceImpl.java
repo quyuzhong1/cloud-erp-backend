@@ -770,7 +770,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<ProjectTaskEntity> getByTaskIds(List<String> taskIds) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTaskEntity::getId, taskIds);
+        queryWrapper.in(ProjectTaskEntity::getId, taskIds);
         return this.list(queryWrapper);
     }
 

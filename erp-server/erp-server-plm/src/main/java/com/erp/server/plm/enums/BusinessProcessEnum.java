@@ -8,7 +8,8 @@ package com.erp.server.plm.enums;
  */
 public enum BusinessProcessEnum {
 
-    REVIEW_TASK("reviewTask", "评审任务");
+    REVIEW_TASK("reviewTask", "评审任务"),
+    DOCS_CHANGE("changeDocs", "文档变更");
 
 
     private String businessType;

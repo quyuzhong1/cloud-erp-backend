@@ -5,6 +5,8 @@ import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
@@ -20,6 +22,6 @@ public interface WorkflowFeign {
 
 
     //启动流程
-    @GetMapping("workflow/feign/process/startProcess")
+    @PostMapping("workflow/feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
 }
