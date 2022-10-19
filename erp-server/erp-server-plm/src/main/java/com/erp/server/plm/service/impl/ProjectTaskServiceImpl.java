@@ -824,8 +824,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-18 19:53
      */
     @Override
-    public void checkSonTaskFinish(List<String> taskIds) {
-        List<ProjectTaskEntity> list = this.list();
+    public void checkSonTaskFinish(List<String> taskIds,String productId) {
+        List<ProjectTaskEntity> list = this.getByProductId(productId);
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();

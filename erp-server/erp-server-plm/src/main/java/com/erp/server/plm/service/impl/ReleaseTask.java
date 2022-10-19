@@ -31,11 +31,11 @@ public class ReleaseTask implements TaskOperateStrategy {
      * 更改任务状态为 1  前提是检查任务状态应该为待发布0
      *
      * @param taskIds
-     * @param state
+     * @param productId
      * @return
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String productId,String userId) {
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
@@ -44,7 +44,8 @@ public class ReleaseTask implements TaskOperateStrategy {
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95029);
         }
-        boolean flag = projectTaskService.updateTaskState(taskIds, state,null,null);
+
+        boolean flag = projectTaskService.updateTaskState(taskIds, TaskStateEnum.NOT_START.getCode(),null,null);
         return flag;
     }
 }

@@ -4,11 +4,12 @@ package com.erp.server.plm.controller;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.server.plm.service.PreTaskService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.model.workflow.dto.TaskOperateDTO;
+import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.impl.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,9 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private ProductInfoService productInfoService;
+
+    @Autowired
+    private CommonService commonService;
 
 
     /**
@@ -189,8 +193,103 @@ public class ProjectTaskController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-任务分页列表 -状态操作-发布任务
+     *
+     * @return
+     */
+    @PostMapping("/publishTask")
+    public ApiResult publishTask(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        TaskOperate taskOperate = new TaskOperate(new ReleaseTask());
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-取消发布
+     *
+     * @return
+     */
+    @PostMapping("/cancelPublishTask")
+    public ApiResult cancelPublishTask(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        CancelRelease  cancelRelease=new CancelRelease();
+        TaskOperate taskOperate = new TaskOperate(cancelRelease);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-开始任务
+     *
+     * @return
+     */
+    @PostMapping("/startTask")
+    public ApiResult startTask(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        StartTask startTask=new StartTask();
+        TaskOperate taskOperate = new TaskOperate(startTask);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-关闭任务
+     *
+     * @return
+     */
+    @PostMapping("/closeTask")
+    public ApiResult closeTask(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        CloseTask  closeTask =new CloseTask();
+        TaskOperate taskOperate = new TaskOperate(closeTask);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
 
 
+    /**
+     * 项目任务-任务分页列表 -状态操作-完成任务
+     *
+     * @return
+     */
+    @PostMapping("/finishTask")
+    public ApiResult finishTask(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        FinishTask  finishTask =new FinishTask();
+        TaskOperate taskOperate = new TaskOperate(finishTask);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核通过
+     *
+     * @return
+     */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        TaskApprovalPass approvalPass =new TaskApprovalPass();
+        TaskOperate taskOperate = new TaskOperate(approvalPass);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核不通过
+     *
+     * @return
+     */
+    @PostMapping("/approvalReject")
+    public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        TaskApprovalReject approvalReject =new TaskApprovalReject();
+        TaskOperate taskOperate = new TaskOperate(approvalReject);
+        Boolean result = taskOperate.updateTaskState(dto.getTaskIdList(), dto.getProductId(), loginUser.getUid());
+        return result == true ? success() : failure();
+    }
 
 
 }

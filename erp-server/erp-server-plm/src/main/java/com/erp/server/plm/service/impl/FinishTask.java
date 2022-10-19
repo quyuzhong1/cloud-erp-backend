@@ -47,7 +47,7 @@ public class FinishTask implements TaskOperateStrategy {
 
     @Override
     @Transactional
-    public Boolean updateTaskState(List<String> taskIds, Integer state, String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String  productId, String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         //评审任务code
@@ -65,7 +65,7 @@ public class FinishTask implements TaskOperateStrategy {
         //检查前置任务是否完成
         preTaskService.checkPreTaskFinish(allTaskIds);
         //检查子任务是否有完成
-        projectTaskService.checkSonTaskFinish(allTaskIds);
+        projectTaskService.checkSonTaskFinish(allTaskIds,productId);
 
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();

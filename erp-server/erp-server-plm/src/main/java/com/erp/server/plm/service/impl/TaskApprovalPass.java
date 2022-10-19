@@ -36,7 +36,7 @@ public class TaskApprovalPass implements TaskOperateStrategy {
      * @date 2022-10-19 11:39
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state, String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String  productId, String userId) {
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         // 只有带审核 和 完成待审核 的状态 才可以审核通过
@@ -51,10 +51,10 @@ public class TaskApprovalPass implements TaskOperateStrategy {
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         //这个是审核任务
-        List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
-        List<String> reviewTaskIds = reviewList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        projectTaskService.updateTaskState(reviewTaskIds, approvalIngCode, null, null);
+      //  List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
+        List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        projectTaskService.updateTaskState(taskIdList, approvalIngCode, null, null);
 
-        return null;
+        return true;
     }
 }

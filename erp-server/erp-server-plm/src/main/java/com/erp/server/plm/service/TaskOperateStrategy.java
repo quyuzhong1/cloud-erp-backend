@@ -13,5 +13,5 @@ import java.util.List;
 public interface TaskOperateStrategy {
 
      //实现 更改任务状态
-    Boolean updateTaskState(List<String> taskIds, Integer state, String userId);
+    Boolean updateTaskState(List<String> taskIds, String productId, String userId);
 }
