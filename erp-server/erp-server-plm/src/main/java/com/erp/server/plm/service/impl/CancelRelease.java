@@ -46,7 +46,7 @@ public class CancelRelease implements TaskOperateStrategy {
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95029);
         }
-        boolean flag = projectTaskService.updateTaskState(taskIds, state);
+        boolean flag = projectTaskService.updateTaskState(taskIds, state,null,null);
         return flag;
     }
 }

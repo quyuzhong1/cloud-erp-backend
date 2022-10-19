@@ -63,5 +63,10 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<ProjectTaskEntity> getByTaskIds(List<String> taskIds);
 
-    boolean updateTaskState(List<String> taskIds, Integer state);
+    boolean updateTaskState(List<String> taskIds, Integer state,Date realityStart,Date realityEnd);
+
+
+    int countUndoneByTaskIds(Integer code, List<String> preTaskIds);
+
+    void checkSonTaskFinish(List<String> noProcessTaskIds);
 }

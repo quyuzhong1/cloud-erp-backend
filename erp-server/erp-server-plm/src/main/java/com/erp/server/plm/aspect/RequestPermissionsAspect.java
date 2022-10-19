@@ -50,9 +50,7 @@ public class RequestPermissionsAspect {
         String permissionsCode = inject.value();
         //当权限code 不为空的时候
         if (StringUtils.isNotBlank(permissionsCode)) {
-            PermissionsDTO  dto=new PermissionsDTO();
-
-            String userId = "1545306732634984450";//commonService.getUserInfo().getUid();
+            String userId =commonService.getUserInfo().getUid();
             //当用户id 不为空的时候
             if (StringUtils.isNotBlank(userId)) {
                 List<UserRequestPermissionsDTO> permissionsList = sysUserFeign.getRequestPermissionsList(userId);

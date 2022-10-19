@@ -783,11 +783,59 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
-    public boolean updateTaskState(List<String> taskIds, Integer state) {
+    public boolean updateTaskState(List<String> taskIds, Integer state, Date realityStart, Date realityEnd) {
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
         updateWrapper.set(ProjectTaskEntity::getStatus, state);
+        if (realityStart != null) {
+            updateWrapper.set(ProjectTaskEntity::getRealityStartTime, realityStart);
+        }
+        if (realityEnd != null) {
+            updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
+        }
         updateWrapper.in(ProjectTaskEntity::getId, taskIds);
         return this.update(updateWrapper);
+    }
+
+
+    /**
+     * 统计未完成的任务数
+     *
+     * @param state
+     * @param preTaskIds
+     * @return int
+     * @author yl
+     * @date 2022-10-18 19:47
+     */
+    @Override
+    public int countUndoneByTaskIds(Integer state, List<String> preTaskIds) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProjectTaskEntity::getId, preTaskIds);
+        queryWrapper.eq(ProjectTaskEntity::getStatus, state);
+        return this.count(queryWrapper);
+    }
+
+
+    /**
+     * 检查任务列表 下有子任务 是否有未完成的任务
+     *
+     * @param taskIds
+     * @return void
+     * @author yl
+     * @date 2022-10-18 19:53
+     */
+    @Override
+    public void checkSonTaskFinish(List<String> taskIds) {
+        List<ProjectTaskEntity> list = this.list();
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        for (String taskId : taskIds) {
+            List<String> resultList = new ArrayList<>();
+            //递归获取他的子任务id
+            getChilds(taskId, list, resultList);
+            int count = countUndoneByTaskIds(finishCode, resultList);
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95036);
+            }
+        }
     }
 
 

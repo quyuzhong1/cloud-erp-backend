@@ -14,5 +14,7 @@ public interface BusinessProcessService extends IService<BusinessProcessEntity> 
 
     List<BusinessProcessEntity> getProcessList(String businessType);
 
+    BusinessProcessEntity getProcessByBusinessType(String businessType);
+
     Boolean saveProcess(BusinessProcessDTO dto);
 }

@@ -19,4 +19,8 @@ public interface PreTaskService extends IService<PreTaskEntity> {
     Boolean removePreTask(SetPreTaskDTO dto);
 
     List<String> getPreTaskIdList(String taskId);
+
+
+
+    void checkPreTaskFinish(List<String> taskIds);
 }

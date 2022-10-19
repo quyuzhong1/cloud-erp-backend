@@ -37,6 +37,22 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
 
 
     /**
+     * 根据businessType  获取对应的数据
+     *
+     * @param businessType
+     * @return com.erp.model.plm.entity.BusinessProcessEntity
+     * @author yl
+     * @date 2022-10-18 17:10
+     */
+    @Override
+    public BusinessProcessEntity getProcessByBusinessType(String businessType) {
+        LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
+        return this.getOne(queryWrapper);
+    }
+
+
+    /**
      * 保存流程
      *
      * @param dto
@@ -45,7 +61,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
     @Override
     public Boolean saveProcess(BusinessProcessDTO dto) {
         BusinessProcessEntity processEntity = new BusinessProcessEntity();
-        BeanMapper.copy(dto,processEntity);
+        BeanMapper.copy(dto, processEntity);
         return this.save(processEntity);
     }
 }

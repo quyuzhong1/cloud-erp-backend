@@ -2,11 +2,17 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
+import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,6 +28,9 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         implements PreTaskService {
 
 
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
     /**
      * 保存前置任务
      *
@@ -34,7 +43,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public void savePreTask(String taskId, List<String> preTaskIdList) {
-        if(CollectionUtils.isNotEmpty(preTaskIdList)){
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             //先删除前置任务
             removePreTaskByTaskId(taskId, preTaskIdList);
             if (CollectionUtils.isNotEmpty(preTaskIdList)) {
@@ -113,6 +122,44 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
         queryWrapper.select(PreTaskEntity::getPreTaskId);
         return this.listObjs(queryWrapper, Object::toString);
+    }
+
+    /**
+     * 根任务id 获取前置任务id
+     *
+     * @param noProcessTaskIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-18 19:28
+     */
+
+    public List<String> getPreTaskIdListByTaskIds(List<String> noProcessTaskIds) {
+        List<String> taskIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(noProcessTaskIds)) {
+            LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(PreTaskEntity::getPreTaskId);
+            queryWrapper.in(PreTaskEntity::getTaskId, noProcessTaskIds);
+            taskIdList = this.listObjs(queryWrapper, Object::toString);
+        }
+        return taskIdList;
+    }
+
+    /**
+     * 完成任务 检查 前置任务是否已完成
+     *
+     * @param taskIds
+     */
+    @Override
+    public void checkPreTaskFinish(List<String> taskIds) {
+        //获取到前置任务id
+        List<String> preTaskIds = getPreTaskIdListByTaskIds(taskIds);
+        if (CollectionUtils.isNotEmpty(preTaskIds)) {
+            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(), preTaskIds);
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95035);
+            }
+        }
+
     }
 }
 
