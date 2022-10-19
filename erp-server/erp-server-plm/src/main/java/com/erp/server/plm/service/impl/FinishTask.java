@@ -100,7 +100,7 @@ public class FinishTask implements TaskOperateStrategy {
          */
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         Date nowDate = new Date();
-        projectTaskService.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), nowDate, null);
+        projectTaskService.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         //获取到所有流程的信息
         List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
         //获取到所有到负责人的成员信息
