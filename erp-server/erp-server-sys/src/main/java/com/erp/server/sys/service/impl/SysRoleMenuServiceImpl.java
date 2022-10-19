@@ -231,6 +231,8 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(sysRoleMenuEntity)) {
                         item.setDataScope(sysRoleMenuEntity.getDataScope());
+                    } else {
+                        item.setDataScope(1);
                     }
                     item.setParentName("");
                     item.setSelectState(false);
