@@ -41,9 +41,14 @@ public interface SysUserFeign {
 
     //获取用户权限
     @PostMapping("sys/feign/user/getRequestPermissionsList")
-    List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody  String userId);
+    List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId);
 
     //获取用户列表
     @GetMapping("sys/feign/user/getUserList")
     List<FindUserDTO> getUserList();
+
+    //获取部门的用户
+    @GetMapping("sys/feign/user/getDepUserList")
+    List<SysUserDTO> getDepUserList(@RequestBody String userId);
+
 }

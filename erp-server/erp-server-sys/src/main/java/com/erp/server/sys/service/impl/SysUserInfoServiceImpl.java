@@ -662,18 +662,18 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @date 2022-10-15 11:22
      */
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
-        String permissionsKey = RedisCacheConstants.PERMISSIONS_CODE_KEY + userId;
-        //先从redis 获取 如果没有在从数据库获取
-        List<UserRequestPermissionsDTO> resultList = redisService.getCacheList(permissionsKey);
-        //当为空的时候 就去查
-        if (CollectionUtils.isEmpty(resultList)) {
-            resultList = baseMapper.getRequestPermissionsList(userId);
-            if (CollectionUtils.isNotEmpty(resultList)) {
-                redisService.setCacheList(permissionsKey, resultList);
-                redisService.expire(permissionsKey, 7l, TimeUnit.DAYS);
-            }
-        }
-        return resultList;
+        return baseMapper.getRequestPermissionsList(userId);
+    }
+
+    /**
+     * 根据用户id 获取到所属部门的所有用户id
+     * @Author Luo_WG
+     * @Date 2022/10/19 14:17
+     * @param userId 用户id
+     * @return java.util.List<java.lang.String>
+     **/
+    public List<SysUserDTO> getDepUserList(String userId) {
+        return baseMapper.getDepUserList(userId);
     }
 
 

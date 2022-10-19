@@ -1,9 +1,12 @@
 package com.erp.model.sys.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,10 +18,13 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 public class SysRoleMenuBatchDTO implements Serializable {
-
-     //角色id
+    /**
+     * 角色id
+     */
     private String roleId;
 
-    //菜单id集合
-    private Set<String> menuIdList;
+    /**
+     * 选中的菜单权限集合
+     */
+    private Set<SysRoleMenuDataScopeDTO> sysRoleMenuDataScopeList;
 }

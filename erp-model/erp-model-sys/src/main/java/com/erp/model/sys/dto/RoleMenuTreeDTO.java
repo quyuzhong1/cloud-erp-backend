@@ -48,6 +48,11 @@ public class RoleMenuTreeDTO implements Serializable {
     //选中状态 0 没有  1 有
     private Boolean selectState;
 
+    /**
+     * 数据权限(1-自己,2-部门,3-全部)
+     */
+    private Integer dataScope;
+
 
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<RoleMenuTreeDTO> childrenList;

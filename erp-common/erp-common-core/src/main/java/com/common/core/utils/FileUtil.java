@@ -265,7 +265,8 @@ public class FileUtil {
         try {
             String originalFilename = multipartFile.getOriginalFilename();
             String[] filename = originalFilename.split("\\.");
-            file = File.createTempFile(filename[0], filename[1]);
+            UUID uuid = UUID.randomUUID();
+            file = File.createTempFile(uuid.toString(), filename[filename.length-1]);
             multipartFile.transferTo(file);
             file.deleteOnExit();
         } catch (IOException e) {

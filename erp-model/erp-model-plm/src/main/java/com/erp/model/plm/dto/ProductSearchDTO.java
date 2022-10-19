@@ -9,7 +9,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname ProductSearchDTO
@@ -42,6 +44,5 @@ public class ProductSearchDTO extends PermissionsDTO  {
 
     //产品id 集合
     private List<String> productIds;
-
 
 }

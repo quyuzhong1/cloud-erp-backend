@@ -5,6 +5,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.annotation.DataPermision;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
@@ -83,14 +84,15 @@ public class ProductDetailController extends BaseController {
     private BasicDictService basicDictService;
 
     /**
-     * 产品信息-主页列表-查询
+     * 产品信息-主页列表-查询1
      * @Author Luo_WG
      * @Date 2022/10/9 10:15
      * @param pagingDTO pagingDTO
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductDetailShowDTO>>
      **/
     @PostMapping("/list")
-    //@RequestPermissions("plm:product:detail:paging")
+    @RequestPermissions("plm:product:detail:paging")
+    @DataPermision(field = "create_user_id", menuCode = "plm:product:detail:paging")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -459,6 +461,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdateProductUnit")
+    //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
     public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
         Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
         return flag == true ? this.success() : this.failure();
@@ -484,6 +487,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/deleteProductUnit")
+    //@RequestPermissions("plm:product:detail:deleteProductUnit")
     public ApiResult deleteProductUnit(String id) {
         Boolean flag = productUnitService.delete(id);
         return flag == true ? this.success() : this.failure();
@@ -499,6 +503,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/importProductFile")
+    //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
         try {
@@ -533,6 +538,7 @@ public class ProductDetailController extends BaseController {
      * @param response response
      **/
     @GetMapping("/exportTemplate")
+    //@RequestPermissions("plm:product:detail:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
         String excelName = "template.xlsx";
@@ -564,6 +570,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping(value = "/exportProduct")
+    //@RequestPermissions("plm:product:detail:exportProduct")
     public void exportProduct(@RequestBody ProductSkuDTO productSkuDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuDTO, response);
     }

@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.modules.sys.vo.SysMenuVO;
-import com.erp.model.sys.dto.RoleMenuDTO;
-import com.erp.model.sys.dto.RoleMenuTreeDTO;
-import com.erp.model.sys.dto.SysRoleMenuBatchDTO;
-import com.erp.model.sys.dto.SysRoleMenuDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysMenuEntity;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.server.sys.constant.SysConstant;
@@ -83,14 +80,15 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Override
     @Transactional
     public boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO) {
-        Set<String> menuIds = batchDTO.getMenuIdList();
+        Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getSysRoleMenuDataScopeList();
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(menuIds)) {
-            for (String menuId : menuIds) {
+            for (SysRoleMenuDataScopeDTO menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
-                entity.setMenuId(menuId);
+                entity.setMenuId(menuId.getMenuId());
                 entity.setRoleId(roleId);
+                entity.setDataScope(menuId.getDataScope());
                 batchList.add(entity);
             }
             return this.saveBatch(batchList);
@@ -218,17 +216,28 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     public RoleMenuDTO findRoleMenuTreeByRoleId(String roleId) {
         RoleMenuDTO roleMenuVO = new RoleMenuDTO();
         List<String> menuIds = getMenuIdByRoleId(roleId);
+
         List<SysMenuEntity> allList = sysMenuService.list();
+
+        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(SysRoleMenuEntity::getRoleId, roleId);
+        List<SysRoleMenuEntity> sysRoleMenuEntityList = this.list(queryWrapper);
+
         List<RoleMenuTreeDTO> menuList = BeanMapperUtils.copyList(RoleMenuTreeDTO.class, allList);
         List<RoleMenuTreeDTO> treeList = menuList.stream().
                 filter(item -> "0".equals(item.getParentId())).
                 map(item -> {
+                    SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
+                    item.setDataScope(sysRoleMenuEntity.getDataScope());
                     item.setParentName("");
                     item.setSelectState(false);
                     item.setChildrenList(getChildrenList(item, menuList, menuIds));
                     return item;
                 }).collect(Collectors.toList());
 
+        treeList.forEach(req -> {
+
+        });
         roleMenuVO.setSysRoleMenuTrees(treeList);
         roleMenuVO.setSelectedMenuIds(menuIds);
         roleMenuVO.setTotalMenu(allList.size());

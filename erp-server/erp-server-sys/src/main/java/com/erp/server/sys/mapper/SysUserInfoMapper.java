@@ -41,4 +41,6 @@ public interface SysUserInfoMapper extends BaseMapper<SysUserInfoEntity> {
     void setLoginIp(@Param("params") SysLoginIpDTO dto);
 
     List<UserRequestPermissionsDTO> getRequestPermissionsList(@Param("userId") String userId);
+
+    List<SysUserDTO> getDepUserList(@Param("userId") String userId);
 }

@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Classname PermissionsDTO
@@ -20,4 +22,14 @@ public class PermissionsDTO  implements Serializable {
      * 1-自己,2-部门,3-全部
      */
     private Integer dataScope;
+
+    /** 请求参数 */
+    private Map<String, Object> param;
+
+    public Map<String, Object> getParam() {
+        if (param == null) {
+            param = new HashMap<>();
+        }
+        return param;
+    }
 }

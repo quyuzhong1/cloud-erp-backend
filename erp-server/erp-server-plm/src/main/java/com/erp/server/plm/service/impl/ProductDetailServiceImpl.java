@@ -14,12 +14,15 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -27,6 +30,7 @@ import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -87,6 +91,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private BasicCategoryService basicCategoryService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CommonService commonService;
+
     /**
      * @Description 产品信息查询列表
      * @Author Luo_WG
@@ -122,6 +132,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailById(String productId) {
+        LoginUser loginUser = commonService.getUserInfo();
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailById(productId);

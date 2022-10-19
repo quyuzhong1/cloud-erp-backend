@@ -59,8 +59,6 @@ public class CommonController  extends BaseController {
      **/
     @PostMapping("/upload")
     public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request){
-        MultipartHttpServletRequest httpservletrequest = (MultipartHttpServletRequest) request;
-        List<MultipartFile> lists = httpservletrequest.getFiles("multipartFile");
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
             String filePath = FastDFSClientUtil.uploadFile(file);

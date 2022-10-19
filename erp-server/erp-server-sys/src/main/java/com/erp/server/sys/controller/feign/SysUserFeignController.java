@@ -6,6 +6,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
+import com.erp.model.sys.dto.UserDTO;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -81,6 +82,16 @@ public class SysUserFeignController extends BaseController {
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(@RequestBody String userId) {
         List<UserRequestPermissionsDTO> list = sysUserInfoService.getRequestPermissionsList(userId);
         return list;
+    }
+
+    /**
+     * 根据部门id 获取 所有用户
+     * @return
+     */
+    @PostMapping("/getDepUserList")
+    public List<SysUserDTO> getDepUserList(@RequestBody String userId) {
+        List<SysUserDTO> depUserList = sysUserInfoService.getDepUserList(userId);
+        return depUserList;
     }
 
 
