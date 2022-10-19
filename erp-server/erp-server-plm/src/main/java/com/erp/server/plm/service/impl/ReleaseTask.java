@@ -35,7 +35,7 @@ public class ReleaseTask implements TaskOperateStrategy {
      * @return
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state) {
+    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
@@ -44,7 +44,7 @@ public class ReleaseTask implements TaskOperateStrategy {
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95029);
         }
-        boolean flag = projectTaskService.updateTaskState(taskIds, state);
+        boolean flag = projectTaskService.updateTaskState(taskIds, state,null,null);
         return flag;
     }
 }

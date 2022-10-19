@@ -63,9 +63,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             String userId = item;
             entity.setMemberId(userId);
             FindUserDTO user = findUsers.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
-            if(!Objects.isNull(user)){
+            if (!Objects.isNull(user)) {
                 entity.setMemberName(user.getUserName());
-            }else{
+            } else {
                 entity.setMemberName("");
             }
             entity.setProjectId(projectId);
@@ -272,6 +272,19 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         boolean flag = this.removeById(dto.getId());
         roleRefMemberService.removeById(dto.getRoleRefMemberId());
         return flag;
+    }
+
+
+    /**
+     * 获取到 所有 是负责人的成员
+     *
+     * @return
+     */
+    @Override
+    public List<ProjectMembersEntity> getChargeList() {
+        LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectMembersEntity::getIsCharge, IsConstant.YES);
+        return this.list(queryWrapper);
     }
 
 

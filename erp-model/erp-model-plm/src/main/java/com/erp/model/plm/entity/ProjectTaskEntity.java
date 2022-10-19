@@ -166,4 +166,8 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("create_user_name")
     private String createUserName;
 
+    //流程表id
+    @TableField("business_process_id")
+    private String businessProcessId;
+
 }

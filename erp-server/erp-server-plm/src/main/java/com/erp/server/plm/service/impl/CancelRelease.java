@@ -37,7 +37,7 @@ public class CancelRelease implements TaskOperateStrategy {
      * @date 2022-10-18 15:51
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state) {
+    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);

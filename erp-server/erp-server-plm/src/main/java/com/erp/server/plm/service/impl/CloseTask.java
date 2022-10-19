@@ -31,7 +31,7 @@ public class CloseTask implements TaskOperateStrategy {
      * @return
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state) {
+    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         //进行中

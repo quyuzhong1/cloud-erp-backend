@@ -58,7 +58,7 @@ public class StartTask implements TaskOperateStrategy {
      */
     @Override
     @Transactional
-    public Boolean updateTaskState(List<String> taskIds, Integer state) {
+    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         Integer ingCode = TaskStateEnum.ING.getCode();
@@ -83,8 +83,6 @@ public class StartTask implements TaskOperateStrategy {
          */
         List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(reviewList)) {
-            LoginUser loginUser = commonService.getUserInfo();
-            String userId = loginUser.getUid();
             String businessType = BusinessProcessEnum.REVIEW_TASK.getBusinessType();
             BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessType(businessType);
             //该流程是 任务负责人会签审核的
