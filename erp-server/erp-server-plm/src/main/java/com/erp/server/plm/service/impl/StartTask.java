@@ -45,20 +45,19 @@ public class StartTask implements TaskOperateStrategy {
     private BusinessProcessService businessProcessService;
 
 
-    @Autowired
-    private CommonService commonService;
+
 
 
     /**
      * 开始任务
      *
      * @param taskIds
-     * @param state
+     * @param productId
      * @return
      */
     @Override
     @Transactional
-    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String  productId,String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         Integer ingCode = TaskStateEnum.ING.getCode();

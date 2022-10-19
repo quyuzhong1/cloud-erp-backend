@@ -68,5 +68,5 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     int countUndoneByTaskIds(Integer code, List<String> preTaskIds);
 
-    void checkSonTaskFinish(List<String> noProcessTaskIds);
+    void checkSonTaskFinish(List<String> noProcessTaskIds,String productId);
 }

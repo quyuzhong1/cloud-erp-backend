@@ -31,13 +31,13 @@ public class CancelRelease implements TaskOperateStrategy {
      * 在未开始的时候 可以取消发布 否则 不行，取消发布后变为待发布  任务状态为待发布
      *
      * @param taskIds
-     * @param state
+     * @param productId 产品id
      * @return java.lang.Boolean
      * @author yl
      * @date 2022-10-18 15:51
      */
     @Override
-    public Boolean updateTaskState(List<String> taskIds, Integer state,String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String productId ,String userId) {
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
@@ -46,7 +46,7 @@ public class CancelRelease implements TaskOperateStrategy {
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95029);
         }
-        boolean flag = projectTaskService.updateTaskState(taskIds, state,null,null);
+        boolean flag = projectTaskService.updateTaskState(taskIds,TaskStateEnum.TO_BE_RELEASED.getCode() ,null,null);
         return flag;
     }
 }

@@ -47,7 +47,7 @@ public class FinishTask implements TaskOperateStrategy {
 
     @Override
     @Transactional
-    public Boolean updateTaskState(List<String> taskIds, Integer state, String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String  productId, String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         //评审任务code
@@ -65,7 +65,7 @@ public class FinishTask implements TaskOperateStrategy {
         //检查前置任务是否完成
         preTaskService.checkPreTaskFinish(allTaskIds);
         //检查子任务是否有完成
-        projectTaskService.checkSonTaskFinish(allTaskIds);
+        projectTaskService.checkSonTaskFinish(allTaskIds,productId);
 
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
@@ -100,7 +100,7 @@ public class FinishTask implements TaskOperateStrategy {
          */
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         Date nowDate = new Date();
-        projectTaskService.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), nowDate, null);
+        projectTaskService.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         //获取到所有流程的信息
         List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
         //获取到所有到负责人的成员信息
