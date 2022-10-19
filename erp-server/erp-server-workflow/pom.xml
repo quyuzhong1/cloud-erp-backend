@@ -52,7 +52,12 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-
+        <!--rpc-->
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-auth</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 
 
          <!--camunda-->

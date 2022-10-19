@@ -7,7 +7,7 @@
         <bpmn:sequenceFlow id="Flow_1smh5qe" sourceRef="StartEvent_1" targetRef="Activity_0qgekm7" />
         <bpmn:endEvent id="Event_0xcugt3" name="结束">
             <bpmn:extensionElements>
-                <camunda:executionListener class="" event="end" />
+                <camunda:executionListener class="com.erp.server.workflow.listeners.ChangeDocsResultListener" event="end" />
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_10shfpl</bpmn:incoming>
         </bpmn:endEvent>

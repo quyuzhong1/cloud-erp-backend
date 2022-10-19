@@ -61,7 +61,7 @@ public class StartTask implements TaskOperateStrategy {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         Integer ingCode = TaskStateEnum.ING.getCode();
-        int size = list.stream().filter(t -> t.getStatus() > ingCode).collect(Collectors.toList()).size();
+        int size = list.stream().filter(t -> t.getStatus() != TaskStateEnum.NOT_START.getCode()).collect(Collectors.toList()).size();
         if (size > 0) {
             throw new ServiceException(ApiError.ERROR_95031);
         }
@@ -92,21 +92,21 @@ public class StartTask implements TaskOperateStrategy {
                 for (ProjectTaskEntity review : reviewList) {
                     String chargeId = review.getChargeId();
                     if (StringUtils.isNotBlank(chargeId)) {
-                        StartProcessDTO start = new StartProcessDTO();
-                        start.setBusinessKey(processEntity.getBusinessKey());
-                        start.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                        start.setUserId(userId);
+                        StartProcessDTO startProcess = new StartProcessDTO();
+                        startProcess.setBusinessKey(processEntity.getBusinessKey());
+                        startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                        startProcess.setUserId(userId);
                         Map<String, Object> parameterMap = new HashMap<>();
                         //taskChargeIds
-                        parameterMap.put("taskChargeIds", Arrays.asList(chargeId.split(",")));
-                        start.setParameterMap(parameterMap);
-                        ProcessNodeDTO process = workflowFeign.startProcess(start);
+                        parameterMap.put("taskChargeIdList", Arrays.asList(chargeId.split(",")));
+                        startProcess.setParameterMap(parameterMap);
+                        //启动一个流程
+                        ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
                         //这个是流程Id
                         String processId = process.getProcessId();
                         //流程id 不为空 表示成功
                         if (StringUtils.isNotBlank(processId)) {
                             review.setProcessId(processId);
-
                         }
                         review.setRealityStartTime(nowDate);
                         review.setStatus(waitConfirmCode);

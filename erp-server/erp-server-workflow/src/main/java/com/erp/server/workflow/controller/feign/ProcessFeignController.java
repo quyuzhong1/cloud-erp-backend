@@ -36,7 +36,7 @@ public class ProcessFeignController extends BaseController {
 
     //启动流程
     @PostMapping("/startProcess")
-    public ProcessNodeDTO startProcess(@RequestBody @Validated StartProcessDTO dto) {
+    public ProcessNodeDTO startProcess(@RequestBody  StartProcessDTO dto) {
         ProcessNodeDTO process = workflowService.startProcess(dto);
         return process;
     }

@@ -52,7 +52,7 @@ public class ServiceExceptionHandler {
     public ApiResult defaultErrorHandler(Exception e) {
         ApiResult result = new ApiResult();
         result.setCode(ApiError.ERROR_500.code);
-        result.setMsg(getExceptionMessage(e));
+        result.setMsg(getLastCauseString(e,0));
         return result;
     }
 
@@ -62,6 +62,60 @@ public class ServiceExceptionHandler {
         ex.printStackTrace(writer);
         StringBuffer buffer = stringWriter.getBuffer();
         return buffer.toString();
+    }
+
+
+
+
+    /**
+     * 获取最后导致错误的跟踪信息
+     *
+     * @param e           错误信息
+     * @param limitLength 限定长度,0或-1表示不限定长度
+     * @return
+     */
+    public static String getLastCauseString(Throwable e, int limitLength) {
+        String errMsg = (e.getMessage() == null ? e.toString() : e.getMessage());
+        try {
+            errMsg = errMsg + ":\r\n " + getCauseTrace(getLastCause(e));
+            if (limitLength > 0 && errMsg.length() > limitLength) {
+                return errMsg.substring(0, limitLength);
+            }
+        } catch (Exception e2) {
+        }
+        return errMsg;
+    }
+
+    /**
+     * 获取错误跟踪信息(全部)
+     *
+     * @param e 错误信息
+     * @return
+     */
+    public static String getCauseTrace(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw, true);
+        e.printStackTrace(pw);
+        pw.flush();
+        sw.flush();
+        return sw.toString();
+    }
+
+    /**
+     * 获取最后一个导致错误的跟踪信息
+     *
+     * @param e 错误信息
+     * @return
+     */
+    public static Throwable getLastCause(Throwable e) {
+        Throwable e1 = e.getCause();
+        if (e1 != null) {
+            //e1.printStackTrace();
+            return getLastCause(e1);
+        } else {
+            //e.printStackTrace();
+            return e;
+        }
     }
 
 }

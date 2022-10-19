@@ -232,6 +232,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/startTask")
     public ApiResult startTask(@RequestBody TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
+        System.out.println(loginUser.getUid());
         StartTask startTask=new StartTask();
         ApplicationContextUtils.autowire(startTask);
         TaskOperate taskOperate = new TaskOperate(startTask);
