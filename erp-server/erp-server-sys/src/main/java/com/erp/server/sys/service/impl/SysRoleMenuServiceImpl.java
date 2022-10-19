@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
@@ -228,7 +229,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 filter(item -> "0".equals(item.getParentId())).
                 map(item -> {
                     SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
-                    item.setDataScope(sysRoleMenuEntity.getDataScope());
+                    if (ObjectUtils.isNotEmpty(sysRoleMenuEntity)) {
+                        item.setDataScope(sysRoleMenuEntity.getDataScope());
+                    }
                     item.setParentName("");
                     item.setSelectState(false);
                     item.setChildrenList(getChildrenList(item, menuList, menuIds));
