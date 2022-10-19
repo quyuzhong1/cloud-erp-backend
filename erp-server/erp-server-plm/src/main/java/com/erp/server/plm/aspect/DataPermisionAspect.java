@@ -106,6 +106,9 @@ public class DataPermisionAspect {
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, String field, String menuCode) {
         StringBuilder sqlString = new StringBuilder();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
+//        requestPermissionsList.stream().filter()
+        //SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
+        //
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
        // List<String> depUserList = depUserList1.getData();

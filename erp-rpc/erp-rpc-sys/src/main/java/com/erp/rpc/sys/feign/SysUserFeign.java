@@ -51,4 +51,6 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getDepUserList")
     List<SysUserDTO> getDepUserList(@RequestBody String userId);
 
+
+
 }
