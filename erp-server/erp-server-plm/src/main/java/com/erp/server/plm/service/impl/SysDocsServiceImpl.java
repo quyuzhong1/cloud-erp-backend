@@ -14,6 +14,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
+import com.erp.model.plm.dto.FinishDocsDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -152,4 +153,9 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         queryWrapper.select(SysDocsEntity::getName,SysDocsEntity::getId);
         return this.listMaps(queryWrapper);
     }
+
+    
+
+    
+
 }

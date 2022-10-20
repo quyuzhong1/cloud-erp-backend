@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -39,8 +40,9 @@ public class SysTaskDTO implements Serializable {
     /**
      * 负责人id
      */
-    @NotBlank(message = "负责人id 不能为空")
-    private String chargeId;
+    @NotNull(message = "任务负责人集合不能为空")
+    @Size(min = 1,message = "负责人至少有一个")
+    private List<String> chargeIds;
 
 
 
@@ -97,7 +99,15 @@ public class SysTaskDTO implements Serializable {
     private String description;
 
 
+    /**
+     * 业务流程表id
+     */
+    private String businessProcessId;
 
+    /**
+     * 业务流程名
+     */
+    private String businessName="";
 
     private List<FinishDocsDTO> finishDocsList;
 }

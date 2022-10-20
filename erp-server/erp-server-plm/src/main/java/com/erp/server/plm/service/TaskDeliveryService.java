@@ -37,4 +37,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<CountDTO> getTaskDocsCountByProductId();
 
     List<DocsDTO> getDocsByTaskId(String taskId);
+
+
+    List<FinishDocsDTO> getSysTaskFinishDocs(String taskId);
 }
