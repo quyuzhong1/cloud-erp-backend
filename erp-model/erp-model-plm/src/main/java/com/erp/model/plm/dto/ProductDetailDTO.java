@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -32,6 +34,7 @@ public class ProductDetailDTO implements Serializable {
     /**
      * 产品sku名称
      */
+    @Size(max = 50,message = "最大50字符")
     private String name;
 
     /**

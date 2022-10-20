@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
  * @Description 产品基础信息请求参数
@@ -23,6 +24,7 @@ public class ProductInfoDTO {
      * 产品名
      */
     @NotBlank(message = "产品名不能为空")
+    @Size(max = 50,message = "最大50字符")
     private String name;
 
     /**

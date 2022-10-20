@@ -128,14 +128,14 @@ public class DataPermisionAspect {
         }
         Object[] params = joinPoint.getArgs();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        RequestPermissions inject = method.getAnnotation(RequestPermissions.class);
-       /* if (StringUtils.isNotBlank(sqlString.toString())) {
-            if(params.length > 0){
-                ObjectUtils.setFieldValue(params[inject.index()],inject.dataScope(),permissions.getDataScope());
-            }
+        DataPermision inject = method.getAnnotation(DataPermision.class);
+        //这个是给那个字段赋值
 
-            ((PermissionsDTO) params).getParam().put(DATA_SCOPE, sqlString);
-        }*/
+        if (StringUtils.isNotBlank(sqlString.toString())) {
+            if(params.length > 0){
+                ObjectUtils.setFieldValue(params[inject.index()],inject.param(),sqlString);
+            }
+        }
     }
 
 }

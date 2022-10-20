@@ -15,4 +15,8 @@ public @interface DataPermision {
      * 用户表的别名
      */
     String menuCode() default "";
+
+    int index() default 0;
+
+    String param() default "param";
 }
