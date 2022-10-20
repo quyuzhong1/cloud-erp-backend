@@ -1,19 +1,18 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
- * @Description 产品信息-主页列表-查询
+ * @Description 产品信息-主页列表-导出excel
  * @Author Luo_WG
  * @Date 2022/9/28 14:21
  **/
 @Data
 @NoArgsConstructor
-public class ProductSkuDTO extends PermissionsDTO {
+public class ProductSkuExcelDTO {
 
     /**
      * sku/spu/编号
@@ -39,4 +38,9 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 负责人id
      */
     private List<String> chargeIds;
+
+    /**
+     * skuId集合
+     */
+    private List<String> skuIds;
 }

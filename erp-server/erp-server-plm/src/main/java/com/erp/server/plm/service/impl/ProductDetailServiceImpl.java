@@ -758,14 +758,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 获取数据导出excel
      * @Author Luo_WG
      * @Date 2022/10/10 12:09
-     * @param productSkuDTO productSkuDTO
+     * @param productSkuExcelDTO exportSkuExcelDTO
      * @param response response
      * @return void
      **/
     @Override
-    public void exportProduct(ProductSkuDTO productSkuDTO,HttpServletResponse response) {
-        List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuDTO);
-
+    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
+        List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
             req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
             if (StringUtils.isNotBlank(req.getSaleState())) {

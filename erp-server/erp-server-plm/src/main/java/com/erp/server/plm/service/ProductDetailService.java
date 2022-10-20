@@ -181,11 +181,11 @@ public interface ProductDetailService {
      * 导出excel的sku数据
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
-     * @param productSkuDTO productSkuDTO
+     * @param productSkuExcelDTO productSkuExcelDTO
      * @param response response
      * @return void
      **/
-    void exportProduct(ProductSkuDTO productSkuDTO, HttpServletResponse response);
+    void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
     
 
 }

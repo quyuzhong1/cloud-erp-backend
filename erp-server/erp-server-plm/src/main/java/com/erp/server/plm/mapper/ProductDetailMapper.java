@@ -62,10 +62,10 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * 获得导出Excel的sku数据
      * @Author Luo_WG
      * @Date 2022/10/9 14:14
-     * @param productSkuDTO productSkuDTO
+     * @param productSkuExcelDTO productSkuExcelDTO
      * @return java.util.List<com.erp.model.plm.dto.ExportSkuExcelDTO>
      **/
-    List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuDTO productSkuDTO);
+    List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
 }
 

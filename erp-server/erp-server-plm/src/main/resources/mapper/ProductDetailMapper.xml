@@ -254,14 +254,21 @@
         LEFT JOIN basic_dict country ON ps.sale_country = country.id
         LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
         WHERE pi.delete_state = 0
-            <if test="params.no != '' and params.no != null">
-                AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
-            </if>
-            <if test="params.stateList.size() > 0 and params.stateList != null">
-                AND pd.product_state in
-                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
+        <if test="params.no != '' and params.no != null">
+            AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
+        </if>
+        <if test="params.stateList.size() > 0 and params.stateList != null">
+            AND pd.product_state in
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.skuIds.size() > 0 and params.skuIds != null">
+            AND pd.id in
+            <foreach collection="params.skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+
     </select>
 </mapper>
