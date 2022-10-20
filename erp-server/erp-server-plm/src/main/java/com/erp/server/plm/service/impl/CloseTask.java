@@ -38,8 +38,8 @@ public class CloseTask implements TaskOperateStrategy {
         Integer ingCode = TaskStateEnum.ING.getCode();
         //待审核
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
-        long flag = list.stream().filter(t -> (t.getStatus() != ingCode || t.getStatus() != waitConfirmCode)).count();
-        if (flag > 0) {
+        long flag = list.stream().filter(t -> (ingCode.equals(t.getStatus())   || waitConfirmCode.equals(waitConfirmCode))).count();
+        if (flag !=list.size()) {
             throw new ServiceException(ApiError.ERROR_95032);
         }
         //更改状态

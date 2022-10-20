@@ -71,11 +71,11 @@ public class FinishTask implements TaskOperateStrategy {
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
 
 
-        //一般任务 列表  都是将任务状态改为进行中
+        //一般任务 列表
         List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());
 
         //一般任务 没有流程
-        List<ProjectTaskEntity> noProcessList = generalTasks.stream().filter(p -> StringUtils.isBlank(p.getProcessId())).collect(Collectors.toList());
+        List<ProjectTaskEntity> noProcessList = generalTasks.stream().filter(p -> StringUtils.isBlank(p.getBusinessProcessId())).collect(Collectors.toList());
 
         //一般任务 有流程
         List<ProjectTaskEntity> processList = generalTasks.stream().filter(p -> StringUtils.isBlank(p.getBusinessProcessId())).collect(Collectors.toList());
