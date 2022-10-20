@@ -203,7 +203,7 @@
 		pd.sku_no,
 		pd."name" sku_name,
 		pd.plan_listing_time,
-		pd.unit_name,
+        unit.value AS unit_name,
 		pd.charge_name,
 		pd.product_state,
 		target_tax_cost,
@@ -213,12 +213,12 @@
 		retail_price,
 		target_gpm,
 		actual_gpm_cny,
-		actual_gpm_usd
+		actual_gpm_usd,
 		year_sale_qty,
 		year_sale_amount,
 		month_sale_qty,
 		month_sale_amount,
-		sale_country,
+        country.value AS sale_country,
 		listing_time,
 		delisting_time,
         CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
@@ -245,6 +245,8 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
+        LEFT JOIN basic_dict country ON ps.sale_country = country.id
+        LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
         WHERE pi.delete_state = 0
             <if test="params.no != '' and params.no != null">
                 AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))

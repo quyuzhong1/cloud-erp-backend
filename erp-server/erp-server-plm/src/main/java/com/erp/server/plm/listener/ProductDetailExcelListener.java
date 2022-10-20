@@ -135,21 +135,20 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //存在侵权风险
         String pirateRisk = dto.getPirateRisk();
         if(StringUtils.isNotBlank(pirateRisk)){
-            if(!pirateRisk.equals("有风险") && !pirateRisk.equals("无风险")){
-                dto.setErrorMsg("存在侵权风险：有风险 或者 无风险");
+            if(!pirateRisk.equals("有") && !pirateRisk.equals("无")){
+                dto.setErrorMsg("存在侵权风险：有 或者 无");
                 list.add(dto);
                 return;
+            }
+            if(pirateRisk.equals("有风险")){
+                productInfoDTO.setPirateRisk(1);
+            } else {
+                productInfoDTO.setPirateRisk(2);
             }
         }
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         //spu信息
-
-        if(pirateRisk.equals("有风险")){
-            productInfoDTO.setPirateRisk(1);
-        } else {
-            productInfoDTO.setPirateRisk(2);
-        }
 
         productInfoDTO.setName(dto.getName());
 

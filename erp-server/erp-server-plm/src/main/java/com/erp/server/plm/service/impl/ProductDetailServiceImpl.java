@@ -25,6 +25,7 @@ import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
+import com.erp.server.plm.enums.SaleStateEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -767,6 +768,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         exportSkuExcelDTO.forEach(req -> {
             req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
+            if (StringUtils.isNotBlank(req.getSaleState())) {
+                req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
+            }
         });
 
         StringBuffer sb = new StringBuffer();
