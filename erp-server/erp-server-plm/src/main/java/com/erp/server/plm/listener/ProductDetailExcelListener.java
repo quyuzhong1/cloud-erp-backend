@@ -99,7 +99,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
             productInfoDTO.setId(productBy.getId());
             if (!ObjectUtils.isEmpty(productDetailShow)) {
-                if (productDetailShow.getName().equals(dto.getName())) {
+                if (productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
                     dto.setErrorMsg(ApiError.ERROR_95007.msg);
                     list.add(dto);
                     return;

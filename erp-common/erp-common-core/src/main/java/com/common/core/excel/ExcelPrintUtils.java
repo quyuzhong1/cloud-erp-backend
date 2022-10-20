@@ -2,6 +2,7 @@ package com.common.core.excel;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.context.WriteContext;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
@@ -633,9 +634,11 @@ public class ExcelPrintUtils {
 			bos = new BufferedOutputStream(out);
 			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
 			WriteSheet writeSheet = EasyExcel.writerSheet().build();
+
 			//列表数据
 			excelWriter.fill(list, writeSheet);
 			excelWriter.finish();
+
 		} catch (Exception e) {
 			log.info("导出模板数据异常！");
 		} finally {

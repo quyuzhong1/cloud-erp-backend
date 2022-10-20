@@ -504,7 +504,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -517,6 +517,7 @@ public class ProductDetailController extends BaseController {
                 sb.append(date);
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+
                 /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
                 response.setCharacterEncoding("utf-8");
                 String fileName = URLEncoder.encode("测试", "UTF-8");
@@ -527,7 +528,6 @@ public class ProductDetailController extends BaseController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return this.success();
     }
 
     /**
