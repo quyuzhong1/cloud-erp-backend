@@ -49,7 +49,7 @@ public class ProductDetailShowDTO implements Serializable {
     /**
      * 首批到货量
      */
-    private String actualArrivalNum;
+    private String actualArrivalQty;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货
@@ -86,9 +86,4 @@ public class ProductDetailShowDTO implements Serializable {
      * 规格类型  1：无规格  2：多规格
      */
     private Integer specType;
-
-    /**
-     * 首批到货数据
-     */
-    private Integer planOrderQty;
 }
