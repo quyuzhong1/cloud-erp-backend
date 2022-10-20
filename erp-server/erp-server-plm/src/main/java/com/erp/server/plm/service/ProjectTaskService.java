@@ -5,7 +5,6 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.Date;
 import java.util.List;
@@ -71,4 +70,18 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     int countUndoneByTaskIds(Integer code, List<String> preTaskIds);
 
     void checkSonTaskFinish(List<String> noProcessTaskIds,String productId);
+
+    Boolean startTask(OperateBaseTaskDTO dto);
+
+    Boolean publishTask(OperateBaseTaskDTO dto);
+
+    Boolean cancelPublishTask(OperateBaseTaskDTO dto);
+
+    Boolean closeTask(OperateBaseTaskDTO dto);
+
+    Boolean finishTask(OperateBaseTaskDTO dto);
+
+    Boolean approvalPass(TaskOperateDTO dto);
+
+    Boolean approvalReject(TaskOperateDTO dto);
 }
