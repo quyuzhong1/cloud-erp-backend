@@ -45,9 +45,6 @@ public class StartTask implements TaskOperateStrategy {
     private BusinessProcessService businessProcessService;
 
 
-
-
-
     /**
      * 开始任务
      *
@@ -57,12 +54,12 @@ public class StartTask implements TaskOperateStrategy {
      */
     @Override
     @Transactional
-    public Boolean updateTaskState(List<String> taskIds, String  productId,String userId) {
+    public Boolean updateTaskState(List<String> taskIds, String productId, String userId) {
         //获取所有的任务列表
         List<ProjectTaskEntity> list = projectTaskService.getByTaskIds(taskIds);
         Integer ingCode = TaskStateEnum.ING.getCode();
-        int size = list.stream().filter(t -> t.getStatus() != TaskStateEnum.NOT_START.getCode()).collect(Collectors.toList()).size();
-        if (size > 0) {
+        int size = list.stream().filter(t -> TaskStateEnum.NOT_START.getCode().equals(t.getStatus()) || TaskStateEnum.CLOSE.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        if (size != list.size()) {
             throw new ServiceException(ApiError.ERROR_95031);
         }
         //一般任务

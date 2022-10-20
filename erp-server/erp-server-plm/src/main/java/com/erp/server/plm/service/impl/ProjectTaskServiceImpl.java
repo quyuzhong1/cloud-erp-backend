@@ -784,16 +784,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public boolean updateTaskState(List<String> taskIds, Integer state, Date realityStart, Date realityEnd) {
-        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
-        updateWrapper.set(ProjectTaskEntity::getStatus, state);
-        if (realityStart != null) {
-            updateWrapper.set(ProjectTaskEntity::getRealityStartTime, realityStart);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<ProjectTaskEntity>();
+            updateWrapper.set(ProjectTaskEntity::getStatus, state);
+            if (realityStart != null) {
+                updateWrapper.set(ProjectTaskEntity::getRealityStartTime, realityStart);
+            }
+            if (realityEnd != null) {
+                updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
+            }
+            updateWrapper.in(ProjectTaskEntity::getId, taskIds);
+            return this.update(updateWrapper);
         }
-        if (realityEnd != null) {
-            updateWrapper.set(ProjectTaskEntity::getRealityEndTime, realityEnd);
-        }
-        updateWrapper.in(ProjectTaskEntity::getId, taskIds);
-        return this.update(updateWrapper);
+        return true;
     }
 
 
@@ -808,10 +811,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public int countUndoneByTaskIds(Integer state, List<String> preTaskIds) {
-        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProjectTaskEntity::getId, preTaskIds);
-        queryWrapper.eq(ProjectTaskEntity::getStatus, state);
-        return this.count(queryWrapper);
+        if (CollectionUtils.isNotEmpty(preTaskIds)) {
+            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskEntity::getId, preTaskIds);
+            queryWrapper.eq(ProjectTaskEntity::getStatus, state);
+            return this.count(queryWrapper);
+        }
+        return 0;
     }
 
 
@@ -824,7 +830,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-18 19:53
      */
     @Override
-    public void checkSonTaskFinish(List<String> taskIds,String productId) {
+    public void checkSonTaskFinish(List<String> taskIds, String productId) {
         List<ProjectTaskEntity> list = this.getByProductId(productId);
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         for (String taskId : taskIds) {
