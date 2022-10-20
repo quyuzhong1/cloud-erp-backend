@@ -23,6 +23,8 @@ import javax.annotation.Resource;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 数据过滤处理
@@ -106,17 +108,20 @@ public class DataPermisionAspect {
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, String field, String menuCode) {
         StringBuilder sqlString = new StringBuilder();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
+        List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream = requestPermissionsList.stream().filter(req -> req.getPermissionsCode().equals(menuCode)).collect(Collectors.toList());
 //        requestPermissionsList.stream().filter()
         //SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
         //
+
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
        // List<String> depUserList = depUserList1.getData();
         for (SysUserDTO sysUserDTO : depUserList) {
             userList.add(sysUserDTO.getUid());
         }
-        System.out.println(userList);
-        for (UserRequestPermissionsDTO role : requestPermissionsList) {
+
+
+        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
                 sqlString = new StringBuilder();
                 break;
@@ -129,10 +134,10 @@ public class DataPermisionAspect {
 
         if (StringUtils.isNotBlank(sqlString.toString())) {
             // 拿到方法的参数，要求第一个参数为实体类且继承PermissionsDTO，因为要将拼接的sql保存PermissionsDTO的param属性上
-            Object params = joinPoint.getArgs()[0];
+            Object params = joinPoint.getArgs();
+
             if (params != null && params instanceof PermissionsDTO) {
-                PermissionsDTO baseEntity = (PermissionsDTO) params;
-                baseEntity.getParam().put(DATA_SCOPE, sqlString);
+                ((PermissionsDTO) params).getParam().put(DATA_SCOPE, sqlString);
             }
         }
     }
