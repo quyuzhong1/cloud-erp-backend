@@ -62,13 +62,23 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             list.add(dto);
             return;
         }
+        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 50) {
+            dto.setErrorMsg("产品名称不能超过50个字节");
+            list.add(dto);
+            return;
+        }
         if (StringUtils.isBlank(dto.getChargeName())) {
             dto.setErrorMsg("产品负责人不能为空");
             list.add(dto);
             return;
         }
-        if (StringUtils.isBlank(dto.getChargeName())) {
+        if (StringUtils.isBlank(dto.getBrandName())) {
             dto.setErrorMsg("产品品牌不能为空");
+            list.add(dto);
+            return;
+        }
+        if (StringUtils.isBlank(dto.getSkuNo())) {
+            dto.setErrorMsg("sku不能为空");
             list.add(dto);
             return;
         }
