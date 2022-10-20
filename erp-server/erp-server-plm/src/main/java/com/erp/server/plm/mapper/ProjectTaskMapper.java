@@ -41,5 +41,10 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<RefTaskInfoDTO> getRefTask(@Param("taskIds") List<String> taskIds);
 
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
+
+    IPage myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+                          @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
+                          @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
+
 }
 

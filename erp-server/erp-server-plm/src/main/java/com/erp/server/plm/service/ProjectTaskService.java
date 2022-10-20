@@ -5,6 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.Date;
 import java.util.List;
@@ -34,6 +35,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId);
 
     void copyTaskBySys(String productId, String projectId);
+
 
     PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);
 

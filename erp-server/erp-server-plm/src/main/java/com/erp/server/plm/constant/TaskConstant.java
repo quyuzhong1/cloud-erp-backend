@@ -16,9 +16,10 @@ public interface TaskConstant {
 
     public static final String APPROVAL_TASK_NAME = "立项阶段";
 
-    public static final Integer MY_APPROVAL_TASK = 1;
+
 
     public static final Integer MY_FINISH_TASK = 0;
+    public static final Integer MY_APPROVAL_TASK = 1;
     public static final Integer ALL_FINISH_TASK = 2;
 
     public static final String FILE_TYPE = "文件";

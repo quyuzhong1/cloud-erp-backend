@@ -7,6 +7,7 @@ import com.erp.model.workflow.dto.QueryProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
+import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
@@ -54,15 +55,17 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      */
     @Override
     public List<TaskShowDTO> queryMyToDo(String userId) {
-        List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
-        List<TaskShowDTO> resultList = new ArrayList<>(tasks.size());
-        for (Task task : tasks) {
-            TaskShowDTO vo = new TaskShowDTO();
-            vo.setAssignee(task.getAssignee());
-            vo.setProcessInstanceId(task.getProcessInstanceId());
-            vo.setTaskId(task.getId());
-            vo.setNodeId(task.getTaskDefinitionKey());
-            resultList.add(vo);
+        List<TaskShowDTO> resultList = new ArrayList<>();
+        if(StringUtils.isNotBlank(userId)){
+            List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
+            for (Task task : tasks) {
+                TaskShowDTO vo = new TaskShowDTO();
+                vo.setAssignee(task.getAssignee());
+                vo.setProcessInstanceId(task.getProcessInstanceId());
+                vo.setTaskId(task.getId());
+                vo.setNodeId(task.getTaskDefinitionKey());
+                resultList.add(vo);
+            }
         }
         return resultList;
     }

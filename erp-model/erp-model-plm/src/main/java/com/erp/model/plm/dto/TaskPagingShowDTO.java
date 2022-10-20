@@ -122,6 +122,20 @@ public class TaskPagingShowDTO  implements Serializable {
 
 
     /**
+     * 流程id
+     *
+     */
+    private String processId;
+
+
+    /**
+     * 流程任务id
+     *
+     */
+    private String processTaskId="";
+
+
+    /**
      * 子 任务
      */
     @JsonInclude(value= JsonInclude.Include.NON_EMPTY)

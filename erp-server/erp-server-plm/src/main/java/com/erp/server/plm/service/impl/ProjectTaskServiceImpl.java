@@ -16,6 +16,8 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
@@ -66,6 +68,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private ProductOperateRecordService productOperateRecordService;
+
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     /**
      * 添加系统的产品任务
@@ -252,7 +257,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
+        String userId = "123456";
+        //= loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -261,11 +267,31 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<Integer> statusList = params.getStatusList();
         List<TaskSearchDTO> searchList = params.getSearchList();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = null;
+        IPage pageData = new Page();
+
+
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
+        //这个待我审核的任务
+        if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
+            List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+            //获取流程集合
+            List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(processIds)) {
+                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, processIds);
+                //要给流程任务的id
+                List<TaskPagingShowDTO> list = pageData.getRecords();
+                for (TaskPagingShowDTO show : list) {
+                    TaskShowDTO showDTO = myToDoList.stream().filter(t -> t.getProcessInstanceId().equals(show.getProcessId())).findFirst().orElse(null);
+                    if (showDTO != null) {
+                        show.setProcessTaskId(showDTO.getTaskId());
+                    }
+                }
+            }
+        }
+        //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
             pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
         }
@@ -296,7 +322,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
                 item.setChildList(getChildrenList(item, allList));
-
             }
         }
 
