@@ -65,6 +65,17 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String taskName;
 
+
+    /**
+     *  任务状态
+     *  任务状态 0:待发布 1:待开始
+     *           2:待审核  3:进行中
+     *           4 已完成, 5 已关闭
+     *           6.完成待审核 7.审核中
+     *           8 审核通过  9 审核不通过
+     */
+    private String taskState;
+
     /**
      *  任务名
      */

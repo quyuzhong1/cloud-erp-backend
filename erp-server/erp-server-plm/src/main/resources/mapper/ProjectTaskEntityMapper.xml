@@ -4,7 +4,7 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         WHERE product_id=#{productId} AND pid='0'
         <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
             AND phase_id=#{phaseId}
@@ -74,7 +74,7 @@
     <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
         SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,
         t.plan_start_time,t.plan_end_time,t.description AS taskDescription,
-        t.reality_start_time,t.reality_end_time,
+        t.reality_start_time,t.reality_end_time,t.status AS taskState,
         t.create_time,t.phase_name,t.update_time,t.create_user_name,
         t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
         t.product_id,
@@ -104,6 +104,63 @@
           SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
             charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
             WHERE product_id=#{productId} AND pid !='0'
+    </select>
+
+
+    <select id="myApprovalPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        WHERE product_id=#{productId} AND pid='0' AND process_id IN
+        <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
+            #{processId}
+        </foreach>
+
+        <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
+            AND phase_id=#{phaseId}
+        </if>
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND status IN
+            <foreach collection="statusList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="searchList !=null and searchList.size>0">
+            <foreach collection="searchList" item="item">
+                <if test="item.searchType=='name'">
+                    <if test="item.searchKeyword != null and item.searchKeyword!=''">
+                        AND name LIKE concat('%',#{item.searchKeyword},'%')
+                    </if>
+                </if>
+                <if test="item.searchType=='priority'">
+                    <if test="item.priority != null ">
+                        AND priority =#{item.priority}
+                    </if>
+                </if>
+                <if test="item.searchType=='personInCharge'">
+                    <if test="item.personInChargeId != null ">
+                        AND charge_id =#{item.chargeId}
+                    </if>
+                </if>
+                <if test="item.searchType=='status'">
+                    <if test="item.status != null ">
+                        AND status =#{item.status}
+                    </if>
+                </if>
+                <if test="item.searchType=='createTime'">
+                    <if test="item.startTime != null ">
+                        AND create_time &gt;=#{item.startTime}
+                    </if>
+                    <if test="item.endTime != null ">
+                        AND end_time &gt;=#{item.endTime}
+                    </if>
+                </if>
+            </foreach>
+        </if>
+        ORDER BY
+        create_time DESC
     </select>
 
 </mapper>

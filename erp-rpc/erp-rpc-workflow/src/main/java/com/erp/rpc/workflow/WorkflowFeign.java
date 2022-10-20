@@ -2,9 +2,11 @@ package com.erp.rpc.workflow;
 
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @Classname WorkflowFeign
@@ -19,4 +21,8 @@ public interface WorkflowFeign {
     //启动流程
     @PostMapping("workflow/feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
+
+    //获取我待办的任务列表
+    @PostMapping("workflow/feign/process/queryMyToDo")
+    List<TaskShowDTO> queryMyToDo(@RequestParam(value="userId") String userId);
 }
