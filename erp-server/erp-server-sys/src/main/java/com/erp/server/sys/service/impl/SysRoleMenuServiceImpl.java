@@ -234,7 +234,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     }
                     item.setParentName("");
                     item.setSelectState(false);
-                    item.setChildrenList(getChildrenList(item, menuList, menuIds));
+                    item.setChildrenList(getChildrenList(item, menuList, menuIds, sysRoleMenuEntityList));
                     return item;
                 }).collect(Collectors.toList());
 
@@ -340,9 +340,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         return CollectionUtils.isEmpty(collectList) ? null : collectList;
     }
 
-    private List<RoleMenuTreeDTO> getChildrenList(RoleMenuTreeDTO item, List<RoleMenuTreeDTO> menuList, List<String> menuIds) {
+    private List<RoleMenuTreeDTO> getChildrenList(RoleMenuTreeDTO item, List<RoleMenuTreeDTO> menuList, List<String> menuIds, List<SysRoleMenuEntity> sysRoleMenuEntityList) {
         List<RoleMenuTreeDTO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
                 .map(m -> {
+                    System.out.println("bb:" + m.getMenuId());
                     m.setParentName(item.getMenuName());
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");
                     //表示 没有 选中
@@ -351,8 +352,14 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     } else {
                         m.setSelectState(true);
                     }
-                    m.setDataScope(item.getDataScope());
-                    m.setChildrenList(getChildrenList(m, menuList, menuIds));
+
+                    SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> m.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(sysRoleMenuEntity)) {
+                        m.setDataScope(sysRoleMenuEntity.getDataScope());
+                    } else {
+                        m.setDataScope(1);
+                    }
+                    m.setChildrenList(getChildrenList(m, menuList, menuIds, sysRoleMenuEntityList));
                     return m;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collectList) ? null : collectList;
