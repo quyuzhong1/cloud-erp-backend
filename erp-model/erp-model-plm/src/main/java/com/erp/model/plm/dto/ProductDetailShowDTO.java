@@ -86,4 +86,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 规格类型  1：无规格  2：多规格
      */
     private Integer specType;
+
+    /**
+     * 首批到货数据
+     */
+    private Integer planOrderQty;
 }

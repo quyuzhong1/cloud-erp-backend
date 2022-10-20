@@ -48,7 +48,8 @@
         pd.product_state,
         pd.create_user_id,
         pd.create_time,
-        pi.spec_type
+        pi.spec_type,
+        pp.plan_order_qty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
@@ -164,7 +165,7 @@
         SELECT
         pi."id",
         pi.spu_no,
-        CASE WHEN pi.spec_type = 1 THEN pi."name" ELSE pd."name" END "name",
+        pi."name",
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -188,13 +189,13 @@
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
         SELECT
         pi.spu_no,
-        CASE WHEN pi.spec_type = 1 THEN pi."name" ELSE pd."name" END "name",
+        pd."name",
 		pi.sale_method,
 		pi.category,
 		pi.sell_spot,
 		pi.function_desc,
 		pi.usage_desc,
-		pi.pirate_risk,
+        CASE WHEN pi.pirate_risk = 1 THEN '有侵权风险' ELSE '无侵权风险' END pirate_risk,
 		pi.materials,
 		pi.property,
 		pi.brand_name,
@@ -220,8 +221,8 @@
 		sale_country,
 		listing_time,
 		delisting_time,
-		is_finished_img,
-		is_finished_video,
+        CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
+        CASE WHEN is_finished_video = 1 THEN '是' ELSE '否' END is_finished_video,
 		sale_state,
 		product_size,
 		gross_weight,

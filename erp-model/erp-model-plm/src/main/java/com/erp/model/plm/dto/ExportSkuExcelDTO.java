@@ -12,7 +12,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 public class ExportSkuExcelDTO implements Serializable {
-    @ExcelProperty(value = "spu", index = 0)
+    @ExcelProperty(value = "SPU", index = 0)
     private String spuNo;
 
     @ExcelProperty(value = "产品名称", index = 1)
@@ -39,14 +39,11 @@ public class ExportSkuExcelDTO implements Serializable {
     @ExcelProperty(value = "主要材质", index = 8)
     private String materials;
 
-    @ExcelProperty(value = "规格", index = 9)
+    @ExcelProperty(value = "产品属性", index = 9)
     private String property;
 
     @ExcelProperty(value = "品牌", index = 10)
     private String brandName;
-
-    @ExcelProperty(value = "变体规格", index = 11)
-    private String variantProperty;
 
     @ExcelProperty(value = "sku编号", index = 12)
     private String skuNo;
@@ -54,11 +51,14 @@ public class ExportSkuExcelDTO implements Serializable {
     @ExcelProperty(value = "sku名称", index = 13)
     private String skuName;
 
+    @ExcelProperty(value = "变体属性", index = 11)
+    private String variantProperty;
+
     @ExcelProperty(value = "计划上市时间", index = 14)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
-    @ExcelProperty(value = "单位名称", index = 15)
+    @ExcelProperty(value = "单位", index = 15)
     private String unitName;
 
     @ExcelProperty(value = "产品经理", index = 16)
