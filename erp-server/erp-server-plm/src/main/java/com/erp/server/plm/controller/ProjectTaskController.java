@@ -273,6 +273,17 @@ public class ProjectTaskController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-任务详情 -查看任务流程
+     *
+     * @return
+     */
+    @PostMapping("/findTaskProcess")
+    public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
+        List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
+        return success(taskProcess);
+    }
+
 
 }
 

@@ -24,12 +24,14 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
+import com.erp.server.plm.enums.TaskProcessTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -794,6 +796,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(chargeId)) {
             resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
+        String businessProcessId = resultDTO.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (processEntity != null) {
+                resultDTO.setBusinessName(processEntity.getBusinessName());
+            }
+
+        }
+
         return resultDTO;
     }
 
@@ -1112,6 +1123,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             processTask.setProcessId(processId);
                             processTask.setStatus(finishWaitConfirmCode);
                             processTask.setRealityStartTime(nowDate);
+                            processTask.setBusinessProcessId(processEntity.getId());
                             this.updateById(processTask);
                         }
                     }
@@ -1174,10 +1186,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 审批驳回
-     * @author yl
-     * @date 2022-10-20 14:13
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-10-20 14:13
      */
     @Override
     public Boolean approvalReject(TaskOperateDTO dto) {
@@ -1194,8 +1207,69 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
-       //这里应该还一个驳回的流程
+        //这里应该还一个驳回的流程
         return flag;
+
+    }
+
+
+    /**
+     * 查看任务流程情况
+     *
+     * @param taskId
+     * @return com.erp.model.plm.dto.TaskProcessDTO
+     * @author yl
+     * @date 2022-10-20 14:44
+     */
+    @Override
+    public List<TaskProcessNodeDTO> findTaskProcess(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+
+        Integer taskType = taskEntity.getType();
+        //一般任务code
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //如果是一般任务
+        if (generalTask.equals(taskType)) {
+            String processId = taskEntity.getProcessId();
+            String businessProcessId = taskEntity.getBusinessProcessId();
+            //表示一般任务带有审核审核
+            if (StringUtils.isNotBlank(processId) && StringUtils.isNotBlank(businessProcessId)) {
+
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 根据流程类型 获取到流程信息
+     *
+     * @param processType
+     * @return
+     * @author yl
+     * @date 2022-10-20 15:00
+     */
+    public List<TaskProcessNodeDTO> getByProcessTye(Integer processType) {
+        List<TaskProcessNodeDTO> resultList = new ArrayList<>();
+        Integer waitReleased=TaskStateEnum.TO_BE_RELEASED.getCode();
+        String waitReleasedName=TaskStateEnum.TO_BE_RELEASED.getName();
+
+        Integer notStart=TaskStateEnum.NOT_START.getCode();
+        String notStartName=TaskStateEnum.NOT_START.getName();
+
+        //一般任务
+        Integer general = TaskProcessTypeEnum.GENERAL_TASK.getCode();
+        if (general.equals(processType)) {
+            TaskProcessNodeDTO waitReleasedDTO=new TaskProcessNodeDTO();
+            waitReleasedDTO.setNodeName(waitReleasedName);
+            waitReleasedDTO.setNodeState(waitReleased);
+            resultList.add(waitReleasedDTO);
+        }
+
+        return resultList;
 
     }
 

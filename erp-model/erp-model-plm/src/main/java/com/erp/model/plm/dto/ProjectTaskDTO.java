@@ -117,6 +117,17 @@ public class ProjectTaskDTO implements Serializable {
      */
     private String processId;
 
+    /**
+     * 业务流程表id
+     */
+    private String businessProcessId;
+
+    /**
+     * 业务流程名
+     */
+    private String businessName="";
+
+
 
     /**
      * 交付文档

@@ -84,4 +84,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Boolean approvalPass(TaskOperateDTO dto);
 
     Boolean approvalReject(TaskOperateDTO dto);
+
+
+    List<TaskProcessNodeDTO>  findTaskProcess(String taskId);
 }

@@ -60,7 +60,7 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @PostMapping("/changeFile")
-    public ApiResult changeFile(@RequestBody @Validated TaskChangeFileDTO dto) {
+    public ApiResult changeFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
         Boolean flag = taskDocsFinishService.changeFile(dto);
         return flag == true ? success() : failure();
     }
