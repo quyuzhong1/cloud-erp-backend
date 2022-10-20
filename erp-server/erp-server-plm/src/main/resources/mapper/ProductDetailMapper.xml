@@ -57,18 +57,25 @@
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
         </if>
+
+        <if test="params.productId != '' and params.productId != null">
+            AND pd.product_id = #{params.productId}
+        </if>
+
         <if test="params.stateList.size() > 0 and params.stateList != null">
             AND pd.product_state in
             <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
+
         <if test="params.categoryIds.size() > 0 and params.categoryIds != null">
             AND pi.category_id in
             <foreach collection="params.categoryIds" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
         </if>
+
         <if test="params.chargeIds.size() > 0 and params.chargeIds != null">
             AND pd.charge_id in
             <foreach collection="params.chargeIds" item="chargeId" open="(" separator="," close=")">

@@ -21,6 +21,11 @@ public class ProductSkuDTO extends PermissionsDTO {
     private String no;
 
     /**
+     * 产品SPU表id
+     */
+    private String productId;
+
+    /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
      */
     private List<Integer> stateList;
