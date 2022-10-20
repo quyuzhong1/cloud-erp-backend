@@ -565,13 +565,13 @@ public class ProductDetailController extends BaseController {
      * excel导出产品信息
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
-     * @param exportSkuExcelDTO exportSkuExcelDTO
+     * @param productSkuExcelDTO productSkuExcelDTO
      * @param response response
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping(value = "/exportProduct")
     //@RequestPermissions("plm:product:detail:exportProduct")
-    public void exportProduct(@RequestBody ExportSkuExcelDTO exportSkuExcelDTO, HttpServletResponse response) {
-        productDetailService.exportProduct(exportSkuExcelDTO, response);
+    public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productDetailService.exportProduct(productSkuExcelDTO, response);
     }
 }
