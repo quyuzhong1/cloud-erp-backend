@@ -40,7 +40,7 @@ public class TaskOperatorRecordEntity implements Serializable {
      * 操作人名
      */
     @TableField(value = "operator_name")
-    private BigDecimal operatorName;
+    private String operatorName;
 
 
 

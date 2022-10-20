@@ -222,6 +222,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         return baseMapper.getTaskDocsCountByProductId();
     }
 
+
+
+    @Override
+    public List<DocsDTO> getDocsByTaskId(String taskId) {
+
+        return baseMapper.getDocsByTaskId(taskId);
+    }
+
     /**
      * 根据任务id 获取对应要交付的文档
      *

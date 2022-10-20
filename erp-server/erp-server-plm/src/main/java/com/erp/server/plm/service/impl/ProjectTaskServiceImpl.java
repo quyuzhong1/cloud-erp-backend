@@ -85,6 +85,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectMembersService projectMembersService;
 
+    @Autowired
+    private TaskOperatorRecordService taskOperatorRecordService;
+
     /**
      * 添加系统的产品任务
      *
@@ -270,8 +273,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = "123456";
-        //= loginUser.getUid();
+        String userId = loginUser.getUid();
+
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -673,7 +676,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
-
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
@@ -778,7 +780,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 根据任务di 获取 编辑的任务详情
-     *
      * @param taskId
      * @return com.erp.model.plm.dto.ProjectTaskDTO
      * @author yl
@@ -796,6 +797,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(chargeId)) {
             resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
+        resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
         String businessProcessId = resultDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
@@ -969,7 +971,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @return
      */
     @Override
+    @Transactional
     public Boolean publishTask(OperateBaseTaskDTO dto) {
+        LoginUser loginUser=commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
@@ -980,6 +984,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95029);
         }
         boolean flag = updateTaskState(taskIds, TaskStateEnum.NOT_START.getCode(), null, null);
+        if(flag){
+            taskOperatorRecordService.batchSaveRecord(taskIds,releasedCode,TaskStateEnum.NOT_START.getCode(),loginUser.getUid(),loginUser.getUserName(),"");
+        }
         return flag;
     }
 

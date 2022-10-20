@@ -54,4 +54,10 @@
         WHERE product_id !='' GROUP BY product_id
     </select>
 
+    <select id="getDocsByTaskId" resultType="com.erp.model.plm.dto.DocsDTO">
+       SELECT id ,docs_name AS name,is_sys FROM task_delivery_docs
+       WHERE task_id=#{taskId}
+
+    </select>
+
 </mapper>
