@@ -591,7 +591,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             BusinessProcessEntity processEntity=businessProcessService.getById(businessProcessId);
             if(!Objects.isNull(processEntity)&&
                     BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())){
-                detailsDTO.setChangeDocsProcessState(detailsDTO.getTaskState());
+                Integer taskState=detailsDTO.getTaskState();
+                detailsDTO.setChangeDocsProcessState(TaskStateEnum.getName(taskState));
             }
         }
 

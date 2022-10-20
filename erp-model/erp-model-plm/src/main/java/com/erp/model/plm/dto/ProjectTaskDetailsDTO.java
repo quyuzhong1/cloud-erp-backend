@@ -173,7 +173,7 @@ public class ProjectTaskDetailsDTO implements Serializable {
      * 7.审核中
      * 8 审核通过
      */
-    private Integer changeDocsProcessState=0;
+    private String changeDocsProcessState="";
 
     private String businessProcessId;
 

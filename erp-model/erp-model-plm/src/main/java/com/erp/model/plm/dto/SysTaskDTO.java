@@ -42,16 +42,12 @@ public class SysTaskDTO implements Serializable {
     @NotBlank(message = "负责人id 不能为空")
     private String chargeId;
 
-    /**
-     * 负责人名
-     */
-    @NotBlank(message = "负责人不能为空")
-    private String chargeName;
+
 
     /**
      * 前置任务id
      */
-    private String preTaskId;
+    private List<String> preTaskIdList;
 
     /**
      * 计划开始时间
