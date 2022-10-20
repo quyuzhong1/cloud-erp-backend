@@ -1,6 +1,8 @@
 package com.erp.server.plm.aspect;
 
+import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.DataPermision;
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PermissionsDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
@@ -9,7 +11,6 @@ import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
@@ -78,10 +79,9 @@ public class DataPermisionAspect {
         userInfo.setUid("1545306732634984450");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
-
+            dataScopeFilter(joinPoint, userInfo, controllerDataScope.field(),
+                    controllerDataScope.menuCode());
         }
-        dataScopeFilter(joinPoint, userInfo, controllerDataScope.field(),
-                controllerDataScope.menuCode());
     }
 
     /**
@@ -109,17 +109,12 @@ public class DataPermisionAspect {
         StringBuilder sqlString = new StringBuilder();
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream = requestPermissionsList.stream().filter(req -> req.getPermissionsCode().equals(menuCode)).collect(Collectors.toList());
-//        requestPermissionsList.stream().filter()
-        //SysRoleMenuEntity sysRoleMenuEntity = sysRoleMenuEntityList.stream().filter(roleMenu -> item.getMenuId().equals(roleMenu.getMenuId())).findFirst().orElse(null);
-        //
 
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
-       // List<String> depUserList = depUserList1.getData();
         for (SysUserDTO sysUserDTO : depUserList) {
             userList.add(sysUserDTO.getUid());
         }
-
 
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
@@ -131,15 +126,16 @@ public class DataPermisionAspect {
                 sqlString.append(" AND " + field + " = " + user.getUid() + " ");
             }
         }
-
-        if (StringUtils.isNotBlank(sqlString.toString())) {
-            // 拿到方法的参数，要求第一个参数为实体类且继承PermissionsDTO，因为要将拼接的sql保存PermissionsDTO的param属性上
-            Object params = joinPoint.getArgs();
-
-            if (params != null && params instanceof PermissionsDTO) {
-                ((PermissionsDTO) params).getParam().put(DATA_SCOPE, sqlString);
+        Object[] params = joinPoint.getArgs();
+        Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        RequestPermissions inject = method.getAnnotation(RequestPermissions.class);
+       /* if (StringUtils.isNotBlank(sqlString.toString())) {
+            if(params.length > 0){
+                ObjectUtils.setFieldValue(params[inject.index()],inject.dataScope(),permissions.getDataScope());
             }
-        }
+
+            ((PermissionsDTO) params).getParam().put(DATA_SCOPE, sqlString);
+        }*/
     }
 
 }
