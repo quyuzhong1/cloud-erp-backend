@@ -130,10 +130,9 @@ public class DataPermisionAspect {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DataPermision inject = method.getAnnotation(DataPermision.class);
         //这个是给那个字段赋值
-
         if (StringUtils.isNotBlank(sqlString.toString())) {
             if(params.length > 0){
-                ObjectUtils.setFieldValue(params[inject.index()],inject.param(),sqlString);
+                ObjectUtils.setFieldValue(params[inject.index()],inject.param(),sqlString.toString());
             }
         }
     }

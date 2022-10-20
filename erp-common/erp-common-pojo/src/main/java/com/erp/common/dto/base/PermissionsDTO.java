@@ -23,13 +23,8 @@ public class PermissionsDTO  implements Serializable {
      */
     private Integer dataScope;
 
-    /** 请求参数 */
-    private Map<String, Object> param;
-
-    public Map<String, Object> getParam() {
-        if (param == null) {
-            param = new HashMap<>();
-        }
-        return param;
-    }
+    /**
+     * 拼接的sql
+     */
+    private String param;
 }

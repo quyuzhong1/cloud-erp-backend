@@ -19,4 +19,7 @@ public @interface DataPermision {
     int index() default 0;
 
     String param() default "param";
+
+    //这个是给那个字段赋值
+    String dataScope() default "dataScope";
 }
