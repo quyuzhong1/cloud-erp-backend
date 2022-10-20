@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.TaskOperatorRecordEntity;
 
+import java.util.List;
+
 /**
  * @Classname TaskOperatorRecordServoce
  * @Description TODO
@@ -10,4 +12,5 @@ import com.erp.model.plm.entity.TaskOperatorRecordEntity;
  * @Created by yl
  */
 public interface TaskOperatorRecordService  extends IService<TaskOperatorRecordEntity> {
+    void batchSaveRecord(List<String> taskIds, Integer beforeState, Integer afterState, String uid, String userName, String comment);
 }
