@@ -77,7 +77,7 @@
         t.reality_start_time,t.reality_end_time,t.status AS taskState,
         t.create_time,t.phase_name,t.update_time,t.create_user_name,
         t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
-        t.product_id,
+        t.product_id,t.business_process_id,
         pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName
         FROM   project_task t

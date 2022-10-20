@@ -35,4 +35,9 @@ public class TaskProcessNodeDTO  implements Serializable {
      *  节点状态
      */
     private Integer  nodeState;
+
+    /**
+     *  是否达到该节点
+     */
+    private Boolean  ifFinishNode;
 }

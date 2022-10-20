@@ -19,149 +19,133 @@ public class ProjectTaskDetailsDTO implements Serializable {
 
 
     /**
-     *  任务id
+     * 任务id
      */
     private String taskId;
 
     /**
-     *  产品id
+     * 产品id
      */
     private String productId;
 
     /**
-     *  产品经理id
+     * 产品经理id
      */
     private String productChargeId;
 
     /**
-     *  产品经理
+     * 产品经理
      */
     private String productChargeName;
 
     /**
-     *  项目负责人id
+     * 项目负责人id
      */
     private String projectChargeId;
 
     /**
-     *  项目负人
+     * 项目负人
      */
     private String projectChargeName;
 
 
     /**
-     *  任务负责人id
+     * 任务负责人id
      */
     private String taskChargeId;
 
     /**
-     *  任务负责人
+     * 任务负责人
      */
     private String taskChargeName;
 
 
     /**
-     *  任务名
+     * 任务名
      */
     private String taskName;
 
 
     /**
-     *  任务状态
-     *  任务状态 0:待发布 1:待开始
-     *           2:待审核  3:进行中
-     *           4 已完成, 5 已关闭
-     *           6.完成待审核 7.审核中
-     *           8 审核通过  9 审核不通过
+     * 任务状态
+     * 任务状态 0:待发布 1:待开始
+     * 2:待审核  3:进行中
+     * 4 已完成, 5 已关闭
+     * 6.完成待审核 7.审核中
+     * 8 审核通过  9 审核不通过
      */
-    private String taskState;
+    private Integer taskState;
 
     /**
-     *  任务名
+     * 任务名
      */
     private String taskDescription;
 
 
-
     /**
      * 任务类型 0 一般任务 1：审核任务
-     *
      */
     private String type;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
-     *
      */
     private String priority;
 
     /**
      * 计划开始时间
-     *
      */
     private Date planStartTime;
 
     /**
      * 计划结束时间
-     *
      */
     private Date planEndTime;
 
     /**
      * 计划时间
-     *
      */
     private String planTime;
 
 
     /**
      * 实际开始时间
-     *
      */
     private Date realityStartTime;
 
     /**
      * 实际结束时间
-     *
      */
     private Date realityEndTime;
 
     /**
      * 实际时间
-     *
      */
     private String realityTime;
 
     /**
      * 产品名称
-     *
      */
     private String productName;
 
 
-
-
     /**
      * 创建时间
-     *
      */
     private Date createTime;
 
     /**
      * 任务阶段
-     *
      */
     private String phaseName;
 
     /**
      * 更新时间
-     *
      */
     private Date updateTime;
 
     /**
      * 创建人
-     *
      */
     private String createUserName;
 
@@ -178,10 +162,20 @@ public class ProjectTaskDetailsDTO implements Serializable {
 
     /**
      * 输出文档 列表
-     *
      */
-    private List<DeliveryDocsDTO> outputDocsList ;
+    private List<DeliveryDocsDTO> outputDocsList;
 
+
+    /**
+     * 变更文档流程状态
+     * 0 没有
+     * 2:待审核
+     * 7.审核中
+     * 8 审核通过
+     */
+    private Integer changeDocsProcessState=0;
+
+    private String businessProcessId;
 
 
 }

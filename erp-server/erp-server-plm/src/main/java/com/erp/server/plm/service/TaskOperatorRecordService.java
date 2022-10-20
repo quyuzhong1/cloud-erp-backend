@@ -13,4 +13,6 @@ import java.util.List;
  */
 public interface TaskOperatorRecordService  extends IService<TaskOperatorRecordEntity> {
     void batchSaveRecord(List<String> taskIds, Integer beforeState, Integer afterState, String uid, String userName, String comment);
+
+    List<TaskOperatorRecordEntity> getByTaskId(String taskId);
 }

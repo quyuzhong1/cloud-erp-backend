@@ -278,7 +278,7 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/findTaskProcess")
+    @GetMapping("/findTaskProcess")
     public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
         List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
         return success(taskProcess);

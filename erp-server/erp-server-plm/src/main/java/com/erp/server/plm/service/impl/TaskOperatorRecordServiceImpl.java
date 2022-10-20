@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.TaskOperatorRecordEntity;
 import com.erp.server.plm.mapper.TaskOperatorRecordMapper;
@@ -48,7 +49,20 @@ public class TaskOperatorRecordServiceImpl extends ServiceImpl<TaskOperatorRecor
             }
             this.saveBatch(addList);
         }
+    }
 
-
+    /**
+     * 根据任务id 获取任务操作记录
+     *
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.entity.TaskOperatorRecordEntity>
+     * @author yl
+     * @date 2022-10-20 17:07
+     */
+    @Override
+    public List<TaskOperatorRecordEntity> getByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskOperatorRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskOperatorRecordEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
     }
 }
