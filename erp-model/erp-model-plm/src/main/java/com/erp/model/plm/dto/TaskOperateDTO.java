@@ -1,4 +1,4 @@
-package com.erp.model.workflow.dto;
+package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,12 +25,18 @@ public class TaskOperateDTO  implements Serializable {
      */
     @NotNull(message = "任务id集合不能为空")
     @Size(min = 1,message = "勾选任务必须选一个")
-    private List<String>  taskIdList;
+    private List<TaskHandleDataDTO>  taskDataList;
 
     /**
      * 产品id 不能为空
      */
     @NotBlank(message = "产品id不能为空")
     private String productId;
+
+    /**
+     * 意见
+     */
+    private String comment;
+
 
 }

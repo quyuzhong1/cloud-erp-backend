@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow;
 
+import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
@@ -25,4 +26,8 @@ public interface WorkflowFeign {
     //获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDo")
     List<TaskShowDTO> queryMyToDo(@RequestParam(value="userId") String userId);
+
+    //审核任务通过
+    @PostMapping("workflow/feign/process/taskPass")
+    Boolean taskPass(@RequestBody ApproveProcessDTO dto);
 }
