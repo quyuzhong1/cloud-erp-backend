@@ -82,6 +82,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getMenuIdList();
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
+        removeByRoleId(roleId);
         if (CollectionUtils.isNotEmpty(menuIds)) {
             for (SysRoleMenuDataScopeDTO menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
@@ -92,7 +93,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             }
             return this.saveBatch(batchList);
         }
-        removeByRoleId(roleId);
         return true;
 
     }

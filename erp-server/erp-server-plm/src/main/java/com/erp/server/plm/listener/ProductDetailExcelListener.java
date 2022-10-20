@@ -62,6 +62,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             list.add(dto);
             return;
         }
+        if (StringUtils.isBlank(dto.getChargeName())) {
+            dto.setErrorMsg("产品负责人不能为空");
+            list.add(dto);
+            return;
+        }
+        if (StringUtils.isBlank(dto.getChargeName())) {
+            dto.setErrorMsg("产品品牌不能为空");
+            list.add(dto);
+            return;
+        }
         ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
         //根据产品名称查询产品信息
         ProductDetailShowDTO productDetailShow = productDetailService.getProductBy(dto.getName(), "");
@@ -98,6 +108,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 list.add(dto);
             }
         }
+
 
         //销售方式不正确
         if(StringUtils.isNotBlank(dto.getSaleMethod())){
