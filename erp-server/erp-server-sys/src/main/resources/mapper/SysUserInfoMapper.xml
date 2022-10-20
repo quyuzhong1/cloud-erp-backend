@@ -98,7 +98,7 @@
     </select>
 
     <select id="getDepUserList" resultType="com.erp.common.modules.sys.dto.SysUserDTO">
-        SELECT sdu.user_id
+        SELECT sdu.user_id AS uid
         FROM sys_department_user sdu
         WHERE sdu.department_id IN (SELECT du.department_id FROM sys_department_user du WHERE du.user_id = #{userId})
         GROUP BY sdu.user_id

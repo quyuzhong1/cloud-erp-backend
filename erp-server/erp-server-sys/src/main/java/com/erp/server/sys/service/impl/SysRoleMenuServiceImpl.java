@@ -52,8 +52,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
             wrapper.in(SysRoleMenuEntity::getMenuId, menuIds);
             baseMapper.delete(wrapper);
         }
-
-
     }
 
 
@@ -81,7 +79,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Override
     @Transactional
     public boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO) {
-        Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getSysRoleMenuDataScopeList();
+        Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getMenuIdList();
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(menuIds)) {
@@ -240,9 +238,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     return item;
                 }).collect(Collectors.toList());
 
-        treeList.forEach(req -> {
-
-        });
         roleMenuVO.setSysRoleMenuTrees(treeList);
         roleMenuVO.setSelectedMenuIds(menuIds);
         roleMenuVO.setTotalMenu(allList.size());
@@ -356,6 +351,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                     } else {
                         m.setSelectState(true);
                     }
+                    m.setDataScope(item.getDataScope());
                     m.setChildrenList(getChildrenList(m, menuList, menuIds));
                     return m;
                 }).collect(Collectors.toList());

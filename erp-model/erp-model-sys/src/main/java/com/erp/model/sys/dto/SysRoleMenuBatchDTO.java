@@ -26,5 +26,5 @@ public class SysRoleMenuBatchDTO implements Serializable {
     /**
      * 选中的菜单权限集合
      */
-    private Set<SysRoleMenuDataScopeDTO> sysRoleMenuDataScopeList;
+    private Set<SysRoleMenuDataScopeDTO> menuIdList;
 }
