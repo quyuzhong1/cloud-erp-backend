@@ -137,9 +137,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailById(productId);
-        //获取多级分类
-        List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
-        noSpecDetailById.setCategoryIdList(categoryIdList);
+        if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
+            //获取多级分类
+            List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
+            noSpecDetailById.setCategoryIdList(categoryIdList);
+        }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);

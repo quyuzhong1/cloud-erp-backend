@@ -162,7 +162,7 @@
         pd.unit_id,
         pd.product_state
         FROM product_info pi
-        INNER JOIN product_detail pd on pi.id = pd.product_id
+        LEFT JOIN product_detail pd on pi.id = pd.product_id
         WHERE pi.delete_state = 0
             AND pi.id = #{productId}
     </select>

@@ -27,10 +27,14 @@ public @interface DataPermission {
     String param() default "param";
 
     /**
+     * 服务类Class,一般用于DELETE
      * 操作类型 查询：query 修改：update 删除：delete
      */
     String operationType() default "operationType";
 
-    //<? extends IService<T>> service null;
+    /**
+     *
+     */
+    Class<? extends IService> serviceClass() default IService.class;
 
 }
