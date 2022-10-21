@@ -7,25 +7,28 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.FinishDocsDTO;
+import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
-import com.erp.server.plm.service.ProjectTaskSysService;
-import com.erp.server.plm.service.SysTaskPhaseService;
-import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,15 +52,30 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private SysTaskPhaseService sysTaskPhaseService;
 
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private BusinessProcessService businessProcessService;
+
+    @Autowired
+    private SysDocsService sysDocsService;
+
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
+        checkTaskName(dto.getId(), dto.getName());
+
         //当前登录人
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();
         //获取到任务阶段
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
+        List<String> chargeIds = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeIds);
+        entity.setChargeName(chargeNames);
+        entity.setChargeId(String.join(",", chargeIds));
         if (!Objects.isNull(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
@@ -79,6 +97,27 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
         }
         return flag;
+    }
+
+    /**
+     * 检查任务名是否存在
+     *
+     * @param id
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2022-10-20 19:54
+     */
+    private void checkTaskName(String id, String name) {
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskSysEntity::getName, name);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(ProjectTaskSysEntity::getId, id);
+        }
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95013);
+        }
     }
 
     @Override
@@ -176,5 +215,28 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
         return this.listMaps(queryWrapper);
+    }
+
+    @Override
+    public SysTaskDTO taskDetails(String taskId) {
+        ProjectTaskSysEntity sysEntity = this.getById(taskId);
+        if (Objects.isNull(sysEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        SysTaskDTO sysTaskDTO = new SysTaskDTO();
+        BeanMapper.copy(sysEntity, sysTaskDTO);
+        String chargeId = sysEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            sysTaskDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        }
+        String businessProcessId = sysEntity.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (processEntity != null) {
+                sysTaskDTO.setBusinessName(processEntity.getBusinessName());
+            }
+        }
+        sysTaskDTO.setFinishDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
+        return sysTaskDTO;
     }
 }

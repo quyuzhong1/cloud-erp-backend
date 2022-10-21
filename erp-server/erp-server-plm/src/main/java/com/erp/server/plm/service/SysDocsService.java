@@ -6,6 +6,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
+import com.erp.model.plm.dto.FinishDocsDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 
@@ -31,4 +32,5 @@ public interface SysDocsService extends IService<SysDocsEntity> {
     List<DocsDTO> getDocsNames(Integer yes);
 
     List<Map<String, Object>> sysDocsNames();
+
 }

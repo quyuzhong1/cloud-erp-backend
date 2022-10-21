@@ -7,6 +7,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.FinishDocsDTO;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,4 +32,6 @@ public interface TaskDocsMapper  extends BaseMapper<TaskDeliveryDocsEntity> {
     List<CountDTO> getTaskDocsCountByProductId();
 
     List<DocsDTO> getDocsByTaskId(@Param("taskId") String taskId);
+
+    List<FinishDocsDTO> getSysTaskFinishDocs(@Param("taskId") String taskId);
 }

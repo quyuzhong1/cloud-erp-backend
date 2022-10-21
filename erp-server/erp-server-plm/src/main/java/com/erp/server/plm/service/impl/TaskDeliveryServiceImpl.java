@@ -230,6 +230,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         return baseMapper.getDocsByTaskId(taskId);
     }
 
+    @Override
+    public List<FinishDocsDTO> getSysTaskFinishDocs(String taskId) {
+        return baseMapper.getSysTaskFinishDocs(taskId);
+    }
+
     /**
      * 根据任务id 获取对应要交付的文档
      *

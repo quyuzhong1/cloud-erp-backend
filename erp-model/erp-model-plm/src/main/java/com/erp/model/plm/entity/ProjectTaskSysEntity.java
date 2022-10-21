@@ -126,5 +126,8 @@ public class ProjectTaskSysEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    @TableField("business_process_id")
+    private String businessProcessId;
+
 
 }

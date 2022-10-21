@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.ProjectTaskDTO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.server.plm.service.ProjectTaskSysService;
@@ -39,6 +40,18 @@ public class ProjectTaskSysController extends BaseController {
     public ApiResult saveOrUpdate(@RequestBody @Validated SysTaskDTO dto) {
         Boolean result = projectTaskSysService.saveOrUpdateSysTask(dto);
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 系统任务-编辑任务-获取任务详情
+     *
+     * @param taskId
+     * @return
+     */
+    @GetMapping("/taskDetails")
+    public ApiResult<SysTaskDTO> taskDetails(String taskId) {
+        SysTaskDTO taskDTO = projectTaskSysService.taskDetails(taskId);
+        return success(taskDTO);
     }
 
 

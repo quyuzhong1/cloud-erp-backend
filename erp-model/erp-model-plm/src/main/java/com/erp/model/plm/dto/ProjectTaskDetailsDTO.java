@@ -168,10 +168,6 @@ public class ProjectTaskDetailsDTO implements Serializable {
 
     /**
      * 变更文档流程状态
-     * 0 没有
-     * 2:待审核
-     * 7.审核中
-     * 8 审核通过
      */
     private String changeDocsProcessState="";
 
