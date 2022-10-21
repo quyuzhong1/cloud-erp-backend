@@ -40,8 +40,7 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private ProductInfoService productInfoService;
 
-    @Autowired
-    private CommonService commonService;
+
 
 
     /**
@@ -292,9 +291,9 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/feign/process/pass")
-    public ApiResult processPass(String taskId) {
-        List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
-        return success(taskProcess);
+    public ApiResult processPass(String processId) {
+        taskService.approvalTaskPass(processId);
+        return success();
     }
 
 

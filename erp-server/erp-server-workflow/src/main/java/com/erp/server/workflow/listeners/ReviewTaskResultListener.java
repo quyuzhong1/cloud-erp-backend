@@ -5,26 +5,21 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDate;
-
 /**
- * 一般任务审核监听
- *
- * @Classname
+ *  评审任务 会签结束
  * @Description TODO
- * @Date 2022-10-18 11:02
+ * @Date 2022-10-18 11:18
  * @Created by yl
  */
-public class GeneralTaskResultListener implements ExecutionListener {
+public class ReviewTaskResultListener implements ExecutionListener {
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
-        //这个是流程id
-        String parentActivityInstanceId = delegateExecution.getParentActivityInstanceId();
-        plmTaskFeign.processPass(parentActivityInstanceId);
+        String  parentActivityInstanceId=  delegateExecution.getParentActivityInstanceId();
 
+        plmTaskFeign.processPass(parentActivityInstanceId);
     }
 }

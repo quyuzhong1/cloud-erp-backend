@@ -586,12 +586,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        String businessProcessId= detailsDTO.getBusinessProcessId();
-        if(StringUtils.isNotBlank(businessProcessId)){
-            BusinessProcessEntity processEntity=businessProcessService.getById(businessProcessId);
-            if(!Objects.isNull(processEntity)&&
-                    BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())){
-                Integer taskState=detailsDTO.getTaskState();
+        String businessProcessId = detailsDTO.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (!Objects.isNull(processEntity) &&
+                    BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())) {
+                Integer taskState = detailsDTO.getTaskState();
                 detailsDTO.setChangeDocsProcessState(TaskStateEnum.getName(taskState));
             }
         }
@@ -1296,6 +1296,40 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return getByProcessTye(TaskProcessTypeEnum.REVIEW_TASK.getCode(), taskEntity);
     }
+
+
+    /**
+     * 方法说明
+     *
+     * @param processId
+     * @return void
+     * @author yl
+     * @date 2022-10-21 10:01
+     */
+    @Override
+    @Transactional
+    public void approvalTaskPass(String processId) {
+        LoginUser loginUser = commonService.getUserInfo();
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
+        ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
+        if (!Objects.isNull(taskEntity)) {
+            taskEntity.setRealityStartTime(new Date());
+            taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
+            updateById(taskEntity);
+            //保存记录
+            TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+            recordEntity.setTaskId(taskEntity.getId());
+            recordEntity.setBeforeState(taskEntity.getStatus());
+            recordEntity.setAfterState(TaskStateEnum.APPROVAL_PASS.getCode());
+            recordEntity.setOperatorId(loginUser.getUid());
+            recordEntity.setOperatorName(loginUser.getUserName());
+            taskOperatorRecordService.save(recordEntity);
+        }
+
+
+    }
+
 
     /**
      * 根据流程类型 获取到流程信息

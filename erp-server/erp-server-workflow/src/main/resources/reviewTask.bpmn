@@ -12,7 +12,7 @@
         </bpmn:userTask>
         <bpmn:endEvent id="Event_0jh2dct">
             <bpmn:extensionElements>
-                <camunda:executionListener class="com.erp.server.workflow.listeners.ReviewTTaskResultListener" event="end" />
+                <camunda:executionListener class="com.erp.server.workflow.listeners.ReviewTaskResultListener" event="end" />
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_13885g5</bpmn:incoming>
         </bpmn:endEvent>

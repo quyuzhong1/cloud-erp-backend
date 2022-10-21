@@ -1,7 +1,9 @@
 package com.erp.server.workflow.listeners;
 
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**   变更文档 审核结果
  * @Classname ChangeDocsResultListener
@@ -10,8 +12,12 @@ import org.camunda.bpm.engine.delegate.ExecutionListener;
  * @Created by yl
  */
 public class ChangeDocsResultListener implements ExecutionListener {
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
-
+        String  parentActivityInstanceId=  delegateExecution.getParentActivityInstanceId();
+        plmTaskFeign.processPass(parentActivityInstanceId);
     }
 }
