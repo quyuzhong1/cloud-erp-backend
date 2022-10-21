@@ -285,5 +285,18 @@ public class ProjectTaskController extends BaseController {
     }
 
 
+    /**
+     * 工作流
+     * 审核通过 改变任务状态
+     * 以及
+     * @return
+     */
+    @PostMapping("/feign/process/pass")
+    public ApiResult processPass(String taskId) {
+        List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
+        return success(taskProcess);
+    }
+
+
 }
 

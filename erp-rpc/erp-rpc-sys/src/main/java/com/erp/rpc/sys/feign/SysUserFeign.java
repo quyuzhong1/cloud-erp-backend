@@ -5,7 +5,6 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
