@@ -105,6 +105,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProductOperateRecordService productOperateRecordService;
 
+    @Autowired
+    private PreTaskService preTaskService;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -353,7 +356,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
 
                 //这是立项任务
-                int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())&&item.getProductId().equals(t.getProductId())).collect(Collectors.toList()).size();
                 item.setApprovalTaskCount(approvalTaskCount);
                 //这是立项完成任务
                 int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
@@ -580,7 +583,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (approvalStatus != null) {
                 product.setApprovalStatus(approvalStatus);
                 if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
+                    String productId=product.getId();
                     yesApproval = true;
+                    /**
+                     * 表示改成已立项 就要去检查该该产品下的 所有的任务
+                     *  是否完成
+                      */
+                    List<String> taskIdList=projectTaskService.
+                            getByProductId(productId).stream()
+                            .map(ProjectTaskEntity::getId).collect(Collectors.toList());
+
+                    preTaskService.checkPreTaskFinish(taskIdList);
+                    projectTaskService.checkSonTaskFinish(taskIdList,productId);
                 }
             }
 

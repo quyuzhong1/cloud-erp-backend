@@ -29,6 +29,7 @@ public class ProjectPhaseController extends BaseController {
 
     /**
      * 项目任务-阶段列表
+     *
      * @param dto
      * @return
      */
@@ -40,6 +41,7 @@ public class ProjectPhaseController extends BaseController {
 
     /**
      * 项目任务-批量保存或者修改阶段
+     *
      * @param dto
      * @return
      */
@@ -47,6 +49,18 @@ public class ProjectPhaseController extends BaseController {
     public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
         projectPhaseService.batchSaveOrUpdate(dto);
         return success();
+    }
+
+    /**
+     * 项目任务-删除阶段
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/remove")
+    public ApiResult remove(String id) {
+        Boolean flag = projectPhaseService.removeTaskPhaseById(id);
+        return flag == true ? success() : failure();
     }
 
 

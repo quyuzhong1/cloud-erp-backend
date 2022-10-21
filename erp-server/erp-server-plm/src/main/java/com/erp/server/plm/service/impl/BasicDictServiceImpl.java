@@ -49,7 +49,7 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     public List<BasicDictEntity> listByType(String type) {
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BasicDictEntity::getType, type);
-        queryWrapper.orderByDesc(BasicDictEntity::getCreateTime);
+        queryWrapper.orderByDesc(BasicDictEntity::getOrderIndex);
         return this.list(queryWrapper);
     }
 

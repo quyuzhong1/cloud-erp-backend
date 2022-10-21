@@ -98,9 +98,6 @@ public class ProjectTaskSysEntity implements Serializable {
     @TableField("is_fixed")
     private Integer isFixed;
 
-    //流程id
-    @TableField("process_id")
-    private Integer processId;
 
     /**
      * 任务描述

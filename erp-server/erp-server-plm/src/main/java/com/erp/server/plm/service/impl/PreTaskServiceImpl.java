@@ -154,7 +154,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         //获取到前置任务id
         List<String> preTaskIds = getPreTaskIdListByTaskIds(taskIds);
         if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(), preTaskIds);
+            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(),TaskStateEnum.APPROVAL_PASS.getCode(), preTaskIds);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95035);
             }

@@ -586,12 +586,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        String businessProcessId= detailsDTO.getBusinessProcessId();
-        if(StringUtils.isNotBlank(businessProcessId)){
-            BusinessProcessEntity processEntity=businessProcessService.getById(businessProcessId);
-            if(!Objects.isNull(processEntity)&&
-                    BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())){
-                Integer taskState=detailsDTO.getTaskState();
+        String businessProcessId = detailsDTO.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (!Objects.isNull(processEntity) &&
+                    BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())) {
+                Integer taskState = detailsDTO.getTaskState();
                 detailsDTO.setChangeDocsProcessState(TaskStateEnum.getName(taskState));
             }
         }
@@ -863,19 +863,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 统计未完成的任务数
      *
-     * @param state
+     * @param finishState
      * @param preTaskIds
      * @return int
      * @author yl
      * @date 2022-10-18 19:47
      */
     @Override
-    public int countUndoneByTaskIds(Integer state, List<String> preTaskIds) {
+    public int countUndoneByTaskIds(Integer finishState, Integer approvalPassState, List<String> preTaskIds) {
         if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(ProjectTaskEntity::getId, preTaskIds);
-            queryWrapper.eq(ProjectTaskEntity::getStatus, state);
-            return this.count(queryWrapper);
+            return this.baseMapper.findUndone(finishState, approvalPassState, preTaskIds);
         }
         return 0;
     }
@@ -893,11 +890,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void checkSonTaskFinish(List<String> taskIds, String productId) {
         List<ProjectTaskEntity> list = this.getByProductId(productId);
         Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
-            int count = countUndoneByTaskIds(finishCode, resultList);
+            int count = countUndoneByTaskIds(finishCode,approvalPassCode,resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
@@ -1004,7 +1002,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+            throw new ServiceException(ApiError.ERROR_95030);
         }
         boolean flag = updateTaskState(taskIds, TaskStateEnum.NOT_START.getCode(), null, null);
         if (flag) {
@@ -1016,6 +1014,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 取消发布
      * 取消发布任务
+     * 在未开始 未审核 可以取消发布
      * 在未开始的时候 可以取消发布 否则 不行，取消发布后变为待发布  任务状态为待发布
      *
      * @param dto
@@ -1027,15 +1026,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
+        //未审核
+        Integer waitConfirmCode=TaskStateEnum.WAIT_CONFIRM.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        //统计项目状态为  不是待发布的任务
-        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())).count();
+
+        //统计项目状态为  不是待发布的任务 和待审核的任务
+        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())&&!waitConfirmCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+            throw new ServiceException(ApiError.ERROR_95031);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.TO_BE_RELEASED.getCode(), null, null);
         if (flag) {
-            taskOperatorRecordService.batchSaveRecord(taskIds, notStartCode, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            taskOperatorRecordService.batchSaveTaskRecord(list,TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
 
@@ -1053,17 +1055,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean closeTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
-        //待开始
-        Integer notStartCode = TaskStateEnum.NOT_START.getCode();
+        //进行中
+        Integer ingCode = TaskStateEnum.ING.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        //统计项目状态为  不是待发布的任务
-        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())).count();
+        //统计项目状态为  不是进行中的任务
+        long releasedCount = list.stream().filter(t -> !ingCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95029);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.CLOSE.getCode(), null, null);
         if (flag) {
-            taskOperatorRecordService.batchSaveRecord(taskIds, notStartCode, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
 
@@ -1297,6 +1299,40 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return getByProcessTye(TaskProcessTypeEnum.REVIEW_TASK.getCode(), taskEntity);
     }
 
+
+    /**
+     * 方法说明
+     *
+     * @param processId
+     * @return void
+     * @author yl
+     * @date 2022-10-21 10:01
+     */
+    @Override
+    @Transactional
+    public void approvalTaskPass(String processId) {
+        LoginUser loginUser = commonService.getUserInfo();
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
+        ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
+        if (!Objects.isNull(taskEntity)) {
+            taskEntity.setRealityStartTime(new Date());
+            taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
+            updateById(taskEntity);
+            //保存记录
+            TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+            recordEntity.setTaskId(taskEntity.getId());
+            recordEntity.setBeforeState(taskEntity.getStatus());
+            recordEntity.setAfterState(TaskStateEnum.APPROVAL_PASS.getCode());
+            recordEntity.setOperatorId(loginUser.getUid());
+            recordEntity.setOperatorName(loginUser.getUserName());
+            taskOperatorRecordService.save(recordEntity);
+        }
+
+
+    }
+
+
     /**
      * 根据流程类型 获取到流程信息
      *
@@ -1407,7 +1443,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return waitReleasedDTO;
     }
 
-
+    //检查子任务
     private void checkTaskIfExistPid(String taskId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);

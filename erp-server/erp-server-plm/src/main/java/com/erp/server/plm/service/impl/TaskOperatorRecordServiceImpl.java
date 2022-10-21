@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskOperatorRecordEntity;
 import com.erp.server.plm.mapper.TaskOperatorRecordMapper;
 import com.erp.server.plm.service.TaskOperatorRecordService;
@@ -64,5 +65,22 @@ public class TaskOperatorRecordServiceImpl extends ServiceImpl<TaskOperatorRecor
         LambdaQueryWrapper<TaskOperatorRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskOperatorRecordEntity::getTaskId, taskId);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public void batchSaveTaskRecord(List<ProjectTaskEntity> taskList, Integer afterState, String uid, String userName, String s) {
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            List<TaskOperatorRecordEntity> saveList = new ArrayList<>(taskList.size());
+            for (ProjectTaskEntity task : taskList) {
+                TaskOperatorRecordEntity record = new TaskOperatorRecordEntity();
+                record.setOperatorId(uid);
+                record.setOperatorName(userName);
+                record.setBeforeState(task.getStatus());
+                record.setAfterState(afterState);
+                record.setTaskId(task.getId());
+                saveList.add(record);
+            }
+            this.saveBatch(saveList);
+        }
     }
 }

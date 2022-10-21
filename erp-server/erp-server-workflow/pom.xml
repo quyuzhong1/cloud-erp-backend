@@ -55,7 +55,7 @@
         <!--rpc-->
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-rpc-auth</artifactId>
+            <artifactId>erp-rpc-plm</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 

@@ -67,7 +67,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     boolean updateTaskState(List<String> taskIds, Integer state,Date realityStart,Date realityEnd);
 
 
-    int countUndoneByTaskIds(Integer code, List<String> preTaskIds);
+    int countUndoneByTaskIds(Integer code, Integer approvalPass, List<String> preTaskIds);
 
     void checkSonTaskFinish(List<String> noProcessTaskIds,String productId);
 
@@ -87,4 +87,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
     List<TaskProcessNodeDTO>  findTaskProcess(String taskId);
+
+    void approvalTaskPass(String processId);
 }
