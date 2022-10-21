@@ -174,8 +174,6 @@ public class ProductInfoEntity implements Serializable {
     @TableField("spec_type")
     private Integer specType;
 
-
-
     /**
      * 销售方式
      */
@@ -188,5 +186,29 @@ public class ProductInfoEntity implements Serializable {
      */
     @TableField("relevance_product_id")
     private String relevanceProductId;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id")
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name")
+    private String createUserName;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id")
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    private String updateUserName;
 
 }

@@ -224,6 +224,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
+        LoginUser loginUser = commonService.getUserInfo();
+        if (StringUtils.isBlank(detailEntity.getId())) {
+            detailEntity.setCreateUserId(loginUser.getUid());
+            detailEntity.setCreateUserName(loginUser.getUserName());
+        } else {
+            detailEntity.setUpdateUserId(loginUser.getUid());
+            detailEntity.setUpdateUserName(loginUser.getUserName());
+        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -238,6 +246,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
+        LoginUser loginUser = commonService.getUserInfo();
+        list.forEach(req -> {
+            if (ObjectUtils.isNotEmpty(loginUser)) {
+                if (StringUtils.isBlank(req.getId())) {
+                    req.setCreateUserId(loginUser.getUid());
+                    req.setCreateUserName(loginUser.getUserName());
+                } else {
+                    req.setUpdateUserId(loginUser.getUid());
+                    req.setUpdateUserName(loginUser.getUserName());
+                }
+            }
+        });
         return this.saveOrUpdateBatch(list);
     }
 
@@ -251,16 +271,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
-        //检查sku编号是否重复
-        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+        //检查spu编号是否重复
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
+        //检查sku编号是否重复
+        if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95015);
+        }
+
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        productSpuBaseInfoDTO.setApprovalStatus(4);
         productSpuBaseInfoDTO.setSpecType(1);
         productSpuBaseInfoDTO.setGrade("");
         //1.修改产品表 主表信息
@@ -360,7 +384,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
-        productInfoDTO.setApprovalStatus(4);
         productInfoDTO.setSpecType(2);
         productInfoDTO.setGrade("");
 
@@ -434,12 +457,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkSpuNo(variantAutoAddDTO.getProductSpuBaseInfoDTO().getSpuNo(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
+
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
         }
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
-        productSpuBaseInfoDTO.setApprovalStatus(4);
         productSpuBaseInfoDTO.setSpecType(2);
         productSpuBaseInfoDTO.setGrade("");
         //1.保存产品表 基础信息获取产品id

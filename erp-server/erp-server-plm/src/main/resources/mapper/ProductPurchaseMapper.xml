@@ -7,7 +7,7 @@
     <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductPurchaseEntity">
         <id property="id" column="id" jdbcType="VARCHAR"/>
         <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="ean" column="ean" jdbcType="INTEGER"/>
+        <result property="ean" column="ean" jdbcType="VARCHAR"/>
         <result property="planOrderQty" column="plan_order_qty" jdbcType="INTEGER"/>
         <result property="placeOrderTime" column="place_order_time" jdbcType="DATE"/>
         <result property="planArrivalTime" column="plan_arrival_time" jdbcType="DATE"/>

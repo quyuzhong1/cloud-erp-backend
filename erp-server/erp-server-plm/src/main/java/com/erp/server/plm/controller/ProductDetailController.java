@@ -2,10 +2,8 @@ package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.AlgorithmUtil;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.annotation.DataPermision;
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
@@ -92,7 +90,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     //@RequestPermissions("plm:product:detail:list")
-    @DataPermision(field = "create_user_id", menuCode = "plm:product:detail:list")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -191,6 +189,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
+    @DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete")
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();

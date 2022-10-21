@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -117,4 +118,24 @@ public class ProductInfoDTO {
     private String saleMethod;
 
     private Integer approvalStatus;
+
+    /**
+     * 创建人id
+     */
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    private String createUserName;
+
+    /**
+     * 修改人id
+     */
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    private String updateUserName;
 }

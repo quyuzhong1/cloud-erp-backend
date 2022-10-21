@@ -70,28 +70,28 @@ public class ProductPackEntity implements Serializable {
     private Date createTime;
 
     /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     /**
-     * 修改人id
+     * 创建人id
      */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
+    @TableField(value = "create_user_id")
+    private String createUserId;
 
     /**
      * 创建人名称
      */
     @TableField(value = "create_user_name")
     private String createUserName;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id")
+    private String updateUserId;
 
     /**
      * 修改人名称
