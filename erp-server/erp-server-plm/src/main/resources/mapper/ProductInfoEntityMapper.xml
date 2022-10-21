@@ -96,7 +96,7 @@
 
     <select id="getProductAndProjectList" resultType="com.erp.model.plm.dto.ProductProjectDTO">
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
-        FROM product_info pi INNER JOIN project_info pj
+        FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
         WHERE pi.delete_state=0
 
