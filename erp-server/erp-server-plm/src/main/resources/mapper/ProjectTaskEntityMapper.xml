@@ -163,4 +163,9 @@
         create_time DESC
     </select>
 
+    <select id="findUndone" resultType="int">
+        SELECT COUNT(*) FROM project_task WHERE
+        status!=#{finishState} AND  status !=#{approvalPassState}
+    </select>
+
 </mapper>

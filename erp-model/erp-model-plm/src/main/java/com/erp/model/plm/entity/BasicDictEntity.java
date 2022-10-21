@@ -70,7 +70,7 @@ public class BasicDictEntity implements Serializable {
      * 排序
      */
     @TableField("order_index")
-    private String orderIndex;
+    private Integer orderIndex;
 
 
 }

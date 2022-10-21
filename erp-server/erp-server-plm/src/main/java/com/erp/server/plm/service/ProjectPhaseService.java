@@ -32,4 +32,6 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
     void savePhase(String templateId, String productId);
 
     String saveTaskPhase(String productId, String phaseName,Integer isSourceSys);
+
+    Boolean removeTaskPhaseById(String id);
 }
