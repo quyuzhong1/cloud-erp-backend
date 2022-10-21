@@ -31,7 +31,7 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * EAN码
      */
-    private Integer ean;
+    private String ean;
 
     /**
      * 计划首批下单量
