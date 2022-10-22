@@ -2,7 +2,6 @@ package com.erp.server.plm.aspect;
 
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.constant.OperationType;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;

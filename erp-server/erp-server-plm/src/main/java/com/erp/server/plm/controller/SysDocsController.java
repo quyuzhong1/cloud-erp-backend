@@ -41,6 +41,7 @@ public class SysDocsController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:sys:docs:paging")
     public ApiResult<PagingVO<DocsShowDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto){
         PagingVO<DocsShowDTO> pagingVO=sysDocsService.paging(dto);
         return success(pagingVO);
@@ -54,6 +55,7 @@ public class SysDocsController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @PostMapping("/saveOrUpdate")
+    //@RequestPermissions("plm:sys:docs:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody DocsDTO dto){
          sysDocsService.saveOrUpdateDocs(dto);
          return success();
@@ -68,6 +70,7 @@ public class SysDocsController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @PostMapping("/updateState")
+    //@RequestPermissions("plm:sys:docs:updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto){
        Boolean flag= sysDocsService.updateState(dto);
        return flag==true?success():failure();
@@ -81,6 +84,7 @@ public class SysDocsController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:sys:docs:list")
     public ApiResult sysDocsNames(){
        List<Map<String,Object>> list= sysDocsService.sysDocsNames();
         return success(list);

@@ -37,6 +37,7 @@ public class TaskCommentController extends BaseController {
      * @return
      */
     @PostMapping("/save")
+    //@RequestPermissions("plm:taskComment:save")
     public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO dto) {
         Boolean result = taskCommentService.saveTaskComment(dto);
         return result == true ? success() : failure();
@@ -48,6 +49,7 @@ public class TaskCommentController extends BaseController {
      * @return
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:taskComment:list")
     public ApiResult saveTaskComment(String taskId) {
         List<TaskCommentEntity> result = taskCommentService.getListByTaskId(taskId);
         return success(result);

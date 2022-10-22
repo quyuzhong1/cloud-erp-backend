@@ -38,6 +38,7 @@ public class SysProductFieldController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
+    //@RequestPermissions("plm:sys:field:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated SysProductFieldDTO dto) {
         Boolean flag = productFieldService.saveOrUpdateSysField(dto);
         return flag == true ? success() : failure();
@@ -47,6 +48,7 @@ public class SysProductFieldController extends BaseController {
      * 修改字段状态
      */
     @PostMapping("/updateState")
+    //@RequestPermissions("plm:sys:field:updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
         Boolean flag = productFieldService.updateState(dto);
         return flag == true ? success() : failure();
@@ -58,6 +60,7 @@ public class SysProductFieldController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:sys:field:paging")
     public ApiResult<PagingVO<SysProductFieldPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SysProductFieldPagingDTO> pagingVO = productFieldService.sysPaging(dto);
         return success(pagingVO);
@@ -67,6 +70,7 @@ public class SysProductFieldController extends BaseController {
      * 获取 产品开发管理-设置-新增字段-系统字段列表
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:sys:field:list")
     public ApiResult paging() {
        List<Map<String,Object>> list=productFieldService.sysList();
         return success(list);

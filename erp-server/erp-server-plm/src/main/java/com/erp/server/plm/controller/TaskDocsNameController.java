@@ -27,12 +27,14 @@ public class TaskDocsNameController extends BaseController {
 
 
     @PostMapping("/save")
+    //@RequestPermissions("plm:taskName:save")
     public ApiResult saveDocsName(@RequestBody @Validated DocsNameDTO dto) {
         Boolean flag = taskDocsNameService.saveDocsName(dto);
         return flag == true ? success() : failure();
     }
 
     @GetMapping("/list")
+    //@RequestPermissions("plm:taskName:list")
     public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
         List<DocsDTO> list = taskDocsNameService.getDocsNameList(dto.getProductId());
         return success(list);

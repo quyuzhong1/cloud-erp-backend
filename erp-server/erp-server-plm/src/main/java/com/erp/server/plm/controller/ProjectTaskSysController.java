@@ -37,6 +37,7 @@ public class ProjectTaskSysController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
+    //@RequestPermissions("plm:sys:task:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated SysTaskDTO dto) {
         Boolean result = projectTaskSysService.saveOrUpdateSysTask(dto);
         return result == true ? success() : failure();
@@ -49,6 +50,7 @@ public class ProjectTaskSysController extends BaseController {
      * @return
      */
     @GetMapping("/taskDetails")
+    //@RequestPermissions("plm:sys:task:taskDetails")
     public ApiResult<SysTaskDTO> taskDetails(String taskId) {
         SysTaskDTO taskDTO = projectTaskSysService.taskDetails(taskId);
         return success(taskDTO);
@@ -61,6 +63,7 @@ public class ProjectTaskSysController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:sys:task:paging")
     public ApiResult<PagingVO<SysTaskPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SysTaskPagingDTO> pagingVO = projectTaskSysService.paging(dto);
         return success(pagingVO);
@@ -70,6 +73,7 @@ public class ProjectTaskSysController extends BaseController {
      * 删除任务
      */
     @PostMapping("/remove")
+    //@RequestPermissions("plm:sys:task:remove")
     public ApiResult paging(String taskId) {
         Boolean flag=projectTaskSysService.removeTask(taskId);
         return flag==true?success():failure();
@@ -79,6 +83,7 @@ public class ProjectTaskSysController extends BaseController {
      * 新建任务 获取前置任务列表
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:sys:task:list")
     public ApiResult list() {
         List<Map<String,Object>> list= projectTaskSysService.taskList();
         return success(list);

@@ -40,9 +40,6 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private ProductInfoService productInfoService;
 
-
-
-
     /**
      * 项目任务-分页列表
      *
@@ -50,6 +47,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:task:paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -62,6 +60,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/save")
+    //@RequestPermissions("plm:task:save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
         return flag == true ? success() : failure();
@@ -74,12 +73,14 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    //@RequestPermissions("plm:task:update")
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.updateTask(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/saveSonTask")
+    //@RequestPermissions("plm:task:saveSonTask")
     public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
         return flag == true ? success() : failure();
@@ -92,6 +93,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:task:list")
     public ApiResult list(String productId) {
         List<Map<String, Object>> list = taskService.getTaskListByProductId(productId);
         return success(list);
