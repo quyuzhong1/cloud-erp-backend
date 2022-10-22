@@ -32,6 +32,7 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:process:list")
     public ApiResult<List<BusinessProcessEntity>> getProcessList(String businessType) {
         List<BusinessProcessEntity> resultList = businessProcessService.getProcessList(businessType);
         return success(resultList);
@@ -44,6 +45,7 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @PostMapping("/save")
+    //@RequestPermissions("plm:process:save")
     public ApiResult saveProcess(@RequestBody BusinessProcessDTO dto) {
         Boolean flag = businessProcessService.saveProcess(dto);
         return flag == true ? success() : failure();

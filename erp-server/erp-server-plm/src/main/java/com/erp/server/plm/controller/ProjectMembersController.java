@@ -40,6 +40,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:project:member:paging")
     public ApiResult<PagingVO<List<MemberPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<MemberPagingDTO> dto) {
         PagingVO<List<MemberPagingShowDTO>> pagingVO = projectMembersService.paging(dto);
         return success(pagingVO);
@@ -51,6 +52,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
+    //@RequestPermissions("plm:project:member:saveOrUpdate")
     public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
         return flag == true ? success() : failure();
@@ -63,6 +65,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/remove")
+    //@RequestPermissions("plm:project:member:remove")
     public ApiResult remove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
         Boolean flag = projectMembersService.removeMembers(dto);
         return flag == true ? success() : failure();

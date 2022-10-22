@@ -38,6 +38,7 @@ public class ProductArchiveController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:product:archive:paging")
     public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);
         return success(pagingVO);
@@ -47,6 +48,7 @@ public class ProductArchiveController extends BaseController {
      * 重新激活
      */
     @PostMapping("/activate")
+    //@RequestPermissions("plm:product:archive:activate")
     public ApiResult activate(String productId) {
         boolean flag = productArchiveService.activate(productId);
         return flag==true?success():failure("激活失败");

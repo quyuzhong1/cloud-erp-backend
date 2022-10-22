@@ -2,6 +2,7 @@ package com.erp.server.plm.aspect;
 
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.DataPermission;
+import com.erp.common.constant.OperationType;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
@@ -120,7 +121,20 @@ public class DataPermissionAspect {
         } else if (controllerDataScope.operationType().equals("update")) {
 
         }*/
+        String sqlParam = "";
+        switch (controllerDataScope.operationType()) {
+            case "query":
+                sqlParam = query(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
+                break;
+            case "delete":
 
+                break;
+            case "update":
+
+                break;
+            default:
+                break;
+        }
         StringBuilder sqlString = new StringBuilder();
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
@@ -131,13 +145,14 @@ public class DataPermissionAspect {
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
                 sqlString.append(" AND " + controllerDataScope.tableField() + " = " + user.getUid() + " ");
             }
+
         }
 
 
         //这个是给那个字段赋值
         if (StringUtils.isNotBlank(sqlString.toString())) {
             if(params.length > 0){
-                ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
+
             }
         }
     }
@@ -146,13 +161,18 @@ public class DataPermissionAspect {
      *
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
+     * @param joinPoint 切点信息
      * @param userRequestPermissionsDTOStream 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
      * @param controllerDataScope 自定义注解信息
      * @return java.lang.String
      **/
-    public String query(List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission controllerDataScope) {
+    public String query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission controllerDataScope) {
+        Object[] params = joinPoint.getArgs();
+        Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        DataPermission inject = method.getAnnotation(DataPermission.class);
+
         StringBuilder sqlString = new StringBuilder();
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
@@ -164,7 +184,7 @@ public class DataPermissionAspect {
                 sqlString.append(" AND " + controllerDataScope.tableField() + " = " + user.getUid() + " ");
             }
         }
-
+        ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
         return sqlString.toString();
     }
 

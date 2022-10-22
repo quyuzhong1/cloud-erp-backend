@@ -36,6 +36,7 @@ public class ProductFieldController  extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:field:paging")
     public ApiResult<PagingVO<SysProductFieldPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SysProductFieldPagingDTO> pagingVO = productFieldService.paging(dto);
         return success(pagingVO);
@@ -45,6 +46,7 @@ public class ProductFieldController  extends BaseController {
      * 修改字段状态
      */
     @PostMapping("/updateState")
+    //@RequestPermissions("plm:field:updateState")
     public ApiResult updateState(@RequestBody @Validated StateDTO dto) {
         Boolean flag = productFieldService.updateState(dto);
         return flag == true ? success() : failure();
@@ -56,6 +58,7 @@ public class ProductFieldController  extends BaseController {
      * @return
      */
     @PostMapping("/save")
+    //@RequestPermissions("plm:field:save")
     public ApiResult  save(@RequestBody @Validated ProductFieldDTO dto) {
         Boolean flag= productFieldService.saveField(dto);
         return flag==true?success():failure();

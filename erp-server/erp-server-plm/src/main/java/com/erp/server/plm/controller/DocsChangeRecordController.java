@@ -34,6 +34,7 @@ public class DocsChangeRecordController extends BaseController {
      * @return
      */
     @GetMapping("/list")
+    //@RequestPermissions("plm:docsChange:list")
     public ApiResult<List<DocsChangeRecordEntity>> list(String taskId) {
         List<DocsChangeRecordEntity> list = docsChangeRecordService.listByTaskId(taskId);
         return success(list);
