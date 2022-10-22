@@ -1,5 +1,8 @@
 package com.erp.server.plm.aspect;
 
+import com.alibaba.excel.util.CollectionUtils;
+import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.DataPermission;
 import com.erp.common.modules.sys.dto.SysUserDTO;
@@ -14,11 +17,15 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.hibernate.validator.internal.util.StringHelper;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.thymeleaf.spring5.context.SpringContextUtils;
+
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +59,9 @@ public class DataPermissionAspect {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ApplicationContext applicationContext;
 
     // 配置织入点
     @Pointcut("@annotation(com.erp.common.annotation.DataPermission)")
@@ -164,10 +174,10 @@ public class DataPermissionAspect {
      * @param userRequestPermissionsDTOStream 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
-     * @param controllerDataScope 自定义注解信息
+     * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public String query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission controllerDataScope) {
+    public String query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Object[] params = joinPoint.getArgs();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DataPermission inject = method.getAnnotation(DataPermission.class);
@@ -178,9 +188,9 @@ public class DataPermissionAspect {
                 sqlString = new StringBuilder();
                 break;
             } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
+                sqlString.append(" AND " + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " = " + user.getUid() + " ");
+                sqlString.append(" AND " + dataPermission.tableField() + " = " + user.getUid() + " ");
             }
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
@@ -194,21 +204,109 @@ public class DataPermissionAspect {
      * @param userRequestPermissionsDTOStream 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
-     * @param controllerDataScope 自定义注解信息
+     * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public String delete(List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission controllerDataScope) {
+    public void delete(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+        Class<? extends IService> serviceClass = dataPermission.serviceClass();
+        if (serviceClass != IService.class) {
+            IService<?> service = getIservice(joinPoint, serviceClass.getName());
+            //controllerDataScope.setService(service);
+        }
+        List<Object> inputIdList = new ArrayList<>();
+
+        Object[] args = joinPoint.getArgs();
+        Object arg = joinPoint.getArgs()[0];
+        if (arg instanceof List) {
+            inputIdList = (List<Object>) arg;
+        } else if (arg instanceof String[]) {
+            inputIdList = Arrays.asList((String[]) args[0]);
+        } else if (arg instanceof String) {
+            inputIdList = Collections.singletonList(arg);
+        } else if (arg instanceof Map) {
+            Map mapParam = (Map) arg;
+            try {
+                if (mapParam.containsKey(dataPermission.tableField())) {
+                    Object p = mapParam.get(dataPermission.tableField());
+                    if(p instanceof String){ // 20220113兼容map中数据id为string的情况
+                        inputIdList.add(p);
+                    } else if (p instanceof List){
+                        inputIdList = (List<Object>) mapParam.get("id");
+                    }
+                } else {
+                    inputIdList = (List<Object>) mapParam.get("ids");
+                }
+            } catch (Exception e) {
+                return;
+            }
+        } else {
+            try {
+                Map mapParam = JSONObject.parseObject(JSONObject.toJSONString(arg), Map.class);
+                Object o = mapParam.get("id");
+                if(o != null){
+                    if(o instanceof List){
+                        inputIdList = (List<Object>) o;
+                    } else if (o instanceof String){
+                        inputIdList.add(o);
+                    }
+                } else {
+                    inputIdList = (List<Object>) mapParam.get("ids");  // key : ids  数组
+                }
+            } catch (Exception e) {
+                return;
+            }
+        }
+        if(CollectionUtils.isEmpty(inputIdList)){
+            return;
+        }
+
         StringBuilder sqlString = new StringBuilder();
+
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
                 sqlString = new StringBuilder();
                 break;
             } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
+                sqlString.append(" AND " + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " = " + user.getUid() + " ");
+                sqlString.append(" AND " + dataPermission.tableField() + " = " + user.getUid() + " ");
             }
         }
-        return sqlString.toString();
+        return ;
+    }
+
+    /**
+     * 获取服务名 获取相关服务
+     *
+     * @param point
+     * @param className
+     * @return
+     */
+    private IService<?> getIservice(JoinPoint point, String className) {
+        if (StringUtils.isEmpty(className)) {
+            className = point.getTarget().getClass().getSimpleName();
+        }
+
+        // 将第一个字母修改成小写
+        String serviceName = className.substring(0, 1).toLowerCase() + className.substring(1);
+
+        // 获取实体对象
+        try {
+            return applicationContext.getBean(serviceName, IService.class);
+        } catch (NoSuchBeanDefinitionException e) {
+            // 1.通过权限命名取一次服务
+            try {
+                return (IService<?>) applicationContext.getBean(Class.forName(serviceName));
+            } catch (ClassNotFoundException ex1) {
+                // 2.找不到可能是远程服务，通过以下方式获取远程服务(获取当前类服务)
+                String serviceClassName = point.getTarget().getClass().getName();
+                try {
+                    return (IService<?>) applicationContext.getBean(Class.forName(serviceClassName));
+                } catch (ClassNotFoundException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return null;
     }
 }

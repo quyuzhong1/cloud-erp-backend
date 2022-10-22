@@ -83,6 +83,7 @@ public class ProductInfoDTO {
     /**
      * 产品卖点
      */
+    @Size(max = 50,message = "最大50字符")
     private String sellSpot;
 
     /**
@@ -93,6 +94,7 @@ public class ProductInfoDTO {
     /**
      * 产品用途
      */
+    @Size(max = 50,message = "最大50字符")
     private String usageDesc;
 
     /**
@@ -103,6 +105,7 @@ public class ProductInfoDTO {
     /**
      * 主要材质
      */
+    @Size(max = 50,message = "最大50字符")
     private String materials;
 
     /**
