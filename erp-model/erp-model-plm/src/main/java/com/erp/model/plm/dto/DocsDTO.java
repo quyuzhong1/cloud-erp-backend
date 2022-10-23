@@ -35,4 +35,9 @@ public class DocsDTO {
      * 1 是  0 不是
      */
     private Integer isSys;
+
+    /**
+     * 1 启用 0 禁用
+     */
+    private Integer state=1;
 }

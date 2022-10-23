@@ -78,27 +78,26 @@ public class ProjectTaskDTO implements Serializable {
     /**
      * 计划开始时间
      */
-    @NotNull(message = "计划开始时间不能为空")
+
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planStartTime;
 
     /**
      * 计划结束时间
      */
-    @NotNull(message = "计划结束时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
      */
-    @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
+  //  @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
     private Integer priority;
 
     /**
      * 任务阶段id
      */
-    @NotBlank(message = "阶段id 不能为空")
+  //  @NotBlank(message = "阶段id 不能为空")
     private String phaseId;
 
     /**

@@ -39,4 +39,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     Boolean removeMembers(RemoveProjectMemberDTO dto);
 
     List<ProjectMembersEntity> getChargeList();
+
+    List<ProjectMemberDTO> memberList(String productId);
 }
