@@ -89,27 +89,22 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
                 variantEntity.setUpdateUserName(loginUser.getUserName());
             }
         }
+        //编辑变体类型
         boolean flag = this.saveOrUpdate(variantEntity);
+
+        //获取变体值数据
         List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
 
+        //去重
         List<ProductVariantPropertyDTO> distinctList = productVariantPropertyList.stream().collect(
                 Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(
                         Comparator.comparing(ProductVariantPropertyDTO::getPropertyValue))), ArrayList::new));
 
-        List<String> collect = distinctList.stream().map(ProductVariantPropertyDTO::getPropertyValue).collect(Collectors.toList());
-
-        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductVariantPropertyEntity::getVariantId, variantEntity.getId());
-        queryWrapper.in(ProductVariantPropertyEntity::getPropertyValue, collect);
-        List<ProductVariantPropertyEntity> list = productVariantPropertyService.list(queryWrapper);
-        if (!ListUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95023);
-        }
-        productVariantPropertyList.forEach(req -> {
+        distinctList.forEach(req -> {
             req.setVariantId(variantEntity.getId());
         });
 
-        productVariantPropertyService.saveOrUpdateBatch(productVariantPropertyList);
+        productVariantPropertyService.saveOrUpdateBatch(distinctList);
         return flag;
     }
 
