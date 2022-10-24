@@ -14,7 +14,7 @@ public enum  BasicDictTypeEnum {
     /**
      * 产品品牌
      */
-    PACKAGING_MATERIALS("productBrand", "产品品牌"),
+    PRODUCT_BRAND("productBrand", "产品品牌"),
     /**
      * 报关属性
      */

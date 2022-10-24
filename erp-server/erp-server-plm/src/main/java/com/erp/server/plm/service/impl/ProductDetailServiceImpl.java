@@ -18,10 +18,7 @@ import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductVariantOptionEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
@@ -97,6 +94,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private BasicDictService basicDictService;
+
 
     /**
      * @Description 产品信息查询列表
@@ -791,10 +792,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
+            //状态编码转换成中文
             req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
             if (StringUtils.isNotBlank(req.getSaleState())) {
                 req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
             }
+
+            String[] split = req.getSaleCountry().split(",");
+            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+            List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            req.setSaleCountry(StringUtils.join(nameList, ","));
         });
 
         StringBuffer sb = new StringBuffer();
@@ -809,5 +816,4 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             e.printStackTrace();
         }
     }
-
 }

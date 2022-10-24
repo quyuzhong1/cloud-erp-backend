@@ -1,5 +1,6 @@
 package com.erp.server.plm.listener;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.BeanMapper;
@@ -10,19 +11,25 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.server.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.enums.SaleMethodEnum;
+import com.erp.server.plm.enums.SaleStateEnum;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductInfoService;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
@@ -37,6 +44,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
     private BasicDictService basicDictService;
 
     private List<ProductDetailExcelDTO> list;
+
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductInfoService productInfoService,
                                       BasicCategoryService basicCategoryService, BasicDictService basicDictService) {
@@ -82,6 +91,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             list.add(dto);
             return;
         }
+
         ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
         //根据产品名称查询产品信息
         ProductDetailShowDTO productDetailShow = productDetailService.getProductBy(dto.getName(), "");
@@ -99,7 +109,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
             productInfoDTO.setId(productBy.getId());
             if (!ObjectUtils.isEmpty(productDetailShow)) {
-                if (productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
+                if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
                     dto.setErrorMsg(ApiError.ERROR_95007.msg);
                     list.add(dto);
                     return;
@@ -113,9 +123,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 list.add(dto);
                 return;
             }
-            if (!ObjectUtils.isEmpty(productDetailShow)) {
+            if (productDetailService.checkName(dto.getName(), "")) {
                 dto.setErrorMsg(ApiError.ERROR_95007.msg);
                 list.add(dto);
+                return;
             }
         }
 
@@ -140,7 +151,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 list.add(dto);
                 return;
             }
-            if(pirateRisk.equals("有风险")){
+            if(pirateRisk.equals("有")){
                 productInfoDTO.setPirateRisk(1);
             } else {
                 productInfoDTO.setPirateRisk(2);
@@ -149,7 +160,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         //spu信息
-
         productInfoDTO.setName(dto.getName());
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
@@ -164,12 +174,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setChargeId("产品经理id");
         productInfoDTO.setMaterials(dto.getMaterials());
 
+
+
         productInfoDTO.setFunctionDesc(dto.getFunctionDesc());
         productInfoDTO.setSellSpot(dto.getSellSpot());
         productInfoDTO.setSaleMethod(dto.getSaleMethod());
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
 
-        BasicDictEntity productBrand = basicDictService.checkBasicDict("productBrand", dto.getBrandName());
+
+
+        BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), dto.getBrandName());
         if (ObjectUtils.isEmpty(productBrand)) {
             dto.setErrorMsg("产品品牌在系统中未找到");
             list.add(dto);
@@ -177,7 +191,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
         productInfoDTO.setBrandId(productBrand.getId());
         productInfoDTO.setBrandName(productBrand.getValue());
-        BasicDictEntity productProperty = basicDictService.checkBasicDict("productProperty", dto.getProperty());
+        BasicDictEntity productProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), dto.getProperty());
         if (ObjectUtils.isEmpty(productProperty)) {
             dto.setErrorMsg("产品属性在系统中未找到");
             list.add(dto);
@@ -190,7 +204,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
-        productNoSpecDTO.getProductBaseInfoDTO();
+
+        Date planListingTime = new Date();
+        try {
+            planListingTime = simpleDateFormat.parse(dto.getPlanListingTime());
+        } catch (ParseException e) {
+            dto.setErrorMsg("计划上市时间日期格式不正确");
+            list.add(dto);
+            return;
+        }
+        productSkuBaseInfoDTO.setPlanListingTime(planListingTime);
 
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
@@ -208,10 +231,73 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //产品销售信息
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
         BeanMapper.copy(dto, productSaleDTO);
+        Date listingTime = new Date();
+        try {
+            listingTime = simpleDateFormat.parse(dto.getListingTime());
+        } catch (ParseException e) {
+            dto.setErrorMsg("上市时间日期格式不正确");
+            list.add(dto);
+            return;
+        }
+        Date delistingTime = new Date();
+        try {
+            delistingTime = simpleDateFormat.parse(dto.getDelistingTime());
+        } catch (ParseException e) {
+            dto.setErrorMsg("退市时间日期格式不正确");
+            list.add(dto);
+            return;
+        }
+        productSaleDTO.setListingTime(listingTime);
+        productSaleDTO.setDelistingTime(delistingTime);
+
+        dto.getSaleState();
+        Integer codeByName = SaleStateEnum.getCodeByName(dto.getSaleState());
+        if (codeByName == null || codeByName == 0) {
+            dto.setErrorMsg("销售状态不正确：销售状态：未销售，销售中，清仓中，已下架");
+            list.add(dto);
+            return;
+        }
+        productSaleDTO.setSaleState(codeByName);
+        //图片是否完成
+        String isFinishedImg = dto.getIsFinishedImg();
+        if(StringUtils.isNotBlank(isFinishedImg)){
+            if(!isFinishedImg.equals("是") && !isFinishedImg.equals("否")){
+                dto.setErrorMsg("图片是否完成：是 或者 否");
+                list.add(dto);
+                return;
+            }
+            if(isFinishedImg.equals("是")){
+                productSaleDTO.setIsFinishedImg(1);
+            } else {
+                productSaleDTO.setIsFinishedImg(2);
+            }
+        }
+        //视频是否完成
+        String isFinishedVideo = dto.getIsFinishedVideo();
+        if(StringUtils.isNotBlank(isFinishedVideo)) {
+            if(!isFinishedVideo.equals("是") && !isFinishedVideo.equals("否")){
+                dto.setErrorMsg("视频是否完成：是 或者 否");
+                list.add(dto);
+                return;
+            }
+            if(isFinishedVideo.equals("是")){
+                productSaleDTO.setIsFinishedVideo(1);
+            } else {
+                productSaleDTO.setIsFinishedVideo(2);
+            }
+        }
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
         //产品物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
         BeanMapper.copy(dto, productLogisticsDTO);
+        BasicDictEntity declareProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.DECLARE_PROPERTY.getCode(), dto.getProductProperty());
+        if (ObjectUtils.isEmpty(declareProperty)) {
+            dto.setErrorMsg("报关产品属性在系统中未找到");
+            list.add(dto);
+            return;
+        }
+        productLogisticsDTO.setProductProperty(declareProperty.getValue());
+        productLogisticsDTO.setProductPropertyId(declareProperty.getId());
         productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
         //产品包装信息
         ProductPackDTO productPackDTO = new ProductPackDTO();

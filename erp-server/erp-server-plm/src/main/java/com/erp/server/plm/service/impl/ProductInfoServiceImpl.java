@@ -188,7 +188,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         BeanMapper.copy(dto, entity);
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
-
+        entity.setIsFinishedProductDev(1);
         Boolean flag = this.saveOrUpdate(entity);
 
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务

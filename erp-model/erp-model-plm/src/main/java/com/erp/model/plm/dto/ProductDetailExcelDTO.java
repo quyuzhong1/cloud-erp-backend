@@ -47,8 +47,7 @@ public class ProductDetailExcelDTO {
     private String property;
 
     @ExcelProperty(value = "计划上市时间", index = 10)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private String planListingTime;
 
     @ExcelProperty(value = "单位", index = 11)
     private String unitName;
@@ -96,23 +95,21 @@ public class ProductDetailExcelDTO {
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 26)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date listingTime;
+    private String listingTime;
 
     @ExcelProperty(value = "退市时间", index = 27)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date delistingTime;
+    private String delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 28)
-    private Integer isFinishedImg;
+    private String isFinishedImg;
 
     @ExcelProperty(value = "视频是否完成", index = 29)
-    private Integer isFinishedVideo;
+    private String isFinishedVideo;
 
     @ExcelProperty(value = "销售状态", index = 30)
-    private Integer saleState;
+    private String saleState;
 
-    @ExcelProperty(value = "产品属性", index = 31)
+    @ExcelProperty(value = "报关产品属性", index = 31)
     private String productProperty;
 
     @ExcelProperty(value = "报关中文名", index = 32)

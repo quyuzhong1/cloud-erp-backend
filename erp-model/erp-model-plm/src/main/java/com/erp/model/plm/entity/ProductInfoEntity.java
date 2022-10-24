@@ -211,4 +211,12 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "update_user_name")
     private String updateUserName;
 
+    /**
+     * 是否是产品开发管理的数据：1 是
+     */
+    @TableField(value = "is_finished_product_dev")
+    private Integer isFinishedProductDev;
+
+
+
 }

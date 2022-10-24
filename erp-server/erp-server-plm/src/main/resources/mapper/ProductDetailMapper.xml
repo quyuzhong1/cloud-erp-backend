@@ -197,7 +197,7 @@
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
         SELECT
         pi.spu_no,
-        pd."name",
+        CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
 		pi.sale_method,
 		pi.category,
 		pi.sell_spot,
@@ -226,7 +226,7 @@
 		year_sale_amount,
 		month_sale_qty,
 		month_sale_amount,
-        country.value AS sale_country,
+        ps.sale_country,
 		listing_time,
 		delisting_time,
         CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
@@ -253,7 +253,6 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-        LEFT JOIN basic_dict country ON ps.sale_country = country.id
         LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
         WHERE pi.delete_state = 0
         <if test="params.no != '' and params.no != null">
