@@ -1324,11 +1324,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+       checkTaskState(list);
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         long count = list.stream().filter(t -> t.getStatus() != approvalIngCode).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95038);
+            throw new ServiceException(ApiError.ERROR_95046);
         }
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
@@ -1450,6 +1451,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity approvalIngEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalIngState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalPassState)).findFirst().orElse(null);
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
+        TaskOperatorRecordEntity approvalNoPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalNoPassState)).findFirst().orElse(null);
 
         //先添加待发布的
         TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
@@ -1476,17 +1478,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(finishStateEntity, finishState));
         }
 
-        if (general.equals(generalApproval)) {
+        if (generalApproval.equals(processType)) {
             //添加待开始
             resultList.add(getProcessNode(notStartEntity, notStart));
             //添加进行中
             resultList.add(getProcessNode(ingStateEntity, ingState));
             //添加完成待审核
-            resultList.add(getProcessNode(finishWaitConfirmEntity, finishState));
+            resultList.add(getProcessNode(finishWaitConfirmEntity, finishWaitConfirmState));
             //添加审核中
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
             //添加审核通过
             resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+
+            //添加审核不通过
+            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
         }
 
         if (reviewTask.equals(processType)) {
@@ -1494,6 +1499,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState));
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
             resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+            //添加审核不通过
+            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
         }
 
         return resultList;

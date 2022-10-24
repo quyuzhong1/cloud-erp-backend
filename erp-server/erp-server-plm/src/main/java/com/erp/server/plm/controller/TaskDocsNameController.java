@@ -42,7 +42,7 @@ public class TaskDocsNameController extends BaseController {
      */
     @GetMapping("/list")
     //@RequestPermissions("plm:taskName:list")
-    public ApiResult list(@RequestParam(value="productId")  String  productId) {
+    public ApiResult<List<DocsDTO>> list(@RequestParam(value="productId")  String  productId) {
         List<DocsDTO> list = taskDocsNameService.getDocsNameList(productId);
         return success(list);
     }
