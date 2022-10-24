@@ -24,7 +24,7 @@ public class DocsDTO {
 
     /**
      * 文档名
-     * @author yl
+     * @author
      * @date 2022-10-09 10:51
      */
     @NotBlank(message = "文档名不能为空")

@@ -1068,10 +1068,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     public Integer checkTaskState(List<ProjectTaskEntity> list) {
         //当不为空
-        if (CollectionUtils.isNotEmpty(list) && list.size() > 1) {
-            List<Integer> stateList = list.stream().map(ProjectTaskEntity::getStatus).distinct().collect(Collectors.toList());
-            if (list.size() == stateList.size()) {
-                throw new ServiceException(ApiError.ERROR_95029);
+        if (CollectionUtils.isNotEmpty(list)) {
+            if (list.size() > 1) {
+                List<Integer> stateList = list.stream().map(ProjectTaskEntity::getStatus).distinct().collect(Collectors.toList());
+                if (list.size() == stateList.size()) {
+                    throw new ServiceException(ApiError.ERROR_95029);
+                }
             }
             return list.get(0).getStatus();
         }
@@ -1282,17 +1284,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
         // 只有待审核 和 完成待审核 的状态 才可以审核通过
-        if ((!waitConfirmCode.equals(state)) || (!finishWaitConfirmCode.equals(state))) {
+        if (!waitConfirmCode.equals(state) && !finishWaitConfirmCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-
 
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
-
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
             TaskHandleDataDTO handleData = taskDataList.stream().filter(d -> d.getProcessId().equals(item.getProcessId())).findFirst().orElse(null);

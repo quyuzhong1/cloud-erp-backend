@@ -51,8 +51,8 @@ public class ProcessFeignController extends BaseController {
 
     //审核通过任务
     @PostMapping("/taskPass")
-    public boolean taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
         processTaskService.taskPass(dto);
-        return true;
+        return success();
     }
 }
