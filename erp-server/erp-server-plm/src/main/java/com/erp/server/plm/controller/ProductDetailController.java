@@ -212,7 +212,7 @@ public class ProductDetailController extends BaseController {
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult deleteByProductId(@RequestParam(value = "id")  String id) {
-        Boolean flag = productDetailService.delete(id);
+        Boolean flag = productDetailService.deleteByProductId(id);
         return flag == true ? this.success() : this.failure();
     }
 
