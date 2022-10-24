@@ -89,4 +89,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<TaskProcessNodeDTO>  findTaskProcess(String taskId);
 
     void approvalTaskPass(String processId);
+
+    Integer getTaskProperty(ProjectTaskEntity taskEntity);
 }

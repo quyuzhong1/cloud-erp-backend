@@ -63,7 +63,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
-            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
             //先删除文档 不存在的数据
             removeTaskDocsByTaskId(taskId, docsId);
 
@@ -302,8 +302,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     public void removeTaskDocsByTaskId(String taskId, List<String> docsIds) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-        queryWrapper.notIn(TaskDeliveryDocsEntity::getDocsNameId, docsIds);
+        queryWrapper.notIn(TaskDeliveryDocsEntity::getId, docsIds);
         this.remove(queryWrapper);
 
     }

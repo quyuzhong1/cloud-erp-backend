@@ -657,8 +657,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //如果审核通过可以变更
                 if (taskState.equals(TaskStateEnum.APPROVAL_PASS)) {
                     docs.setChangeFlag(true);
-                } else {
-                    docs.setDeleteFlag(true);
+                    docs.setDeleteFlag(false);
                 }
             }
         }
@@ -1283,9 +1282,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return true;
     }
 
-    
-
-
 
     /**
      * 审核任务
@@ -1670,14 +1666,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public String getWarning(Integer state, Integer finishState, Date planEndTime) {
         Date nowDay = new Date();
         String warning = "-";
-        //状态
-        if (!finishState.equals(state)) {
-            int difference = DateUtil.getDiffDay(planEndTime, nowDay);
-            if (difference > 0) {
-                warning = "过期" + difference + "天";
-            } else {
-                if (difference >= -2) {
-                    warning = Math.abs(difference) + 1 + "天后过期";
+        if (planEndTime != null) {
+            //状态
+            if (!finishState.equals(state)) {
+                int difference = DateUtil.getDiffDay(planEndTime, nowDay);
+                if (difference > 0) {
+                    warning = "过期" + difference + "天";
+                } else {
+                    if (difference >= -2) {
+                        warning = Math.abs(difference) + 1 + "天后过期";
+                    }
                 }
             }
         }
