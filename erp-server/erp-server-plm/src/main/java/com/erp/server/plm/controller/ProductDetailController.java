@@ -195,9 +195,24 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
-    @DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
+    //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
+        return flag == true ? this.success() : this.failure();
+    }
+
+    /**
+     * 产品信息-取消按钮-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:42
+     * @param id spu主表id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @PostMapping("/deleteByProductId")
+    //@RequestPermissions("plm:product:detail:delete")
+    //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
+    public ApiResult deleteByProductId(@RequestParam(value = "id")  String id) {
+        Boolean flag = productDetailService.delete(id);
         return flag == true ? this.success() : this.failure();
     }
 
