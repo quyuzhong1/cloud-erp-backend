@@ -24,8 +24,8 @@ public class PlmInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String tokenUserStr = request.getHeader("tokenUserInfo");
         try {
-            tokenUserStr = URLDecoder.decode(tokenUserStr, "UTF-8");
             if (StringUtils.isNotBlank(tokenUserStr)) {
+                tokenUserStr = URLDecoder.decode(tokenUserStr, "UTF-8");
                 LoginUser user = JSONObject.parseObject(tokenUserStr, LoginUser.class);
                 threadLocal.set(user);
             }

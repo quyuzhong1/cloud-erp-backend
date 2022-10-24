@@ -89,4 +89,17 @@ public class DeliveryDocsDTO implements Serializable {
     private String submitUserName;
 
 
+    /**
+     * 能否显示变更 按钮
+     */
+    private Boolean changeFlag=false;
+
+    /**
+     * 能否显示删除
+     */
+    private Boolean deleteFlag=true;
+
+
+
+
 }

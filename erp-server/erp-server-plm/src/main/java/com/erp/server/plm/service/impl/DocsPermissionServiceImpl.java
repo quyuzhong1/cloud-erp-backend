@@ -23,7 +23,7 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
      * 根据用户id 获取到
      *
      * @param uid
-     * @return java.util.List<java.lang.String>
+     * @return java.util.List<jav`a.lang.String>
      * @author yl
      * @date 2022-09-23 15:13
      */

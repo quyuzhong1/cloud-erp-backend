@@ -19,6 +19,7 @@ import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -113,14 +114,23 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public void setPower(SetDocsPowerDTO dto) {
         //保存他的权限
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-        List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(dto.getReoleId()));
+        String roleId = dto.getRoleId();
         String docsId = dto.getId();
-        for (RoleRefMemberDTO item : refMembers) {
-            DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-            docsPermission.setQueryUserId(item.getMembersId());
-            docsPermission.setDeliveryDocsId(docsId);
-            docsPermissionList.add(docsPermission);
+        if (StringUtils.isNotBlank(roleId)) {
+            List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
+            for (RoleRefMemberDTO item : refMembers) {
+                DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                docsPermission.setQueryUserId(item.getMembersId());
+                docsPermission.setDeliveryDocsId(docsId);
+                docsPermissionList.add(docsPermission);
+            }
+        } else {
+            DocsPermissionEntity save = new DocsPermissionEntity();
+            save.setDeliveryDocsId(docsId);
+            save.setQueryUserId("");
+            docsPermissionList.add(save);
         }
+
         docsPermissionService.saveBatch(docsPermissionList);
 
     }
@@ -221,7 +231,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public List<CountDTO> getTaskDocsCountByProductId() {
         return baseMapper.getTaskDocsCountByProductId();
     }
-
 
 
     @Override

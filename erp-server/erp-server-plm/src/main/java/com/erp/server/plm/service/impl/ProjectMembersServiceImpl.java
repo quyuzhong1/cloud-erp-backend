@@ -198,11 +198,11 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<String> roleIds = new ArrayList<>();
         String roleId = params.getProjectRoleId();
         if (StringUtils.isBlank(roleId)) {
-            roleIds=projectRoleService.getRoleIdsByProductId(productId);
+            roleIds = projectRoleService.getRoleIdsByProductId(productId);
         } else {
             roleIds.add(roleId);
         }
-        IPage pageData = baseMapper.paging(query, productId,roleIds);
+        IPage pageData = baseMapper.paging(query, productId, roleIds);
         List<MemberPagingShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到任务处理的情况
@@ -292,9 +292,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
      * @return
      */
     @Override
-    public List<ProjectMembersEntity> getChargeList() {
+    public List<ProjectMembersEntity> getChargeList(String productId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectMembersEntity::getIsCharge, IsConstant.YES);
+        queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
 
