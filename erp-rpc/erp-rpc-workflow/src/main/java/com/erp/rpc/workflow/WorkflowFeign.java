@@ -30,5 +30,5 @@ public interface WorkflowFeign {
 
     //审核任务通过
     @PostMapping("workflow/feign/process/taskPass")
-    ApiResult taskPass(@RequestBody ApproveProcessDTO dto);
+    ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 }
