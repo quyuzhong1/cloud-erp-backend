@@ -198,7 +198,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         ProductUnitEntity productUnitEntity = new ProductUnitEntity();
-        if (StringUtils.isNotBlank(dto.getName())) {
+        if (StringUtils.isNotBlank(dto.getUnitName())) {
             productUnitEntity = productUnitService.checkUnitName(dto.getName());
             if (ObjectUtils.isEmpty(productUnitEntity)) {
                 errorMsgList.add("单位名称在系统中不存在");

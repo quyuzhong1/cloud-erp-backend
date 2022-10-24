@@ -202,7 +202,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         purchaseShowDTOList.forEach(req -> {
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
-            req.setCreateUserName(findUserDTO.getUserName());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                req.setCreateUserName(findUserDTO.getUserName());
+            }
         });
 
         productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
@@ -212,10 +214,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品销售信息查询列表
         List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
         saleShowDTOList.forEach(req -> {
-            String[] split = req.getSaleCountry().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setSaleCountryName(StringUtils.join(nameList, ","));
+            if (StringUtils.isNotBlank(req.getSaleCountry())) {
+                String[] split = req.getSaleCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setSaleCountryName(StringUtils.join(nameList, ","));
+            }
         });
 
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);

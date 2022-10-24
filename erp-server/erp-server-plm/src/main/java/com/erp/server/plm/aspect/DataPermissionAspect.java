@@ -209,10 +209,9 @@ public class DataPermissionAspect {
      **/
     public void delete(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
-        if (serviceClass != IService.class) {
-            IService<?> service = getIservice(joinPoint, serviceClass.getName());
-            //controllerDataScope.setService(service);
-        }
+        IService<?> service = getIservice(joinPoint, serviceClass.getName());
+
+        //controllerDataScope.setService(service);
         List<Object> inputIdList = new ArrayList<>();
 
         Object[] args = joinPoint.getArgs();
@@ -259,6 +258,7 @@ public class DataPermissionAspect {
         if(CollectionUtils.isEmpty(inputIdList)){
             return;
         }
+       // List<Object> businessData = service.getById(inputIdList);
 
         StringBuilder sqlString = new StringBuilder();
 
@@ -309,4 +309,29 @@ public class DataPermissionAspect {
         }
         return null;
     }
+
+/*    *//**
+     * 通过反向 获取参数中的对象
+     *
+     * @param entityName 对象名
+     * @param obj        参数
+     * @return
+     *//*
+    private Object getObjClassValue(String entityName, Object obj) {
+        Object invokeClass = obj;
+        if (StringUtils.isNotBlank(entityName)) {
+            String[] clsNames = entityName.split("\\."); // 允许带.表示子对象
+            for (String key : clsNames) {
+                String methodName = ReflectUtils.toGetMethodName(key);
+                try {
+                    Method method = invokeClass.getClass().getMethod(methodName);
+                    invokeClass = method.invoke(obj);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        return invokeClass;
+    }*/
 }
