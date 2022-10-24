@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -99,13 +100,21 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
             //根据角色id 集合 获取到对应的人
             List<RoleRefMemberDTO> roleRefList = roleRefMemberService.getByRoleIds(roleIds);
             roleDTO.setCount(roleRefList.size());
-            List<String> memberList=roleRefList.stream().map(RoleRefMemberDTO::getMembersId).collect(Collectors.toList());
+            List<String> memberList = roleRefList.stream().map(RoleRefMemberDTO::getMembersId).collect(Collectors.toList());
             //根据成员id 获取到参与了多少项目
-            List<ProductRoleMemberDTO> productMemberList=projectMembersService.getProductCountByMemberList(memberList);
+            List<ProductRoleMemberDTO> productMemberList = projectMembersService.getProductCountByMemberList(memberList);
             roleDTO.setProductRoleMembers(productMemberList);
             resultList.add(roleDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public List<String> getRoleIdsByProductId(String productId) {
+        LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectRoleEntity::getId);
+        queryWrapper.eq(ProjectRoleEntity::getProductId,productId);
+        return listObjs(queryWrapper,Object::toString);
     }
 
 

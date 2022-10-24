@@ -91,9 +91,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         result.setProductName(entity.getName());
         //获取产品任务情况
         ProductTaskCountDTO taskCount =projectTaskService.getProductTaskCount(productId,new Date());
+        //总任务数
         Integer totalTaskCount = taskCount.getTotalTaskCount();
+        //完成任务数
         Integer finishTaskCount = taskCount.getFinishTaskCount();
-        Integer postponeTaskCount = taskCount.getTotalTaskCount();
+        //
+        Integer postponeTaskCount = taskCount.getPostponeTaskCount();
         Integer unfinishedTaskCount = taskCount.getUnfinishedTaskCount();
         int finishRatio = 0;
         int postponeRatio = 0;
@@ -363,6 +366,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             ProjectInfoEntity project = new ProjectInfoEntity();
             project.setName(productName);
             project.setProductId(productId);
+            project.setProjectStatus(ProjectStateEnum.NOT_START.getState());
             this.save(project);
         }
 

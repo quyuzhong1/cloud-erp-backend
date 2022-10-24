@@ -68,8 +68,9 @@ public class StartProjectDTO implements Serializable {
 
     /**
      * 来源类型
+     * 来源类型 0 新建 1,项目复制 2.模板复制
      */
-    @StateEnumValue(intValues = {0,1,2}, message = "来源类型不能为空")
+    @StateEnumValue(intValues = {0,1,2}, message = "来源类型有误")
     private Integer sourceType;
 
     /**

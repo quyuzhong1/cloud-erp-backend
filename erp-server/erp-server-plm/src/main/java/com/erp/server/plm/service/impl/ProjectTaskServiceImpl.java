@@ -90,6 +90,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 添加系统的产品任务
+     * 只添加立项的
      *
      * @param productId
      * @return void
@@ -274,7 +275,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
-
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -284,7 +284,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskSearchDTO> searchList = params.getSearchList();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
-
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
@@ -732,10 +731,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public ProductTaskCountDTO getProductTaskCount(String productId, Date date) {
         List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+        Integer finishState=TaskStateEnum.FINISH.getCode();
+        Integer approvalPassState=TaskStateEnum.APPROVAL_PASS.getCode();
         //完成任务数
-        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int finishTaskCount = taskList.stream().filter(t ->finishState.equals(t.getStatus())||approvalPassState.equals(t.getStatus())).collect(Collectors.toList()).size();
         //未完成任务数
-        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus())&&!approvalPassState.equals(t.getStatus())).collect(Collectors.toList()).size();
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
@@ -895,7 +896,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> resultList = new ArrayList<>();
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
-            int count = countUndoneByTaskIds(finishCode,approvalPassCode,resultList);
+            int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
@@ -915,11 +916,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = getByTaskIds(taskIds);
-        Integer ingCode = TaskStateEnum.ING.getCode();
-        int size = list.stream().filter(t -> TaskStateEnum.NOT_START.getCode().equals(t.getStatus()) || TaskStateEnum.CLOSE.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        if (size != list.size()) {
-            throw new ServiceException(ApiError.ERROR_95031);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+        //只有待开始 和待审核 才能开始任务
+        if ((!TaskStateEnum.NOT_START.getCode().equals(state)) ||
+                (!TaskStateEnum.WAIT_CONFIRM.getCode().equals(state))
+        ) {
+            throw new ServiceException(ApiError.ERROR_95032);
         }
+        Integer ingCode = TaskStateEnum.ING.getCode();
+
         //一般任务
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
         //审核任务
@@ -930,9 +936,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(generalTasks)) {
             List<String> taskIdList = generalTasks.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             this.updateTaskState(taskIdList, ingCode, new Date(), null);
-
             taskOperatorRecordService.batchSaveRecord(taskIds, TaskStateEnum.NOT_START.getCode(), ingCode, loginUser.getUid(), loginUser.getUserName(), "");
-
         }
         /**
          * 审核任务要 启动流程 任务评审流程
@@ -999,6 +1003,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态
+        checkTaskState(list);
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
@@ -1009,6 +1015,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskOperatorRecordService.batchSaveRecord(taskIds, releasedCode, TaskStateEnum.NOT_START.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
+    }
+
+    /**
+     * 任务操作 的时候 检查
+     * 所选的的任务状态是否是一致
+     * 如果不一致 就抛异常
+     */
+    public Integer checkTaskState(List<ProjectTaskEntity> list) {
+        //当不为空
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<Integer> stateList = list.stream().map(ProjectTaskEntity::getStatus).distinct().collect(Collectors.toList());
+            if (list.size() != stateList.size()) {
+                throw new ServiceException(ApiError.ERROR_95029);
+            }
+            return list.get(0).getStatus();
+        }
+        return -1;
     }
 
     /**
@@ -1027,17 +1050,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
         //未审核
-        Integer waitConfirmCode=TaskStateEnum.WAIT_CONFIRM.getCode();
+        Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-
+        checkTaskState(list);
         //统计项目状态为  不是待发布的任务 和待审核的任务
-        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())&&!waitConfirmCode.equals(t.getStatus())).count();
+        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus()) && !waitConfirmCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
             throw new ServiceException(ApiError.ERROR_95031);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.TO_BE_RELEASED.getCode(), null, null);
         if (flag) {
-            taskOperatorRecordService.batchSaveTaskRecord(list,TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
 
@@ -1055,9 +1078,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean closeTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
+
         //进行中
         Integer ingCode = TaskStateEnum.ING.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
         //统计项目状态为  不是进行中的任务
         long releasedCount = list.stream().filter(t -> !ingCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
@@ -1084,6 +1110,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+
         //评审任务code
         Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
         /**
@@ -1092,7 +1121,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
         //表示有 评审任务 则要 踢出去
         if (CollectionUtils.isNotEmpty(reviewList) && reviewList.size() > 0) {
-            throw new ServiceException(ApiError.ERROR_95033);
+            throw new ServiceException(ApiError.ERROR_95034);
         }
 
         List<String> allTaskIds = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -1121,7 +1150,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //找出 没有流程中 不是进行中的任务 如果有表示 不能完成任务
         long noProcess = list.stream().filter(t -> t.getStatus() != ingCode).count();
         if (noProcess > 0) {
-            throw new ServiceException(ApiError.ERROR_95034);
+            throw new ServiceException(ApiError.ERROR_95044);
         }
 
         //完成待审核
@@ -1180,7 +1209,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
             }
         }
-
         return true;
     }
 
@@ -1201,19 +1229,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        // 只有待审核 和 完成待审核 的状态 才可以审核通过
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+        // 只有待审核 和 完成待审核 的状态 才可以审核通过
+        if ((!waitConfirmCode.equals(state)) || (!finishWaitConfirmCode.equals(state))) {
+            throw new ServiceException(ApiError.ERROR_95038);
+        }
+
+
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
-        long count = list.stream().filter(p -> (waitConfirmCode.equals(p.getStatus()) || finishWaitConfirmCode.equals(p.getStatus()) || finishWaitConfirmCode.equals(p.getStatus()))).count();
-        if (count != list.size()) {
-            throw new ServiceException(ApiError.ERROR_95038);
-        }
-        long noProcessCount = list.stream().filter(t -> StringUtils.isBlank(t.getProcessId())).count();
-        if (noProcessCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95038);
-        }
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");

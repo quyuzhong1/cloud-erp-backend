@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
+ *  产品开发管理
  * @Classname TaskDocsNameController
  * @Description TODO
  * @Date 2022-09-22 12:12
@@ -33,6 +34,11 @@ public class TaskDocsNameController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 新建任务-设置目标交付文档-获取交付文档名称
+     * @param dto
+     * @return
+     */
     @GetMapping("/list")
     //@RequestPermissions("plm:taskName:list")
     public ApiResult list(@RequestBody @Validated BasicProductIdDTO dto) {
