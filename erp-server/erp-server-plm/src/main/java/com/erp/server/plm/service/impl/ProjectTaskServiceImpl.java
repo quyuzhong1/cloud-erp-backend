@@ -274,7 +274,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = "1549948476757303297";
+        String userId =loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -313,7 +313,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(processIds)) {
-                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, processIds);
                 //要给流程任务的id
                 List<TaskPagingShowDTO> list = pageData.getRecords();
                 for (TaskPagingShowDTO show : list) {
