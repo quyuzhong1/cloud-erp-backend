@@ -1195,7 +1195,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         preTaskService.checkPreTaskFinish(allTaskIds);
         //检查子任务是否有完成
         this.checkSonTaskFinish(allTaskIds, dto.getProductId());
-
+        //检查文档是否有上传
+        finishService.checkTaskDocsUpload(allTaskIds);
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
 
@@ -1281,6 +1282,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return true;
     }
+
+    
+
 
 
     /**

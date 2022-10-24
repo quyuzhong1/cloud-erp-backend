@@ -7,10 +7,7 @@ import com.common.core.utils.FileUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
-import com.erp.model.plm.dto.CountDTO;
-import com.erp.model.plm.dto.ProductOperateRecordDTO;
-import com.erp.model.plm.dto.TaskChangeFileDTO;
-import com.erp.model.plm.dto.TaskUploadFileDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
@@ -36,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -67,6 +65,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -175,11 +176,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        Integer taskState=taskEntity.getStatus();
+        Integer taskState = taskEntity.getStatus();
         //如果已完成了 或者有人审核了 就不能删除
         Integer finishState = TaskStateEnum.FINISH.getCode();
         Integer approvalIngState = TaskStateEnum.APPROVAL_ING.getCode();
-        if(finishState.equals(taskState)||!approvalIngState.equals(taskState)){
+        if (finishState.equals(taskState) || !approvalIngState.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95040);
         }
         //新增产品操作日志
@@ -295,6 +296,38 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             projectTaskService.updateById(taskEntity);
         }
         return flag;
+    }
+
+
+    /**
+     * 检查任务是否有上传文档
+     *
+     * @param allTaskIds
+     * @return void
+     * @author yl
+     * @date 2022-10-24 18:09
+     */
+    @Override
+    public void checkTaskDocsUpload(List<String> allTaskIds) {
+        for (String taskId : allTaskIds) {
+            //获取到该任务要上交的文档
+            List<DocsDTO> docsList = taskDeliveryService.getDocsByTaskId(taskId);
+            //获取到该任务完成的文档数
+            int finishDocsNum = getFinishDocsNum(taskId);
+            if (docsList.size() != finishDocsNum) {
+                throw new ServiceException(ApiError.ERROR_95047);
+            }
+
+        }
+
+    }
+
+
+    public int getFinishDocsNum(String taskId) {
+        LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+        return this.count(queryWrapper);
+
     }
 
 
