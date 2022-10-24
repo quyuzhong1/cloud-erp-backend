@@ -38,9 +38,8 @@
         </if>
 
         ORDER BY p.create_time DESC
-
-
     </select>
+
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
         SELECT pi.id, pi.name AS productName,pi.charge_name AS productChargeName,
         pj.charge_name AS projectChargeName,pj.start_time AS planStartTime,
@@ -98,7 +97,7 @@
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
-        WHERE pi.delete_state=0 AND p.is_finished_product_dev = 1
+        WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1
 
     </select>
 
