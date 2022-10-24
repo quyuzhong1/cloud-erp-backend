@@ -199,12 +199,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        purchaseShowDTOList.forEach(req -> {
+            FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
+            req.setCreateUserName(findUserDTO.getUserName());
+        });
+
         productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         productManyDetail.setRemarkEntityList(remarkEntityList);
         //产品销售信息查询列表
         List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
+        saleShowDTOList.forEach(req -> {
+            String[] split = req.getSaleCountry().split(",");
+            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+            List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            req.setSaleCountryName(StringUtils.join(nameList, ","));
+        });
+
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);
         //产品包装信息查询列表
         List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);

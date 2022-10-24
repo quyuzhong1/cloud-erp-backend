@@ -27,10 +27,8 @@ import org.springframework.util.ObjectUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
     private Integer importType;
@@ -130,6 +128,21 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 }
             }
         }
+        if(StringUtils.isNotBlank(dto.getSaleCountry())){
+            String[] saleCountryList = dto.getSaleCountry().split(",");
+            for (String saleMethod : saleCountryList) {
+                BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), saleMethod);
+                if (ObjectUtils.isEmpty(productBrand)) {
+                    errorMsgList.add("销售国家在系统中未找到");
+                    break;
+                }
+            }
+        }
+      /*
+        List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+        List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+        req.setSaleCountry(StringUtils.join(nameList, ","));*/
+
 
         //存在侵权风险
         String pirateRisk = dto.getPirateRisk();
@@ -348,6 +361,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productPurchaseDTO.setActualArrivalTime(actualArrivalTime);
         productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
+
         //产品销售信息
         BeanMapper.copy(dto, productSaleDTO);
         productSaleDTO.setListingTime(listingTime);
