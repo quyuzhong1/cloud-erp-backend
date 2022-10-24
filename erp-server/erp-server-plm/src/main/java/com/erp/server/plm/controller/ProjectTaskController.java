@@ -272,7 +272,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/approvalPass")
     //@RequestPermissions("plm:task:approvalPass")
-    public ApiResult approvalPass(@RequestBody TaskOperateDTO  dto) {
+    public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO  dto) {
         Boolean result = taskService.approvalPass(dto);
         return result == true ? success() : failure();
     }
