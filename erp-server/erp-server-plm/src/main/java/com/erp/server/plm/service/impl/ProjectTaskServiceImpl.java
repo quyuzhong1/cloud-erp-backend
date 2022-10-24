@@ -1430,7 +1430,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
         if (!Objects.isNull(taskEntity)) {
-            taskEntity.setRealityStartTime(new Date());
+            taskEntity.setRealityEndTime(new Date());
             taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
             updateById(taskEntity);
             //保存记录
