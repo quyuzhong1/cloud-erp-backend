@@ -31,7 +31,8 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
     public List<String> getDocsIdsByUserId(String uid) {
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryUserId,uid);
+        queryWrapper.eq(DocsPermissionEntity::getQueryUserId,uid).or()
+                .eq(DocsPermissionEntity::getQueryUserId,"");
         return this.listObjs(queryWrapper,Object::toString);
     }
 }

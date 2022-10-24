@@ -274,7 +274,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
+        String userId = "1549948476757303297";
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -309,6 +309,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
             pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
+            List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+            //获取流程集合
+            List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(processIds)) {
+                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, processIds);
+                //要给流程任务的id
+                List<TaskPagingShowDTO> list = pageData.getRecords();
+                for (TaskPagingShowDTO show : list) {
+                    TaskShowDTO showDTO = myToDoList.stream().filter(t -> t.getProcessInstanceId().equals(show.getProcessId())).findFirst().orElse(null);
+                    if (showDTO != null) {
+                        show.setProcessTaskId(showDTO.getTaskId());
+                    }
+                }
+            }
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -1133,7 +1147,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //统计项目状态为  不是进行中的任务
         long releasedCount = list.stream().filter(t -> !ingCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+            throw new ServiceException(ApiError.ERROR_95033);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.CLOSE.getCode(), null, null);
         if (flag) {
@@ -1283,16 +1297,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer state = checkTaskState(list);
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+        //审核中
+        Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         // 只有待审核 和 完成待审核 的状态 才可以审核通过
-        if (!waitConfirmCode.equals(state) && !finishWaitConfirmCode.equals(state)) {
+        if (!waitConfirmCode.equals(state) &&
+                !finishWaitConfirmCode.equals(state) &&
+                !approvalIngCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
-        //审核中
-        Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
+
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
+        String comment = dto.getComment();
+        if (StringUtils.isBlank(comment)) {
+            comment = "";
+        }
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
             TaskHandleDataDTO handleData = taskDataList.stream().filter(d -> d.getProcessId().equals(item.getProcessId())).findFirst().orElse(null);
@@ -1301,7 +1322,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 approveProcess.setTaskId(handleData.getProcessTaskId());
                 approveProcess.setProcessInstanceId(item.getProcessId());
                 approveProcess.setUserId(loginUser.getUid());
-                approveProcess.setComment(dto.getComment());
+                approveProcess.setComment(comment);
                 workflowFeign.taskPass(approveProcess);
             }
         }
@@ -1324,7 +1345,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-       checkTaskState(list);
+        checkTaskState(list);
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         long count = list.stream().filter(t -> t.getStatus() != approvalIngCode).count();
