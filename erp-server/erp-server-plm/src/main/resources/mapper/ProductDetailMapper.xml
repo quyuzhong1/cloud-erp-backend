@@ -245,7 +245,19 @@
 		customs_code,
 		declare_element,
 		english_material,
-		english_usage
+		english_usage,
+        pp.ean,
+        pp.planOrderQty,
+        pp.placeOrderTime,
+        pp.planArrivalTime,
+        pp.moq,
+        pp.deliveryCycle,
+        pp.actualArrivalTime,
+        pp.arrivalState,
+        pp.purchaseUserId purchaseUser,
+        pp.mainSupplier,
+        pp.secondSupplier,
+        pp.actualArrivalQty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"

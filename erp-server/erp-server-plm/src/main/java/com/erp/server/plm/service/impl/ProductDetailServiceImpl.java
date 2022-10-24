@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,9 +12,12 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
@@ -22,6 +26,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
+import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -792,10 +797,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
-            //状态编码转换成中文
+            //销售状态编码转换成中文
             req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
             if (StringUtils.isNotBlank(req.getSaleState())) {
                 req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
+            }
+            //采购状态编码转换成中文
+            if (StringUtils.isNotBlank(req.getArrivalState())) {
+                req.setSaleState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
+            }
+            if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
+                baseSearchDTO.setSearchKeyword(req.getPurchaseUser());
+                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
+                List<FindUserDTO> userList =  listApiResult.getData();
+                if (!CollectionUtils.isEmpty(userList)) {
+                    req.setPurchaseUser(userList.get(0).getUserName());
+                }
             }
 
             String[] split = req.getSaleCountry().split(",");

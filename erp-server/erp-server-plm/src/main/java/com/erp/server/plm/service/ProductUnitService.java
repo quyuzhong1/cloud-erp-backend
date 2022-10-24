@@ -37,4 +37,13 @@ public interface ProductUnitService extends IService<ProductUnitEntity> {
      * @return java.lang.Boolean
      **/
     Boolean delete(String id);
+
+    /**
+     * @Description 查询单位名称是否存在
+     * @Author Luo_WG
+     * @Date 2022/9/27 15:02
+     * @param name 单位名称
+     * @return java.lang.Boolean
+     **/
+    ProductUnitEntity checkUnitName(String name);
 }

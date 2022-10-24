@@ -11,6 +11,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
 import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
@@ -81,6 +82,10 @@ public class ProductDetailController extends BaseController {
 
     @Resource
     private BasicDictService basicDictService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     /**
      * 产品信息-主页列表-查询1
@@ -505,7 +510,7 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
     public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();

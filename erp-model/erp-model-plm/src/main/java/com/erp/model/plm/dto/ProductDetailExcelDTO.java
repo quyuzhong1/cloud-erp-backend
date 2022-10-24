@@ -1,11 +1,14 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.alibaba.excel.annotation.ExcelProperty;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品sku信息导入
@@ -151,6 +154,42 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "单箱数量", index = 44)
     private BigDecimal boxQty;
 
-    @ExcelProperty(value = "错误信息", index = 45)
+    @ExcelProperty(value = "ean码", index = 45)
+    private String ean;
+
+    @ExcelProperty(value = "计划首批下单量", index = 46)
+    private String planOrderQty;
+
+    @ExcelProperty(value = "首批下单时间", index = 47)
+    private String placeOrderTime;
+
+    @ExcelProperty(value = "预计首批到货时间", index = 48)
+    private String planArrivalTime;
+
+    @ExcelProperty(value = "MOQ(最小起订量)", index = 49)
+    private Integer moq;
+
+    @ExcelProperty(value = "交货周期(天)", index = 50)
+    private BigDecimal deliveryCycle;
+
+    @ExcelProperty(value = "实际首批到货时间", index = 51)
+    private String actualArrivalTime;
+
+    @ExcelProperty(value = "首批到货状态", index = 52)
+    private String arrivalState;
+
+    @ExcelProperty(value = "采购员", index = 53)
+    private String purchaseUser;
+
+    @ExcelProperty(value = "一级供应商", index = 54)
+    private String mainSupplier;
+
+    @ExcelProperty(value = "二级供应商", index = 55)
+    private String secondSupplier;
+
+    @ExcelProperty(value = "实际首批到货量", index = 56)
+    private Integer actualArrivalQty;
+
+    @ExcelProperty(value = "错误信息", index = 57)
     private String errorMsg;
 }
