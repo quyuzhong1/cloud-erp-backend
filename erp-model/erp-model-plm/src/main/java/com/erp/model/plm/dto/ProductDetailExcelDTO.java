@@ -83,13 +83,13 @@ public class ProductDetailExcelDTO {
     private String actualGpmUsd;
 
     @ExcelProperty(value = "年目标销售量", index = 21)
-    private Integer yearSaleQty;
+    private Long yearSaleQty;
 
     @ExcelProperty(value = "年目标销售额", index = 22)
     private BigDecimal yearSaleAmount;
 
     @ExcelProperty(value = "月目标销售量", index = 23)
-    private Integer monthSaleQty;
+    private Long monthSaleQty;
 
     @ExcelProperty(value = "月目标销售额", index = 24)
     private BigDecimal monthSaleAmount;
@@ -158,7 +158,7 @@ public class ProductDetailExcelDTO {
     private String ean;
 
     @ExcelProperty(value = "计划首批下单量", index = 46)
-    private String planOrderQty;
+    private Integer planOrderQty;
 
     @ExcelProperty(value = "首批下单时间", index = 47)
     private Date placeOrderTime;

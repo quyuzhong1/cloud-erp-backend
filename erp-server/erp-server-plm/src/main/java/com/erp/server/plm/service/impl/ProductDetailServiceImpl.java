@@ -852,11 +852,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setPurchaseUser(userList.get(0).getUserName());
                 }
             }
-
-            String[] split = req.getSaleCountry().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setSaleCountry(StringUtils.join(nameList, ","));
+            if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+                String[] split = req.getSaleCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setSaleCountry(StringUtils.join(nameList, ","));
+            }
         });
 
         StringBuffer sb = new StringBuffer();
