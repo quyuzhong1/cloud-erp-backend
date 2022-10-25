@@ -50,7 +50,7 @@ public class ProductDetailExcelDTO {
     private String property;
 
     @ExcelProperty(value = "计划上市时间", index = 10)
-    private String planListingTime;
+    private Date planListingTime;
 
     @ExcelProperty(value = "单位", index = 11)
     private String unitName;
@@ -98,10 +98,10 @@ public class ProductDetailExcelDTO {
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 26)
-    private String listingTime;
+    private Date listingTime;
 
     @ExcelProperty(value = "退市时间", index = 27)
-    private String delistingTime;
+    private Date delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 28)
     private String isFinishedImg;
@@ -161,10 +161,10 @@ public class ProductDetailExcelDTO {
     private String planOrderQty;
 
     @ExcelProperty(value = "首批下单时间", index = 47)
-    private String placeOrderTime;
+    private Date placeOrderTime;
 
     @ExcelProperty(value = "预计首批到货时间", index = 48)
-    private String planArrivalTime;
+    private Date planArrivalTime;
 
     @ExcelProperty(value = "MOQ(最小起订量)", index = 49)
     private Integer moq;
@@ -173,7 +173,7 @@ public class ProductDetailExcelDTO {
     private BigDecimal deliveryCycle;
 
     @ExcelProperty(value = "实际首批到货时间", index = 51)
-    private String actualArrivalTime;
+    private Date actualArrivalTime;
 
     @ExcelProperty(value = "首批到货状态", index = 52)
     private String arrivalState;

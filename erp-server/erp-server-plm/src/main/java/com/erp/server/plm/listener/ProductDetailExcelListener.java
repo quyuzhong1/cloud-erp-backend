@@ -45,7 +45,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private List<ProductDetailExcelDTO> list;
 
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductUnitService productUnitService,
                                       BasicCategoryService basicCategoryService, BasicDictService basicDictService, SysUserFeign sysUserFeign) {
@@ -188,14 +188,14 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             errorMsgList.add("产品属性在系统中未找到");
         }
 
-        Date planListingTime = null;
-        if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
+        Date planListingTime = dto.getPlanListingTime();
+        /*if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
             try {
                 planListingTime = simpleDateFormat.parse(dto.getPlanListingTime());
             } catch (ParseException e) {
                 errorMsgList.add("计划上市时间日期格式不正确");
             }
-        }
+        }*/
 
         ProductUnitEntity productUnitEntity = new ProductUnitEntity();
         if (StringUtils.isNotBlank(dto.getUnitName())) {
@@ -205,50 +205,50 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
         }
 
-        Date listingTime = null;
-        if (StringUtils.isNotBlank(dto.getListingTime())) {
+        Date listingTime = dto.getListingTime();
+        /*if (StringUtils.isNotBlank(dto.getListingTime())) {
             try {
                 listingTime = simpleDateFormat.parse(dto.getListingTime());
             } catch (ParseException e) {
                 errorMsgList.add("上市时间日期格式不正确");
             }
-        }
+        }*/
 
-        Date delistingTime = null;
-        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
+        Date delistingTime = dto.getDelistingTime();
+/*        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
             try {
                 delistingTime = simpleDateFormat.parse(dto.getDelistingTime());
             } catch (ParseException e) {
                 errorMsgList.add("退市时间日期格式不正确");
             }
-        }
+        }*/
 
-        Date placeOrderTime = null;
-        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
+        Date placeOrderTime = dto.getPlaceOrderTime();
+/*        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
             try {
                 placeOrderTime = simpleDateFormat.parse(dto.getPlaceOrderTime());
             } catch (ParseException e) {
                 errorMsgList.add("首批下单时间日期格式不正确");
             }
-        }
+        }*/
 
-        Date planArrivalTime = null;
-        if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
+        Date planArrivalTime = dto.getPlanArrivalTime();
+/*        if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
             try {
                 planArrivalTime = simpleDateFormat.parse(dto.getPlanArrivalTime());
             } catch (ParseException e) {
                 errorMsgList.add("预计首批到货时间日期格式不正确");
             }
-        }
+        }*/
 
-        Date actualArrivalTime = null;
-        if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
+        Date actualArrivalTime = dto.getActualArrivalTime();
+/*        if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
             try {
                 actualArrivalTime = simpleDateFormat.parse(dto.getActualArrivalTime());
             } catch (ParseException e) {
                 errorMsgList.add("实际首批到货时间日期格式不正确");
             }
-        }
+        }*/
 
         Integer saleState = null;
         if (StringUtils.isNotBlank(dto.getSaleState())) {
