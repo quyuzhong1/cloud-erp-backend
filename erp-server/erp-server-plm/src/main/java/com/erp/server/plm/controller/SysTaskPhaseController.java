@@ -67,7 +67,7 @@ public class SysTaskPhaseController extends BaseController {
      */
     @PostMapping("/remove")
     //@RequestPermissions("plm:sys:taskPhase:remove")
-    public ApiResult remove(String id) {
+    public ApiResult remove(@RequestParam(value = "id") String id) {
         boolean flag = sysTaskPhaseService.removeSysTaskPhase(id);
         return flag==true?success():failure();
     }
