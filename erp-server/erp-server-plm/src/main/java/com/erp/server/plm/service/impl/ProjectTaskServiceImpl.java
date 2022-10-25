@@ -437,6 +437,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
+        if(TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)){
+            taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
@@ -756,6 +759,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
+        if(TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)){
+            taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        }
+
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));

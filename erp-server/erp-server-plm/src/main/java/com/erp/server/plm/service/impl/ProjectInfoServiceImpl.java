@@ -154,7 +154,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //结束时间
         project.setEndTime(dto.getEndTime());
         project.setDescribe(dto.getDescribe());
-        project.setProjectStatus(ProjectStateEnum.YES_START.getState());
+        project.setProjectStatus(ProjectStateEnum.ING.getState());
         boolean flag = updateById(project);
         Integer sourceType = dto.getSourceType();
         if (flag) {
@@ -233,6 +233,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
+        //获取归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
