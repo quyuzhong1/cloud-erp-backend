@@ -244,12 +244,16 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         } else {
             pageData = baseMapper.paging(query, params, archiveProductIds);
         }
+
+        Integer finish=TaskStateEnum.FINISH.getCode();
+        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             for (ProductShowDTO item : list) {
+                List<ProjectTaskEntity> productTaskList=taskList.stream().filter(t->item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
 
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -262,16 +266,16 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 }
 
                 //这是立项任务
-                int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 //这是立项完成任务
-                int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
+                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())))
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 item.setApprovalTaskCount(approvalTaskCount);
 
                 //这是项目任务
-                int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-                int projectFinishTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
+                int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus()))).
                         collect(Collectors.toList()).size();
 
                 item.setProjectTaskCount(projectTaskCount);

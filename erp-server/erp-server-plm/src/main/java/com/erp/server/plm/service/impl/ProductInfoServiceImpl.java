@@ -343,6 +343,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             pageData = baseMapper.paging(query, params, archiveProductIds);
         }
         List<ProductShowDTO> list = pageData.getRecords();
+        Integer finish=TaskStateEnum.FINISH.getCode();
+        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
@@ -354,17 +357,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if(ProductConstant.ITERATION_PRODUCT.equals(item.getType())){
                     item.setIfIteration(true);
                 }
-
+                List<ProjectTaskEntity> productTaskList=taskList.stream().filter(t->item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
                 //这是立项任务
-                int approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())&&item.getProductId().equals(t.getProductId())).collect(Collectors.toList()).size();
+                int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 item.setApprovalTaskCount(approvalTaskCount);
                 //这是立项完成任务
-                int approvalFinishTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus()))
+                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) &&(finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())))
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 //这是项目任务
-                int projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-                int projectFinishTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && TaskStateEnum.FINISH.getCode().equals(t.getStatus())).
+                int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
+                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus()))).
                         collect(Collectors.toList()).size();
 
                 item.setProjectTaskCount(projectTaskCount);
