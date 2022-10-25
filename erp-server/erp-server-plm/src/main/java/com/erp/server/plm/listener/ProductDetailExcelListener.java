@@ -5,6 +5,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
+import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
@@ -25,6 +26,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -94,8 +96,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
-        //产品销售信息
-        ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
             productSkuBaseInfoDTO.setId(productBy.getSkuId());
@@ -128,14 +129,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 }
             }
         }
+        String saleCountryStr = "";
         if(StringUtils.isNotBlank(dto.getSaleCountry())){
             String[] saleCountryList = dto.getSaleCountry().split(",");
-            for (String saleMethod : saleCountryList) {
-                BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), saleMethod);
-                if (ObjectUtils.isEmpty(productBrand)) {
+            for (String saleCountry : saleCountryList) {
+                BasicDictEntity productCountry = basicDictService.checkBasicDict(BasicDictTypeEnum.COUNTRY.getCode(), saleCountry);
+                if (ObjectUtils.isEmpty(productCountry)) {
                     errorMsgList.add("销售国家在系统中未找到");
                     break;
                 }
+                saleCountryStr = saleCountryStr + productCountry.getId() + ",";
             }
         }
       /*
@@ -188,15 +191,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             errorMsgList.add("产品属性在系统中未找到");
         }
 
-        Date planListingTime = dto.getPlanListingTime();
-        /*if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
-            try {
-                planListingTime = simpleDateFormat.parse(dto.getPlanListingTime());
-            } catch (ParseException e) {
-                errorMsgList.add("计划上市时间日期格式不正确");
-            }
-        }*/
-
         ProductUnitEntity productUnitEntity = new ProductUnitEntity();
         if (StringUtils.isNotBlank(dto.getUnitName())) {
             productUnitEntity = productUnitService.checkUnitName(dto.getName());
@@ -204,51 +198,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("单位名称在系统中不存在");
             }
         }
-
-        Date listingTime = dto.getListingTime();
-        /*if (StringUtils.isNotBlank(dto.getListingTime())) {
-            try {
-                listingTime = simpleDateFormat.parse(dto.getListingTime());
-            } catch (ParseException e) {
-                errorMsgList.add("上市时间日期格式不正确");
-            }
-        }*/
-
-        Date delistingTime = dto.getDelistingTime();
-/*        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
-            try {
-                delistingTime = simpleDateFormat.parse(dto.getDelistingTime());
-            } catch (ParseException e) {
-                errorMsgList.add("退市时间日期格式不正确");
-            }
-        }*/
-
-        Date placeOrderTime = dto.getPlaceOrderTime();
-/*        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
-            try {
-                placeOrderTime = simpleDateFormat.parse(dto.getPlaceOrderTime());
-            } catch (ParseException e) {
-                errorMsgList.add("首批下单时间日期格式不正确");
-            }
-        }*/
-
-        Date planArrivalTime = dto.getPlanArrivalTime();
-/*        if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
-            try {
-                planArrivalTime = simpleDateFormat.parse(dto.getPlanArrivalTime());
-            } catch (ParseException e) {
-                errorMsgList.add("预计首批到货时间日期格式不正确");
-            }
-        }*/
-
-        Date actualArrivalTime = dto.getActualArrivalTime();
-/*        if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
-            try {
-                actualArrivalTime = simpleDateFormat.parse(dto.getActualArrivalTime());
-            } catch (ParseException e) {
-                errorMsgList.add("实际首批到货时间日期格式不正确");
-            }
-        }*/
 
         Integer saleState = null;
         if (StringUtils.isNotBlank(dto.getSaleState())) {
@@ -266,7 +215,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
         }
 
-
         BasicDictEntity declareProperty = new BasicDictEntity();
         if (StringUtils.isNotBlank(dto.getProductProperty())) {
             declareProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.DECLARE_PROPERTY.getCode(), dto.getProductProperty());
@@ -282,28 +230,18 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("图片是否完成：是 或者 否");
 
             }
-            if(isFinishedImg.equals("是")){
-                productSaleDTO.setIsFinishedImg(1);
-            } else {
-                productSaleDTO.setIsFinishedImg(2);
-            }
         }
+
         //视频是否完成
         String isFinishedVideo = dto.getIsFinishedVideo();
         if(StringUtils.isNotBlank(isFinishedVideo)) {
             if(!isFinishedVideo.equals("是") && !isFinishedVideo.equals("否")){
                 errorMsgList.add("视频是否完成：是 或者 否");
-
-            }
-            if(isFinishedVideo.equals("是")){
-                productSaleDTO.setIsFinishedVideo(1);
-            } else {
-                productSaleDTO.setIsFinishedVideo(2);
             }
         }
+
         String errStr = "";
         if (errorMsgList.size() > 0) {
-
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
                 errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
@@ -312,6 +250,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             list.add(dto);
             return;
         }
+
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         //spu信息
         productInfoDTO.setName(dto.getName());
@@ -337,40 +276,72 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
+
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(planListingTime);
+        productSkuBaseInfoDTO.setPlanListingTime(dto.getPlanListingTime());
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
+
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
         productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
         productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
+
         //产品成本信息表
         ProductCostDTO productCostDTO = new ProductCostDTO();
         BeanMapper.copy(dto, productCostDTO);
         productNoSpecDTO.setProductCostDTO(productCostDTO);
+
         //采购信息信息
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
-        BeanMapper.copy(dto, productPurchaseDTO);
-        productPurchaseDTO.setPlaceOrderTime(placeOrderTime);
-        productPurchaseDTO.setPlanArrivalTime(planArrivalTime);
-        productPurchaseDTO.setActualArrivalTime(actualArrivalTime);
+        productPurchaseDTO.setEan(dto.getEan());
+        productPurchaseDTO.setPlanOrderQty(dto.getPlanOrderQty());
+        productPurchaseDTO.setPlaceOrderTime(dto.getPlaceOrderTime());
+        productPurchaseDTO.setPlanArrivalTime(dto.getPlanArrivalTime());
+        productPurchaseDTO.setMoq(dto.getMoq());
+        productPurchaseDTO.setDeliveryCycle(dto.getDeliveryCycle());
+        productPurchaseDTO.setActualArrivalTime(dto.getActualArrivalTime());
+        productPurchaseDTO.setArrivalState(purchaseState);
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
         }
+        productPurchaseDTO.setMainSupplier(dto.getMainSupplier());
+        productPurchaseDTO.setSecondSupplier(dto.getSecondSupplier());
+        productPurchaseDTO.setActualArrivalQty(dto.getActualArrivalQty());
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
 
         //产品销售信息
-        BeanMapper.copy(dto, productSaleDTO);
-        productSaleDTO.setListingTime(listingTime);
-        productSaleDTO.setDelistingTime(delistingTime);
+        ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+        productSaleDTO.setYearSaleQty(dto.getYearSaleQty());
+        productSaleDTO.setYearSaleAmount(dto.getYearSaleAmount());
+        productSaleDTO.setMonthSaleQty(dto.getMonthSaleQty());
+        productSaleDTO.setMonthSaleAmount(dto.getMonthSaleAmount());
+        productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
+/*        productSaleDTO.setListingTime(dto.getListingTime());
+        productSaleDTO.setDelistingTime(dto.getDelistingTime());   */
+        productSaleDTO.setListingTime(null);
+        productSaleDTO.setDelistingTime(null);
         productSaleDTO.setSaleState(saleState);
-
+        if (StringUtils.isNotBlank(isFinishedImg)) {
+            if (isFinishedImg.equals("是")) {
+                productSaleDTO.setIsFinishedImg(1);
+            } else {
+                productSaleDTO.setIsFinishedImg(2);
+            }
+        }
+        if (StringUtils.isNotBlank(isFinishedVideo)) {
+            if (isFinishedVideo.equals("是")) {
+                productSaleDTO.setIsFinishedVideo(1);
+            } else {
+                productSaleDTO.setIsFinishedVideo(2);
+            }
+        }
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
+
         //产品物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
         BeanMapper.copy(dto, productLogisticsDTO);
@@ -382,6 +353,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
         productNoSpecDTO.setProductPackDTO(productPackDTO);
+
         /*//产品证书信息
         ProductCertificateDTO productCertificateDTO = new ProductCertificateDTO();
         BeanMapper.copy(dto, productCertificateDTO);
