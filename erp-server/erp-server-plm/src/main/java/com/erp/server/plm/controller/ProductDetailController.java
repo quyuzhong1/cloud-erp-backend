@@ -96,7 +96,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     //@RequestPermissions("plm:product:detail:list")
-    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list")
+    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
