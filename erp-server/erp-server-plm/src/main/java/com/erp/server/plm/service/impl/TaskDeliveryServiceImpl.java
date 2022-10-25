@@ -18,6 +18,7 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Autowired
     private RoleRefMemberService roleRefMemberService;
 
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
+
     /**
      * 获取任务的需要交付的文档数
      *
@@ -65,7 +69,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
             //先删除文档 不存在的数据
-            removeTaskDocsByTaskId(taskId, docsId);
+            removeTaskDocs(existDocsIds, docsId);
 
             //需要过滤一下的
             deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
@@ -107,7 +111,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     private List<TaskDeliveryDocsEntity> getExistDocs(String taskId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId,taskId);
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
         return this.list(queryWrapper);
     }
 
@@ -188,12 +192,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
         //保存交付文档
         if (CollectionUtils.isNotEmpty(docsList)) {
-            //先删除文档
-            removeTaskDocsByTaskId(taskId, docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList()));
-
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+
+            //先删除文档
+            removeTaskDocs(existDocsIds, docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList()));
+
+
             //需要过滤一下的
             docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getDocsId())).collect(Collectors.toList());
 
@@ -295,15 +301,30 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     /**
      * 根据任务id 删除 文档
      *
-     * @param taskId
+     * @param existDocsIds
      * @return void
      * @author yl
      * @date 2022-09-28 15:23
      */
-    public void removeTaskDocsByTaskId(String taskId, List<String> docsIds) {
+    public void removeTaskDocs(List<String> existDocsIds, List<String> docsIds) {
+        List<String> intersectionList = (List<String>) CollectionUtils.intersection(existDocsIds, docsIds);
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.notIn(TaskDeliveryDocsEntity::getId, docsIds);
-        this.remove(queryWrapper);
+        //表示没有交集
+        if (intersectionList.size() == 0) {
+            if (CollectionUtils.isNotEmpty(existDocsIds)) {
+                queryWrapper.in(TaskDeliveryDocsEntity::getId, existDocsIds);
+                taskDocsFinishService.removeByDocsIds(existDocsIds);
+                this.remove(queryWrapper);
+            }
+
+        }
+        //去差集
+        List<String> subtractList = (List<String>) CollectionUtils.intersection(docsIds, existDocsIds);
+        if (subtractList.size() != 0) {
+            queryWrapper.in(TaskDeliveryDocsEntity::getId, subtractList);
+            taskDocsFinishService.removeByDocsIds(subtractList);
+            this.remove(queryWrapper);
+        }
 
     }
 }

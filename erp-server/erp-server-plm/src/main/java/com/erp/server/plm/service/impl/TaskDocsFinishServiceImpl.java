@@ -142,7 +142,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
         finishEntity.setUploadType(dto.getUploadType());
-
+        finishEntity.setOldFileUrl(fileUrl);
+        finishEntity.setOldUploadType(dto.getUploadType());
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());
@@ -225,7 +226,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         Integer taskState = taskEntity.getStatus();
         //当不为这两个的时候是不能变更的
-        if (!taskState.equals(finishCode) || !approvalPassCode.equals(taskState)) {
+        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
         String finishDocsId = dto.getFinishDocsId();
@@ -325,6 +326,26 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             }
 
         }
+
+    }
+
+
+    /**
+     * 刪除完成的文档
+     *
+     * @param existDocsIds
+     * @return void
+     * @author yl
+     * @date 2022-10-25 11:06
+     */
+    @Override
+    public void removeByDocsIds(List<String> existDocsIds) {
+        if(CollectionUtils.isNotEmpty(existDocsIds)){
+            LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(TaskDocsFinishEntity::getTaskDocsId,existDocsIds);
+            this.remove(queryWrapper);
+        }
+
 
     }
 

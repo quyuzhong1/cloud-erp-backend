@@ -108,6 +108,9 @@ public class TaskDocsFinishEntity implements Serializable {
     @TableField("old_file_url")
     private String oldFileUrl;
 
+    @TableField("old_upload_type")
+    private Integer oldUploadType;
+
 
 
 

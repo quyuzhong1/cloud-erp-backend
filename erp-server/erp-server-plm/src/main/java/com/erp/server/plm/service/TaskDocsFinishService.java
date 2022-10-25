@@ -29,4 +29,6 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
     Boolean changeFile(TaskChangeFileDTO dto);
 
     void checkTaskDocsUpload(List<String> allTaskIds);
+
+    void removeByDocsIds(List<String> existDocsIds);
 }
