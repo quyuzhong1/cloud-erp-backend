@@ -197,6 +197,22 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     }
 
+    /**
+     * 方法说明
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-25 19:08
+     */
+    @Override
+    public List<String> getAllSysName() {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectPhaseEntity::getName);
+        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys,IsConstant.YES);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
+
     private void checkPhaseTask(String id) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);

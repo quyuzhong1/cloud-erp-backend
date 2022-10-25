@@ -2,6 +2,7 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.service.SysTaskPhaseService;
@@ -82,7 +83,7 @@ public class SysTaskPhaseController extends BaseController {
      */
     @GetMapping("/list")
     //@RequestPermissions("plm:sys:taskPhase:list")
-    public ApiResult<List<SysTaskPhaseEntity>> list() {
+    public ApiResult<List<BasicDTO>> list() {
         return success(sysTaskPhaseService.getSysTaskPhaseList());
     }
 

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -19,10 +20,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +34,8 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
 
 
     @Autowired
-    private ProjectPhaseService  projectPhaseService;
+    private ProjectPhaseService projectPhaseService;
+
     /**
      * 修改阶段名称
      *
@@ -129,10 +128,21 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     }
 
     @Override
-    public List<SysTaskPhaseEntity> getSysTaskPhaseList() {
-        LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByDesc(SysTaskPhaseEntity::getIsProjectApproval);
-        return this.list(queryWrapper);
+    public List<BasicDTO> getSysTaskPhaseList() {
+        List<SysTaskPhaseEntity> list = this.list();
+        List<BasicDTO> resultList = new ArrayList<>(list.size());
+        List<String> projectPhaseNameList = projectPhaseService.getAllSysName();
+        for (SysTaskPhaseEntity item : list) {
+            BasicDTO basic = new BasicDTO();
+            basic.setId(item.getId());
+            basic.setName(item.getName());
+            if (projectPhaseNameList.contains(item.getName())) {
+                basic.setIfQuote(true);
+            }
+            resultList.add(basic);
+        }
+
+        return resultList;
     }
 
 

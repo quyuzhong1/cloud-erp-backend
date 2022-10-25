@@ -36,4 +36,6 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
     Boolean removeTaskPhaseById(String id);
 
     void checkTaskQuote(String name);
+
+    List<String> getAllSysName();
 }
