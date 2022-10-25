@@ -161,9 +161,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //检查密码是否正确
         boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
-        if (!passwordFlag) {
+/*        if (!passwordFlag) {
             return null;
-        }
+        }*/
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE == userState) {
