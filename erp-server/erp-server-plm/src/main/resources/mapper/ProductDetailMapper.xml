@@ -247,17 +247,17 @@
 		english_material,
 		english_usage,
         pp.ean,
-        pp.planOrderQty,
-        pp.placeOrderTime,
-        pp.planArrivalTime,
+        pp.plan_order_qty,
+        pp.place_order_time,
+        pp.plan_arrival_time,
         pp.moq,
-        pp.deliveryCycle,
-        pp.actualArrivalTime,
-        pp.arrivalState,
-        pp.purchaseUserId purchaseUser,
-        pp.mainSupplier,
-        pp.secondSupplier,
-        pp.actualArrivalQty
+        pp.delivery_cycle,
+        pp.actual_arrival_time,
+        pp.arrival_state,
+        pp.purchase_user_id AS purchase_user,
+        pp.main_supplier,
+        pp.second_supplier,
+        pp.actual_arrival_qty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"

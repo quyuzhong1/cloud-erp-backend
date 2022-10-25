@@ -4,7 +4,11 @@ import com.alibaba.excel.util.CollectionUtils;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
+import com.common.core.utils.ReflectUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.common.annotation.DataPermission;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.spring5.context.SpringContextUtils;
 
 import javax.annotation.Resource;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -111,7 +116,9 @@ public class DataPermissionAspect {
 
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream = requestPermissionsList.stream().filter(req -> req.getPermissionsCode().equals(controllerDataScope.menuCode())).collect(Collectors.toList());
-
+        if (CollectionUtils.isEmpty(userRequestPermissionsDTOStream)) {
+            throw new ServiceException(ApiError.ERROR_1013);
+        }
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
         for (SysUserDTO sysUserDTO : depUserList) {
@@ -136,7 +143,7 @@ public class DataPermissionAspect {
                 sqlParam = query(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
                 break;
             case "delete":
-
+                delete(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
                 break;
             case "update":
 
@@ -198,7 +205,7 @@ public class DataPermissionAspect {
     }
 
     /**
-     *
+     * 删除
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
      * @param userRequestPermissionsDTOStream 权限列表
@@ -219,7 +226,7 @@ public class DataPermissionAspect {
         if (arg instanceof List) {
             inputIdList = (List<Object>) arg;
         } else if (arg instanceof String[]) {
-            inputIdList = Arrays.asList((String[]) args[0]);
+            inputIdList = Arrays.asList(args[0]);
         } else if (arg instanceof String) {
             inputIdList = Collections.singletonList(arg);
         } else if (arg instanceof Map) {
@@ -258,21 +265,41 @@ public class DataPermissionAspect {
         if(CollectionUtils.isEmpty(inputIdList)){
             return;
         }
-       // List<Object> businessData = service.getById(inputIdList);
+        Object businessData = service.getById(arg.toString());
 
-        StringBuilder sqlString = new StringBuilder();
+        String s = JSONObject.toJSONString(businessData);
+
+        JSONObject jsonObject = JSONObject.parseObject(s);
+
+        String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
-                sqlString = new StringBuilder();
                 break;
             } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
+                if (!userList.contains(userId)) {
+                    throw new ServiceException(ApiError.ERROR_1013);
+                }
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableField() + " = " + user.getUid() + " ");
+                if (!user.equals(userId)) {
+                    throw new ServiceException(ApiError.ERROR_1013);
+                }
             }
         }
-        return ;
+    }
+
+    /**
+     * 修改
+     * @Author Luo_WG
+     * @Date 2022/10/21 9:57
+     * @param userRequestPermissionsDTOStream 权限列表
+     * @param userList 部门用户列表
+     * @param user 用户信息
+     * @param dataPermission 自定义注解信息
+     * @return java.lang.String
+     **/
+    public void update(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+
     }
 
     /**
@@ -309,11 +336,11 @@ public class DataPermissionAspect {
         }
         return null;
     }
-
-/*    *//**
+/*
+    *//**
      * 通过反向 获取参数中的对象
      *
-     * @param entityName 对象名
+     * @param entityName 对象名 WhDeliveryPlanEntity
      * @param obj        参数
      * @return
      *//*
@@ -333,5 +360,35 @@ public class DataPermissionAspect {
         }
 
         return invokeClass;
+    }
+
+    *//**
+     * 解析对象中指定的方法
+     *
+     * @param fieldKey   所需要指定的字段名，如：addUser,add_user
+     * @param entityName 该字段名所在的实体类的名字，驼峰标识，第一个字母需要大写
+     * @param obj        所需要遍历的实体类
+     * @return 返回解析后该字段的值
+     *//*
+    private Set<String> getObjFieldValue(String fieldKey, String entityName, Object obj) {
+        Set<String> containSet = new HashSet<>();
+        if (StringUtils.isBlank(fieldKey)) {
+            return containSet;
+        }
+        try {
+            Object invokeClass = getObjClassValue(entityName, obj);
+
+                item = ReflectUtils.toGetMethodName(fieldKey);
+
+                Method method = invokeClass.getClass().getMethod(fieldKey);
+                // 如果list包不含该ID，则认为不可以操作该数据
+                String invoke = (String) method.invoke(invokeClass);
+                if (StringUtils.isNotBlank(invoke)) {
+                    containSet.add(invoke);
+            }
+        } catch (NoSuchMethodException | IllegalAccessException |  InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        return containSet;
     }*/
 }
