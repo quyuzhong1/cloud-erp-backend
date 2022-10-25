@@ -92,7 +92,7 @@ public class DeliveryDocsDTO implements Serializable {
     /**
      * 文件大小
      */
-    private Integer fileSize;
+    private Double fileSize;
 
 
     /**
