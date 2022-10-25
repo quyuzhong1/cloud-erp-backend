@@ -65,7 +65,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
             //先删除文档 不存在的数据
-            removeTaskDocsByTaskId(taskId, docsId);
+            removeTaskDocs(existDocsIds, docsId);
 
             //需要过滤一下的
             deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
@@ -188,12 +188,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
         //保存交付文档
         if (CollectionUtils.isNotEmpty(docsList)) {
-            //先删除文档
-            removeTaskDocsByTaskId(taskId, docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList()));
-
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+
+            //先删除文档
+            removeTaskDocs(existDocsIds, docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList()));
+
+
             //需要过滤一下的
             docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getDocsId())).collect(Collectors.toList());
 
@@ -295,14 +297,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     /**
      * 根据任务id 删除 文档
      *
-     * @param taskId
+     * @param existDocsIds
      * @return void
      * @author yl
      * @date 2022-09-28 15:23
      */
-    public void removeTaskDocsByTaskId(String taskId, List<String> docsIds) {
+    public void removeTaskDocs(List<String> existDocsIds, List<String> docsIds) {
+        List<String> intersectionList= (List<String>) CollectionUtils.intersection(existDocsIds,docsIds);
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.notIn(TaskDeliveryDocsEntity::getId, docsIds);
+        //表示没有交集
+        if(intersectionList.size()==0){
+            queryWrapper.in(TaskDeliveryDocsEntity::getId, existDocsIds);
+        }else{
+            //有
+            queryWrapper.notIn(TaskDeliveryDocsEntity::getId,docsIds);
+        }
         this.remove(queryWrapper);
 
     }

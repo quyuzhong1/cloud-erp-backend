@@ -645,6 +645,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         detailsDTO.setChildTasks(childTasks);
 
+        //获取交付文档
         List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(taskId);
         //获取到任务的属性
         Integer taskProperty = getTaskProperty(taskEntity);
