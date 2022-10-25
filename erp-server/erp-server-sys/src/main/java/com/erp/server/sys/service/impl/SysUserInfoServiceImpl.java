@@ -161,9 +161,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //检查密码是否正确
         boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
-/*        if (!passwordFlag) {
+        if (!passwordFlag) {
             return null;
-        }*/
+        }
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE == userState) {
@@ -176,7 +176,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
