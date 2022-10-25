@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -98,11 +99,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //
         Integer postponeTaskCount = taskCount.getPostponeTaskCount();
         Integer unfinishedTaskCount = taskCount.getUnfinishedTaskCount();
-        int finishRatio = 0;
-        int postponeRatio = 0;
+        double finishRatio = 0;
+        double postponeRatio = 0;
+        Double totalCount=Double.valueOf(totalTaskCount);
         if (totalTaskCount != 0) {
-            finishRatio = (finishTaskCount / totalTaskCount) * 100;
-            postponeRatio = (postponeTaskCount / totalTaskCount) * 100;
+            finishRatio= (Double.valueOf(finishTaskCount)/totalCount)*100;
+
+            postponeRatio = (Double.valueOf(postponeTaskCount) / totalTaskCount) * 100;
         }
         result.setFinishTaskCount(finishTaskCount);
         result.setUnfinishedTaskCount(unfinishedTaskCount);

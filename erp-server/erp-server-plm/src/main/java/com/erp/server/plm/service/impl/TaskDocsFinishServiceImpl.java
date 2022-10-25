@@ -165,10 +165,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @Date 2022/10/14 16:08
      **/
     @Override
-    public Boolean removeById(String id) {
+    public Boolean removeDocs(String id) {
         //删除文档
         //需要判断能否删除
-
         TaskDocsFinishEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95028);

@@ -50,7 +50,7 @@ public class TaskDocsFinishController extends BaseController {
     @PostMapping("/removeFile")
     //@RequestPermissions("plm:finish:docs:removeFile")
     public ApiResult removeFile(@RequestParam(value = "finishDocsId") String finishDocsId) {
-        Boolean flag = taskDocsFinishService.removeById(finishDocsId);
+        Boolean flag = taskDocsFinishService.removeDocs(finishDocsId);
         return flag == true ? success() : failure();
     }
 

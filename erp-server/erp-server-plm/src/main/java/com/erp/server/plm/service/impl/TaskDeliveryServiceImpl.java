@@ -330,16 +330,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 this.remove(queryWrapper);
             }
         }else{
-            //表示没有交集 所有都要删除
-            queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-            queryWrapper.in(TaskDeliveryDocsEntity::getId,existDocsIds);
-            this.remove(queryWrapper);
-            taskDocsFinishService.removeByDocsIds(taskId,existDocsIds);
-
+            if (CollectionUtils.isNotEmpty(existDocsIds)) {
+                //表示没有交集 所有都要删除
+                queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+                queryWrapper.in(TaskDeliveryDocsEntity::getId,existDocsIds);
+                this.remove(queryWrapper);
+                taskDocsFinishService.removeByDocsIds(taskId,existDocsIds);
+            }
         }
-
-
-
     }
 
     public static void main(String[] args) {

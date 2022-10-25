@@ -39,7 +39,7 @@ public class ProjectInfoDTO  implements Serializable {
     /**
      * 完成率
      */
-    private Integer finishRatio;
+    private Double finishRatio;
 
 
     /**
@@ -59,7 +59,7 @@ public class ProjectInfoDTO  implements Serializable {
     /**
      * 延期率
      */
-    private Integer postponeRatio;
+    private Double postponeRatio;
 
     /**
      * 阶段分布
