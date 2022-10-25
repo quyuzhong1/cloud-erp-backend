@@ -87,6 +87,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private TaskOperatorRecordService taskOperatorRecordService;
+    @Autowired
+    private TaskCommentService taskCommentService;
 
     /**
      * 添加系统的产品任务
@@ -660,7 +662,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     docs.setChangeFlag(true);
                     docs.setDeleteFlag(false);
                 }
-                if(taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())){
+                if (taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())) {
                     docs.setDeleteFlag(false);
                 }
             }
@@ -800,7 +802,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime()!=null&&date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
         ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
         taskCountDTO.setFinishTaskCount(finishTaskCount);
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -1348,6 +1350,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-20 14:13
      */
     @Override
+    @Transactional
     public Boolean approvalReject(TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         //审核不通过表示要博回的
@@ -1368,15 +1371,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95046);
         }
 
-
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(taskIdList, approvalIngCode, TaskStateEnum.APPROVAL_NO_PASS.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
-
         }
 
-        //这里应该还一个驳回的流程
+        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        for (String taskId : taskIds) {
+            //添加评论
+            TaskCommentEntity comment = new TaskCommentEntity();
+            comment.setComment(dto.getComment());
+            comment.setTaskId(taskId);
+            comment.setCreateUserName(loginUser.getUserName());
+            comment.setCreateUserId(loginUser.getUid());
+            taskCommentList.add(comment);
+        }
+
+        taskCommentService.batchSaveTaskComment(taskCommentList);
         return flag;
 
     }

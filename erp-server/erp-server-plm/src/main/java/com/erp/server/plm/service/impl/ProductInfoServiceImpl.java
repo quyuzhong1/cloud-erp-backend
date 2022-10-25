@@ -185,7 +185,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> chargeIds = dto.getChargeIds();
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
+        String CategoryId = dto.getCategoryId();
         BeanMapper.copy(dto, entity);
+        BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
+        if(category!=null){
+            entity.setCategory(category.getName());
+        }else{
+            entity.setCategory("");
+        }
+
+
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
@@ -343,8 +352,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             pageData = baseMapper.paging(query, params, archiveProductIds);
         }
         List<ProductShowDTO> list = pageData.getRecords();
-        Integer finish=TaskStateEnum.FINISH.getCode();
-        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
 
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
@@ -354,20 +363,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                 }
-                if(ProductConstant.ITERATION_PRODUCT.equals(item.getType())){
+                if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
-                List<ProjectTaskEntity> productTaskList=taskList.stream().filter(t->item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
+                List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
                 //这是立项任务
                 int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 item.setApprovalTaskCount(approvalTaskCount);
                 //这是立项完成任务
-                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) &&(finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())))
+                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus())))
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 //这是项目任务
                 int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus()))).
+                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus()))).
                         collect(Collectors.toList()).size();
 
                 item.setProjectTaskCount(projectTaskCount);
@@ -586,18 +595,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (approvalStatus != null) {
                 product.setApprovalStatus(approvalStatus);
                 if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
-                    String productId=product.getId();
+                    String productId = product.getId();
                     yesApproval = true;
                     /**
                      * 表示改成已立项 就要去检查该该产品下的 所有的任务
                      *  是否完成
-                      */
-                    List<String> taskIdList=projectTaskService.
+                     */
+                    List<String> taskIdList = projectTaskService.
                             getByProductId(productId).stream()
                             .map(ProjectTaskEntity::getId).collect(Collectors.toList());
 
                     preTaskService.checkPreTaskFinish(taskIdList);
-                    projectTaskService.checkSonTaskFinish(taskIdList,productId);
+                    projectTaskService.checkSonTaskFinish(taskIdList, productId);
                 }
             }
 
@@ -683,13 +692,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.getProductRelevanceList();
     }
 
-    
+
     /**
      * 获取有产品有项目的 信息
-     * @author yl
-     * @date 2022-10-13 17:14
+     *
      * @param
      * @return java.util.List<com.erp.model.plm.dto.ProductProjectDTO>
+     * @author yl
+     * @date 2022-10-13 17:14
      */
     @Override
     public List<ProductProjectDTO> getProductAndProjectList() {

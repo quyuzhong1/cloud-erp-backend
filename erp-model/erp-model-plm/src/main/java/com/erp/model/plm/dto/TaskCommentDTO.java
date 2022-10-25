@@ -41,6 +41,6 @@ public class TaskCommentDTO implements Serializable {
     /**
      * 创建人名
      */
-    private Date createUserName;
+    private String createUserName;
 
 }
