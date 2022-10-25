@@ -30,5 +30,5 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
     void checkTaskDocsUpload(List<String> allTaskIds);
 
-    void removeByDocsIds(List<String> existDocsIds);
+    void removeByDocsIds(String taskId,List<String> existDocsIds);
 }
