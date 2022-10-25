@@ -339,10 +339,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-10-25 11:06
      */
     @Override
-    public void removeByDocsIds(List<String> existDocsIds) {
-        if(CollectionUtils.isNotEmpty(existDocsIds)){
+    public void removeByDocsIds(String taskId, List<String> existDocsIds) {
+        if (CollectionUtils.isNotEmpty(existDocsIds)) {
             LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(TaskDocsFinishEntity::getTaskDocsId,existDocsIds);
+            queryWrapper.in(TaskDocsFinishEntity::getTaskDocsId, existDocsIds);
+            queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
             this.remove(queryWrapper);
         }
 
