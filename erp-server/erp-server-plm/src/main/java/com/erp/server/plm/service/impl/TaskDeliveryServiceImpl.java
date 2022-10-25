@@ -63,11 +63,16 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public void saveDeliveryDocs(String userId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            //这个id 可能是系统的
             List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
-
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+            List<String> parameterIds = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //如果是一样 没有改变文档 返回
+            if (existDocsIds.size() == parameterIds.size() && existDocsIds.containsAll(parameterIds) && parameterIds.containsAll(existDocsIds)) {
+                return;
+            }
             //先删除文档 不存在的数据
             removeTaskDocs(existDocsIds, docsId);
 
@@ -195,9 +200,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            List<String> parameterIds = docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList());
+            //如果是一样 没有改变文档 返回
+            if (existDocsIds.size() == parameterIds.size() && existDocsIds.contains(parameterIds) && parameterIds.contains(existDocsIds)) {
+                return;
+            }
 
             //先删除文档
-            removeTaskDocs(existDocsIds, docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList()));
+            removeTaskDocs(existDocsIds, parameterIds);
 
 
             //需要过滤一下的
