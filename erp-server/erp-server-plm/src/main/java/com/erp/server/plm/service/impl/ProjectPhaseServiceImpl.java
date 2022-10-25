@@ -66,6 +66,9 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         //先从系统里面取
         List<TaskPhaseDTO> sysList = sysTaskPhaseService.getSysTaskPhase(nameList);
         if (CollectionUtils.isNotEmpty(sysList)) {
+            for (TaskPhaseDTO item : sysList) {
+                item.setIfQuote(true);
+            }
             resultList.addAll(sysList);
         }
         return resultList;
@@ -209,8 +212,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public List<String> getAllSysName() {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectPhaseEntity::getName);
-        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys,IsConstant.YES);
-        return this.listObjs(queryWrapper,Object::toString);
+        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys, IsConstant.YES);
+        return this.listObjs(queryWrapper, Object::toString);
     }
 
     private void checkPhaseTask(String id) {

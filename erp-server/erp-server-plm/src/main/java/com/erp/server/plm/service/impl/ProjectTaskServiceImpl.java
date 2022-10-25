@@ -718,12 +718,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getChargeName().equals(chargeNames)) {
             list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
         }
-        if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
-            list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
+        if(dto.getPlanStartTime()!=null){
+            if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
+                list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
+            }
         }
-        if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
-            list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
+        if(dto.getPlanEndTime()!=null){
+            if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
+                list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
+            }
         }
+
         if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
             String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
             String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
