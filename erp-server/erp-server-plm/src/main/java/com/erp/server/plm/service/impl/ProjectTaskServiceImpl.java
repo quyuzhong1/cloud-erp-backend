@@ -656,7 +656,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             // 如果任务类型是审核的
             if (taskProperty.equals(generalApproval) || taskProperty.equals(reviewTask)) {
                 //如果审核通过可以变更
-                if (taskState.equals(TaskStateEnum.APPROVAL_PASS)) {
+                if (taskState.equals(TaskStateEnum.APPROVAL_PASS.getCode())) {
                     docs.setChangeFlag(true);
                     docs.setDeleteFlag(false);
                 }
