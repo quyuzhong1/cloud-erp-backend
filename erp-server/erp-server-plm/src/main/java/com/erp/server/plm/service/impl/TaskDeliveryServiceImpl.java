@@ -199,17 +199,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (CollectionUtils.isNotEmpty(docsList)) {
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
-            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
+            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
             List<String> parameterIds = docsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
             //如果是一样 没有改变文档 返回
             if (existDocsIds.size() == parameterIds.size() && existDocsIds.contains(parameterIds) && parameterIds.contains(existDocsIds)) {
                 return;
             }
-
             //先删除文档
             removeTaskDocs(taskId,existDocsIds, parameterIds);
-
-
             //需要过滤一下的
             docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
 

@@ -66,7 +66,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getName());
-
         //当前登录人
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskSysEntity entity = new ProjectTaskSysEntity();

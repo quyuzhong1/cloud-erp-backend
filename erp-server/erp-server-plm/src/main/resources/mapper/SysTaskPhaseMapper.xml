@@ -4,6 +4,14 @@
 
   <select id="getSysTaskPhase" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
       SELECT ID,NAME, 1 AS isSys  FROM  sys_project_phase
+      <where>
+            <if test="nameList !=null and nameList.size()>0" >
+                name NOT IN
+                <foreach collection="nameList" item="name" open="(" separator="," close=")">
+                    #{name}
+                </foreach>
+            </if>
+      </where>
   </select>
 
 </mapper>

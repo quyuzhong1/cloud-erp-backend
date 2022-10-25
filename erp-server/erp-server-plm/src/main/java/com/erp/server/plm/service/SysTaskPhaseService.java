@@ -19,7 +19,7 @@ public interface SysTaskPhaseService extends IService<SysTaskPhaseEntity> {
 
     void batchSaveOrUpdate(List<UpdateBasicNameDTO> list);
 
-    List<TaskPhaseDTO> getSysTaskPhase();
+    List<TaskPhaseDTO> getSysTaskPhase(List<String> nameList);
 
     List<String> getSysTaskPhaseNames();
 

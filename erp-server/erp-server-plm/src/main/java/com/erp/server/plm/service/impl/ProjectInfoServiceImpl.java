@@ -339,7 +339,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         StartItemSourceDTO newAdd = new StartItemSourceDTO();
         newAdd.setSourceType(SourceType.NEW);
         newAdd.setSourceName("自定义新建");
-        newAdd.setSourceType(100);
         newAdd.setFlagId(IdWorker.getIdStr());
         resultList.add(newAdd);
 
