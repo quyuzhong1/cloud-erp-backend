@@ -317,6 +317,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //2.修改/新增 sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
