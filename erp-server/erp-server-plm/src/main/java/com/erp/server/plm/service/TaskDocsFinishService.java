@@ -27,4 +27,6 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
     List<CountDTO> getTaskDocsCountByProductId();
 
     Boolean changeFile(TaskChangeFileDTO dto);
+
+    void checkTaskDocsUpload(List<String> allTaskIds);
 }
