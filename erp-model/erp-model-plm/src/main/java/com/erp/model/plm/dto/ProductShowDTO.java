@@ -104,12 +104,12 @@ public class ProductShowDTO implements Serializable {
     /**
      * 立项进度
      */
-    private Integer approvalProgress;
+    private double approvalProgress;
 
     /**
      * 项目进度
      */
-    private Integer projectProgress;
+    private double projectProgress;
 
     /**
      * 任务总数
