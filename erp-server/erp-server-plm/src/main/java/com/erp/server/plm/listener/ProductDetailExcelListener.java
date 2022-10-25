@@ -326,7 +326,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setApprovalStatus(0);
         productInfoDTO.setSpecType(1);
         productInfoDTO.setGrade("");
-        if (CollectionUtils.isEmpty(chargeNameList)) {
+        if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
             productInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
         }
@@ -359,7 +359,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productPurchaseDTO.setPlaceOrderTime(placeOrderTime);
         productPurchaseDTO.setPlanArrivalTime(planArrivalTime);
         productPurchaseDTO.setActualArrivalTime(actualArrivalTime);
-        productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
+        if (purchaseUserList.size() > 0) {
+            productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
+        }
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
 
         //产品销售信息
