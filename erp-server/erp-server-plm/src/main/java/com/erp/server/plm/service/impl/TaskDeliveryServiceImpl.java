@@ -18,6 +18,7 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private RoleRefMemberService roleRefMemberService;
+
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
 
     /**
      * 获取任务的需要交付的文档数
@@ -107,7 +111,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     private List<TaskDeliveryDocsEntity> getExistDocs(String taskId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId,taskId);
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
         return this.list(queryWrapper);
     }
 
@@ -303,16 +307,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:23
      */
     public void removeTaskDocs(List<String> existDocsIds, List<String> docsIds) {
-        List<String> intersectionList= (List<String>) CollectionUtils.intersection(existDocsIds,docsIds);
+        List<String> intersectionList = (List<String>) CollectionUtils.intersection(existDocsIds, docsIds);
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         //表示没有交集
-        if(intersectionList.size()==0){
-            queryWrapper.in(TaskDeliveryDocsEntity::getId, existDocsIds);
-        }else{
-            //有
-            queryWrapper.notIn(TaskDeliveryDocsEntity::getId,docsIds);
+        if (intersectionList.size() == 0) {
+            if (CollectionUtils.isNotEmpty(existDocsIds)) {
+                queryWrapper.in(TaskDeliveryDocsEntity::getId, existDocsIds);
+                taskDocsFinishService.removeByDocsIds(existDocsIds);
+                this.remove(queryWrapper);
+            }
+
         }
-        this.remove(queryWrapper);
+        //去差集
+        List<String> subtractList = (List<String>) CollectionUtils.intersection(docsIds, existDocsIds);
+        if (subtractList.size() != 0) {
+            queryWrapper.in(TaskDeliveryDocsEntity::getId, subtractList);
+            taskDocsFinishService.removeByDocsIds(subtractList);
+            this.remove(queryWrapper);
+        }
 
     }
 }

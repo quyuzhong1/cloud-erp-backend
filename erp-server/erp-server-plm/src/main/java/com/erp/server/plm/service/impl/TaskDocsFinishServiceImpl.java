@@ -330,6 +330,26 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     }
 
 
+    /**
+     * 刪除完成的文档
+     *
+     * @param existDocsIds
+     * @return void
+     * @author yl
+     * @date 2022-10-25 11:06
+     */
+    @Override
+    public void removeByDocsIds(List<String> existDocsIds) {
+        if(CollectionUtils.isNotEmpty(existDocsIds)){
+            LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(TaskDocsFinishEntity::getTaskDocsId,existDocsIds);
+            this.remove(queryWrapper);
+        }
+
+
+    }
+
+
     public int getFinishDocsNum(String taskId) {
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
