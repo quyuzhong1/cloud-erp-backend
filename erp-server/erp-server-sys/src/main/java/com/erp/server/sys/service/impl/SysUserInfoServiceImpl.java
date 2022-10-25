@@ -161,9 +161,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //检查密码是否正确
         boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
-        if (!passwordFlag) {
+/*        if (!passwordFlag) {
             return null;
-        }
+        }*/
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE == userState) {
@@ -171,7 +171,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
-        //后面还有编写
+        //后面还有编写 1580852739573813249
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);

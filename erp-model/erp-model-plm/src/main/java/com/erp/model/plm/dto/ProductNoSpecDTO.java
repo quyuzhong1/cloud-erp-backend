@@ -2,6 +2,9 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -18,6 +21,7 @@ public class ProductNoSpecDTO {
      * 产品基础信息
      */
     @NotNull(message = "产品基础信息不能为空")
+    @Valid
     private ProductBaseInfoDTO productBaseInfoDTO;
 
     /**

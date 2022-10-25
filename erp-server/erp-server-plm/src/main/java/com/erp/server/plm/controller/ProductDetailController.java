@@ -139,7 +139,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
-    public ApiResult saveOrUpdateNoSpec(@RequestBody ProductNoSpecDTO productNoSpecDTO) {
+    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -153,7 +153,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    public ApiResult saveOrUpdateManySpec(@RequestBody ProductManySpecDTO productManySpecDTO) {
+    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }

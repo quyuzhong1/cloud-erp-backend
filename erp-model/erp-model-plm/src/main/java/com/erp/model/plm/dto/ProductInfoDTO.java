@@ -83,18 +83,19 @@ public class ProductInfoDTO {
     /**
      * 产品卖点
      */
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 500,message = "最大50字符")
     private String sellSpot;
 
     /**
      * 产品功能描述
      */
+    @Size(max = 500,message = "最大50字符")
     private String functionDesc;
 
     /**
      * 产品用途
      */
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 500,message = "最大50字符")
     private String usageDesc;
 
     /**
@@ -105,19 +106,17 @@ public class ProductInfoDTO {
     /**
      * 主要材质
      */
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 500,message = "最大50字符")
     private String materials;
 
     /**
      * 规格类型  1：无规格  2：多规格
      */
-    @StateEnumValue(intValues = {1, 2}, message = "规格类型1或者2")
     private Integer specType;
 
     /**
      * 销售方式
      */
-    @StateEnumValue(intValues = {1, 2, 3}, message = "销售方式1或者2或者3")
     private String saleMethod;
 
     private Integer approvalStatus;
