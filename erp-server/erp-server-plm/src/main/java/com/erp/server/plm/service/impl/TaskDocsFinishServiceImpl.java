@@ -9,6 +9,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
+import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
@@ -69,6 +70,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -292,6 +296,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
+        List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(taskEntity.getProductId());
+        List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(membersIds)) {
+            throw new ServiceException(ApiError.ERROR_95045);
+        }
+        parameterMap.put("memberChargeList", membersIds);
         startProcess.setParameterMap(parameterMap);
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
         String processId = processResult.getProcessId();
