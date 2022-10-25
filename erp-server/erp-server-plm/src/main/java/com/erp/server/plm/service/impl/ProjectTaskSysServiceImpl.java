@@ -11,6 +11,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
 import com.erp.model.plm.dto.FinishDocsDTO;
@@ -90,7 +91,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
 
         }
-        List<FinishDocsDTO> docsList = dto.getFinishDocsList();
+        List<DocsDTO> docsList = dto.getDeliveryDocsList();
         boolean flag = this.saveOrUpdate(entity);
         //表示保存成功
         if (flag) {
@@ -236,7 +237,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 sysTaskDTO.setBusinessName(processEntity.getBusinessName());
             }
         }
-        sysTaskDTO.setFinishDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
+        sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         return sysTaskDTO;
     }
 }

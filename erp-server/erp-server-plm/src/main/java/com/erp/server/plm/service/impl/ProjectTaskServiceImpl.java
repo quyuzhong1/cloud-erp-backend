@@ -660,6 +660,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     docs.setChangeFlag(true);
                     docs.setDeleteFlag(false);
                 }
+                if(taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())){
+                    docs.setDeleteFlag(false);
+                }
             }
         }
 

@@ -308,7 +308,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (StringUtils.isNotBlank(processId)) {
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
-            taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+            taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             projectTaskService.updateById(taskEntity);
         }
         return flag;

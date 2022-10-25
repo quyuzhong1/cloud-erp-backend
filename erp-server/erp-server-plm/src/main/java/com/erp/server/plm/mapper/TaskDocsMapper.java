@@ -33,5 +33,5 @@ public interface TaskDocsMapper  extends BaseMapper<TaskDeliveryDocsEntity> {
 
     List<DocsDTO> getDocsByTaskId(@Param("taskId") String taskId);
 
-    List<FinishDocsDTO> getSysTaskFinishDocs(@Param("taskId") String taskId);
+
 }

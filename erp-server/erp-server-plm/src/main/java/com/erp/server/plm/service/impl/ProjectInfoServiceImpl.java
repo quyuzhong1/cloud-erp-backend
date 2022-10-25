@@ -104,8 +104,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Double totalCount=Double.valueOf(totalTaskCount);
         if (totalTaskCount != 0) {
             finishRatio= (Double.valueOf(finishTaskCount)/totalCount)*100;
-
+            finishRatio=Math.round(finishRatio*100)/100.0;
             postponeRatio = (Double.valueOf(postponeTaskCount) / totalTaskCount) * 100;
+            postponeRatio=Math.round(postponeRatio*100)/100.0;
         }
         result.setFinishTaskCount(finishTaskCount);
         result.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -608,4 +609,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
     }
+
+
 }

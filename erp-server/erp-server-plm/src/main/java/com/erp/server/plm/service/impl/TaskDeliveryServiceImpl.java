@@ -194,13 +194,13 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:07
      */
     @Override
-    public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
+    public void saveSysDeliveryDocs(String taskId, List<DocsDTO> docsList) {
         //保存交付文档
         if (CollectionUtils.isNotEmpty(docsList)) {
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getDocsNameId).collect(Collectors.toList());
-            List<String> parameterIds = docsList.stream().map(FinishDocsDTO::getDocsId).collect(Collectors.toList());
+            List<String> parameterIds = docsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
             //如果是一样 没有改变文档 返回
             if (existDocsIds.size() == parameterIds.size() && existDocsIds.contains(parameterIds) && parameterIds.contains(existDocsIds)) {
                 return;
@@ -211,15 +211,15 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
 
             //需要过滤一下的
-            docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getDocsId())).collect(Collectors.toList());
+            docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
 
             List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
-            for (FinishDocsDTO item : docsList) {
+            for (DocsDTO item : docsList) {
                 TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
-                entity.setDocsName(item.getDocsName());
+                entity.setDocsName(item.getName());
                 entity.setTaskId(taskId);
                 entity.setProductId("");
-                entity.setDocsNameId(item.getDocsId());
+                entity.setDocsNameId(item.getId());
                 entity.setIsSys(IsConstant.YES);
                 saveList.add(entity);
             }
@@ -288,8 +288,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     @Override
-    public List<FinishDocsDTO> getSysTaskFinishDocs(String taskId) {
-        return baseMapper.getSysTaskFinishDocs(taskId);
+    public List<DocsDTO> getSysTaskFinishDocs(String taskId) {
+        return baseMapper.getDocsByTaskId(taskId);
     }
 
     /**
