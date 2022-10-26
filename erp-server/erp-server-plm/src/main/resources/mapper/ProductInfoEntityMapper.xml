@@ -49,7 +49,7 @@
         pj.end_time AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
-        WHERE AND p.is_finished_product_dev = 1 AND pi.id IN
+        WHERE  pi.is_finished_product_dev = 1 AND pi.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>

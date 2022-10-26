@@ -613,20 +613,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 product.setChargeName(productChargeName);
             }
             if (approvalStatus != null) {
-                product.setApprovalStatus(approvalStatus);
-                if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
-                    String productId = product.getId();
-                    yesApproval = true;
-                    /**
-                     * 表示改成已立项 就要去检查该该产品下的 所有的任务
-                     *  是否完成
-                     */
-                    List<String> taskIdList = projectTaskService.
-                            getByProductId(productId).stream()
-                            .map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                if (!product.getApprovalStatus().equals(approvalStatus)) {
+                    product.setApprovalStatus(approvalStatus);
+                    if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
+                        String productId = product.getId();
+                        yesApproval = true;
+                        /**
+                         * 表示改成已立项 就要去检查该该产品下的 所有的任务
+                         *  是否完成
+                         */
+                        List<String> taskIdList = projectTaskService.
+                                getByProductId(productId).stream()
+                                .map(ProjectTaskEntity::getId).collect(Collectors.toList());
 
-                    preTaskService.checkPreTaskFinish(taskIdList);
-                    projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                        preTaskService.checkPreTaskFinish(taskIdList);
+                        projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                    }
                 }
             }
 
