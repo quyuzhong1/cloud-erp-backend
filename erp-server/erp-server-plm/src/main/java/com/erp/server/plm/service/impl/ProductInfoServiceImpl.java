@@ -188,9 +188,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String CategoryId = dto.getCategoryId();
         BeanMapper.copy(dto, entity);
         BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
-        if(category!=null){
+        if (category != null) {
             entity.setCategory(category.getName());
-        }else{
+        } else {
             entity.setCategory("");
         }
         LoginUser loginUser = commonService.getUserInfo();
@@ -374,16 +374,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIfIteration(true);
                 }
 
-                Integer approvalStatus=item.getApprovalStatus();
+                Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 
 
-
-                Integer projectStatus=item.getProjectStatus();
-                if(projectStatus!=null){
-                    item.setProjectStatusName("");
-                }else{
+                Integer projectStatus = item.getProjectStatus();
+                if (projectStatus != null) {
                     item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
+                } else {
+                    item.setProjectStatusName("");
                 }
 
                 List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
@@ -412,10 +411,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 //项目任务完成
                 if (projectTaskCount != 0) {
-                    projectProgress = ((double)projectFinishTaskCount / projectTaskCount) * 100;
+                    projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
-                approvalProgress=Math.round(approvalProgress*100)/100;
-                projectProgress=Math.round(projectProgress*100)/100;
+                approvalProgress = Math.round(approvalProgress * 100) / 100;
+                projectProgress = Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
