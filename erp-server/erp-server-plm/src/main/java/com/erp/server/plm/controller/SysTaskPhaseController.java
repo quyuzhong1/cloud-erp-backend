@@ -83,7 +83,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @GetMapping("/list")
-    @RequestPermissions("plm:sys:taskPhase:list")
+   // @RequestPermissions("plm:sys:taskPhase:list")
     public ApiResult<List<BasicDTO>> list() {
         return success(sysTaskPhaseService.getSysTaskPhaseList());
     }

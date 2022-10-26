@@ -35,7 +35,7 @@ public class ProjectPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    @RequestPermissions("plm:task:phase:list")
+  //  @RequestPermissions("plm:task:phase:list")
     public ApiResult<List<TaskPhaseDTO>> list(@RequestBody @Validated BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = projectPhaseService.findList(dto);
         return success(resultList);
