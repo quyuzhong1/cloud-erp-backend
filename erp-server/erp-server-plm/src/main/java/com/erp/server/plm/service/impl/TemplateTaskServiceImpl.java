@@ -53,7 +53,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 entity.setTemplateId(templateId);
                 entity.setId(IdWorker.getIdStr());
                 this.save(entity);
-                taskDeliveryService.saveTaskDeliveryDocs("",entity.getId(),item.getId());
+                taskDeliveryService.saveTaskDeliveryDocs(templateId,entity.getId(),item.getId());
 
             }
 

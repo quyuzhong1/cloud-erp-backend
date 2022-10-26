@@ -47,11 +47,7 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("charge_name")
     private String chargeName;
 
-    /**
-     * 前置任务id
-     */
-    @TableField("pre_task_id")
-    private String preTaskId;
+
 
     /**
      * 计划开始时间
@@ -134,6 +130,10 @@ public class TemplateTaskEntity implements Serializable {
      */
     @TableField("property")
     private Integer property;
+
+    //流程表id
+    @TableField("business_process_id")
+    private String businessProcessId;
 
 
 
