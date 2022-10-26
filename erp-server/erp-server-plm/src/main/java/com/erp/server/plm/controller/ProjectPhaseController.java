@@ -48,7 +48,7 @@ public class ProjectPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/batchSaveOrUpdate")
-    @RequestPermissions("plm:task:phase:batchSaveOrUpdate")
+    //@RequestPermissions("plm:task:phase:batchSaveOrUpdate")
     public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
         projectPhaseService.batchSaveOrUpdate(dto);
         return success();
@@ -61,7 +61,7 @@ public class ProjectPhaseController extends BaseController {
      * @return
      */
     @PostMapping("/remove")
-    @RequestPermissions("plm:task:phase:remove")
+    //  @RequestPermissions("plm:task:phase:remove")
     public ApiResult remove(String id) {
         Boolean flag = projectPhaseService.removeTaskPhaseById(id);
         return flag == true ? success() : failure();

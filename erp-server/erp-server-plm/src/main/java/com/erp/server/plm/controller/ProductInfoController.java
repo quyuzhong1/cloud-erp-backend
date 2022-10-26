@@ -60,7 +60,6 @@ public class ProductInfoController extends BaseController {
      * 产品列表-编辑时候详情
      */
     @PostMapping("/productInfo")
-    @RequestPermissions("plm:product:productInfo")
     public ApiResult<ProductDTO> info(@RequestBody @Validated BaseIdDTO dto) {
         ProductDTO product = productInfoService.info(dto.getId());
         return success(product);
@@ -138,7 +137,6 @@ public class ProductInfoController extends BaseController {
      * 新建产品-获取关联产品
      */
     @GetMapping("/list")
-    @RequestPermissions("plm:product:list")
     public ApiResult list() {
         List<Map<String, Object>> list = productInfoService.getListObjs();
         return success(list);

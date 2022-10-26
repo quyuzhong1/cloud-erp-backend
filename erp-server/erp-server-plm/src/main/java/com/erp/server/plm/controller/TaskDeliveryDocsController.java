@@ -35,14 +35,14 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @RequestPermissions("plm:taskDocs:paging")
+    //  @RequestPermissions("plm:taskDocs:paging")
     public ApiResult<PagingVO<List<DeliveryDocsDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<List<DeliveryDocsDTO>> pagingVO = taskDeliveryService.paging(dto);
         return success(pagingVO);
     }
 
     @GetMapping("/list")
-    @RequestPermissions("plm:taskDocs:list")
+    //  @RequestPermissions("plm:taskDocs:list")
     public ApiResult list(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
@@ -54,7 +54,7 @@ public class TaskDeliveryDocsController extends BaseController {
      * @return
      */
     @PostMapping("/setPower")
-    @RequestPermissions("plm:taskDocs:setPower")
+    // @RequestPermissions("plm:taskDocs:setPower")
     public ApiResult setPower(@RequestBody @Validated SetDocsPowerDTO dto) {
         taskDeliveryService.setPower(dto);
         return success();

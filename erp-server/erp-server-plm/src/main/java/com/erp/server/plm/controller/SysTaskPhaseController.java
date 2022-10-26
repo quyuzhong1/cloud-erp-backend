@@ -39,7 +39,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/batchSaveOrUpdate")
-    @RequestPermissions("plm:sys:taskPhase:batchSaveOrUpdate")
+    // @RequestPermissions("plm:sys:taskPhase:batchSaveOrUpdate")
     public ApiResult add(@RequestBody @Validated List<UpdateBasicNameDTO> list) {
         sysTaskPhaseService.batchSaveOrUpdate(list);
         return success();
@@ -54,7 +54,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/update")
-    @RequestPermissions("plm:sys:taskPhase:update")
+    //  @RequestPermissions("plm:sys:taskPhase:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
         sysTaskPhaseService.updateTaskPhase(dto);
         return success();
@@ -68,7 +68,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/remove")
-    @RequestPermissions("plm:sys:taskPhase:remove")
+    //  @RequestPermissions("plm:sys:taskPhase:remove")
     public ApiResult remove(@RequestParam(value = "id") String id) {
         boolean flag = sysTaskPhaseService.removeSysTaskPhase(id);
         return flag==true?success():failure();

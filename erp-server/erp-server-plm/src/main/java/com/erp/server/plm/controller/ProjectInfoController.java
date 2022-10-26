@@ -66,7 +66,7 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @RequestPermissions("plm:project:paging")
+    //@RequestPermissions("plm:project:paging")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);

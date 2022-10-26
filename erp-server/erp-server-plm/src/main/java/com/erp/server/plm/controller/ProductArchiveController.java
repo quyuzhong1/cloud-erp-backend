@@ -40,7 +40,6 @@ public class ProductArchiveController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @RequestPermissions("plm:product:archive:paging")
     @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:archive:paging", tableAlias = "p")
     public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);

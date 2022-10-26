@@ -35,7 +35,7 @@ public class UserProductController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/userAddProduct")
-    @RequestPermissions("plm:user:product:userAddProduct")
+    //   @RequestPermissions("plm:user:product:userAddProduct")
     public ApiResult userAddProduct(@RequestParam(value = "productId") String productId) {
         boolean flag = userAddProductService.userAddProduct(productId);
         return flag == true ? success() : failure();
@@ -50,7 +50,7 @@ public class UserProductController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/userCancelProduct")
-    @RequestPermissions("plm:user:product:userCancelProduct")
+    //  @RequestPermissions("plm:user:product:userCancelProduct")
     public ApiResult userCancelProduct(@RequestParam(value = "productId") String productId) {
         boolean flag = userAddProductService.userCancelProduct(productId);
         return flag == true ? success() : failure();
@@ -65,7 +65,7 @@ public class UserProductController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/list")
-    @RequestPermissions("plm:user:product:list")
+    //  @RequestPermissions("plm:user:product:list")
     public ApiResult list() {
         List<Map<String, Object>> list = userAddProductService.listByUserId();
         return success(list);

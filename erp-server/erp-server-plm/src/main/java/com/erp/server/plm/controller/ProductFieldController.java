@@ -37,7 +37,6 @@ public class ProductFieldController  extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @RequestPermissions("plm:field:paging")
     public ApiResult<PagingVO<SysProductFieldPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SysProductFieldPagingDTO> pagingVO = productFieldService.paging(dto);
         return success(pagingVO);
