@@ -1,12 +1,14 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BasicProductIdDTO;
 import com.erp.model.plm.dto.BatchTaskPhaseDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.server.plm.service.ProjectPhaseService;
+import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +64,7 @@ public class ProjectPhaseController extends BaseController {
      */
     @PostMapping("/remove")
     //  @RequestPermissions("plm:task:phase:remove")
+    //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:task:phase:remove", serviceClass = ProductInfoServiceImpl.class)
     public ApiResult remove(String id) {
         Boolean flag = projectPhaseService.removeTaskPhaseById(id);
         return flag == true ? success() : failure();
