@@ -1236,7 +1236,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
 
         //找出 没有流程中 不是进行中的任务 如果有表示 不能完成任务
-        long noProcess = list.stream().filter(t -> ingCode.equals(t.getStatus()) && !approvalNoPass.equals(t.getStatus())).count();
+        long noProcess = list.stream().filter(t -> !ingCode.equals(t.getStatus()) && !approvalNoPass.equals(t.getStatus())).count();
         if (noProcess > 0) {
             throw new ServiceException(ApiError.ERROR_95044);
         }
