@@ -224,12 +224,14 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        //只有任务完成了 或者 审核通过了 才能变更流程
+        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Integer taskState = taskEntity.getStatus();
         //当不为这两个的时候是不能变更的
-        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)) {
+        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+        &&!approvalNoPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
         String finishDocsId = dto.getFinishDocsId();

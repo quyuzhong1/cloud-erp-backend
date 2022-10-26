@@ -13,6 +13,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.SysTaskPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
+import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.SysTaskPhaseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +36,8 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
 
     @Autowired
     private ProjectPhaseService projectPhaseService;
+    @Autowired
+    private ProjectTaskService projectTaskService;
 
     /**
      * 修改阶段名称
@@ -131,12 +134,14 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     public List<BasicDTO> getSysTaskPhaseList() {
         List<SysTaskPhaseEntity> list = this.list();
         List<BasicDTO> resultList = new ArrayList<>(list.size());
-        List<String> projectPhaseNameList = projectPhaseService.getAllSysName();
+        List<String> sysPhaseIds=list.stream().map(SysTaskPhaseEntity::getId).collect(Collectors.toList());
+        //获取到系统的阶段
+        List<String> projectPhaseIdList = projectTaskService.getSysPhase(sysPhaseIds);
         for (SysTaskPhaseEntity item : list) {
             BasicDTO basic = new BasicDTO();
             basic.setId(item.getId());
             basic.setName(item.getName());
-            if (projectPhaseNameList.contains(item.getName())) {
+            if (projectPhaseIdList.contains(item.getId())) {
                 basic.setIfQuote(true);
             }
             resultList.add(basic);

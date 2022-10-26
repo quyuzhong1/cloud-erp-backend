@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +105,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void addSysTask(String productId) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
+
+        //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
@@ -250,7 +253,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<ProjectTaskEntity> saveList = new LinkedList<>();
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
@@ -258,9 +260,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
                 entity.setId(IdWorker.getIdStr());
-                saveList.add(entity);
+                boolean flag = this.save(entity);
+                if (flag) {
+                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId());
+                }
             }
-            this.saveBatch(saveList);
         }
 
     }
@@ -667,6 +671,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     docs.setChangeFlag(true);
                     docs.setDeleteFlag(false);
                 }
+                if (taskState.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
+                    docs.setChangeFlag(true);
+                }
                 if (taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())) {
                     docs.setDeleteFlag(false);
                 }
@@ -700,6 +707,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return TaskProcessTypeEnum.REVIEW_TASK.getCode();
     }
+
+
+    /**
+     * 获取任务中 用过系统阶段的有那些
+     *
+     * @param sysPhaseIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-26 15:04
+     */
+    @Override
+    public List<String> getSysPhase(List<String> sysPhaseIds) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectTaskEntity::getPhaseId);
+        queryWrapper.in(ProjectTaskEntity::getPhaseId,sysPhaseIds);
+        queryWrapper.groupBy(ProjectTaskEntity::getPhaseId);
+        return this.listObjs(queryWrapper,Objects::toString);
+    }
+
 
     private List<String> getUpdateField(ProjectTaskDTO dto) {
         ProjectTaskEntity entity = new ProjectTaskEntity();
@@ -844,20 +870,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //任务名
         String name = dto.getName();
-        //开始时间
         Date planStartTime = dto.getPlanStartTime();
+        taskEntity.setPlanStartTime(planStartTime);
         //结束时间
         Date planEndTime = dto.getPlanStartTime();
+        taskEntity.setPlanEndTime(planEndTime);
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
-        }
-        if (planStartTime != null) {
-            taskEntity.setPlanStartTime(planStartTime);
-        }
-        if (planEndTime != null) {
-            taskEntity.setPlanEndTime(planStartTime);
         }
         if (StringUtils.isNotBlank(chargeId)) {
             taskEntity.setChargeId(chargeId);
@@ -944,15 +965,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * 统计未完成的任务数
      *
      * @param finishState
-     * @param preTaskIds
+     * @param taskIds
      * @return int
      * @author yl
      * @date 2022-10-18 19:47
      */
     @Override
-    public int countUndoneByTaskIds(Integer finishState, Integer approvalPassState, List<String> preTaskIds) {
-        if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            return this.baseMapper.findUndone(finishState, approvalPassState, preTaskIds);
+    public int countUndoneByTaskIds(Integer finishState, Integer approvalPassState, List<String> taskIds) {
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            return this.baseMapper.findUndone(finishState, approvalPassState, taskIds);
         }
         return 0;
     }
@@ -973,6 +994,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
+            List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            int parentCount = countUndoneByTaskIds(finishCode, approvalPassCode, parentTaskIds);
+            if (parentCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95050);
+            }
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
             int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
@@ -1268,9 +1294,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //有审核流程的 要启动流程了
         for (ProjectTaskEntity processTask : processList) {
             String businessProcessId = processTask.getBusinessProcessId();
-            String taskProcessId = processTask.getProcessId();
-            //当流程Id 不为空就表示 有流程 是审核不通过的
-            if (StringUtils.isBlank(taskProcessId)) {
+            //当不是审核不通过 就启动一个流程
+            if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
                 if (StringUtils.isNotBlank(businessProcessId)) {
                     BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
                     if (!Objects.isNull(processEntity)) {

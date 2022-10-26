@@ -91,4 +91,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void approvalTaskPass(String processId);
 
     Integer getTaskProperty(ProjectTaskEntity taskEntity);
+
+
+    List<String> getSysPhase(List<String> sysPhaseIds);
 }

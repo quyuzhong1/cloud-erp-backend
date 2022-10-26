@@ -166,6 +166,10 @@
     <select id="findUndone" resultType="int">
         SELECT COUNT(*) FROM project_task WHERE
         status!=#{finishState} AND  status !=#{approvalPassState}
+        WHERE id IN
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
     </select>
 
 </mapper>
