@@ -11,6 +11,8 @@ import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.UserAddProductService;
+import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
+import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -101,6 +103,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/remove")
     //@RequestPermissions("plm:product:remove")
+    @DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:remove", serviceClass = ProductInfoServiceImpl.class)
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();
