@@ -72,6 +72,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     private CommonService commonService;
 
 
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+
+
     /**
      * 项目概述
      *
@@ -91,7 +95,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //产品名
         result.setProductName(entity.getName());
         //获取产品任务情况
-        ProductTaskCountDTO taskCount =projectTaskService.getProductTaskCount(productId,new Date());
+        ProductTaskCountDTO taskCount = projectTaskService.getProductTaskCount(productId, new Date());
         //总任务数
         Integer totalTaskCount = taskCount.getTotalTaskCount();
         //完成任务数
@@ -101,12 +105,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer unfinishedTaskCount = taskCount.getUnfinishedTaskCount();
         double finishRatio = 0;
         double postponeRatio = 0;
-        Double totalCount=Double.valueOf(totalTaskCount);
+        Double totalCount = Double.valueOf(totalTaskCount);
         if (totalTaskCount != 0) {
-            finishRatio= (Double.valueOf(finishTaskCount)/totalCount)*100;
-            finishRatio=Math.round(finishRatio*100)/100.0;
+            finishRatio = (Double.valueOf(finishTaskCount) / totalCount) * 100;
+            finishRatio = Math.round(finishRatio * 100) / 100.0;
             postponeRatio = (Double.valueOf(postponeTaskCount) / totalTaskCount) * 100;
-            postponeRatio=Math.round(postponeRatio*100)/100.0;
+            postponeRatio = Math.round(postponeRatio * 100) / 100.0;
         }
         result.setFinishTaskCount(finishTaskCount);
         result.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -116,13 +120,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         result.setPostponeRatio(postponeRatio);
 
         //获取任务阶段分布
-        PhaseDistributeDTO taskPhase = phaseDistributeList(taskList);
+        PhaseDistributeDTO taskPhase = phaseDistributeList(productId, taskList);
         result.setPhaseDistribute(taskPhase);
         List<Map<String, Object>> finishTaskTrend = getFinishTaskTrend(30, taskList);
         result.setFinishTaskTrend(finishTaskTrend);
         return result;
     }
-
 
 
     /**
@@ -250,15 +253,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             pageData = baseMapper.paging(query, params, archiveProductIds);
         }
 
-        Integer finish=TaskStateEnum.FINISH.getCode();
-        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             for (ProductShowDTO item : list) {
-                List<ProjectTaskEntity> productTaskList=taskList.stream().filter(t->item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
+                List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
 
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -273,14 +276,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //这是立项任务
                 int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 //这是立项完成任务
-                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())))
+                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus())))
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 item.setApprovalTaskCount(approvalTaskCount);
 
                 //这是项目任务
                 int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus())||approvalPass.equals(t.getStatus()))).
+                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus()))).
                         collect(Collectors.toList()).size();
 
                 item.setProjectTaskCount(projectTaskCount);
@@ -464,26 +467,38 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @author yl
      * @date 2022-09-19 15:20
      */
-    public PhaseDistributeDTO phaseDistributeList(List<ProjectTaskEntity> taskList) {
+    public PhaseDistributeDTO phaseDistributeList(String productId, List<ProjectTaskEntity> taskList) {
         PhaseDistributeDTO phaseDistribute = new PhaseDistributeDTO();
+
+        List<String> phaseNameList = projectPhaseService.getPhaseNameName(productId);
         //以阶段名分组
         Map<String, List<ProjectTaskEntity>> map = taskList.parallelStream().
                 collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
-        //阶段的 集合  以阶段名作为key 以对应结果为值
         List<ProductPhaseDistributeDTO> phaseDistributeList = new LinkedList<>();
-        for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
+//        //阶段的 集合  以阶段名作为key 以对应结果为值
+//        for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
+//            ProductPhaseDistributeDTO phaseDistributeDTO = new ProductPhaseDistributeDTO();
+//            //阶段名
+//            String phaseName = item.getKey();
+//            phaseDistributeDTO.setPhaseName(phaseName);
+//            //分类后的任务
+//            List<ProjectTaskEntity> groupList = item.getValue();
+//            List<Map<String, Object>> phaseStateList = getPhaseStateList(groupList);
+//            phaseDistributeDTO.setPhaseDataList(phaseStateList);
+//            phaseDistributeList.add(phaseDistributeDTO);
+//        }
+        for (String phaseName : phaseNameList) {
             ProductPhaseDistributeDTO phaseDistributeDTO = new ProductPhaseDistributeDTO();
-            //阶段名
-            String phaseName = item.getKey();
             phaseDistributeDTO.setPhaseName(phaseName);
             //分类后的任务
-            List<ProjectTaskEntity> groupList = item.getValue();
+            List<ProjectTaskEntity> groupList = taskList.stream().filter(t -> phaseName.equals(t.getPhaseName())).collect(Collectors.toList());
             List<Map<String, Object>> phaseStateList = getPhaseStateList(groupList);
             phaseDistributeDTO.setPhaseDataList(phaseStateList);
             phaseDistributeList.add(phaseDistributeDTO);
         }
+
         //获取枚举的所有值
         for (ProductInfoStateEnum e : ProductInfoStateEnum.values()) {
             Map<String, Object> statusMap = new HashMap<>();

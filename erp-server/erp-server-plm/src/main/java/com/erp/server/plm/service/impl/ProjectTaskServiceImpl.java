@@ -738,9 +738,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
             list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
         }
-        if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
-            list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
+        if (StringUtils.isNotBlank(projectTaskEntity.getDescription())) {
+            if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
+                list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
+            }
         }
+
         return list;
     }
 
