@@ -80,7 +80,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        userInfo.setUid("1585211043112554497");
+        //userInfo.setUid("1585211043112554497");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
