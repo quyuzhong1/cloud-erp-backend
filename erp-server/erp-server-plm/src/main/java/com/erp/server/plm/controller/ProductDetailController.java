@@ -155,9 +155,9 @@ public class ProductDetailController extends BaseController {
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
 /*    @DataPermission(operationType = "update",
             tableField = "create_user_id",
-            menuCode = "plm:product:detail:delete",
+            menuCode = "plm:product:detail:saveOrUpdateManySpec",
             serviceClass = ProductDetailServiceImpl.class,
-            entityName = "ProductInfoDTO"
+            entityName = "productInfoDTO"
     )*/
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
@@ -203,8 +203,7 @@ public class ProductDetailController extends BaseController {
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
-        //Boolean flag = productDetailService.delete(skuId);
-        Boolean flag = true;
+        Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
     }
 
