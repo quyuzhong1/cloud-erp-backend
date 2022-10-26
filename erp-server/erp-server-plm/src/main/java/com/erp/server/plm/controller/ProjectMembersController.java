@@ -49,7 +49,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdate")
-    @RequestPermissions("plm:project:member:saveOrUpdate")
+    //@RequestPermissions("plm:project:member:saveOrUpdate")
     public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
         return flag == true ? success() : failure();
@@ -75,7 +75,7 @@ public class ProjectMembersController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    @RequestPermissions("plm:project:member:list")
+    //@RequestPermissions("plm:project:member:list")
     public ApiResult<List<ProjectMemberDTO>> list(String productId) {
         List<ProjectMemberDTO> resultList = projectMembersService.memberList(productId);
         return  success(resultList);

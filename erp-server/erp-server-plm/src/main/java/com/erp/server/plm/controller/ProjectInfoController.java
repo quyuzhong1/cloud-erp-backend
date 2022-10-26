@@ -41,7 +41,7 @@ public class ProjectInfoController extends BaseController {
      */
 
     @PostMapping("/startProject")
-    @RequestPermissions("plm:project:startProject")
+    //@RequestPermissions("plm:project:startProject")
     public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
         Boolean flag = projectInfoService.startProject(dto);
         return flag == true ? success() : failure();
@@ -81,7 +81,7 @@ public class ProjectInfoController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/archive")
-    @RequestPermissions("plm:project:archive")
+    //@RequestPermissions("plm:project:archive")
     public ApiResult archive(@RequestParam(value = "productId") String productId) {
         boolean flag = projectInfoService.archive(productId);
         return flag == true ? success() : failure();
