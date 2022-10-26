@@ -174,7 +174,7 @@ public class DataPermissionAspect {
     }
 
     /**
-     *
+     * 查询
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
      * @param joinPoint 切点信息
@@ -218,7 +218,6 @@ public class DataPermissionAspect {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
-        //controllerDataScope.setService(service);
         List<Object> inputIdList = new ArrayList<>();
 
         Object[] args = joinPoint.getArgs();
@@ -234,7 +233,7 @@ public class DataPermissionAspect {
             try {
                 if (mapParam.containsKey(dataPermission.tableField())) {
                     Object p = mapParam.get(dataPermission.tableField());
-                    if(p instanceof String){ // 20220113兼容map中数据id为string的情况
+                    if(p instanceof String){
                         inputIdList.add(p);
                     } else if (p instanceof List){
                         inputIdList = (List<Object>) mapParam.get("id");
@@ -299,7 +298,38 @@ public class DataPermissionAspect {
      * @return java.lang.String
      **/
     public void update(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+        Class<? extends IService> serviceClass = dataPermission.serviceClass();
+        IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
+        List<Object> inputIdList = new ArrayList<>();
+
+        Object[] args = joinPoint.getArgs();
+        Object arg = joinPoint.getArgs()[0];
+
+        if (CollectionUtils.isEmpty(inputIdList)) {
+            return;
+        }
+        Object businessData = service.getById(arg.toString());
+
+        String s = JSONObject.toJSONString(businessData);
+
+        JSONObject jsonObject = JSONObject.parseObject(s);
+
+        String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
+
+        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
+            if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
+                break;
+            } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
+                if (!userList.contains(userId)) {
+                    throw new ServiceException(ApiError.ERROR_1013);
+                }
+            } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
+                if (!user.equals(userId)) {
+                    throw new ServiceException(ApiError.ERROR_1013);
+                }
+            }
+        }
     }
 
     /**

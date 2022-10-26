@@ -160,11 +160,11 @@
         pi.materials,
         pd.plan_listing_time,
         pd.unit_id,
-        unit.value AS unit_name,
+        unit.name AS unit_name,
         pd.product_state
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id
-        LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id
         WHERE pi.delete_state = 0
             AND pi.id = #{productId}
     </select>
@@ -211,7 +211,7 @@
 		pd.sku_no,
 		pd."name" sku_name,
 		pd.plan_listing_time,
-        unit.value AS unit_name,
+        unit.name AS unit_name,
 		pd.charge_name,
 		pd.product_state,
 		target_tax_cost,
@@ -238,7 +238,7 @@
 		box_size,
 		box_weight,
 		box_qty,
-		product_property,
+        dp.value AS product_property,
 		declare_chinese_name,
 		declare_english_name,
 		declare_price,
@@ -265,7 +265,8 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-        LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id
+        LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id
         WHERE pi.delete_state = 0
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))

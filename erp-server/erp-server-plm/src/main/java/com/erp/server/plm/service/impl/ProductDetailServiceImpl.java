@@ -842,7 +842,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             //采购状态编码转换成中文
             if (StringUtils.isNotBlank(req.getArrivalState())) {
-                req.setSaleState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
+                req.setArrivalState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
             }
             if (StringUtils.isNotBlank(req.getPurchaseUser())) {
                 BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
@@ -853,6 +853,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setPurchaseUser(userList.get(0).getUserName());
                 }
             }
+
             if (StringUtils.isNotBlank(req.getPurchaseUser())) {
                 String[] split = req.getSaleCountry().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));

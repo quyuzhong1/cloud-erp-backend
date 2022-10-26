@@ -320,7 +320,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSaleDTO.setYearSaleAmount(dto.getYearSaleAmount());
         productSaleDTO.setMonthSaleQty(dto.getMonthSaleQty());
         productSaleDTO.setMonthSaleAmount(dto.getMonthSaleAmount());
-        productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
+        if (StringUtils.isNotBlank(saleCountryStr)) {
+            productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
+        }
 /*        productSaleDTO.setListingTime(dto.getListingTime());
         productSaleDTO.setDelistingTime(dto.getDelistingTime());   */
         productSaleDTO.setListingTime(null);

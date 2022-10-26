@@ -46,13 +46,11 @@ public class ProductInfoDTO {
     /**
      * 产品负责人
      */
-    @NotBlank(message = "产品负责人不能为空")
     private String chargeName;
 
     /**
      * 负责人id
      */
-    @NotBlank(message = "负责人id不能为空")
     private String chargeId;
 
     /**

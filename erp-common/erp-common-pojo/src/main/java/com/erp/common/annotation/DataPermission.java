@@ -10,7 +10,8 @@ import java.lang.annotation.*;
 @Documented
 public @interface DataPermission {
     /**
-     * 部门表的别名
+     * 校验权限的字段 例如 ：tableField = create_user_id
+     * 根据数据库表的create_user_id字段查询是否有权限操作数据
      */
     String tableField() default "";
 
@@ -35,6 +36,12 @@ public @interface DataPermission {
      * 服务类Class,一般用于DELETE
      */
     Class<? extends IService> serviceClass() default IService.class;
+
+    /**
+     * 业务数据实体类名,用于Update
+     * 如:entityName = "ProductInfoDTO"
+     */
+    String entityName() default "";
 
 
 }
