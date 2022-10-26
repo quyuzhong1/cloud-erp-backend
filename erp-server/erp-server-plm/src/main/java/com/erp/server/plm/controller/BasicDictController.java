@@ -34,7 +34,7 @@ public class BasicDictController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdate")
-    //@RequestPermissions("plm:dict:saveOrUpdate")
+    @RequestPermissions("plm:dict:saveOrUpdate")
     public ApiResult saveOrUpdateDict(@RequestBody @Validated List<BasicDictDTO> dtos) {
         Boolean flag = basicDictService.saveOrUpdateDict(dtos);
         return flag == true ? success() : failure();
@@ -47,7 +47,7 @@ public class BasicDictController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/remove")
-    //@RequestPermissions("plm:dict:remove")
+    @RequestPermissions("plm:dict:remove")
     public ApiResult saveOrUpdateDict(String id) {
         Boolean flag = basicDictService.removeById(id);
         return flag == true ? success() : failure();
@@ -61,7 +61,7 @@ public class BasicDictController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:dict:list")
+    @RequestPermissions("plm:dict:list")
     public ApiResult<List<BasicDictEntity>> list(String type) {
         List<BasicDictEntity> list = basicDictService.listByType(type);
         return success(list);

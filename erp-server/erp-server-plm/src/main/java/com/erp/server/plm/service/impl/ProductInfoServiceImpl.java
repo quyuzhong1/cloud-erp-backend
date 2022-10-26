@@ -193,7 +193,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }else{
             entity.setCategory("");
         }
-
+        LoginUser loginUser = commonService.getUserInfo();
+        if (StringUtils.isBlank(dto.getId())) {
+            entity.setCreateUserId(loginUser.getUid());
+            entity.setCreateUserName(loginUser.getUserName());
+        } else {
+            entity.setUpdateUserId(loginUser.getUid());
+            entity.setUpdateUserName(loginUser.getUserName());
+        }
 
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);

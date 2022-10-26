@@ -15,6 +15,10 @@
            AND  p.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
 
+        <if test="params.param != '' and params.param != null">
+            ${params.param}
+        </if>
+
     </select>
 
 

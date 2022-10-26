@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller;
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BasicProductIdDTO;
@@ -29,7 +30,7 @@ public class TaskDocsNameController extends BaseController {
 
 
     @PostMapping("/save")
-    //@RequestPermissions("plm:taskName:save")
+    @RequestPermissions("plm:taskName:save")
     public ApiResult saveDocsName(@RequestBody @Validated DocsNameDTO dto) {
         Boolean flag = taskDocsNameService.saveDocsName(dto);
         return flag == true ? success() : failure();
@@ -41,7 +42,7 @@ public class TaskDocsNameController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:taskName:list")
+    @RequestPermissions("plm:taskName:list")
     public ApiResult<List<DocsDTO>> list(@RequestParam(value="productId")  String  productId) {
         List<DocsDTO> list = taskDocsNameService.getDocsNameList(productId);
         return success(list);
