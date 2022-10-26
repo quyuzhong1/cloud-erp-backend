@@ -189,14 +189,13 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      */
 
     @Override
-    public void checkTaskQuote(String name) {
-        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectPhaseEntity::getName, name);
-        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys, IsConstant.YES);
-        int count = this.count(queryWrapper);
-        if (count > 0) {
+    public void checkTaskQuote(String phaseId) {
+        //获取到系统的阶段
+        List<String> projectPhaseIdList = projectTaskService.getSysPhase(Arrays.asList(phaseId));
+        if(CollectionUtils.isNotEmpty(projectPhaseIdList)){
             throw new ServiceException(ApiError.ERROR_95048);
         }
+
 
     }
 

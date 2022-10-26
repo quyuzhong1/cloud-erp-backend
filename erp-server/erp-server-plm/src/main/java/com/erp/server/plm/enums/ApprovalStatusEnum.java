@@ -12,7 +12,7 @@ public enum ApprovalStatusEnum {
     PROBE(1,"调研中"),
     ID_DESIGN_ING(2,"ID设计中"),
     APPROVAL(3,"已立项"),
-    TERMINATE(4,"已终止");
+    TERMINATE(4,"已中止");
 
     private Integer state;
 

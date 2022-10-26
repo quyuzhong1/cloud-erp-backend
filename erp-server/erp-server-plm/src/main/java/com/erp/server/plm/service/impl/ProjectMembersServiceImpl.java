@@ -156,7 +156,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleId(), dto.getUserId());
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(),dto.getRoleId(), dto.getUserId());
+
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
         FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);

@@ -16,5 +16,5 @@ public interface RoleRefMemberService extends IService<RoleRefMemberEntity> {
 
     void saveOrUpdateRef(String roleRefMemberId, String id, String roleId);
 
-    void checkRoleMember(String roleId,String memberId);
+    void checkRoleMember(String id,String roleId,String memberId);
 }

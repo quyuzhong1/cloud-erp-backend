@@ -19,6 +19,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProductInfoStateEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
@@ -280,7 +281,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 item.setApprovalTaskCount(approvalTaskCount);
+                Integer approvalStatus=item.getApprovalStatus();
+                item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 
+                Integer projectStatus=item.getProjectStatus();
+                item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
                 //这是项目任务
                 int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus()))).

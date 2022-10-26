@@ -123,7 +123,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     @Override
     public boolean removeSysTaskPhase(String id) {
         SysTaskPhaseEntity taskPhase = this.getById(id);
-        projectPhaseService.checkTaskQuote(taskPhase.getName());
+        projectPhaseService.checkTaskQuote(taskPhase.getId());
         if (!Objects.isNull(taskPhase) && IsConstant.YES.equals(taskPhase.getIsProjectApproval())) {
             throw new ServiceException(ApiError.ERROR_95020);
         }

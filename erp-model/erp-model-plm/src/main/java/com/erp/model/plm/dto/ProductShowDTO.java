@@ -52,12 +52,24 @@ public class ProductShowDTO implements Serializable {
      *
      */
     private Integer approvalStatus;
+
+    /**
+     * 产品立项状态名
+     *
+     */
+    private String approvalStatusName;
     /**
      * 产品项目状态
      *  0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
      *
      */
     private Integer projectStatus;
+
+    /**
+     * 产品项目状态名
+     *
+     */
+    private String projectStatusName;
 
     /**
      * 截止时间

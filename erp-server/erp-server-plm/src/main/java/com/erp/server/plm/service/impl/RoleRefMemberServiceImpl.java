@@ -62,8 +62,6 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
             queryWrapper.set(RoleRefMemberEntity::getMembersId, memberId);
             this.update(queryWrapper);
         } else {
-            //检查
-            checkRoleMember(roleId,memberId);
             RoleRefMemberEntity ref = new RoleRefMemberEntity();
             ref.setMembersId(memberId);
             ref.setRoleId(roleId);
@@ -80,10 +78,11 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
      * @return void
      */
     @Override
-    public void checkRoleMember(String roleId,String memberId){
+    public void checkRoleMember(String id,String roleId,String memberId){
         LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
         queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
+        queryWrapper.ne(RoleRefMemberEntity::getId,id);
         RoleRefMemberEntity entity = this.getOne(queryWrapper);
         if (entity != null) {
             throw new ServiceException(ApiError.ERROR_95021);
