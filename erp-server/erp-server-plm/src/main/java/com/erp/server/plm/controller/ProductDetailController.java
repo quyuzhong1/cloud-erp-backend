@@ -153,12 +153,12 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    @DataPermission(operationType = "update",
+/*    @DataPermission(operationType = "update",
             tableField = "create_user_id",
             menuCode = "plm:product:detail:delete",
             serviceClass = ProductDetailServiceImpl.class,
             entityName = "ProductInfoDTO"
-    )
+    )*/
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
