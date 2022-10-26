@@ -667,6 +667,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     docs.setChangeFlag(true);
                     docs.setDeleteFlag(false);
                 }
+                if (taskState.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
+                    docs.setChangeFlag(true);
+                }
                 if (taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())) {
                     docs.setDeleteFlag(false);
                 }
@@ -1268,9 +1271,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //有审核流程的 要启动流程了
         for (ProjectTaskEntity processTask : processList) {
             String businessProcessId = processTask.getBusinessProcessId();
-            String taskProcessId = processTask.getProcessId();
-            //当流程Id 不为空就表示 有流程 是审核不通过的
-            if (StringUtils.isBlank(taskProcessId)) {
+            //当不是审核不通过 就启动一个流程
+            if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
                 if (StringUtils.isNotBlank(businessProcessId)) {
                     BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
                     if (!Objects.isNull(processEntity)) {

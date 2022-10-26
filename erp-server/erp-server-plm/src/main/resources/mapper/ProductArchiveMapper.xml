@@ -10,7 +10,11 @@
         ON p.id=pi.product_id
         INNER JOIN product_archive pa
         ON pa.product_id=p.id
-        WHERE P.category_id=#{params.categoryId}
+        <where>
+            <if test="params.categoryId!='' and params.categoryId!=null">
+                P.category_id=#{params.categoryId}
+            </if>
+        </where>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
            AND  p.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
