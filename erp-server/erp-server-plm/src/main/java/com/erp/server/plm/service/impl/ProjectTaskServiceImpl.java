@@ -527,7 +527,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //总任务数
             int totalTaskCount = taskList.size();
             //延期的任务数
-            int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            int postponeTaskCount = 0;
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+
 
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
