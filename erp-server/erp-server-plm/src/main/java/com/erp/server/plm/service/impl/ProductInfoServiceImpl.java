@@ -378,6 +378,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 
 
+
+                Integer projectStatus=item.getProjectStatus();
+                if(projectStatus!=null){
+                    item.setProjectStatusName("");
+                }else{
+                    item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
+                }
+
                 List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
                 //这是立项任务
                 int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();

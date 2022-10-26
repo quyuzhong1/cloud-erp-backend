@@ -55,7 +55,6 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @GetMapping("/startItemList")
-    @RequestPermissions("plm:project:startItemList")
     public ApiResult<List<StartItemSourceDTO>> getList() {
         List<StartItemSourceDTO> resultList=projectInfoService.getStartItemSourceList();
         return success(resultList);

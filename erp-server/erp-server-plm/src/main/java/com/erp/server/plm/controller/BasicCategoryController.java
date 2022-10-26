@@ -61,7 +61,6 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @GetMapping("/tree")
-    @RequestPermissions("plm:category:tree")
     public ApiResult<List<BasicCategoryDTO>> tree() {
         List<BasicCategoryDTO> treeList = categoryService.getTree();
         return success(treeList);

@@ -158,7 +158,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //结束时间
         project.setEndTime(dto.getEndTime());
         project.setDescribe(dto.getDescribe());
-        project.setProjectStatus(ProjectStateEnum.ING.getState());
+        project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
         Integer sourceType = dto.getSourceType();
         if (flag) {
@@ -281,6 +281,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 item.setApprovalTaskCount(approvalTaskCount);
+
                 Integer approvalStatus=item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 
