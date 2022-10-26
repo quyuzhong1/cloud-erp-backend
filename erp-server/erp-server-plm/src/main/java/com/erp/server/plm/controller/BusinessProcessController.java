@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller;
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BusinessProcessDTO;
@@ -32,7 +33,7 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:process:list")
+    @RequestPermissions("plm:process:list")
     public ApiResult<List<BusinessProcessEntity>> getProcessList(String businessType) {
         List<BusinessProcessEntity> resultList = businessProcessService.getProcessList(businessType);
         return success(resultList);
@@ -45,7 +46,7 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @PostMapping("/save")
-    //@RequestPermissions("plm:process:save")
+    @RequestPermissions("plm:process:save")
     public ApiResult saveProcess(@RequestBody BusinessProcessDTO dto) {
         Boolean flag = businessProcessService.saveProcess(dto);
         return flag == true ? success() : failure();

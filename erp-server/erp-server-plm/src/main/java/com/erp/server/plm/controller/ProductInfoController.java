@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -48,6 +49,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/paging")
    // @RequestPermissions("plm:product:paging")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -58,7 +60,7 @@ public class ProductInfoController extends BaseController {
      * 产品列表-编辑时候详情
      */
     @PostMapping("/productInfo")
-    //@RequestPermissions("plm:product:productInfo")
+    @RequestPermissions("plm:product:productInfo")
     public ApiResult<ProductDTO> info(@RequestBody @Validated BaseIdDTO dto) {
         ProductDTO product = productInfoService.info(dto.getId());
         return success(product);
@@ -68,7 +70,7 @@ public class ProductInfoController extends BaseController {
      * 产品列表-更改对应数据
      */
     @PostMapping("/updateProduct")
-    //@RequestPermissions("plm:product:updateProduct")
+    @RequestPermissions("plm:product:updateProduct")
     public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);
         return success();
@@ -79,7 +81,7 @@ public class ProductInfoController extends BaseController {
      * 产品列表-新建产品
      */
     @PostMapping("/saveOrUpdate")
-    //@RequestPermissions("plm:product:saveOrUpdate")
+    @RequestPermissions("plm:product:saveOrUpdate")
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
         Boolean flag = productInfoService.saveOrUpdateProduct(dto);
         return flag == true ? success() : failure();
@@ -89,7 +91,7 @@ public class ProductInfoController extends BaseController {
      * 产品列表-移动分类
      */
     @PostMapping("/updateCategory")
-    //@RequestPermissions("plm:product:updateCategory")
+    @RequestPermissions("plm:product:updateCategory")
     public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
         Boolean flag = productInfoService.updateCategory(dto);
         return flag == true ? success() : failure();
@@ -99,14 +101,14 @@ public class ProductInfoController extends BaseController {
      * 产品列表-删除产品
      */
     @PostMapping("/remove")
-    //@RequestPermissions("plm:product:remove")
+    @RequestPermissions("plm:product:remove")
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();
     }
 
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:exportTemplate")
+    @RequestPermissions("plm:product:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         productInfoService.exportTemplate(request, response);
     }
@@ -115,7 +117,7 @@ public class ProductInfoController extends BaseController {
      * 概述
      */
     @GetMapping("/info")
-    //@RequestPermissions("plm:product:info")
+    @RequestPermissions("plm:product:info")
     public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);
@@ -126,7 +128,7 @@ public class ProductInfoController extends BaseController {
      * 保存模板
      */
     @PostMapping("/saveTemplate")
-    //@RequestPermissions("plm:product:saveTemplate")
+    @RequestPermissions("plm:product:saveTemplate")
     public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();
@@ -136,7 +138,7 @@ public class ProductInfoController extends BaseController {
      * 新建产品-获取关联产品
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:product:list")
+    @RequestPermissions("plm:product:list")
     public ApiResult list() {
         List<Map<String, Object>> list = productInfoService.getListObjs();
         return success(list);
@@ -147,7 +149,7 @@ public class ProductInfoController extends BaseController {
      * 数据导出
      */
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
-    //@RequestPermissions("plm:product:exportProductData")
+    @RequestPermissions("plm:product:exportProductData")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
     }

@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -37,7 +38,7 @@ public class ProjectRoleController extends BaseController {
      * @date 2022-10-09 19:33
      */
     @GetMapping("/sort/list")
-    //@RequestPermissions("plm:role:sort:list")
+    @RequestPermissions("plm:role:sort:list")
     public ApiResult<List<ProductRoleDTO>> roleSortList() {
         return success(projectRoleService.roleSortList());
     }
@@ -52,7 +53,7 @@ public class ProjectRoleController extends BaseController {
      * @date 2022-10-09 19:33
      */
     @PostMapping("/save")
-    //@RequestPermissions("plm:role:save")
+    @RequestPermissions("plm:role:save")
     public ApiResult save(@RequestBody @Validated ProjectRoleDTO dto) {
         boolean flag = projectRoleService.saveRole(dto);
         return flag == true ? success() : failure();
@@ -67,7 +68,7 @@ public class ProjectRoleController extends BaseController {
      * @date 2022-10-09 19:33
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:role:list")
+    @RequestPermissions("plm:role:list")
     public ApiResult<List<ProjectRoleEntity>> list(String productId) {
         return success(projectRoleService.listByProductId(productId));
     }

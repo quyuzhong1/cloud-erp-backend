@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -47,7 +48,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    //@RequestPermissions("plm:task:paging")
+    @RequestPermissions("plm:task:paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -60,7 +61,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/save")
-    //@RequestPermissions("plm:task:save")
+    @RequestPermissions("plm:task:save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
         return flag == true ? success() : failure();
@@ -73,14 +74,14 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    //@RequestPermissions("plm:task:update")
+    @RequestPermissions("plm:task:update")
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.updateTask(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/saveSonTask")
-    //@RequestPermissions("plm:task:saveSonTask")
+    @RequestPermissions("plm:task:saveSonTask")
     public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
         return flag == true ? success() : failure();
@@ -93,7 +94,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:task:list")
+    @RequestPermissions("plm:task:list")
     public ApiResult list(String productId) {
         List<Map<String, Object>> list = taskService.getTaskListByProductId(productId);
         return success(list);
@@ -106,7 +107,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/taskDetails")
-    //@RequestPermissions("plm:task:taskDetails")
+    @RequestPermissions("plm:task:taskDetails")
     public ApiResult<ProjectTaskDTO> taskDetails(String taskId) {
         ProjectTaskDTO taskDTO = taskService.taskDetails(taskId);
         return success(taskDTO);
@@ -119,7 +120,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/removeTask")
-    //@RequestPermissions("plm:task:removeTask")
+    @RequestPermissions("plm:task:removeTask")
     public ApiResult remove(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = taskService.removeTask(dto.getId());
         return flag == true ? success() : failure();
@@ -132,7 +133,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/setPreTask")
-    //@RequestPermissions("plm:task:setPreTask")
+    @RequestPermissions("plm:task:setPreTask")
     public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
         Boolean flag = preTaskService.addPreTask(dto);
         return flag == true ? success() : failure();
@@ -145,7 +146,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/removePreTask")
-    //@RequestPermissions("plm:task:removePreTask")
+    @RequestPermissions("plm:task:removePreTask")
     public ApiResult removePreTask(@RequestBody @Validated SetPreTaskDTO dto) {
         Boolean flag = preTaskService.removePreTask(dto);
         return flag == true ? success() : failure();
@@ -160,7 +161,7 @@ public class ProjectTaskController extends BaseController {
      * @date 2022-10-11 11:23
      */
     @GetMapping("/details")
-    //@RequestPermissions("plm:task:details")
+    @RequestPermissions("plm:task:details")
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
         return success(detailsDTO);
@@ -172,7 +173,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/getProductTaskCount")
-    //@RequestPermissions("plm:task:getProductTaskCount")
+    @RequestPermissions("plm:task:getProductTaskCount")
     public ApiResult<ProductTaskCountDTO> getProductTaskCount(String productId) {
         ProductTaskCountDTO dto = taskService.getProductTaskCount(productId, new Date());
         return success(dto);
@@ -184,7 +185,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/getProductList")
-    //@RequestPermissions("plm:task:getProductList")
+    @RequestPermissions("plm:task:getProductList")
     public ApiResult<List<ProductProjectDTO>> getProductList() {
         List<ProductProjectDTO> resultList = productInfoService.getProductAndProjectList();
         return success(resultList);
@@ -197,7 +198,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/updateTask")
-    //@RequestPermissions("plm:task:updateTask")
+    @RequestPermissions("plm:task:updateTask")
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto) {
         Boolean result = taskService.updateBaseTask(dto);
         return result == true ? success() : failure();
@@ -209,7 +210,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/publishTask")
-    //@RequestPermissions("plm:task:publishTask")
+    @RequestPermissions("plm:task:publishTask")
     public ApiResult publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
         Boolean result = taskService.publishTask(dto);
         return result == true ? success() : failure();
@@ -221,7 +222,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/cancelPublishTask")
-    //@RequestPermissions("plm:task:cancelPublishTask")
+    @RequestPermissions("plm:task:cancelPublishTask")
     public ApiResult cancelPublishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.cancelPublishTask(dto);
         return result == true ? success() : failure();
@@ -233,7 +234,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/startTask")
-    //@RequestPermissions("plm:task:startTask")
+    @RequestPermissions("plm:task:startTask")
     public ApiResult startTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.startTask(dto);
         return result == true ? success() : failure();
@@ -245,7 +246,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/closeTask")
-    //@RequestPermissions("plm:task:closeTask")
+    @RequestPermissions("plm:task:closeTask")
     public ApiResult closeTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.closeTask(dto);
         return result == true ? success() : failure();
@@ -259,7 +260,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/finishTask")
-    //@RequestPermissions("plm:task:finishTask")
+    @RequestPermissions("plm:task:finishTask")
     public ApiResult finishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.finishTask(dto);
         return result == true ? success() : failure();
@@ -271,7 +272,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/approvalPass")
-    //@RequestPermissions("plm:task:approvalPass")
+    @RequestPermissions("plm:task:approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO  dto) {
         Boolean result = taskService.approvalPass(dto);
         return result == true ? success() : failure();
@@ -283,7 +284,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/approvalReject")
-    //@RequestPermissions("plm:task:approvalReject")
+    @RequestPermissions("plm:task:approvalReject")
     public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
         return result == true ? success() : failure();
@@ -295,7 +296,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/findTaskProcess")
-    //@RequestPermissions("plm:task:findTaskProcess")
+    @RequestPermissions("plm:task:findTaskProcess")
     public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
         List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
         return success(taskProcess);

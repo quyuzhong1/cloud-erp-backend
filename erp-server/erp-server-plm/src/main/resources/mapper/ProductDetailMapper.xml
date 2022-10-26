@@ -82,6 +82,9 @@
                 #{chargeId}
             </foreach>
         </if>
+        <if test="params.param != '' and params.param != null">
+            ${params.param}
+        </if>
         ORDER BY pd.create_time DESC
     </select>
 

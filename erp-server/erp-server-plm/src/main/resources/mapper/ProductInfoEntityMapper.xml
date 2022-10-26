@@ -36,6 +36,9 @@
                 #{productId}
             </foreach>
         </if>
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
 
         ORDER BY p.create_time DESC
     </select>
@@ -89,6 +92,9 @@
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
+        </if>
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
         </if>
 
     </select>

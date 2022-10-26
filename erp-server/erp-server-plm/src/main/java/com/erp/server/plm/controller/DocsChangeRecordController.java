@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller;
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.entity.DocsChangeRecordEntity;
@@ -34,7 +35,7 @@ public class DocsChangeRecordController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    //@RequestPermissions("plm:docsChange:list")
+    @RequestPermissions("plm:docsChange:list")
     public ApiResult<List<DocsChangeRecordEntity>> list(String taskId) {
         List<DocsChangeRecordEntity> list = docsChangeRecordService.listByTaskId(taskId);
         return success(list);

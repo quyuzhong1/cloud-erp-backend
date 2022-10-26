@@ -95,8 +95,8 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductDetailShowDTO>>
      **/
     @PostMapping("/list")
-    //@RequestPermissions("plm:product:detail:list")
-    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list")
+    @RequestPermissions("plm:product:detail:list")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list", tableAlias = "pi")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -110,7 +110,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
      **/
     @GetMapping("/getNoSpecDetailById")
-    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    @RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(productId);
         return this.success(list);
@@ -124,7 +124,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
      **/
     @GetMapping("/getManySpecDetailById")
-    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+    @RequestPermissions("plm:product:detail:getManySpecDetailById")
     public ApiResult<ProductManyDetailDTO> getManySpecDetailById(@RequestParam(value = "productId") String productId) {
         ProductManyDetailDTO list = productDetailService.getManySpecDetailById(productId);
         return this.success(list);
@@ -138,7 +138,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdateNoSpec")
-    //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
+    @RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
     public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
         return flag == true ? this.success() : this.failure();
@@ -152,12 +152,13 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdateManySpec")
-    //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
+    @RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
 /*    @DataPermission(operationType = "update",
             tableField = "create_user_id",
             menuCode = "plm:product:detail:saveOrUpdateManySpec",
-            serviceClass = ProductDetailServiceImpl.class,
-            entityName = "productInfoDTO"
+            serviceClass = ProductInfoService.class,
+            entityName = "productInfoDTO",
+            keyIdName = "id"
     )*/
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
@@ -172,7 +173,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/insertProductImage")
-    //@RequestPermissions("plm:product:detail:insertProductImage")
+    @RequestPermissions("plm:product:detail:insertProductImage")
     public ApiResult insertProductImage(@RequestBody ProductImagesDTO productImagesDTO) {
         Boolean flag = productImagesService.insertProductImage(productImagesDTO);
         return flag == true ? this.success() : this.failure();
@@ -186,7 +187,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductDetailEntity>>
      **/
     @PostMapping("/InsertManySpecSku")
-    //@RequestPermissions("plm:product:detail:InsertManySpecAuto")
+    @RequestPermissions("plm:product:detail:InsertManySpecAuto")
     public ApiResult<List<ProductDetailEntity>> InsertManySpecAuto(@RequestBody VariantAutoAddDTO variantAutoAddDTO) {
         List<ProductDetailEntity> list = productDetailService.insertManySpecAuto(variantAutoAddDTO);
         return this.success(list);
@@ -200,7 +201,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/delete")
-    //@RequestPermissions("plm:product:detail:delete")
+    @RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
@@ -215,7 +216,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/deleteByProductId")
-    //@RequestPermissions("plm:product:detail:delete")
+    @RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult deleteByProductId(@RequestParam(value = "id")  String id) {
         Boolean flag = productDetailService.deleteByProductId(id);
@@ -230,7 +231,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/deleteBatch")
-    //@RequestPermissions("plm:product:detail:deleteBatch")
+    @RequestPermissions("plm:product:detail:deleteBatch")
     public ApiResult deleteBatch(@RequestParam(value = "skuIds")  List<String> skuIds) {
         Boolean flag = productDetailService.deleteBatch(skuIds);
         return flag == true ? this.success() : this.failure();
@@ -335,7 +336,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @GetMapping("/removeCertificate")
-    //@RequestPermissions("plm:product:detail:removeCertificate")
+    @RequestPermissions("plm:product:detail:removeCertificate")
     public ApiResult removeCertificate(@RequestParam("id") String id) {
         Boolean flag = productCertificateService.removeCertificate(id);
         return  flag == true ? this.success() : this.failure();
@@ -349,7 +350,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
      **/
     @GetMapping("/listPurchaseRemark")
-    //@RequestPermissions("plm:product:detail:listPurchaseRemark")
+    @RequestPermissions("plm:product:detail:listPurchaseRemark")
     public ApiResult<List<ProductPurchaseRemarkEntity>> listPurchaseRemark(@RequestParam(value = "productId") String productId) {
         List<ProductPurchaseRemarkEntity> list = productPurchaseRemarkService.list(productId);
         return this.success(list);
@@ -363,7 +364,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdatePurchaseRemark")
-    //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemark")
+    @RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemark")
     public ApiResult saveOrUpdatePurchaseRemark(@RequestBody ProductPurchaseRemarkDTO dto) {
         Boolean flag = productPurchaseRemarkService.saveOrUpdate(dto);
         return flag == true ? this.success() : this.failure();
@@ -377,7 +378,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
-    //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
+    @RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
     public ApiResult saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
         Boolean flag = productPurchaseRemarkService.saveOrUpdateBatch(dto);
         return flag == true ? this.success() : this.failure();
@@ -403,7 +404,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
      **/
     @GetMapping("/listVariantAndProperty")
-    //@RequestPermissions("plm:product:detail:listVariantAndProperty")
+    @RequestPermissions("plm:product:detail:listVariantAndProperty")
     public ApiResult<List<ProductVariantDTO>> listVariantAndProperty() {
         List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
         return this.success(productVariantDTOS);
@@ -417,7 +418,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdateVariant")
-    //@RequestPermissions("plm:product:detail:saveOrUpdateVariant")
+    @RequestPermissions("plm:product:detail:saveOrUpdateVariant")
     public ApiResult saveOrUpdateVariant(@RequestBody ProductVariantDTO productVariantDTO) {
         Boolean flag = productVariantService.saveOrUpdate(productVariantDTO);
         return flag == true ? this.success() : this.failure();
@@ -431,7 +432,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/deleteVariant")
-    //@RequestPermissions("plm:product:detail:deleteVariant")
+    @RequestPermissions("plm:product:detail:deleteVariant")
     public ApiResult deleteVariant(@RequestParam(value="variantId") String variantId){
         Boolean flag = productVariantService.deleteVariant(variantId);
         return flag == true ? this.success() : this.failure();
@@ -487,7 +488,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/saveOrUpdateProductUnit")
-    //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
+    @RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
     public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
         Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
         return flag == true ? this.success() : this.failure();
@@ -513,7 +514,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/deleteProductUnit")
-    //@RequestPermissions("plm:product:detail:deleteProductUnit")
+    @RequestPermissions("plm:product:detail:deleteProductUnit")
     public ApiResult deleteProductUnit(String id) {
         Boolean flag = productUnitService.delete(id);
         return flag == true ? this.success() : this.failure();
@@ -529,7 +530,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/importProductFile")
-    //@RequestPermissions("plm:product:detail:importProductFile")
+    @RequestPermissions("plm:product:detail:importProductFile")
     public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
@@ -564,7 +565,7 @@ public class ProductDetailController extends BaseController {
      * @param response response
      **/
     @GetMapping("/exportTemplate")
-    //@RequestPermissions("plm:product:detail:exportTemplate")
+    @RequestPermissions("plm:product:detail:exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
         String excelName = "template.xlsx";
@@ -596,7 +597,7 @@ public class ProductDetailController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping(value = "/exportProduct")
-    //@RequestPermissions("plm:product:detail:exportProduct")
+    @RequestPermissions("plm:product:detail:exportProduct")
     public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
     }

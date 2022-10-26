@@ -54,11 +54,6 @@ public class DataPermissionAspect {
      */
     public static final Integer DATA_SCOPE_SELF = 1;
 
-    /**
-     * 数据权限过滤关键字
-     */
-    public static final String DATA_SCOPE = "DataPermision";
-
     @Resource
     private CommonService commonService;
 
@@ -85,7 +80,6 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        userInfo.setUid("1545306732634984450");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -113,34 +107,20 @@ public class DataPermissionAspect {
      * @param controllerDataScope 自定义注解参数
      */
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, DataPermission controllerDataScope) {
-
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream = requestPermissionsList.stream().filter(req -> req.getPermissionsCode().equals(controllerDataScope.menuCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(userRequestPermissionsDTOStream)) {
-            throw new ServiceException(ApiError.ERROR_1013);
+            return;
+            //throw new ServiceException(ApiError.ERROR_1013);
         }
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
         for (SysUserDTO sysUserDTO : depUserList) {
             userList.add(sysUserDTO.getUid());
         }
-        Object[] params = joinPoint.getArgs();
-        Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        DataPermission inject = method.getAnnotation(DataPermission.class);
-
-/*        //sql的拼接
-        String sqlParam = "";
-        if (controllerDataScope.operationType().equals("query")) {
-            sqlParam = query(userRequestPermissionsDTOStream, userList, user, controllerDataScope);
-        } else if (controllerDataScope.operationType().equals("delete")) {
-
-        } else if (controllerDataScope.operationType().equals("update")) {
-
-        }*/
-        String sqlParam = "";
         switch (controllerDataScope.operationType()) {
             case "query":
-                sqlParam = query(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
+                query(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
                 break;
             case "delete":
                 delete(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
@@ -150,26 +130,6 @@ public class DataPermissionAspect {
                 break;
             default:
                 break;
-        }
-        StringBuilder sqlString = new StringBuilder();
-        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
-            if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
-                sqlString = new StringBuilder();
-                break;
-            } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " IN (" + StringUtils.join(userList, ",") + ")");
-            } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + controllerDataScope.tableField() + " = " + user.getUid() + " ");
-            }
-
-        }
-
-
-        //这个是给那个字段赋值
-        if (StringUtils.isNotBlank(sqlString.toString())) {
-            if(params.length > 0){
-
-            }
         }
     }
 
@@ -184,7 +144,7 @@ public class DataPermissionAspect {
      * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public String query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+    public void query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Object[] params = joinPoint.getArgs();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DataPermission inject = method.getAnnotation(DataPermission.class);
@@ -195,13 +155,12 @@ public class DataPermissionAspect {
                 sqlString = new StringBuilder();
                 break;
             } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableField() + " = " + user.getUid() + " ");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = " + user.getUid() + " ");
             }
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
-        return sqlString.toString();
     }
 
     /**
@@ -231,12 +190,12 @@ public class DataPermissionAspect {
         } else if (arg instanceof Map) {
             Map mapParam = (Map) arg;
             try {
-                if (mapParam.containsKey(dataPermission.tableField())) {
-                    Object p = mapParam.get(dataPermission.tableField());
+                if (mapParam.containsKey(dataPermission.keyIdName())) {
+                    Object p = mapParam.get(dataPermission.keyIdName());
                     if(p instanceof String){
                         inputIdList.add(p);
                     } else if (p instanceof List){
-                        inputIdList = (List<Object>) mapParam.get("id");
+                        inputIdList = (List<Object>) mapParam.get(dataPermission.keyIdName());
                     }
                 } else {
                     inputIdList = (List<Object>) mapParam.get("ids");
@@ -247,7 +206,7 @@ public class DataPermissionAspect {
         } else {
             try {
                 Map mapParam = JSONObject.parseObject(JSONObject.toJSONString(arg), Map.class);
-                Object o = mapParam.get("id");
+                Object o = mapParam.get(dataPermission.keyIdName());
                 if(o != null){
                     if(o instanceof List){
                         inputIdList = (List<Object>) o;
@@ -301,23 +260,32 @@ public class DataPermissionAspect {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
-        List<Object> inputIdList = new ArrayList<>();
-
-        Object[] args = joinPoint.getArgs();
         Object obj = joinPoint.getArgs()[0];
 
-        String s = JSONObject.toJSONString(obj);
-        JSONObject jsonObject = JSONObject.parseObject(s);
+        JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(obj));
+
         Object arg = jsonObject.get(dataPermission.entityName());
 
+        List<Object> inputIdList = new ArrayList<>();
 
-        if (CollectionUtils.isEmpty(inputIdList)) {
+        if (arg instanceof List) {
+            inputIdList = (List<Object>) arg;
+        } else if (arg instanceof Map) {
+            Map mapParam = (Map) arg;
+            inputIdList.add(mapParam.get(dataPermission.keyIdName()));
+        }
+
+
+        JSONObject entity = JSONObject.parseObject(JSONObject.toJSONString(arg));
+
+        if (StringUtils.isBlank(entity.get(dataPermission.keyIdName()).toString())) {
             return;
         }
-        //Object businessData = service.(inputIdList);
+        Object businessData = service.getById(entity.get(dataPermission.keyIdName()).toString());
+        String j = JSONObject.toJSONString(businessData);
+        JSONObject jo = JSONObject.parseObject(j);
 
-
-        String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
+        String userId = jo.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
             if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
@@ -368,59 +336,4 @@ public class DataPermissionAspect {
         }
         return null;
     }
-/*
-    *//**
-     * 通过反向 获取参数中的对象
-     *
-     * @param entityName 对象名 WhDeliveryPlanEntity
-     * @param obj        参数
-     * @return
-     *//*
-    private Object getObjClassValue(String entityName, Object obj) {
-        Object invokeClass = obj;
-        if (StringUtils.isNotBlank(entityName)) {
-            String[] clsNames = entityName.split("\\."); // 允许带.表示子对象
-            for (String key : clsNames) {
-                String methodName = ReflectUtils.toGetMethodName(key);
-                try {
-                    Method method = invokeClass.getClass().getMethod(methodName);
-                    invokeClass = method.invoke(obj);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        return invokeClass;
-    }
-
-    *//**
-     * 解析对象中指定的方法
-     *
-     * @param fieldKey   所需要指定的字段名，如：addUser,add_user
-     * @param entityName 该字段名所在的实体类的名字，驼峰标识，第一个字母需要大写
-     * @param obj        所需要遍历的实体类
-     * @return 返回解析后该字段的值
-     *//*
-    private Set<String> getObjFieldValue(String fieldKey, String entityName, Object obj) {
-        Set<String> containSet = new HashSet<>();
-        if (StringUtils.isBlank(fieldKey)) {
-            return containSet;
-        }
-        try {
-            Object invokeClass = getObjClassValue(entityName, obj);
-
-                item = ReflectUtils.toGetMethodName(fieldKey);
-
-                Method method = invokeClass.getClass().getMethod(fieldKey);
-                // 如果list包不含该ID，则认为不可以操作该数据
-                String invoke = (String) method.invoke(invokeClass);
-                if (StringUtils.isNotBlank(invoke)) {
-                    containSet.add(invoke);
-            }
-        } catch (NoSuchMethodException | IllegalAccessException |  InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-        return containSet;
-    }*/
 }
