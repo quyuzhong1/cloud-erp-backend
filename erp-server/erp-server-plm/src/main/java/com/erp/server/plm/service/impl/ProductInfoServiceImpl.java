@@ -585,7 +585,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
         ProductInfoEntity product = this.getById(dto.getProductId());
-
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
