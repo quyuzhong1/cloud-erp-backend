@@ -170,6 +170,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     public List<Map<String, Object>> sysDocsNames() {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(SysDocsEntity::getName, SysDocsEntity::getId, SysDocsEntity::getStartState);
+        queryWrapper.eq(SysDocsEntity::getStartState,IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 

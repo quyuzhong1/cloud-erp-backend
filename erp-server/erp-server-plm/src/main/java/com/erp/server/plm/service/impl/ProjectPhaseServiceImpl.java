@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -54,10 +55,21 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public List<TaskPhaseDTO> findList(BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = new ArrayList<>();
         String productId = dto.getProductId();
+
         //根据产品id 获取到对应的阶段名
         List<TaskPhaseDTO> productList = getTaskPhaseByProductId(productId);
         if (CollectionUtils.isNotEmpty(productList)) {
             resultList.addAll(productList);
+
+        }
+        List<String> nameList = productList.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
+        //先从系统里面取
+        List<TaskPhaseDTO> sysList = sysTaskPhaseService.getSysTaskPhase(nameList);
+        if (CollectionUtils.isNotEmpty(sysList)) {
+            for (TaskPhaseDTO item : sysList) {
+                item.setIfQuote(true);
+            }
+            resultList.addAll(sysList);
         }
         return resultList;
     }
@@ -167,12 +179,49 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         return removeById(id);
     }
 
+    /**
+     * 是否产品已 引用
+     *
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2022-10-25 17:46
+     */
+
+    @Override
+    public void checkTaskQuote(String name) {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectPhaseEntity::getName, name);
+        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys, IsConstant.YES);
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95048);
+        }
+
+    }
+
+    /**
+     * 方法说明
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-25 19:08
+     */
+    @Override
+    public List<String> getAllSysName() {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectPhaseEntity::getName);
+        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys, IsConstant.YES);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
     private void checkPhaseTask(String id) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);
         int count = projectTaskService.count(queryWrapper);
-        if(count>0){
-          throw new ServiceException(ApiError.ERROR_95043);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95043);
         }
     }
 

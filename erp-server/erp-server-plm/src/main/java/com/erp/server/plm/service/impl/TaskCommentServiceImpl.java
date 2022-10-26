@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.TaskCommentEntity;
 import com.erp.server.plm.mapper.TaskCommentMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.TaskCommentService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +59,22 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         LambdaQueryWrapper<TaskCommentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskCommentEntity::getTaskId, taskId);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 批量保存
+     *
+     * @param taskCommentList
+     * @return void
+     * @author yl
+     * @date 2022-10-25 18:11
+     */
+    @Override
+    public void batchSaveTaskComment(List<TaskCommentEntity> taskCommentList) {
+        if (CollectionUtils.isNotEmpty(taskCommentList)) {
+            this.saveBatch(taskCommentList);
+        }
     }
 }
 
