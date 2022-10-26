@@ -216,6 +216,23 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+
+    /**
+     * 根据产品id 获取阶段名
+     *
+     * @param productId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-26 10:06
+     */
+    @Override
+    public List<String> getPhaseNameName(String productId) {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectPhaseEntity::getName);
+        queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
     private void checkPhaseTask(String id) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);
