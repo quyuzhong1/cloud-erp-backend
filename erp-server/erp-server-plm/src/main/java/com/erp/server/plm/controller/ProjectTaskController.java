@@ -173,7 +173,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/getProductTaskCount")
-    @RequestPermissions("plm:task:getProductTaskCount")
+    //@RequestPermissions("plm:task:getProductTaskCount")
     public ApiResult<ProductTaskCountDTO> getProductTaskCount(String productId) {
         ProductTaskCountDTO dto = taskService.getProductTaskCount(productId, new Date());
         return success(dto);

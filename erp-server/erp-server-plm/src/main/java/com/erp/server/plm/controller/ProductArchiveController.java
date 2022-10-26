@@ -50,7 +50,7 @@ public class ProductArchiveController extends BaseController {
      * 重新激活
      */
     @PostMapping("/activate")
-    @RequestPermissions("plm:product:archive:activate")
+    //@RequestPermissions("plm:product:archive:activate")
     public ApiResult activate(String productId) {
         boolean flag = productArchiveService.activate(productId);
         return flag==true?success():failure("激活失败");
