@@ -559,8 +559,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByProductId(productId);
 
         TaskConductDTO dto = new TaskConductDTO();
+        Integer finish=TaskStateEnum.FINISH.getCode();
+        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+
         //完成任务数
-        int finishTaskCount = list.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int finishTaskCount = list.stream().filter(t -> finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
         //进行中
         int ingTaskCount = list.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
         //总任务数
@@ -994,17 +997,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
-            List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-            int parentCount = countUndoneByTaskIds(finishCode, approvalPassCode, parentTaskIds);
-            if (parentCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95050);
-            }
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
             int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
+        }
+    }
+
+
+    @Override
+    public void checkTaskFinish(List<ProjectTaskEntity> list){
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        int parentCount = countUndoneByTaskIds(finishCode, approvalPassCode, parentTaskIds);
+        if (parentCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95050);
         }
     }
 
