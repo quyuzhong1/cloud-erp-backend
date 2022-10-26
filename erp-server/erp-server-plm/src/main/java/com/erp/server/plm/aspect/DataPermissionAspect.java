@@ -146,7 +146,7 @@ public class DataPermissionAspect {
                 delete(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
                 break;
             case "update":
-
+                update(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
                 break;
             default:
                 break;
@@ -304,16 +304,18 @@ public class DataPermissionAspect {
         List<Object> inputIdList = new ArrayList<>();
 
         Object[] args = joinPoint.getArgs();
-        Object arg = joinPoint.getArgs()[0];
+        Object obj = joinPoint.getArgs()[0];
+
+        String s = JSONObject.toJSONString(obj);
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        Object arg = jsonObject.get(dataPermission.entityName());
+
 
         if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
-        Object businessData = service.getById(arg.toString());
+        //Object businessData = service.(inputIdList);
 
-        String s = JSONObject.toJSONString(businessData);
-
-        JSONObject jsonObject = JSONObject.parseObject(s);
 
         String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
