@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
@@ -67,6 +68,7 @@ public class ProjectInfoController extends BaseController {
      */
     @PostMapping("/paging")
     //@RequestPermissions("plm:project:paging")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:project:paging", tableAlias = "p")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);

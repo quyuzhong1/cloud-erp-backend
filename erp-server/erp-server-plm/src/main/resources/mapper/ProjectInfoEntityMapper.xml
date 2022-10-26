@@ -39,6 +39,10 @@
                 #{productId}
             </foreach>
         </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
     </select>
 
 
@@ -73,6 +77,10 @@
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
         </if>
     </select>
 

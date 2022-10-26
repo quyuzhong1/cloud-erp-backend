@@ -80,6 +80,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
+        userInfo.setUid("1585211043112554497");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -155,9 +156,14 @@ public class DataPermissionAspect {
                 sqlString = new StringBuilder();
                 break;
             } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(userList, ",") + ")");
+                List<String> listt = new ArrayList<>();
+                for (String s : userList) {
+                    listt.add("'" + s +"'" );
+                }
+
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
             } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = " + user.getUid() + " ");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
             }
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
@@ -266,14 +272,14 @@ public class DataPermissionAspect {
 
         Object arg = jsonObject.get(dataPermission.entityName());
 
-        List<Object> inputIdList = new ArrayList<>();
+/*        List<Object> inputIdList = new ArrayList<>();
 
         if (arg instanceof List) {
             inputIdList = (List<Object>) arg;
         } else if (arg instanceof Map) {
             Map mapParam = (Map) arg;
             inputIdList.add(mapParam.get(dataPermission.keyIdName()));
-        }
+        }*/
 
 
         JSONObject entity = JSONObject.parseObject(JSONObject.toJSONString(arg));

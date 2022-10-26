@@ -235,9 +235,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Override
     public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
+        dto.getParams().setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
-        //获取归档的产品id
+        //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();

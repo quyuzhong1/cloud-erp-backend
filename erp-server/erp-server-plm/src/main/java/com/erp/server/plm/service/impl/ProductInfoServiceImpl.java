@@ -340,7 +340,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
-
+        dto.getParams().setParam(dto.getParam());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
         //获取到归档的产品id

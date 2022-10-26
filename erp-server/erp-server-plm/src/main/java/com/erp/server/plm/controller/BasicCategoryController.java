@@ -36,7 +36,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/save")
-    @RequestPermissions("plm:category:save")
+    //@RequestPermissions("plm:category:save")
     public ApiResult addCategory(@RequestBody @Validated SaveBasicCategoryDTO dto) {
         categoryService.addCategory(dto);
         return success();
@@ -49,7 +49,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/update")
-    @RequestPermissions("plm:category:update")
+    //@RequestPermissions("plm:category:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
         categoryService.updateCategory(dto);
         return success();
@@ -74,7 +74,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @RequestMapping(value = "/remove", method = {RequestMethod.POST})
-    @RequestPermissions("plm:category:remove")
+    //@RequestPermissions("plm:category:remove")
     public ApiResult remove(String id) {
         Boolean flag = categoryService.deleteById(id);
         return flag == true ? success() : failure();
