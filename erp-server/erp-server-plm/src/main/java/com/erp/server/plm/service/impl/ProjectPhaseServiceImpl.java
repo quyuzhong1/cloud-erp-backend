@@ -128,7 +128,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         List<ProjectPhaseEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectPhaseEntity item : list) {
-                item.setFlagId(flagId);
+
                 item.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);
@@ -182,7 +182,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     /**
      * 是否产品已 引用
      *
-     * @param name
+     * @param
      * @return void
      * @author yl
      * @date 2022-10-25 17:46

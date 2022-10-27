@@ -33,8 +33,6 @@ public class ProjectPhaseEntity implements Serializable {
     @TableField("product_id")
     private String productId;
 
-    @TableField("flag_id")
-    private String flagId;
 
 
     /**

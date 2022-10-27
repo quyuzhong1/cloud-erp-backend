@@ -93,7 +93,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<ProjectMembersEntity> list = getListByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity entity : list) {
-                entity.setFlagId(flagId);
                 entity.setId(IdWorker.getIdStr());
                 entity.setProjectId("");
                 entity.setProductId("");
@@ -130,7 +129,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     public void saveMemberByTemplate(String productId, String projectId, String flagId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectMembersEntity::getFlagId, flagId);
+
         List<ProjectMembersEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity entity : list) {

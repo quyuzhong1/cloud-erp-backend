@@ -133,7 +133,7 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
         List<ProjectRoleEntity> list = this.listByProductId(productId);
         for (ProjectRoleEntity item : list) {
             item.setId(IdWorker.getIdStr());
-            item.setFlagId(templateId);
+
         }
 
     }
