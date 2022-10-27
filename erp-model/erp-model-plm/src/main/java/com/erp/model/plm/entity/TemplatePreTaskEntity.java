@@ -1,49 +1,53 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
- * 
- * @TableName role_ref_members
+ * 任务的前置任务表
+ * @TableName template_pre_task
  */
-@TableName(value ="role_ref_members")
 @Data
-public class RoleRefMemberEntity implements Serializable {
+@TableName(value ="template_pre_task")
+public class TemplatePreTaskEntity implements Serializable {
     /**
      * 
      */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    @TableId(value = "id",type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 成员表id
+     * 任务id
      */
-    private String membersId;
+    private String taskId;
 
     /**
-     * 项目角色表id
+     * 前置任务id
      */
-    private String roleId;
-
-    private String productId;
-
+    private String preTaskId;
 
     /**
      * 
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    @TableField(value = "create_time",fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
      * 
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+
     private Date updateTime;
 
-    @TableField(exist = false)
+    /**
+     * 模板id
+     */
+    private String templateId;
+
     private static final long serialVersionUID = 1L;
+
+
 }

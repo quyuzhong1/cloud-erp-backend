@@ -469,7 +469,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
         }
         return flag;
     }
@@ -817,7 +817,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
 
             List<String> updateField = getUpdateField(dto);
             if (updateField.size() > 0) {
@@ -924,6 +924,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
         }
+        resultDTO.setPreTaskIdList(preTaskService.getPreTaskIdList(taskId));
 
         return resultDTO;
     }

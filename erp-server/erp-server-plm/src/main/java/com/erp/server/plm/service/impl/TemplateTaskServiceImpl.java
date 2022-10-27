@@ -55,68 +55,18 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Transactional
     public void saveTemplateTask(String templateId, String productId) {
         List<ProjectTaskEntity> projectTaskList = taskService.getByProductId(productId);
-
-        List<ProjectTaskEntity> parentProjectTaskList=projectTaskList.stream().filter(p->p.getPid().equals("0")).collect(Collectors.toList());
-        //从父级开始
-        if (CollectionUtils.isNotEmpty(parentProjectTaskList)) {
+        if (CollectionUtils.isNotEmpty(projectTaskList)) {
+            List<TemplateTaskEntity> saveList = new ArrayList<>();
             for (ProjectTaskEntity item : projectTaskList) {
-                String taskId = item.getId();
                 TemplateTaskEntity entity = new TemplateTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
-                String templateTaskId = IdWorker.getIdStr();
-                entity.setId(templateTaskId);
-                entity.setPhaseId("");
-                entity.setPhaseName("");
-                String pid=item.getPid();
-                boolean flag = this.save(entity);
-                if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(templateId, templateTaskId, item.getId());
-                    //这是前置任务
-                    List<ProjectTaskEntity> preTaskList = preTaskService.getPreTaskList(taskId);
-                    saveTemplatePreTask(templateId, preTaskList, templateTaskId);
-
-
-                }
-
+                saveList.add(entity);
             }
-
-
+            this.saveBatch(saveList);
         }
-
     }
 
-
-    /**
-     * 保存前置任务
-     *
-     * @param preTaskList
-     * @param templateTaskId
-     * @return void
-     * @author yl
-     * @date 2022-10-27 10:07
-     */
-    public void saveTemplatePreTask(String templateId, List<ProjectTaskEntity> preTaskList, String templateTaskId) {
-        List<String> preTaskListId = new ArrayList<>();
-        for (ProjectTaskEntity preTask : preTaskList) {
-            TemplateTaskEntity entity = new TemplateTaskEntity();
-            BeanMapper.copy(preTask, entity);
-            entity.setTemplateId(templateId);
-            String tempTaskId = IdWorker.getIdStr();
-            entity.setId(tempTaskId);
-            entity.setPhaseId("");
-            entity.setPhaseName("");
-            boolean flag = this.save(entity);
-            if (flag) {
-                preTaskListId.add(tempTaskId);
-                taskDeliveryService.saveTaskDeliveryDocs(templateId, tempTaskId, preTask.getId());
-            }
-        }
-        if (CollectionUtils.isNotEmpty(preTaskListId)) {
-            preTaskService.savePreTask(templateTaskId, preTaskListId);
-        }
-
-    }
 
     /**
      * 根据模板 获取项目任务

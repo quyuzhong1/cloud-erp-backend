@@ -87,4 +87,11 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         return resultList;
 
     }
+
+    @Override
+    public List<TaskDocsNameEntity> getDocsNameByProductId(String productId) {
+        LambdaQueryWrapper<TaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsNameEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
 }

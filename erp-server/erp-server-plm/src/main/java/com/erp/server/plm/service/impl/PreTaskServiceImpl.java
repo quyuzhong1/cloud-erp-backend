@@ -43,7 +43,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      */
 
     @Override
-    public void savePreTask(String taskId, List<String> preTaskIdList) {
+    public void savePreTask(String taskId, List<String> preTaskIdList, String productId) {
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             //先删除前置任务
             removePreTaskByTaskId(taskId, preTaskIdList);
@@ -53,6 +53,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
                     PreTaskEntity entity = new PreTaskEntity();
                     entity.setPreTaskId(preTaskId);
                     entity.setTaskId(taskId);
+                    entity.setProductId(productId);
                     addList.add(entity);
                 }
                 this.saveBatch(addList);
@@ -181,6 +182,13 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
             return projectTaskService.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public List<PreTaskEntity> getPreTaskByProductId(String productId) {
+        LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PreTaskEntity::getProductId, productId);
+        return list(queryWrapper);
     }
 }
 

@@ -7,6 +7,7 @@
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
+        p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
         WHERE P.delete_state=0 AND p.is_finished_product_dev = 1

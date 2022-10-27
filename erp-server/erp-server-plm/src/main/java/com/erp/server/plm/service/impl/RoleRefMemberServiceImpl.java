@@ -52,7 +52,7 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
      * @date 2022-10-10 15:01
      */
     @Override
-    public void saveOrUpdateRef(String roleRefMemberId, String memberId, String roleId) {
+    public void saveOrUpdateRef(String roleRefMemberId, String memberId, String roleId, String productId) {
         //表示 是修改
         if (StringUtils.isNotBlank(roleRefMemberId)) {
             //如果修改  先查出来原来用没有
@@ -60,33 +60,43 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
             queryWrapper.eq(RoleRefMemberEntity::getId, roleRefMemberId);
             queryWrapper.set(RoleRefMemberEntity::getRoleId, roleId);
             queryWrapper.set(RoleRefMemberEntity::getMembersId, memberId);
+            queryWrapper.set(RoleRefMemberEntity::getProductId, productId);
             this.update(queryWrapper);
         } else {
             RoleRefMemberEntity ref = new RoleRefMemberEntity();
             ref.setMembersId(memberId);
             ref.setRoleId(roleId);
-           this.save(ref);
+            ref.setProductId(productId);
+            this.save(ref);
         }
 
     }
-    
+
     /**
      * 检查角色id 与成员id 是否存在
-     * @author yl
-     * @date 2022-10-11 11:02
+     *
      * @param
      * @return void
+     * @author yl
+     * @date 2022-10-11 11:02
      */
     @Override
-    public void checkRoleMember(String id,String roleId,String memberId){
+    public void checkRoleMember(String id, String roleId, String memberId) {
         LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
         queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
-        queryWrapper.ne(RoleRefMemberEntity::getId,id);
+        queryWrapper.ne(RoleRefMemberEntity::getId, id);
         RoleRefMemberEntity entity = this.getOne(queryWrapper);
         if (entity != null) {
             throw new ServiceException(ApiError.ERROR_95021);
         }
+    }
+
+    @Override
+    public List<RoleRefMemberEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
+        return this.list(queryWrapper);
     }
 }
 

@@ -10,4 +10,5 @@ import com.erp.model.plm.entity.TemplateRoleRefMembersEntity;
  */
 public interface TemplateRoleRefMembersService extends IService<TemplateRoleRefMembersEntity> {
 
+    void saveRoleRefMembers(String templateId, String productId);
 }

@@ -157,7 +157,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         Boolean flag = this.saveOrUpdate(entity);
         //保存成功就要去保存关系表
         if (flag) {
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId());
+            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId(),dto.getProductId());
         }
         return flag;
 

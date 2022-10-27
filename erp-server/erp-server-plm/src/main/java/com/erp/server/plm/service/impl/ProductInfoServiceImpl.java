@@ -77,8 +77,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private TemplateMembersService  templateMembersService;
 
-    @Autowired
-    private ProjectPhaseService phaseService;
+
 
     @Autowired
     private TemplateTaskService templateTaskService;
@@ -117,6 +116,24 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private TemplatePhaseService  templatePhaseService;
+
+    @Autowired
+    private TemplateDeliveryDocsService  templateDeliveryDocsService;
+
+    @Autowired
+    private TemplateTaskDocsNameService  templateTaskDocsNameService;
+
+    @Autowired
+    private TemplateRoleRefMembersService  templateRoleRefMembersService;
+
+    @Autowired
+    private TemplatePreTaskService  templatePreTaskService;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private TaskDocsFinishService finishService;
 
 
     /**
@@ -377,6 +394,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
+
+            //根据产品id 获取到对应的要交付的文档数
+            List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
+            //根据产品id 获取到对应完成的文档数
+            List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
+            //   获取到 产品迭代的数量
+            List<CountDTO> productRelevance = this.getProductRelevanceList();
             for (ProductShowDTO item : list) {
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -384,6 +408,28 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
+                //总的文档数
+                CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (totalDocsDTO != null) {
+                    item.setTotalDocsCount(totalDocsDTO.getCount());
+                } else {
+                    item.setTotalDocsCount(0);
+                }
+                //完成的
+                CountDTO finishDocsDTO = productFinishDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (finishDocsDTO != null) {
+                    item.setFinishDocsCount(finishDocsDTO.getCount());
+                } else {
+                    item.setFinishDocsCount(0);
+                }
+                //迭代数
+                CountDTO relevanceDTO = productRelevance.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (relevanceDTO != null) {
+                    item.setIterateCount(finishDocsDTO.getCount());
+                } else {
+                    item.setIterateCount(0);
+                }
+
 
                 Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
@@ -478,11 +524,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             //保存角色
             templateRoleService.saveTemplateRole(templateId,productId);
+
+            templateRoleRefMembersService.saveRoleRefMembers(templateId,productId);
             //任务阶段
             templatePhaseService.saveTemplatePhase(templateId, productId);
-
-            //保存模板任务 同时保存了对应交付文档
+            //任务文档名称
+            templateTaskDocsNameService.saveTemplateDocsName(templateId,productId);
+            //保存交付文档
+            templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId,productId);
+            //保存模板任务
             templateTaskService.saveTemplateTask(templateId, productId);
+            //保存前置任务
+            templatePreTaskService.saveTemplatePreTask(templateId,productId);
         }
 
         return true;
