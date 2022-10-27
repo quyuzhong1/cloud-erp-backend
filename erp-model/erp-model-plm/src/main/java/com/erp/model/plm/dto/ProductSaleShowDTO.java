@@ -51,7 +51,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 月目标销售量
      */
-    private Integer monthSaleQty;
+    private Long monthSaleQty;
 
     /**
      * 月目标销售额
