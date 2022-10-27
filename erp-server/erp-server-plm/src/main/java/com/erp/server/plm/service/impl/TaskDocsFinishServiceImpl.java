@@ -266,6 +266,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             fileUrl = dto.getFileUrl();
         }
         finishEntity.setOldFileUrl(finishEntity.getFileUrl());
+        finishEntity.setOldUploadType(finishEntity.getUploadType());
+
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
         finishEntity.setUpdateUserId(loginUser.getUid());

@@ -666,7 +666,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer taskState = taskEntity.getStatus();
         Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
         Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+        Boolean isApprovalPass = TaskStateEnum.APPROVAL_PASS.getCode().equals(taskEntity.getStatus());
         for (DeliveryDocsDTO docs : docsList) {
+            //当审核通过
+            if (isApprovalPass) {
+                docs.setOldFileUrl(docs.getFileUrl());
+                docs.setOldUploadType(docs.getUploadType());
+            }
+
             // 如果任务类型是审核的
             if (taskProperty.equals(generalApproval) || taskProperty.equals(reviewTask)) {
                 //如果审核通过可以变更
@@ -1294,59 +1301,59 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //当有流程的不为空
         if (CollectionUtils.isNotEmpty(processList)) {
-        //获取到所有流程的信息
-        List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
-        //获取到所有到负责人的成员信息
-        List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(dto.getProductId());
-        List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(membersIds)) {
-            throw new ServiceException(ApiError.ERROR_95045);
-        }
-        //有审核流程的 要启动流程了
-        for (ProjectTaskEntity processTask : processList) {
-            String businessProcessId = processTask.getBusinessProcessId();
-            //当不是审核不通过 就启动一个流程
-            if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
-                if (StringUtils.isNotBlank(businessProcessId)) {
-                    BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
-                    if (!Objects.isNull(processEntity)) {
-                        if (CollectionUtils.isNotEmpty(membersIds)) {
-                            StartProcessDTO startProcess = new StartProcessDTO();
-                            startProcess.setBusinessKey(processEntity.getBusinessKey());
-                            startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                            startProcess.setUserId(loginUser.getUid());
-                            Map<String, Object> parameterMap = new HashMap<>();
-                            parameterMap.put("memberChargeList", membersIds);
-                            startProcess.setParameterMap(parameterMap);
-                            //启动流程
-                            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-                            String processId = processResult.getProcessId();
-                            //当流程id不为空的时候
-                            if (StringUtils.isNotBlank(processId)) {
-                                processTask.setProcessId(processId);
-                                processTask.setStatus(finishWaitConfirmCode);
-                                processTask.setRealityStartTime(nowDate);
-                                processTask.setBusinessProcessId(processEntity.getId());
-                                this.updateById(processTask);
+            //获取到所有流程的信息
+            List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
+            //获取到所有到负责人的成员信息
+            List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(dto.getProductId());
+            List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(membersIds)) {
+                throw new ServiceException(ApiError.ERROR_95045);
+            }
+            //有审核流程的 要启动流程了
+            for (ProjectTaskEntity processTask : processList) {
+                String businessProcessId = processTask.getBusinessProcessId();
+                //当不是审核不通过 就启动一个流程
+                if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
+                    if (StringUtils.isNotBlank(businessProcessId)) {
+                        BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
+                        if (!Objects.isNull(processEntity)) {
+                            if (CollectionUtils.isNotEmpty(membersIds)) {
+                                StartProcessDTO startProcess = new StartProcessDTO();
+                                startProcess.setBusinessKey(processEntity.getBusinessKey());
+                                startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                                startProcess.setUserId(loginUser.getUid());
+                                Map<String, Object> parameterMap = new HashMap<>();
+                                parameterMap.put("memberChargeList", membersIds);
+                                startProcess.setParameterMap(parameterMap);
+                                //启动流程
+                                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+                                String processId = processResult.getProcessId();
+                                //当流程id不为空的时候
+                                if (StringUtils.isNotBlank(processId)) {
+                                    processTask.setProcessId(processId);
+                                    processTask.setStatus(finishWaitConfirmCode);
+                                    processTask.setRealityStartTime(nowDate);
+                                    processTask.setBusinessProcessId(processEntity.getId());
+                                    this.updateById(processTask);
 
-                                TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
-                                recordEntity.setOperatorName(loginUser.getUserName());
-                                recordEntity.setOperatorId(loginUser.getUid());
-                                recordEntity.setBeforeState(ingCode);
-                                recordEntity.setAfterState(finishWaitConfirmCode);
-                                recordEntity.setTaskId(processTask.getId());
-                                taskOperatorRecordService.save(recordEntity);
+                                    TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+                                    recordEntity.setOperatorName(loginUser.getUserName());
+                                    recordEntity.setOperatorId(loginUser.getUid());
+                                    recordEntity.setBeforeState(ingCode);
+                                    recordEntity.setAfterState(finishWaitConfirmCode);
+                                    recordEntity.setTaskId(processTask.getId());
+                                    taskOperatorRecordService.save(recordEntity);
+                                }
                             }
                         }
                     }
-                }
-            } else {
-                List<String> processTaskIds = processList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                //当流程Id 不为空就表示 有流程 是审核不通过的
-                this.updateTaskState(processTaskIds, finishWaitConfirmCode, null, null);
-                taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), finishWaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
+                } else {
+                    List<String> processTaskIds = processList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                    //当流程Id 不为空就表示 有流程 是审核不通过的
+                    this.updateTaskState(processTaskIds, finishWaitConfirmCode, null, null);
+                    taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), finishWaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
 
-            }
+                }
             }
 
         }
