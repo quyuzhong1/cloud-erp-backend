@@ -62,7 +62,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
             }
         }
 
-        return baseMapper.selectList(queryWrapper);
+        return taskList;
     }
 
     /**

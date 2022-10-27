@@ -186,7 +186,7 @@ public class TaskJob {
     private void createScheduleOrderTask(String platform){
         Date nextDate = queryLatestTaskDate(platform,BusinessType.ORDER);
 
-        while(nextDate.compareTo(DateUtil.yesterday())>=0){
+        while(nextDate.compareTo(DateUtil.yesterday())<=0){
             //创建任务
             saveTask(platform,BusinessType.ORDER,nextDate);
 

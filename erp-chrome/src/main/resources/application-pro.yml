@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://172.16.110.12:5432/erp_chrome_prod?useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:postgresql://120.77.238.162:5432/erp_chrome_prod?useSSL=false&serverTimezone=GMT%2B8
     driver-class-name: org.postgresql.Driver
     username: postgres
-    password: admin@viji
+    password: Ke4Na2kRUzHbXIMw
   servlet:
     multipart:
       enabled: true
