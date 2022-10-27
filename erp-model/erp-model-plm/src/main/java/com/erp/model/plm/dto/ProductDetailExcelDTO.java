@@ -175,20 +175,20 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "实际首批到货时间", index = 51)
     private Date actualArrivalTime;
 
-    @ExcelProperty(value = "首批到货状态", index = 52)
+    @ExcelProperty(value = "实际首批到货量", index = 52)
+    private Integer actualArrivalQty;
+
+    @ExcelProperty(value = "首批到货状态", index = 53)
     private String arrivalState;
 
-    @ExcelProperty(value = "采购员", index = 53)
+    @ExcelProperty(value = "采购员", index = 54)
     private String purchaseUser;
 
-    @ExcelProperty(value = "一级供应商", index = 54)
+    @ExcelProperty(value = "一级供应商", index = 55)
     private String mainSupplier;
 
-    @ExcelProperty(value = "二级供应商", index = 55)
+    @ExcelProperty(value = "二级供应商", index = 56)
     private String secondSupplier;
-
-    @ExcelProperty(value = "实际首批到货量", index = 56)
-    private Integer actualArrivalQty;
 
     @ExcelProperty(value = "错误信息", index = 57)
     private String errorMsg;
