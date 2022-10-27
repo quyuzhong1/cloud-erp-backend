@@ -44,7 +44,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 计划首批下单量
      */
-    private Integer planOrderQty;
+    private Long planOrderQty;
 
     /**
      * 首批下单时间
@@ -130,7 +130,7 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 实际首批到货量
      */
-    private Integer actualArrivalQty;
+    private Long actualArrivalQty;
 
     private static final long serialVersionUID = 1L;
 }
