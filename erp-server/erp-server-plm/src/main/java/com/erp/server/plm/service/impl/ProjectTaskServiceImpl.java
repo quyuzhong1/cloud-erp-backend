@@ -559,11 +559,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByProductId(productId);
 
         TaskConductDTO dto = new TaskConductDTO();
-        Integer finish=TaskStateEnum.FINISH.getCode();
-        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
 
         //完成任务数
-        int finishTaskCount = list.stream().filter(t -> finish.equals(t.getStatus())||approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+        int finishTaskCount = list.stream().filter(t -> finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
         //进行中
         int ingTaskCount = list.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
         //总任务数
@@ -724,9 +724,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<String> getSysPhase(List<String> sysPhaseIds) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectTaskEntity::getPhaseId);
-        queryWrapper.in(ProjectTaskEntity::getPhaseId,sysPhaseIds);
+        queryWrapper.in(ProjectTaskEntity::getPhaseId, sysPhaseIds);
         queryWrapper.groupBy(ProjectTaskEntity::getPhaseId);
-        return this.listObjs(queryWrapper,Objects::toString);
+        return this.listObjs(queryWrapper, Objects::toString);
     }
 
 
@@ -1008,7 +1008,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     @Override
-    public void checkTaskFinish(List<ProjectTaskEntity> list){
+    public void checkTaskFinish(List<ProjectTaskEntity> list) {
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -1292,7 +1292,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         this.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
 
-
+        //当有流程的不为空
+        if (CollectionUtils.isNotEmpty(processList)) {
         //获取到所有流程的信息
         List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
         //获取到所有到负责人的成员信息
@@ -1345,6 +1346,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 this.updateTaskState(processTaskIds, finishWaitConfirmCode, null, null);
                 taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), finishWaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
 
+            }
             }
 
         }

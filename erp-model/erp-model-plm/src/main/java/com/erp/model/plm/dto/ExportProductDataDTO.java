@@ -32,7 +32,7 @@ public class ExportProductDataDTO implements Serializable {
      * 1. 任务列表
      */
     @NotNull(message = "导出类型不能为空")
-    @Size(min=1,max = 2,message = "导出数据必须勾选")
+  //  @Size(min=1,max = 2,message = "导出数据必须勾选")
     private List<Integer> exportDataList;
 
 

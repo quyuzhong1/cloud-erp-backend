@@ -113,7 +113,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     }
 
     /**
-     * 保存任务阶段
+     * 保存 模板 阶段
      *
      * @param flagId
      * @param productId
@@ -122,13 +122,13 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      * @date 2022-09-20 15:10
      */
     @Override
-    public void savePhase(String flagId, String productId) {
+    public void saveTemplatePhase(String flagId, String productId) {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
         List<ProjectPhaseEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectPhaseEntity item : list) {
-                item.setProductId(flagId);
+                item.setFlagId(flagId);
                 item.setId(IdWorker.getIdStr());
             }
             this.saveBatch(list);

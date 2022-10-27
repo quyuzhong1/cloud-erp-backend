@@ -108,6 +108,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private PreTaskService preTaskService;
 
+    @Autowired
+    private ProjectRoleService projectRoleService;
+
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -462,9 +466,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             membersService.saveMember(templateId, productId);
+            //保存角色
+            projectRoleService.saveTemplateRole(templateId, productId);
 
             //任务阶段
-            phaseService.savePhase(templateId, productId);
+            phaseService.saveTemplatePhase(templateId, productId);
 
             //保存模板任务 同时保存了对应交付文档
             templateTaskService.saveTemplateTask(templateId, productId);
@@ -622,8 +628,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                          * 表示改成已立项 就要去检查该该产品下的 所有的任务
                          *  是否完成
                          */
-                        List<ProjectTaskEntity> taskList=projectTaskService.getByProductId(productId);
-                        List<String> taskIdList =taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+                        List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
                         projectTaskService.checkTaskFinish(taskList);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);

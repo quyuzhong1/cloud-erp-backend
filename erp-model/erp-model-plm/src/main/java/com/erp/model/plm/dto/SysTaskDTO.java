@@ -88,10 +88,7 @@ public class SysTaskDTO implements Serializable {
      */
     private Integer isFixed;
 
-    /**
-     * 流程id
-     */
-    private Integer processId;
+
 
     /**
      * 任务描述

@@ -29,7 +29,7 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
 
     void batchSaveOrUpdate(BatchTaskPhaseDTO list);
 
-    void savePhase(String templateId, String productId);
+    void saveTemplatePhase(String templateId, String productId);
 
     String saveTaskPhase(String productId, String phaseName,Integer isSourceSys);
 

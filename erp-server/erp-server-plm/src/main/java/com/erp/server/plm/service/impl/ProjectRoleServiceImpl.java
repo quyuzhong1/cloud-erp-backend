@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -113,8 +114,28 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     public List<String> getRoleIdsByProductId(String productId) {
         LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectRoleEntity::getId);
-        queryWrapper.eq(ProjectRoleEntity::getProductId,productId);
-        return listObjs(queryWrapper,Object::toString);
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
+        return listObjs(queryWrapper, Object::toString);
+    }
+
+
+    /**
+     * 保存 模板角色
+     *
+     * @param templateId
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-10-27 9:21
+     */
+    @Override
+    public void saveTemplateRole(String templateId, String productId) {
+        List<ProjectRoleEntity> list = this.listByProductId(productId);
+        for (ProjectRoleEntity item : list) {
+            item.setId(IdWorker.getIdStr());
+            item.setFlagId(templateId);
+        }
+
     }
 
 

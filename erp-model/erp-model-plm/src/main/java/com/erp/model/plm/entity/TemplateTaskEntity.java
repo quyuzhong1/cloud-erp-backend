@@ -29,6 +29,9 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("name")
     private String name;
 
+    @TableField("pid")
+    private String pid;
+
     /**
      * 任务类型 0 一般任务 1：审核任务
      */
@@ -107,11 +110,7 @@ public class TemplateTaskEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-    /**
-     * 流程id
-     */
-    @TableField("process_id")
-    private String processId;
+
 
     /**
      * 引用系统任务的id

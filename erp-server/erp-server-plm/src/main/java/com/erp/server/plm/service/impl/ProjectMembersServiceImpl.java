@@ -95,6 +95,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             for (ProjectMembersEntity entity : list) {
                 entity.setFlagId(flagId);
                 entity.setId(IdWorker.getIdStr());
+                entity.setProjectId("");
+                entity.setProductId("");
             }
             this.saveBatch(list);
         }

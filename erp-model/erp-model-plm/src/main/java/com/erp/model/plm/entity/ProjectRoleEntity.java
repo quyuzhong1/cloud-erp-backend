@@ -47,6 +47,12 @@ public class ProjectRoleEntity implements Serializable {
     private String productId;
 
     /**
+     * 标示id
+     */
+    private String flagId;
+
+
+    /**
      * 项目id
      */
     private String projectId;
