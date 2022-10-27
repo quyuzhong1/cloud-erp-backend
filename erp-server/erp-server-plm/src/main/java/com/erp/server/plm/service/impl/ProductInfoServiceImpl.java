@@ -35,6 +35,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -71,8 +72,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectTemplateService templateService;
 
+
+
     @Autowired
-    private ProjectMembersService membersService;
+    private TemplateMembersService  templateMembersService;
 
     @Autowired
     private ProjectPhaseService phaseService;
@@ -108,8 +111,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private PreTaskService preTaskService;
 
+
     @Autowired
-    private ProjectRoleService projectRoleService;
+    private TemplateRoleService  templateRoleService;
+
+    @Autowired
+    private TemplatePhaseService  templatePhaseService;
 
 
     /**
@@ -467,12 +474,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String templateId = templateService.saveTemplate(templateName);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
-            membersService.saveMember(templateId, productId);
-            //保存角色
-            projectRoleService.saveTemplateRole(templateId, productId);
+            templateMembersService.saveMember(templateId, productId);
 
+            //保存角色
+            templateRoleService.saveTemplateRole(templateId,productId);
             //任务阶段
-            phaseService.saveTemplatePhase(templateId, productId);
+            templatePhaseService.saveTemplatePhase(templateId, productId);
 
             //保存模板任务 同时保存了对应交付文档
             templateTaskService.saveTemplateTask(templateId, productId);
@@ -520,6 +527,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProductInfoEntity::getId, ProductInfoEntity::getName);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState,IsConstant.NO);
+        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev,IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 

@@ -9,4 +9,5 @@ import com.erp.model.plm.entity.TemplateRoleEntity;
  */
 public interface TemplateRoleService extends IService<TemplateRoleEntity> {
 
+    void saveTemplateRole(String templateId, String productId);
 }

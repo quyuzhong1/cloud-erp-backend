@@ -10,4 +10,5 @@ import com.erp.model.plm.entity.TemplatePhaseEntity;
  */
 public interface TemplatePhaseService extends IService<TemplatePhaseEntity> {
 
+    void saveTemplatePhase(String templateId, String productId);
 }

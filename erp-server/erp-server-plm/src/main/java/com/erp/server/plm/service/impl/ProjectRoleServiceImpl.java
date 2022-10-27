@@ -119,24 +119,7 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     }
 
 
-    /**
-     * 保存 模板角色
-     *
-     * @param templateId
-     * @param productId
-     * @return void
-     * @author yl
-     * @date 2022-10-27 9:21
-     */
-    @Override
-    public void saveTemplateRole(String templateId, String productId) {
-        List<ProjectRoleEntity> list = this.listByProductId(productId);
-        for (ProjectRoleEntity item : list) {
-            item.setId(IdWorker.getIdStr());
 
-        }
-
-    }
 
 
     /**

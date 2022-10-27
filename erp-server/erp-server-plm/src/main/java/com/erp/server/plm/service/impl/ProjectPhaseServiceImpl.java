@@ -55,22 +55,12 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public List<TaskPhaseDTO> findList(BasicProductIdDTO dto) {
         List<TaskPhaseDTO> resultList = new ArrayList<>();
         String productId = dto.getProductId();
-
         //根据产品id 获取到对应的阶段名
         List<TaskPhaseDTO> productList = getTaskPhaseByProductId(productId);
         if (CollectionUtils.isNotEmpty(productList)) {
             resultList.addAll(productList);
+        }
 
-        }
-        List<String> nameList = productList.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
-        //先从系统里面取
-        List<TaskPhaseDTO> sysList = sysTaskPhaseService.getSysTaskPhase(nameList);
-        if (CollectionUtils.isNotEmpty(sysList)) {
-            for (TaskPhaseDTO item : sysList) {
-                item.setIfQuote(true);
-            }
-            resultList.addAll(sysList);
-        }
         return resultList;
     }
 
@@ -87,18 +77,12 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         List<TaskPhaseDTO> list = dto.getTaskPhases();
         String productId = dto.getProductId();
         //获取到任务阶段的
-
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
             List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
-            List<String> phaseIds = list.stream().map(TaskPhaseDTO::getId).collect(Collectors.toList());
-            //获取产品加系统的阶段名 去重后的
-            List<String> dbPhaseNames = getDbTaskPhaseNames(productId, phaseIds);
-            //获取交集
-            List<String> intersections = phaseNames.stream().filter(item -> dbPhaseNames.contains(item)).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(intersections)) {
-                String intersectionName = String.join(",", intersections);
-                throw new ServiceException(1, intersectionName + " 阶段名已存在,不可重复提交");
+            List<String> distinctList = phaseNames.stream().distinct().collect(Collectors.toList());
+            if (phaseNames.size() != distinctList.size()) {
+                throw new ServiceException(ApiError.ERROR_95001);
             }
             List<ProjectPhaseEntity> updateList = new LinkedList<>();
             for (TaskPhaseDTO item : list) {
@@ -110,30 +94,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             }
             this.saveOrUpdateBatch(updateList);
         }
-    }
-
-    /**
-     * 保存 模板 阶段
-     *
-     * @param flagId
-     * @param productId
-     * @return void
-     * @author yl
-     * @date 2022-09-20 15:10
-     */
-    @Override
-    public void saveTemplatePhase(String flagId, String productId) {
-        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
-        List<ProjectPhaseEntity> list = this.list(queryWrapper);
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (ProjectPhaseEntity item : list) {
-
-                item.setId(IdWorker.getIdStr());
-            }
-            this.saveBatch(list);
-        }
-
     }
 
 
@@ -179,42 +139,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         return removeById(id);
     }
 
-    /**
-     * 是否产品已 引用
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2022-10-25 17:46
-     */
-
-    @Override
-    public void checkTaskQuote(String phaseId) {
-        //获取到系统的阶段
-        List<String> projectPhaseIdList = projectTaskService.getSysPhase(Arrays.asList(phaseId));
-        if(CollectionUtils.isNotEmpty(projectPhaseIdList)){
-            throw new ServiceException(ApiError.ERROR_95048);
-        }
-
-
-    }
-
-    /**
-     * 方法说明
-     *
-     * @param
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2022-10-25 19:08
-     */
-    @Override
-    public List<String> getAllSysName() {
-        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProjectPhaseEntity::getName);
-        queryWrapper.eq(ProjectPhaseEntity::getIsSourceSys, IsConstant.YES);
-        return this.listObjs(queryWrapper, Object::toString);
-    }
-
 
     /**
      * 根据产品id 获取阶段名
@@ -232,6 +156,39 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    /**
+     * 保存系统的阶段名
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.ProjectPhaseEntity>
+     * @author yl
+     * @date 2022-10-27 14:30
+     */
+    @Override
+    public List<ProjectPhaseEntity> saveSysPhase(String productId) {
+        List<String> sysPhaseNames = sysTaskPhaseService.getSysTaskPhaseNames();
+        if (CollectionUtils.isNotEmpty(sysPhaseNames)) {
+            List<ProjectPhaseEntity> saveList = new ArrayList<>();
+            for (String phaseName : sysPhaseNames) {
+                ProjectPhaseEntity phaseEntity = new ProjectPhaseEntity();
+                phaseEntity.setName(phaseName);
+                phaseEntity.setProductId(productId);
+                phaseEntity.setIsSourceSys(IsConstant.YES);
+                saveList.add(phaseEntity);
+            }
+            this.saveBatch(saveList);
+            return saveList;
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<ProjectPhaseEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
     private void checkPhaseTask(String id) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);
@@ -239,33 +196,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95043);
         }
-    }
-
-
-    /**
-     * 根据产品id 获取 产品下任务阶段名 然后在加上 系统的任务阶段名
-     *
-     * @param productId
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2022-09-14 17:53
-     */
-    private List<String> getDbTaskPhaseNames(String productId, List<String> phaseIds) {
-        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProjectPhaseEntity::getName);
-        queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
-        queryWrapper.notIn(ProjectPhaseEntity::getId, phaseIds);
-        List<String> list = this.listObjs(queryWrapper, Object::toString);
-//        List<String> sysList = sysTaskPhaseService.getSysTaskPhaseNames();
-        List<String> results = new LinkedList<>();
-        if (CollectionUtils.isNotEmpty(list)) {
-            results.addAll(list);
-        }
-//        if (CollectionUtils.isNotEmpty(sysList)) {
-//            results.addAll(sysList);
-//        }
-
-        return results.stream().distinct().collect(Collectors.toList());
     }
 
 
@@ -284,6 +214,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         for (TaskPhaseDTO item : list) {
             if (flagName.equals(item.getName())) {
                 item.setIsProjectApproval(IsConstant.YES);
+                item.setIfQuote(true);
             }
         }
         return list;

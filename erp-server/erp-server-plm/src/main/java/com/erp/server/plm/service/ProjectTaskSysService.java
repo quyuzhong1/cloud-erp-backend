@@ -34,4 +34,6 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
     List<Map<String, Object>> taskList();
 
     SysTaskDTO taskDetails(String taskId);
+
+    void checkQuotePhase(String id);
 }

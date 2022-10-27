@@ -23,5 +23,4 @@ public interface ProjectRoleService extends IService<ProjectRoleEntity> {
 
     List<String> getRoleIdsByProductId(String productId);
 
-    void saveTemplateRole(String templateId, String productId);
 }

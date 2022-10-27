@@ -20,7 +20,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     void add(String productId,String projectId, List<String> members);
 
-    void saveMember(String flagId, String productId);
 
     void saveMemberByProject(String productId,String projectId, String flagId);
 

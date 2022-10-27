@@ -79,27 +79,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     }
 
 
-    /**
-     * 保存模板的成员
-     *
-     * @param flagId
-     * @param productId
-     * @return void
-     * @author yl
-     * @date 2022-09-20 14:52
-     */
-    @Override
-    public void saveMember(String flagId, String productId) {
-        List<ProjectMembersEntity> list = getListByProductId(productId);
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (ProjectMembersEntity entity : list) {
-                entity.setId(IdWorker.getIdStr());
-                entity.setProjectId("");
-                entity.setProductId("");
-            }
-            this.saveBatch(list);
-        }
-    }
+
 
 
     /**
