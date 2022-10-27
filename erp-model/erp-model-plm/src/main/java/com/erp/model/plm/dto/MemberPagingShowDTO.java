@@ -24,27 +24,27 @@ public class MemberPagingShowDTO implements Serializable {
     /**
      * 角色成员关系表id
      */
-    private String roleRefMemberId;
+    private String roleRefMemberId="";
 
     /**
      * 角色名
      */
-    private String roleName;
+    private String roleName="";
 
     /**
      * 角色id
      */
-    private String roleId;
+    private String roleId="";
 
     /**
      * 成员名
      */
-    private String memberName;
+    private String memberName="";
 
     /**
      * 成员id
      */
-    private String memberId;
+    private String memberId="";
 
     /**
      * 创建人id

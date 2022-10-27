@@ -20,6 +20,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
 import com.erp.server.plm.enums.TaskProcessTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.*;
@@ -312,7 +313,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (StringUtils.isNotBlank(processId)) {
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
-            taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
+            if(taskEntity.getType().equals(TaskTypeEnum.GENERAL_TASK.getCode())){
+                taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
+            }else{
+                taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+            }
             projectTaskService.updateById(taskEntity);
         }
         return flag;
