@@ -11,9 +11,7 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProjectInfoEntity;
-import com.erp.model.plm.entity.ProjectMembersEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -57,48 +55,41 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     private ProjectRoleService projectRoleService;
 
 
+    /**
+     * 启动项目 添加成员
+     *
+     * @param productId
+     * @param projectId
+     * @param members
+     * @return void
+     * @author yl
+     * @date 2022-10-27 19:01
+     */
     @Override
     public void add(String productId, String projectId, List<String> members) {
+        List<ProjectMembersEntity> existList = this.getListByProductId(productId);
         List<ProjectMembersEntity> addList = new LinkedList<>();
         List<FindUserDTO> findUsers = sysUserFeign.getUserList();
         for (String item : members) {
-            ProjectMembersEntity entity = new ProjectMembersEntity();
-            String userId = item;
-            entity.setMemberId(userId);
-            FindUserDTO user = findUsers.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
-            if (!Objects.isNull(user)) {
-                entity.setMemberName(user.getUserName());
-            } else {
-                entity.setMemberName("");
+            long count = existList.stream().filter(p -> p.getMemberId().equals(item)).count();
+            //表示没有重复
+            if(count==0){
+                ProjectMembersEntity entity = new ProjectMembersEntity();
+                String userId = item;
+                entity.setMemberId(userId);
+                FindUserDTO user = findUsers.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+                if (!Objects.isNull(user)) {
+                    entity.setMemberName(user.getUserName());
+                } else {
+                    entity.setMemberName("");
+                }
+                entity.setProjectId(projectId);
+                entity.setProductId(productId);
+                addList.add(entity);
             }
-            entity.setProjectId(projectId);
-            entity.setProductId(productId);
-            addList.add(entity);
+
         }
         this.saveBatch(addList);
-    }
-
-
-    /**
-     * 保存模板的成员
-     *
-     * @param flagId
-     * @param productId
-     * @return void
-     * @author yl
-     * @date 2022-09-20 14:52
-     */
-    @Override
-    public void saveMember(String flagId, String productId) {
-        List<ProjectMembersEntity> list = getListByProductId(productId);
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (ProjectMembersEntity entity : list) {
-                entity.setId(IdWorker.getIdStr());
-                entity.setProjectId("");
-                entity.setProductId("");
-            }
-            this.saveBatch(list);
-        }
     }
 
 
@@ -157,7 +148,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(),dto.getRoleId(), dto.getUserId());
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserId());
 
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
@@ -177,7 +168,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         Boolean flag = this.saveOrUpdate(entity);
         //保存成功就要去保存关系表
         if (flag) {
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId());
+            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId(), dto.getProductId());
         }
         return flag;
 
@@ -199,34 +190,73 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         String productId = params.getProductId();
         List<String> roleIds = new ArrayList<>();
         String roleId = params.getProjectRoleId();
+
+        IPage pageData = new Page(); //查看所有的人
         if (StringUtils.isBlank(roleId)) {
-            roleIds = projectRoleService.getRoleIdsByProductId(productId);
-        } else {
-            roleIds.add(roleId);
-        }
-        IPage pageData = baseMapper.paging(query, productId, roleIds);
-        List<MemberPagingShowDTO> list = pageData.getRecords();
-        if (CollectionUtils.isNotEmpty(list)) {
-            //获取到任务处理的情况
-            List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
-            for (MemberPagingShowDTO item : list) {
-                TaskConductDTO taskConduct = conductList.stream().filter(c -> c.getMembersId().equals(item.getMemberId())).findFirst().orElse(null);
-                Integer totalTaskCount = 0;
-                Integer finishTaskCount = 0;
-                Integer ingTaskCount = 0;
-                Integer postponeTaskCount = 0;
-                if (!Objects.isNull(taskConduct)) {
-                    totalTaskCount = taskConduct.getTotalTaskCount();
-                    finishTaskCount = taskConduct.getFinishTaskCount();
-                    ingTaskCount = taskConduct.getIngTaskCount();
-                    postponeTaskCount = taskConduct.getPostponeTaskCount();
+            List<ProjectRoleEntity> roleList = projectRoleService.listByProductId(productId);
+            List<RoleRefMemberEntity> refList = roleRefMemberService.getByProductId(productId);
+            //查看所有的人
+            pageData = baseMapper.allPaging(query, productId);
+            List<MemberPagingShowDTO> list = pageData.getRecords();
+
+            if (CollectionUtils.isNotEmpty(list)) {
+                //获取到任务处理的情况
+                List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
+                for (MemberPagingShowDTO item : list) {
+                    String memberId = item.getMemberId();
+                    RoleRefMemberEntity ref = refList.stream().filter(r -> r.getMembersId().equals(memberId)).findFirst().orElse(null);
+                    if (ref != null) {
+                        item.setRoleId(ref.getRoleId());
+                        ProjectRoleEntity role = roleList.stream().filter(r -> r.getId().equals(ref.getRoleId())).findFirst().orElse(null);
+                        item.setRoleRefMemberId(ref.getId());
+                        if (role != null) {
+                            item.setRoleName(role.getName());
+                        }
+                    }
+                    Integer totalTaskCount = 0;
+                    Integer finishTaskCount = 0;
+                    Integer ingTaskCount = 0;
+                    Integer postponeTaskCount = 0;
+                    TaskConductDTO taskConduct = conductList.stream().filter(c -> c.getMembersId().equals(item.getMemberId())).findFirst().orElse(null);
+                    if (!Objects.isNull(taskConduct)) {
+                        totalTaskCount = taskConduct.getTotalTaskCount();
+                        finishTaskCount = taskConduct.getFinishTaskCount();
+                        ingTaskCount = taskConduct.getIngTaskCount();
+                        postponeTaskCount = taskConduct.getPostponeTaskCount();
+                    }
+                    item.setTotalTaskCount(totalTaskCount);
+                    item.setFinishTaskCount(finishTaskCount);
+                    item.setIngTaskCount(ingTaskCount);
+                    item.setPostponeTaskCount(postponeTaskCount);
                 }
-                item.setTotalTaskCount(totalTaskCount);
-                item.setFinishTaskCount(finishTaskCount);
-                item.setIngTaskCount(ingTaskCount);
-                item.setPostponeTaskCount(postponeTaskCount);
+            }
+
+        } else {
+            pageData = baseMapper.paging(query, productId, roleIds);
+            List<MemberPagingShowDTO> list = pageData.getRecords();
+            if (CollectionUtils.isNotEmpty(list)) {
+                //获取到任务处理的情况
+                List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
+                for (MemberPagingShowDTO item : list) {
+                    TaskConductDTO taskConduct = conductList.stream().filter(c -> c.getMembersId().equals(item.getMemberId())).findFirst().orElse(null);
+                    Integer totalTaskCount = 0;
+                    Integer finishTaskCount = 0;
+                    Integer ingTaskCount = 0;
+                    Integer postponeTaskCount = 0;
+                    if (!Objects.isNull(taskConduct)) {
+                        totalTaskCount = taskConduct.getTotalTaskCount();
+                        finishTaskCount = taskConduct.getFinishTaskCount();
+                        ingTaskCount = taskConduct.getIngTaskCount();
+                        postponeTaskCount = taskConduct.getPostponeTaskCount();
+                    }
+                    item.setTotalTaskCount(totalTaskCount);
+                    item.setFinishTaskCount(finishTaskCount);
+                    item.setIngTaskCount(ingTaskCount);
+                    item.setPostponeTaskCount(postponeTaskCount);
+                }
             }
         }
+
         return new PagingVO(pageData);
 
     }

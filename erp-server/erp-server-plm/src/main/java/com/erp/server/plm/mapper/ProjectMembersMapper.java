@@ -21,5 +21,7 @@ import java.util.List;
 @Mapper
 public interface ProjectMembersMapper extends BaseMapper<ProjectMembersEntity> {
 
-    IPage paging(Page query, @Param("productId")String productId,@Param("roleIds") List<String> roleIds );
+    IPage paging(Page query, @Param("productId")String productId,@Param("roleIds") List<String> roleIds  );
+
+    IPage allPaging(Page query, @Param("productId") String productId);
 }

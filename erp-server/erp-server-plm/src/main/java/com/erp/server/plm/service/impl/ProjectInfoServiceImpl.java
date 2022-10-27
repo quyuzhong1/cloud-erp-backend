@@ -76,6 +76,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private ProjectPhaseService projectPhaseService;
 
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private TaskDocsFinishService finishService;
+
 
     /**
      * 项目概述
@@ -259,6 +265,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         List<ProductShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
+            //根据产品id 获取到对应的要交付的文档数
+            List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
+            //根据产品id 获取到对应完成的文档数
+            List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
+            //   获取到 产品迭代的数量
+            List<CountDTO> productRelevance = productInfoService.getProductRelevanceList();
+
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
@@ -273,6 +286,28 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
+                }
+
+                //总的文档数
+                CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (totalDocsDTO != null) {
+                    item.setTotalDocsCount(totalDocsDTO.getCount());
+                } else {
+                    item.setTotalDocsCount(0);
+                }
+                //完成的
+                CountDTO finishDocsDTO = productFinishDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (finishDocsDTO != null) {
+                    item.setFinishDocsCount(finishDocsDTO.getCount());
+                } else {
+                    item.setFinishDocsCount(0);
+                }
+                //迭代数
+                CountDTO relevanceDTO = productRelevance.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
+                if (relevanceDTO != null) {
+                    item.setIterateCount(finishDocsDTO.getCount());
+                } else {
+                    item.setIterateCount(0);
                 }
 
                 //这是立项任务

@@ -16,4 +16,6 @@ import java.util.List;
 public interface TaskDocsNameService  extends IService<TaskDocsNameEntity> {
     Boolean saveDocsName(DocsNameDTO dto);
     List<DocsDTO> getDocsNameList(String productId);
+
+    List<TaskDocsNameEntity> getDocsNameByProductId(String productId);
 }

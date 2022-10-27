@@ -141,5 +141,29 @@ public class ProductShowDTO implements Serializable {
      */
     private Boolean ifIteration=false;
 
+    /**
+     * 创建时间
+     */
+    private Date  createTime;
+
+    /**
+     * 总文档数
+     */
+    private Integer totalDocsCount;
+
+
+
+    /**
+     * 完成文档档数
+     */
+    private Integer finishDocsCount;
+
+
+
+    /**
+     * 迭代数量
+     */
+    private Integer iterateCount;
+
 
 }

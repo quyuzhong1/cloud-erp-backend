@@ -49,6 +49,7 @@ public class ProductNoSpecDTO {
     /**
      * 产品物流信息
      */
+    @Valid
     private ProductLogisticsDTO productLogisticsDTO;
 
     /**

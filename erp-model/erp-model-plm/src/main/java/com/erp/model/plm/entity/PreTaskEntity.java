@@ -29,6 +29,12 @@ public class PreTaskEntity implements Serializable {
      */
     private String preTaskId;
 
+
+    /**
+     * 产品id
+     */
+    private String productId;
+
     /**
      * 
      */

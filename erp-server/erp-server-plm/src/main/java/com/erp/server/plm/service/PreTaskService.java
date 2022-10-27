@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface PreTaskService extends IService<PreTaskEntity> {
 
-    void savePreTask(String id, List<String> preTaskIdList);
+    void savePreTask(String id, List<String> preTaskIdList,String productId);
 
     Boolean addPreTask(SetPreTaskDTO dto);
 
@@ -26,4 +26,6 @@ public interface PreTaskService extends IService<PreTaskEntity> {
     void checkPreTaskFinish(List<String> taskIds);
 
     List<ProjectTaskEntity> getPreTaskList(String taskId);
+
+    List<PreTaskEntity> getPreTaskByProductId(String productId);
 }

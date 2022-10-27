@@ -249,16 +249,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-09-21 9:08
      */
     @Override
+    @Transactional
     public void copyTaskBySys(String saveProductId, String saveProjectId) {
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
+        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
+
             for (ProjectTaskSysEntity item : sysTaskList) {
+                ProjectPhaseEntity phase = projectPhaseList.stream().filter(p -> p.getName().equals(item.getName())).findFirst().orElse(null);
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
+                if(phase!=null){
+                    entity.setPhaseId(phase.getId());
+                    entity.setPhaseName(phase.getName());
+                }else{
+                    entity.setPhaseId("");
+                    entity.setPhaseName("");
+                }
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
@@ -458,7 +469,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
         }
         return flag;
     }
@@ -719,22 +730,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
 
-    /**
-     * 获取任务中 用过系统阶段的有那些
-     *
-     * @param sysPhaseIds
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2022-10-26 15:04
-     */
-    @Override
-    public List<String> getSysPhase(List<String> sysPhaseIds) {
-        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(ProjectTaskEntity::getPhaseId);
-        queryWrapper.in(ProjectTaskEntity::getPhaseId, sysPhaseIds);
-        queryWrapper.groupBy(ProjectTaskEntity::getPhaseId);
-        return this.listObjs(queryWrapper, Objects::toString);
-    }
+
 
 
     private List<String> getUpdateField(ProjectTaskDTO dto) {
@@ -821,7 +817,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
 
             List<String> updateField = getUpdateField(dto);
             if (updateField.size() > 0) {
@@ -928,6 +924,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
         }
+        resultDTO.setPreTaskIdList(preTaskService.getPreTaskIdList(taskId));
 
         return resultDTO;
     }

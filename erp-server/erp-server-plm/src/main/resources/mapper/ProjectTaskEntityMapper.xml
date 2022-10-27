@@ -82,7 +82,7 @@
         pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName
         FROM   project_task t
         LEFT JOIN product_info pi ON pi.id=t.product_id
-        LEFT JOIN project_info pj ON pj.id=t.project_id
+        LEFT JOIN project_info pj ON pj.product_id=pi.id
         WHERE t.id=#{taskId}
     </select>
 

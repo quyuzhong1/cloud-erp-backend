@@ -93,7 +93,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Integer getTaskProperty(ProjectTaskEntity taskEntity);
 
 
-    List<String> getSysPhase(List<String> sysPhaseIds);
 
     void checkTaskFinish(List<ProjectTaskEntity> list);
 }

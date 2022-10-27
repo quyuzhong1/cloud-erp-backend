@@ -74,7 +74,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 return;
             }
             //先删除文档 不存在的数据
-            removeTaskDocs(taskId,existDocsIds, docsId);
+            removeTaskDocs(taskId, existDocsIds, docsId);
 
             //需要过滤一下的
             deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
@@ -206,7 +206,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 return;
             }
             //先删除文档
-            removeTaskDocs(taskId,existDocsIds, parameterIds);
+            removeTaskDocs(taskId, existDocsIds, parameterIds);
             //需要过滤一下的
             docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
 
@@ -290,6 +290,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     /**
+     * 获取交付的文档
+     *
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.TaskDeliveryDocsEntity>
+     * @author yl
+     * @date 2022-10-27 16:16
+     */
+    @Override
+    public List<TaskDeliveryDocsEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDeliveryDocsEntity::getProductId,productId);
+        return this.list(queryWrapper);
+    }
+
+    /**
      * 根据任务id 获取对应要交付的文档
      *
      * @param
@@ -322,33 +337,20 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
                 queryWrapper.notIn(TaskDeliveryDocsEntity::getId, intersectionList);
                 //去差集
-                List<String> subtractList = (List<String>) CollectionUtils.subtract(existDocsIds,docsIds);
-                taskDocsFinishService.removeByDocsIds(taskId,subtractList);
+                List<String> subtractList = (List<String>) CollectionUtils.subtract(existDocsIds, docsIds);
+                taskDocsFinishService.removeByDocsIds(taskId, subtractList);
                 this.remove(queryWrapper);
             }
-        }else{
+        } else {
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
                 //表示没有交集 所有都要删除
                 queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-                queryWrapper.in(TaskDeliveryDocsEntity::getId,existDocsIds);
+                queryWrapper.in(TaskDeliveryDocsEntity::getId, existDocsIds);
                 this.remove(queryWrapper);
-                taskDocsFinishService.removeByDocsIds(taskId,existDocsIds);
+                taskDocsFinishService.removeByDocsIds(taskId, existDocsIds);
             }
         }
     }
 
-    public static void main(String[] args) {
-        List<String> list1 = new LinkedList<>();
-        list1.add("1");
-        list1.add("2");
-        list1.add("3");
 
-
-        List<String> list2 = new LinkedList<>();
-        list2.add("4");
-        list2.add("5");
-
-
-        System.out.println(CollectionUtils.intersection(list2,list1));
-    }
 }

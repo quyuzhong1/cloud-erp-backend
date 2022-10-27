@@ -14,6 +14,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.SysTaskPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
 import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.ProjectTaskSysService;
 import com.erp.server.plm.service.SysTaskPhaseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,9 +36,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
 
 
     @Autowired
-    private ProjectPhaseService projectPhaseService;
-    @Autowired
-    private ProjectTaskService projectTaskService;
+    private ProjectTaskSysService projectTaskSysService;
 
     /**
      * 修改阶段名称
@@ -49,7 +48,6 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
      */
     @Override
     public void updateTaskPhase(UpdateBasicNameDTO dto) {
-        projectPhaseService.checkTaskQuote(dto.getName());
 
         String taskPhaseName = dto.getName();
         //检查任务阶段名 是否存在
@@ -107,9 +105,10 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     //获取到系统任务阶段名集合
     @Override
     public List<String> getSysTaskPhaseNames() {
-        List<SysTaskPhaseEntity> list = this.list();
-        List<String> resultList = list.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
-        return resultList;
+        LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysTaskPhaseEntity::getName);
+        queryWrapper.eq(SysTaskPhaseEntity::getIsProjectApproval,IsConstant.NO);
+        return listObjs(queryWrapper,Object::toString);
     }
 
     /**
@@ -123,7 +122,8 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     @Override
     public boolean removeSysTaskPhase(String id) {
         SysTaskPhaseEntity taskPhase = this.getById(id);
-        projectPhaseService.checkTaskQuote(taskPhase.getId());
+        projectTaskSysService.checkQuotePhase(id);
+
         if (!Objects.isNull(taskPhase) && IsConstant.YES.equals(taskPhase.getIsProjectApproval())) {
             throw new ServiceException(ApiError.ERROR_95020);
         }
@@ -134,14 +134,11 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     public List<BasicDTO> getSysTaskPhaseList() {
         List<SysTaskPhaseEntity> list = this.list();
         List<BasicDTO> resultList = new ArrayList<>(list.size());
-        List<String> sysPhaseIds=list.stream().map(SysTaskPhaseEntity::getId).collect(Collectors.toList());
-        //获取到系统的阶段
-        List<String> projectPhaseIdList = projectTaskService.getSysPhase(sysPhaseIds);
         for (SysTaskPhaseEntity item : list) {
             BasicDTO basic = new BasicDTO();
             basic.setId(item.getId());
             basic.setName(item.getName());
-            if (projectPhaseIdList.contains(item.getId())) {
+            if (item.getIsProjectApproval().equals(IsConstant.YES)) {
                 basic.setIfQuote(true);
             }
             resultList.add(basic);

@@ -80,7 +80,6 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        //userInfo.setUid("1585211043112554497");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -230,11 +229,17 @@ public class DataPermissionAspect {
             return;
         }
         Object businessData = service.getById(arg.toString());
+        if (org.springframework.util.ObjectUtils.isEmpty(businessData)) {
+            return;
+        }
 
         String s = JSONObject.toJSONString(businessData);
 
         JSONObject jsonObject = JSONObject.parseObject(s);
 
+        if (jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)) == null) {
+            return;
+        }
         String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
         for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {

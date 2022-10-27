@@ -8,7 +8,9 @@
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
-        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time,
+        pi.create_time
+
         FROM product_info p INNER JOIN project_info
         pi
         ON p.id=pi.product_id
@@ -48,7 +50,7 @@
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
-        pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
+        pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,pi.create_time
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p
         INNER JOIN project_info pi ON p.id=pi.product_id
         WHERE  P.delete_state=0

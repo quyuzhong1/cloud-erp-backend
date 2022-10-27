@@ -239,4 +239,22 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         return sysTaskDTO;
     }
+
+    /**
+     * 检查阶段是否引用
+     *
+     * @param phaseId
+     * @return void
+     * @author yl
+     * @date 2022-10-27 14:55
+     */
+    @Override
+    public void checkQuotePhase(String phaseId) {
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskSysEntity::getPhaseId, phaseId);
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95048);
+        }
+    }
 }

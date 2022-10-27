@@ -10,4 +10,5 @@ import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
  */
 public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDocsEntity> {
 
+    void saveTemplateDeliveryDocs(String templateId, String productId);
 }

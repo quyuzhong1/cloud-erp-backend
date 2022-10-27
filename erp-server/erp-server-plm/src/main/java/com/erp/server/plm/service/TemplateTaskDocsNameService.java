@@ -10,4 +10,5 @@ import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
  */
 public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNameEntity> {
 
+    void saveTemplateDocsName(String templateId, String productId);
 }

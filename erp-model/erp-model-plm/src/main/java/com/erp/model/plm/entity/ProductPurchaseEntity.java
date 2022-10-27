@@ -36,7 +36,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 计划首批下单量
      */
     @TableField(value = "plan_order_qty")
-    private Integer planOrderQty;
+    private Long planOrderQty;
 
     /**
      * 首批下单时间
@@ -120,7 +120,7 @@ public class ProductPurchaseEntity implements Serializable {
      * 实际首批到货量
      */
     @TableField(value = "actual_arrival_qty")
-    private Integer actualArrivalQty;
+    private Long actualArrivalQty;
 
     /**
      * 创建人名称

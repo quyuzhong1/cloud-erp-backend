@@ -29,6 +29,9 @@ public class TemplateRoleRefMembersEntity implements Serializable {
      */
     private String roleId;
 
+
+    private String templateId;
+
     /**
      * 
      */
