@@ -31,12 +31,6 @@ public class OrderGyyDeliverEntity implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    /**
-     * 发货时间
-     */
-    @TableField("deliver_time")
-    @Alias("发货时间")
-    private String deliverTime;
 
     /**
      * 平台类型
@@ -116,7 +110,7 @@ public class OrderGyyDeliverEntity implements Serializable {
     private String orderNumber;
 
     /**
-     * 订单日期
+     * 发货时间
      */
     @TableField("order_date")
     @Alias("发货时间")

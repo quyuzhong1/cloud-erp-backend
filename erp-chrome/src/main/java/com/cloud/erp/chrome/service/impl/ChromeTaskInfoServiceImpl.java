@@ -39,7 +39,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
      * @return  任务列表
      */
     @Override
-    public List<ScheduleTaskEntity> getChromeTaskList(FindTaskDTO  dto) {
+    public synchronized List<ScheduleTaskEntity> getChromeTaskList(FindTaskDTO  dto) {
         List<ScheduleTaskEntity> resultList=new ArrayList<>();
 
         List<String> list= Arrays.asList(ErpPlatform.GYY,ErpPlatform.MABANG,ErpPlatform.YXK);
@@ -47,10 +47,18 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
             throw new ServiceException(1,"平台类型有误");
         }
         LambdaQueryWrapper<ScheduleTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ScheduleTaskEntity::getTaskStatus, TaskState.NOT_START);
         queryWrapper.eq(ScheduleTaskEntity::getPlatform,dto.getPlatform());
+        queryWrapper.and(st->st
+            .eq(ScheduleTaskEntity::getTaskStatus,TaskState.NOT_START)
+            .or(i->i
+                .eq(ScheduleTaskEntity::getTaskStatus,TaskState.ING)
+                .lt(ScheduleTaskEntity::getUpdateTime,DateUtil.offsetMinute(new Date(),-30))
+            )
+        );
         queryWrapper.orderByAsc(ScheduleTaskEntity::getId);
         queryWrapper.last("LIMIT 1");
+//        System.out.println(queryWrapper.getTargetSql());
+
         List<ScheduleTaskEntity> taskList=baseMapper.selectList(queryWrapper);
         for(ScheduleTaskEntity task:taskList){
             if (ErpPlatform.MABANG.equals(task.getPlatform())){
@@ -60,6 +68,8 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
             } else {
                 task.setParameter(getTaskParamForYunXingKong(task));
             }
+            //更新状态锁定
+            this.updateTaskState(task.getId(),TaskState.ING);
         }
 
         return taskList;

@@ -67,13 +67,6 @@ public class MabanIncomeExpensesEntity implements Serializable {
     private String skuInfo;
 
     /**
-     * 发货日期
-     */
-    @TableField("invoice_date")
-    @Alias("发货日期")
-    private String invoiceDate;
-
-    /**
      * 平台
      */
     @TableField("platform")
