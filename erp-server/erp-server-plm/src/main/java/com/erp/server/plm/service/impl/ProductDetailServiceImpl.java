@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,20 +12,21 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductVariantOptionEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
+import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -98,6 +100,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
+
     /**
      * @Description 产品信息查询列表
      * @Author Luo_WG
@@ -107,6 +113,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
+        pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         return new PagingVO(pageData);
@@ -137,9 +144,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
         //无规格产品信息明细
         ProductNoDetailDTO noSpecDetailById = productDetailMapper.getNoSpecDetailById(productId);
-        //获取多级分类
-        List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
-        noSpecDetailById.setCategoryIdList(categoryIdList);
+        if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
+            //获取多级分类
+            List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
+            noSpecDetailById.setCategoryIdList(categoryIdList);
+        }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
@@ -191,12 +200,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        purchaseShowDTOList.forEach(req -> {
+            FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                req.setCreateUserName(findUserDTO.getUserName());
+            }
+        });
+
         productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         productManyDetail.setRemarkEntityList(remarkEntityList);
         //产品销售信息查询列表
         List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
+        saleShowDTOList.forEach(req -> {
+            if (StringUtils.isNotBlank(req.getSaleCountry())) {
+                String[] split = req.getSaleCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setSaleCountryName(StringUtils.join(nameList, ","));
+            }
+        });
+
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);
         //产品包装信息查询列表
         List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);
@@ -224,6 +250,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
+        LoginUser loginUser = commonService.getUserInfo();
+        if (StringUtils.isBlank(detailEntity.getId())) {
+            detailEntity.setCreateUserId(loginUser.getUid());
+            detailEntity.setCreateUserName(loginUser.getUserName());
+        } else {
+            detailEntity.setUpdateUserId(loginUser.getUid());
+            detailEntity.setUpdateUserName(loginUser.getUserName());
+        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -238,6 +272,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
+        LoginUser loginUser = commonService.getUserInfo();
+        list.forEach(req -> {
+            if (ObjectUtils.isNotEmpty(loginUser)) {
+                if (StringUtils.isBlank(req.getId())) {
+                    req.setCreateUserId(loginUser.getUid());
+                    req.setCreateUserName(loginUser.getUserName());
+                } else {
+                    req.setUpdateUserId(loginUser.getUid());
+                    req.setUpdateUserName(loginUser.getUserName());
+                }
+            }
+        });
         return this.saveOrUpdateBatch(list);
     }
 
@@ -251,16 +297,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
-        //检查sku编号是否重复
-        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+        //检查spu编号是否重复
+        if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
+        //检查sku编号是否重复
+        if (this.checkSkuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getSkuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
+            throw new ServiceException(ApiError.ERROR_95015);
+        }
+
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        productSpuBaseInfoDTO.setApprovalStatus(4);
         productSpuBaseInfoDTO.setSpecType(1);
         productSpuBaseInfoDTO.setGrade("");
         //1.修改产品表 主表信息
@@ -268,6 +318,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //2.修改/新增 sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
@@ -360,7 +411,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
-        productInfoDTO.setApprovalStatus(4);
         productInfoDTO.setSpecType(2);
         productInfoDTO.setGrade("");
 
@@ -434,12 +484,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (this.checkSpuNo(variantAutoAddDTO.getProductSpuBaseInfoDTO().getSpuNo(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
         }
+
         //如果是修改允许保留原来的产品名称不变
         if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
         }
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
-        productSpuBaseInfoDTO.setApprovalStatus(4);
         productSpuBaseInfoDTO.setSpecType(2);
         productSpuBaseInfoDTO.setGrade("");
         //1.保存产品表 基础信息获取产品id
@@ -533,6 +583,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
         return this.remove(queryWrapper);
+    }
+
+    /**
+     * @Description 根据产品id删除产品信息
+     * @Author Luo_WG
+     * @Date 2022/9/22 11:32
+     * @param id:产品sku表主键id
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional
+    public Boolean deleteByProductId(String id){
+        //删除sku信息
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductDetailEntity::getProductId, id);
+        this.remove(queryWrapper);
+        //删除产品主表
+        LambdaQueryWrapper<ProductInfoEntity> wrapper = new LambdaQueryWrapper();
+        wrapper.eq(ProductInfoEntity::getId, id);
+        return  productInfoService.remove(wrapper);
     }
 
     /**
@@ -766,9 +836,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
+            //销售状态编码转换成中文
             req.setProductState(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductState())));
             if (StringUtils.isNotBlank(req.getSaleState())) {
                 req.setSaleState(SaleStateEnum.getNameByCode(Integer.valueOf(req.getSaleState())));
+            }
+            //采购状态编码转换成中文
+            if (StringUtils.isNotBlank(req.getArrivalState())) {
+                req.setArrivalState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
+            }
+            if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
+                baseSearchDTO.setSearchKeyword(req.getPurchaseUser());
+                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
+                List<FindUserDTO> userList =  listApiResult.getData();
+                if (!CollectionUtils.isEmpty(userList)) {
+                    req.setPurchaseUser(userList.get(0).getUserName());
+                }
+            }
+
+            if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+                String[] split = req.getSaleCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setSaleCountry(StringUtils.join(nameList, ","));
             }
         });
 
@@ -784,5 +875,4 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             e.printStackTrace();
         }
     }
-
 }

@@ -36,7 +36,7 @@ public class ProductSaleEntity implements Serializable {
      * 年目标销售量
      */
     @TableField(value = "year_sale_qty")
-    private Integer yearSaleQty;
+    private Long yearSaleQty;
 
     /**
      * 年目标销售额
@@ -48,7 +48,7 @@ public class ProductSaleEntity implements Serializable {
      * 月目标销售量
      */
     @TableField(value = "month_sale_qty")
-    private Integer monthSaleQty;
+    private Long monthSaleQty;
 
     /**
      * 月目标销售额

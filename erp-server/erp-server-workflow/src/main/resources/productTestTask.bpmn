@@ -4,7 +4,7 @@
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_0dvy6lv</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:sequenceFlow id="Flow_0dvy6lv" sourceRef="StartEvent_1" targetRef="Activity_1lb9sa4" />
+        <bpmn:sequenceFlow id="Flow_0dvy6lv" sourceRef="StartEvent_1" targetRef="Activity_02r1fxn" />
         <bpmn:endEvent id="Event_0uvwtyk">
             <bpmn:extensionElements>
                 <camunda:executionListener class="com.erp.server.workflow.listeners.ProjectTaskCountersignResultListener" event="end" />
@@ -14,9 +14,14 @@
         <bpmn:sequenceFlow id="Flow_1vnleji" sourceRef="Activity_1lb9sa4" targetRef="Event_0uvwtyk" />
         <bpmn:userTask id="Activity_1lb9sa4" name="项目成员负责人会签" camunda:assignee="${memberCharges}">
             <bpmn:extensionElements />
-            <bpmn:incoming>Flow_0dvy6lv</bpmn:incoming>
+            <bpmn:incoming>Flow_1lqw9jp</bpmn:incoming>
             <bpmn:outgoing>Flow_1vnleji</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="memberChargeList" camunda:elementVariable="memberCharges" />
+        </bpmn:userTask>
+        <bpmn:sequenceFlow id="Flow_1lqw9jp" sourceRef="Activity_02r1fxn" targetRef="Activity_1lb9sa4" />
+        <bpmn:userTask id="Activity_02r1fxn" name="发起人" camunda:assignee="${operation}">
+            <bpmn:incoming>Flow_0dvy6lv</bpmn:incoming>
+            <bpmn:outgoing>Flow_1lqw9jp</bpmn:outgoing>
         </bpmn:userTask>
     </bpmn:process>
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -27,6 +32,10 @@
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNEdge id="Flow_0dvy6lv_di" bpmnElement="Flow_0dvy6lv">
                 <di:waypoint x="215" y="117" />
+                <di:waypoint x="270" y="117" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1lqw9jp_di" bpmnElement="Flow_1lqw9jp">
+                <di:waypoint x="370" y="117" />
                 <di:waypoint x="410" y="117" />
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
@@ -40,6 +49,10 @@
             </bpmndi:BPMNShape>
             <bpmndi:BPMNShape id="Activity_03ndmpa_di" bpmnElement="Activity_1lb9sa4">
                 <dc:Bounds x="410" y="77" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_1u02iy0_di" bpmnElement="Activity_02r1fxn">
+                <dc:Bounds x="270" y="77" width="100" height="80" />
+                <bpmndi:BPMNLabel />
             </bpmndi:BPMNShape>
         </bpmndi:BPMNPlane>
     </bpmndi:BPMNDiagram>

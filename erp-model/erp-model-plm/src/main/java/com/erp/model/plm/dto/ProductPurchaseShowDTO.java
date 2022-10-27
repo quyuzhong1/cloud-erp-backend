@@ -83,6 +83,11 @@ public class ProductPurchaseShowDTO implements Serializable {
     private String purchaseUserId;
 
     /**
+     * 采购员
+     */
+    private String purchaseUserName;
+
+    /**
      * 一级供应商
      */
     private String mainSupplier;

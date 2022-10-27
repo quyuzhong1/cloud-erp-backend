@@ -36,7 +36,6 @@ public class ProductDTO implements Serializable {
     /**
      * 产品分类
      */
-    @NotBlank(message = "产品分类不能为空")
     private String category;
 
 

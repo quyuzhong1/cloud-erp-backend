@@ -8,6 +8,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * @Classname 系统管理 拦截器
@@ -20,12 +22,17 @@ public class SysInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)  {
-        String tokenUserStr=request.getHeader("tokenUserInfo");
-        if(StringUtils.isNotBlank(tokenUserStr)){
-            LoginUser user= JSONObject.parseObject(tokenUserStr, LoginUser.class);
-            threadLocal.set(user);
+        String tokenUserStr = request.getHeader("tokenUserInfo");
+        try {
+            if (StringUtils.isNotBlank(tokenUserStr)) {
+                tokenUserStr = URLDecoder.decode(tokenUserStr, "UTF-8");
+                LoginUser user = JSONObject.parseObject(tokenUserStr, LoginUser.class);
+                threadLocal.set(user);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-        return  true;
+        return true;
     }
 
 

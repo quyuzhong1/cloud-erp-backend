@@ -3,7 +3,9 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
@@ -11,16 +13,14 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectMembersEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
-import com.erp.server.plm.service.ProjectInfoService;
-import com.erp.server.plm.service.ProjectMembersService;
+import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.plm.service.ProjectTaskService;
 
-import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,6 +52,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProjectRoleService projectRoleService;
 
 
     @Override
@@ -90,8 +93,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<ProjectMembersEntity> list = getListByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity entity : list) {
-                entity.setFlagId(flagId);
                 entity.setId(IdWorker.getIdStr());
+                entity.setProjectId("");
+                entity.setProductId("");
             }
             this.saveBatch(list);
         }
@@ -125,7 +129,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     public void saveMemberByTemplate(String productId, String projectId, String flagId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectMembersEntity::getFlagId, flagId);
+
         List<ProjectMembersEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             for (ProjectMembersEntity entity : list) {
@@ -153,7 +157,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleId(), dto.getUserId());
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(),dto.getRoleId(), dto.getUserId());
+
         ProjectMembersEntity entity = new ProjectMembersEntity();
         entity.setProductId(dto.getProductId());
         FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
@@ -191,7 +196,15 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     public PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         MemberPagingDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        String productId = params.getProductId();
+        List<String> roleIds = new ArrayList<>();
+        String roleId = params.getProjectRoleId();
+        if (StringUtils.isBlank(roleId)) {
+            roleIds = projectRoleService.getRoleIdsByProductId(productId);
+        } else {
+            roleIds.add(roleId);
+        }
+        IPage pageData = baseMapper.paging(query, productId, roleIds);
         List<MemberPagingShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //获取到任务处理的情况
@@ -281,10 +294,28 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
      * @return
      */
     @Override
-    public List<ProjectMembersEntity> getChargeList() {
+    public List<ProjectMembersEntity> getChargeList(String productId) {
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectMembersEntity::getIsCharge, IsConstant.YES);
+        queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<ProjectMemberDTO> memberList(String productId) {
+        List<ProjectMemberDTO> resultList = new ArrayList<>();
+        LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
+        List<ProjectMembersEntity> list = this.list(queryWrapper);
+        resultList = BeanMapper.copyList(list, ProjectMemberDTO.class);
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+            for (ProjectMemberDTO item : resultList) {
+                long taskCount = taskList.stream().filter(t -> t.getChargeId().contains(item.getMemberId())).count();
+                item.setTaskCount(taskCount);
+            }
+        }
+        return resultList;
     }
 
 

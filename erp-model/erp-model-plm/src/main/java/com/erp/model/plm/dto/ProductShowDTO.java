@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -51,6 +52,12 @@ public class ProductShowDTO implements Serializable {
      *
      */
     private Integer approvalStatus;
+
+    /**
+     * 产品立项状态名
+     *
+     */
+    private String approvalStatusName;
     /**
      * 产品项目状态
      *  0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
@@ -59,8 +66,15 @@ public class ProductShowDTO implements Serializable {
     private Integer projectStatus;
 
     /**
+     * 产品项目状态名
+     *
+     */
+    private String projectStatusName;
+
+    /**
      * 截止时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date endTime;
 
     /**
@@ -104,12 +118,12 @@ public class ProductShowDTO implements Serializable {
     /**
      * 立项进度
      */
-    private Integer approvalProgress;
+    private double approvalProgress;
 
     /**
      * 项目进度
      */
-    private Integer projectProgress;
+    private double projectProgress;
 
     /**
      * 任务总数

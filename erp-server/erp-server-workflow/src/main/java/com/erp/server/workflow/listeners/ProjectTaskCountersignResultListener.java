@@ -3,6 +3,7 @@ package com.erp.server.workflow.listeners;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
@@ -13,6 +14,7 @@ import java.time.LocalDate;
  * @Date 2022-10-13 15:33
  * @Created by yl
  */
+@Service
 public class ProjectTaskCountersignResultListener  implements ExecutionListener {
 
     @Override

@@ -24,7 +24,7 @@ public class DocsDTO {
 
     /**
      * 文档名
-     * @author yl
+     * @author
      * @date 2022-10-09 10:51
      */
     @NotBlank(message = "文档名不能为空")
@@ -35,4 +35,9 @@ public class DocsDTO {
      * 1 是  0 不是
      */
     private Integer isSys;
+
+    /**
+     * 1 启用 0 禁用
+     */
+    private Integer state=1;
 }

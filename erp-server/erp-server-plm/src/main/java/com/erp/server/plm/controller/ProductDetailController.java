@@ -2,10 +2,8 @@ package com.erp.server.plm.controller;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.AlgorithmUtil;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.annotation.DataPermision;
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
@@ -13,8 +11,10 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -83,6 +83,10 @@ public class ProductDetailController extends BaseController {
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+
     /**
      * 产品信息-主页列表-查询1
      * @Author Luo_WG
@@ -92,7 +96,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     //@RequestPermissions("plm:product:detail:list")
-    @DataPermision(field = "create_user_id", menuCode = "plm:product:detail:list")
+    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list", tableAlias = "pi")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -135,7 +139,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
-    public ApiResult saveOrUpdateNoSpec(@RequestBody ProductNoSpecDTO productNoSpecDTO) {
+    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -149,7 +153,14 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    public ApiResult saveOrUpdateManySpec(@RequestBody ProductManySpecDTO productManySpecDTO) {
+/*    @DataPermission(operationType = "update",
+            tableField = "create_user_id",
+            menuCode = "plm:product:detail:saveOrUpdateManySpec",
+            serviceClass = ProductInfoService.class,
+            entityName = "productInfoDTO",
+            keyIdName = "id"
+    )*/
+    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -191,24 +202,40 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
+    @DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
     }
 
     /**
+     * 产品信息-取消按钮-删除
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:42
+     * @param id spu主表id
+     * @return com.erp.common.dto.base.ApiResult
+     **/
+    @PostMapping("/deleteByProductId")
+    //@RequestPermissions("plm:product:detail:delete")
+    //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
+    public ApiResult deleteByProductId(@RequestParam(value = "id")  String id) {
+        Boolean flag = productDetailService.deleteByProductId(id);
+        return flag == true ? this.success() : this.failure();
+    }
+
+/*    *//**
      * 产品信息-多规格sku-批量删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
      * @param skuIds sku表id
      * @return com.erp.common.dto.base.ApiResult
-     **/
+     **//*
     @PostMapping("/deleteBatch")
-    //@RequestPermissions("plm:product:detail:deleteBatch")
+    @RequestPermissions("plm:product:detail:deleteBatch")
     public ApiResult deleteBatch(@RequestParam(value = "skuIds")  List<String> skuIds) {
         Boolean flag = productDetailService.deleteBatch(skuIds);
         return flag == true ? this.success() : this.failure();
-    }
+    }*/
 
     /**
      * 成本信息-主页列表-查询
@@ -505,7 +532,7 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
     public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productInfoService, basicCategoryService, basicDictService);
+        ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();

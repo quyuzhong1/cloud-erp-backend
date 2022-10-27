@@ -46,5 +46,6 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
                           @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
                           @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
+    int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
 }
 

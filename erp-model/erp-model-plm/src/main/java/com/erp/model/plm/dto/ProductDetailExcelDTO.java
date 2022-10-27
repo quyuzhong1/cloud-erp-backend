@@ -1,11 +1,14 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.alibaba.excel.annotation.ExcelProperty;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品sku信息导入
@@ -47,7 +50,6 @@ public class ProductDetailExcelDTO {
     private String property;
 
     @ExcelProperty(value = "计划上市时间", index = 10)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
     @ExcelProperty(value = "单位", index = 11)
@@ -81,13 +83,13 @@ public class ProductDetailExcelDTO {
     private String actualGpmUsd;
 
     @ExcelProperty(value = "年目标销售量", index = 21)
-    private Integer yearSaleQty;
+    private Long yearSaleQty;
 
     @ExcelProperty(value = "年目标销售额", index = 22)
     private BigDecimal yearSaleAmount;
 
     @ExcelProperty(value = "月目标销售量", index = 23)
-    private Integer monthSaleQty;
+    private Long monthSaleQty;
 
     @ExcelProperty(value = "月目标销售额", index = 24)
     private BigDecimal monthSaleAmount;
@@ -96,23 +98,21 @@ public class ProductDetailExcelDTO {
     private String saleCountry;
 
     @ExcelProperty(value = "上市时间", index = 26)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date listingTime;
 
     @ExcelProperty(value = "退市时间", index = 27)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date delistingTime;
 
     @ExcelProperty(value = "图片是否完成", index = 28)
-    private Integer isFinishedImg;
+    private String isFinishedImg;
 
     @ExcelProperty(value = "视频是否完成", index = 29)
-    private Integer isFinishedVideo;
+    private String isFinishedVideo;
 
     @ExcelProperty(value = "销售状态", index = 30)
-    private Integer saleState;
+    private String saleState;
 
-    @ExcelProperty(value = "产品属性", index = 31)
+    @ExcelProperty(value = "报关产品属性", index = 31)
     private String productProperty;
 
     @ExcelProperty(value = "报关中文名", index = 32)
@@ -154,6 +154,42 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "单箱数量", index = 44)
     private BigDecimal boxQty;
 
-    @ExcelProperty(value = "错误信息", index = 45)
+    @ExcelProperty(value = "ean码", index = 45)
+    private String ean;
+
+    @ExcelProperty(value = "计划首批下单量", index = 46)
+    private Integer planOrderQty;
+
+    @ExcelProperty(value = "首批下单时间", index = 47)
+    private Date placeOrderTime;
+
+    @ExcelProperty(value = "预计首批到货时间", index = 48)
+    private Date planArrivalTime;
+
+    @ExcelProperty(value = "MOQ(最小起订量)", index = 49)
+    private Integer moq;
+
+    @ExcelProperty(value = "交货周期(天)", index = 50)
+    private BigDecimal deliveryCycle;
+
+    @ExcelProperty(value = "实际首批到货时间", index = 51)
+    private Date actualArrivalTime;
+
+    @ExcelProperty(value = "首批到货状态", index = 52)
+    private String arrivalState;
+
+    @ExcelProperty(value = "采购员", index = 53)
+    private String purchaseUser;
+
+    @ExcelProperty(value = "一级供应商", index = 54)
+    private String mainSupplier;
+
+    @ExcelProperty(value = "二级供应商", index = 55)
+    private String secondSupplier;
+
+    @ExcelProperty(value = "实际首批到货量", index = 56)
+    private Integer actualArrivalQty;
+
+    @ExcelProperty(value = "错误信息", index = 57)
     private String errorMsg;
 }

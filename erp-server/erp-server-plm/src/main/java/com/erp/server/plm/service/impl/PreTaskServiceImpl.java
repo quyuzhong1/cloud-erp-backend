@@ -6,6 +6,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
@@ -154,12 +155,32 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         //获取到前置任务id
         List<String> preTaskIds = getPreTaskIdListByTaskIds(taskIds);
         if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(), preTaskIds);
+            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(), TaskStateEnum.APPROVAL_PASS.getCode(), preTaskIds);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95035);
             }
         }
 
+    }
+
+
+    /**
+     * 获取该任务的前置任务
+     *
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
+     * @author yl
+     * @date 2022-10-27 9:58
+     */
+    @Override
+    public List<ProjectTaskEntity> getPreTaskList(String taskId) {
+        List<String> preTaskIdList = getPreTaskIdList(taskId);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskEntity::getId, preTaskIdList);
+            return projectTaskService.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 }
 

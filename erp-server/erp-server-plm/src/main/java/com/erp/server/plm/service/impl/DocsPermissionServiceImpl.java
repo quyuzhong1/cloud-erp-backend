@@ -23,7 +23,7 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
      * 根据用户id 获取到
      *
      * @param uid
-     * @return java.util.List<java.lang.String>
+     * @return java.util.List<jav`a.lang.String>
      * @author yl
      * @date 2022-09-23 15:13
      */
@@ -31,7 +31,8 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
     public List<String> getDocsIdsByUserId(String uid) {
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryUserId,uid);
+        queryWrapper.eq(DocsPermissionEntity::getQueryUserId,uid).or()
+                .eq(DocsPermissionEntity::getQueryUserId,"");
         return this.listObjs(queryWrapper,Object::toString);
     }
 }

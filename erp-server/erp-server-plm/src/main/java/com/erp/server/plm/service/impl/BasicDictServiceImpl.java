@@ -49,7 +49,21 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     public List<BasicDictEntity> listByType(String type) {
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BasicDictEntity::getType, type);
-        queryWrapper.orderByDesc(BasicDictEntity::getCreateTime);
+        queryWrapper.orderByDesc(BasicDictEntity::getOrderIndex);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据id集合批量查询字典信息
+     * @Author Luo_WG
+     * @Date 2022/10/22 19:50
+     * @param list id集合
+     * @return java.util.List<com.erp.model.plm.entity.BasicDictEntity>
+     **/
+    @Override
+    public List<BasicDictEntity> listByIds(List<String> list) {
+        LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BasicDictEntity::getId, list);
         return this.list(queryWrapper);
     }
 

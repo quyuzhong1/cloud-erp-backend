@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 
 import com.erp.model.workflow.dto.ApproveProcessDTO;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.QueryProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
@@ -19,7 +20,7 @@ public interface ProcessTaskService {
     //我的待办
     List<TaskShowDTO>  queryMyToDo(String userId);
 
-    void taskPass(ApproveProcessDTO dto);
+    ProcessNodeDTO taskPass(ApproveProcessDTO dto);
 
 
     //我的已办

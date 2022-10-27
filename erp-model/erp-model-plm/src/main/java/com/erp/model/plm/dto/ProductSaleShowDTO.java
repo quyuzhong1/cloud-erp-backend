@@ -64,6 +64,11 @@ public class ProductSaleShowDTO implements Serializable {
     private String saleCountry;
 
     /**
+     * 销售国家名称
+     */
+    private String saleCountryName;
+
+    /**
      * 上市时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")

@@ -20,9 +20,12 @@ import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.SysDocsMapper;
+import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SysDocsService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.C;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -40,6 +43,10 @@ import java.util.Map;
 @Service
 public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity> implements SysDocsService {
 
+
+    @Autowired
+    private CommonService commonService;
+
     /**
      * 保存或者修改系统文档
      *
@@ -50,7 +57,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      */
     @Override
     public void saveOrUpdateDocs(DocsDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
         String name = dto.getName();
         SysDocsEntity docsEntity = new SysDocsEntity();
         String id = dto.getId();
@@ -90,6 +97,8 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         }
         return this.listObjs(queryWrapper, Object::toString);
     }
+
+
 
 
     /**
@@ -133,9 +142,19 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     public List<DocsDTO> getDocsNames(Integer state) {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysDocsEntity::getId, SysDocsEntity::getName);
-        queryWrapper.eq(SysDocsEntity::getStartState, state);
+        queryWrapper.eq(SysDocsEntity::getStartState, IsConstant.YES);
         List<SysDocsEntity> list = this.list(queryWrapper);
-        return BeanMapper.copyList(list, DocsDTO.class);
+        List<DocsDTO> resultList = new ArrayList<>();
+        for (SysDocsEntity item : list) {
+            DocsDTO d = new DocsDTO();
+            d.setIsSys(IsConstant.YES);
+            d.setId(item.getId());
+            d.setName(item.getName());
+            d.setState(item.getStartState());
+            resultList.add(d);
+        }
+        return resultList;
+
 
     }
 
@@ -150,12 +169,10 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     @Override
     public List<Map<String, Object>> sysDocsNames() {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.select(SysDocsEntity::getName,SysDocsEntity::getId);
+        queryWrapper.select(SysDocsEntity::getName, SysDocsEntity::getId, SysDocsEntity::getStartState);
+        queryWrapper.eq(SysDocsEntity::getStartState,IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 
-    
-
-    
 
 }

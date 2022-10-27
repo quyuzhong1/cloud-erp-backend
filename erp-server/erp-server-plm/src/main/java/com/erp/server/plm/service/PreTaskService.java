@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.SetPreTaskDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public interface PreTaskService extends IService<PreTaskEntity> {
 
 
     void checkPreTaskFinish(List<String> taskIds);
+
+    List<ProjectTaskEntity> getPreTaskList(String taskId);
 }

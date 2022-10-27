@@ -4,6 +4,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  *  评审任务 会签结束
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @Date 2022-10-18 11:18
  * @Created by yl
  */
+@Service
 public class ReviewTaskResultListener implements ExecutionListener {
 
     @Autowired

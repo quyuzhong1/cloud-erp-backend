@@ -7,11 +7,9 @@ import com.common.core.utils.FileUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
-import com.erp.model.plm.dto.CountDTO;
-import com.erp.model.plm.dto.ProductOperateRecordDTO;
-import com.erp.model.plm.dto.TaskChangeFileDTO;
-import com.erp.model.plm.dto.TaskUploadFileDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
+import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
@@ -20,6 +18,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
+import com.erp.server.plm.enums.TaskProcessTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
@@ -36,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -67,6 +67,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -140,7 +146,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
         finishEntity.setUploadType(dto.getUploadType());
-
+        finishEntity.setOldFileUrl(fileUrl);
+        finishEntity.setOldUploadType(dto.getUploadType());
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());
@@ -162,10 +169,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @Date 2022/10/14 16:08
      **/
     @Override
-    public Boolean removeById(String id) {
+    public Boolean removeDocs(String id) {
         //删除文档
         //需要判断能否删除
-
         TaskDocsFinishEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95028);
@@ -173,15 +179,20 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         String taskId = entity.getTaskId();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
-        Integer taskState=taskEntity.getStatus();
-        //如果已完成了 或者有人审核了 就不能删除
-        Integer finishState = TaskStateEnum.FINISH.getCode();
-        Integer approvalIngState = TaskStateEnum.APPROVAL_ING.getCode();
-        if(finishState.equals(taskState)||!approvalIngState.equals(taskState)){
             throw new ServiceException(ApiError.ERROR_95040);
         }
+        Integer taskState = taskEntity.getStatus();
+        //如果已完成了 或者有人审核了 就不能删除
+        Integer taskProperty = projectTaskService.getTaskProperty(taskEntity);
+        Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
+        Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+        //当是流程的时候
+        if (generalApproval.equals(taskProperty) || reviewTask.equals(taskProperty)) {
+            if (TaskStateEnum.APPROVAL_PASS.getCode().equals(taskState)) {
+                throw new ServiceException(ApiError.ERROR_95007);
+            }
+        }
+
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(entity.getProductId());
@@ -213,12 +224,14 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
-        //只有任务完成了 或者 审核通过了 才能变更流程
+        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Integer taskState = taskEntity.getStatus();
         //当不为这两个的时候是不能变更的
-        if (!taskState.equals(finishCode) || !approvalPassCode.equals(taskState)) {
+        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+        &&!approvalNoPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
         String finishDocsId = dto.getFinishDocsId();
@@ -253,6 +266,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             fileUrl = dto.getFileUrl();
         }
         finishEntity.setOldFileUrl(finishEntity.getFileUrl());
+        finishEntity.setOldUploadType(finishEntity.getUploadType());
+
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
         finishEntity.setUpdateUserId(loginUser.getUid());
@@ -285,16 +300,75 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
+        List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(taskEntity.getProductId());
+        List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(membersIds)) {
+            throw new ServiceException(ApiError.ERROR_95045);
+        }
+        parameterMap.put("memberChargeList", membersIds);
         startProcess.setParameterMap(parameterMap);
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
         String processId = processResult.getProcessId();
         if (StringUtils.isNotBlank(processId)) {
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
-            taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+            taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             projectTaskService.updateById(taskEntity);
         }
         return flag;
+    }
+
+
+    /**
+     * 检查任务是否有上传文档
+     *
+     * @param allTaskIds
+     * @return void
+     * @author yl
+     * @date 2022-10-24 18:09
+     */
+    @Override
+    public void checkTaskDocsUpload(List<String> allTaskIds) {
+        for (String taskId : allTaskIds) {
+            //获取到该任务要上交的文档
+            List<DocsDTO> docsList = taskDeliveryService.getDocsByTaskId(taskId);
+            //获取到该任务完成的文档数
+            int finishDocsNum = getFinishDocsNum(taskId);
+            if (docsList.size() != finishDocsNum) {
+                throw new ServiceException(ApiError.ERROR_95047);
+            }
+
+        }
+
+    }
+
+
+    /**
+     * 刪除完成的文档
+     *
+     * @param existDocsIds
+     * @return void
+     * @author yl
+     * @date 2022-10-25 11:06
+     */
+    @Override
+    public void removeByDocsIds(String taskId, List<String> existDocsIds) {
+        if (CollectionUtils.isNotEmpty(existDocsIds)) {
+            LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(TaskDocsFinishEntity::getTaskDocsId, existDocsIds);
+            queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+            this.remove(queryWrapper);
+        }
+
+
+    }
+
+
+    public int getFinishDocsNum(String taskId) {
+        LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+        return this.count(queryWrapper);
+
     }
 
 

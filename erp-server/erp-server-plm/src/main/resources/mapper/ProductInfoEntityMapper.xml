@@ -9,7 +9,7 @@
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE P.delete_state=0
+        WHERE P.delete_state=0 AND p.is_finished_product_dev = 1
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -36,18 +36,20 @@
                 #{productId}
             </foreach>
         </if>
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
 
         ORDER BY p.create_time DESC
-
-
     </select>
+
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
         SELECT pi.id, pi.name AS productName,pi.charge_name AS productChargeName,
         pj.charge_name AS projectChargeName,pj.start_time AS planStartTime,
         pj.end_time AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
-        WHERE pi.id IN
+        WHERE  pi.is_finished_product_dev = 1 AND pi.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
@@ -55,7 +57,7 @@
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT relevance_product_id AS flagId, COUNT(*)  AS count FROM product_info
-        WHERE relevance_product_id !='' AND delete_state=0 GROUP BY relevance_product_id
+        WHERE relevance_product_id !='' AND delete_state=0 AND is_finished_product_dev = 1 GROUP BY relevance_product_id
     </select>
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -64,7 +66,7 @@
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time
         FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
-        WHERE P.delete_state=0
+        WHERE P.delete_state=0 AND p.is_finished_product_dev = 1
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -91,6 +93,9 @@
                 #{productId}
             </foreach>
         </if>
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
 
     </select>
 
@@ -98,7 +103,7 @@
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
-        WHERE pi.delete_state=0
+        WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1
 
     </select>
 

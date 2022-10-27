@@ -34,10 +34,14 @@
         </if>
 
         <if test="archiveProductIds !=null and archiveProductIds.size()>0">
-            AND pi.id NOT IN
+            AND p.id NOT IN
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
         </if>
     </select>
 
@@ -69,10 +73,14 @@
         </if>
 
         <if test="archiveProductIds !=null and archiveProductIds.size()>0">
-            AND pi.id NOT IN
+            AND p.id NOT IN
             <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
                 #{productId}
             </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
         </if>
     </select>
 

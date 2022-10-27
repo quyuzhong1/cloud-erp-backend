@@ -1,10 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
-import com.erp.model.workflow.dto.ActivityDTO;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.QueryProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import org.apache.commons.lang3.StringUtils;
@@ -56,7 +53,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     @Override
     public List<TaskShowDTO> queryMyToDo(String userId) {
         List<TaskShowDTO> resultList = new ArrayList<>();
-        if(StringUtils.isNotBlank(userId)){
+        if (StringUtils.isNotBlank(userId)) {
             List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
             for (Task task : tasks) {
                 TaskShowDTO vo = new TaskShowDTO();
@@ -79,14 +76,14 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
-    public void taskPass(ApproveProcessDTO dto) {
+    public ProcessNodeDTO taskPass(ApproveProcessDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
         String taskId = dto.getTaskId();
         Task task = taskService.createTaskQuery().
                 taskId(taskId).singleResult();
         if (Objects.isNull(task)) {
-            return;
+            return null;
         }
         String nowActivityId = task.getTaskDefinitionKey();
         //添加审批意见
@@ -102,7 +99,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         activityDTO.setProcessInstanceId(processInstanceId);
         //审批通过后 需要保存流程节点信息
         actHistoryActivityService.saveActivity(activityDTO);
-
+        return new ProcessNodeDTO();
     }
 
 

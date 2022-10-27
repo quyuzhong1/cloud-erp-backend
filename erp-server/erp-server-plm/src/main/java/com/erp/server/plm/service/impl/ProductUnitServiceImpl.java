@@ -70,10 +70,26 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
      * @param id:主键id
      * @return java.lang.Boolean
      **/
+    @Override
     public Boolean delete(String id){
         LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductUnitEntity::getId, id);
         return this.remove(queryWrapper);
+    }
+
+    /**
+     * @Description 查询单位名称是否存在
+     * @Author Luo_WG
+     * @Date 2022/9/27 15:02
+     * @param name 单位名称
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public ProductUnitEntity checkUnitName(String name){
+        LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductUnitEntity::getName, name);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 }
 

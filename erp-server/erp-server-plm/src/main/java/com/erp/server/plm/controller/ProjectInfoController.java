@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.DataPermission;
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
@@ -40,6 +42,7 @@ public class ProjectInfoController extends BaseController {
      */
 
     @PostMapping("/startProject")
+    //@RequestPermissions("plm:project:startProject")
     public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
         Boolean flag = projectInfoService.startProject(dto);
         return flag == true ? success() : failure();
@@ -64,6 +67,8 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    //@RequestPermissions("plm:project:paging")
+    //@DataPermission(operationType = "query", tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "p")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);
@@ -78,6 +83,7 @@ public class ProjectInfoController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/archive")
+    //@RequestPermissions("plm:project:archive")
     public ApiResult archive(@RequestParam(value = "productId") String productId) {
         boolean flag = projectInfoService.archive(productId);
         return flag == true ? success() : failure();

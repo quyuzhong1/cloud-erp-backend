@@ -2,11 +2,14 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 
+import javax.validation.Valid;
+
 @Data
 public class ProductBaseInfoDTO {
     /**
      * 产品spu基础信息
      */
+    @Valid
     private ProductInfoDTO productSpuBaseInfoDTO;
 
     /**

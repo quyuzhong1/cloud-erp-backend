@@ -61,4 +61,9 @@ public class ProductSkuBaseInfoDTO {
      */
     private String chargeName;
 
+    /**
+     * 品名
+     */
+    private String name;
+
 }

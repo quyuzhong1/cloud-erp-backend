@@ -40,7 +40,7 @@
         pd.images_url,
         pi.spu_no,
         pd.sku_no,
-        CASE WHEN pi.spec_type = 1 THEN pi."name" ELSE pd."name" END "name",
+        CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
         pp.actual_arrival_qty,
         pp.arrival_state,
         pi.pirate_risk,
@@ -82,6 +82,9 @@
                 #{chargeId}
             </foreach>
         </if>
+        <if test="params.param != '' and params.param != null">
+            ${params.param}
+        </if>
         ORDER BY pd.create_time DESC
     </select>
 
@@ -92,7 +95,7 @@
         pd.images_url,
         pi.spu_no,
         pd.sku_no,
-        CASE WHEN pi.spec_type = 1 THEN pi."name" ELSE pd."name" END "name",
+        CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
         pp.actual_arrival_qty,
         pp.arrival_state,
         pi.pirate_risk,
@@ -142,7 +145,7 @@
         pd.images_url,
         pd.sku_no,
         pd.product_state,
-        CASE WHEN pi.spec_type = 1 THEN pi."name" ELSE pd."name" END "name",
+        CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -160,9 +163,11 @@
         pi.materials,
         pd.plan_listing_time,
         pd.unit_id,
+        unit.name AS unit_name,
         pd.product_state
         FROM product_info pi
-        INNER JOIN product_detail pd on pi.id = pd.product_id
+        LEFT JOIN product_detail pd on pi.id = pd.product_id
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id
         WHERE pi.delete_state = 0
             AND pi.id = #{productId}
     </select>
@@ -195,7 +200,7 @@
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ExportSkuExcelDTO">
         SELECT
         pi.spu_no,
-        pd."name",
+        CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
 		pi.sale_method,
 		pi.category,
 		pi.sell_spot,
@@ -209,7 +214,7 @@
 		pd.sku_no,
 		pd."name" sku_name,
 		pd.plan_listing_time,
-        unit.value AS unit_name,
+        unit.name AS unit_name,
 		pd.charge_name,
 		pd.product_state,
 		target_tax_cost,
@@ -224,7 +229,7 @@
 		year_sale_amount,
 		month_sale_qty,
 		month_sale_amount,
-        country.value AS sale_country,
+        ps.sale_country,
 		listing_time,
 		delisting_time,
         CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
@@ -236,14 +241,26 @@
 		box_size,
 		box_weight,
 		box_qty,
-		product_property,
+        dp.value AS product_property,
 		declare_chinese_name,
 		declare_english_name,
 		declare_price,
 		customs_code,
 		declare_element,
 		english_material,
-		english_usage
+		english_usage,
+        pp.ean,
+        pp.plan_order_qty,
+        pp.place_order_time,
+        pp.plan_arrival_time,
+        pp.moq,
+        pp.delivery_cycle,
+        pp.actual_arrival_time,
+        pp.arrival_state,
+        pp.purchase_user_id AS purchase_user,
+        pp.main_supplier,
+        pp.second_supplier,
+        pp.actual_arrival_qty
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
@@ -251,8 +268,8 @@
         LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
         LEFT JOIN product_pack ppk ON ppk.sku_id = pd."id"
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
-        LEFT JOIN basic_dict country ON ps.sale_country = country.id
-        LEFT JOIN basic_dict unit ON pd.unit_id = unit.id
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id
+        LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id
         WHERE pi.delete_state = 0
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))

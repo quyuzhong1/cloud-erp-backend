@@ -8,6 +8,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
+import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TemplateTaskService;
@@ -15,9 +16,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -34,6 +38,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
+
+    @Autowired
+    private PreTaskService preTaskService;
+
     /**
      * 保存模板任务
      *
@@ -44,19 +52,68 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * @date 2022-09-20 15:40
      */
     @Override
+    @Transactional
     public void saveTemplateTask(String templateId, String productId) {
         List<ProjectTaskEntity> projectTaskList = taskService.getByProductId(productId);
-        if (CollectionUtils.isNotEmpty(projectTaskList)) {
+
+        List<ProjectTaskEntity> parentProjectTaskList=projectTaskList.stream().filter(p->p.getPid().equals("0")).collect(Collectors.toList());
+        //从父级开始
+        if (CollectionUtils.isNotEmpty(parentProjectTaskList)) {
             for (ProjectTaskEntity item : projectTaskList) {
+                String taskId = item.getId();
                 TemplateTaskEntity entity = new TemplateTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
-                entity.setId(IdWorker.getIdStr());
-                this.save(entity);
-                taskDeliveryService.saveTaskDeliveryDocs("",entity.getId(),item.getId());
+                String templateTaskId = IdWorker.getIdStr();
+                entity.setId(templateTaskId);
+                entity.setPhaseId("");
+                entity.setPhaseName("");
+                String pid=item.getPid();
+                boolean flag = this.save(entity);
+                if (flag) {
+                    taskDeliveryService.saveTaskDeliveryDocs(templateId, templateTaskId, item.getId());
+                    //这是前置任务
+                    List<ProjectTaskEntity> preTaskList = preTaskService.getPreTaskList(taskId);
+                    saveTemplatePreTask(templateId, preTaskList, templateTaskId);
+
+
+                }
 
             }
 
+
+        }
+
+    }
+
+
+    /**
+     * 保存前置任务
+     *
+     * @param preTaskList
+     * @param templateTaskId
+     * @return void
+     * @author yl
+     * @date 2022-10-27 10:07
+     */
+    public void saveTemplatePreTask(String templateId, List<ProjectTaskEntity> preTaskList, String templateTaskId) {
+        List<String> preTaskListId = new ArrayList<>();
+        for (ProjectTaskEntity preTask : preTaskList) {
+            TemplateTaskEntity entity = new TemplateTaskEntity();
+            BeanMapper.copy(preTask, entity);
+            entity.setTemplateId(templateId);
+            String tempTaskId = IdWorker.getIdStr();
+            entity.setId(tempTaskId);
+            entity.setPhaseId("");
+            entity.setPhaseName("");
+            boolean flag = this.save(entity);
+            if (flag) {
+                preTaskListId.add(tempTaskId);
+                taskDeliveryService.saveTaskDeliveryDocs(templateId, tempTaskId, preTask.getId());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(preTaskListId)) {
+            preTaskService.savePreTask(templateTaskId, preTaskListId);
         }
 
     }
@@ -72,7 +129,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Override
     public List<TemplateTaskEntity> getTaskByTemplateId(String flagTemplateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,flagTemplateId);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, flagTemplateId);
         queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
         return this.list(queryWrapper);
     }

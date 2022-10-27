@@ -2,6 +2,7 @@ package com.erp.server.plm.controller;
 
 
 import com.alibaba.fastjson2.JSONObject;
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
@@ -35,6 +36,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/save")
+    //@RequestPermissions("plm:category:save")
     public ApiResult addCategory(@RequestBody @Validated SaveBasicCategoryDTO dto) {
         categoryService.addCategory(dto);
         return success();
@@ -47,6 +49,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/update")
+    //@RequestPermissions("plm:category:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
         categoryService.updateCategory(dto);
         return success();
@@ -71,6 +74,7 @@ public class BasicCategoryController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult
      **/
     @RequestMapping(value = "/remove", method = {RequestMethod.POST})
+    //@RequestPermissions("plm:category:remove")
     public ApiResult remove(String id) {
         Boolean flag = categoryService.deleteById(id);
         return flag == true ? success() : failure();

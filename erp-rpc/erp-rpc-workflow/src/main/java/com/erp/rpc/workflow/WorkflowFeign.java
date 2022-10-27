@@ -1,5 +1,6 @@
 package com.erp.rpc.workflow;
 
+import com.erp.common.dto.base.ApiResult;
 import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
@@ -29,5 +30,5 @@ public interface WorkflowFeign {
 
     //审核任务通过
     @PostMapping("workflow/feign/process/taskPass")
-    Boolean taskPass(@RequestBody ApproveProcessDTO dto);
+    ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 }

@@ -43,7 +43,7 @@ public class ProjectTaskSysEntity implements Serializable {
     private Integer type;
 
     /**
-     * 负责人id
+     * 负责人id 多个
      */
     @TableField("charge_id")
     private String chargeId;

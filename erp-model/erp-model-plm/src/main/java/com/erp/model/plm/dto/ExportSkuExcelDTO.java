@@ -164,4 +164,40 @@ public class ExportSkuExcelDTO implements Serializable {
 
     @ExcelProperty(value = "英文用途", index = 49)
     private String englishUsage;
+
+    @ExcelProperty(value = "ean码", index = 50)
+    private String ean;
+
+    @ExcelProperty(value = "计划首批下单量", index = 51)
+    private String planOrderQty;
+
+    @ExcelProperty(value = "首批下单时间", index = 52)
+    private String placeOrderTime;
+
+    @ExcelProperty(value = "预计首批到货时间", index = 53)
+    private String planArrivalTime;
+
+    @ExcelProperty(value = "MOQ(最小起订量)", index = 54)
+    private Integer moq;
+
+    @ExcelProperty(value = "交货周期(天)", index = 55)
+    private BigDecimal deliveryCycle;
+
+    @ExcelProperty(value = "实际首批到货时间", index = 56)
+    private String actualArrivalTime;
+
+    @ExcelProperty(value = "首批到货状态", index = 57)
+    private String arrivalState;
+
+    @ExcelProperty(value = "采购员", index = 58)
+    private String purchaseUser;
+
+    @ExcelProperty(value = "一级供应商", index = 59)
+    private String mainSupplier;
+
+    @ExcelProperty(value = "二级供应商", index = 60)
+    private String secondSupplier;
+
+    @ExcelProperty(value = "实际首批到货量", index = 61)
+    private Integer actualArrivalQty;
 }

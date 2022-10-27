@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -15,15 +16,16 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductManySpecDTO {
     /**
-     * SKU信息明细
-     */
-    private List<ProductDetailDTO> productDetailList;
-
-    /**
      * 产品基础信息
      */
     @NotNull(message = "产品基础信息不能为空")
+    @Valid
     private ProductInfoDTO productInfoDTO;
+
+    /**
+     * SKU信息明细
+     */
+    private List<ProductDetailDTO> productDetailList;
 
     /**
      * 成本信息

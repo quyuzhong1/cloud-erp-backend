@@ -8,6 +8,8 @@ import com.erp.model.plm.entity.ProjectMembersEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 项目成员表 Mapper 接口
@@ -19,5 +21,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface ProjectMembersMapper extends BaseMapper<ProjectMembersEntity> {
 
-    IPage paging(Page query,@Param("params") MemberPagingDTO params);
+    IPage paging(Page query, @Param("productId")String productId,@Param("roleIds") List<String> roleIds );
 }

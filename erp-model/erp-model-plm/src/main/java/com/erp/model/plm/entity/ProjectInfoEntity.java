@@ -47,7 +47,7 @@ public class ProjectInfoEntity implements Serializable {
     private String flagId;
 
     //来源类型 0 新建  1  项目复制  2，模板
-    @TableField("source_type")
+    @TableField("source_type" )
     private Integer sourceType;
 
     /**

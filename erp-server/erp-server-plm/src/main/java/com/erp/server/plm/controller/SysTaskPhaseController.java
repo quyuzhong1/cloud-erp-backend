@@ -1,7 +1,9 @@
 package com.erp.server.plm.controller;
 
+import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.service.SysTaskPhaseService;
@@ -37,6 +39,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/batchSaveOrUpdate")
+    // @RequestPermissions("plm:sys:taskPhase:batchSaveOrUpdate")
     public ApiResult add(@RequestBody @Validated List<UpdateBasicNameDTO> list) {
         sysTaskPhaseService.batchSaveOrUpdate(list);
         return success();
@@ -51,6 +54,7 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/update")
+    //  @RequestPermissions("plm:sys:taskPhase:update")
     public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
         sysTaskPhaseService.updateTaskPhase(dto);
         return success();
@@ -64,7 +68,8 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @PostMapping("/remove")
-    public ApiResult remove(String id) {
+    //  @RequestPermissions("plm:sys:taskPhase:remove")
+    public ApiResult remove(@RequestParam(value = "id") String id) {
         boolean flag = sysTaskPhaseService.removeSysTaskPhase(id);
         return flag==true?success():failure();
     }
@@ -78,7 +83,8 @@ public class SysTaskPhaseController extends BaseController {
      * @date 2022-10-09 10:27
      */
     @GetMapping("/list")
-    public ApiResult<List<SysTaskPhaseEntity>> list() {
+   // @RequestPermissions("plm:sys:taskPhase:list")
+    public ApiResult<List<BasicDTO>> list() {
         return success(sysTaskPhaseService.getSysTaskPhaseList());
     }
 

@@ -19,6 +19,7 @@ public class UpdateBasicNameDTO {
 
     /**
      * 表id
+     *
      * @author yl
      * @date 2022-10-09 10:45
      * @param null
@@ -28,6 +29,7 @@ public class UpdateBasicNameDTO {
 
     /**
      * 名称
+     *
      * @author yl
      * @date 2022-10-09 10:45
      * @param null
@@ -35,4 +37,7 @@ public class UpdateBasicNameDTO {
      */
     @NotBlank(message = "名称不能为空")
     private String name;
+
+
+
 }

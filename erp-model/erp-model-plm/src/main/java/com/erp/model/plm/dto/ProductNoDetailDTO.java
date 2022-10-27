@@ -120,10 +120,16 @@ public class ProductNoDetailDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private String planListingTime;
+
     /**
      * 单位表id
      */
     private String unitId;
+
+    /**
+     * 单位表名称
+     */
+    private String unitName;
 
     /**
      * 产品分类id集合

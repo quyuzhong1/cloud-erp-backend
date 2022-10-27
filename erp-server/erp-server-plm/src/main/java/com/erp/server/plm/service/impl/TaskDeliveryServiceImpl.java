@@ -18,13 +18,16 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname TaskDocsServiceImpl
@@ -40,6 +43,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private RoleRefMemberService roleRefMemberService;
+
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
 
     /**
      * 获取任务的需要交付的文档数
@@ -57,8 +63,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public void saveDeliveryDocs(String userId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
-            //先删除文档
-            removeTaskDocsByTaskId(taskId);
+            //这个id 可能是系统的
+            List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //根据任务id 获取到已存在的文档id
+            List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
+            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+            List<String> parameterIds = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //如果是一样 没有改变文档 返回
+            if (existDocsIds.size() == parameterIds.size() && existDocsIds.containsAll(parameterIds) && parameterIds.containsAll(existDocsIds)) {
+                return;
+            }
+            //先删除文档 不存在的数据
+            removeTaskDocs(taskId,existDocsIds, docsId);
+
+            //需要过滤一下的
+            deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
             //保存交付文档
             List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
             for (DocsDTO item : deliveryDocsList) {
@@ -83,6 +102,22 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 docsPermissionService.saveBatch(docsPermissionList);
             }
         }
+    }
+
+
+    /**
+     * 根据任务id 获取已存在的文档
+     *
+     * @param taskId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-24 17:43
+     */
+
+    private List<TaskDeliveryDocsEntity> getExistDocs(String taskId) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
     }
 
 
@@ -113,14 +148,23 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public void setPower(SetDocsPowerDTO dto) {
         //保存他的权限
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-        List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(dto.getReoleId()));
+        String roleId = dto.getRoleId();
         String docsId = dto.getId();
-        for (RoleRefMemberDTO item : refMembers) {
-            DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-            docsPermission.setQueryUserId(item.getMembersId());
-            docsPermission.setDeliveryDocsId(docsId);
-            docsPermissionList.add(docsPermission);
+        if (StringUtils.isNotBlank(roleId)) {
+            List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
+            for (RoleRefMemberDTO item : refMembers) {
+                DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                docsPermission.setQueryUserId(item.getMembersId());
+                docsPermission.setDeliveryDocsId(docsId);
+                docsPermissionList.add(docsPermission);
+            }
+        } else {
+            DocsPermissionEntity save = new DocsPermissionEntity();
+            save.setDeliveryDocsId(docsId);
+            save.setQueryUserId("");
+            docsPermissionList.add(save);
         }
+
         docsPermissionService.saveBatch(docsPermissionList);
 
     }
@@ -150,18 +194,29 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:07
      */
     @Override
-    public void saveSysDeliveryDocs(String taskId, List<FinishDocsDTO> docsList) {
+    public void saveSysDeliveryDocs(String taskId, List<DocsDTO> docsList) {
         //保存交付文档
         if (CollectionUtils.isNotEmpty(docsList)) {
+            //根据任务id 获取到已存在的文档id
+            List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
+            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+            List<String> parameterIds = docsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //如果是一样 没有改变文档 返回
+            if (existDocsIds.size() == parameterIds.size() && existDocsIds.contains(parameterIds) && parameterIds.contains(existDocsIds)) {
+                return;
+            }
             //先删除文档
-            removeTaskDocsByTaskId(taskId);
+            removeTaskDocs(taskId,existDocsIds, parameterIds);
+            //需要过滤一下的
+            docsList = docsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
+
             List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
-            for (FinishDocsDTO item : docsList) {
+            for (DocsDTO item : docsList) {
                 TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
-                entity.setDocsName(item.getDocsName());
+                entity.setDocsName(item.getName());
                 entity.setTaskId(taskId);
                 entity.setProductId("");
-                entity.setDocsNameId(item.getDocsId());
+                entity.setDocsNameId(item.getId());
                 entity.setIsSys(IsConstant.YES);
                 saveList.add(entity);
             }
@@ -223,7 +278,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
 
-
     @Override
     public List<DocsDTO> getDocsByTaskId(String taskId) {
 
@@ -231,8 +285,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     @Override
-    public List<FinishDocsDTO> getSysTaskFinishDocs(String taskId) {
-        return baseMapper.getSysTaskFinishDocs(taskId);
+    public List<DocsDTO> getSysTaskFinishDocs(String taskId) {
+        return baseMapper.getDocsByTaskId(taskId);
     }
 
     /**
@@ -254,15 +308,47 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     /**
      * 根据任务id 删除 文档
      *
-     * @param taskId
+     * @param existDocsIds
      * @return void
      * @author yl
      * @date 2022-09-28 15:23
      */
-    public void removeTaskDocsByTaskId(String taskId) {
+    public void removeTaskDocs(String taskId, List<String> existDocsIds, List<String> docsIds) {
+        List<String> intersectionList = (List<String>) CollectionUtils.intersection(existDocsIds, docsIds);
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-        this.remove(queryWrapper);
+        //表示有交集 的不能删除
+        if (intersectionList.size() != 0) {
+            if (CollectionUtils.isNotEmpty(existDocsIds)) {
+                queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+                queryWrapper.notIn(TaskDeliveryDocsEntity::getId, intersectionList);
+                //去差集
+                List<String> subtractList = (List<String>) CollectionUtils.subtract(existDocsIds,docsIds);
+                taskDocsFinishService.removeByDocsIds(taskId,subtractList);
+                this.remove(queryWrapper);
+            }
+        }else{
+            if (CollectionUtils.isNotEmpty(existDocsIds)) {
+                //表示没有交集 所有都要删除
+                queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+                queryWrapper.in(TaskDeliveryDocsEntity::getId,existDocsIds);
+                this.remove(queryWrapper);
+                taskDocsFinishService.removeByDocsIds(taskId,existDocsIds);
+            }
+        }
+    }
 
+    public static void main(String[] args) {
+        List<String> list1 = new LinkedList<>();
+        list1.add("1");
+        list1.add("2");
+        list1.add("3");
+
+
+        List<String> list2 = new LinkedList<>();
+        list2.add("4");
+        list2.add("5");
+
+
+        System.out.println(CollectionUtils.intersection(list2,list1));
     }
 }

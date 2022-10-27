@@ -27,7 +27,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     List<DeliveryDocsDTO> getByTaskId(String taskId);
 
-    void saveSysDeliveryDocs(String id, List<FinishDocsDTO> docsList);
+    void saveSysDeliveryDocs(String id, List<DocsDTO> docsList);
 
     void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId);
 
@@ -39,5 +39,5 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<DocsDTO> getDocsByTaskId(String taskId);
 
 
-    List<FinishDocsDTO> getSysTaskFinishDocs(String taskId);
+    List<DocsDTO> getSysTaskFinishDocs(String taskId);
 }

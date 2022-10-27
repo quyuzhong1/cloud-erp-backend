@@ -33,6 +33,8 @@ public class ProjectPhaseEntity implements Serializable {
     @TableField("product_id")
     private String productId;
 
+
+
     /**
      * 阶段名
      */

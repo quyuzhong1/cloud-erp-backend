@@ -15,4 +15,6 @@ public interface TaskCommentService extends IService<TaskCommentEntity> {
     Boolean saveTaskComment(TaskCommentDTO dto);
 
     List<TaskCommentEntity> getListByTaskId(String taskId);
+
+    void batchSaveTaskComment(List<TaskCommentEntity> taskCommentList);
 }

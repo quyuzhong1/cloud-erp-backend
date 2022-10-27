@@ -33,6 +33,8 @@ public class TaskPhaseDTO {
      */
     private Integer isProjectApproval=0;
 
+    private Boolean ifQuote=false;
+
 
 
 

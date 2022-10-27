@@ -31,7 +31,6 @@ import java.util.Objects;
 @Component
 public class RequestPermissionsAspect {
 
-
     @Autowired
     private CommonService commonService;
 

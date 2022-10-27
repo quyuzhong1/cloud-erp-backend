@@ -58,6 +58,24 @@ public class DeliveryDocsDTO implements Serializable {
      */
     private String fileUrl;
 
+    /**
+     * 上传的类型 0 本地
+     * 1 飞书
+     */
+    private Integer uploadType;
+
+
+    /**
+     * 旧文件地址
+     */
+    private String oldFileUrl;
+
+    /**
+     * 旧 上传的类型 0 本地
+     * 1 飞书
+     */
+    private Integer oldUploadType;
+
 
     /**
      * 交付文档名
@@ -74,7 +92,7 @@ public class DeliveryDocsDTO implements Serializable {
     /**
      * 文件大小
      */
-    private Integer fileSize;
+    private Double fileSize;
 
 
     /**
@@ -87,6 +105,19 @@ public class DeliveryDocsDTO implements Serializable {
      * 提交人
      */
     private String submitUserName;
+
+
+    /**
+     * 能否显示变更 按钮
+     */
+    private Boolean changeFlag=false;
+
+    /**
+     * 能否显示删除
+     */
+    private Boolean deleteFlag=true;
+
+
 
 
 }

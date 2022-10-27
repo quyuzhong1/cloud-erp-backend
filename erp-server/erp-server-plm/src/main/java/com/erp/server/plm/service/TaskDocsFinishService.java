@@ -22,9 +22,13 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
     Boolean uploadFile(TaskUploadFileDTO dto);
 
-    Boolean removeById(String id);
+    Boolean removeDocs(String id);
 
     List<CountDTO> getTaskDocsCountByProductId();
 
     Boolean changeFile(TaskChangeFileDTO dto);
+
+    void checkTaskDocsUpload(List<String> allTaskIds);
+
+    void removeByDocsIds(String taskId,List<String> existDocsIds);
 }

@@ -5,22 +5,23 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.SysTaskPhaseMapper;
+import com.erp.server.plm.service.ProjectPhaseService;
+import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.SysTaskPhaseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +33,12 @@ import java.util.stream.Collectors;
 @Service
 public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, SysTaskPhaseEntity> implements SysTaskPhaseService {
 
+
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
     /**
      * 修改阶段名称
      *
@@ -42,6 +49,8 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
      */
     @Override
     public void updateTaskPhase(UpdateBasicNameDTO dto) {
+        projectPhaseService.checkTaskQuote(dto.getName());
+
         String taskPhaseName = dto.getName();
         //检查任务阶段名 是否存在
         checkTaskPhaseName(taskPhaseName);
@@ -114,6 +123,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     @Override
     public boolean removeSysTaskPhase(String id) {
         SysTaskPhaseEntity taskPhase = this.getById(id);
+        projectPhaseService.checkTaskQuote(taskPhase.getId());
         if (!Objects.isNull(taskPhase) && IsConstant.YES.equals(taskPhase.getIsProjectApproval())) {
             throw new ServiceException(ApiError.ERROR_95020);
         }
@@ -121,10 +131,23 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
     }
 
     @Override
-    public List<SysTaskPhaseEntity> getSysTaskPhaseList() {
-        LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByDesc(SysTaskPhaseEntity::getIsProjectApproval);
-        return this.list(queryWrapper);
+    public List<BasicDTO> getSysTaskPhaseList() {
+        List<SysTaskPhaseEntity> list = this.list();
+        List<BasicDTO> resultList = new ArrayList<>(list.size());
+        List<String> sysPhaseIds=list.stream().map(SysTaskPhaseEntity::getId).collect(Collectors.toList());
+        //获取到系统的阶段
+        List<String> projectPhaseIdList = projectTaskService.getSysPhase(sysPhaseIds);
+        for (SysTaskPhaseEntity item : list) {
+            BasicDTO basic = new BasicDTO();
+            basic.setId(item.getId());
+            basic.setName(item.getName());
+            if (projectPhaseIdList.contains(item.getId())) {
+                basic.setIfQuote(true);
+            }
+            resultList.add(basic);
+        }
+
+        return resultList;
     }
 
 
@@ -137,8 +160,8 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
      * @date 2022-09-13 17:42
      */
     @Override
-    public List<TaskPhaseDTO> getSysTaskPhase() {
-        return baseMapper.getSysTaskPhase();
+    public List<TaskPhaseDTO> getSysTaskPhase(List<String> nameList) {
+        return baseMapper.getSysTaskPhase(nameList);
     }
 
 

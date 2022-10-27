@@ -23,6 +23,15 @@ public interface BasicDictService extends IService<BasicDictEntity> {
     List<BasicDictEntity>  listByType(String type);
 
     /**
+     * 根据id集合批量查询字典信息
+     * @Author Luo_WG
+     * @Date 2022/10/22 19:50
+     * @param list id集合
+     * @return java.util.List<com.erp.model.plm.entity.BasicDictEntity>
+     **/
+    List<BasicDictEntity> listByIds(List<String> list);
+
+    /**
      * @Description 根据名称查询字段是否存在
      * @Author Luo_WG
      * @Date 2022/9/29 11:02
@@ -31,4 +40,5 @@ public interface BasicDictService extends IService<BasicDictEntity> {
      * @return com.erp.model.plm.entity.BasicDictEntity
      **/
     BasicDictEntity checkBasicDict(String type, String value);
+
 }

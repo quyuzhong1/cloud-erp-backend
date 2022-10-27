@@ -36,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,9 +88,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private TaskOperatorRecordService taskOperatorRecordService;
+    @Autowired
+    private TaskCommentService taskCommentService;
 
     /**
      * 添加系统的产品任务
+     * 只添加立项的
      *
      * @param productId
      * @return void
@@ -101,6 +105,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void addSysTask(String productId) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
+
+        //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
@@ -247,7 +253,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<ProjectTaskEntity> saveList = new LinkedList<>();
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
@@ -255,9 +260,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
                 entity.setId(IdWorker.getIdStr());
-                saveList.add(entity);
+                boolean flag = this.save(entity);
+                if (flag) {
+                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId());
+                }
             }
-            this.saveBatch(saveList);
         }
 
     }
@@ -274,7 +281,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
-
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -284,7 +290,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskSearchDTO> searchList = params.getSearchList();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
-
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
@@ -310,6 +315,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
             pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
+            List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+            //获取流程集合
+            List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(processIds)) {
+                //要给流程任务的id
+                List<TaskPagingShowDTO> list = pageData.getRecords();
+                for (TaskPagingShowDTO show : list) {
+                    TaskShowDTO showDTO = myToDoList.stream().filter(t -> t.getProcessInstanceId().equals(show.getProcessId())).findFirst().orElse(null);
+                    if (showDTO != null) {
+                        show.setProcessTaskId(showDTO.getTaskId());
+                    }
+                }
+            }
         }
         if (pageData != null) {
             List<TaskPagingShowDTO> list = pageData.getRecords();
@@ -423,6 +441,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
+        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
+            taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
@@ -510,7 +531,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //总任务数
             int totalTaskCount = taskList.size();
             //延期的任务数
-            int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            int postponeTaskCount = 0;
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+
 
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
@@ -536,8 +559,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByProductId(productId);
 
         TaskConductDTO dto = new TaskConductDTO();
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+
         //完成任务数
-        int finishTaskCount = list.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int finishTaskCount = list.stream().filter(t -> finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
         //进行中
         int ingTaskCount = list.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
         //总任务数
@@ -586,6 +612,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(detailsDTO)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        ProjectTaskEntity taskEntity = getById(taskId);
         String businessProcessId = detailsDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
@@ -631,9 +658,84 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             childTasks = getRefTask(childTaskIds);
         }
         detailsDTO.setChildTasks(childTasks);
-        detailsDTO.setOutputDocsList(taskDeliveryService.getByTaskId(taskId));
+
+        //获取交付文档
+        List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(taskId);
+        //获取到任务的属性
+        Integer taskProperty = getTaskProperty(taskEntity);
+        Integer taskState = taskEntity.getStatus();
+        Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
+        Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+        Boolean isApprovalPass = TaskStateEnum.APPROVAL_PASS.getCode().equals(taskEntity.getStatus());
+        for (DeliveryDocsDTO docs : docsList) {
+            //当审核通过
+            if (isApprovalPass) {
+                docs.setOldFileUrl(docs.getFileUrl());
+                docs.setOldUploadType(docs.getUploadType());
+            }
+
+            // 如果任务类型是审核的
+            if (taskProperty.equals(generalApproval) || taskProperty.equals(reviewTask)) {
+                //如果审核通过可以变更
+                if (taskState.equals(TaskStateEnum.APPROVAL_PASS.getCode())) {
+                    docs.setChangeFlag(true);
+                    docs.setDeleteFlag(false);
+                }
+                if (taskState.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
+                    docs.setChangeFlag(true);
+                }
+                if (taskState.equals(TaskStateEnum.APPROVAL_ING.getCode())) {
+                    docs.setDeleteFlag(false);
+                }
+            }
+        }
+
+        detailsDTO.setOutputDocsList(docsList);
         return detailsDTO;
     }
+
+
+    /**
+     * 获取任务属性
+     * 是一般任务 还是一般带审核  还是待审核
+     *
+     * @return
+     */
+    public Integer getTaskProperty(ProjectTaskEntity taskEntity) {
+        Integer taskType = taskEntity.getType();
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        if (generalTask.equals(taskType)) {
+            String processId = taskEntity.getProcessId();
+            String businessProcessId = taskEntity.getBusinessProcessId();
+            if (StringUtils.isNotBlank(processId) && StringUtils.isNotBlank(businessProcessId)) {
+                return TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
+            } else {
+                return TaskProcessTypeEnum.GENERAL_TASK.getCode();
+            }
+        }
+
+        return TaskProcessTypeEnum.REVIEW_TASK.getCode();
+    }
+
+
+    /**
+     * 获取任务中 用过系统阶段的有那些
+     *
+     * @param sysPhaseIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-26 15:04
+     */
+    @Override
+    public List<String> getSysPhase(List<String> sysPhaseIds) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(ProjectTaskEntity::getPhaseId);
+        queryWrapper.in(ProjectTaskEntity::getPhaseId, sysPhaseIds);
+        queryWrapper.groupBy(ProjectTaskEntity::getPhaseId);
+        return this.listObjs(queryWrapper, Objects::toString);
+    }
+
 
     private List<String> getUpdateField(ProjectTaskDTO dto) {
         ProjectTaskEntity entity = new ProjectTaskEntity();
@@ -654,12 +756,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getChargeName().equals(chargeNames)) {
             list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
         }
-        if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
-            list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
+        if (dto.getPlanStartTime() != null) {
+            if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
+                list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
+            }
         }
-        if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
-            list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
+        if (dto.getPlanEndTime() != null) {
+            if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
+                list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
+            }
         }
+
         if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
             String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
             String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
@@ -669,9 +776,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
             list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
         }
-        if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
-            list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
+        if (StringUtils.isNotBlank(projectTaskEntity.getDescription())) {
+            if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
+                list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
+            }
         }
+
         return list;
     }
 
@@ -695,6 +805,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
+        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
+            taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        }
+
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
@@ -732,14 +846,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public ProductTaskCountDTO getProductTaskCount(String productId, Date date) {
         List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+        Integer finishState = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassState = TaskStateEnum.APPROVAL_PASS.getCode();
         //完成任务数
-        int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPassState.equals(t.getStatus())).collect(Collectors.toList()).size();
         //未完成任务数
-        int unfinishedTaskCount = taskList.stream().filter(t -> !TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+        int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus()) && !approvalPassState.equals(t.getStatus())).collect(Collectors.toList()).size();
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
         ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
         taskCountDTO.setFinishTaskCount(finishTaskCount);
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -764,20 +880,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //任务名
         String name = dto.getName();
-        //开始时间
         Date planStartTime = dto.getPlanStartTime();
+        taskEntity.setPlanStartTime(planStartTime);
         //结束时间
         Date planEndTime = dto.getPlanStartTime();
+        taskEntity.setPlanEndTime(planEndTime);
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
-        }
-        if (planStartTime != null) {
-            taskEntity.setPlanStartTime(planStartTime);
-        }
-        if (planEndTime != null) {
-            taskEntity.setPlanEndTime(planStartTime);
         }
         if (StringUtils.isNotBlank(chargeId)) {
             taskEntity.setChargeId(chargeId);
@@ -863,19 +974,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 统计未完成的任务数
      *
-     * @param state
-     * @param preTaskIds
+     * @param finishState
+     * @param taskIds
      * @return int
      * @author yl
      * @date 2022-10-18 19:47
      */
     @Override
-    public int countUndoneByTaskIds(Integer state, List<String> preTaskIds) {
-        if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(ProjectTaskEntity::getId, preTaskIds);
-            queryWrapper.eq(ProjectTaskEntity::getStatus, state);
-            return this.count(queryWrapper);
+    public int countUndoneByTaskIds(Integer finishState, Integer approvalPassState, List<String> taskIds) {
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            return this.baseMapper.findUndone(finishState, approvalPassState, taskIds);
         }
         return 0;
     }
@@ -893,14 +1001,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void checkSonTaskFinish(List<String> taskIds, String productId) {
         List<ProjectTaskEntity> list = this.getByProductId(productId);
         Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
-            int count = countUndoneByTaskIds(finishCode, resultList);
+            int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
+        }
+    }
+
+
+    @Override
+    public void checkTaskFinish(List<ProjectTaskEntity> list) {
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        int parentCount = countUndoneByTaskIds(finishCode, approvalPassCode, parentTaskIds);
+        if (parentCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95050);
         }
     }
 
@@ -917,25 +1038,63 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = getByTaskIds(taskIds);
-        Integer ingCode = TaskStateEnum.ING.getCode();
-        int size = list.stream().filter(t -> TaskStateEnum.NOT_START.getCode().equals(t.getStatus()) || TaskStateEnum.CLOSE.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
-        if (size != list.size()) {
-            throw new ServiceException(ApiError.ERROR_95031);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+        //只有待开始 和待审核 才能开始任务
+        if (!TaskStateEnum.NOT_START.getCode().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95032);
         }
+        Integer ingCode = TaskStateEnum.ING.getCode();
+
         //一般任务
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
-        //审核任务
-        Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
+
 
         //一般任务 列表  都是将任务状态改为进行中
         List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(generalTasks)) {
             List<String> taskIdList = generalTasks.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             this.updateTaskState(taskIdList, ingCode, new Date(), null);
-
             taskOperatorRecordService.batchSaveRecord(taskIds, TaskStateEnum.NOT_START.getCode(), ingCode, loginUser.getUid(), loginUser.getUserName(), "");
-
         }
+
+        return true;
+    }
+
+    /**
+     * 发布任务
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    @Transactional
+    public Boolean publishTask(OperateBaseTaskDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        List<String> taskIds = dto.getTaskIdList();
+        //待发布
+        Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
+        List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态
+        checkTaskState(list);
+        //统计项目状态为  不是待发布的任务
+        long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
+        if (releasedCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95030);
+        }
+
+        //一般任务
+        Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
+        //一般任务 列表  都是将任务状态改为进行中
+        List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());
+        List<String> generalTaskIds = generalTasks.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        boolean flag = updateTaskState(generalTaskIds, TaskStateEnum.NOT_START.getCode(), null, null);
+        if (flag) {
+            taskOperatorRecordService.batchSaveRecord(generalTaskIds, releasedCode, TaskStateEnum.NOT_START.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+        }
+
+        //审核任务
+        Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
         /**
          * 审核任务要 启动流程 任务评审流程
          */
@@ -984,38 +1143,32 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
             }
         }
-        return true;
+        return flag;
     }
 
     /**
-     * 发布任务
-     *
-     * @param dto
-     * @return
+     * 任务操作 的时候 检查
+     * 所选的的任务状态是否是一致
+     * 如果不一致 就抛异常
      */
-    @Override
-    @Transactional
-    public Boolean publishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
-        List<String> taskIds = dto.getTaskIdList();
-        //待发布
-        Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
-        List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        //统计项目状态为  不是待发布的任务
-        long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
-        if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+    public Integer checkTaskState(List<ProjectTaskEntity> list) {
+        //当不为空
+        if (CollectionUtils.isNotEmpty(list)) {
+            if (list.size() > 1) {
+                List<Integer> stateList = list.stream().map(ProjectTaskEntity::getStatus).distinct().collect(Collectors.toList());
+                if (list.size() == stateList.size()) {
+                    throw new ServiceException(ApiError.ERROR_95029);
+                }
+            }
+            return list.get(0).getStatus();
         }
-        boolean flag = updateTaskState(taskIds, TaskStateEnum.NOT_START.getCode(), null, null);
-        if (flag) {
-            taskOperatorRecordService.batchSaveRecord(taskIds, releasedCode, TaskStateEnum.NOT_START.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
-        }
-        return flag;
+        return -1;
     }
 
     /**
      * 取消发布
      * 取消发布任务
+     * 在未开始 未审核 可以取消发布
      * 在未开始的时候 可以取消发布 否则 不行，取消发布后变为待发布  任务状态为待发布
      *
      * @param dto
@@ -1027,15 +1180,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //待开始
         Integer notStartCode = TaskStateEnum.NOT_START.getCode();
+        //未审核
+        Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        //统计项目状态为  不是待发布的任务
-        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())).count();
+        checkTaskState(list);
+        //统计项目状态为  不是待发布的任务 和待审核的任务
+        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus()) && !waitConfirmCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+            throw new ServiceException(ApiError.ERROR_95031);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.TO_BE_RELEASED.getCode(), null, null);
         if (flag) {
-            taskOperatorRecordService.batchSaveRecord(taskIds, notStartCode, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
 
@@ -1053,17 +1209,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean closeTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
-        //待开始
-        Integer notStartCode = TaskStateEnum.NOT_START.getCode();
+
+        //进行中
+        Integer ingCode = TaskStateEnum.ING.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        //统计项目状态为  不是待发布的任务
-        long releasedCount = list.stream().filter(t -> !notStartCode.equals(t.getStatus())).count();
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+        //统计项目状态为  不是进行中的任务
+        long releasedCount = list.stream().filter(t -> !ingCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95029);
+            throw new ServiceException(ApiError.ERROR_95033);
         }
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.CLOSE.getCode(), null, null);
         if (flag) {
-            taskOperatorRecordService.batchSaveRecord(taskIds, notStartCode, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
 
@@ -1082,6 +1241,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         //获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+
         //评审任务code
         Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
         /**
@@ -1090,7 +1252,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
         //表示有 评审任务 则要 踢出去
         if (CollectionUtils.isNotEmpty(reviewList) && reviewList.size() > 0) {
-            throw new ServiceException(ApiError.ERROR_95033);
+            throw new ServiceException(ApiError.ERROR_95034);
         }
 
         List<String> allTaskIds = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -1098,7 +1260,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         preTaskService.checkPreTaskFinish(allTaskIds);
         //检查子任务是否有完成
         this.checkSonTaskFinish(allTaskIds, dto.getProductId());
-
+        //检查文档是否有上传
+        finishService.checkTaskDocsUpload(allTaskIds);
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
 
@@ -1110,16 +1273,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> noProcessList = generalTasks.stream().filter(p -> StringUtils.isBlank(p.getBusinessProcessId())).collect(Collectors.toList());
 
         //一般任务 有流程
-        List<ProjectTaskEntity> processList = generalTasks.stream().filter(p -> StringUtils.isBlank(p.getBusinessProcessId())).collect(Collectors.toList());
+        List<ProjectTaskEntity> processList = generalTasks.stream().filter(p -> StringUtils.isNotBlank(p.getBusinessProcessId())).collect(Collectors.toList());
 
         //进行中
         Integer ingCode = TaskStateEnum.ING.getCode();
-
+        //
+        Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
 
         //找出 没有流程中 不是进行中的任务 如果有表示 不能完成任务
-        long noProcess = list.stream().filter(t -> t.getStatus() != ingCode).count();
+        long noProcess = list.stream().filter(t -> !ingCode.equals(t.getStatus()) && !approvalNoPass.equals(t.getStatus())).count();
         if (noProcess > 0) {
-            throw new ServiceException(ApiError.ERROR_95034);
+            throw new ServiceException(ApiError.ERROR_95044);
         }
 
         //完成待审核
@@ -1135,50 +1299,64 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         this.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
 
+        //当有流程的不为空
+        if (CollectionUtils.isNotEmpty(processList)) {
+            //获取到所有流程的信息
+            List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
+            //获取到所有到负责人的成员信息
+            List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(dto.getProductId());
+            List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(membersIds)) {
+                throw new ServiceException(ApiError.ERROR_95045);
+            }
+            //有审核流程的 要启动流程了
+            for (ProjectTaskEntity processTask : processList) {
+                String businessProcessId = processTask.getBusinessProcessId();
+                //当不是审核不通过 就启动一个流程
+                if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
+                    if (StringUtils.isNotBlank(businessProcessId)) {
+                        BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
+                        if (!Objects.isNull(processEntity)) {
+                            if (CollectionUtils.isNotEmpty(membersIds)) {
+                                StartProcessDTO startProcess = new StartProcessDTO();
+                                startProcess.setBusinessKey(processEntity.getBusinessKey());
+                                startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                                startProcess.setUserId(loginUser.getUid());
+                                Map<String, Object> parameterMap = new HashMap<>();
+                                parameterMap.put("memberChargeList", membersIds);
+                                startProcess.setParameterMap(parameterMap);
+                                //启动流程
+                                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+                                String processId = processResult.getProcessId();
+                                //当流程id不为空的时候
+                                if (StringUtils.isNotBlank(processId)) {
+                                    processTask.setProcessId(processId);
+                                    processTask.setStatus(finishWaitConfirmCode);
+                                    processTask.setRealityStartTime(nowDate);
+                                    processTask.setBusinessProcessId(processEntity.getId());
+                                    this.updateById(processTask);
 
-        //获取到所有流程的信息
-        List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
-        //获取到所有到负责人的成员信息
-        List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList();
-        //有审核流程的 要启动流程了
-        for (ProjectTaskEntity processTask : processList) {
-            String businessProcessId = processTask.getBusinessProcessId();
-            if (StringUtils.isNotBlank(businessProcessId)) {
-                BusinessProcessEntity processEntity = businessProcessList.stream().filter(b -> businessProcessId.equals(b.getId())).findFirst().orElse(null);
-                if (!Objects.isNull(processEntity)) {
-                    List<String> membersIds = projectMembersList.stream().filter(p -> p.getProductId().equals(processTask.getProductId())).map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(membersIds)) {
-                        StartProcessDTO startProcess = new StartProcessDTO();
-                        startProcess.setBusinessKey(processEntity.getBusinessKey());
-                        startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                        startProcess.setUserId(loginUser.getUid());
-                        Map<String, Object> parameterMap = new HashMap<>();
-                        parameterMap.put("memberChargeList", membersIds);
-                        startProcess.setParameterMap(parameterMap);
-                        //启动流程
-                        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-                        String processId = processResult.getProcessId();
-                        //当流程id不为空的时候
-                        if (StringUtils.isNotBlank(processId)) {
-                            processTask.setProcessId(processId);
-                            processTask.setStatus(finishWaitConfirmCode);
-                            processTask.setRealityStartTime(nowDate);
-                            processTask.setBusinessProcessId(processEntity.getId());
-                            this.updateById(processTask);
-
-                            TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
-                            recordEntity.setOperatorName(loginUser.getUserName());
-                            recordEntity.setOperatorId(loginUser.getUid());
-                            recordEntity.setBeforeState(ingCode);
-                            recordEntity.setAfterState(finishWaitConfirmCode);
-                            recordEntity.setTaskId(processTask.getId());
-                            taskOperatorRecordService.save(recordEntity);
+                                    TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+                                    recordEntity.setOperatorName(loginUser.getUserName());
+                                    recordEntity.setOperatorId(loginUser.getUid());
+                                    recordEntity.setBeforeState(ingCode);
+                                    recordEntity.setAfterState(finishWaitConfirmCode);
+                                    recordEntity.setTaskId(processTask.getId());
+                                    taskOperatorRecordService.save(recordEntity);
+                                }
+                            }
                         }
                     }
+                } else {
+                    List<String> processTaskIds = processList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                    //当流程Id 不为空就表示 有流程 是审核不通过的
+                    this.updateTaskState(processTaskIds, finishWaitConfirmCode, null, null);
+                    taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), finishWaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
+
                 }
             }
-        }
 
+        }
         return true;
     }
 
@@ -1195,27 +1373,44 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean approvalPass(TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
+
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(loginUser.getUid());
+        //这是用户的流程id
+        List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
+
+        //传过来的流程id
+        List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
+        //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
+        if (!processInstanceIds.containsAll(processIds)) {
+            throw new ServiceException(ApiError.ERROR_95049);
+        }
+
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-        // 只有待审核 和 完成待审核 的状态 才可以审核通过
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
-        long count = list.stream().filter(p -> (waitConfirmCode.equals(p.getStatus()) || finishWaitConfirmCode.equals(p.getStatus()) || finishWaitConfirmCode.equals(p.getStatus()))).count();
-        if (count != list.size()) {
+        // 只有待审核 和 完成待审核 的状态 才可以审核通过
+        if (!waitConfirmCode.equals(state) &&
+                !finishWaitConfirmCode.equals(state) &&
+                !approvalIngCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        long noProcessCount = list.stream().filter(t -> StringUtils.isBlank(t.getProcessId())).count();
-        if (noProcessCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95038);
-        }
+
+
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
-
+        String comment = dto.getComment();
+        if (StringUtils.isBlank(comment)) {
+            comment = "";
+        }
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
             TaskHandleDataDTO handleData = taskDataList.stream().filter(d -> d.getProcessId().equals(item.getProcessId())).findFirst().orElse(null);
@@ -1224,7 +1419,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 approveProcess.setTaskId(handleData.getProcessTaskId());
                 approveProcess.setProcessInstanceId(item.getProcessId());
                 approveProcess.setUserId(loginUser.getUid());
-                approveProcess.setComment(dto.getComment());
+                approveProcess.setComment(comment);
                 workflowFeign.taskPass(approveProcess);
             }
         }
@@ -1240,27 +1435,58 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-20 14:13
      */
     @Override
+    @Transactional
     public Boolean approvalReject(TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
+
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(loginUser.getUid());
+        //这是用户的流程id
+        List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+
+
         //审核不通过表示要博回的
         //根据任务id 获取所有的任务列表
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
+        //传过来的流程id
+        List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
+        //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
+        if (!processInstanceIds.containsAll(processIds)) {
+            throw new ServiceException(ApiError.ERROR_95049);
+        }
+
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        Integer state = checkTaskState(list);
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
-        long count = list.stream().filter(t -> t.getStatus() != approvalIngCode).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95038);
+        //审核中
+        Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+        //待审核
+        Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
+        if (!approvalIngCode.equals(state) && !finishWaitConfirmCode.equals(state)
+                && !waitConfirmCode.equals(state)
+        ) {
+            throw new ServiceException(ApiError.ERROR_95046);
         }
+
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(taskIdList, approvalIngCode, TaskStateEnum.APPROVAL_NO_PASS.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
-
         }
 
-        //这里应该还一个驳回的流程
+        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        for (String taskId : taskIds) {
+            //添加评论
+            TaskCommentEntity comment = new TaskCommentEntity();
+            comment.setComment(dto.getComment());
+            comment.setTaskId(taskId);
+            comment.setCreateUserName(loginUser.getUserName());
+            comment.setCreateUserId(loginUser.getUid());
+            taskCommentList.add(comment);
+        }
+
+        taskCommentService.batchSaveTaskComment(taskCommentList);
         return flag;
 
     }
@@ -1314,7 +1540,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
         if (!Objects.isNull(taskEntity)) {
-            taskEntity.setRealityStartTime(new Date());
+            taskEntity.setRealityEndTime(new Date());
             taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
             updateById(taskEntity);
             //保存记录
@@ -1373,6 +1599,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity approvalIngEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalIngState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalPassState)).findFirst().orElse(null);
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
+        TaskOperatorRecordEntity approvalNoPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalNoPassState)).findFirst().orElse(null);
 
         //先添加待发布的
         TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
@@ -1399,17 +1626,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(finishStateEntity, finishState));
         }
 
-        if (general.equals(generalApproval)) {
+        if (generalApproval.equals(processType)) {
             //添加待开始
             resultList.add(getProcessNode(notStartEntity, notStart));
             //添加进行中
             resultList.add(getProcessNode(ingStateEntity, ingState));
             //添加完成待审核
-            resultList.add(getProcessNode(finishWaitConfirmEntity, finishState));
+            resultList.add(getProcessNode(finishWaitConfirmEntity, finishWaitConfirmState));
             //添加审核中
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
             //添加审核通过
             resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+
+            //添加审核不通过
+            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
         }
 
         if (reviewTask.equals(processType)) {
@@ -1417,6 +1647,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState));
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
             resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+            //添加审核不通过
+            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
         }
 
         return resultList;
@@ -1441,7 +1673,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return waitReleasedDTO;
     }
 
-
+    //检查子任务
     private void checkTaskIfExistPid(String taskId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
@@ -1548,14 +1780,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public String getWarning(Integer state, Integer finishState, Date planEndTime) {
         Date nowDay = new Date();
         String warning = "-";
-        //状态
-        if (!finishState.equals(state)) {
-            int difference = DateUtil.getDiffDay(planEndTime, nowDay);
-            if (difference > 0) {
-                warning = "过期" + difference + "天";
-            } else {
-                if (difference >= -2) {
-                    warning = Math.abs(difference) + 1 + "天后过期";
+        if (planEndTime != null) {
+            //状态
+            if (!finishState.equals(state)) {
+                int difference = DateUtil.getDiffDay(planEndTime, nowDay);
+                if (difference > 0) {
+                    warning = "过期" + difference + "天";
+                } else {
+                    if (difference >= -2) {
+                        warning = Math.abs(difference) + 1 + "天后过期";
+                    }
                 }
             }
         }
