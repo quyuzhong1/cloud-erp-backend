@@ -199,5 +199,5 @@ public class ExportSkuExcelDTO implements Serializable {
     private String secondSupplier;
 
     @ExcelProperty(value = "实际首批到货量", index = 61)
-    private Integer actualArrivalQty;
+    private Long actualArrivalQty;
 }

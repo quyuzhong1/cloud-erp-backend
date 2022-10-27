@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Max;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -36,7 +38,7 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 计划首批下单量
      */
-    private Integer planOrderQty;
+    private Long planOrderQty;
 
     /**
      * 首批下单时间
@@ -99,7 +101,7 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 实际首批到货量
      */
-    private Integer actualArrivalQty;
+    private Long actualArrivalQty;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

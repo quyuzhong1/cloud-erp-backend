@@ -158,7 +158,7 @@ public class ProductDetailExcelDTO {
     private String ean;
 
     @ExcelProperty(value = "计划首批下单量", index = 46)
-    private Integer planOrderQty;
+    private Long planOrderQty;
 
     @ExcelProperty(value = "首批下单时间", index = 47)
     private Date placeOrderTime;
@@ -176,7 +176,7 @@ public class ProductDetailExcelDTO {
     private Date actualArrivalTime;
 
     @ExcelProperty(value = "实际首批到货量", index = 52)
-    private Integer actualArrivalQty;
+    private Long actualArrivalQty;
 
     @ExcelProperty(value = "首批到货状态", index = 53)
     private String arrivalState;
