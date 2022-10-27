@@ -25,7 +25,7 @@ public class ProductInfoDTO {
      * 产品名
      */
     @NotBlank(message = "产品名不能为空")
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 50,message = "产品名最大50字符")
     private String name;
 
     /**
@@ -81,19 +81,19 @@ public class ProductInfoDTO {
     /**
      * 产品卖点
      */
-    @Size(max = 500,message = "最大50字符")
+    @Size(max = 500,message = "产品卖点最大500字符")
     private String sellSpot;
 
     /**
      * 产品功能描述
      */
-    @Size(max = 500,message = "最大50字符")
+    @Size(max = 500,message = "产品功能描述最大500字符")
     private String functionDesc;
 
     /**
      * 产品用途
      */
-    @Size(max = 500,message = "最大50字符")
+    @Size(max = 500,message = "产品用途最大500字符")
     private String usageDesc;
 
     /**
@@ -104,7 +104,7 @@ public class ProductInfoDTO {
     /**
      * 主要材质
      */
-    @Size(max = 500,message = "最大50字符")
+    @Size(max = 500,message = "主要材质最大500字符")
     private String materials;
 
     /**
