@@ -662,7 +662,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             String productName = dto.getProductName();
             String gradeId = dto.getGradeId();
             List<String> productChargeIdList = dto.getProductChargeIdList();
-            String productChargeName=commonService.getNameByIds(productChargeIdList);
             Integer approvalStatus = dto.getApprovalStatus();
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
@@ -677,10 +676,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 product.setGrade(grade);
             }
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
+                String productChargeName=commonService.getNameByIds(productChargeIdList);
                 product.setChargeId(String.join(",",productChargeIdList));
-                product.setChargeName(productChargeName);
-            }
-            if (StringUtils.isNotBlank(productChargeName)) {
                 product.setChargeName(productChargeName);
             }
             if (approvalStatus != null) {
@@ -715,12 +712,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (!Objects.isNull(project)) {
                 Integer projectStatus = dto.getProjectStatus();
                 List<String> projectChargeIdList = dto.getProjectChargeIdList();
-                String projectChargeName = commonService.getNameByIds(projectChargeIdList);
                 if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
+                    String projectChargeName = commonService.getNameByIds(projectChargeIdList);
                     project.setChargeId(String.join(",",projectChargeIdList));
-                    project.setChargeName(projectChargeName);
-                }
-                if (StringUtils.isNotBlank(projectChargeName)) {
                     project.setChargeName(projectChargeName);
                 }
                 if (projectStatus != null) {

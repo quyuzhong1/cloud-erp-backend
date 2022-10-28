@@ -74,12 +74,6 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
      */
     public List<DocsDTO> getDocsNameList(String productId) {
         List<DocsDTO> resultList = new LinkedList<>();
-        int state = IsConstant.YES;
-        List<DocsDTO> sysDocsNames = sysDocsService.getDocsNames(state);
-        for (DocsDTO item : sysDocsNames) {
-            item.setIsSys(state);
-        }
-        resultList.addAll(sysDocsNames);
         LambdaQueryWrapper<TaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsNameEntity::getProductId, productId);
         List<TaskDocsNameEntity> list = list(queryWrapper);
