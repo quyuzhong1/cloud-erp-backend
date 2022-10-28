@@ -672,7 +672,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
-        queryWrapper.ne(ProductInfoEntity::getDeleteState, IsConstant.NO);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
@@ -694,7 +694,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
-        queryWrapper.ne(ProductInfoEntity::getDeleteState, IsConstant.NO);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
