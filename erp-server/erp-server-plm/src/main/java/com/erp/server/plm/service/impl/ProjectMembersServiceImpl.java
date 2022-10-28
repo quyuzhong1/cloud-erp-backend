@@ -117,21 +117,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     }
 
-    @Override
-    public void saveMemberByTemplate(String productId, String projectId, String flagId) {
-        LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-
-        List<ProjectMembersEntity> list = this.list(queryWrapper);
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (ProjectMembersEntity entity : list) {
-                entity.setProjectId(projectId);
-                entity.setProductId(productId);
-                entity.setId(IdWorker.getIdStr());
-            }
-            this.saveBatch(list);
-        }
-
-    }
 
 
     @Override

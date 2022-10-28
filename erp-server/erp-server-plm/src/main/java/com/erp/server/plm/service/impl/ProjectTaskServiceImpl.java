@@ -84,7 +84,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private BusinessProcessService businessProcessService;
 
     @Autowired
-    private ProjectMembersService projectMembersService;
+    private TaskDocsNameService taskDocsNameService;
+
+
 
     @Autowired
     private TaskOperatorRecordService taskOperatorRecordService;
@@ -105,11 +107,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void addSysTask(String productId) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
-
         //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
+
+            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
+            //保存文档名
+            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds,productId);
+
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
@@ -120,7 +126,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId());
+                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(),docsNameList);
                 }
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -213,30 +219,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     }
 
-    /**
-     * 从模板 复制数据
-     *
-     * @param saveProductId
-     * @param saveProjectId
-     * @param flagTemplateId
-     * @return void
-     * @author yl
-     * @date 2022-09-21 9:49
-     */
-    @Override
-    public void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId) {
-        List<TemplateTaskEntity> templateTasks = templateTaskService.getTaskByTemplateId(flagTemplateId);
-        List<ProjectTaskEntity> saveList = new LinkedList<>();
-        for (TemplateTaskEntity item : templateTasks) {
-            ProjectTaskEntity entity = new ProjectTaskEntity();
-            BeanMapper.copy(item, entity);
-            entity.setProductId(saveProductId);
-            entity.setProjectId(saveProjectId);
-            entity.setId(IdWorker.getIdStr());
-            saveList.add(entity);
-        }
-        this.saveBatch(saveList);
-    }
+
 
     /**
      * 新建项目的话 需要查看系统是否设置了任务
@@ -255,7 +238,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-
+            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
+            //保存文档名
+            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds,saveProductId);
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectPhaseEntity phase = projectPhaseList.stream().filter(p -> p.getName().equals(item.getName())).findFirst().orElse(null);
                 ProjectTaskEntity entity = new ProjectTaskEntity();
@@ -273,7 +258,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId());
+                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(),docsNameList);
                 }
             }
         }
@@ -925,7 +910,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String approvalUserId = taskEntity.getApprovalUserId();
         List<String> approvalUserIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(approvalUserId)) {
-            approvalUserIdList=Arrays.asList(approvalUserId.split(","));
+            approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         resultDTO.setApprovalUserIds(approvalUserIdList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));

@@ -23,7 +23,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     void saveMemberByProject(String productId,String projectId, String flagId);
 
-    void saveMemberByTemplate(String productId,String projectId, String flagId);
 
     List<ProjectMembersEntity> getListByProductId(String productId);
 

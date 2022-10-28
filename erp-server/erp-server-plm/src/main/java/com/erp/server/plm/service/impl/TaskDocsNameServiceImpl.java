@@ -13,11 +13,13 @@ import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.TaskDocsNameMapper;
 import com.erp.server.plm.service.SysDocsService;
+import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +35,9 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
 
     @Autowired
     private SysDocsService sysDocsService;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
 
     /**
      * 保存文档名
@@ -93,5 +98,22 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         LambdaQueryWrapper<TaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsNameEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<TaskDocsNameEntity> saveBySysTaskIds(List<String> sysTaskIds, String productId) {
+        List<String> sysDocsNames = taskDeliveryService.getDocsNameByTaskIds(sysTaskIds);
+        List<String> docsNames = sysDocsNames.stream().distinct().collect(Collectors.toList());
+        List<TaskDocsNameEntity> saveList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(docsNames)) {
+            for (String docsName : docsNames) {
+                TaskDocsNameEntity entity = new TaskDocsNameEntity();
+                entity.setName(docsName);
+                entity.setProductId(productId);
+                saveList.add(entity);
+            }
+            this.saveBatch(saveList);
+        }
+        return saveList;
     }
 }

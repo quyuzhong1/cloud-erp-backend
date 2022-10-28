@@ -1,7 +1,10 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.TemplateCopySourceDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 
@@ -41,6 +44,48 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
             }
             this.saveBatch(saveList);
         }
+    }
+
+
+    /**
+     * 方法说明
+     *
+     * @param templateId
+     * @param productId
+     * @param projectId
+     * @return void
+     * @author yl
+     * @date 2022-10-28 11:24
+     */
+    @Override
+    public List<TemplateCopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
+        List<TemplateRoleEntity> list = getByTemplateId(templateId);
+        List<TemplateCopySourceDTO> sourceList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<ProjectRoleEntity> copyList = new ArrayList<>();
+            for (TemplateRoleEntity item : list) {
+                TemplateCopySourceDTO sourceDTO = new TemplateCopySourceDTO();
+                ProjectRoleEntity entity = new ProjectRoleEntity();
+                BeanMapper.copy(item, entity);
+                entity.setProjectId(projectId);
+                entity.setProductId(productId);
+                String id = IdWorker.getIdStr();
+                entity.setId(id);
+                sourceDTO.setNewCreateId(id);
+                sourceDTO.setTemplateDataId(item.getId());
+                copyList.add(entity);
+                sourceList.add(sourceDTO);
+            }
+            projectRoleService.saveBatch(copyList);
+        }
+        return sourceList;
+    }
+
+    public List<TemplateRoleEntity> getByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
+
     }
 }
 
