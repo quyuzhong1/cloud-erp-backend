@@ -743,10 +743,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!projectTaskEntity.getName().equals(dto.getName())) {
             list.add("编辑任务字段[任务名]由[" + projectTaskEntity.getName() + "]改为[" + dto.getName() + "]");
         }
-        if (!projectTaskEntity.getType().equals(dto.getType())) {
-            String entityType = (projectTaskEntity.getType() == 0) ? "一般任务" : "审核任务";
-            String dtoType = (dto.getType() == 0) ? "一般任务" : "审核任务";
-            list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
+
+        if (dto.getType()!= null) {
+            if (!projectTaskEntity.getType().equals(dto.getType())) {
+                String entityType = (projectTaskEntity.getType() == 0) ? "一般任务" : "审核任务";
+                String dtoType = (dto.getType() == 0) ? "一般任务" : "审核任务";
+                list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
+            }
         }
         //负责人ids
         List<String> chargeIds = dto.getChargeIds();
@@ -765,20 +768,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
-            String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
-            String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
-            list.add("编辑任务字段[任务优先级]由[" + entityPriority + "]改为[" + dtoPriority + "]");
+        if (dto.getPriority()!= null) {
+            if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
+                String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
+                String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
+                list.add("编辑任务字段[任务优先级]由[" + entityPriority + "]改为[" + dtoPriority + "]");
+            }
         }
 
-        if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
-            list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
+        if (dto.getPhaseName()!= null) {
+            if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
+                list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
+            }
         }
-        if (StringUtils.isNotBlank(projectTaskEntity.getDescription())) {
+
+        if (dto.getDescription()!= null) {
             if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
                 list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
             }
         }
+
 
         return list;
     }

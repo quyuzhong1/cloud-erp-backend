@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,13 +17,11 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.controller.ProductDetailController;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
@@ -32,16 +29,10 @@ import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.*;
@@ -127,7 +118,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return ProductDetailShowDTO
      **/
     @Override
-    public ProductDetailShowDTO getProductBy(String name, String skuNo){
+    public ProductDetailShowDTO getProductBy(String name, String skuNo) {
         return productDetailMapper.listProduct(name, skuNo);
     }
 
