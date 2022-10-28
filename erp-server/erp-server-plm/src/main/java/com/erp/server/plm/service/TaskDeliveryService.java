@@ -7,6 +7,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
+import com.erp.model.plm.entity.TaskDocsNameEntity;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     void saveSysDeliveryDocs(String id, List<DocsDTO> docsList);
 
-    void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId);
+    void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId, List<TaskDocsNameEntity> docsNameList);
 
     void removeByTaskId(String taskId);
 
@@ -42,4 +43,6 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<DocsDTO> getSysTaskFinishDocs(String taskId);
 
     List<TaskDeliveryDocsEntity> getByProductId(String productId);
+
+    List<String> getDocsNameByTaskIds(List<String> sysTaskIds);
 }

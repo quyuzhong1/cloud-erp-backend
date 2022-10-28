@@ -91,10 +91,11 @@
     </update>
 
     <select id="getRequestPermissionsList" resultType="com.erp.common.modules.sys.dto.UserRequestPermissionsDTO">
-        SELECT COALESCE ( sm.data_scope, 0 ) AS dataScope,m.menu_code AS permissionsCode
+        SELECT MAX(COALESCE ( sm.data_scope, 0 )) AS dataScope,m.menu_code AS permissionsCode
         FROM sys_role_menu sm INNER JOIN  sys_role_user sr ON sr.role_id = sm.role_id
         INNER JOIN  sys_menu m ON sm.menu_id = m.menu_id
         WHERE sr.user_id=#{userId} AND m.menu_code!=''
+        GROUP BY m.menu_code
     </select>
 
     <select id="getDepUserList" resultType="com.erp.common.modules.sys.dto.SysUserDTO">

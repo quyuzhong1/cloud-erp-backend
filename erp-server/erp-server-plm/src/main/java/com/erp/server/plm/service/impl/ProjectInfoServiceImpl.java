@@ -15,6 +15,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
@@ -30,6 +31,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,6 +84,28 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TaskDocsFinishService finishService;
 
+    @Autowired
+    private TemplateMembersService templateMembersService;
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TemplateRoleService templateRoleService;
+
+    @Autowired
+    private TemplatePhaseService templatePhaseService;
+
+    @Autowired
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
+    @Autowired
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
+    @Autowired
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private TemplatePreTaskService templatePreTaskService;
 
     /**
      * 项目概述
@@ -182,10 +206,22 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectTaskService.copyTaskByProject(productId, projectId, flagId);
             }
 
-            //如果是 从模板复制 那么从项目表 里面复制 复制成员
-            if (SourceType.PROJECT.equals(sourceType)) {
-                projectMembersService.saveMemberByTemplate(productId, projectId, flagId);
-                projectTaskService.copyTaskByTemplate(productId, projectId, flagId);
+            //如果是 从模板复制  那么模板复制数据
+            if (SourceType.TEMPLATE.equals(sourceType)) {
+                ProjectTemplateEntity template = templateService.getById(flagId);
+                if (Objects.isNull(template)) {
+                    throw new ServiceException(ApiError.ERROR_95051);
+                }
+                //复制模板团队成员
+                templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
+                //复制模板角色
+                List<TemplateCopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
+                //复制角色关系表
+                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList);
+                //复制任务阶段
+                List<TemplateCopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
+
+
             }
 
 
@@ -318,10 +354,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 item.setApprovalTaskCount(approvalTaskCount);
 
-                Integer approvalStatus=item.getApprovalStatus();
+                Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 
-                Integer projectStatus=item.getProjectStatus();
+                Integer projectStatus = item.getProjectStatus();
                 item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
                 //这是项目任务
                 int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
@@ -388,12 +424,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         newAdd.setFlagId(IdWorker.getIdStr());
         resultList.add(newAdd);
 
-        StartItemSourceDTO project = new StartItemSourceDTO();
-        project.setSourceType(SourceType.PROJECT);
-        project.setSourceName("从项目中复制");
-        project.setFlagId(IdWorker.getIdStr());
-        project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
-        resultList.add(project);
+//        StartItemSourceDTO project = new StartItemSourceDTO();
+//        project.setSourceType(SourceType.PROJECT);
+//        project.setSourceName("从项目中复制");
+//        project.setFlagId(IdWorker.getIdStr());
+//        project.setChildrenList(baseMapper.listMap(SourceType.PROJECT));
+//        resultList.add(project);
 
         StartItemSourceDTO template = new StartItemSourceDTO();
         template.setSourceType(SourceType.TEMPLATE);

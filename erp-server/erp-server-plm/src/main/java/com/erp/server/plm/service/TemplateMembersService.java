@@ -11,4 +11,6 @@ import com.erp.model.plm.entity.TemplateMembersEntity;
 public interface TemplateMembersService extends IService<TemplateMembersEntity> {
 
     void saveMember(String templateId, String productId);
+
+    void copyTemplateMembers(String id, String productId, String projectId);
 }

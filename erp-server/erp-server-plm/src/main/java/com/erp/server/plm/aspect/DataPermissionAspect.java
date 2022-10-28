@@ -12,6 +12,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
+import com.erp.model.plm.dto.CountDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
 import org.apache.commons.lang.StringUtils;
@@ -108,8 +109,10 @@ public class DataPermissionAspect {
      */
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, DataPermission controllerDataScope) {
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
-        List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream = requestPermissionsList.stream().filter(req -> req.getPermissionsCode().equals(controllerDataScope.menuCode())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(userRequestPermissionsDTOStream)) {
+
+        UserRequestPermissionsDTO userRequestPermissions = requestPermissionsList.stream().filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode())).findFirst().orElse(null);
+
+        if (org.springframework.util.ObjectUtils.isEmpty(userRequestPermissions)) {
             return;
             //throw new ServiceException(ApiError.ERROR_1013);
         }
@@ -120,13 +123,13 @@ public class DataPermissionAspect {
         }
         switch (controllerDataScope.operationType()) {
             case "query":
-                query(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
+                query(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
             case "delete":
-                delete(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
+                delete(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
             case "update":
-                update(joinPoint, userRequestPermissionsDTOStream, userList, user, controllerDataScope);
+                update(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
             default:
                 break;
@@ -138,32 +141,30 @@ public class DataPermissionAspect {
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
      * @param joinPoint 切点信息
-     * @param userRequestPermissionsDTOStream 权限列表
+     * @param userRequestPermissions 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
      * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public void query(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+    public void query(JoinPoint joinPoint, UserRequestPermissionsDTO userRequestPermissions, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Object[] params = joinPoint.getArgs();
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DataPermission inject = method.getAnnotation(DataPermission.class);
 
         StringBuilder sqlString = new StringBuilder();
-        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
-            if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
-                sqlString = new StringBuilder();
-                break;
-            } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                List<String> listt = new ArrayList<>();
-                for (String s : userList) {
-                    listt.add("'" + s +"'" );
-                }
-
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
-            } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
+        if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            sqlString = new StringBuilder();
+            return;
+        } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            List<String> listt = new ArrayList<>();
+            for (String s : userList) {
+                listt.add("'" + s + "'");
             }
+
+            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
     }
@@ -172,13 +173,13 @@ public class DataPermissionAspect {
      * 删除
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
-     * @param userRequestPermissionsDTOStream 权限列表
+     * @param userRequestPermissions 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
      * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public void delete(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+    public void delete(JoinPoint joinPoint, UserRequestPermissionsDTO userRequestPermissions, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
@@ -242,18 +243,17 @@ public class DataPermissionAspect {
         }
         String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
-        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
-            if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
-                break;
-            } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                if (!userList.contains(userId)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
-                }
-            } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                if (!user.equals(userId)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
-                }
+        if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return;
+        } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            if (!userList.contains(userId)) {
+                throw new ServiceException(ApiError.ERROR_1013);
             }
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!user.equals(userId)) {
+                throw new ServiceException(ApiError.ERROR_1013);
+            }
+
         }
     }
 
@@ -261,13 +261,13 @@ public class DataPermissionAspect {
      * 修改
      * @Author Luo_WG
      * @Date 2022/10/21 9:57
-     * @param userRequestPermissionsDTOStream 权限列表
+     * @param userRequestPermissions 权限列表
      * @param userList 部门用户列表
      * @param user 用户信息
      * @param dataPermission 自定义注解信息
      * @return java.lang.String
      **/
-    public void update(JoinPoint joinPoint, List<UserRequestPermissionsDTO> userRequestPermissionsDTOStream, List<String> userList, LoginUser user, DataPermission dataPermission) {
+    public void update(JoinPoint joinPoint, UserRequestPermissionsDTO userRequestPermissions, List<String> userList, LoginUser user, DataPermission dataPermission) {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
@@ -286,7 +286,6 @@ public class DataPermissionAspect {
             inputIdList.add(mapParam.get(dataPermission.keyIdName()));
         }*/
 
-
         JSONObject entity = JSONObject.parseObject(JSONObject.toJSONString(arg));
 
         if (StringUtils.isBlank(entity.get(dataPermission.keyIdName()).toString())) {
@@ -298,17 +297,15 @@ public class DataPermissionAspect {
 
         String userId = jo.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
 
-        for (UserRequestPermissionsDTO role : userRequestPermissionsDTOStream) {
-            if (DATA_SCOPE_ALL.equals(role.getDataScope())) {
-                break;
-            } else if (DATA_SCOPE_DEPT.equals(role.getDataScope())) {
-                if (!userList.contains(userId)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
-                }
-            } else if (DATA_SCOPE_SELF.equals(role.getDataScope())) {
-                if (!user.equals(userId)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
-                }
+        if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return;
+        } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            if (!userList.contains(userId)) {
+                throw new ServiceException(ApiError.ERROR_1013);
+            }
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!user.equals(userId)) {
+                throw new ServiceException(ApiError.ERROR_1013);
             }
         }
     }

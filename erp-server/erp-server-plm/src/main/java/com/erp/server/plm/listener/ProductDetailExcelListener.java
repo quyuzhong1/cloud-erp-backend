@@ -1,15 +1,12 @@
 package com.erp.server.plm.listener;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
-import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -19,18 +16,11 @@ import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleMethodEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
 import com.erp.server.plm.service.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
-
-import java.math.BigDecimal;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
     private Integer importType;
@@ -121,7 +111,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         //销售方式不正确
-        if(StringUtils.isNotBlank(dto.getSaleMethod())){
+        if(StringUtils.isNotBlank(dto.getSaleMethod())) {
             String[] saleMethodList = dto.getSaleMethod().split(",");
             for (String saleMethod : saleMethodList) {
                 if (SaleMethodEnum.getCodeByName(saleMethod) == null) {
@@ -268,6 +258,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
             productInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
+            productSkuBaseInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
+            productSkuBaseInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
         }
         productInfoDTO.setMaterials(dto.getMaterials());
         productInfoDTO.setFunctionDesc(dto.getFunctionDesc());

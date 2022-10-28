@@ -113,6 +113,12 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("project_id")
     private String projectId;
 
+    /**
+     * 审核人id 多个以逗号分割
+     */
+    @TableField("approval_user_id")
+    private String approvalUserId;
+
 
     /**
      * 创建时间

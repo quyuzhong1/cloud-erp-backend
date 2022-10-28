@@ -755,14 +755,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             return;
         }
         //获取任务
-        if (flag == IsConstant.YES) {
+        if (IsConstant.YES.equals(flag)) {
             List<TaskExcelDTO> taskExcelList = projectTaskService.getExportTask(productIds);
             ExcelUtil.export(fileName, "任务列表", taskExcelList, TaskExcelDTO.class, response);
             return;
         }
 
         //获取产品
-        if (flag == IsConstant.NO) {
+        if (IsConstant.NO.equals(flag)) {
             List<ProductExcelDTO> productList = getProductExcelList(productIds);
             ExcelUtil.export(fileName, "产品列表", productList, ProductExcelDTO.class, response);
             return;

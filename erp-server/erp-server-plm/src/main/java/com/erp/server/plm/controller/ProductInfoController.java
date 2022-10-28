@@ -2,7 +2,7 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -10,14 +10,10 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
-import com.erp.server.plm.service.UserAddProductService;
-import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
 import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.erp.common.controller.BaseController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
