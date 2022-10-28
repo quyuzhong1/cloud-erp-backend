@@ -2,10 +2,12 @@ package com.cloud.erp.chrome.service.impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.GyyShipmentsDTO;
 import com.cloud.erp.chrome.entity.OrderGyyDeliverEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.mapper.OrderGyyDeliverMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
 import com.cloud.erp.chrome.service.CsvServer;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +54,9 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
     public void saveDeliverCsvByUrl(GyyShipmentsDTO dto) {
         File file = null;
         try {
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
+            cleanExistsData(dto.getTaskId());
+
             String projectPath = System.getProperty("user.dir"); //当前项目
 //            String path = projectPath + "/erp-chrome/src/main/java/temp";
             String path = projectPath + "/erp-chrome/attachement";
@@ -65,12 +71,29 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
             if (file != null) {
                 FileUtil.del(file);
             }
+
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             e.printStackTrace();
 //            throw new ServiceException(1, "管易云保存数据失败");
             throw new RuntimeException("管易云保存数据失败",e);
         }
+    }
+
+    // 删除已存在的数据
+    private void cleanExistsData(Integer taskId) {
+        ScheduleTaskEntity taskEntity= chromeTaskInfoService.getById(taskId);
+        if(taskEntity==null){
+            return;
+        }
+        Date startTime=taskEntity.getStartTime();
+        Date endTime=taskEntity.getEndTime();
+
+        // 删除已存在的数据
+        this.remove(new LambdaQueryWrapper<OrderGyyDeliverEntity>()
+                .gt(OrderGyyDeliverEntity::getOrderDate,startTime)
+                .lt(OrderGyyDeliverEntity::getOrderDate,endTime)
+        );
     }
 
 

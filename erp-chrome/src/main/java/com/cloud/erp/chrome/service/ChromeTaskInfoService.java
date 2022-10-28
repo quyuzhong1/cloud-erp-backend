@@ -16,7 +16,18 @@ import java.util.List;
  */
 public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
 
+    /**
+     * 查询任务列表
+     * @param dto   查询参数
+     * @return  任务列表
+     */
     List<ScheduleTaskEntity> getChromeTaskList(FindTaskDTO dto);
 
-    void updateTaskState(Integer taskId, Integer finish);
+    /**
+     * 更新任务状态
+     * @param taskId 任务Id
+     * @param status 状态
+     */
+    void updateTaskState(Integer taskId, Integer status);
+
 }

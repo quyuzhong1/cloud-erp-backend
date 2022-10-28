@@ -1,9 +1,12 @@
 package com.cloud.erp.chrome.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.entity.MabanIncomeExpensesEntity;
+import com.cloud.erp.chrome.entity.OrderGyyDeliverEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.handler.ConvertHandler;
 import com.cloud.erp.chrome.mapper.MabanIncomeExpensesMapper;
 import com.cloud.erp.chrome.service.ChromeTaskInfoService;
@@ -17,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +58,9 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
     @Transactional
     public void importIncomeExpensesCsv(MabangOrderDTO dto) {
         try {
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
+            cleanExistsData(dto.getTaskId());
+
             MultipartFile file = dto.getFile();
             List<MabanIncomeExpensesEntity> convertList = csvServer.getObjectListByMultipartFile(file, MabanIncomeExpensesEntity.class);
             if (CollectionUtils.isNotEmpty(convertList)) {
@@ -65,11 +72,28 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
                     }
                 }
             }
+
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             log.error("importIncomeExpensesCsv  出错了 e==" + e);
             throw new RuntimeException("importIncomeExpensesCsv  出错了 e==",e);
         }
+    }
+
+    // 删除已存在的数据
+    private void cleanExistsData(Integer taskId) {
+        ScheduleTaskEntity taskEntity= chromeTaskInfoService.getById(taskId);
+        if(taskEntity==null){
+            return;
+        }
+        Date startTime=taskEntity.getStartTime();
+        Date endTime=taskEntity.getEndTime();
+
+        // 删除已存在的数据
+        this.remove(new LambdaQueryWrapper<MabanIncomeExpensesEntity>()
+                .gt(MabanIncomeExpensesEntity::getOrderDate,startTime)
+                .lt(MabanIncomeExpensesEntity::getOrderDate,endTime)
+        );
     }
 
 }

@@ -2,9 +2,12 @@ package com.cloud.erp.chrome.service.impl;
 
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.MabangOrderDTO;
 import com.cloud.erp.chrome.dto.YxkOrderDTO;
+import com.cloud.erp.chrome.entity.MabanIncomeExpensesEntity;
+import com.cloud.erp.chrome.entity.ScheduleTaskEntity;
 import com.cloud.erp.chrome.entity.YxkOrderEntity;
 import com.cloud.erp.chrome.handler.ConvertHandler;
 import com.cloud.erp.chrome.mapper.YxkOrderMapper;
@@ -25,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -64,6 +68,9 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
         String vurl = dto.getUrl();
         String cookie = dto.getCookie();
         try {
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
+            cleanExistsData(dto.getTaskId());
+
             URL url = new URL(vurl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("Cookie", cookie);
@@ -104,21 +111,23 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
             for (List<YxkOrderEntity> listSub : lists) {
                 this.saveBatch(listSub);
             }
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
+
         } catch (Exception e) {
             log.error("云星空保存数据失败 无法获取到文件",e);
 //            throw new ServiceException(1, "云星空保存数据失败 无法获取到文件");
             throw new RuntimeException("云星空保存数据失败 无法获取到文件",e);
 
         }
-
-        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
-
-
     }
 
     @Override
+    @Transactional
     public void saveOrder(MabangOrderDTO dto) {
         try {
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
+            cleanExistsData(dto.getTaskId());
+
             File file = multiToFile(dto.getFile());
             ExcelReader excelReader = ExcelUtil.getReader(file, "Sheet1");
             excelReader.addHeaderAlias("日期", "shipmentDate");
@@ -159,11 +168,12 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
             for (List<YxkOrderEntity> listSub : lists) {
                 this.saveBatch(listSub);
             }
+
+            chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServiceException(1, "云星空保存数据失败  通过参数无法获取到数据");
         }
-        chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH);
 
     }
 
@@ -191,5 +201,21 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
             log.error(e.getMessage());
         }
         return file;
+    }
+
+    // 删除已存在的数据
+    private void cleanExistsData(Integer taskId) {
+        ScheduleTaskEntity taskEntity= chromeTaskInfoService.getById(taskId);
+        if(taskEntity==null){
+            return;
+        }
+        Date startTime=taskEntity.getStartTime();
+        Date endTime=taskEntity.getEndTime();
+
+        // 删除已存在的数据
+        this.remove(new LambdaQueryWrapper<YxkOrderEntity>()
+                .gt(YxkOrderEntity::getOrderDate,startTime)
+                .lt(YxkOrderEntity::getOrderDate,endTime)
+        );
     }
 }

@@ -8,9 +8,23 @@ package com.cloud.erp.chrome.constant;
  */
 public class TaskState {
 
+    /**
+     * 任务-未开始
+     */
     public static final Integer NOT_START=0;
 
-    public static final Integer ING=1;
+    /**
+     * 任务-被取走
+     */
+    public static final Integer TAKEN =1;
 
-    public static final Integer FINISH=2;
+    /**
+     * 任务-接受到数据
+     */
+    public static final Integer RECEIVEING=2;
+
+    /**
+     * 任务-已完成
+     */
+    public static final Integer FINISH=3;
 }

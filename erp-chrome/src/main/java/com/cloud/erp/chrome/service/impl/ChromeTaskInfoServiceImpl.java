@@ -51,8 +51,8 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         queryWrapper.and(st->st
             .eq(ScheduleTaskEntity::getTaskStatus,TaskState.NOT_START)
             .or(i->i
-                .eq(ScheduleTaskEntity::getTaskStatus,TaskState.ING)
-                .lt(ScheduleTaskEntity::getUpdateTime,DateUtil.offsetMinute(new Date(),-30))
+                .eq(ScheduleTaskEntity::getTaskStatus,TaskState.TAKEN)
+                .lt(ScheduleTaskEntity::getUpdateTime,DateUtil.offsetMinute(new Date(),-10))
             )
         );
         queryWrapper.orderByAsc(ScheduleTaskEntity::getId);
@@ -69,7 +69,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
                 task.setParameter(getTaskParamForYunXingKong(task));
             }
             //更新状态锁定
-            this.updateTaskState(task.getId(),TaskState.ING);
+            this.updateTaskState(task.getId(),TaskState.TAKEN);
         }
 
         return taskList;
@@ -134,16 +134,17 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
      * @author yl
      * @date 2022-08-26 9:38
      * @param taskId
-     * @param taskState
+     * @param status
      * @return void
      */
     @Override
-    public void updateTaskState(Integer taskId, Integer taskState) {
+    public void updateTaskState(Integer taskId, Integer status) {
         UpdateWrapper<ScheduleTaskEntity> updateWrapper=new UpdateWrapper<>();
         updateWrapper.lambda().eq(ScheduleTaskEntity::getId,taskId);
-        updateWrapper.lambda().set(ScheduleTaskEntity::getTaskStatus,taskState);
+        updateWrapper.lambda().set(ScheduleTaskEntity::getTaskStatus, status);
         updateWrapper.lambda().set(ScheduleTaskEntity::getUpdateTime,new Date());
         this.update(updateWrapper);
 
     }
+
 }
