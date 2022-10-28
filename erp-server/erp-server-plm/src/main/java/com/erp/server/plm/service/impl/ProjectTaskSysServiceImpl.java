@@ -29,10 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -73,6 +70,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
+
+        List<String> approvalUserIds = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
+            entity.setApprovalUserId(String.join(",",approvalUserIds));
+        }
         String chargeNames = commonService.getNameByIds(chargeIds);
         entity.setChargeName(chargeNames);
         entity.setChargeId(String.join(",", chargeIds));
@@ -229,6 +231,12 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if (StringUtils.isNotBlank(chargeId)) {
             sysTaskDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
+        String approvalUserId = sysEntity.getApprovalUserId();
+        List<String> approvalUserIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(approvalUserId)) {
+            approvalUserIdList=Arrays.asList(approvalUserId.split(","));
+        }
+        sysTaskDTO.setApprovalUserIds(approvalUserIdList);
         String businessProcessId = sysEntity.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);

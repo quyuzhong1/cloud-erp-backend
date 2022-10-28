@@ -98,7 +98,11 @@ public class ProjectTaskSysEntity implements Serializable {
     @TableField("is_fixed")
     private Integer isFixed;
 
-
+    /**
+     * 审核人id 多个以逗号分割
+     */
+    @TableField("approval_user_id")
+    private String approvalUserId;
     /**
      * 任务描述
      */

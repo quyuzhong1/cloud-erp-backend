@@ -58,6 +58,13 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("plan_start_time")
     private Date planStartTime;
 
+    /**·
+     * 审核人id 多个以逗号分割
+     */
+    @TableField("approval_user_id")
+    private String approvalUserId;
+
+
     /**
      * j计划结束时间
      */

@@ -263,10 +263,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
-                if(phase!=null){
+                if (phase != null) {
                     entity.setPhaseId(phase.getId());
                     entity.setPhaseName(phase.getName());
-                }else{
+                } else {
                     entity.setPhaseId("");
                     entity.setPhaseName("");
                 }
@@ -457,6 +457,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
+        //自定义审核人
+        List<String> approvalUserIds = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
+            taskEntity.setApprovalUserId(String.join(",", approvalUserIds));
+        }
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
         taskEntity.setPhaseName(phaseName);
@@ -469,7 +474,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
         }
         return flag;
     }
@@ -580,7 +585,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = list.size();
         //延期的任务数
-        int postponeTaskCount = list.stream().filter(t -> date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
         dto.setTotalTaskCount(totalTaskCount);
         dto.setFinishTaskCount(finishTaskCount);
         dto.setIngTaskCount(ingTaskCount);
@@ -730,9 +735,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
 
-
-
-
     private List<String> getUpdateField(ProjectTaskDTO dto) {
         ProjectTaskEntity entity = new ProjectTaskEntity();
         BeanMapper.copy(dto, entity);
@@ -805,6 +807,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
         }
 
+        //自定义审核人
+        List<String> approvalUserIds = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
+            taskEntity.setApprovalUserId(String.join(",", approvalUserIds));
+        }
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
         taskEntity.setChargeId(String.join(",", chargeId));
@@ -817,7 +824,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(loginUser.getUid(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
-            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(),dto.getProductId());
+            preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
             List<String> updateField = getUpdateField(dto);
             if (updateField.size() > 0) {
@@ -915,6 +922,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(chargeId)) {
             resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
+        String approvalUserId = taskEntity.getApprovalUserId();
+        List<String> approvalUserIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(approvalUserId)) {
+            approvalUserIdList=Arrays.asList(approvalUserId.split(","));
+        }
+        resultDTO.setApprovalUserIds(approvalUserIdList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
         String businessProcessId = resultDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
@@ -1300,14 +1313,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(processList)) {
             //获取到所有流程的信息
             List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
-            //获取到所有到负责人的成员信息
-            List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(dto.getProductId());
-            List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(membersIds)) {
-                throw new ServiceException(ApiError.ERROR_95045);
-            }
+
             //有审核流程的 要启动流程了
             for (ProjectTaskEntity processTask : processList) {
+                //获取到自定义的审核人
+                String approvalUserId = processTask.getApprovalUserId();
+                if (StringUtils.isBlank(approvalUserId)) {
+                    throw new ServiceException(ApiError.ERROR_95045);
+                }
+                List<String> membersIds = Arrays.asList(approvalUserId.split(","));
                 String businessProcessId = processTask.getBusinessProcessId();
                 //当不是审核不通过 就启动一个流程
                 if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
