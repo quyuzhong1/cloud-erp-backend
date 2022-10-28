@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.TemplateCopySourceDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
@@ -81,6 +82,71 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, flagTemplateId);
         queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * 复制模板任务
+     *
+     * @param templateId
+     * @param productId
+     * @param projectId
+     * @return void
+     * @author yl
+     * @date 2022-10-28 14:22
+     */
+    @Override
+    public List<TemplateCopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<TemplateCopySourceDTO> phaseSourceList) {
+        List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
+        //来源信息
+        List<TemplateCopySourceDTO> sourceList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
+            for (TemplateTaskEntity item : list) {
+                TemplateCopySourceDTO source = new TemplateCopySourceDTO();
+                source.setTemplateDataId(item.getId());
+                String taskId = IdWorker.getIdStr();
+                ProjectTaskEntity taskEntity = new ProjectTaskEntity();
+                BeanMapper.copy(item, taskEntity);
+                taskEntity.setProductId(productId);
+                taskEntity.setProjectId(projectId);
+                taskEntity.setId(taskId);
+                source.setNewCreateId(taskId);
+                TemplateCopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getTemplateDataId()
+                        .equals(item.getPhaseId())).findFirst().orElse(null);
+                if (phase != null) {
+                    taskEntity.setPhaseId(phase.getNewCreateId());
+                } else {
+                    taskEntity.setPhaseId("");
+                }
+                copyList.add(taskEntity);
+                sourceList.add(source);
+            }
+
+            //更改父id
+            for (ProjectTaskEntity task : copyList) {
+                //这个pid 还是 模板数据的pid
+                String pid = task.getPid();
+                if (!pid.equals("0")) {
+                    TemplateCopySourceDTO source = sourceList.stream().
+                            filter(s -> s.getTemplateDataId().equals(pid)).findFirst().orElse(null);
+                    if (source != null) {
+                        task.setPid(source.getNewCreateId());
+                    } else {
+                        task.setPid("0");
+                    }
+                }
+            }
+
+        }
+        return sourceList;
+    }
+
+
+    public List<TemplateTaskEntity> getByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
         return this.list(queryWrapper);
     }
 }

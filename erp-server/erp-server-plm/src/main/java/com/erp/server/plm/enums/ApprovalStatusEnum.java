@@ -8,7 +8,7 @@ package com.erp.server.plm.enums;
  */
 public enum ApprovalStatusEnum {
 
-    WAIT(0,"待规划"),
+    WAIT(0,"未开始"),
     PROBE(1,"调研中"),
     ID_DESIGN_ING(2,"ID设计中"),
     APPROVAL(3,"已立项"),

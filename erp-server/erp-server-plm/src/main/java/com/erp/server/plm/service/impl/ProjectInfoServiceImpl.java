@@ -221,7 +221,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //复制任务阶段
                 List<TemplateCopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
 
+                //复制任务文档名
+                List<TemplateCopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
 
+                //这个是任务的
+                List<TemplateCopySourceDTO>  taskSourceList=  templateTaskService.copyTemplateTask(flagId,productId,projectId,phaseSourceList);
+                //这个是复制前置任务关系
+                templatePreTaskService.copyTemplatePreTask(flagId,productId,taskSourceList);
+                //这个是交付文档
+                templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId,productId,taskSourceList,docsNameSourceList);
             }
 
 
