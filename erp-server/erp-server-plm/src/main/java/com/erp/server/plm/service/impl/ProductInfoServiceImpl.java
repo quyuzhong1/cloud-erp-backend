@@ -492,7 +492,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
         queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
-        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }

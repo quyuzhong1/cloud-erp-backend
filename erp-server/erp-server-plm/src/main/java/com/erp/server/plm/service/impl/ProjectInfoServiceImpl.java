@@ -349,7 +349,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //迭代数
                 CountDTO relevanceDTO = productRelevance.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
                 if (relevanceDTO != null) {
-                    item.setIterateCount(finishDocsDTO.getCount());
+                    item.setIterateCount(relevanceDTO.getCount());
                 } else {
                     item.setIterateCount(0);
                 }

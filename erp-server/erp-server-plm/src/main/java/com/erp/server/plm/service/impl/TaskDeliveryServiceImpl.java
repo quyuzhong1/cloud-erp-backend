@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -249,10 +250,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             TaskDocsNameEntity docsName = docsNameList.stream().filter(d -> d.getName().
                     equals(item.getDocsName()) && productId.equals(d.getProductId())).
                     findFirst().orElse(null);
-            if(docsName!=null){
+            if (docsName != null) {
                 entity.setDocsNameId(docsName.getId());
                 entity.setDocsName(docsName.getName());
-            }else{
+            } else {
                 entity.setDocsNameId(item.getDocsNameId());
                 entity.setDocsName(item.getDocsName());
             }
@@ -323,10 +324,13 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public List<String> getDocsNameByTaskIds(List<String> taskIds) {
-        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(TaskDeliveryDocsEntity::getDocsName);
-        queryWrapper.in(TaskDeliveryDocsEntity::getTaskId);
-        return listObjs(queryWrapper, Object::toString);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(TaskDeliveryDocsEntity::getDocsName);
+            queryWrapper.in(TaskDeliveryDocsEntity::getTaskId,taskIds);
+            return listObjs(queryWrapper, Object::toString);
+        }
+        return new ArrayList<>();
     }
 
     /**
