@@ -653,6 +653,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
+
         ProductInfoEntity product = this.getById(dto.getProductId());
         //是否已立项
         Boolean yesApproval = false;
@@ -660,8 +661,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             String grade = dto.getGrade();
             String productName = dto.getProductName();
             String gradeId = dto.getGradeId();
-            String productChargeId = dto.getProductChargeId();
-            String productChargeName = dto.getProductChargeId();
+            List<String> productChargeIdList = dto.getProductChargeIdList();
+            String productChargeName=commonService.getNameByIds(productChargeIdList);
             Integer approvalStatus = dto.getApprovalStatus();
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
@@ -675,8 +676,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (StringUtils.isNotBlank(grade)) {
                 product.setGrade(grade);
             }
-            if (StringUtils.isNotBlank(productChargeId)) {
-                product.setChargeId(productChargeId);
+            if (CollectionUtils.isNotEmpty(productChargeIdList)) {
+                product.setChargeId(String.join(",",productChargeIdList));
+                product.setChargeName(productChargeName);
             }
             if (StringUtils.isNotBlank(productChargeName)) {
                 product.setChargeName(productChargeName);
@@ -712,10 +714,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
             if (!Objects.isNull(project)) {
                 Integer projectStatus = dto.getProjectStatus();
-                String projectChargeId = dto.getProjectChargeId();
-                String projectChargeName = dto.getProjectChargeName();
-                if (StringUtils.isNotBlank(projectChargeId)) {
-                    project.setChargeId(projectChargeId);
+                List<String> projectChargeIdList = dto.getProjectChargeIdList();
+                String projectChargeName = commonService.getNameByIds(projectChargeIdList);
+                if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
+                    project.setChargeId(String.join(",",projectChargeIdList));
+                    project.setChargeName(projectChargeName);
                 }
                 if (StringUtils.isNotBlank(projectChargeName)) {
                     project.setChargeName(projectChargeName);

@@ -36,12 +36,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProjectTaskService taskService;
 
-    @Autowired
-    private TaskDeliveryService taskDeliveryService;
-
-
-    @Autowired
-    private PreTaskService preTaskService;
 
     /**
      * 保存模板任务
@@ -137,6 +131,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     }
                 }
             }
+
+            taskService.saveBatch(copyList);
 
         }
         return sourceList;
