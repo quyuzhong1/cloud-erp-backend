@@ -44,22 +44,19 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public void savePreTask(String taskId, List<String> preTaskIdList, String productId) {
+        //先删除前置任务
+        removePreTaskByTaskId(taskId, preTaskIdList);
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            //先删除前置任务
-            removePreTaskByTaskId(taskId, preTaskIdList);
-            if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-                List<PreTaskEntity> addList = new ArrayList<>();
-                for (String preTaskId : preTaskIdList) {
-                    PreTaskEntity entity = new PreTaskEntity();
-                    entity.setPreTaskId(preTaskId);
-                    entity.setTaskId(taskId);
-                    entity.setProductId(productId);
-                    addList.add(entity);
-                }
-                this.saveBatch(addList);
+            List<PreTaskEntity> addList = new ArrayList<>();
+            for (String preTaskId : preTaskIdList) {
+                PreTaskEntity entity = new PreTaskEntity();
+                entity.setPreTaskId(preTaskId);
+                entity.setTaskId(taskId);
+                entity.setProductId(productId);
+                addList.add(entity);
             }
+            this.saveBatch(addList);
         }
-
     }
 
 
@@ -75,7 +72,9 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     private void removePreTaskByTaskId(String taskId, List<String> preTaskIdList) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
-        queryWrapper.in(PreTaskEntity::getPreTaskId, preTaskIdList);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            queryWrapper.in(PreTaskEntity::getPreTaskId, preTaskIdList);
+        }
         this.remove(queryWrapper);
     }
 
