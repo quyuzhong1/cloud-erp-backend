@@ -12,6 +12,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
+import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsMapper;
@@ -238,15 +239,23 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:32
      */
     @Override
-    public void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId) {
-        //根据系统的任务id 获取到交付文档
+    public void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId, List<TaskDocsNameEntity> docsNameList) {
+        //根据任务id 获取到交付文档
         List<TaskDeliveryDocsEntity> list = getListByTaskId(sysTaskId);
         List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
         for (TaskDeliveryDocsEntity item : list) {
             TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
             entity.setProductId(productId);
-            entity.setDocsNameId(item.getDocsNameId());
-            entity.setDocsName(item.getDocsName());
+            TaskDocsNameEntity docsName = docsNameList.stream().filter(d -> d.getName().
+                    equals(item.getDocsName()) && productId.equals(d.getProductId())).
+                    findFirst().orElse(null);
+            if(docsName!=null){
+                entity.setDocsNameId(docsName.getId());
+                entity.setDocsName(docsName.getName());
+            }else{
+                entity.setDocsNameId(item.getDocsNameId());
+                entity.setDocsName(item.getDocsName());
+            }
             entity.setTaskId(taskId);
             entity.setIsSys(item.getIsSys());
             saveList.add(entity);
@@ -300,8 +309,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public List<TaskDeliveryDocsEntity> getByProductId(String productId) {
         LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getProductId,productId);
+        queryWrapper.eq(TaskDeliveryDocsEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 获取到任务id 交付名
+     *
+     * @param taskIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-10-28 10:26
+     */
+    @Override
+    public List<String> getDocsNameByTaskIds(List<String> taskIds) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(TaskDeliveryDocsEntity::getDocsName);
+        queryWrapper.in(TaskDeliveryDocsEntity::getTaskId);
+        return listObjs(queryWrapper, Object::toString);
     }
 
     /**

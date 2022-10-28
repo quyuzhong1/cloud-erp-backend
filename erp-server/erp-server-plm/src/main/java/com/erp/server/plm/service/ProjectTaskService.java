@@ -31,7 +31,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     void copyTaskByProject(String saveProductId, String saveProjectId,String  flagProjectId);
 
-    void copyTaskByTemplate(String saveProductId, String saveProjectId, String flagTemplateId);
 
     void copyTaskBySys(String productId, String projectId);
 

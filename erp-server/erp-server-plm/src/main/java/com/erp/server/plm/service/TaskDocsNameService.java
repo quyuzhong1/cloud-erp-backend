@@ -18,4 +18,6 @@ public interface TaskDocsNameService  extends IService<TaskDocsNameEntity> {
     List<DocsDTO> getDocsNameList(String productId);
 
     List<TaskDocsNameEntity> getDocsNameByProductId(String productId);
+
+    List<TaskDocsNameEntity> saveBySysTaskIds(List<String> sysTaskIds,String productId);
 }

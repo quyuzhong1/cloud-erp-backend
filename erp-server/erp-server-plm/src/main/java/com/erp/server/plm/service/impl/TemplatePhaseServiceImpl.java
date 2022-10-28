@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.TemplateCopySourceDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 
@@ -47,6 +48,11 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
             }
             this.saveBatch(saveList);
         }
+    }
+
+    @Override
+    public List<TemplateCopySourceDTO> copyTemplatePhase(String flagId, String productId, String projectId) {
+        return null;
     }
 }
 
