@@ -703,7 +703,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         approvalPassMap.put("value", approvalPassValue);
         list.add(approvalPassMap);
 
-        return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
+        return list;
     }
 
 

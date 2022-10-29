@@ -73,10 +73,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectTemplateService templateService;
 
 
-
     @Autowired
-    private TemplateMembersService  templateMembersService;
-
+    private TemplateMembersService templateMembersService;
 
 
     @Autowired
@@ -112,28 +110,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
 
     @Autowired
-    private TemplateRoleService  templateRoleService;
+    private TemplateRoleService templateRoleService;
 
     @Autowired
-    private TemplatePhaseService  templatePhaseService;
+    private TemplatePhaseService templatePhaseService;
 
     @Autowired
-    private TemplateDeliveryDocsService  templateDeliveryDocsService;
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
 
     @Autowired
-    private TemplateTaskDocsNameService  templateTaskDocsNameService;
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
 
     @Autowired
-    private TemplateRoleRefMembersService  templateRoleRefMembersService;
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
 
     @Autowired
-    private TemplatePreTaskService  templatePreTaskService;
+    private TemplatePreTaskService templatePreTaskService;
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
     @Autowired
     private TaskDocsFinishService finishService;
+
+    @Autowired
+    private TaskDocsNameService taskDocsNameService;
 
 
     /**
@@ -237,7 +238,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
-            projectTaskService.addSysTask(entity.getId());
+            List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
+            projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -522,19 +524,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             templateMembersService.saveMember(templateId, productId);
 
             //保存角色
-            templateRoleService.saveTemplateRole(templateId,productId);
+            templateRoleService.saveTemplateRole(templateId, productId);
 
-            templateRoleRefMembersService.saveRoleRefMembers(templateId,productId);
+            templateRoleRefMembersService.saveRoleRefMembers(templateId, productId);
             //任务阶段
             templatePhaseService.saveTemplatePhase(templateId, productId);
             //任务文档名称
-            templateTaskDocsNameService.saveTemplateDocsName(templateId,productId);
+            templateTaskDocsNameService.saveTemplateDocsName(templateId, productId);
             //保存交付文档
-            templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId,productId);
+            templateDeliveryDocsService.saveTemplateDeliveryDocs(templateId, productId);
             //保存模板任务
             templateTaskService.saveTemplateTask(templateId, productId);
             //保存前置任务
-            templatePreTaskService.saveTemplatePreTask(templateId,productId);
+            templatePreTaskService.saveTemplatePreTask(templateId, productId);
         }
 
         return true;
@@ -579,8 +581,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProductInfoEntity::getId, ProductInfoEntity::getName);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState,IsConstant.NO);
-        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev,IsConstant.YES);
+        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
+        queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 
@@ -676,8 +678,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 product.setGrade(grade);
             }
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
-                String productChargeName=commonService.getNameByIds(productChargeIdList);
-                product.setChargeId(String.join(",",productChargeIdList));
+                String productChargeName = commonService.getNameByIds(productChargeIdList);
+                product.setChargeId(String.join(",", productChargeIdList));
                 product.setChargeName(productChargeName);
             }
             if (approvalStatus != null) {
@@ -714,7 +716,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 List<String> projectChargeIdList = dto.getProjectChargeIdList();
                 if (CollectionUtils.isNotEmpty(projectChargeIdList)) {
                     String projectChargeName = commonService.getNameByIds(projectChargeIdList);
-                    project.setChargeId(String.join(",",projectChargeIdList));
+                    project.setChargeId(String.join(",", projectChargeIdList));
                     project.setChargeName(projectChargeName);
                 }
                 if (projectStatus != null) {

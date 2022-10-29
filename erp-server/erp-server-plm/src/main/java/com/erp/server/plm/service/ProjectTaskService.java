@@ -5,6 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.TaskDocsNameEntity;
 
 import java.util.Date;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Map;
 public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
-    void addSysTask(String id);
+    void addSysTask(String id,List<TaskDocsNameEntity> taskDocsNameList);
 
     void removeTaskByProductId(String productId);
 

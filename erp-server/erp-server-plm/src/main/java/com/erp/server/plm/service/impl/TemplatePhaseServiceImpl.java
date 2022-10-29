@@ -7,8 +7,6 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
-
-import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TemplatePhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
 import com.erp.server.plm.service.TemplatePhaseService;
@@ -18,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -56,22 +55,33 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     @Override
     public List<CopySourceDTO> copyTemplatePhase(String templateId, String productId, String projectId) {
         List<TemplatePhaseEntity> list = getByTemplateId(templateId);
+        List<ProjectPhaseEntity> existList = projectPhaseService.getByProductId(productId);
         List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectPhaseEntity> copyList = new ArrayList<>();
             for (TemplatePhaseEntity item : list) {
-                ProjectPhaseEntity entity = new ProjectPhaseEntity();
+                ProjectPhaseEntity exist = existList.stream().filter(e -> e.getName().equals(item.getName())).
+                        findFirst().orElse(null);
                 CopySourceDTO source = new CopySourceDTO();
-                BeanMapper.copy(item, entity);
-                entity.setProductId(productId);
-                String id = IdWorker.getIdStr();
-                entity.setId(id);
-                source.setNewCreateId(id);
+
+                if (Objects.isNull(exist)) {
+                    ProjectPhaseEntity entity = new ProjectPhaseEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    String id = IdWorker.getIdStr();
+                    entity.setId(id);
+                    source.setNewCreateId(id);
+                    copyList.add(entity);
+                } else {
+                    source.setNewCreateId(exist.getId());
+                }
                 source.setDataId(item.getId());
-                copyList.add(entity);
                 sourceList.add(source);
             }
-            projectPhaseService.saveBatch(copyList);
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                projectPhaseService.saveBatch(copyList);
+            }
+
         }
         return sourceList;
     }
@@ -79,7 +89,6 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     public List<TemplatePhaseEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePhaseEntity::getTemplateId, templateId);
-        queryWrapper.ne(TemplatePhaseEntity::getName, TaskConstant.APPROVAL_TASK_NAME);
         return this.list(queryWrapper);
 
     }

@@ -103,17 +103,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Transactional
     @Override
-    public void addSysTask(String productId) {
+    public void addSysTask(String productId,List<TaskDocsNameEntity> taskDocsNameList) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //保存文档名 用到那些保存那些
-            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds, productId);
 
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
@@ -125,7 +121,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), docsNameList);
+                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
                 }
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -237,9 +233,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //保存除了立项阶段的 阶段名
         List<CopySourceDTO> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //保存文档名
-            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds, saveProductId);
+            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.getDocsNameByProductId(saveProductId);
             for (ProjectTaskSysEntity item : sysTaskList) {
                 CopySourceDTO phase = projectPhaseList.stream().filter(p -> p.getDataId().equals(item.getPhaseId())).findFirst().orElse(null);
                 ProjectTaskEntity entity = new ProjectTaskEntity();

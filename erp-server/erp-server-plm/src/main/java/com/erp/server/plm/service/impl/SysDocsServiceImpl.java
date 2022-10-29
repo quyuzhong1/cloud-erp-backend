@@ -174,5 +174,13 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
         return this.listMaps(queryWrapper);
     }
 
+    @Override
+    public List<String> getSysDocsName() {
+        LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.select(SysDocsEntity::getName);
+        queryWrapper.eq(SysDocsEntity::getStartState,IsConstant.YES);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
+
 
 }

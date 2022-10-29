@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.enums.ApiError;
@@ -104,6 +105,32 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
                 TaskDocsNameEntity entity = new TaskDocsNameEntity();
                 entity.setName(docsName);
                 entity.setProductId(productId);
+                saveList.add(entity);
+            }
+            this.saveBatch(saveList);
+        }
+        return saveList;
+    }
+
+
+    /**
+     * 保存系统设置的是文档名
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.TaskDocsNameEntity>
+     * @author yl
+     * @date 2022-10-29 15:09
+     */
+    @Override
+    public List<TaskDocsNameEntity> saveBySys(String productId) {
+        List<String> sysDocsName = sysDocsService.getSysDocsName();
+        List<TaskDocsNameEntity> saveList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(sysDocsName)) {
+            for (String docsName : sysDocsName) {
+                TaskDocsNameEntity entity = new TaskDocsNameEntity();
+                entity.setId(IdWorker.getIdStr());
+                entity.setProductId(productId);
+                entity.setName(docsName);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
