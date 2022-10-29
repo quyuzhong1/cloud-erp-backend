@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -86,28 +87,36 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Override
     public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList) {
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
+        //可能数据就有
+        List<ProjectTaskEntity> existList = taskService.getByProductId(productId);
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
             for (TemplateTaskEntity item : list) {
+                ProjectTaskEntity exist = existList.stream().filter(e -> e.getId().equals(item.getId()))
+                        .findFirst().orElse(null);
                 CopySourceDTO source = new CopySourceDTO();
-                source.setDataId(item.getId());
-                String taskId = IdWorker.getIdStr();
-                ProjectTaskEntity taskEntity = new ProjectTaskEntity();
-                BeanMapper.copy(item, taskEntity);
-                taskEntity.setProductId(productId);
-                taskEntity.setProjectId(projectId);
-                taskEntity.setId(taskId);
-                source.setNewCreateId(taskId);
-                CopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getDataId()
-                        .equals(item.getPhaseId())).findFirst().orElse(null);
-                if (phase != null) {
-                    taskEntity.setPhaseId(phase.getNewCreateId());
+                if (Objects.isNull(exist)) {
+                    String taskId = IdWorker.getIdStr();
+                    ProjectTaskEntity taskEntity = new ProjectTaskEntity();
+                    BeanMapper.copy(item, taskEntity);
+                    taskEntity.setProductId(productId);
+                    taskEntity.setProjectId(projectId);
+                    taskEntity.setId(taskId);
+                    source.setNewCreateId(taskId);
+                    CopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getDataId()
+                            .equals(item.getPhaseId())).findFirst().orElse(null);
+                    if (phase != null) {
+                        taskEntity.setPhaseId(phase.getNewCreateId());
+                    } else {
+                        taskEntity.setPhaseId("");
+                    }
+                    copyList.add(taskEntity);
                 } else {
-                    taskEntity.setPhaseId("");
+                    source.setNewCreateId(exist.getId());
                 }
-                copyList.add(taskEntity);
+                source.setDataId(item.getId());
                 sourceList.add(source);
             }
 

@@ -213,10 +213,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
                 //复制角色关系表
                 templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList);
-                //复制任务阶段
+                //复制 项目任务阶段
                 List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
 
-                //复制任务文档名
+                //复制任务文档名 可能数据库已有数据
                 List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
 
                 //这个是任务的

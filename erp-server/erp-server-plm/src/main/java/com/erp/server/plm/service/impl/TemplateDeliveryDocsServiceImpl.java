@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -67,28 +68,36 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     @Override
     public void copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList) {
         List<TemplateDeliveryDocsEntity> list = this.getByTemplateId(templateId);
+        List<TaskDeliveryDocsEntity> existList = taskDeliveryService.getByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskDeliveryDocsEntity> copyList = new ArrayList<>();
             for (TemplateDeliveryDocsEntity item : list) {
-                TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
-                BeanMapper.copy(item, entity);
-                entity.setProductId(productId);
-                CopySourceDTO docsNameSource = docsNameSourceList.stream().
-                        filter(d -> d.getDataId().equals(item.getDocsNameId())).findFirst().orElse(null);
-                if (docsNameSource != null) {
-                    entity.setDocsNameId(docsNameSource.getNewCreateId());
-                } else {
-                    entity.setDocsNameId("");
-                }
-                CopySourceDTO taskSource = taskSourceList.stream().
-                        filter(d -> d.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
-                if (taskSource != null) {
-                    entity.setTaskId(taskSource.getNewCreateId());
-                } else {
-                    entity.setTaskId("");
+                TaskDeliveryDocsEntity exist = existList.stream().
+                        filter(e -> e.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+                if (Objects.isNull(exist)) {
+                    TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    CopySourceDTO docsNameSource = docsNameSourceList.stream().
+                            filter(d -> d.getDataId().equals(item.getDocsNameId())).findFirst().orElse(null);
+                    if (docsNameSource != null) {
+                        entity.setDocsNameId(docsNameSource.getNewCreateId());
+                    } else {
+                        entity.setDocsNameId("");
+                    }
+                    CopySourceDTO taskSource = taskSourceList.stream().
+                            filter(d -> d.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
+                    if (taskSource != null) {
+                        entity.setTaskId(taskSource.getNewCreateId());
+                    } else {
+                        entity.setTaskId("");
+                    }
                 }
             }
-            taskDeliveryService.saveBatch(copyList);
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                taskDeliveryService.saveBatch(copyList);
+            }
+
         }
     }
 

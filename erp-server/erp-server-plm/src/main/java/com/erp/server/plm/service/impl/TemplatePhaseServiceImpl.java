@@ -8,6 +8,7 @@ import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TemplatePhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
 import com.erp.server.plm.service.TemplatePhaseService;
@@ -78,6 +79,7 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     public List<TemplatePhaseEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePhaseEntity::getTemplateId, templateId);
+        queryWrapper.ne(TemplatePhaseEntity::getName, TaskConstant.APPROVAL_TASK_NAME);
         return this.list(queryWrapper);
 
     }

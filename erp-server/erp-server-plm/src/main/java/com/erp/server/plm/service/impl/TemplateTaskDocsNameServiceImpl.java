@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -46,7 +48,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
             for (TaskDocsNameEntity item : list) {
                 TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
                 BeanMapper.copy(item, entity);
-                entity.setTemplateId(productId);
+                entity.setTemplateId(templateId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
@@ -67,21 +69,33 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     @Override
     public List<CopySourceDTO> copyTemplateDocsName(String templateId, String productId, String projectId) {
         List<TemplateTaskDocsNameEntity> list = getByTemplateId(templateId);
+        List<TaskDocsNameEntity> existDocsNameList = taskDocsNameService.getDocsNameByProductId(productId);
         List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskDocsNameEntity> copyList = new ArrayList<>();
             for (TemplateTaskDocsNameEntity item : list) {
+                TaskDocsNameEntity exist = existDocsNameList.stream().
+                        filter(e -> e.getName().equals(item.getName())).findFirst().orElse(null);
                 CopySourceDTO source = new CopySourceDTO();
-                TaskDocsNameEntity entity = new TaskDocsNameEntity();
-                BeanMapper.copy(item, entity);
-                entity.setProductId(productId);
-                String id = IdWorker.getIdStr();
+                //可能数据库存在 要排除数据库里面的数据
+                if (Objects.isNull(exist)) {
+                    TaskDocsNameEntity entity = new TaskDocsNameEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    String id = IdWorker.getIdStr();
+                    entity.setId(id);
+                    copyList.add(entity);
+                    source.setNewCreateId(id);
+                } else {
+                    source.setNewCreateId(exist.getId());
+                }
                 source.setDataId(item.getId());
-                source.setNewCreateId(id);
-                copyList.add(entity);
                 sourceList.add(source);
             }
-            taskDocsNameService.saveBatch(copyList);
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                taskDocsNameService.saveBatch(copyList);
+            }
+
         }
 
         return sourceList;

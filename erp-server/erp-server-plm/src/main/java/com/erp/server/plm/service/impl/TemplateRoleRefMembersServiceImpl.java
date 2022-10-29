@@ -38,6 +38,7 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
             for (RoleRefMemberEntity item : list) {
                 TemplateRoleRefMembersEntity entity = new TemplateRoleRefMembersEntity();
                 BeanMapper.copy(item, entity);
+                entity.setTemplateId(templateId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);

@@ -112,7 +112,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
 
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //保存文档名
+            //保存文档名 用到那些保存那些
             List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds, productId);
 
             for (ProjectTaskSysEntity item : sysTaskList) {
