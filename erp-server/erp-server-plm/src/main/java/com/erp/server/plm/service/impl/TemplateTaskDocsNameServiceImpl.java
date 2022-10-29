@@ -102,6 +102,11 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     }
 
 
+    /**
+     * 获取到项目
+     * @param templateId
+     * @return
+     */
     public List<TemplateTaskDocsNameEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);

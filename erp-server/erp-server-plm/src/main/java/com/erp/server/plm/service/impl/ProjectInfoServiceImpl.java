@@ -553,8 +553,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         List<String> phaseNameList = projectPhaseService.getPhaseNameName(productId);
         //以阶段名分组
-        Map<String, List<ProjectTaskEntity>> map = taskList.parallelStream().
-                collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
+//        Map<String, List<ProjectTaskEntity>> map = taskList.parallelStream().
+//                collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
         List<ProductPhaseDistributeDTO> phaseDistributeList = new LinkedList<>();
@@ -703,7 +703,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         approvalPassMap.put("value", approvalPassValue);
         list.add(approvalPassMap);
 
-        return list;
+        return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
+
     }
 
 

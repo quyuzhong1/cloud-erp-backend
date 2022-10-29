@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicProductIdDTO;
@@ -81,13 +82,10 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         //获取到任务阶段的
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
-            List<String> phaseNames = list.stream().map(TaskPhaseDTO::getName).collect(Collectors.toList());
-            List<String> distinctList = phaseNames.stream().distinct().collect(Collectors.toList());
-            if (phaseNames.size() != distinctList.size()) {
-                throw new ServiceException(ApiError.ERROR_95001);
-            }
+            chekPhaseName(list, productId);
             List<ProjectPhaseEntity> updateList = new LinkedList<>();
             for (TaskPhaseDTO item : list) {
+
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setId(item.getId());
                 entity.setName(item.getName());
@@ -96,6 +94,28 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             }
             this.saveOrUpdateBatch(updateList);
         }
+    }
+
+    private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {
+        List<ProjectPhaseEntity> phaseList = getByProductId(productId);
+        List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
+        List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
+        for (TaskPhaseDTO phase : list) {
+            String id = phase.getId();
+            String name = phase.getName();
+            List<String> phaseNames = new ArrayList<>();
+            if (StringUtils.isNotBlank(id)) {
+                phaseNames = phaseList.stream().filter(p -> !p.getId().equals(id)).map(ProjectPhaseEntity::getName).collect(Collectors.toList());
+            } else {
+                phaseNames = phaseList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
+            }
+            if(phaseNames.contains(name)||sysTaskPhase.contains(name)){
+                throw new ServiceException(ApiError.ERROR_95001);
+            }
+
+        }
+
+
     }
 
 
