@@ -1685,8 +1685,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private void checkTaskIfExistPid(String taskId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
-        ProjectTaskEntity entity = baseMapper.selectOne(queryWrapper);
-        if (entity != null) {
+        Integer count = baseMapper.selectCount(queryWrapper);
+        if (count>0) {
             throw new ServiceException(ApiError.ERROR_95024);
         }
     }
