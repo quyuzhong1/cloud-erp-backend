@@ -56,8 +56,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private BusinessProcessService businessProcessService;
 
-    @Autowired
-    private SysDocsService sysDocsService;
+
 
     @Override
     @Transactional

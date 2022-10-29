@@ -1,28 +1,22 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.TemplateCopySourceDTO;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
-import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -90,15 +84,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * @date 2022-10-28 14:22
      */
     @Override
-    public List<TemplateCopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<TemplateCopySourceDTO> phaseSourceList) {
+    public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList) {
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
         //来源信息
-        List<TemplateCopySourceDTO> sourceList = new ArrayList<>();
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
             for (TemplateTaskEntity item : list) {
-                TemplateCopySourceDTO source = new TemplateCopySourceDTO();
-                source.setTemplateDataId(item.getId());
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
                 String taskId = IdWorker.getIdStr();
                 ProjectTaskEntity taskEntity = new ProjectTaskEntity();
                 BeanMapper.copy(item, taskEntity);
@@ -106,7 +100,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 taskEntity.setProjectId(projectId);
                 taskEntity.setId(taskId);
                 source.setNewCreateId(taskId);
-                TemplateCopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getTemplateDataId()
+                CopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getDataId()
                         .equals(item.getPhaseId())).findFirst().orElse(null);
                 if (phase != null) {
                     taskEntity.setPhaseId(phase.getNewCreateId());
@@ -122,8 +116,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 //这个pid 还是 模板数据的pid
                 String pid = task.getPid();
                 if (!pid.equals("0")) {
-                    TemplateCopySourceDTO source = sourceList.stream().
-                            filter(s -> s.getTemplateDataId().equals(pid)).findFirst().orElse(null);
+                    CopySourceDTO source = sourceList.stream().
+                            filter(s -> s.getDataId().equals(pid)).findFirst().orElse(null);
                     if (source != null) {
                         task.setPid(source.getNewCreateId());
                     } else {

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -16,7 +15,6 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -24,20 +22,17 @@ import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProductInfoStateEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -215,17 +210,17 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //复制模板团队成员
                 templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
                 //复制模板角色
-                List<TemplateCopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
+                List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
                 //复制角色关系表
                 templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList);
                 //复制任务阶段
-                List<TemplateCopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
+                List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
 
                 //复制任务文档名
-                List<TemplateCopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
+                List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
 
                 //这个是任务的
-                List<TemplateCopySourceDTO>  taskSourceList=  templateTaskService.copyTemplateTask(flagId,productId,projectId,phaseSourceList);
+                List<CopySourceDTO>  taskSourceList=  templateTaskService.copyTemplateTask(flagId,productId,projectId,phaseSourceList);
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId,productId,taskSourceList);
                 //这个是交付文档

@@ -3,7 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.TemplateCopySourceDTO;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 
@@ -65,7 +65,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
      * @date 2022-10-28 15:57
      */
     @Override
-    public void copyTemplateDeliveryDocs(String templateId, String productId, List<TemplateCopySourceDTO> taskSourceList, List<TemplateCopySourceDTO> docsNameSourceList) {
+    public void copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList) {
         List<TemplateDeliveryDocsEntity> list = this.getByTemplateId(templateId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskDeliveryDocsEntity> copyList = new ArrayList<>();
@@ -73,15 +73,15 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                 TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
                 BeanMapper.copy(item, entity);
                 entity.setProductId(productId);
-                TemplateCopySourceDTO docsNameSource = docsNameSourceList.stream().
-                        filter(d -> d.getTemplateDataId().equals(item.getDocsNameId())).findFirst().orElse(null);
+                CopySourceDTO docsNameSource = docsNameSourceList.stream().
+                        filter(d -> d.getDataId().equals(item.getDocsNameId())).findFirst().orElse(null);
                 if (docsNameSource != null) {
                     entity.setDocsNameId(docsNameSource.getNewCreateId());
                 } else {
                     entity.setDocsNameId("");
                 }
-                TemplateCopySourceDTO taskSource = taskSourceList.stream().
-                        filter(d -> d.getTemplateDataId().equals(item.getTaskId())).findFirst().orElse(null);
+                CopySourceDTO taskSource = taskSourceList.stream().
+                        filter(d -> d.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
                 if (taskSource != null) {
                     entity.setTaskId(taskSource.getNewCreateId());
                 } else {

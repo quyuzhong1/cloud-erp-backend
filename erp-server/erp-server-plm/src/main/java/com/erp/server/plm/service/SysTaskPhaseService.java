@@ -1,6 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
@@ -22,9 +25,11 @@ public interface SysTaskPhaseService extends IService<SysTaskPhaseEntity> {
 
     List<TaskPhaseDTO> getSysTaskPhase(List<String> nameList);
 
-    List<String> getSysTaskPhaseNames();
+    List<SysTaskPhaseEntity> getSysTaskPhaseNames();
 
     boolean removeSysTaskPhase(String id);
 
     List<BasicDTO> getSysTaskPhaseList();
+
+    PagingVO<SysTaskPhaseEntity> paging(PagingDTO<BaseSearchDTO> dto);
 }

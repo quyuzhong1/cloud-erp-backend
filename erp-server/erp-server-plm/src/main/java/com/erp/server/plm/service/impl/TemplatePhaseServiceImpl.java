@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.TemplateCopySourceDTO;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 
@@ -53,20 +53,20 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
     }
 
     @Override
-    public List<TemplateCopySourceDTO> copyTemplatePhase(String templateId, String productId, String projectId) {
+    public List<CopySourceDTO> copyTemplatePhase(String templateId, String productId, String projectId) {
         List<TemplatePhaseEntity> list = getByTemplateId(templateId);
-        List<TemplateCopySourceDTO> sourceList = new ArrayList<>();
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectPhaseEntity> copyList = new ArrayList<>();
             for (TemplatePhaseEntity item : list) {
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
-                TemplateCopySourceDTO source = new TemplateCopySourceDTO();
+                CopySourceDTO source = new CopySourceDTO();
                 BeanMapper.copy(item, entity);
                 entity.setProductId(productId);
                 String id = IdWorker.getIdStr();
                 entity.setId(id);
                 source.setNewCreateId(id);
-                source.setTemplateDataId(item.getId());
+                source.setDataId(item.getId());
                 copyList.add(entity);
                 sourceList.add(source);
             }
