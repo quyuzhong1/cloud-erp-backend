@@ -29,6 +29,17 @@ public class DocsPermissionEntity implements Serializable {
      */
     private String deliveryDocsId;
 
+
+    /**
+     * 产品id
+     */
+    private String productId;
+
+    /**
+     * 产品id
+     */
+    private String taskId;
+
     /**
      * 查看的用户id
      */

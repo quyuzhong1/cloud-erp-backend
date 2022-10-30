@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.TemplateCopySourceDTO;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.model.plm.entity.TemplateRoleRefMembersEntity;
 
@@ -38,6 +38,7 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
             for (RoleRefMemberEntity item : list) {
                 TemplateRoleRefMembersEntity entity = new TemplateRoleRefMembersEntity();
                 BeanMapper.copy(item, entity);
+                entity.setTemplateId(templateId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
@@ -55,12 +56,12 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
      * @date 2022-10-28 11:33
      */
     @Override
-    public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<TemplateCopySourceDTO> copyRoleSourceList) {
+    public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<CopySourceDTO> copyRoleSourceList) {
         List<TemplateRoleRefMembersEntity> list = getByTemplateId(templateId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<RoleRefMemberEntity> copyList = new ArrayList<>();
             for (TemplateRoleRefMembersEntity item : list) {
-                TemplateCopySourceDTO source=  copyRoleSourceList.stream().filter(c->c.getTemplateDataId()
+                CopySourceDTO source=  copyRoleSourceList.stream().filter(c->c.getDataId()
                         .equals(item.getRoleId())).findFirst().orElse(null);
                 if(Objects.isNull(source)){
                     RoleRefMemberEntity entity = new RoleRefMemberEntity();

@@ -14,4 +14,8 @@ import java.util.List;
 public interface DocsPermissionService extends IService<DocsPermissionEntity> {
 
     List<String> getDocsIdsByUserId(String uid);
+
+    void removePermission(String taskId);
+
+    void removeByDeliveryDocsId(List<String> docsIds);
 }

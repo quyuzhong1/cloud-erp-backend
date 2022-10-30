@@ -5,6 +5,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.service.CommonService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -55,17 +56,20 @@ public class CommonServiceImpl implements CommonService {
      */
     @Override
     public String getNameByIds(List<String> userIds) {
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<String> names = new ArrayList<>();
-        for (String userId : userIds) {
-            FindUserDTO findUser = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
-            if (findUser != null) {
-                names.add(findUser.getUserName());
-            } else {
-                names.add("");
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            List<String> names = new ArrayList<>();
+            for (String userId : userIds) {
+                FindUserDTO findUser = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+                if (findUser != null) {
+                    names.add(findUser.getUserName());
+                } else {
+                    names.add("");
+                }
             }
+            return StringUtils.join(names, ",");
         }
-        return StringUtils.join(names, ",");
+        return "";
     }
 
     @Override

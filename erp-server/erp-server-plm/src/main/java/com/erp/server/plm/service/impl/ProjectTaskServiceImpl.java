@@ -87,7 +87,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private TaskDocsNameService taskDocsNameService;
 
 
-
     @Autowired
     private TaskOperatorRecordService taskOperatorRecordService;
     @Autowired
@@ -104,17 +103,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Transactional
     @Override
-    public void addSysTask(String productId) {
+    public void addSysTask(String productId,List<TaskDocsNameEntity> taskDocsNameList) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //保存文档名
-            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds,productId);
 
             for (ProjectTaskSysEntity item : sysTaskList) {
                 ProjectTaskEntity entity = new ProjectTaskEntity();
@@ -126,7 +121,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(),docsNameList);
+                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
                 }
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -220,7 +215,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
 
-
     /**
      * 新建项目的话 需要查看系统是否设置了任务
      * 如果有就要复制项目任务
@@ -236,29 +230,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void copyTaskBySys(String saveProductId, String saveProjectId) {
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
-        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
+        //保存除了立项阶段的 阶段名
+        List<CopySourceDTO> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
-            //保存文档名
-            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.saveBySysTaskIds(sysTaskIds,saveProductId);
+            List<TaskDocsNameEntity> docsNameList = taskDocsNameService.getDocsNameByProductId(saveProductId);
             for (ProjectTaskSysEntity item : sysTaskList) {
-                ProjectPhaseEntity phase = projectPhaseList.stream().filter(p -> p.getName().equals(item.getName())).findFirst().orElse(null);
+                CopySourceDTO phase = projectPhaseList.stream().filter(p -> p.getDataId().equals(item.getPhaseId())).findFirst().orElse(null);
                 ProjectTaskEntity entity = new ProjectTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(saveProductId);
                 entity.setProjectId(saveProjectId);
                 if (phase != null) {
-                    entity.setPhaseId(phase.getId());
-                    entity.setPhaseName(phase.getName());
+                    entity.setPhaseId(phase.getNewCreateId());
                 } else {
                     entity.setPhaseId("");
-                    entity.setPhaseName("");
                 }
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(),docsNameList);
+                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
                 }
             }
         }
@@ -729,7 +720,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[任务名]由[" + projectTaskEntity.getName() + "]改为[" + dto.getName() + "]");
         }
 
-        if (dto.getType()!= null) {
+        if (dto.getType() != null) {
             if (!projectTaskEntity.getType().equals(dto.getType())) {
                 String entityType = (projectTaskEntity.getType() == 0) ? "一般任务" : "审核任务";
                 String dtoType = (dto.getType() == 0) ? "一般任务" : "审核任务";
@@ -753,7 +744,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        if (dto.getPriority()!= null) {
+        if (dto.getPriority() != null) {
             if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
                 String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
                 String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
@@ -761,13 +752,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        if (dto.getPhaseName()!= null) {
+        if (dto.getPhaseName() != null) {
             if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
                 list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
             }
         }
 
-        if (dto.getDescription()!= null) {
+        if (dto.getDescription() != null) {
             if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
                 list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
             }
@@ -799,6 +790,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        } else {
+            taskEntity.setProperty(TaskConstant.PROJECT_TASK);
         }
 
         //自定义审核人
@@ -1573,6 +1566,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<TaskProcessNodeDTO> getByProcessTye(Integer processType, ProjectTaskEntity taskEntity) {
         List<TaskOperatorRecordEntity> recordList = taskOperatorRecordService.getByTaskId(taskEntity.getId());
         List<TaskProcessNodeDTO> resultList = new ArrayList<>();
+        Integer taskState = taskEntity.getStatus();
         //待发布
         Integer waitReleasedState = TaskStateEnum.TO_BE_RELEASED.getCode();
         //待开始
@@ -1606,8 +1600,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalNoPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalNoPassState)).findFirst().orElse(null);
 
-        //先添加待发布的
-        TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
+        Boolean approvalNoPassFlag =taskState.equals(approvalNoPassState);
+
+                //先添加待发布的
+                TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
         processNode.setIfFinishNode(true);
         processNode.setOperateTime(taskEntity.getCreateTime());
         processNode.setOperateUserName(taskEntity.getCreateUserName());
@@ -1622,6 +1618,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
         //评审任务
         Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+
         if (general.equals(processType)) {
             //添加待开始
             resultList.add(getProcessNode(notStartEntity, notStart));
@@ -1640,20 +1637,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(finishWaitConfirmEntity, finishWaitConfirmState));
             //添加审核中
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
-            //添加审核通过
-            resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
 
-            //添加审核不通过
-            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
+           if(approvalNoPassFlag){//添加审核不通过
+               resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
+           }else{
+               //添加审核通过
+               resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+           }
+
         }
 
         if (reviewTask.equals(processType)) {
             //添加待审核
             resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState));
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
-            resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
-            //添加审核不通过
-            resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
+            if(approvalNoPassFlag){//添加审核不通过
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
+            }else{
+                //添加审核通过
+                resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+            }
         }
 
         return resultList;
@@ -1682,8 +1685,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private void checkTaskIfExistPid(String taskId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
-        ProjectTaskEntity entity = baseMapper.selectOne(queryWrapper);
-        if (entity != null) {
+        Integer count = baseMapper.selectCount(queryWrapper);
+        if (count>0) {
             throw new ServiceException(ApiError.ERROR_95024);
         }
     }

@@ -73,7 +73,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         for (String item : members) {
             long count = existList.stream().filter(p -> p.getMemberId().equals(item)).count();
             //表示没有重复
-            if(count==0){
+            if (count == 0) {
                 ProjectMembersEntity entity = new ProjectMembersEntity();
                 String userId = item;
                 entity.setMemberId(userId);
@@ -116,7 +116,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
 
     }
-
 
 
     @Override
@@ -175,7 +174,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         String productId = params.getProductId();
         List<String> roleIds = new ArrayList<>();
         String roleId = params.getProjectRoleId();
-
         IPage pageData = new Page(); //查看所有的人
         if (StringUtils.isBlank(roleId)) {
             List<ProjectRoleEntity> roleList = projectRoleService.listByProductId(productId);
@@ -183,7 +181,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             //查看所有的人
             pageData = baseMapper.allPaging(query, productId);
             List<MemberPagingShowDTO> list = pageData.getRecords();
-
             if (CollectionUtils.isNotEmpty(list)) {
                 //获取到任务处理的情况
                 List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
@@ -217,6 +214,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             }
 
         } else {
+            roleIds.add(roleId);
             pageData = baseMapper.paging(query, productId, roleIds);
             List<MemberPagingShowDTO> list = pageData.getRecords();
             if (CollectionUtils.isNotEmpty(list)) {

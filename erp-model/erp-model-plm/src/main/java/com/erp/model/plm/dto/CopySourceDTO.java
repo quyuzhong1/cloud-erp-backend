@@ -11,12 +11,12 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class TemplateCopySourceDTO  {
+public class CopySourceDTO {
 
     /**
      * 模板数据库里面的id
      */
-    private String templateDataId;
+    private String dataId;
 
     /**
      * 新产生的id

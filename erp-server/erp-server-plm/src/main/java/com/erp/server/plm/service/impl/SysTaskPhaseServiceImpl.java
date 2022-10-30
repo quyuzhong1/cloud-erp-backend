@@ -2,9 +2,14 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.TaskPhaseDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
@@ -79,7 +84,7 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         }
         List<String> phaseNames = list.stream().filter(p -> StringUtils.isBlank(p.getId())).map(UpdateBasicNameDTO::getName).collect(Collectors.toList());
         //获取系统 任务阶段名集合
-        List<String> sysTaskPhaseNames = getSysTaskPhaseNames();
+        List<String> sysTaskPhaseNames = getSysTaskPhaseNameList();
         //获取交集
         List<String> intersections = phaseNames.stream().filter(item -> sysTaskPhaseNames.contains(item)).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(intersections)) {
@@ -101,14 +106,20 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         this.saveOrUpdateBatch(saveList);
     }
 
-
-    //获取到系统任务阶段名集合
-    @Override
-    public List<String> getSysTaskPhaseNames() {
+    private List<String> getSysTaskPhaseNameList() {
         LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysTaskPhaseEntity::getName);
         queryWrapper.eq(SysTaskPhaseEntity::getIsProjectApproval,IsConstant.NO);
         return listObjs(queryWrapper,Object::toString);
+    }
+
+
+    //获取到系统任务阶段名集合
+    @Override
+    public List<SysTaskPhaseEntity> getSysTaskPhaseNames() {
+        LambdaQueryWrapper<SysTaskPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysTaskPhaseEntity::getIsProjectApproval,IsConstant.NO);
+        return list(queryWrapper);
     }
 
     /**
@@ -145,6 +156,15 @@ public class SysTaskPhaseServiceImpl extends ServiceImpl<SysTaskPhaseMapper, Sys
         }
 
         return resultList;
+    }
+
+    @Override
+    public PagingVO<SysTaskPhaseEntity> paging(PagingDTO<BaseSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        BaseSearchDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+
+        return new PagingVO(pageData);
     }
 
 

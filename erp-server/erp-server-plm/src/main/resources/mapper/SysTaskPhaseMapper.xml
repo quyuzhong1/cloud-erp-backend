@@ -2,16 +2,26 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.SysTaskPhaseMapper">
 
-  <select id="getSysTaskPhase" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
-      SELECT ID,NAME, 1 AS isSys  FROM  sys_project_phase
-      <where>
-            <if test="nameList !=null and nameList.size()>0" >
+    <select id="getSysTaskPhase" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
+        SELECT ID,NAME, 1 AS isSys FROM sys_project_phase
+        <where>
+            <if test="nameList !=null and nameList.size()>0">
                 name NOT IN
                 <foreach collection="nameList" item="name" open="(" separator="," close=")">
                     #{name}
                 </foreach>
             </if>
-      </where>
-  </select>
+        </where>
+    </select>
+    <select id="paging" resultType="com.erp.model.plm.entity.SysTaskPhaseEntity">
+         SELECT id,name,create_time,update_time,is_project_approval FROM
+          sys_project_phase
+          <where>
+              <if test="params.searchKeyword !=null and params.searchKeyword!='' " >
+                   name LIKE concat('%',#{params.searchKeyword},'%')
+              </if>
+          </where>
+
+    </select>
 
 </mapper>

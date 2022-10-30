@@ -1,8 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.TemplatePreTaskEntity;
 import com.erp.server.plm.mapper.TemplatePreTaskMapper;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -39,6 +42,57 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
             }
             this.saveBatch(saveList);
         }
+    }
+
+    /**
+     * 复制模板的前置任务
+     *
+     * @param templateId
+     * @param productId
+     * @param taskSourceList
+     * @return void
+     * @author yl
+     * @date 2022-10-28 15:37
+     */
+    @Override
+    public void copyTemplatePreTask(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
+        List<TemplatePreTaskEntity> list = getByTemplateId(templateId);
+        //是否已存在
+        List<PreTaskEntity> existList = preTaskService.getPreTaskByProductId(productId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<PreTaskEntity> copyList = new ArrayList<>();
+            //这里是 根据新的任务id  与老的任务id 对应的实体 去保存数据
+            for (TemplatePreTaskEntity item : list) {
+                PreTaskEntity exist = existList.stream().filter(e -> e.getPreTaskId().
+                        equals(item.getPreTaskId()) && e.getTaskId().equals(item.getTaskId()))
+                        .findFirst().orElse(null);
+                //
+                if (Objects.isNull(exist)) {
+                    CopySourceDTO taskSource = taskSourceList.stream().filter(t ->
+                            t.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
+                    CopySourceDTO preSource = taskSourceList.stream().filter(t ->
+                            t.getDataId().equals(item.getPreTaskId())).findFirst().orElse(null);
+                    if (taskSource != null && preSource != null) {
+                        PreTaskEntity entity = new PreTaskEntity();
+                        entity.setProductId(productId);
+                        entity.setTaskId(taskSource.getNewCreateId());
+                        entity.setPreTaskId(preSource.getNewCreateId());
+                        copyList.add(entity);
+                    }
+                }
+            }
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                preTaskService.saveBatch(copyList);
+            }
+
+        }
+
+    }
+
+    public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
     }
 }
 

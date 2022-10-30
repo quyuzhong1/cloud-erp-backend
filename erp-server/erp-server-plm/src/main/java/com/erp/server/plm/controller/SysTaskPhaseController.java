@@ -3,6 +3,9 @@ package com.erp.server.plm.controller;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.BasicDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -43,6 +46,18 @@ public class SysTaskPhaseController extends BaseController {
     public ApiResult add(@RequestBody @Validated List<UpdateBasicNameDTO> list) {
         sysTaskPhaseService.batchSaveOrUpdate(list);
         return success();
+    }
+
+    /**
+     * 系统阶段分页
+     * @param
+     * @return
+     */
+    @PostMapping("/paging")
+    // @RequestPermissions("plm:sys:taskPhase:batchSaveOrUpdate")
+    public ApiResult<PagingVO<SysTaskPhaseEntity>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<SysTaskPhaseEntity> pagingVO= sysTaskPhaseService.paging(dto);
+        return success(pagingVO);
     }
 
 

@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -49,6 +52,61 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             }
             this.saveBatch(saveList);
         }
+    }
+
+    /**
+     * 从模板复制交付文档数据
+     *
+     * @param templateId
+     * @param productId
+     * @param taskSourceList
+     * @param docsNameSourceList
+     * @return void
+     * @author yl
+     * @date 2022-10-28 15:57
+     */
+    @Override
+    public void copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList) {
+        List<TemplateDeliveryDocsEntity> list = this.getByTemplateId(templateId);
+        List<TaskDeliveryDocsEntity> existList = taskDeliveryService.getByProductId(productId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            List<TaskDeliveryDocsEntity> copyList = new ArrayList<>();
+            for (TemplateDeliveryDocsEntity item : list) {
+                TaskDeliveryDocsEntity exist = existList.stream().
+                        filter(e -> e.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+                if (Objects.isNull(exist)) {
+                    TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
+                    BeanMapper.copy(item, entity);
+                    entity.setProductId(productId);
+                    CopySourceDTO docsNameSource = docsNameSourceList.stream().
+                            filter(d -> d.getDataId().equals(item.getDocsNameId())).findFirst().orElse(null);
+                    if (docsNameSource != null) {
+                        entity.setDocsNameId(docsNameSource.getNewCreateId());
+                    } else {
+                        entity.setDocsNameId("");
+                    }
+                    CopySourceDTO taskSource = taskSourceList.stream().
+                            filter(d -> d.getDataId().equals(item.getTaskId())).findFirst().orElse(null);
+                    if (taskSource != null) {
+                        entity.setTaskId(taskSource.getNewCreateId());
+                    } else {
+                        entity.setTaskId("");
+                    }
+                }
+            }
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                taskDeliveryService.saveBatch(copyList);
+            }
+
+        }
+    }
+
+
+    public List<TemplateDeliveryDocsEntity> getByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
+
     }
 }
 

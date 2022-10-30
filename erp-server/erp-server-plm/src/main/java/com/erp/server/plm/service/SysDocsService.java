@@ -33,4 +33,6 @@ public interface SysDocsService extends IService<SysDocsEntity> {
 
     List<Map<String, Object>> sysDocsNames();
 
+    List<String> getSysDocsName();
+
 }

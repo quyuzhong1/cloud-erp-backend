@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.TemplateCopySourceDTO;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 
@@ -58,13 +58,13 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
      * @date 2022-10-28 11:24
      */
     @Override
-    public List<TemplateCopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
+    public List<CopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
         List<TemplateRoleEntity> list = getByTemplateId(templateId);
-        List<TemplateCopySourceDTO> sourceList = new ArrayList<>();
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<ProjectRoleEntity> copyList = new ArrayList<>();
             for (TemplateRoleEntity item : list) {
-                TemplateCopySourceDTO sourceDTO = new TemplateCopySourceDTO();
+                CopySourceDTO sourceDTO = new CopySourceDTO();
                 ProjectRoleEntity entity = new ProjectRoleEntity();
                 BeanMapper.copy(item, entity);
                 entity.setProjectId(projectId);
@@ -72,7 +72,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
                 String id = IdWorker.getIdStr();
                 entity.setId(id);
                 sourceDTO.setNewCreateId(id);
-                sourceDTO.setTemplateDataId(item.getId());
+                sourceDTO.setDataId(item.getId());
                 copyList.add(entity);
                 sourceList.add(sourceDTO);
             }

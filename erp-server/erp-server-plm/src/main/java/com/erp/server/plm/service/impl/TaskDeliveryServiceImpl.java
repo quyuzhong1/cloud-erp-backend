@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
@@ -16,15 +15,13 @@ import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsMapper;
-import com.erp.server.plm.service.DocsPermissionService;
-import com.erp.server.plm.service.RoleRefMemberService;
-import com.erp.server.plm.service.TaskDeliveryService;
-import com.erp.server.plm.service.TaskDocsFinishService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +44,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private TaskDocsFinishService taskDocsFinishService;
+
+    @Autowired
+    private CommonService commonService;
+
 
     /**
      * 获取任务的需要交付的文档数
@@ -92,12 +93,16 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             }
             Boolean flag = this.saveBatch(saveList);
             if (flag) {
+                //先删除 不在的数据
+                docsPermissionService.removePermission(taskId);
                 //保存他的权限
                 List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
                 for (TaskDeliveryDocsEntity item : saveList) {
                     DocsPermissionEntity docsPermission = new DocsPermissionEntity();
                     docsPermission.setDeliveryDocsId(item.getId());
                     docsPermission.setQueryUserId(userId);
+                    docsPermission.setProductId(productId);
+                    docsPermission.setTaskId(taskId);
                     docsPermissionList.add(docsPermission);
                 }
                 docsPermissionService.saveBatch(docsPermissionList);
@@ -147,15 +152,22 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Override
     public void setPower(SetDocsPowerDTO dto) {
+        String userId = commonService.getUserInfo().getUid();
         //保存他的权限
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
         String roleId = dto.getRoleId();
         String docsId = dto.getId();
+        //先删除所有的
+        docsPermissionService.removeByDeliveryDocsId(Arrays.asList(docsId));
         if (StringUtils.isNotBlank(roleId)) {
             List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
-            for (RoleRefMemberDTO item : refMembers) {
+            List<String> userIds = refMembers.stream().map(RoleRefMemberDTO::getMembersId).distinct().collect(Collectors.toList());
+            if (!userIds.contains(userId)) {
+                userIds.add(userId);
+            }
+            for (String queryUserId : userIds) {
                 DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-                docsPermission.setQueryUserId(item.getMembersId());
+                docsPermission.setQueryUserId(queryUserId);
                 docsPermission.setDeliveryDocsId(docsId);
                 docsPermissionList.add(docsPermission);
             }
@@ -249,10 +261,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             TaskDocsNameEntity docsName = docsNameList.stream().filter(d -> d.getName().
                     equals(item.getDocsName()) && productId.equals(d.getProductId())).
                     findFirst().orElse(null);
-            if(docsName!=null){
+            if (docsName != null) {
                 entity.setDocsNameId(docsName.getId());
                 entity.setDocsName(docsName.getName());
-            }else{
+            } else {
                 entity.setDocsNameId(item.getDocsNameId());
                 entity.setDocsName(item.getDocsName());
             }
@@ -262,7 +274,20 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         this.saveBatch(saveList);
 
+
+        //保存他的权限
+        List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
+        for (TaskDeliveryDocsEntity item : saveList) {
+            DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+            docsPermission.setDeliveryDocsId(item.getId());
+            docsPermission.setQueryUserId("");
+            docsPermission.setProductId(productId);
+            docsPermission.setTaskId(taskId);
+            docsPermissionList.add(docsPermission);
+        }
+        docsPermissionService.saveBatch(docsPermissionList);
     }
+
 
     @Override
     public void removeByTaskId(String taskId) {
@@ -323,10 +348,13 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public List<String> getDocsNameByTaskIds(List<String> taskIds) {
-        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(TaskDeliveryDocsEntity::getDocsName);
-        queryWrapper.in(TaskDeliveryDocsEntity::getTaskId);
-        return listObjs(queryWrapper, Object::toString);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(TaskDeliveryDocsEntity::getDocsName);
+            queryWrapper.in(TaskDeliveryDocsEntity::getTaskId, taskIds);
+            return listObjs(queryWrapper, Object::toString);
+        }
+        return new ArrayList<>();
     }
 
     /**
