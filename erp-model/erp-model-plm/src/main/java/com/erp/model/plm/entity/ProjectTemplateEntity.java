@@ -36,6 +36,9 @@ public class ProjectTemplateEntity implements Serializable {
     @TableField("name")
     private String name;
 
+    @TableField("product_id")
+    private String productId;
+
     /**
      * 创建时间
      */

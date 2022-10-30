@@ -33,10 +33,11 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @date 2022-09-20 14:30
      */
     @Override
-    public String saveTemplate(String templateName) {
+    public String saveTemplate(String templateName,String productId) {
         checkTemplateName(templateName);
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         entity.setName(templateName);
+        entity.setProductId(productId);
         if (this.save(entity)) {
             return entity.getId();
         }

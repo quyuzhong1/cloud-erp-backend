@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -92,6 +93,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                     } else {
                         entity.setTaskId("");
                     }
+                    copyList.add(entity);
                 }
             }
             if (CollectionUtils.isNotEmpty(copyList)) {

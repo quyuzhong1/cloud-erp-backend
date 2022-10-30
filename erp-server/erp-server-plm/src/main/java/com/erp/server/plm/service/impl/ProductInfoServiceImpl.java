@@ -518,7 +518,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
         //保存模板
-        String templateId = templateService.saveTemplate(templateName);
+        String templateId = templateService.saveTemplate(templateName,productId);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);

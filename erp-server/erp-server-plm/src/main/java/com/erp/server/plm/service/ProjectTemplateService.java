@@ -16,7 +16,7 @@ import java.util.List;
  */
 public interface ProjectTemplateService extends IService<ProjectTemplateEntity> {
 
-    String saveTemplate(String templateName);
+    String saveTemplate(String templateName,String productId);
 
     List<StartItemSourceDTO> startItemSource(Integer sourceType);
 }

@@ -63,14 +63,14 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
             for (TemplateRoleRefMembersEntity item : list) {
                 CopySourceDTO source=  copyRoleSourceList.stream().filter(c->c.getDataId()
                         .equals(item.getRoleId())).findFirst().orElse(null);
-                if(Objects.isNull(source)){
-                    RoleRefMemberEntity entity = new RoleRefMemberEntity();
-                    BeanMapper.copy(item, entity);
-                    entity.setProductId(productId);
+                RoleRefMemberEntity entity = new RoleRefMemberEntity();
+                BeanMapper.copy(item, entity);
+                entity.setProductId(productId);
+                if(!Objects.isNull(source)){
                     entity.setRoleId(source.getNewCreateId());
-                    entity.setId(IdWorker.getIdStr());
-                    copyList.add(entity);
                 }
+                entity.setId(IdWorker.getIdStr());
+                copyList.add(entity);
             }
             roleRefMemberService.saveBatch(copyList);
         }
