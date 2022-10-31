@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -100,6 +101,15 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         List<ProjectPhaseEntity> phaseList = getByProductId(productId);
         //List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
         //List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
+
+        Map<Object, Long> mapGroup = list.stream().collect(Collectors.groupingBy(req -> req.getName(), Collectors.counting()));
+
+        // 筛选Map中value大于1的key
+        Stream<Object> stringStream = mapGroup.entrySet().stream().filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey());
+        if (stringStream != null) {
+            throw new ServiceException(ApiError.ERROR_95001);
+        }
+
         for (TaskPhaseDTO phase : list) {
             String id = phase.getId();
             String name = phase.getName();
