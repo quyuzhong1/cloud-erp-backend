@@ -6,6 +6,7 @@
 
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
@@ -64,6 +65,7 @@
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time
         FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id
