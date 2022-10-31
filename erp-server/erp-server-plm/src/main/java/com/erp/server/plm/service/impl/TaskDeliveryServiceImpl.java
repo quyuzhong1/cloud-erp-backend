@@ -148,7 +148,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
-        userId = "1549948476757303297";
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         //根据当前登录人 查看它能查看的文档

@@ -331,7 +331,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     public void deployDefinitionByResource(DeployProcessDTO dto) {
         Deployment deploy = repositoryService.createDeployment()
                 .name(dto.getBusinessName())
-                .addClasspathResource(dto.getBpmnName())
+                .addClasspathResource("diagrams/"+dto.getBpmnName())
                 .deploy();
     }
 
