@@ -370,6 +370,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     }
 
+    @Override
+    public void removeByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+        this.remove(queryWrapper);
+    }
+
 
     public int getFinishDocsNum(String taskId) {
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();

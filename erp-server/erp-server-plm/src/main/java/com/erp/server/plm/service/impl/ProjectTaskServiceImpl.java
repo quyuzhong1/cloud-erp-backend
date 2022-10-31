@@ -56,8 +56,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectTaskSysService projectTaskSysService;
 
-    @Autowired
-    private TemplateTaskService templateTaskService;
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
@@ -92,6 +90,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private TaskOperatorRecordService taskOperatorRecordService;
     @Autowired
     private TaskCommentService taskCommentService;
+
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
 
     /**
      * 添加系统的产品任务
@@ -495,7 +496,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
-        return this.removeById(entity);
+        Boolean flag = this.removeById(entity);
+        if (flag) {
+            taskDeliveryService.removeByTaskId(taskId);
+            taskDocsFinishService.removeByTaskId(taskId);
+        }
+        return flag;
     }
 
 
@@ -922,15 +928,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();
-        List<FindUserDTO>  userList=commonService.getAllUser();
+        List<FindUserDTO> userList = commonService.getAllUser();
         for (String userId : approvalUserIdList) {
             UserInfoDTO u = new UserInfoDTO();
             u.setUserId(userId);
-            FindUserDTO  user=userList.stream().filter(s->s.getUserId().
+            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
                     equals(userId)).findFirst().orElse(null);
-            if(!Objects.isNull(user)){
+            if (!Objects.isNull(user)) {
                 u.setUserName(user.getUserName());
-            }else{
+            } else {
                 u.setUserName("");
             }
             approvalUserList.add(u);

@@ -11,6 +11,8 @@ import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.PreTaskMapper;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,12 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
+
+    @Autowired
+    private TaskDeliveryService taskDeliveryService;
 
     /**
      * 保存前置任务
@@ -106,6 +114,13 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getTaskId, dto.getTaskId());
         queryWrapper.eq(PreTaskEntity::getPreTaskId, dto.getPreTaskId());
+        Boolean flag = remove(queryWrapper);
+        if(flag){
+            taskDeliveryService.removeByTaskId(dto.getTaskId());
+            taskDocsFinishService.removeByTaskId(dto.getTaskId());
+        }
+
+
         return remove(queryWrapper);
     }
 
