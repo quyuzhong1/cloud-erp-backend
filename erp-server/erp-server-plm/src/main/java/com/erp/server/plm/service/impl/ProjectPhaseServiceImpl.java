@@ -98,8 +98,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {
         List<ProjectPhaseEntity> phaseList = getByProductId(productId);
-        List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
-        List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
+        //List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
+        //List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
         for (TaskPhaseDTO phase : list) {
             String id = phase.getId();
             String name = phase.getName();
@@ -109,7 +109,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             } else {
                 phaseNames = phaseList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
             }
-            if(phaseNames.contains(name)||sysTaskPhase.contains(name)){
+            if(phaseNames.contains(name)/*||sysTaskPhase.contains(name)*/){
                 throw new ServiceException(ApiError.ERROR_95001);
             }
 
