@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -67,14 +68,17 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
      * @date 2022-10-28 15:57
      */
     @Override
-    public void copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList) {
+    public List<CopySourceDTO> copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList) {
         List<TemplateDeliveryDocsEntity> list = this.getByTemplateId(templateId);
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         List<TaskDeliveryDocsEntity> existList = taskDeliveryService.getByProductId(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskDeliveryDocsEntity> copyList = new ArrayList<>();
             for (TemplateDeliveryDocsEntity item : list) {
+                CopySourceDTO source = new CopySourceDTO();
+                source.setDataId(item.getId());
                 TaskDeliveryDocsEntity exist = existList.stream().
-                        filter(e -> e.getTaskId().equals(item.getTaskId())).findFirst().orElse(null);
+                        filter(e -> e.getDocsNameId().equals(item.getDocsNameId())).findFirst().orElse(null);
                 if (Objects.isNull(exist)) {
                     TaskDeliveryDocsEntity entity = new TaskDeliveryDocsEntity();
                     BeanMapper.copy(item, entity);
@@ -93,14 +97,19 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                     } else {
                         entity.setTaskId("");
                     }
+                    String id = IdWorker.getIdStr();
+                    source.setDataId(id);
                     copyList.add(entity);
+                } else {
+                    source.setDataId(exist.getId());
                 }
+                sourceList.add(source);
             }
             if (CollectionUtils.isNotEmpty(copyList)) {
                 taskDeliveryService.saveBatch(copyList);
             }
-
         }
+        return sourceList;
     }
 
 

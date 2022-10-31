@@ -638,12 +638,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         //前置任务
         List<RefTaskInfoDTO> preTasks = new ArrayList<>();
-        //子任务
-        List<RefTaskInfoDTO> childTasks = new ArrayList<>();
+
         if (CollectionUtils.isNotEmpty(preTaskIdList)) {
             preTasks = getRefTask(preTaskIdList);
         }
         detailsDTO.setPreTasks(preTasks);
+        //子任务
+        List<RefTaskInfoDTO> childTasks = new ArrayList<>();
         //获取到当前任务id 的子任务
         List<String> childTaskIds = getChildTaskIds(taskId, detailsDTO.getProductId());
         if (CollectionUtils.isNotEmpty(childTaskIds)) {
@@ -1702,11 +1703,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> resultList = new LinkedList<>();
         //根据产品id 获取到产品任务
         List<ProjectTaskEntity> taskList = getByProductId(productId);
-        ProjectTaskEntity pidTask = taskList.stream().filter(t -> taskId.equals(t.getPid())).findFirst().orElse(null);
-        if (pidTask != null) {
-            resultList.add(pidTask.getId());
-            //递归获取他的子任务id
-            getChilds(pidTask.getId(), taskList, resultList);
+        List<ProjectTaskEntity> pidTaskList = taskList.stream().filter(t -> taskId.equals(t.getPid())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(pidTaskList)) {
+            resultList.addAll(pidTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
         }
         return resultList;
 

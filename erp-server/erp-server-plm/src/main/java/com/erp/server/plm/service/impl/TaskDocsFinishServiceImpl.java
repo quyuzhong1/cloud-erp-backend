@@ -232,7 +232,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Integer taskState = taskEntity.getStatus();
         //当不为这两个的时候是不能变更的
         if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
-        &&!approvalNoPassCode.equals(taskState)) {
+                && !approvalNoPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
         String finishDocsId = dto.getFinishDocsId();
@@ -301,11 +301,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
-        List<ProjectMembersEntity> projectMembersList = projectMembersService.getChargeList(taskEntity.getProductId());
-        List<String> membersIds = projectMembersList.stream().map(ProjectMembersEntity::getMemberId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(membersIds)) {
+        String approvalUserId = taskEntity.getApprovalUserId();
+        if (StringUtils.isEmpty(approvalUserId)) {
             throw new ServiceException(ApiError.ERROR_95045);
         }
+        List<String> membersIds = Arrays.asList(approvalUserId.split(","));
         parameterMap.put("memberChargeList", membersIds);
         startProcess.setParameterMap(parameterMap);
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
@@ -313,9 +313,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (StringUtils.isNotBlank(processId)) {
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
-            if(taskEntity.getType().equals(TaskTypeEnum.GENERAL_TASK.getCode())){
+            if (taskEntity.getType().equals(TaskTypeEnum.GENERAL_TASK.getCode())) {
                 taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
-            }else{
+            } else {
                 taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             }
             projectTaskService.updateById(taskEntity);

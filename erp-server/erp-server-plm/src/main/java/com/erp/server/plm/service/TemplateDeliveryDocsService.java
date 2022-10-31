@@ -14,5 +14,5 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
 
     void saveTemplateDeliveryDocs(String templateId, String productId);
 
-    void copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList);
+    List<CopySourceDTO> copyTemplateDeliveryDocs(String templateId, String productId, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> docsNameSourceList);
 }

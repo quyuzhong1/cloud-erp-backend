@@ -102,6 +102,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TemplatePreTaskService templatePreTaskService;
 
+    @Autowired
+    private TemplateDocsPermissionService templateDocsPermissionService;
+
     /**
      * 项目概述
      *
@@ -224,7 +227,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
                 //这个是交付文档
-                templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
+                List<CopySourceDTO> deliveryDocsSourceList= templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
+                //这个是文档权限
+                templateDocsPermissionService.copyTemplateDeliveryDocs(flagId,productId,taskSourceList,deliveryDocsSourceList);
+
             }
 
 
