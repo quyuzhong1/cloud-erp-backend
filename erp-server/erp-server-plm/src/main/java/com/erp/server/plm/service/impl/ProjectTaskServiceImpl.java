@@ -56,8 +56,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectTaskSysService projectTaskSysService;
 
-    @Autowired
-    private TemplateTaskService templateTaskService;
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
@@ -93,6 +91,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private TaskCommentService taskCommentService;
 
+    @Autowired
+    private TaskDocsFinishService taskDocsFinishService;
+
     /**
      * 添加系统的产品任务
      * 只添加立项的
@@ -119,6 +120,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(productId);
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
+                entity.setStatus(TaskStateEnum.NOT_START.getCode());
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
@@ -281,10 +283,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
+            statusList.add(TaskStateEnum.NOT_START.getCode());
+            statusList.add(TaskStateEnum.ING.getCode());
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
+            statusList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            statusList.add(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -431,6 +437,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+            taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
         }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
@@ -493,7 +500,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //检查是否是子任务
         checkTaskIfExistPid(taskId);
-        return this.removeById(entity);
+        Boolean flag = this.removeById(entity);
+        if (flag) {
+            taskDeliveryService.removeByTaskId(taskId);
+            taskDocsFinishService.removeByTaskId(taskId);
+        }
+        return flag;
     }
 
 
@@ -920,15 +932,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();
-        List<FindUserDTO>  userList=commonService.getAllUser();
+        List<FindUserDTO> userList = commonService.getAllUser();
         for (String userId : approvalUserIdList) {
             UserInfoDTO u = new UserInfoDTO();
             u.setUserId(userId);
-            FindUserDTO  user=userList.stream().filter(s->s.getUserId().
+            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
                     equals(userId)).findFirst().orElse(null);
-            if(!Objects.isNull(user)){
+            if (!Objects.isNull(user)) {
                 u.setUserName(user.getUserName());
-            }else{
+            } else {
                 u.setUserName("");
             }
             approvalUserList.add(u);

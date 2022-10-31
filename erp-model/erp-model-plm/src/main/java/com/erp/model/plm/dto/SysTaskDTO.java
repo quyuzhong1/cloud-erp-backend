@@ -99,7 +99,7 @@ public class SysTaskDTO implements Serializable {
     /**
      * 审核人集合
      */
-    private List<String> approvalUserIds;
+    private List<UserInfoDTO> approvalUserIds;
 
     /**
      * 业务流程表id

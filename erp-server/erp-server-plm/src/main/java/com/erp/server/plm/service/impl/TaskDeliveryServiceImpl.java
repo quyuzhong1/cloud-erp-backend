@@ -10,21 +10,21 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.DocsPermissionEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +47,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
 
 
     /**
@@ -142,11 +145,27 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
-        //根据当前登录人 查看它能查看的文档
-        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        //根据当前登录人 查看它能查看的文档
+        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId, params.getFlagId());
         IPage pageData = baseMapper.paging(query, params, ids);
+        List<DeliveryDocsDTO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
+            for (DeliveryDocsDTO item : list) {
+                ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
+                //当没审核通过
+                if(Objects.isNull(entity)||!entity.getStatus().equals(approvalPass)){
+                    item.setFileUrl(item.getOldFileUrl());
+                    item.setFileName(item.getOldFileName());
+                    item.setUploadType(item.getOldUploadType());
+                }
+
+            }
+        }
+
         return new PagingVO(pageData);
     }
 

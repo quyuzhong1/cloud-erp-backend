@@ -19,7 +19,8 @@
        SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
-       COALESCE(f.file_size,0) fileSize, f.upload_type,
+       COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+       f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
        where d.product_id=#{params.flagId}
@@ -42,7 +43,7 @@
         COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
         COALESCE(f.file_size,0) fileSize,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName,
-        f.upload_type,f.old_file_url,f.old_upload_type
+        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name
         FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
         where d.task_id=#{taskId}
     </select>

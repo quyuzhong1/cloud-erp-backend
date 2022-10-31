@@ -9,12 +9,10 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.DocsDTO;
-import com.erp.model.plm.dto.SysTaskDTO;
-import com.erp.model.plm.dto.SysTaskPagingDTO;
-import com.erp.model.plm.dto.FinishDocsDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
@@ -70,9 +68,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
 
-        List<String> approvalUserIds = dto.getApprovalUserIds();
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
-            entity.setApprovalUserId(String.join(",",approvalUserIds));
+            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
+            entity.setApprovalUserId(String.join(",", approvalUserIdList));
         }
         String chargeNames = commonService.getNameByIds(chargeIds);
         entity.setChargeName(chargeNames);
@@ -235,7 +235,21 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if (StringUtils.isNotBlank(approvalUserId)) {
             approvalUserIdList=Arrays.asList(approvalUserId.split(","));
         }
-        sysTaskDTO.setApprovalUserIds(approvalUserIdList);
+        List<UserInfoDTO> approvalUserList = new ArrayList<>();
+        List<FindUserDTO> userList = commonService.getAllUser();
+        for (String userId : approvalUserIdList) {
+            UserInfoDTO u = new UserInfoDTO();
+            u.setUserId(userId);
+            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
+                    equals(userId)).findFirst().orElse(null);
+            if (!Objects.isNull(user)) {
+                u.setUserName(user.getUserName());
+            } else {
+                u.setUserName("");
+            }
+            approvalUserList.add(u);
+        }
+        sysTaskDTO.setApprovalUserIds(approvalUserList);
         String businessProcessId = sysEntity.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
