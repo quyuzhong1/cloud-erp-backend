@@ -23,6 +23,8 @@
             ${params.param}
         </if>
 
+        ORDER BY pa.archive_time DESC
+
     </select>
 
 
