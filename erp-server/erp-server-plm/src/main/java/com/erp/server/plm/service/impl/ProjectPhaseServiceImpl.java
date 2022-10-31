@@ -47,6 +47,9 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     @Autowired
     private ProjectTaskService projectTaskService;
 
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+
     /**
      * 获取 产品任务的阶段名
      *
@@ -195,20 +198,27 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     @Override
     public List<CopySourceDTO> saveSysPhase(String productId) {
         List<SysTaskPhaseEntity> sysPhaseNames = sysTaskPhaseService.getSysTaskPhaseNames();
+
         if (CollectionUtils.isNotEmpty(sysPhaseNames)) {
+            List<ProjectPhaseEntity>  existList=projectPhaseService.getByProductId(productId);
             List<CopySourceDTO> sourceList = new ArrayList<>(sysPhaseNames.size());
             List<ProjectPhaseEntity> saveList = new ArrayList<>();
             for (SysTaskPhaseEntity item : sysPhaseNames) {
-                ProjectPhaseEntity phaseEntity = new ProjectPhaseEntity();
-                phaseEntity.setName(item.getName());
-                phaseEntity.setProductId(productId);
-                phaseEntity.setIsSourceSys(IsConstant.YES);
-                String id = IdWorker.getIdStr();
-                phaseEntity.setId(id);
+                ProjectPhaseEntity exist= existList.stream().filter(e->e.getName().equals(item.getName())).findFirst().orElse(null);
                 CopySourceDTO source = new CopySourceDTO();
-                source.setNewCreateId(id);
+                if(Objects.isNull(exist)){
+                    ProjectPhaseEntity phaseEntity = new ProjectPhaseEntity();
+                    phaseEntity.setName(item.getName());
+                    phaseEntity.setProductId(productId);
+                    phaseEntity.setIsSourceSys(IsConstant.YES);
+                    String id = IdWorker.getIdStr();
+                    phaseEntity.setId(id);
+                    source.setNewCreateId(id);
+                    saveList.add(phaseEntity);
+                }else{
+                    source.setNewCreateId(exist.getId());
+                }
                 source.setDataId(item.getId());
-                saveList.add(phaseEntity);
                 sourceList.add(source);
             }
             this.saveBatch(saveList);

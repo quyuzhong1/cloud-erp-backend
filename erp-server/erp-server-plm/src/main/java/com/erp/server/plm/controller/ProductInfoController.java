@@ -116,7 +116,7 @@ public class ProductInfoController extends BaseController {
      * 概述
      */
     @GetMapping("/info")
-    @RequestPermissions("plm:product:info")
+   // @RequestPermissions("plm:product:info")
     public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);

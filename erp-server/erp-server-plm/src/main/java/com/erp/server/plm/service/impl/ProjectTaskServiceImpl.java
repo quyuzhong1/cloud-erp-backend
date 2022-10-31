@@ -120,7 +120,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(productId);
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                entity.setStatus(TaskStateEnum.NOT_START.getCode());
+                if(IsConstant.NO.equals(item.getType())){
+                    entity.setStatus(TaskStateEnum.NOT_START.getCode());
+                }
                 entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
@@ -437,7 +439,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
-            taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
+            if(IsConstant.NO.equals(dto.getType())){
+                taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
+            }
+
         }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
@@ -1077,8 +1082,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //一般任务
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
-
-
         //一般任务 列表  都是将任务状态改为进行中
         List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(generalTasks)) {

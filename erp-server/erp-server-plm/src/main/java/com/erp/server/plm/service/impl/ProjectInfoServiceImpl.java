@@ -632,7 +632,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //完成待确认
         Integer waitConfirm = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
         //审核中
-        Integer approvalIng = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
         //审核不通过
         Integer noPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         //审核通过
