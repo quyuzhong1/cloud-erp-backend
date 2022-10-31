@@ -694,6 +694,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 String productChargeName = commonService.getNameByIds(productChargeIdList);
                 product.setChargeId(String.join(",", productChargeIdList));
                 product.setChargeName(productChargeName);
+            }else{
+                product.setChargeName("");
+                product.setChargeId("");
             }
             if (approvalStatus != null) {
                 if (!product.getApprovalStatus().equals(approvalStatus)) {
@@ -731,6 +734,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     String projectChargeName = commonService.getNameByIds(projectChargeIdList);
                     project.setChargeId(String.join(",", projectChargeIdList));
                     project.setChargeName(projectChargeName);
+                }else{
+                    project.setChargeName("");
+                    project.setChargeId("");
                 }
                 if (projectStatus != null) {
                     if(!project.getProjectStatus().equals(projectStatus)){

@@ -12,6 +12,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -103,7 +104,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Transactional
     @Override
-    public void addSysTask(String productId,List<TaskDocsNameEntity> taskDocsNameList) {
+    public void addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         //添加前置任务
@@ -434,9 +435,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
         //自定义审核人
-        List<String> approvalUserIds = dto.getApprovalUserIds();
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
-            taskEntity.setApprovalUserId(String.join(",", approvalUserIds));
+            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
+            taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
         }
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
@@ -796,9 +798,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //自定义审核人
-        List<String> approvalUserIds = dto.getApprovalUserIds();
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
-            taskEntity.setApprovalUserId(String.join(",", approvalUserIds));
+            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
+
+            taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
         }
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
@@ -915,7 +919,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(approvalUserId)) {
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
-        resultDTO.setApprovalUserIds(approvalUserIdList);
+        List<UserInfoDTO> approvalUserList = new ArrayList<>();
+        List<FindUserDTO>  userList=commonService.getAllUser();
+        for (String userId : approvalUserIdList) {
+            UserInfoDTO u = new UserInfoDTO();
+            u.setUserId(userId);
+            FindUserDTO  user=userList.stream().filter(s->s.getUserId().
+                    equals(userId)).findFirst().orElse(null);
+            if(!Objects.isNull(user)){
+                u.setUserName(user.getUserName());
+            }else{
+                u.setUserName("");
+            }
+        }
+        resultDTO.setApprovalUserIds(approvalUserList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
         String businessProcessId = resultDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
@@ -1040,7 +1057,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer state = checkTaskState(list);
         //只有待开始 和待审核 才能开始任务
         if (!TaskStateEnum.NOT_START.getCode().equals(state)
-        &&!TaskStateEnum.CLOSE.getCode().equals(state)) {
+                && !TaskStateEnum.CLOSE.getCode().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95032);
         }
         Integer ingCode = TaskStateEnum.ING.getCode();
@@ -1602,10 +1619,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalNoPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalNoPassState)).findFirst().orElse(null);
 
-        Boolean approvalNoPassFlag =taskState.equals(approvalNoPassState);
+        Boolean approvalNoPassFlag = taskState.equals(approvalNoPassState);
 
-                //先添加待发布的
-                TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
+        //先添加待发布的
+        TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
         processNode.setIfFinishNode(true);
         processNode.setOperateTime(taskEntity.getCreateTime());
         processNode.setOperateUserName(taskEntity.getCreateUserName());
@@ -1640,12 +1657,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //添加审核中
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
 
-           if(approvalNoPassFlag){//添加审核不通过
-               resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
-           }else{
-               //添加审核通过
-               resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
-           }
+            if (approvalNoPassFlag) {//添加审核不通过
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
+            } else {
+                //添加审核通过
+                resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+            }
 
         }
 
@@ -1653,9 +1670,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //添加待审核
             resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState));
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
-            if(approvalNoPassFlag){//添加审核不通过
+            if (approvalNoPassFlag) {//添加审核不通过
                 resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
-            }else{
+            } else {
                 //添加审核通过
                 resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
             }
@@ -1688,7 +1705,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPid, taskId);
         Integer count = baseMapper.selectCount(queryWrapper);
-        if (count>0) {
+        if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95024);
         }
     }

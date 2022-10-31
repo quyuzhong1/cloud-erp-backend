@@ -134,7 +134,7 @@ public class ProjectTaskDTO implements Serializable {
     /**
      * 审核人集合
      */
-    private List<String> approvalUserIds;
+    private List<UserInfoDTO> approvalUserIds;
 
 
 
