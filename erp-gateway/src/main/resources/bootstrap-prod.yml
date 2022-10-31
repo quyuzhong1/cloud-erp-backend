@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.10
+        namespace: prod
+      config:
+        server-addr: 172.16.100.10
+        namespace: prod
+        file-extension: yml
+        shared-configs: gateway.yml,common.yml
+#    gateway:
+#      routes:
+#        - id: admin_route
+#          uri: lb://erp-admin
+#          predicates:
+#            - Path=/api/sys/**
+#          filters:
+#            - RewritePath=/api/(?<segment>.*), /$\{segment}
+
