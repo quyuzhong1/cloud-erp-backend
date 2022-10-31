@@ -220,11 +220,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<CopySourceDTO> docsNameSourceList = templateTaskDocsNameService.copyTemplateDocsName(flagId, productId, projectId);
 
                 //这个是任务的
-                List<CopySourceDTO>  taskSourceList=  templateTaskService.copyTemplateTask(flagId,productId,projectId,phaseSourceList);
+                List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(flagId, productId, projectId, phaseSourceList);
                 //这个是复制前置任务关系
-                templatePreTaskService.copyTemplatePreTask(flagId,productId,taskSourceList);
+                templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
                 //这个是交付文档
-                templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId,productId,taskSourceList,docsNameSourceList);
+                templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
             }
 
 
@@ -703,8 +703,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         approvalPassMap.put("value", approvalPassValue);
         list.add(approvalPassMap);
 
-        return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
-
+        // return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
+        return list;
     }
 
 
