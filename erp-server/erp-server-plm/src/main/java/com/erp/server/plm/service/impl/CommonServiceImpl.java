@@ -82,5 +82,11 @@ public class CommonServiceImpl implements CommonService {
         return "";
     }
 
+    @Override
+    public List<FindUserDTO> getAllUser() {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        return userList;
+    }
+
 
 }

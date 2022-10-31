@@ -19,5 +19,7 @@ public interface CommonService {
 
     String getNameById (String userId);
 
+    public List<FindUserDTO> getAllUser();
+
 
 }

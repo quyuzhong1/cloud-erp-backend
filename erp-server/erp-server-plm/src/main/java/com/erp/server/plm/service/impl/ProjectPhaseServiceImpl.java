@@ -119,7 +119,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             } else {
                 phaseNames = phaseList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
             }
-            if(phaseNames.contains(name)/*||sysTaskPhase.contains(name)*/){
+            if (phaseNames.contains(name)/*||sysTaskPhase.contains(name)*/) {
                 throw new ServiceException(ApiError.ERROR_95001);
             }
 
@@ -250,12 +250,19 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     private List<TaskPhaseDTO> getTaskPhaseByProductId(String productId) {
         List<TaskPhaseDTO> list = baseMapper.getTaskPhaseByProductId(productId);
         String flagName = TaskConstant.APPROVAL_TASK_NAME;
+        List<TaskPhaseDTO> resultList = new ArrayList<>();
+        List<TaskPhaseDTO> otherList = new ArrayList<>();
         for (TaskPhaseDTO item : list) {
             if (flagName.equals(item.getName())) {
                 item.setIsProjectApproval(IsConstant.YES);
                 item.setIfQuote(true);
+                resultList.add(item);
+            } else {
+                otherList.add(item);
             }
+
         }
-        return list;
+        resultList.addAll(otherList);
+        return resultList;
     }
 }
