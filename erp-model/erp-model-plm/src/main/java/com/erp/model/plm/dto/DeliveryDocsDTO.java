@@ -47,7 +47,10 @@ public class DeliveryDocsDTO implements Serializable {
     private String taskName;
 
 
-
+    /**
+     * 交付文档名
+     */
+    private String fileName;
     /**
      * 文件类型
      */
@@ -85,10 +88,7 @@ public class DeliveryDocsDTO implements Serializable {
     private String deliveryDocsName;
 
 
-    /**
-     * 交付文档名
-     */
-    private String fileName;
+
 
 
     /**

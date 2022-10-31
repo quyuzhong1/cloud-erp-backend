@@ -24,10 +24,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -156,18 +153,16 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
-            String taskId = list.get(0).getTaskId();
-            ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
-            Boolean isApprovalPass = true;
-            if (taskEntity != null && !approvalPass.equals(taskEntity.getStatus())) {
-                isApprovalPass = false;
-            }
+            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
+                ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
                 //当没审核通过
-                if (!isApprovalPass) {
+                if(Objects.isNull(entity)||!entity.getStatus().equals(approvalPass)){
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
+                    item.setUploadType(item.getOldUploadType());
                 }
+
             }
         }
 
