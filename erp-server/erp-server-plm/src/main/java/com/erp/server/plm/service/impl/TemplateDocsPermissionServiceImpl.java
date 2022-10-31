@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
@@ -49,6 +50,7 @@ public class TemplateDocsPermissionServiceImpl extends ServiceImpl<TemplateDocsP
             for (DocsPermissionEntity item : list) {
                 TemplateDocsPermissionEntity entity = new TemplateDocsPermissionEntity();
                 BeanMapper.copy(item, entity);
+                entity.setTemplateId(templateId);
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
@@ -80,10 +82,11 @@ public class TemplateDocsPermissionServiceImpl extends ServiceImpl<TemplateDocsP
                     BeanMapper.copy(item, entity);
                     entity.setProductId(productId);
                     entity.setDeliveryDocsId(source.getNewCreateId());
+                    entity.setId(IdWorker.getIdStr());
                     saveList.add(entity);
                 }
-                docsPermissionService.saveBatch(saveList);
             }
+            docsPermissionService.saveBatch(saveList);
         }
 
     }

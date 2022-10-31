@@ -97,11 +97,13 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                     } else {
                         entity.setTaskId("");
                     }
+
                     String id = IdWorker.getIdStr();
-                    source.setDataId(id);
+                    entity.setId(id);
                     copyList.add(entity);
+                    source.setNewCreateId(id);
                 } else {
-                    source.setDataId(exist.getId());
+                    source.setNewCreateId(exist.getId());
                 }
                 sourceList.add(source);
             }
