@@ -136,6 +136,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private TaskDocsNameService taskDocsNameService;
 
+    @Autowired
+    private TemplateDocsPermissionService templateDocsPermissionService;
+
 
     /**
      * 查询 分类id 下有多少产品
@@ -537,6 +540,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             templateTaskService.saveTemplateTask(templateId, productId);
             //保存前置任务
             templatePreTaskService.saveTemplatePreTask(templateId, productId);
+            //保存文档权限
+            templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId);
         }
 
         return true;

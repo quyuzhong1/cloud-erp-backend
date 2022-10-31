@@ -18,4 +18,6 @@ public interface DocsPermissionService extends IService<DocsPermissionEntity> {
     void removePermission(String taskId);
 
     void removeByDeliveryDocsId(List<String> docsIds);
+
+    List<DocsPermissionEntity> getDocsPermissionByProductId(String productId);
 }
