@@ -5,6 +5,7 @@
 
     <select id="getTaskPhaseByProductId" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
         SELECT ID,NAME FROM  project_phase WHERE product_id=#{productId}
+        ORDER BY create_time DESC
     </select>
 
 </mapper>

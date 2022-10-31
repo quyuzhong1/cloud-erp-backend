@@ -16,9 +16,16 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class DocsNameDTO implements Serializable {
 
+
+    /**
+     * 文档名
+     */
     @NotBlank(message = "文档名不能为空")
     private String name;
 
+    /**
+     * 产品id
+     */
     @NotBlank(message = "产品id不能为空")
     private String productId;
 }
