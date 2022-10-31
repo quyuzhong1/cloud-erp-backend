@@ -694,11 +694,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         String productId = product.getId();
                         yesApproval = true;
                         /**
-                         * 表示改成已立项 就要去检查该该产品下的 所有的任务
+                         * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
                          *  是否完成
                          */
                         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-                        List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                        List<String> taskIdList = taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
                         projectTaskService.checkTaskFinish(taskList);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);

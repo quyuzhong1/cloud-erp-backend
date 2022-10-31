@@ -874,7 +874,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Date planStartTime = dto.getPlanStartTime();
         taskEntity.setPlanStartTime(planStartTime);
         //结束时间
-        Date planEndTime = dto.getPlanStartTime();
+        Date planEndTime = dto.getPlanEndTime();
         taskEntity.setPlanEndTime(planEndTime);
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
@@ -1039,7 +1039,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
         //只有待开始 和待审核 才能开始任务
-        if (!TaskStateEnum.NOT_START.getCode().equals(state)) {
+        if (!TaskStateEnum.NOT_START.getCode().equals(state)
+        &&!TaskStateEnum.CLOSE.getCode().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95032);
         }
         Integer ingCode = TaskStateEnum.ING.getCode();
