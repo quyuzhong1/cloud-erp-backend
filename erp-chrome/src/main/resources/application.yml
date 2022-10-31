@@ -1,0 +1,8 @@
+spring:
+  application:
+    name:  erp-chrome
+  profiles:
+    active: pro
+server:
+  port: 7040
+

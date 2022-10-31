@@ -1,0 +1,141 @@
+package com.erp.model.plm.dto;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.common.annotation.StateEnumValue;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * @Description 产品基础信息请求参数
+ * @Author Luo_WG
+ * @Date 2022/9/23 17:26
+ **/
+@Data
+@NoArgsConstructor
+public class ProductInfoDTO {
+    /**
+     * 主键id
+     */
+    private String id;
+
+    /**
+     * 产品名
+     */
+    @NotBlank(message = "产品名不能为空")
+    @Size(max = 50,message = "产品名最大50字符")
+    private String name;
+
+    /**
+     * 产品类别
+     */
+    private String category;
+
+    /**
+     * 产品属性
+     */
+    private String property;
+
+    /**
+     * 产品属性id
+     */
+    private String propertyId;
+
+    /**
+     * 产品负责人
+     */
+    private String chargeName;
+
+    /**
+     * 负责人id
+     */
+    private String chargeId;
+
+    /**
+     * 产品等级
+     */
+    private String grade;
+
+    /**
+     * 产品品牌
+     */
+    private String brandName;
+
+    /**
+     * 品牌id
+     */
+    private String brandId;
+
+    /**
+     * 分类id
+     */
+    private String categoryId;
+
+    /**
+     * spuNo
+     */
+    private String spuNo;
+
+    /**
+     * 产品卖点
+     */
+    @Size(max = 500,message = "产品卖点最大500字符")
+    private String sellSpot;
+
+    /**
+     * 产品功能描述
+     */
+    @Size(max = 500,message = "产品功能描述最大500字符")
+    private String functionDesc;
+
+    /**
+     * 产品用途
+     */
+    @Size(max = 500,message = "产品用途最大500字符")
+    private String usageDesc;
+
+    /**
+     * 存在侵权风险 1：有侵权风险 2：无侵权风险
+     */
+    private Integer pirateRisk;
+
+    /**
+     * 主要材质
+     */
+    @Size(max = 500,message = "主要材质最大500字符")
+    private String materials;
+
+    /**
+     * 规格类型  1：无规格  2：多规格
+     */
+    private Integer specType;
+
+    /**
+     * 销售方式
+     */
+    private String saleMethod;
+
+    private Integer approvalStatus;
+
+    /**
+     * 创建人id
+     */
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    private String createUserName;
+
+    /**
+     * 修改人id
+     */
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    private String updateUserName;
+}

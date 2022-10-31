@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.110.12
+        namespace: dev-yl
+      config:
+        server-addr: 172.16.110.12
+        namespace: dev
+        shared-configs: common.yml,erp-auth.yml

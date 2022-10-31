@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: erp-workflow
+  profiles:
+    active: dev
+server:
+  port: 9040
+
+logback:
+  filePath: /data/log/code/cloud-erp/logs/workflow.%d{yyyy-MM-dd}.%i.log
+  maxHistory: 356
+  maxFileSize: 100MB
+  totalSizeCap: 10GB
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      first-name: admin
+      password: admin
+    filter:
+      create: All tasks
+    webapp:
+      application-path: bpm
+    auto-deployment-enabled: false
+    generic-properties:
+      properties:
+        javaSerializationFormatEnabled: true

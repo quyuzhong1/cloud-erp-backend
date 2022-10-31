@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TaskDocsMapper">
+
+    <select id="getTaskDocsCount" resultType="com.erp.model.plm.dto.CountDTO">
+        SELECT task_id  AS flagId ,count(*) AS count FROM task_delivery_docs
+        <where>
+            <if test="taskIds !=null and taskIds.size>0">
+                AND task_id IN
+                <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY task_id
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+       SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
+       COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+       COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+       COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+       f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
+       f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
+       FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
+       where d.product_id=#{params.flagId}
+       <if test="params.searchKeyword !='' and params.searchKeyword!=null">
+            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+       </if>
+       <if test="ids !=null and ids.size()>0">
+           AND d.id in
+           <foreach collection="ids" item="id" open="(" separator="," close=")">
+               #{id}
+           </foreach>
+       </if>
+
+    </select>
+
+    <select id="getByTaskId" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+        SELECT d.id, f.id AS finishDocsId, d.docs_name deliveryDocsName ,d.task_id,
+        d.is_sys,
+        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+        COALESCE(f.file_size,0) fileSize,
+        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName,
+        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name
+        FROM  task_delivery_docs d LEFT JOIN  task_finish_docs f  on f.task_docs_id=d.id
+        where d.task_id=#{taskId}
+    </select>
+
+
+
+
+    <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
+        SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
+        WHERE product_id !='' GROUP BY product_id
+    </select>
+
+    <select id="getDocsByTaskId" resultType="com.erp.model.plm.dto.DocsDTO">
+       SELECT id ,docs_name AS name,is_sys FROM task_delivery_docs
+       WHERE task_id=#{taskId}
+
+    </select>
+
+
+
+</mapper>

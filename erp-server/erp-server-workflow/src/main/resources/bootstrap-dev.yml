@@ -1,0 +1,17 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.110.12
+        namespace: dev-yl
+      config:
+        server-addr: 172.16.110.12
+        namespace: dev
+        file-extension: yml
+        shared-configs: common.yml,db-workflow.yml
+
+
+
+
+
+

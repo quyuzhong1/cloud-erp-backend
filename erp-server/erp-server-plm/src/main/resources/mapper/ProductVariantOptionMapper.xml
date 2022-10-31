@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductVariantOptionMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductVariantOptionEntity">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="productId" column="product_id" jdbcType="VARCHAR"/>
+            <result property="variantType" column="variant_type" jdbcType="VARCHAR"/>
+            <result property="variantValue" column="variant_value" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,product_id,variant_type,
+        variant_value
+    </sql>
+</mapper>

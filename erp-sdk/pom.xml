@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>cloud-erp</artifactId>
+        <groupId>com.cloud.erp</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>erp-sdk</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>erp-sdk-fs</module>
+        <module>erp-sdk-amz-spapi</module>
+        <module>erp-sdk-amz-aws</module>
+        <module>erp-sdk-walmart</module>
+        <module>erp-sdk-shopee</module>
+        <module>erp-sdk-goodcang</module>
+    </modules>
+
+
+</project>

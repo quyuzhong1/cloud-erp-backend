@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectInfoMapper">
+    <select id="listMap" resultType="com.erp.model.plm.dto.StartItemSourceDTO">
+        SELECT id AS flagId,name AS sourceName,${sourceType} AS  sourceType FROM  project_info
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time,
+        pi.create_time
+        FROM product_info p INNER JOIN project_info
+        pi
+        ON p.id=pi.product_id
+        WHERE   P.delete_state=0
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id=#{params.categoryId}
+        </if>
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            AND P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND pi.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="params.productIds !=null and params.productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="archiveProductIds !=null and archiveProductIds.size()>0">
+            AND p.id NOT IN
+            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
+
+        ORDER BY  pi.create_time DESC
+    </select>
+
+
+    <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,pi.create_time,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
+        p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p
+        INNER JOIN project_info pi ON p.id=pi.product_id
+        WHERE  P.delete_state=0
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id=#{params.categoryId}
+        </if>
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            AND P.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND pi.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="productIds !=null and productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="archiveProductIds !=null and archiveProductIds.size()>0">
+            AND p.id NOT IN
+            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
+        ORDER BY  pi.create_time DESC
+    </select>
+
+</mapper>

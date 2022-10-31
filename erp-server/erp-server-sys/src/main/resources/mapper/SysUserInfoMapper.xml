@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.SysUserInfoMapper">
+
+    <select id="findList" resultType="com.erp.model.sys.dto.UserDTO">
+        SELECT uid AS userId,user_name,real_name,mobile
+        FROM sys_user_info
+        WHERE delete_state=1
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND user_name LIKE concat('%',#{searchKeyword},'%') OR
+            real_name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+
+    </select>
+
+    <select id="paging" resultType="com.erp.model.sys.dto.UserManageDTO">
+        SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon,
+        last_login_ip,login_count,user_account,create_time,update_time,email
+        FROM sys_user_info sui
+        WHERE delete_state=1
+        <if test="params.state !=null">
+            AND sui.user_state=#{params.state}
+        </if>
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.startTime!=null">
+            AND last_login_time &gt;=#{params.startTime}
+        </if>
+        <if test="params.endTime!=null">
+            AND last_login_time &lt;=#{params.endTime}
+        </if>
+
+        <if test="roleIds !=null  and  roleIds.size()>0">
+            AND uid in
+            (SELECT sru.user_id FROM  sys_role_user sru WHERE sru.role_id in  (
+                <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+                    #{roleId}
+                </foreach>
+            ))
+        </if>
+
+        ORDER BY update_time DESC
+
+    </select>
+
+    <select id="findRoleIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
+        SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
+        COALESCE((SELECT 1 FROM sys_role_user sru where
+        sru.user_id=sui.uid AND sru.role_id=#{roleId} limit 1),0) AS
+        flagState
+        FROM sys_user_info sui
+        WHERE sui.delete_state=1
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
+            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+
+    <select id="findPostIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
+        SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
+        COALESCE((SELECT 1 FROM sys_post_user spu
+        where spu.user_id=sui.uid AND spu.post_id=#{postId} limit 1),0) AS flagState
+        FROM sys_user_info sui
+        WHERE sui.delete_state=1
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
+            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+
+    <select id="findDepartmentIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
+        SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
+        COALESCE((SELECT 1 FROM sys_department_user sdu
+        where sdu.user_id=sui.uid AND sdu.department_id=#{departmentId} limit 1),0) AS flagState
+        FROM sys_user_info sui
+        WHERE sui.delete_state=1
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND sui.user_name LIKE concat('%',#{searchKeyword},'%') OR
+            sui.real_name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+    <update id="setLoginIp">
+        UPDATE sys_user_info SET last_login_ip=#{params.ip},
+        last_login_time=#{params.date},
+        login_count=(COALESCE(login_count,0)+1)
+        WHERE uid=#{params.uid}
+    </update>
+
+    <select id="getRequestPermissionsList" resultType="com.erp.common.modules.sys.dto.UserRequestPermissionsDTO">
+        SELECT MAX(COALESCE ( sm.data_scope, 0 )) AS dataScope,m.menu_code AS permissionsCode
+        FROM sys_role_menu sm INNER JOIN  sys_role_user sr ON sr.role_id = sm.role_id
+        INNER JOIN  sys_menu m ON sm.menu_id = m.menu_id
+        WHERE sr.user_id=#{userId} AND m.menu_code!=''
+        GROUP BY m.menu_code
+    </select>
+
+    <select id="getDepUserList" resultType="com.erp.common.modules.sys.dto.SysUserDTO">
+        SELECT sdu.user_id AS uid
+        FROM sys_department_user sdu
+        WHERE sdu.department_id IN (SELECT du.department_id FROM sys_department_user du WHERE du.user_id = #{userId})
+        GROUP BY sdu.user_id
+    </select>
+
+
+</mapper>

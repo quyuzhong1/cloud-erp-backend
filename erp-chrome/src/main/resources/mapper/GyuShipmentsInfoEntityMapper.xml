@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.erp.chrome.mapper.GyuShipmentsInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.cloud.erp.chrome.entity.GyuShipmentsInfoEntity">
+        <id column="id" property="id" />
+        <result column="shops_name" property="shopsName" />
+        <result column="invoice_no" property="invoiceNo" />
+        <result column="platform_no" property="platformNo" />
+        <result column="invoice_time" property="invoiceTime" />
+        <result column="member_name" property="memberName" />
+        <result column="goods_sku" property="goodsSku" />
+        <result column="goods_name" property="goodsName" />
+        <result column="quantity" property="quantity" />
+        <result column="unit_cost" property="unitCost" />
+        <result column="cost_price" property="costPrice" />
+        <result column="reality_unit_price" property="realityUnitPrice" />
+        <result column="reality_price" property="realityPrice" />
+        <result column="warehouse_name" property="warehouseName" />
+        <result column="goods_bar_code" property="goodsBarCode" />
+        <result column="tracking_number" property="trackingNumber" />
+        <result column="logistics_company" property="logisticsCompany" />
+        <result column="currency" property="currency" />
+    </resultMap>
+
+</mapper>

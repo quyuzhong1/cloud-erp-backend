@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductSaleMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductSaleEntity">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
+        <result property="yearSaleQty" column="year_sale_qty" jdbcType="INTEGER"/>
+        <result property="yearSaleAmount" column="year_sale_amount" jdbcType="NUMERIC"/>
+        <result property="monthSaleQty" column="month_sale_qty" jdbcType="INTEGER"/>
+        <result property="monthSaleAmount" column="month_sale_amount" jdbcType="NUMERIC"/>
+        <result property="saleCountry" column="sale_country" jdbcType="VARCHAR"/>
+        <result property="listingTime" column="listing_time" jdbcType="TIMESTAMP"/>
+        <result property="delistingTime" column="delisting_time" jdbcType="TIMESTAMP"/>
+        <result property="isFinishedImg" column="is_finished_img" jdbcType="INTEGER"/>
+        <result property="isFinishedVideo" column="is_finished_video" jdbcType="INTEGER"/>
+        <result property="saleState" column="sale_state" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
+        <result property="dataUrl" column="data_url" jdbcType="VARCHAR"/>
+        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
+        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        year_sale_qty,
+        year_sale_amount,month_sale_qty,month_sale_amount,
+        sale_country,listing_time,delisting_time,
+        is_finished_img,is_finished_video,sale_state,
+        pd.create_time,pd.create_user_id,pd.update_time,
+        pd.update_user_id,data_url
+    </sql>
+
+    <select id="list" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">
+        SELECT
+        ps.id,
+        pd.sku_no,
+        pd.id AS sku_id,
+        pd.images_url,
+        <include refid="Base_Column_List"/>
+        FROM product_detail pd
+        LEFT JOIN product_sale ps ON ps.sku_id = pd."id"
+        WHERE pd.product_id = #{productId}
+    </select>
+</mapper>

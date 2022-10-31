@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
+
+    <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        WHERE product_id=#{productId} AND pid='0'
+        <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
+            AND phase_id=#{phaseId}
+        </if>
+
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+        <if test="userId !=null and userId!=''">
+            AND charge_id =#{userId}
+        </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND status IN
+            <foreach collection="statusList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="searchList !=null and searchList.size>0">
+            <foreach collection="searchList" item="item">
+                <if test="item.searchType=='name'">
+                    <if test="item.searchKeyword != null and item.searchKeyword!=''">
+                        AND name LIKE concat('%',#{item.searchKeyword},'%')
+                    </if>
+                </if>
+                <if test="item.searchType=='priority'">
+                    <if test="item.priority != null ">
+                        AND priority =#{item.priority}
+                    </if>
+                </if>
+                <if test="item.searchType=='personInCharge'">
+                    <if test="item.personInChargeId != null ">
+                        AND charge_id =#{item.chargeId}
+                    </if>
+                </if>
+                <if test="item.searchType=='status'">
+                    <if test="item.status != null ">
+                        AND status =#{item.status}
+                    </if>
+                </if>
+                <if test="item.searchType=='createTime'">
+                    <if test="item.startTime != null ">
+                        AND create_time &gt;=#{item.startTime}
+                    </if>
+                    <if test="item.endTime != null ">
+                        AND end_time &gt;=#{item.endTime}
+                    </if>
+                </if>
+            </foreach>
+        </if>
+        ORDER BY
+        create_time DESC
+    </select>
+
+    <select id="getExportTask" resultType="com.erp.model.plm.dto.TaskExcelDTO">
+        SELECT t.id AS taskId ,t.name AS taskName,t.plan_start_time,
+        t.plan_end_time,t.charge_name,t.reality_start_time,t.status AS taskState,
+        date_part('day',t.plan_end_time-t.plan_start_time) AS expectedDay,
+        p.name AS productName
+        FROM project_task t INNER JOIN product_info p
+        on p.id=t.product_id
+        WHERE t.product_id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </select>
+
+    <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
+        SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,
+        t.plan_start_time,t.plan_end_time,t.description AS taskDescription,
+        t.reality_start_time,t.reality_end_time,t.status AS taskState,
+        t.create_time,t.phase_name,t.update_time,t.create_user_name,
+        t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
+        t.product_id,t.business_process_id,
+        pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,
+        pi.name AS productName,pj.charge_id AS projectChargeId,pj.charge_name AS projectChargeName
+        FROM   project_task t
+        LEFT JOIN product_info pi ON pi.id=t.product_id
+        LEFT JOIN project_info pj ON pj.product_id=pi.id
+        WHERE t.id=#{taskId}
+    </select>
+
+
+    <select id="getRefTask" resultType="com.erp.model.plm.dto.RefTaskInfoDTO">
+        SELECT id AS flagTaskId ,name AS taskName,charge_name AS taskChargeName,type AS taskType,
+        status AS taskStatus FROM project_task
+        <where>
+            <if test="taskIds !=null and taskIds.size()>0">
+                id IN
+                <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                    #{taskId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="allChildrenList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+          SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+            charge_name,quote_sys_task_id,product_id,charge_id FROM project_task
+            WHERE product_id=#{productId} AND pid !='0'
+    </select>
+
+
+    <select id="myApprovalPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        WHERE product_id=#{productId} AND pid='0' AND process_id IN
+        <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
+            #{processId}
+        </foreach>
+
+        <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
+            AND phase_id=#{phaseId}
+        </if>
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND status IN
+            <foreach collection="statusList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="searchList !=null and searchList.size>0">
+            <foreach collection="searchList" item="item">
+                <if test="item.searchType=='name'">
+                    <if test="item.searchKeyword != null and item.searchKeyword!=''">
+                        AND name LIKE concat('%',#{item.searchKeyword},'%')
+                    </if>
+                </if>
+                <if test="item.searchType=='priority'">
+                    <if test="item.priority != null ">
+                        AND priority =#{item.priority}
+                    </if>
+                </if>
+                <if test="item.searchType=='personInCharge'">
+                    <if test="item.personInChargeId != null ">
+                        AND charge_id =#{item.chargeId}
+                    </if>
+                </if>
+                <if test="item.searchType=='status'">
+                    <if test="item.status != null ">
+                        AND status =#{item.status}
+                    </if>
+                </if>
+                <if test="item.searchType=='createTime'">
+                    <if test="item.startTime != null ">
+                        AND create_time &gt;=#{item.startTime}
+                    </if>
+                    <if test="item.endTime != null ">
+                        AND end_time &gt;=#{item.endTime}
+                    </if>
+                </if>
+            </foreach>
+        </if>
+        ORDER BY
+        create_time DESC
+    </select>
+
+    <select id="findUndone" resultType="int">
+        SELECT COUNT(*) FROM project_task WHERE
+        status!=#{finishState} AND  status !=#{approvalPassState}
+        <if test="taskIds!=null and taskIds.size>0">
+            AND id IN
+            <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </if>
+
+    </select>
+
+</mapper>

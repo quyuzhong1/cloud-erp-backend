@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectPhaseMapper">
+
+
+    <select id="getTaskPhaseByProductId" resultType="com.erp.model.plm.dto.TaskPhaseDTO">
+        SELECT ID,NAME FROM  project_phase WHERE product_id=#{productId}
+        ORDER BY create_time ASC
+    </select>
+
+</mapper>

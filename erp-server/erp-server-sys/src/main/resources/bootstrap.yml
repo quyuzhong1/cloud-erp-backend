@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: erp-sys
+  profiles:
+    active: dev
+server:
+  port: 9020
+
+
+
+
+
+
