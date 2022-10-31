@@ -283,10 +283,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
+            statusList.add(TaskStateEnum.NOT_START.getCode());
+            statusList.add(TaskStateEnum.ING.getCode());
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
+            statusList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            statusList.add(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
