@@ -59,7 +59,7 @@ public class ProductPurchaseEntity implements Serializable {
     /**
      * 交货周期(天)
      */
-    @TableField(value = "delivery_cycle")
+    @TableField(value = "delivery_cycle", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal deliveryCycle;
 
     /**

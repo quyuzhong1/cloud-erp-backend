@@ -54,7 +54,7 @@ public class ProductLogisticsEntity implements Serializable {
     /**
      * 报关申报价格
      */
-    @TableField(value = "declare_price")
+    @TableField(value = "declare_price", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal declarePrice;
 
     /**

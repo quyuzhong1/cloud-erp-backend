@@ -41,7 +41,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 年目标销售额
      */
-    @TableField(value = "year_sale_amount")
+    @TableField(value = "year_sale_amount", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal yearSaleAmount;
 
     /**
@@ -53,7 +53,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 月目标销售额
      */
-    @TableField(value = "month_sale_amount")
+    @TableField(value = "month_sale_amount", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal monthSaleAmount;
 
     /**

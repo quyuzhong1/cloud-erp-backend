@@ -36,13 +36,13 @@ public class ProductPackEntity implements Serializable {
     /**
      * 毛重
      */
-    @TableField(value = "gross_weight")
+    @TableField(value = "gross_weight", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal grossWeight;
 
     /**
      * 净重
      */
-    @TableField(value = "net_weight")
+    @TableField(value = "net_weight", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal netWeight;
 
     /**
@@ -54,13 +54,13 @@ public class ProductPackEntity implements Serializable {
     /**
      * 单箱重量
      */
-    @TableField(value = "box_weight")
+    @TableField(value = "box_weight", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxWeight;
 
     /**
      * 单箱数量
      */
-    @TableField(value = "box_qty")
+    @TableField(value = "box_qty", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal boxQty;
 
     /**
