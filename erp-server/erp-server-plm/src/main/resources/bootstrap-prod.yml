@@ -1,0 +1,31 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.10
+        namespace: prod
+      config:
+        server-addr: 172.16.100.10
+        namespace: prod
+        file-extension: yml
+        shared-configs: common.yml,db-plm.yml
+#显示日期的
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+fdfs:
+  connect-timeout: 600
+  so-timeout: 1500
+  tracker-list:
+    - 172.16.110.12:22122
+
+
+
+
+
+
+
+
+
+
