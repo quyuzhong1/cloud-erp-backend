@@ -66,7 +66,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     @Override
-    public void saveDeliveryDocs(String userId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
+    public void saveDeliveryDocs(String taskChargeId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
             //这个id 可能是系统的
             List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
@@ -100,13 +100,16 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 docsPermissionService.removePermission(taskId);
                 //保存他的权限
                 List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-                for (TaskDeliveryDocsEntity item : saveList) {
-                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-                    docsPermission.setDeliveryDocsId(item.getId());
-                    docsPermission.setQueryUserId(userId);
-                    docsPermission.setProductId(productId);
-                    docsPermission.setTaskId(taskId);
-                    docsPermissionList.add(docsPermission);
+                String chargeIds[] = taskChargeId.split(",");
+                for(String chargeId:chargeIds){
+                    for (TaskDeliveryDocsEntity item : saveList) {
+                        DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                        docsPermission.setDeliveryDocsId(item.getId());
+                        docsPermission.setQueryUserId(chargeId);
+                        docsPermission.setProductId(productId);
+                        docsPermission.setTaskId(taskId);
+                        docsPermissionList.add(docsPermission);
+                    }
                 }
                 docsPermissionService.saveBatch(docsPermissionList);
             }
@@ -145,6 +148,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
+        userId = "1549948476757303297";
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         //根据当前登录人 查看它能查看的文档
@@ -157,7 +161,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
                 //当没审核通过
-                if(Objects.isNull(entity)||!entity.getStatus().equals(approvalPass)){
+                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalPass)) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
@@ -171,8 +175,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Override
     public void setPower(SetDocsPowerDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
         //保存他的权限
+        TaskDeliveryDocsEntity deliveryDocsEntity = this.getById(dto.getId());
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
         String roleId = dto.getRoleId();
         String docsId = dto.getId();
@@ -181,19 +185,25 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (StringUtils.isNotBlank(roleId)) {
             List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
             List<String> userIds = refMembers.stream().map(RoleRefMemberDTO::getMembersId).distinct().collect(Collectors.toList());
-            if (!userIds.contains(userId)) {
-                userIds.add(userId);
-            }
             for (String queryUserId : userIds) {
                 DocsPermissionEntity docsPermission = new DocsPermissionEntity();
                 docsPermission.setQueryUserId(queryUserId);
                 docsPermission.setDeliveryDocsId(docsId);
+                if (deliveryDocsEntity != null) {
+                    docsPermission.setProductId(deliveryDocsEntity.getProductId());
+                    docsPermission.setTaskId(deliveryDocsEntity.getTaskId());
+                }
+
                 docsPermissionList.add(docsPermission);
             }
         } else {
             DocsPermissionEntity save = new DocsPermissionEntity();
             save.setDeliveryDocsId(docsId);
             save.setQueryUserId("");
+            if (deliveryDocsEntity != null) {
+                save.setProductId(deliveryDocsEntity.getProductId());
+                save.setTaskId(deliveryDocsEntity.getTaskId());
+            }
             docsPermissionList.add(save);
         }
 

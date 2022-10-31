@@ -8,6 +8,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
+import com.erp.model.plm.dto.ProjectMemberDTO;
 import com.erp.model.plm.dto.UploadImgDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
@@ -50,6 +51,16 @@ public class CommonController  extends BaseController {
         return sysUserFeign.userList(dto);
     }
 
+
+    /**
+     * 获取用户 任务情况
+     * @param
+     * @return
+     */
+    @PostMapping("/getUserTask")
+    public ApiResult<List<ProjectMemberDTO>> getUserTask(@RequestBody  BaseSearchDTO dto){
+       return null;
+    }
     /**
      * 上传图片
      * @Author Luo_WG
