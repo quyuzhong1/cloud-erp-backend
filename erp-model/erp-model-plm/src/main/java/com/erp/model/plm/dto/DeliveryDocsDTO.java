@@ -70,6 +70,8 @@ public class DeliveryDocsDTO implements Serializable {
      */
     private String oldFileUrl;
 
+    private String oldFileName;
+
     /**
      * 旧 上传的类型 0 本地
      * 1 飞书
