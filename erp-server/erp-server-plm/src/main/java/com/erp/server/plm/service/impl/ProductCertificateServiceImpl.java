@@ -80,7 +80,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     /**
-     * @Description 删除产品证书信息
+     * @Description 根据skuid删除产品证书信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
      * @param skuId skuId
