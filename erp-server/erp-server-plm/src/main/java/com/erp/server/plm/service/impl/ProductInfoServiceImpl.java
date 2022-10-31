@@ -434,6 +434,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 } else {
                     item.setIterateCount(0);
                 }
+                String projectChargeId = item.getProjectChargeId();
+                if(StringUtils.isNotBlank(projectChargeId)){
+                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
+                }
+                String  productChargeId=item.getProductChargeId();
+                if(StringUtils.isNotBlank(productChargeId)){
+                    item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
+                }
 
 
                 Integer approvalStatus = item.getApprovalStatus();

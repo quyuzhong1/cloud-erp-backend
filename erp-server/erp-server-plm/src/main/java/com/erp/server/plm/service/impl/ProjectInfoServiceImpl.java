@@ -227,9 +227,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
                 //这个是交付文档
-                List<CopySourceDTO> deliveryDocsSourceList= templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
+                List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
-                templateDocsPermissionService.copyTemplateDeliveryDocs(flagId,productId,taskSourceList,deliveryDocsSourceList);
+                templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
 
             }
 
@@ -353,6 +353,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     item.setIterateCount(relevanceDTO.getCount());
                 } else {
                     item.setIterateCount(0);
+                }
+
+                String projectChargeId = item.getProjectChargeId();
+                if(StringUtils.isNotBlank(projectChargeId)){
+                    item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
+                }
+                String  productChargeId=item.getProductChargeId();
+                if(StringUtils.isNotBlank(productChargeId)){
+                    item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
                 }
 
                 //这是立项任务

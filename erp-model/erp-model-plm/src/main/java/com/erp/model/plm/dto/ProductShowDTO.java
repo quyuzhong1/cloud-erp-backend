@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Classname ProductShowDTO
@@ -83,9 +85,23 @@ public class ProductShowDTO implements Serializable {
     private String projectChargeName;
 
     /**
+     * 项目负责人id
+     */
+    private List<String> projectChargeIdList=new ArrayList<>();
+
+    private String projectChargeId;
+
+    /**
      * 产品负责人
      */
     private String productChargeName;
+
+    private String productChargeId;
+
+    /**
+     * 产品负责人id
+     */
+    private List<String> productChargeIdList;
 
     /**
      * 产品品牌
