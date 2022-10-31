@@ -3,10 +3,10 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.10
-        namespace: prod
+        namespace: uat
       config:
         server-addr: 172.16.100.10
-        namespace: prod
+        namespace: uat
         file-extension: yml
         shared-configs: common.yml,db-plm.yml
 #显示日期的
