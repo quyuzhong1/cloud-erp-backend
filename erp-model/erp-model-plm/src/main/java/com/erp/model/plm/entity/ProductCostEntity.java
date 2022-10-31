@@ -30,25 +30,25 @@ public class ProductCostEntity implements Serializable {
     /**
      * 目标含税成本
      */
-    @TableField(value = "target_tax_cost")
+    @TableField(value = "target_tax_cost", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal targetTaxCost;
 
     /**
      * 目标不含税成本
      */
-    @TableField(value = "target_no_tax_cost")
+    @TableField(value = "target_no_tax_cost", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal targetNoTaxCost;
 
     /**
      * 实际含税成本
      */
-    @TableField(value = "actual_tax_cost")
+    @TableField(value = "actual_tax_cost", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal actualTaxCost;
 
     /**
      * 实际不含税成本
      */
-    @TableField(value = "actual_no_tax_cost")
+    @TableField(value = "actual_no_tax_cost", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal actualNoTaxCost;
 
     /**
