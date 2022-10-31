@@ -142,10 +142,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
-        //根据当前登录人 查看它能查看的文档
-        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        //根据当前登录人 查看它能查看的文档
+        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId,params.getFlagId());
+
         IPage pageData = baseMapper.paging(query, params, ids);
         return new PagingVO(pageData);
     }

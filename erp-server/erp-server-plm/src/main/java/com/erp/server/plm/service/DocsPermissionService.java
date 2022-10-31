@@ -13,7 +13,7 @@ import java.util.List;
 */
 public interface DocsPermissionService extends IService<DocsPermissionEntity> {
 
-    List<String> getDocsIdsByUserId(String uid);
+    List<String> getDocsIdsByUserId(String uid,String productId);
 
     void removePermission(String taskId);
 
