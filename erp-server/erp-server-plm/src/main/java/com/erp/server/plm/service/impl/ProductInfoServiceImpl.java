@@ -710,7 +710,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                          */
                         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
                         List<String> taskIdList = taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                        projectTaskService.checkTaskFinish(taskList);
+                        List<ProjectTaskEntity> taskFinish=taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
+                        projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
                     }

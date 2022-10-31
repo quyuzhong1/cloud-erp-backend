@@ -86,7 +86,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             chekPhaseName(list, productId);
             List<ProjectPhaseEntity> updateList = new LinkedList<>();
             for (TaskPhaseDTO item : list) {
-
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setId(item.getId());
                 entity.setName(item.getName());
@@ -102,11 +101,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         //List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
         //List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
 
-        Map<Object, Long> mapGroup = list.stream().collect(Collectors.groupingBy(req -> req.getName(), Collectors.counting()));
-
-        // 筛选Map中value大于1的key
-        Stream<Object> stringStream = mapGroup.entrySet().stream().filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey());
-        if (stringStream != null) {
+        int size = list.stream().map(TaskPhaseDTO::getName).distinct().collect(Collectors.toList()).size();
+        if (size != list.size()) {
             throw new ServiceException(ApiError.ERROR_95001);
         }
 
