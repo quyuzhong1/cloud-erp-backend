@@ -931,6 +931,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }else{
                 u.setUserName("");
             }
+            approvalUserList.add(u);
         }
         resultDTO.setApprovalUserIds(approvalUserList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
