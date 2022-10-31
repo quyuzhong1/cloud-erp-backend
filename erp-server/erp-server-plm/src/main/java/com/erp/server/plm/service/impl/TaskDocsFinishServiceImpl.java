@@ -149,6 +149,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setUploadType(dto.getUploadType());
         finishEntity.setOldFileUrl(fileUrl);
         finishEntity.setOldUploadType(dto.getUploadType());
+        finishEntity.setOldFileName(fileName);
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());
@@ -268,7 +269,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
         finishEntity.setOldFileUrl(finishEntity.getFileUrl());
         finishEntity.setOldUploadType(finishEntity.getUploadType());
-
+        finishEntity.setOldFileName(finishEntity.getFileName());
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
         finishEntity.setUpdateUserId(loginUser.getUid());
@@ -318,6 +319,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             } else {
                 taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             }
+            taskEntity.setBusinessProcessId(businessProcess.getId());
             projectTaskService.updateById(taskEntity);
         }
         return flag;
