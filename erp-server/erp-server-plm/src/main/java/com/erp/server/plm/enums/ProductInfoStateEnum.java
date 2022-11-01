@@ -22,7 +22,7 @@ public enum ProductInfoStateEnum {
 
     FINISH(3,"已完成"),
 
-    WAIT_CONFIRM(3,"完成待确认"),
+    WAIT_CONFIRM(3,"完成待审核"),
 
     APPROVAL_PASS(3,"审核通过");
 

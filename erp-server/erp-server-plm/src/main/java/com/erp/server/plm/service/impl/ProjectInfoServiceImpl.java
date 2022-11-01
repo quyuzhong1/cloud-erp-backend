@@ -612,7 +612,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer toBeReleased = TaskStateEnum.TO_BE_RELEASED.getCode();
         //待审核
         Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
-        //未启动
+        //待开始
         Integer notStart = TaskStateEnum.NOT_START.getCode();
         //进行中
         Integer ing = TaskStateEnum.ING.getCode();
@@ -687,14 +687,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         //待审核
         Map<String, Object> waitConfirmMap = new HashMap<>();
-        notStartMap.put("name", ProductInfoStateEnum.WAIT_APPROVAL.getName());
-        notStartMap.put("value", notStartValue);
+        waitConfirmMap.put("name", ProductInfoStateEnum.WAIT_APPROVAL.getName());
+        waitConfirmMap.put("value", waitConfirmValue);
         list.add(waitConfirmMap);
 
         Map<String, Object> finishWaitConfirmMap = new HashMap<>();
         finishWaitConfirmMap.put("name", ProductInfoStateEnum.WAIT_CONFIRM.getName());
         finishWaitConfirmMap.put("value", finishWaitConfirmValue);
-        list.add(waitConfirmMap);
+        list.add(finishWaitConfirmMap);
 
         Map<String, Object> ingMap = new HashMap<>();
         ingMap.put("name", ProductInfoStateEnum.ING.getName());
