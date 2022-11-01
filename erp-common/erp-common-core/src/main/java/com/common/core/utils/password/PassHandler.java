@@ -25,7 +25,6 @@ public class PassHandler {
         return Md5Util.md5(pwdMd5 + salt).equals(pass);
     }
 
-
     /**
      * buildPassword:用于用户注册时产生一个密码
      *

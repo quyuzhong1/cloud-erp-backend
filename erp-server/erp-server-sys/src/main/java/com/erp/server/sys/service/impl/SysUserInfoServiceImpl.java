@@ -11,6 +11,7 @@ import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
 import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.Md5Util;
 import com.common.core.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -30,6 +31,7 @@ import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.SysAdminUserEntity;
 import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -38,10 +40,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
-import com.erp.server.sys.service.SysRoleMenuService;
-import com.erp.server.sys.service.SysRoleUserService;
-import com.erp.server.sys.service.SysUserInfoService;
-import com.erp.server.sys.service.SysUserThirdService;
+import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -82,6 +81,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private MailService mailService;
+
+    @Resource
+    private SysAdminUserServer sysAdminUserServer;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
@@ -146,7 +148,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     }
 
-
     /**
      * 账号登录
      *
@@ -155,6 +156,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public SysUserDTO accountLogin(AccountLoginDTO dto) {
+        SysUserDTO sysUserDTO = adminLogin(dto);
+        if (sysUserDTO != null) {
+            return sysUserDTO;
+        }
+
         SysUserInfoEntity entity = findByAccount(dto.getAccount());
         if (Objects.isNull(entity)) {
             return null;
@@ -189,6 +195,32 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         vo.setBindingPlatform(bindingPlatform);
         vo.setBindingState(bindingState);
+        return vo;
+    }
+
+    public SysUserDTO adminLogin(AccountLoginDTO dto) {
+        if (!dto.getAccount().equals(SysConstant.ADMIN_USER)) {
+            return null;
+        }
+
+        LambdaQueryWrapper<SysAdminUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysAdminUserEntity::getLoginAccount, dto.getAccount());
+        SysAdminUserEntity entity = sysAdminUserServer.getOne(queryWrapper);
+        //检查密码是否正确
+        boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
+        if (!passwordFlag) {
+            return null;
+        }
+
+        SysUserDTO vo = new SysUserDTO();
+        List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
+        List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
+        vo.setPermissionList(permissionList);
+        vo.setOverallMenuList(menuAll);
+        vo.setLeftMenuList(leftMenuList);
+        vo.setBindingPlatform("");
+        vo.setBindingState(0);
         return vo;
     }
 
@@ -598,7 +630,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 检查邮箱验证码是否正确
-     *
      * @param email
      * @param verifyCode
      * @return void
@@ -611,10 +642,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (StringUtils.isBlank(code) || !verifyCode.equals(code)) {
             throw new ServiceException(ApiError.ERROR_1007);
         }
-
-
     }
-
 
     /**
      * 检查是否存在
@@ -637,7 +665,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account).
                 eq(SysUserInfoEntity::getDeleteState, 1);
-
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         return entity;
     }
