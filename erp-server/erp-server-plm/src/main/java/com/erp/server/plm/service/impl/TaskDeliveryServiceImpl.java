@@ -290,7 +290,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      * @date 2022-09-28 15:32
      */
     @Override
-    public void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId, List<TaskDocsNameEntity> docsNameList) {
+    public void saveTaskDeliveryDocs(String productId, String taskId, String taskChargeId, String sysTaskId, List<TaskDocsNameEntity> docsNameList) {
         //根据任务id 获取到交付文档
         List<TaskDeliveryDocsEntity> list = getListByTaskId(sysTaskId);
         List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
@@ -323,6 +323,19 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             docsPermission.setProductId(productId);
             docsPermission.setTaskId(taskId);
             docsPermissionList.add(docsPermission);
+        }
+        if (StringUtils.isNotBlank(taskChargeId)) {
+            String taskChargeIds[] = taskChargeId.split(",");
+            for (TaskDeliveryDocsEntity item : saveList) {
+                for (String chargeId : taskChargeIds) {
+                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                    docsPermission.setDeliveryDocsId(item.getId());
+                    docsPermission.setQueryUserId(chargeId);
+                    docsPermission.setProductId(productId);
+                    docsPermission.setTaskId(taskId);
+                    docsPermissionList.add(docsPermission);
+                }
+            }
         }
         docsPermissionService.saveBatch(docsPermissionList);
     }

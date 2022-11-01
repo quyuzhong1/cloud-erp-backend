@@ -54,6 +54,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private BusinessProcessService businessProcessService;
 
+    @Autowired
+    private PreTaskService preTaskService;
 
 
     @Override
@@ -96,6 +98,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         //表示保存成功
         if (flag) {
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
+            //保存前置任务
+            preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
         }
         return flag;
     }
@@ -233,7 +237,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         String approvalUserId = sysEntity.getApprovalUserId();
         List<String> approvalUserIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(approvalUserId)) {
-            approvalUserIdList=Arrays.asList(approvalUserId.split(","));
+            approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();
         List<FindUserDTO> userList = commonService.getAllUser();
@@ -257,7 +261,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 sysTaskDTO.setBusinessName(processEntity.getBusinessName());
             }
         }
+        //前置任务id集合
+        List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
+        sysTaskDTO.setPreTaskIdList(preTaskIdList);
         return sysTaskDTO;
     }
 
