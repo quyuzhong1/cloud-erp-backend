@@ -356,11 +356,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 }
 
                 String projectChargeId = item.getProjectChargeId();
-                if(StringUtils.isNotBlank(projectChargeId)){
+                if (StringUtils.isNotBlank(projectChargeId)) {
                     item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
                 }
-                String  productChargeId=item.getProductChargeId();
-                if(StringUtils.isNotBlank(productChargeId)){
+                String productChargeId = item.getProductChargeId();
+                if (StringUtils.isNotBlank(productChargeId)) {
                     item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
                 }
 
@@ -573,18 +573,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
         List<ProductPhaseDistributeDTO> phaseDistributeList = new LinkedList<>();
-//        //阶段的 集合  以阶段名作为key 以对应结果为值
-//        for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
-//            ProductPhaseDistributeDTO phaseDistributeDTO = new ProductPhaseDistributeDTO();
-//            //阶段名
-//            String phaseName = item.getKey();
-//            phaseDistributeDTO.setPhaseName(phaseName);
-//            //分类后的任务
-//            List<ProjectTaskEntity> groupList = item.getValue();
-//            List<Map<String, Object>> phaseStateList = getPhaseStateList(groupList);
-//            phaseDistributeDTO.setPhaseDataList(phaseStateList);
-//            phaseDistributeList.add(phaseDistributeDTO);
-//        }
         for (String phaseName : phaseNameList) {
             ProductPhaseDistributeDTO phaseDistributeDTO = new ProductPhaseDistributeDTO();
             phaseDistributeDTO.setPhaseName(phaseName);
@@ -622,6 +610,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<Map<String, Object>> list = new LinkedList<>();
         //待发布
         Integer toBeReleased = TaskStateEnum.TO_BE_RELEASED.getCode();
+        //待审核
+        Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
         //未启动
         Integer notStart = TaskStateEnum.NOT_START.getCode();
         //进行中
@@ -630,7 +620,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer finish = TaskStateEnum.FINISH.getCode();
 
         //完成待确认
-        Integer waitConfirm = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+        Integer finishWaitConfirm = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
         //审核中
         Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
         //审核不通过
@@ -640,11 +630,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
         int toBeReleasedValue = 0;
         int notStartValue = 0;
+        int waitConfirmValue = 0;
         int ingValue = 0;
         int approvalIngValue = 0;
         int approvalNoPassValue = 0;
         int finishValue = 0;
-        int waitConfirmValue = 0;
+        int finishWaitConfirmValue = 0;
         int approvalPassValue = 0;
         //这是 审核任务的
         for (ProjectTaskEntity item : groupList) {
@@ -657,14 +648,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (notStart.equals(status)) {
                 notStartValue++;
             }
+            //待审核
+            if (waitConfirm.equals(status)) {
+                waitConfirmValue++;
+            }
             if (ing.equals(status)) {
                 ingValue++;
             }
             if (finish.equals(status)) {
                 finishValue++;
             }
-            if (waitConfirm.equals(status)) {
-                waitConfirmValue++;
+            if (finishWaitConfirm.equals(status)) {
+                finishWaitConfirmValue++;
             }
             if (noPass.equals(status)) {
                 approvalNoPassValue++;
@@ -688,6 +683,19 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         notStartMap.put("value", notStartValue);
         list.add(notStartMap);
 
+
+
+        //待审核
+        Map<String, Object> waitConfirmMap = new HashMap<>();
+        notStartMap.put("name", ProductInfoStateEnum.WAIT_APPROVAL.getName());
+        notStartMap.put("value", notStartValue);
+        list.add(waitConfirmMap);
+
+        Map<String, Object> finishWaitConfirmMap = new HashMap<>();
+        finishWaitConfirmMap.put("name", ProductInfoStateEnum.WAIT_CONFIRM.getName());
+        finishWaitConfirmMap.put("value", finishWaitConfirmValue);
+        list.add(waitConfirmMap);
+
         Map<String, Object> ingMap = new HashMap<>();
         ingMap.put("name", ProductInfoStateEnum.ING.getName());
         ingMap.put("value", ingValue);
@@ -708,10 +716,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         finishMap.put("value", finishValue);
         list.add(finishMap);
 
-        Map<String, Object> waitConfirmMap = new HashMap<>();
-        waitConfirmMap.put("name", ProductInfoStateEnum.WAIT_CONFIRM.getName());
-        waitConfirmMap.put("value", waitConfirmValue);
-        list.add(waitConfirmMap);
+
 
         Map<String, Object> approvalPassMap = new HashMap<>();
         approvalPassMap.put("name", ProductInfoStateEnum.APPROVAL_PASS.getName());

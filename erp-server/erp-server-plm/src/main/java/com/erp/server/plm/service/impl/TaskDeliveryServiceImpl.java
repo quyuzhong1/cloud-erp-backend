@@ -45,11 +45,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Autowired
     private TaskDocsFinishService taskDocsFinishService;
 
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
 
     /**
@@ -101,7 +102,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 //保存他的权限
                 List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
                 String chargeIds[] = taskChargeId.split(",");
-                for(String chargeId:chargeIds){
+                for (String chargeId : chargeIds) {
                     for (TaskDeliveryDocsEntity item : saveList) {
                         DocsPermissionEntity docsPermission = new DocsPermissionEntity();
                         docsPermission.setDeliveryDocsId(item.getId());
@@ -152,6 +153,17 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         BaseSearchDTO params = dto.getParams();
         //根据当前登录人 查看它能查看的文档
         List<String> ids = docsPermissionService.getDocsIdsByUserId(userId, params.getFlagId());
+        //查询是否是项目成员
+        Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
+        //如果是项目成员 可以看到所有的全部文档
+        if (ifExistProjectMember) {
+            List<String> deliveryDocsIds = docsPermissionService.getDocsIdsByProductId(params.getFlagId());
+            if (CollectionUtils.isNotEmpty(deliveryDocsIds)) {
+                ids.addAll(deliveryDocsIds);
+            }
+
+        }
+
         IPage pageData = baseMapper.paging(query, params, ids);
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {

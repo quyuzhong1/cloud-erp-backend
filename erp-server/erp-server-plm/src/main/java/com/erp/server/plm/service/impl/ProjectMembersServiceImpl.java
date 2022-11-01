@@ -331,5 +331,13 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         return resultList;
     }
 
+    @Override
+    public Boolean ifProjectMember(String userId, String productId) {
+        LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
+        queryWrapper.eq(ProjectMembersEntity::getMemberId, userId);
+        return this.count(queryWrapper) > 0 ? true : false;
+    }
+
 
 }

@@ -28,12 +28,11 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
      * @date 2022-09-23 15:13
      */
     @Override
-    public List<String> getDocsIdsByUserId(String uid,String productId) {
+    public List<String> getDocsIdsByUserId(String uid, String productId) {
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
-        queryWrapper.eq(DocsPermissionEntity::getProductId,productId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryUserId, uid).or()
-                .eq(DocsPermissionEntity::getQueryUserId, "");
+        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
+        queryWrapper.eq(DocsPermissionEntity::getQueryUserId, uid);
         return this.listObjs(queryWrapper, Object::toString);
     }
 
@@ -65,5 +64,13 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<String> getDocsIdsByProductId(String productId) {
+        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
+        return listObjs(queryWrapper, Object::toString);
     }
 }

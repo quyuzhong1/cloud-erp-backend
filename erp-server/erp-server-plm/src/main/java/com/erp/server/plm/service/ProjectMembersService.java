@@ -39,4 +39,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     List<ProjectMembersEntity> getChargeList(String  productId);
 
     List<ProjectMemberDTO> memberList(String productId);
+
+    Boolean ifProjectMember(String userId, String productId);
 }

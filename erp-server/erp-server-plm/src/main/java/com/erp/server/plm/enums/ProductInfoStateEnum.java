@@ -12,6 +12,8 @@ public enum ProductInfoStateEnum {
 
     NOT_START(0,"未开始"),
 
+    WAIT_APPROVAL(0,"待审核"),
+
     ING(1,"进行中"),
 
     APPROVAL_ING(1,"审核中"),
