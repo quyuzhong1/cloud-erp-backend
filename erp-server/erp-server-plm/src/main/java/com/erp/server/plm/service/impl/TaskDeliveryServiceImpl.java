@@ -188,12 +188,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         //保存他的权限
         TaskDeliveryDocsEntity deliveryDocsEntity = this.getById(dto.getId());
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-        String roleId = dto.getRoleId();
+        List<String> roleIds = dto.getRoleIdList();
         String docsId = dto.getId();
         //先删除所有的
         docsPermissionService.removeByDeliveryDocsId(Arrays.asList(docsId));
-        if (StringUtils.isNotBlank(roleId)) {
-            List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
+        if (CollectionUtils.isNotEmpty(roleIds)) {
+            List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(roleIds);
             List<String> userIds = refMembers.stream().map(RoleRefMemberDTO::getMembersId).distinct().collect(Collectors.toList());
             for (String queryUserId : userIds) {
                 DocsPermissionEntity docsPermission = new DocsPermissionEntity();

@@ -46,7 +46,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
 
-    List<TaskConductDTO> getTaskConductList(String projectId);
+    List<TaskConductDTO> getTaskConductList(String productId);
 
     TaskConductDTO getTaskConduct(String productId);
 

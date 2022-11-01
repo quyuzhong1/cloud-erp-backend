@@ -94,6 +94,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private TaskDocsFinishService taskDocsFinishService;
 
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
+
     /**
      * 添加系统的产品任务
      * 只添加立项的
@@ -120,7 +124,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setProductId(productId);
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                if(IsConstant.NO.equals(item.getType())){
+                if (IsConstant.NO.equals(item.getType())) {
                     entity.setStatus(TaskStateEnum.NOT_START.getCode());
                 }
                 entity.setId(IdWorker.getIdStr());
@@ -439,7 +443,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
-            if(IsConstant.NO.equals(dto.getType())){
+            if (IsConstant.NO.equals(dto.getType())) {
                 taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
             }
 
@@ -517,26 +521,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 根据产品id 获取到成员任务处理情况
      *
-     * @param projectId
+     * @param productId
      * @return java.util.List<com.erp.model.plm.dto.TaskConductDTO>
      * @author yl
      * @date 2022-09-27 9:47
      */
     @Override
-    public List<TaskConductDTO> getTaskConductList(String projectId) {
+    public List<TaskConductDTO> getTaskConductList(String productId) {
         Date date = new Date();
         List<TaskConductDTO> resultList = new LinkedList<>();
-        List<ProjectTaskEntity> list = this.getByProjectId(projectId);
-        //以成员分组
-        Map<String, List<ProjectTaskEntity>> map = list.stream().
-                collect(Collectors.groupingBy(ProjectTaskEntity::getChargeId));
-        for (Map.Entry<String, List<ProjectTaskEntity>> item : map.entrySet()) {
-            TaskConductDTO dto = new TaskConductDTO();
-            dto.setMembersId(item.getKey());
-            List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().equals(item.getKey())).collect(Collectors.toList());
+        List<ProjectTaskEntity> list = this.getByProductId(productId);
+        List<ProjectMembersEntity> membersList = projectMembersService.getListByProductId(productId);
+        Integer finishTask=TaskStateEnum.FINISH.getCode();
+        Integer approvalPass=TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPass=TaskStateEnum.APPROVAL_NO_PASS.getCode();
 
+        for(ProjectMembersEntity item:membersList){
+            TaskConductDTO dto = new TaskConductDTO();
+            dto.setMembersId(item.getMemberId());
+            List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().contains(item.getMemberId())).collect(Collectors.toList());
             //完成任务数
-            int finishTaskCount = taskList.stream().filter(t -> TaskStateEnum.FINISH.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
+            int finishTaskCount = taskList.stream().filter(t -> finishTask.equals(t.getStatus())||approvalPass.equals(t.getStatus())||approvalNoPass.equals(t.getStatus())).collect(Collectors.toList()).size();
             //进行中
             int ingTaskCount = taskList.stream().filter(t -> TaskStateEnum.ING.getCode().equals(t.getStatus())).collect(Collectors.toList()).size();
             //总任务数
@@ -544,14 +549,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //延期的任务数
             int postponeTaskCount = 0;
             postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
-
-
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
             dto.setIngTaskCount(ingTaskCount);
             dto.setPostponeTaskCount(postponeTaskCount);
             resultList.add(dto);
+
         }
+
         return resultList;
     }
 

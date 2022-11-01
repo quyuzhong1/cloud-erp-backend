@@ -14,6 +14,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class TaskConductDTO  implements Serializable {
+    private String membersName;
 
     private String membersId;
      //总的任务数
