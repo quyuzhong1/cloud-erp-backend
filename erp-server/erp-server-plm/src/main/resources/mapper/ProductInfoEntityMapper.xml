@@ -42,7 +42,7 @@
             ${params.param}
         </if>
 
-        ORDER BY p.create_time DESC
+        ORDER BY p.create_time ASC
     </select>
 
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
@@ -99,6 +99,7 @@
         <if test="params.param!='' and params.param!=null">
             ${params.param}
         </if>
+        ORDER BY pi.create_time ASC
 
     </select>
 
