@@ -55,7 +55,7 @@
             </foreach>
         </if>
         ORDER BY
-        create_time DESC
+        create_time ASC
     </select>
 
     <select id="getExportTask" resultType="com.erp.model.plm.dto.TaskExcelDTO">
@@ -160,7 +160,7 @@
             </foreach>
         </if>
         ORDER BY
-        create_time DESC
+        create_time ASC
     </select>
 
     <select id="findUndone" resultType="int">

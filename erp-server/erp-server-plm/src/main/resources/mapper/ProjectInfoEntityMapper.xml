@@ -46,7 +46,7 @@
             ${params.param}
         </if>
 
-        ORDER BY  pi.create_time ASC
+        ORDER BY  pi.create_time DESC
     </select>
 
 
@@ -87,7 +87,7 @@
         <if test="params.param!='' and params.param!=null">
             ${params.param}
         </if>
-        ORDER BY  pi.create_time ASC
+        ORDER BY  pi.create_time DESC
     </select>
 
 </mapper>
