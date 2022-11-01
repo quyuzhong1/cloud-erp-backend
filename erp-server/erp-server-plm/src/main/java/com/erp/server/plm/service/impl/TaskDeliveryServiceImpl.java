@@ -126,7 +126,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        String userId = loginUser.getUid();
+        String userId = "";
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
@@ -205,7 +205,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             String chargeId = item.getChargeId();
             //如果不为空 并且 包含这个人
             if (StringUtils.isNotBlank(chargeId) && chargeId.contains(userId)) {
-                List<String> deliveryDocsIds = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(item)).map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+                List<String> deliveryDocsIds = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(item.getId())).map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
                 resultList.addAll(deliveryDocsIds);
             }
         }
