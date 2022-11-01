@@ -236,7 +236,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         String approvalUserId = sysEntity.getApprovalUserId();
         List<String> approvalUserIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(approvalUserId)) {
+        if (StringUtils.isNotBlank(approvalUserId)&&approvalUserId.toLowerCase().equals("null")) {
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();

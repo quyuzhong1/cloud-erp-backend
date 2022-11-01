@@ -98,6 +98,16 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
         return this.list(queryWrapper);
     }
+
+
+    @Override
+    public List<String> getUserRole(String userId, String productId) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(RoleRefMemberEntity::getRoleId);
+        queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
+        queryWrapper.eq(RoleRefMemberEntity::getMembersId, userId);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
 }
 
 
