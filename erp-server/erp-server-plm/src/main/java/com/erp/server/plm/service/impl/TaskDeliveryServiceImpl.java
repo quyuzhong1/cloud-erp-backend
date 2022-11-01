@@ -145,7 +145,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
-        String userId = "";
+        String userId = loginUser.getUid();
         if (loginUser != null) {
             userId = loginUser.getUid();
         }
@@ -161,10 +161,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             if (CollectionUtils.isNotEmpty(deliveryDocsIds)) {
                 ids.addAll(deliveryDocsIds);
             }
-
         }
-
-        IPage pageData = baseMapper.paging(query, params, ids);
+        IPage pageData = new Page();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            pageData = baseMapper.paging(query, params, ids);
+        }
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
@@ -177,10 +178,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
                 }
-
             }
         }
-
         return new PagingVO(pageData);
     }
 
