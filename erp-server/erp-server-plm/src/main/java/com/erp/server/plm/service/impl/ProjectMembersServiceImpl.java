@@ -345,18 +345,22 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         Date date = new Date();
         List<TaskConductDTO> resultList = new ArrayList<>();
         List<ProjectTaskEntity> list = projectTaskService.list();
-        Integer finishTask = TaskStateEnum.FINISH.getCode();
+        Integer finishState = TaskStateEnum.FINISH.getCode();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Integer ing = TaskStateEnum.ING.getCode();
         for (FindUserDTO item : userList) {
             List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().contains(item.getUserId())).collect(Collectors.toList());
             //完成任务数
-            int finishTaskCount = taskList.stream().filter(t -> finishTask.equals(t.getStatus()) || approvalPass.equals(t.getStatus()) || approvalNoPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+            int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus()) || approvalNoPass.equals(t.getStatus())).collect(Collectors.toList()).size();
             //进行中
             int ingTaskCount = taskList.stream().filter(t -> ing.equals(t.getStatus())).collect(Collectors.toList()).size();
             //总任务数
             int totalTaskCount = taskList.size();
+
+
+            int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus()) && !approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+
 
             //延期的任务数
             int postponeTaskCount = 0;
@@ -368,6 +372,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             dto.setFinishTaskCount(finishTaskCount);
             dto.setIngTaskCount(ingTaskCount);
             dto.setPostponeTaskCount(postponeTaskCount);
+            dto.setUnfinishedTaskCount(unfinishedTaskCount);
             resultList.add(dto);
         }
 
