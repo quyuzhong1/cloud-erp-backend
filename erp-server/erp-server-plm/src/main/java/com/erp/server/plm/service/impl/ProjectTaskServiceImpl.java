@@ -128,14 +128,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
                 String id = IdWorker.getIdStr();
                 entity.setId(id);
-
                 source.setNewCreateId(id);
                 source.setDataId(item.getId());
                 sourceList.add(source);
                 if (IsConstant.NO.equals(item.getType())) {
                     entity.setStatus(TaskStateEnum.NOT_START.getCode());
                 }
-                entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), entity.getChargeId(), item.getId(), taskDocsNameList);
@@ -299,7 +297,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 } else {
                     entity.setPhaseId("");
                 }
-                entity.setId(IdWorker.getIdStr());
                 boolean flag = this.save(entity);
                 if (flag) {
                     taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), entity.getChargeId(), item.getId(), docsNameList);
