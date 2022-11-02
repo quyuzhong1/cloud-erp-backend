@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -14,7 +13,6 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
-import com.erp.model.plm.dto.FinishDocsDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -24,7 +22,6 @@ import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.SysDocsService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -99,8 +96,6 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     }
 
 
-
-
     /**
      * 修改状态
      *
@@ -111,7 +106,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
      */
     @Override
     public Boolean updateState(StateDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
         LambdaUpdateWrapper<SysDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(SysDocsEntity::getStartState, dto.getState());
         updateWrapper.set(SysDocsEntity::getUpdateUser, loginUser.getUserName());
@@ -170,7 +165,7 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     public List<Map<String, Object>> sysDocsNames() {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(SysDocsEntity::getName, SysDocsEntity::getId, SysDocsEntity::getStartState);
-        queryWrapper.eq(SysDocsEntity::getStartState,IsConstant.YES);
+        queryWrapper.eq(SysDocsEntity::getStartState, IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
 
@@ -178,8 +173,8 @@ public class SysDocsServiceImpl extends ServiceImpl<SysDocsMapper, SysDocsEntity
     public List<String> getSysDocsName() {
         LambdaQueryWrapper<SysDocsEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(SysDocsEntity::getName);
-        queryWrapper.eq(SysDocsEntity::getStartState,IsConstant.YES);
-        return this.listObjs(queryWrapper,Object::toString);
+        queryWrapper.eq(SysDocsEntity::getStartState, IsConstant.YES);
+        return this.listObjs(queryWrapper, Object::toString);
     }
 
 

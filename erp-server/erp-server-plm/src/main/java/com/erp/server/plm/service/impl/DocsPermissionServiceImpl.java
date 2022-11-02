@@ -4,13 +4,19 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.server.plm.mapper.DocsPermissionEntityMapper;
 import com.erp.server.plm.service.DocsPermissionService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -107,7 +113,25 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryRoleId,"");
+        queryWrapper.eq(DocsPermissionEntity::getQueryRoleId, "");
         return null;
+    }
+
+    @Override
+    public SetDocsPowerDTO getDocsPower(String deliveryDocsId) {
+        if (StringUtils.isBlank(deliveryDocsId)) {
+            throw new ServiceException(ApiError.ERROR_95052);
+        }
+        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DocsPermissionEntity::getDeliveryDocsId, deliveryDocsId);
+        List<DocsPermissionEntity> list = this.list(queryWrapper);
+        SetDocsPowerDTO power = new SetDocsPowerDTO();
+        power.setId(deliveryDocsId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            power.setRoleIdList(list.stream().map(DocsPermissionEntity::getQueryRoleId).collect(Collectors.toList()));
+        }else{
+            power.setRoleIdList(new ArrayList<>());
+        }
+        return power;
     }
 }

@@ -335,7 +335,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
 
-}
+    }
 
     /**
      * 分页获取
@@ -944,7 +944,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getPlanEndTime().compareTo(t.getRealityEndTime()) == 1).collect(Collectors.toList()).size();
         ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
         taskCountDTO.setFinishTaskCount(finishTaskCount);
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);
@@ -1904,7 +1904,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 int difference = DateUtil.getDiffDay(planEndTime, nowDay);
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
-                } else {
+                }
+                if (difference == 0) {
+                    warning = "今天后过期";
+                }
+                if (difference < 0) {
                     if (difference >= -2) {
                         warning = Math.abs(difference) + 1 + "天后过期";
                     }

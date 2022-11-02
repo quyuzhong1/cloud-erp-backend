@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.SysDocsMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.DocsShowDTO">
-        SELECT id,name,(start_state=#{flagState}) AS startState,create_user_id,create_time,
+        SELECT id,name,(start_state=${flagState}) AS startState,create_user_id,create_time,
         create_user,update_user_id,update_user,update_time,
         (SELECT COUNT (*) FROM task_delivery_docs td Where td.docs_name_id = sd.id) AS useCount
         FROM sys_docs_name sd
