@@ -18,5 +18,5 @@ public interface PlmTaskFeign {
 
     //流程审核通过 改变任务状态
     @PostMapping("plm/task/feign/process/pass")
-    void processPass(@RequestParam(value="processId") String processId);
+    void processPass(@RequestBody String processId);
 }
