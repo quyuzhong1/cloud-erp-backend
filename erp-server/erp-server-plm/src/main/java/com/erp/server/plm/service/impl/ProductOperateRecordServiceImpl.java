@@ -38,6 +38,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     public List<ProductOperateRecordEntity> list(String productId) {
         LambdaQueryWrapper<ProductOperateRecordEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductOperateRecordEntity::getProductId, productId);
+        queryWrapper.orderByDesc(ProductOperateRecordEntity::getCreateTime);
         List<ProductOperateRecordEntity> list = this.list(queryWrapper);
         List<ProductOperateRecordEntity> entities = new ArrayList<>();
         for (ProductOperateRecordEntity req : list) {
