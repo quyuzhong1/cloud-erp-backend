@@ -166,12 +166,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return null;
         }
 
-        //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(dto);
-        if (sysUserDTO != null) {
-            return sysUserDTO;
-        }
-
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE == userState) {
@@ -179,6 +173,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
+
+        //判断是否是超级管理员登录
+        SysUserDTO sysUserDTO = adminLogin(vo);
+        if (sysUserDTO != null) {
+            return sysUserDTO;
+        }
+
         //后面还有编写 1580852739573813249
         String uid = entity.getUid();
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
@@ -200,11 +201,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return vo;
     }
 
-    public SysUserDTO adminLogin(AccountLoginDTO dto) {
-        if (!dto.getAccount().equals(SysConstant.ADMIN_USER)) {
+    public SysUserDTO adminLogin(SysUserDTO vo) {
+        if (!vo.getUserAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-        SysUserDTO vo = new SysUserDTO();
         List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
         List<String> permissionList = sysRoleMenuService.findMenuCodeAll();
