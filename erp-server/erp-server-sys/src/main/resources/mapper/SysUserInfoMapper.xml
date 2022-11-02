@@ -17,7 +17,7 @@
         SELECT uid,user_name,real_name,mobile,user_state,last_login_time,head_icon,
         last_login_ip,login_count,user_account,create_time,update_time,email
         FROM sys_user_info sui
-        WHERE delete_state=1
+        WHERE delete_state=1 AND user_account not in ('admin')
         <if test="params.state !=null">
             AND sui.user_state=#{params.state}
         </if>
