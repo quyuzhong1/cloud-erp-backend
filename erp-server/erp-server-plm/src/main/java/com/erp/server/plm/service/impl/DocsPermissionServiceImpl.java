@@ -114,7 +114,7 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
         queryWrapper.eq(DocsPermissionEntity::getQueryRoleId, "");
-        return null;
+        return this.listObjs(queryWrapper, Object::toString);
     }
 
     @Override
@@ -127,11 +127,13 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         List<DocsPermissionEntity> list = this.list(queryWrapper);
         SetDocsPowerDTO power = new SetDocsPowerDTO();
         power.setId(deliveryDocsId);
+        List<String> roleIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
-            power.setRoleIdList(list.stream().map(DocsPermissionEntity::getQueryRoleId).collect(Collectors.toList()));
-        }else{
-            power.setRoleIdList(new ArrayList<>());
+            if (StringUtils.isNotBlank(list.get(0).getQueryRoleId())) {
+                roleIdList = list.stream().map(DocsPermissionEntity::getQueryRoleId).collect(Collectors.toList());
+            }
         }
+        power.setRoleIdList(roleIdList);
         return power;
     }
 }
