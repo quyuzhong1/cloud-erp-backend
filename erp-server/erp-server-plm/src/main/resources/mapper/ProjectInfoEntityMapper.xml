@@ -14,7 +14,7 @@
         FROM product_info p INNER JOIN project_info
         pi
         ON p.id=pi.product_id
-        WHERE   P.delete_state=0
+        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -56,12 +56,14 @@
         p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time FROM product_info p
         INNER JOIN project_info pi ON p.id=pi.product_id
-        WHERE  P.delete_state=0
+        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
-            AND P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
             AND pi.project_status IN
