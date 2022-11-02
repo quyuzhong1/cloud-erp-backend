@@ -17,7 +17,7 @@
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%') OR )
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
