@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -32,10 +33,12 @@ public class TaskExcelDTO implements Serializable {
 
     @ColumnWidth(20)
     @ExcelProperty(value = "预计开始时间", index = 3)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String planStartTime;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "预计结束时间", index = 4)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String planEndTime;
 
     @ColumnWidth(20)
@@ -45,10 +48,12 @@ public class TaskExcelDTO implements Serializable {
 
     @ColumnWidth(20)
     @ExcelProperty(value = "实际开始时间", index = 6)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String realityStartTime;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "实际结束时间", index = 7)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String realityEndTime;
 
     @ColumnWidth(10)
