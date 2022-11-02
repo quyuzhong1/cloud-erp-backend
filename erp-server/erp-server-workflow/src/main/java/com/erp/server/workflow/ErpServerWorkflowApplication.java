@@ -8,9 +8,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @EnableProcessApplication
-@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
-@EnableDiscoveryClient
+@SpringBootApplication
 @EnableFeignClients(basePackages = {"com.erp.rpc.*"})
+@EnableDiscoveryClient
 public class ErpServerWorkflowApplication {
 
     public static void main(String[] args) {
