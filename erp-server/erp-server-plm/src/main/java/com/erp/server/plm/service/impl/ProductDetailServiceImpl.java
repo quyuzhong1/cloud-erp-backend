@@ -827,6 +827,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
             //销售状态编码转换成中文
@@ -839,12 +840,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 req.setArrivalState(PurchaseStateEnum.getNameByCode(Integer.valueOf(req.getArrivalState())));
             }
             if (StringUtils.isNotBlank(req.getPurchaseUser())) {
-                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-                baseSearchDTO.setSearchKeyword(req.getPurchaseUser());
-                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-                List<FindUserDTO> userList =  listApiResult.getData();
-                if (!CollectionUtils.isEmpty(userList)) {
-                    req.setPurchaseUser(userList.get(0).getUserName());
+                FindUserDTO findUserDTO = userList.stream().filter(q -> q.getUserId().equals(req.getPurchaseUser())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                    req.setPurchaseUser(findUserDTO.getUserName());
                 }
             }
 

@@ -14,6 +14,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
@@ -203,7 +204,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     if (!Objects.isNull(taskConduct)) {
                         totalTaskCount = taskConduct.getTotalTaskCount();
                         finishTaskCount = taskConduct.getFinishTaskCount();
-                        ingTaskCount = taskConduct.getIngTaskCount();
+                        ingTaskCount = totalTaskCount - finishTaskCount;
                         postponeTaskCount = taskConduct.getPostponeTaskCount();
                     }
                     item.setTotalTaskCount(totalTaskCount);
@@ -328,6 +329,53 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 item.setTaskCount(taskCount);
             }
         }
+        return resultList;
+    }
+
+    @Override
+    public Boolean ifProjectMember(String userId, String productId) {
+        LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
+        queryWrapper.eq(ProjectMembersEntity::getMemberId, userId);
+        return this.count(queryWrapper) > 0 ? true : false;
+    }
+
+    @Override
+    public List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList) {
+        Date date = new Date();
+        List<TaskConductDTO> resultList = new ArrayList<>();
+        List<ProjectTaskEntity> list = projectTaskService.list();
+        Integer finishState = TaskStateEnum.FINISH.getCode();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        Integer ing = TaskStateEnum.ING.getCode();
+        for (FindUserDTO item : userList) {
+            List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().contains(item.getUserId())).collect(Collectors.toList());
+            //完成任务数
+            int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus()) || approvalNoPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+            //进行中
+            int ingTaskCount = taskList.stream().filter(t -> ing.equals(t.getStatus())).collect(Collectors.toList()).size();
+            //总任务数
+            int totalTaskCount = taskList.size();
+
+
+            int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus()) && !approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+
+
+            //延期的任务数
+            int postponeTaskCount = 0;
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            TaskConductDTO dto = new TaskConductDTO();
+            dto.setMembersId(item.getUserId());
+            dto.setMembersName(item.getUserName());
+            dto.setTotalTaskCount(totalTaskCount);
+            dto.setFinishTaskCount(finishTaskCount);
+            dto.setIngTaskCount(ingTaskCount);
+            dto.setPostponeTaskCount(postponeTaskCount);
+            dto.setUnfinishedTaskCount(unfinishedTaskCount);
+            resultList.add(dto);
+        }
+
         return resultList;
     }
 

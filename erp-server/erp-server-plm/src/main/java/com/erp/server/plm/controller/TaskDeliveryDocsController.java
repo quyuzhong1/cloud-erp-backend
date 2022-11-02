@@ -9,6 +9,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
+import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -16,8 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**  产品开发管理
- *  TaskDocsController
+/**
+ * 产品开发管理
+ * TaskDocsController
+ *
  * @Description TODO
  * @Date 2022-09-22 11:36
  * @Created by yl
@@ -29,8 +32,12 @@ public class TaskDeliveryDocsController extends BaseController {
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
+    @Autowired
+    private DocsPermissionService docsPermissionService;
+
     /**
      * 输出物-输出物列表
+     *
      * @param dto
      * @return
      */
@@ -49,7 +56,8 @@ public class TaskDeliveryDocsController extends BaseController {
     }
 
     /**
-     * 输出物-权限
+     * 输出物-设置权限
+     *
      * @param dto
      * @return
      */
@@ -59,4 +67,20 @@ public class TaskDeliveryDocsController extends BaseController {
         taskDeliveryService.setPower(dto);
         return success();
     }
+
+
+    /**
+     * 输出物-查看权限
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/getPower")
+    // @RequestPermissions("plm:taskDocs:setPower")
+    public ApiResult<SetDocsPowerDTO> getPower(@RequestParam(value = "id") String id) {
+        SetDocsPowerDTO docsPower = docsPermissionService.getDocsPower(id);
+        return success(docsPower);
+    }
+
+
 }

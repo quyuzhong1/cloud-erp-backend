@@ -144,6 +144,27 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     }
 
+    /**
+     * 获取所有的菜单code
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:23
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     **/
+    @Override
+    public List<SysMenuVO> findMenuAll() {
+        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
+        List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
+        List<SysMenuVO> resultList = menuList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
+                map(item -> {
+                    item.setParentName("");
+                    item.setChildrenList(getRoleChildrenList(item, menuList, menuIds));
+                    return item;
+                }).collect(Collectors.toList());
+        return resultList;
+    }
+
 
     /**
      * 根据角色id 和类型查找对用的code
@@ -165,7 +186,17 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         } else {
             return baseMapper.findMenuCodeByRoleIds(roleIds, functionType);
         }
+    }
 
+    /**
+     * 获取所有菜单code
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:30
+     * @return java.util.List<java.lang.String>
+     **/
+    @Override
+    public List<String> findMenuCodeAll() {
+        return baseMapper.findAllMenuCode(null);
     }
 
     /**
@@ -181,7 +212,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(SysRoleMenuEntity::getRoleId, roleIds);
         this.remove(queryWrapper);
-
     }
 
     /**
@@ -276,6 +306,28 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         return resultList;
     }
 
+
+    /**
+     * 获取左侧菜单所有列表
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:26
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     **/
+    @Override
+    public List<SysMenuVO> findLeftMenuAll() {
+        List<SysMenuEntity> allList = sysMenuService.list();
+        List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
+        List<String> menuIds = allList.stream().map(s -> s.getMenuId()).collect(Collectors.toList());
+        List<SysMenuVO> resultList = menuList.stream().
+                filter(item -> "0".equals(item.getParentId()) && menuIds.contains(item.getMenuId())).
+                map(item -> {
+                    item.setParentName("");
+                    item.setChildrenList(getRoleChildrenLeftList(item, menuList, menuIds, SysConstant.FUNCTION_TYPE, SysConstant.BUTTON_TYPE));
+                    return item;
+                }).collect(Collectors.toList());
+        return resultList;
+    }
+
     /**
      * bao
      *
@@ -343,7 +395,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     private List<RoleMenuTreeDTO> getChildrenList(RoleMenuTreeDTO item, List<RoleMenuTreeDTO> menuList, List<String> menuIds, List<SysRoleMenuEntity> sysRoleMenuEntityList) {
         List<RoleMenuTreeDTO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
                 .map(m -> {
-                    System.out.println("bb:" + m.getMenuId());
                     m.setParentName(item.getMenuName());
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");
                     //表示 没有 选中

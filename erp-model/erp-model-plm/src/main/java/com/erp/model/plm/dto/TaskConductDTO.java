@@ -14,18 +14,40 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class TaskConductDTO  implements Serializable {
+    private String membersName;
 
+    /**
+     * 成員id
+     */
     private String membersId;
-     //总的任务数
+
+    /**
+     * 总的任务数
+     */
     private Integer totalTaskCount;
 
-    //完成的任务数
+
+    /**
+     * 完成的任务数
+     */
     private Integer finishTaskCount;
 
-    //完成的任务数
+
+    /**
+     * 进行中的任务数
+     */
     private Integer ingTaskCount;
 
-    //延期
+
+
+    /**
+     * 延期的任务数
+     */
     private Integer postponeTaskCount;
+
+    /**
+     * 未完成的任务数
+     */
+    private Integer unfinishedTaskCount;
 
 }

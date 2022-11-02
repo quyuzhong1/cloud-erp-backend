@@ -28,5 +28,5 @@ public class SetDocsPowerDTO implements Serializable {
      * 角色id
      * 传空就是全部
      */
-    private String roleId;
+    private List<String> roleIdList;
 }

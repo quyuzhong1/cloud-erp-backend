@@ -55,12 +55,14 @@
             </foreach>
         </if>
         ORDER BY
-        create_time DESC
+        create_time ASC
     </select>
 
     <select id="getExportTask" resultType="com.erp.model.plm.dto.TaskExcelDTO">
-        SELECT t.id AS taskId ,t.name AS taskName,t.plan_start_time,
-        t.plan_end_time,t.charge_name,t.reality_start_time,t.status AS taskState,
+        SELECT t.id AS taskId ,t.name AS taskName, to_char(t.plan_start_time,'yyyy-MM-dd') AS planStartTime,
+        to_char(t.plan_end_time,'yyyy-MM-dd') AS planEndTime,t.charge_name,
+        to_char(t.reality_start_time,'yyyy-MM-dd') AS realityStartTime,to_char(t.reality_end_time,'yyyy-MM-dd') AS realityEndTime,
+        t.status AS taskState,
         date_part('day',t.plan_end_time-t.plan_start_time) AS expectedDay,
         p.name AS productName
         FROM project_task t INNER JOIN product_info p
@@ -160,7 +162,7 @@
             </foreach>
         </if>
         ORDER BY
-        create_time DESC
+        create_time ASC
     </select>
 
     <select id="findUndone" resultType="int">

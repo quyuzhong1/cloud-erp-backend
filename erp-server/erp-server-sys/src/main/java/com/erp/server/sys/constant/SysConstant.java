@@ -25,4 +25,7 @@ public class SysConstant {
     public static final Integer YES_STATE = 1;
 
     public static final Integer NO_STATE = 0;
+
+    //超级管理员账户
+    public static final String ADMIN_USER = "admin";
 }

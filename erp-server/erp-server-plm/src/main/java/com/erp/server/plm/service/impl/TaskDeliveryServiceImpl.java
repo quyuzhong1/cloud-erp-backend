@@ -45,11 +45,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Autowired
     private TaskDocsFinishService taskDocsFinishService;
 
-    @Autowired
-    private CommonService commonService;
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
 
     /**
@@ -66,7 +67,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     }
 
     @Override
-    public void saveDeliveryDocs(String taskChargeId, String taskId, String productId, List<DocsDTO> deliveryDocsList) {
+    public void saveDeliveryDocs(String taskId, String productId, List<DocsDTO> deliveryDocsList) {
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
             //这个id 可能是系统的
             List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
@@ -80,7 +81,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             }
             //先删除文档 不存在的数据
             removeTaskDocs(taskId, existDocsIds, docsId);
-
             //需要过滤一下的
             deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
             //保存交付文档
@@ -98,18 +98,14 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             if (flag) {
                 //先删除 不在的数据
                 docsPermissionService.removePermission(taskId);
-                //保存他的权限
                 List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-                String chargeIds[] = taskChargeId.split(",");
-                for(String chargeId:chargeIds){
-                    for (TaskDeliveryDocsEntity item : saveList) {
-                        DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-                        docsPermission.setDeliveryDocsId(item.getId());
-                        docsPermission.setQueryUserId(chargeId);
-                        docsPermission.setProductId(productId);
-                        docsPermission.setTaskId(taskId);
-                        docsPermissionList.add(docsPermission);
-                    }
+                for (TaskDeliveryDocsEntity item : saveList) {
+                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                    docsPermission.setDeliveryDocsId(item.getId());
+                    docsPermission.setQueryRoleId("");
+                    docsPermission.setProductId(productId);
+                    docsPermission.setTaskId(taskId);
+                    docsPermissionList.add(docsPermission);
                 }
                 docsPermissionService.saveBatch(docsPermissionList);
             }
@@ -150,9 +146,43 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
-        //根据当前登录人 查看它能查看的文档
-        List<String> ids = docsPermissionService.getDocsIdsByUserId(userId, params.getFlagId());
-        IPage pageData = baseMapper.paging(query, params, ids);
+        List<String> findDeliveryDocsIds = new ArrayList<>();
+        /**
+         * 根据产品id 获取当前登录人 是否是 任务负责人
+         * 如果是就要添加对应的 文档id
+         */
+        List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(params.getFlagId(), userId);
+        if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
+            findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
+        }
+        /**
+         * 查询用户是否在该角色下 在的话 就查询对应的文档id
+         */
+        List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
+        if (CollectionUtils.isNotEmpty(userRoleIds)) {
+            List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
+            if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
+                findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+            }
+        }
+        /**
+         * 查询设置全部的的人可以看的
+         */
+        List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
+        if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
+            //查询是否是项目成员
+            Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
+            //如果是项目成员 可以看到所有设置全部的
+            if (ifExistProjectMember) {
+                findDeliveryDocsIds.addAll(allDeliveryDocsIds);
+            }
+        }
+        findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());
+
+        IPage pageData = new Page();
+        if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
+            pageData = baseMapper.paging(query, params, findDeliveryDocsIds);
+        }
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
@@ -165,11 +195,35 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
                 }
-
             }
         }
-
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 查看用户 是不是 任务负责人 如果是 就加文档id
+     *
+     * @param productId
+     * @param userId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-01 18:42
+     */
+    private List<String> getTaskChargeDeliveryDocsIds(String productId, String userId) {
+        List<String> resultList = new ArrayList<>();
+        List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(productId);
+        //这是任务的
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+        for (ProjectTaskEntity item : taskList) {
+            //任务负责人
+            String chargeId = item.getChargeId();
+            //如果不为空 并且 包含这个人
+            if (StringUtils.isNotBlank(chargeId) && chargeId.contains(userId)) {
+                List<String> deliveryDocsIds = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(item.getId())).map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+                resultList.addAll(deliveryDocsIds);
+            }
+        }
+        return resultList;
     }
 
     @Override
@@ -177,37 +231,32 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         //保存他的权限
         TaskDeliveryDocsEntity deliveryDocsEntity = this.getById(dto.getId());
         List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
-        String roleId = dto.getRoleId();
+        List<String> roleIds = dto.getRoleIdList();
         String docsId = dto.getId();
-        //先删除所有的
-        docsPermissionService.removeByDeliveryDocsId(Arrays.asList(docsId));
-        if (StringUtils.isNotBlank(roleId)) {
-            List<RoleRefMemberDTO> refMembers = roleRefMemberService.getByRoleIds(Arrays.asList(roleId));
-            List<String> userIds = refMembers.stream().map(RoleRefMemberDTO::getMembersId).distinct().collect(Collectors.toList());
-            for (String queryUserId : userIds) {
-                DocsPermissionEntity docsPermission = new DocsPermissionEntity();
-                docsPermission.setQueryUserId(queryUserId);
-                docsPermission.setDeliveryDocsId(docsId);
-                if (deliveryDocsEntity != null) {
+        if (deliveryDocsEntity != null) {
+            //先删除所有的
+            docsPermissionService.removeByDeliveryDocsId(Arrays.asList(docsId));
+            if (CollectionUtils.isNotEmpty(roleIds)) {
+                for (String roleId : roleIds) {
+                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                    docsPermission.setQueryRoleId(roleId);
+                    docsPermission.setDeliveryDocsId(deliveryDocsEntity.getId());
                     docsPermission.setProductId(deliveryDocsEntity.getProductId());
                     docsPermission.setTaskId(deliveryDocsEntity.getTaskId());
+                    docsPermissionList.add(docsPermission);
                 }
-
-                docsPermissionList.add(docsPermission);
-            }
-        } else {
-            DocsPermissionEntity save = new DocsPermissionEntity();
-            save.setDeliveryDocsId(docsId);
-            save.setQueryUserId("");
-            if (deliveryDocsEntity != null) {
+            } else {
+                //当为空 就是全部的
+                DocsPermissionEntity save = new DocsPermissionEntity();
+                save.setDeliveryDocsId(docsId);
                 save.setProductId(deliveryDocsEntity.getProductId());
                 save.setTaskId(deliveryDocsEntity.getTaskId());
+                save.setQueryRoleId("");
+                docsPermissionList.add(save);
             }
-            docsPermissionList.add(save);
         }
 
         docsPermissionService.saveBatch(docsPermissionList);
-
     }
 
 
@@ -308,11 +357,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         for (TaskDeliveryDocsEntity item : saveList) {
             DocsPermissionEntity docsPermission = new DocsPermissionEntity();
             docsPermission.setDeliveryDocsId(item.getId());
-            docsPermission.setQueryUserId("");
+            docsPermission.setQueryRoleId("");
             docsPermission.setProductId(productId);
             docsPermission.setTaskId(taskId);
             docsPermissionList.add(docsPermission);
         }
+
         docsPermissionService.saveBatch(docsPermissionList);
     }
 
@@ -384,6 +434,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         return new ArrayList<>();
     }
+
 
     /**
      * 根据任务id 获取对应要交付的文档

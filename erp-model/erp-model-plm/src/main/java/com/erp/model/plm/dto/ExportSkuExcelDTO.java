@@ -56,7 +56,7 @@ public class ExportSkuExcelDTO implements Serializable {
 
     @ExcelProperty(value = "计划上市时间", index = 14)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planListingTime;
+    private String planListingTime;
 
     @ExcelProperty(value = "单位", index = 15)
     private String unitName;
@@ -172,9 +172,11 @@ public class ExportSkuExcelDTO implements Serializable {
     private String planOrderQty;
 
     @ExcelProperty(value = "首批下单时间", index = 52)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String placeOrderTime;
 
     @ExcelProperty(value = "预计首批到货时间", index = 53)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String planArrivalTime;
 
     @ExcelProperty(value = "MOQ(最小起订量)", index = 54)
@@ -184,6 +186,7 @@ public class ExportSkuExcelDTO implements Serializable {
     private BigDecimal deliveryCycle;
 
     @ExcelProperty(value = "实际首批到货时间", index = 56)
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String actualArrivalTime;
 
     @ExcelProperty(value = "首批到货状态", index = 57)

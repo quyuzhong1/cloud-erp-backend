@@ -30,8 +30,23 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
 
     List<SysMenuVO> findMenuByRoleIds(List<String> ids);
 
+    /**
+     * 获取所有的菜单code
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:23
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     **/
+    List<SysMenuVO> findMenuAll();
 
     List<String> findMenuCodeByRoleIds(List<String> ids, Integer type);
+
+    /**
+     * 获取所有菜单code
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:30
+     * @return java.util.List<java.lang.String>
+     **/
+    List<String> findMenuCodeAll();
 
     void removeRefByRoleIds(List<String> roleIds);
 
@@ -40,6 +55,14 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     RoleMenuDTO findRoleMenuTreeByRoleId(String roleId);
 
     List<SysMenuVO> findLeftMenuByRoleIds(List<String> roleIds);
+
+    /**
+     * 获取左侧菜单所有列表
+     * @Author Luo_WG
+     * @Date 2022/11/1 14:26
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
+     **/
+    List<SysMenuVO> findLeftMenuAll();
 
     Boolean saveRoleMenu(SysRoleMenuDTO dto);
 }

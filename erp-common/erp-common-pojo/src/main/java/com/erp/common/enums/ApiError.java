@@ -137,6 +137,7 @@ public enum ApiError implements Serializable {
     ERROR_95049(95049, "您无权操作，不是您审核的任务"),
     ERROR_95050(95050, "操作失败，有未完成的任务"),
     ERROR_95051(95051, "模板不存在"),
+    ERROR_95052(95052, "文档不存在"),
 
 
 

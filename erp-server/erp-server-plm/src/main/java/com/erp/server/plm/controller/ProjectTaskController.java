@@ -310,7 +310,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/feign/process/pass")
-    public ApiResult processPass(String processId) {
+    public ApiResult processPass(@RequestBody String processId) {
         taskService.approvalTaskPass(processId);
         return success();
     }

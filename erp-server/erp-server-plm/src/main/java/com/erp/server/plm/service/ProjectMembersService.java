@@ -1,7 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectMembersEntity;
@@ -39,4 +41,8 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     List<ProjectMembersEntity> getChargeList(String  productId);
 
     List<ProjectMemberDTO> memberList(String productId);
+
+    Boolean ifProjectMember(String userId, String productId);
+
+    List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList);
 }

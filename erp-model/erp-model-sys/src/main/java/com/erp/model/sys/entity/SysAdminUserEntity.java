@@ -19,29 +19,30 @@ public class SysAdminUserEntity {
     private String userId;
 
     //用户名
+    @TableField(value = "user_name")
     private String userName;
 
     //手机号
-    private String mobile;
-
+    @TableField(value = "password")
     private String password;
 
+    @TableField(value = "salt")
     private String salt;
 
     //用户删除状态 1 正常 0 删除
-    @TableLogic
+    @TableField(value = "user_delete_state")
     private Integer userDeleteState;
 
     //登录的账号
+    @TableField(value = "login_account")
     private String loginAccount;
 
-    //用户状态 1 正常 0 禁用
-    private Integer userState;
+    @TableField(value = "real_name")
+    private String realName;
 
-
-    @TableField(fill= FieldFill.INSERT)
+    @TableField(value = "create_time", fill= FieldFill.INSERT)
     private Date createTime;
 
-    @TableField(fill= FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_time", fill= FieldFill.INSERT_UPDATE)
     private Date updateTime;
 }

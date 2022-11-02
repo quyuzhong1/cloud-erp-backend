@@ -16,7 +16,9 @@
             AND P.category_id=#{params.categoryId}
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
-            AND P.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
             AND P.approval_status IN
@@ -47,8 +49,8 @@
 
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
         SELECT pi.id AS productId, pi.name AS productName,pi.charge_name AS productChargeName,
-        pj.charge_name AS projectChargeName,pj.start_time AS planStartTime,
-        pj.end_time AS planEndTime, pj.project_status,pi.approval_status AS productStatus
+        pj.charge_name AS projectChargeName,to_char(pj.start_time,'yyyy-MM-dd') AS planStartTime,
+        to_char(pj.end_time,'yyyy-MM-dd') AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
         WHERE  pi.is_finished_product_dev = 1 AND pi.id IN
@@ -99,6 +101,7 @@
         <if test="params.param!='' and params.param!=null">
             ${params.param}
         </if>
+        ORDER BY pi.create_time  DESC
 
     </select>
 

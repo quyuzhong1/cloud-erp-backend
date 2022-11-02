@@ -176,7 +176,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
     public void removeRoleUser(String roleId, Set<String> userIds) {
         if (CollectionUtils.isNotEmpty(userIds)) {
             LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
-            wrapper.in(SysRoleUserEntity::getUserId, userIds);
             wrapper.eq(SysRoleUserEntity::getRoleId, roleId);
             baseMapper.delete(wrapper);
         }

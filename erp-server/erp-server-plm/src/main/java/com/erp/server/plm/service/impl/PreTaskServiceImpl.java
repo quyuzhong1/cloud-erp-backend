@@ -115,7 +115,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.eq(PreTaskEntity::getTaskId, dto.getTaskId());
         queryWrapper.eq(PreTaskEntity::getPreTaskId, dto.getPreTaskId());
         Boolean flag = remove(queryWrapper);
-        if(flag){
+        if (flag) {
             taskDeliveryService.removeByTaskId(dto.getTaskId());
             taskDocsFinishService.removeByTaskId(dto.getTaskId());
         }
@@ -203,6 +203,22 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getProductId, productId);
         return list(queryWrapper);
+    }
+
+    /**
+     * 获取系统的前置任务
+     *
+     * @param sysTaskIds
+     * @return java.util.List<com.erp.model.plm.entity.PreTaskEntity>
+     * @author yl
+     * @date 2022-11-01 16:18
+     */
+    @Override
+    public List<PreTaskEntity> getSysPreTask(List<String> sysTaskIds) {
+        LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(PreTaskEntity::getProductId, "");
+        queryWrapper.in(PreTaskEntity::getTaskId, sysTaskIds);
+        return this.list(queryWrapper);
     }
 }
 

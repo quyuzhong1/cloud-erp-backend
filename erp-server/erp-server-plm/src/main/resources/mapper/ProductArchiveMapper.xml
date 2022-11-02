@@ -14,15 +14,18 @@
             <if test="params.categoryId!='' and params.categoryId!=null">
                 P.category_id=#{params.categoryId}
             </if>
+            <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+                AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+                OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+                OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
+            </if>
+            <if test="params.productIds !=null and params.productIds.size()>0">
+                AND P.id IN
+                <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                    #{productId}
+                </foreach>
+            </if>
         </where>
-        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
-           AND  p.name LIKE concat('%',#{params.searchKeyword},'%')
-        </if>
-
-        <if test="params.param != '' and params.param != null">
-            ${params.param}
-        </if>
-
         ORDER BY pa.archive_time DESC
 
     </select>
