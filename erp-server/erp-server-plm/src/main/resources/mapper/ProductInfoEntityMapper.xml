@@ -49,8 +49,8 @@
 
     <select id="getExportProduct" resultType="com.erp.model.plm.dto.ProductExcelDTO">
         SELECT pi.id AS productId, pi.name AS productName,pi.charge_name AS productChargeName,
-        pj.charge_name AS projectChargeName,pj.start_time AS planStartTime,
-        pj.end_time AS planEndTime, pj.project_status,pi.approval_status AS productStatus
+        pj.charge_name AS projectChargeName,to_char(pj.start_time,'yyyy-MM-dd') AS planStartTime,
+        to_char(pj.end_time,'yyyy-MM-dd') AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
         WHERE  pi.is_finished_product_dev = 1 AND pi.id IN
