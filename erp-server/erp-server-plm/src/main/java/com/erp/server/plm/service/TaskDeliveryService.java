@@ -20,7 +20,7 @@ import java.util.List;
 public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<CountDTO> getTaskDocsCount(List<String> taskId);
 
-    void saveDeliveryDocs(String taskChargeId,String taskId,String productId, List<DocsDTO> deliveryDocsList);
+    void saveDeliveryDocs(String taskId,String productId, List<DocsDTO> deliveryDocsList);
 
     PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto);
 
@@ -30,7 +30,7 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     void saveSysDeliveryDocs(String id, List<DocsDTO> docsList);
 
-    void saveTaskDeliveryDocs(String productId, String taskId,String taskChargeId, String sysTaskId, List<TaskDocsNameEntity> docsNameList);
+    void saveTaskDeliveryDocs(String productId, String taskId, String sysTaskId, List<TaskDocsNameEntity> docsNameList);
 
     void removeByTaskId(String taskId);
 

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.server.plm.mapper.DocsPermissionEntityMapper;
 import com.erp.server.plm.service.DocsPermissionService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
-        queryWrapper.eq(DocsPermissionEntity::getQueryUserId, uid);
+        queryWrapper.eq(DocsPermissionEntity::getQueryRoleId, uid);
         return this.listObjs(queryWrapper, Object::toString);
     }
 
@@ -72,5 +73,41 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
         queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
         return listObjs(queryWrapper, Object::toString);
+    }
+
+
+    /**
+     * 根据用户角色 查询到权限
+     *
+     * @param userRoleIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-01 19:07
+     */
+    @Override
+    public List<String> getDocsIdsByRoleIds(List<String> userRoleIds, String productId) {
+        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
+        queryWrapper.in(DocsPermissionEntity::getQueryRoleId, userRoleIds);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
+
+    /**
+     * 查询 设置了全部的 文档id
+     *
+     * @param productId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-01 19:13
+     */
+    @Override
+    public List<String> getAllDeliveryDocsIds(String productId) {
+        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
+        queryWrapper.eq(DocsPermissionEntity::getQueryRoleId,"");
+        return null;
     }
 }

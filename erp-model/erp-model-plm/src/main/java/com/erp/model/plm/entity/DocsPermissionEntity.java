@@ -43,7 +43,7 @@ public class DocsPermissionEntity implements Serializable {
     /**
      * 查看的用户id
      */
-    private String queryUserId;
+    private String queryRoleId;
 
     /**
      * 创建时间

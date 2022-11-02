@@ -136,7 +136,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), entity.getChargeId(), item.getId(), taskDocsNameList);
+                    taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
                 }
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -299,7 +299,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 boolean flag = this.save(entity);
                 if (flag) {
-                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), entity.getChargeId(), item.getId(), docsNameList);
+                    taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
                 }
             }
 
@@ -538,7 +538,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.save(taskEntity);
         if (flag) {
             //保存交付文档
-            taskDeliveryService.saveDeliveryDocs(taskEntity.getChargeId(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+            taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
         }
@@ -908,7 +908,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             //保存交付文档
-            taskDeliveryService.saveDeliveryDocs(taskEntity.getChargeId(), taskEntity.getId(), dto.getProductId(), deliveryDocsList);
+            taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
