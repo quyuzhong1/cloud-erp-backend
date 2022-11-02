@@ -131,7 +131,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     public void removeDepartmentUser(String departmentId, Set<String> userIds) {
         if (CollectionUtils.isNotEmpty(userIds)) {
             LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
-            wrapper.in(SysDepartmentUserEntity::getUserId, userIds);
             wrapper.eq(SysDepartmentUserEntity::getDepartmentId, departmentId);
             baseMapper.delete(wrapper);
         }

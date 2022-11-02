@@ -89,7 +89,6 @@ public class SysPostUserServiceImpl extends ServiceImpl<SysPostUserMapper, SysPo
     public void removePostUser(String postId, Set<String> userIds) {
         if (CollectionUtils.isNotEmpty(userIds)) {
             LambdaQueryWrapper<SysPostUserEntity> wrapper = new LambdaQueryWrapper();
-            wrapper.in(SysPostUserEntity::getUserId, userIds);
             wrapper.eq(SysPostUserEntity::getPostId, postId);
             baseMapper.delete(wrapper);
         }
