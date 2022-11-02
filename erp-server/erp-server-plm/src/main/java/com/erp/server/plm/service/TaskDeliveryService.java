@@ -45,4 +45,6 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
     List<TaskDeliveryDocsEntity> getByProductId(String productId);
 
     List<String> getDocsNameByTaskIds(List<String> sysTaskIds);
+
+
 }

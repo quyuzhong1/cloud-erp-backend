@@ -4,7 +4,7 @@
 
     <select id="sysPaging" resultType="com.erp.model.plm.dto.SysProductFieldPagingDTO">
         SELECT id,name,scope,create_user_id,create_time,
-        create_user_name,if_required,type,(state=#{flagState}) AS state,content,update_time
+        create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
         WHERE is_sys=1
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
@@ -16,7 +16,7 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.SysProductFieldPagingDTO">
         (SELECT id,name,scope,create_user_id,create_time,
-        create_user_name,if_required,type,(state=#{flagState}) AS state,content,update_time
+        create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
         WHERE is_sys=1 AND scope=1
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
@@ -27,7 +27,7 @@
         UNION ALL
 
         (SELECT id,name,scope,create_user_id,create_time,
-        create_user_name,if_required,type,(state=#{flagState}) AS state,content,update_time
+        create_user_name,if_required,type,(state=${flagState}) AS state,content,update_time
         FROM product_field
         WHERE product_id=#{params.flagId}
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">

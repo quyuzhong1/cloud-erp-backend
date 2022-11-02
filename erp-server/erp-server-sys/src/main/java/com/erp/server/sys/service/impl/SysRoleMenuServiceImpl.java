@@ -395,7 +395,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     private List<RoleMenuTreeDTO> getChildrenList(RoleMenuTreeDTO item, List<RoleMenuTreeDTO> menuList, List<String> menuIds, List<SysRoleMenuEntity> sysRoleMenuEntityList) {
         List<RoleMenuTreeDTO> collectList = menuList.stream().filter(menu -> item.getMenuId().equals(menu.getParentId()))
                 .map(m -> {
-                    System.out.println("bb:" + m.getMenuId());
                     m.setParentName(item.getMenuName());
                     String selectFlag = menuIds.stream().filter(r -> r.equals(m.getMenuId())).findFirst().orElse("0");
                     //表示 没有 选中
