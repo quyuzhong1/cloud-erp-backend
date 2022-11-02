@@ -58,6 +58,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
     public List<TaskCommentEntity> getListByTaskId(String taskId) {
         LambdaQueryWrapper<TaskCommentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskCommentEntity::getTaskId, taskId);
+        queryWrapper.orderByDesc(TaskCommentEntity::getCreateTime);
         return this.list(queryWrapper);
     }
 

@@ -694,9 +694,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 String productChargeName = commonService.getNameByIds(productChargeIdList);
                 product.setChargeId(String.join(",", productChargeIdList));
                 product.setChargeName(productChargeName);
-            }else{
-                product.setChargeName("");
-                product.setChargeId("");
             }
             if (approvalStatus != null) {
                 if (!product.getApprovalStatus().equals(approvalStatus)) {
