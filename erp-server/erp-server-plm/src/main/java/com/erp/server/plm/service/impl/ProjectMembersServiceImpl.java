@@ -204,7 +204,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     if (!Objects.isNull(taskConduct)) {
                         totalTaskCount = taskConduct.getTotalTaskCount();
                         finishTaskCount = taskConduct.getFinishTaskCount();
-                        ingTaskCount = taskConduct.getIngTaskCount();
+                        ingTaskCount = totalTaskCount - finishTaskCount;
                         postponeTaskCount = taskConduct.getPostponeTaskCount();
                     }
                     item.setTotalTaskCount(totalTaskCount);
