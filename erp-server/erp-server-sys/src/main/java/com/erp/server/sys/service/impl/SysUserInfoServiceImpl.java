@@ -156,11 +156,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public SysUserDTO accountLogin(AccountLoginDTO dto) {
-        SysUserDTO sysUserDTO = adminLogin(dto);
-        if (sysUserDTO != null) {
-            return sysUserDTO;
-        }
-
         SysUserInfoEntity entity = findByAccount(dto.getAccount());
         if (Objects.isNull(entity)) {
             return null;
@@ -170,6 +165,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!passwordFlag) {
             return null;
         }
+
+        //判断是否是超级管理员登录
+        SysUserDTO sysUserDTO = adminLogin(dto);
+        if (sysUserDTO != null) {
+            return sysUserDTO;
+        }
+
         Integer userState = entity.getUserState();
         //表示禁用
         if (UserStateConstants.USER_DISABLE == userState) {
@@ -202,16 +204,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (!dto.getAccount().equals(SysConstant.ADMIN_USER)) {
             return null;
         }
-
-        LambdaQueryWrapper<SysAdminUserEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysAdminUserEntity::getLoginAccount, dto.getAccount());
-        SysAdminUserEntity entity = sysAdminUserServer.getOne(queryWrapper);
-        //检查密码是否正确
-        boolean passwordFlag = PassHandler.checkPass(dto.getPassword(), entity.getSalt(), entity.getPassword());
-        if (!passwordFlag) {
-            return null;
-        }
-
         SysUserDTO vo = new SysUserDTO();
         List<SysMenuVO> menuAll = sysRoleMenuService.findMenuAll();
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuAll();
