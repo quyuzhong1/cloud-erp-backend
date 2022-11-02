@@ -94,7 +94,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 entity.setIsSys(item.getIsSys());
                 saveList.add(entity);
             }
-            this.saveBatch(saveList);
+            Boolean flag = this.saveBatch(saveList);
+            if (flag) {
+                //先删除 不在的数据
+                docsPermissionService.removePermission(taskId);
+                List<DocsPermissionEntity> docsPermissionList = new LinkedList<>();
+                for (TaskDeliveryDocsEntity item : saveList) {
+                    DocsPermissionEntity docsPermission = new DocsPermissionEntity();
+                    docsPermission.setDeliveryDocsId(item.getId());
+                    docsPermission.setQueryRoleId("");
+                    docsPermission.setProductId(productId);
+                    docsPermission.setTaskId(taskId);
+                    docsPermissionList.add(docsPermission);
+                }
+                docsPermissionService.saveBatch(docsPermissionList);
+            }
         }
     }
 
@@ -420,7 +434,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         return new ArrayList<>();
     }
-
 
 
     /**

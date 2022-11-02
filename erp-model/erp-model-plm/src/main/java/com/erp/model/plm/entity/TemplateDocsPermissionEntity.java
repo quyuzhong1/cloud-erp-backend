@@ -41,9 +41,9 @@ public class TemplateDocsPermissionEntity implements Serializable {
     private String taskId;
 
     /**
-     * 查看的用户id
+     * 查看的角色id
      */
-    private String queryUserId;
+    private String queryRoleId;
 
     /**
      * 创建时间

@@ -75,7 +75,7 @@ public class TaskDeliveryDocsController extends BaseController {
      * @param
      * @return
      */
-    @PostMapping("/getPower")
+    @GetMapping("/getPower")
     // @RequestPermissions("plm:taskDocs:setPower")
     public ApiResult<SetDocsPowerDTO> getPower(@RequestParam(value = "id") String id) {
         SetDocsPowerDTO docsPower = docsPermissionService.getDocsPower(id);
