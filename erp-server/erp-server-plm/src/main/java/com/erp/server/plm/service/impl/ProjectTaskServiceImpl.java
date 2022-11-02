@@ -620,7 +620,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             int totalTaskCount = taskList.size();
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime()!=null&& t.getRealityEndTime() .compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
             dto.setIngTaskCount(ingTaskCount);
@@ -657,7 +657,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = list.size();
         //延期的任务数
-        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime()!=null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
         dto.setTotalTaskCount(totalTaskCount);
         dto.setFinishTaskCount(finishTaskCount);
         dto.setIngTaskCount(ingTaskCount);
@@ -1897,10 +1897,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     //获取预警信息
     public String getWarning(Integer state, Integer finishState, Date planEndTime) {
         Date nowDay = new Date();
+        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         String warning = "-";
         if (planEndTime != null) {
             //状态
-            if (!finishState.equals(state)) {
+            if (!finishState.equals(state) && !approvalPass.equals(state)) {
                 int difference = DateUtil.getDiffDay(planEndTime, nowDay);
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
