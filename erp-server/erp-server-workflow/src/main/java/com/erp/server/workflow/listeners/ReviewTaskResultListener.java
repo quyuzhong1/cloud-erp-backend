@@ -28,7 +28,5 @@ public class ReviewTaskResultListener implements ExecutionListener {
         Map<String, Object> params = new HashMap<>();
         params.put("processId", parentActivityInstanceId);
         OkHttpUtils.doPost(plmUrl, params, null);
-
-
     }
 }

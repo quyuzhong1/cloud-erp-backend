@@ -358,14 +358,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            statusList.add(TaskStateEnum.NOT_START.getCode());
-            statusList.add(TaskStateEnum.ING.getCode());
+//            statusList.add(TaskStateEnum.NOT_START.getCode());
+//            statusList.add(TaskStateEnum.ING.getCode());
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
-            statusList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
-            statusList.add(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
+//            statusList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+//            statusList.add(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -1479,11 +1479,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean approvalPass(TaskOperateDTO dto) {
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
-
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         //根据任务id 获取所有的任务列表
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
-
         /**
          * 评审任务
          */
@@ -1495,14 +1493,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //检查文档是否有上传
             finishService.checkTaskDocsUpload(allTaskIds);
         }
-
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户的流程id
         List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-
-
         //传过来的流程id
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
