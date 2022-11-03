@@ -312,13 +312,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
-        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
+/*        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
             ProductImagesDTO productImagesDTO = new ProductImagesDTO();
             productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
             productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
             productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
             productImagesService.updateProductImage(productImagesDTO);
-        }
+        }*/
 
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
 

@@ -1,12 +1,13 @@
 package com.erp.server.workflow.listeners;
 
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.common.core.utils.OkHttpUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 一般任务审核监听
@@ -19,14 +20,16 @@ import java.time.LocalDate;
 @Service
 public class GeneralTaskResultListener implements ExecutionListener {
 
-    @Autowired
-    private PlmTaskFeign plmTaskFeign;
+    @Value("${plmUrl}")
+    private String plmUrl;
 
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
         //这个是流程id
         String parentActivityInstanceId = delegateExecution.getParentActivityInstanceId();
-        plmTaskFeign.processPass(parentActivityInstanceId);
+        Map<String, Object> params = new HashMap<>();
+        params.put("processId", parentActivityInstanceId);
+        OkHttpUtils.doPost(plmUrl, params, null);
 
     }
 }
