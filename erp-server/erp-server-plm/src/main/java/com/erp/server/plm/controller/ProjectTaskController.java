@@ -309,11 +309,13 @@ public class ProjectTaskController extends BaseController {
      * 以及
      * @return
      */
-    @PostMapping("/feign/process/pass")
+    @PostMapping("/workflow/pass")
     public ApiResult processPass(@RequestBody String processId) {
         taskService.approvalTaskPass(processId);
         return success();
     }
+
+
 
 
 }
