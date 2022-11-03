@@ -188,6 +188,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     public List<ProjectTaskSysEntity> getListByProperty(Integer property) {
         LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskSysEntity::getProperty, property);
+        queryWrapper.orderByDesc(ProjectTaskSysEntity::getCreateTime);
         return this.list(queryWrapper);
     }
 
