@@ -90,8 +90,6 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         taskService.createComment(taskId, dto.getProcessInstanceId(), dto.getComment());
         if (map != null && !map.isEmpty()) {
             taskService.complete(taskId, map);
-        } else {
-            taskService.complete(taskId);
         }
 
         ActivityDTO activityDTO = new ActivityDTO();

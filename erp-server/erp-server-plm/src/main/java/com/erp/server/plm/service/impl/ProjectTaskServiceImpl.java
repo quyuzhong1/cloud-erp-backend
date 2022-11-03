@@ -1483,8 +1483,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean approvalPass(TaskOperateDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
-
-        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(loginUser.getUid());
+        String userId = loginUser.getUid();
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户的流程id
         List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
 
@@ -1528,7 +1528,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 ApproveProcessDTO approveProcess = new ApproveProcessDTO();
                 approveProcess.setTaskId(handleData.getProcessTaskId());
                 approveProcess.setProcessInstanceId(item.getProcessId());
-                approveProcess.setUserId(loginUser.getUid());
+                approveProcess.setUserId(userId);
                 approveProcess.setComment(comment);
                 workflowFeign.taskPass(approveProcess);
             }
