@@ -310,7 +310,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(@RequestBody String processId) {
+    public ApiResult processPass(String processId) {
         taskService.approvalTaskPass(processId);
         return success();
     }
