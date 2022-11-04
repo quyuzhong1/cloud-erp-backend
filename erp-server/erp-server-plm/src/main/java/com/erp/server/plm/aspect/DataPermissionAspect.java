@@ -81,6 +81,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
+        userInfo.setUid("1588440680615690241");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -168,8 +169,12 @@ public class DataPermissionAspect {
             for (String s : userList) {
                 listt.add("'" + s + "'");
             }
+            if (!listt.isEmpty()) {
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
+            } else {
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in ('"+ user.getUid() +"')");
+            }
 
-            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
         }
