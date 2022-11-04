@@ -302,7 +302,16 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
-        String approvalUserId = taskEntity.getApprovalUserId();
+        //任务类型
+        Integer taskType = taskEntity.getType();
+        String approvalUserId = "";
+        //如果是一般任务就是任务自定义审核人审核
+        if (TaskTypeEnum.GENERAL_TASK.equals(taskType)) {
+            approvalUserId = taskEntity.getApprovalUserId();
+        } else {
+            //如果是 评审任务 就是任务负责人
+            approvalUserId = taskEntity.getChargeId();
+        }
         if (StringUtils.isEmpty(approvalUserId)) {
             throw new ServiceException(ApiError.ERROR_95045);
         }

@@ -345,7 +345,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
+        String userId =loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
