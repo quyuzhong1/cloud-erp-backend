@@ -49,7 +49,7 @@ public interface SysUserFeign {
     List<SysUserDTO> getDepUserList(@RequestBody String userId);
 
     //根据用户id 获取用户角色的id
-    @GetMapping("sys/feign/user/getRoleIdList")
+    @PostMapping("sys/feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
 
 
