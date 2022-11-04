@@ -32,13 +32,10 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -349,7 +346,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
         dto.getParams().setParam(dto.getParam());
         LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
+        String userId =loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
         String phaseId = params.getPhaseId();
@@ -363,14 +360,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-            statusList.add(TaskStateEnum.NOT_START.getCode());
-            statusList.add(TaskStateEnum.ING.getCode());
+
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
-            statusList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
-            statusList.add(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -879,7 +873,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
-        LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
@@ -1484,14 +1477,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean approvalPass(TaskOperateDTO dto) {
+        List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
+        List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
+        //根据任务id 获取所有的任务列表
+        List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        /**
+         * 评审任务
+         */
+        //评审任务state
+        Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
+        List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(reviewList)) {
+            List<String> allTaskIds = reviewList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            //检查文档是否有上传
+            finishService.checkTaskDocsUpload(allTaskIds);
+        }
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
         //这是用户的流程id
         List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-
-        List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
-
         //传过来的流程id
         List<String> processIds = taskDataList.stream().map(TaskHandleDataDTO::getProcessId).collect(Collectors.toList());
         //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
@@ -1499,9 +1504,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95049);
         }
 
-        List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
-        //根据任务id 获取所有的任务列表
-        List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
@@ -1523,6 +1525,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isBlank(comment)) {
             comment = "";
         }
+
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
             TaskHandleDataDTO handleData = taskDataList.stream().filter(d -> d.getProcessId().equals(item.getProcessId())).findFirst().orElse(null);
@@ -1650,11 +1653,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
+        queryWrapper.last("LIMIT 1");
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
         if (!Objects.isNull(taskEntity)) {
-            taskEntity.setRealityEndTime(new Date());
-            taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
-            updateById(taskEntity);
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
             recordEntity.setTaskId(taskEntity.getId());
@@ -1662,9 +1663,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             recordEntity.setAfterState(TaskStateEnum.APPROVAL_PASS.getCode());
             recordEntity.setOperatorId(loginUser.getUid());
             recordEntity.setOperatorName(loginUser.getUserName());
+            taskEntity.setRealityEndTime(new Date());
+            taskEntity.setStatus(TaskStateEnum.APPROVAL_PASS.getCode());
+
+            this.updateById(taskEntity);
             taskOperatorRecordService.save(recordEntity);
         }
-
 
     }
 
