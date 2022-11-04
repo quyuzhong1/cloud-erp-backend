@@ -310,7 +310,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             approvalUserId = taskEntity.getApprovalUserId();
         } else {
             //如果是 评审任务 就是任务负责人
-            approvalUserId = taskEntity.getCreateUserId();
+            approvalUserId = taskEntity.getChargeId();
         }
         if (StringUtils.isEmpty(approvalUserId)) {
             throw new ServiceException(ApiError.ERROR_95045);
