@@ -48,7 +48,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/paging")
    // @RequestPermissions("plm:product:paging")
-    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
+    @DataPermission(operationType = "query", tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "p")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -125,6 +125,7 @@ public class ProductInfoController extends BaseController {
      */
     @GetMapping("/info")
    // @RequestPermissions("plm:product:info")
+    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
     public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);
