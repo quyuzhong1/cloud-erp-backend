@@ -347,6 +347,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
+        dto.getParams().setParam(dto.getParam());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
@@ -356,6 +357,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String searchKeyword = params.getSearchKeyword();
         List<Integer> statusList = params.getStatusList();
         List<TaskSearchDTO> searchList = params.getSearchList();
+        String param = params.getParam();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
 
@@ -363,7 +365,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
             statusList.add(TaskStateEnum.NOT_START.getCode());
             statusList.add(TaskStateEnum.ING.getCode());
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
@@ -386,7 +388,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList, param);
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());

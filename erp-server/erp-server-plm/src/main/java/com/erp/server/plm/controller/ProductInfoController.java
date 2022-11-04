@@ -48,7 +48,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/paging")
    // @RequestPermissions("plm:product:paging")
-    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -80,6 +80,14 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:product:saveOrUpdate")
+
+/*    @DataPermission(operationType = "update",
+            tableField = "create_user_id",
+            menuCode = "plm:product:saveOrUpdate",
+            serviceClass = ProductInfoService.class,
+            entityName = "productInfoDTO",
+            keyIdName = "id"
+    )*/
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
         Boolean flag = productInfoService.saveOrUpdateProduct(dto);
         return flag == true ? success() : failure();
