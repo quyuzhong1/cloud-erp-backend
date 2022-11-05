@@ -79,5 +79,17 @@ public class ScheduleTaskEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    /**
+     * 重试次数（超过10次不再重试)
+     */
+    @TableField("retry_count")
+    private Integer retryCount;
+
+    /**
+     * 备注信息
+     */
+    @TableField("remark")
+    private String remark;
+
 
 }
