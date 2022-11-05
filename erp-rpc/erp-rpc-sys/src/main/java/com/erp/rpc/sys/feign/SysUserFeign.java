@@ -23,8 +23,6 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/accountLogin")
     ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO loginDTO);
 
-
-
     //设置登录ip账号登录
     @PostMapping("sys/feign/user/setLoginIp")
     ApiResult<SysUserDTO> setLoginIp(@RequestBody SysLoginIpDTO loginDTO);
@@ -49,6 +47,10 @@ public interface SysUserFeign {
     //获取部门的用户
     @GetMapping("sys/feign/user/getDepUserList")
     List<SysUserDTO> getDepUserList(@RequestBody String userId);
+
+    //根据用户id 获取用户角色的id
+    @PostMapping("sys/feign/user/getRoleIdList")
+    List<String> getRoleIdList(@RequestBody String userId);
 
 
 

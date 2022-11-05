@@ -7,6 +7,8 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.model.sys.dto.UserDTO;
+import com.erp.server.sys.service.SysRoleService;
+import com.erp.server.sys.service.SysRoleUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,8 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private SysUserInfoService sysUserInfoService;
 
+    @Autowired
+    private SysRoleUserService sysRoleUserService;
 
     @PostMapping("/accountLogin")
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
@@ -75,7 +79,7 @@ public class SysUserFeignController extends BaseController {
 
 
     /**
-     * 根据用户id 获取 用户的角色的权限标示
+     * 根据用户id 获取 用户的权限标识
      * @return
      */
     @PostMapping("/getRequestPermissionsList")
@@ -94,5 +98,13 @@ public class SysUserFeignController extends BaseController {
         return depUserList;
     }
 
-
+    /**
+     * 根据用户id 获取用户角色的id
+     * @return
+     */
+    @PostMapping("/getRoleIdList")
+    public List<String> getRoleIdList(@RequestBody String userId) {
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
+        return roleIds;
+    }
 }

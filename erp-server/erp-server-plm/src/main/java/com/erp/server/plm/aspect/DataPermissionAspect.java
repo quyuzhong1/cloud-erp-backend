@@ -81,9 +81,12 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
+        //userInfo.setUid("1588440680615690241");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
+        } else {
+            throw new ServiceException(ApiError.ERROR_403);
         }
     }
 
@@ -109,13 +112,18 @@ public class DataPermissionAspect {
      */
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, DataPermission controllerDataScope) {
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
-
-        UserRequestPermissionsDTO userRequestPermissions = requestPermissionsList.stream().filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode())).findFirst().orElse(null);
-
-        if (org.springframework.util.ObjectUtils.isEmpty(userRequestPermissions)) {
-            return;
-            //throw new ServiceException(ApiError.ERROR_1013);
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(user.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(controllerDataScope.menuCode());
+            userRequestPermissions.setDataScope(DATA_SCOPE_ALL);
+        } else {
+            userRequestPermissions = requestPermissionsList.stream().filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode())).findFirst().orElse(null);
+            if (org.springframework.util.ObjectUtils.isEmpty(userRequestPermissions)) {
+                throw new ServiceException(ApiError.ERROR_1013);
+            }
         }
+
         List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
         List<String> userList = new ArrayList<>();
         for (SysUserDTO sysUserDTO : depUserList) {
@@ -161,8 +169,12 @@ public class DataPermissionAspect {
             for (String s : userList) {
                 listt.add("'" + s + "'");
             }
+            if (!listt.isEmpty()) {
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
+            } else {
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in ('"+ user.getUid() +"')");
+            }
 
-            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " in (" + StringUtils.join(listt, ",") + ")");
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
         }

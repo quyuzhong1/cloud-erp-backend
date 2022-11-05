@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskPagingDTO  implements Serializable {
+public class TaskPagingDTO extends PermissionsDTO implements Serializable {
 
 
      //产品id

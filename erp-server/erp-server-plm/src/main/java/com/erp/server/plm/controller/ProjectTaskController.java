@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -49,6 +50,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:task:paging")
+    @DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:task:paging", tableAlias = "project_task")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -309,11 +311,13 @@ public class ProjectTaskController extends BaseController {
      * 以及
      * @return
      */
-    @PostMapping("/feign/process/pass")
-    public ApiResult processPass(@RequestBody String processId) {
+    @PostMapping("/workflow/pass")
+    public ApiResult processPass(String processId) {
         taskService.approvalTaskPass(processId);
         return success();
     }
+
+
 
 
 }

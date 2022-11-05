@@ -25,6 +25,9 @@
                     #{productId}
                 </foreach>
             </if>
+            <if test="params.param != '' and params.param != null">
+                ${params.param}
+            </if>
         </where>
         ORDER BY pa.archive_time DESC
 

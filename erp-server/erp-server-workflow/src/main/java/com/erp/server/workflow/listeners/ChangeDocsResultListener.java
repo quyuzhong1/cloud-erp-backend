@@ -1,10 +1,13 @@
 package com.erp.server.workflow.listeners;
 
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.common.core.utils.OkHttpUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**   变更文档 审核结果
  * @Classname ChangeDocsResultListener
@@ -14,12 +17,14 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ChangeDocsResultListener implements ExecutionListener {
-    @Autowired
-    private PlmTaskFeign plmTaskFeign;
+    @Value("${plmUrl}")
+    private String plmUrl;
 
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
         String  parentActivityInstanceId=  delegateExecution.getParentActivityInstanceId();
-        plmTaskFeign.processPass(parentActivityInstanceId);
+        Map<String, Object> params = new HashMap<>();
+        params.put("processId", parentActivityInstanceId);
+        OkHttpUtils.doPost(plmUrl, params, null);
     }
 }
