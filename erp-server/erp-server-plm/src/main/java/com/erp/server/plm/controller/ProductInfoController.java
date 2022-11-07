@@ -128,10 +128,10 @@ public class ProductInfoController extends BaseController {
      */
     @GetMapping("/info")
    // @RequestPermissions("plm:product:info")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:info",
-            serviceClass = ProductInfoServiceImpl.class)
+            serviceClass = ProductInfoServiceImpl.class)*/
     public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);
