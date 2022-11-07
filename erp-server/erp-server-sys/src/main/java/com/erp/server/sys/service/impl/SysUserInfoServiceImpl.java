@@ -39,6 +39,7 @@ import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.interceptor.SysInterceptor;
+import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -50,10 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -83,7 +81,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private MailService mailService;
 
     @Resource
-    private SysAdminUserServer sysAdminUserServer;
+    private SysDepartmentService sysDepartmentService;
+
+    @Resource
+    private SysDepartmentMapper sysDepartmentMapper;
 
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
 
@@ -693,8 +694,24 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @param userId 用户id
      * @return java.util.List<java.lang.String>
      **/
-    public List<SysUserDTO> getDepUserList(String userId) {
-        return baseMapper.getDepUserList(userId);
+    public List<String> getDepUserList(String userId) {
+        List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
+        List<String> userDepList = baseMapper.getUserDepList(userId);
+        List<String> deptList = new LinkedList<>();
+        for (String s : userDepList) {
+            if (CollectionUtils.isNotEmpty(treeList)) {
+                for (SysDepartmentTreeDTO vo : treeList) {
+                    if (vo.getPath().contains(s)) {
+                        deptList.add(vo.getId());
+                    }
+
+                }
+            }
+        }
+        if (deptList.size() <= 0) {
+            return new ArrayList<String>();
+        }
+        return baseMapper.getDepUserList(deptList);
     }
 
 

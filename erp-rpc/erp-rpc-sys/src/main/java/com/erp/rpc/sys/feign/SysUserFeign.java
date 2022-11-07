@@ -46,7 +46,7 @@ public interface SysUserFeign {
 
     //获取部门的用户
     @GetMapping("sys/feign/user/getDepUserList")
-    List<SysUserDTO> getDepUserList(@RequestBody String userId);
+    List<String> getDepUserList(@RequestBody String userId);
 
     //根据用户id 获取用户角色的id
     @PostMapping("sys/feign/user/getRoleIdList")

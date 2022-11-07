@@ -212,7 +212,12 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/publishTask")
-    //   @RequestPermissions("plm:task:publishTask")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:tasks:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
         Boolean result = taskService.publishTask(dto);
         return result == true ? success() : failure();
@@ -224,7 +229,12 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/cancelPublishTask")
-    //   @RequestPermissions("plm:task:cancelPublishTask")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:tasks:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult cancelPublishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.cancelPublishTask(dto);
         return result == true ? success() : failure();
@@ -237,6 +247,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/startTask")
     //  @RequestPermissions("plm:task:startTask")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:project:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult startTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.startTask(dto);
         return result == true ? success() : failure();
@@ -249,6 +265,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/closeTask")
     //  @RequestPermissions("plm:task:closeTask")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:project:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult closeTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.closeTask(dto);
         return result == true ? success() : failure();
@@ -263,6 +285,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/finishTask")
     //  @RequestPermissions("plm:task:finishTask")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:project:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult finishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = taskService.finishTask(dto);
         return result == true ? success() : failure();
@@ -275,6 +303,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/approvalPass")
     //  @RequestPermissions("plm:task:approvalPass")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:project:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO  dto) {
         Boolean result = taskService.approvalPass(dto);
         return result == true ? success() : failure();
@@ -287,6 +321,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/approvalReject")
     //  @RequestPermissions("plm:task:approvalReject")
+    @DataPermission(operationType = "update",
+            tableField = "charge_id",
+            menuCode = "plm:task:project:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
         return result == true ? success() : failure();

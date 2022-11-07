@@ -1,6 +1,7 @@
 package com.erp.server.plm.aspect;
 
 import com.alibaba.excel.util.CollectionUtils;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
@@ -81,7 +82,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        //userInfo.setUid("1588440680615690241");
+        userInfo.setUid("1588059400510160897");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -124,11 +125,8 @@ public class DataPermissionAspect {
             }
         }
 
-        List<SysUserDTO> depUserList = sysUserFeign.getDepUserList(user.getUid());
-        List<String> userList = new ArrayList<>();
-        for (SysUserDTO sysUserDTO : depUserList) {
-            userList.add(sysUserDTO.getUid());
-        }
+        List<String> userList = sysUserFeign.getDepUserList(user.getUid());
+
         switch (controllerDataScope.operationType()) {
             case "query":
                 query(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
@@ -195,52 +193,17 @@ public class DataPermissionAspect {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
-        List<Object> inputIdList = new ArrayList<>();
+        List<String> inputIdList = new ArrayList<>();
 
-        Object[] args = joinPoint.getArgs();
         Object arg = joinPoint.getArgs()[0];
-        if (arg instanceof List) {
-            inputIdList = (List<Object>) arg;
-        } else if (arg instanceof String[]) {
-            inputIdList = Arrays.asList(args[0]);
-        } else if (arg instanceof String) {
-            inputIdList = Collections.singletonList(arg);
-        } else if (arg instanceof Map) {
-            Map mapParam = (Map) arg;
-            try {
-                if (mapParam.containsKey(dataPermission.keyIdName())) {
-                    Object p = mapParam.get(dataPermission.keyIdName());
-                    if(p instanceof String){
-                        inputIdList.add(p);
-                    } else if (p instanceof List){
-                        inputIdList = (List<Object>) mapParam.get(dataPermission.keyIdName());
-                    }
-                } else {
-                    inputIdList = (List<Object>) mapParam.get("ids");
-                }
-            } catch (Exception e) {
-                return;
-            }
-        } else {
-            try {
-                Map mapParam = JSONObject.parseObject(JSONObject.toJSONString(arg), Map.class);
-                Object o = mapParam.get(dataPermission.keyIdName());
-                if(o != null){
-                    if(o instanceof List){
-                        inputIdList = (List<Object>) o;
-                    } else if (o instanceof String){
-                        inputIdList.add(o);
-                    }
-                } else {
-                    inputIdList = (List<Object>) mapParam.get("ids");  // key : ids  数组
-                }
-            } catch (Exception e) {
-                return;
-            }
-        }
-        if(CollectionUtils.isEmpty(inputIdList)){
+
+        Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(arg), Map.class);
+        String o = mapParam.get(dataPermission.keyIdName());
+        inputIdList.add(o);
+        if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
+        List<Object> objects = (List<Object>) service.listByIds(inputIdList);
         Object businessData = service.getById(arg.toString());
         if (org.springframework.util.ObjectUtils.isEmpty(businessData)) {
             return;
@@ -285,40 +248,57 @@ public class DataPermissionAspect {
 
         Object obj = joinPoint.getArgs()[0];
 
-        JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(obj));
 
-        Object arg = jsonObject.get(dataPermission.entityName());
 
-/*        List<Object> inputIdList = new ArrayList<>();
+        List<String> inputIdList = new ArrayList<>();
 
-        if (arg instanceof List) {
-            inputIdList = (List<Object>) arg;
-        } else if (arg instanceof Map) {
-            Map mapParam = (Map) arg;
-            inputIdList.add(mapParam.get(dataPermission.keyIdName()));
-        }*/
 
-        JSONObject entity = JSONObject.parseObject(JSONObject.toJSONString(arg));
-
-        if (StringUtils.isBlank(entity.get(dataPermission.keyIdName()).toString())) {
+        Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+        Object o = mapParam.get(dataPermission.keyIdName());
+        if(o != null){
+            if(o instanceof List){
+                inputIdList = (List<String>) o;
+            } else if (o instanceof String){
+                inputIdList.add(String.valueOf(o));
+            }
+        }
+        if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
-        Object businessData = service.getById(entity.get(dataPermission.keyIdName()).toString());
-        String j = JSONObject.toJSONString(businessData);
-        JSONObject jo = JSONObject.parseObject(j);
-
-        String userId = jo.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
+        List<String> users = new ArrayList<>();
+        List<?> objects = service.listByIds(inputIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+            users.add(jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString());
+        }
 
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            if (!userList.contains(userId)) {
+            if (!userList.containsAll(users)) {
                 throw new ServiceException(ApiError.ERROR_1013);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            if (!user.equals(userId)) {
+            if (!users.contains(user.getUid())) {
                 throw new ServiceException(ApiError.ERROR_1013);
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        List<String> list1 = new ArrayList<>();
+        List<String> list2 = new ArrayList<>();
+        list1.add("a");
+        list1.add("b");
+        list1.add("c");
+        list1.add("d");
+        list2.add("a");
+        list2.add("b");
+        list2.add("c");
+        if (list1.contains(list2)) {
+            System.out.println("true");
+        } else {
+            System.out.println("false");
         }
     }
 

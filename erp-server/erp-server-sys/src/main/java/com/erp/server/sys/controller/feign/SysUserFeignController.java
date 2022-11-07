@@ -93,8 +93,8 @@ public class SysUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getDepUserList")
-    public List<SysUserDTO> getDepUserList(@RequestBody String userId) {
-        List<SysUserDTO> depUserList = sysUserInfoService.getDepUserList(userId);
+    public List<String> getDepUserList(@RequestBody String userId) {
+        List<String> depUserList = sysUserInfoService.getDepUserList(userId);
         return depUserList;
     }
 
