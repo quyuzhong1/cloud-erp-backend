@@ -1,7 +1,9 @@
 package com.erp.server.plm.handler;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.erp.server.plm.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -14,17 +16,26 @@ import java.util.Date;
  */
 @Component
 public class ErpObjectHandler implements MetaObjectHandler {
+    @Autowired
+    private CommonService commonService;
 
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
+        String userId = commonService.getUserInfo().getUid();
         this.setFieldValByName("createTime", new Date(), metaObject);
         this.setFieldValByName("updateTime", new Date(), metaObject);
+        this.setFieldValByName("createUserId", userId, metaObject);
+        this.setFieldValByName("updateUserId", userId, metaObject);
+
     }
 
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
+        String userId = commonService.getUserInfo().getUid();
         this.setFieldValByName("updateTime", new Date(), metaObject);
+        this.setFieldValByName("updateUserId", userId, metaObject);
+
     }
 }
