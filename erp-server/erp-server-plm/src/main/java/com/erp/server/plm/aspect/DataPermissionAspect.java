@@ -9,6 +9,7 @@ import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.common.annotation.DataPermission;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
@@ -82,7 +83,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        //userInfo.setUid("1588059400510160897");
+        userInfo.setUid("1587039801131974658");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -128,13 +129,13 @@ public class DataPermissionAspect {
         List<String> userList = sysUserFeign.getDepUserList(user.getUid());
 
         switch (controllerDataScope.operationType()) {
-            case "query":
+            case LIST:
                 query(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
-            case "delete":
+            case CHECK_BY_PARAM:
                 delete(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
-            case "update":
+            case CHECK_BY_ID:
                 update(joinPoint, userRequestPermissions, userList, user, controllerDataScope);
                 break;
             default:
@@ -168,15 +169,22 @@ public class DataPermissionAspect {
                 listt.add("'%" + s + "%'");
             }
             if (!listt.isEmpty()) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like any (array" + listt + ")");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE ANY (ARRAY" + listt + " )");
             } else {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like '%"+ user.getUid() +"%'");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE '%" + user.getUid() + "%'");
             }
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like '%" + user.getUid() + "%' ");
+            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE '%" + user.getUid() + "%' ");
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
+    }
+
+
+    public static void main(String[] args) {
+        String str = "asd";
+        String[] split = str.split(",");
+        System.out.println(split[0].toString());
     }
 
     /**
@@ -248,20 +256,33 @@ public class DataPermissionAspect {
 
         Object obj = joinPoint.getArgs()[0];
 
+        List<Object> objList = new ArrayList<>();
+        if (obj instanceof List) {
+            objList = (List<Object>) obj;
+        } else if (obj instanceof String[]) {
+            objList = Arrays.asList((String[]) joinPoint.getArgs()[0]);
+        } else if (obj instanceof String) {
+            objList = Collections.singletonList(obj);
+        } else if (obj instanceof Map) {
+            Map mapParam = (Map) obj;
 
+        }
 
         List<String> inputIdList = new ArrayList<>();
-
-
-        Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
-        Object o = mapParam.get(dataPermission.keyIdName());
-        if(o != null){
-            if(o instanceof List){
-                inputIdList = (List<String>) o;
-            } else if (o instanceof String){
-                inputIdList.add(String.valueOf(o));
+        if (obj instanceof String) {
+            inputIdList.add(String.valueOf(obj));
+        } else {
+            Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+            Object o = mapParam.get(dataPermission.keyIdName());
+            if(o != null){
+                if(o instanceof List){
+                    inputIdList = (List<String>) o;
+                } else if (o instanceof String){
+                    inputIdList.add(String.valueOf(o));
+                }
             }
         }
+
         if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
@@ -282,23 +303,6 @@ public class DataPermissionAspect {
             if (!users.contains(user.getUid())) {
                 throw new ServiceException(ApiError.ERROR_1013);
             }
-        }
-    }
-
-    public static void main(String[] args) {
-        List<String> list1 = new ArrayList<>();
-        List<String> list2 = new ArrayList<>();
-        list1.add("a");
-        list1.add("b");
-        list1.add("c");
-        list1.add("d");
-        list2.add("a");
-        list2.add("b");
-        list2.add("c");
-        if (list1.contains(list2)) {
-            System.out.println("true");
-        } else {
-            System.out.println("false");
         }
     }
 

@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ProjectTaskDTO implements Serializable {
+public class ProjectTaskDTO  implements Serializable {
 
 
     /**

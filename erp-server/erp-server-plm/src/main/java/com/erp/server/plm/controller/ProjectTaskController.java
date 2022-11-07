@@ -6,6 +6,7 @@ import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -50,7 +51,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:task:paging")
-    @DataPermission(operationType = "query", tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -77,6 +78,12 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/update")
     //   @RequestPermissions("plm:task:update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:tasks:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.updateTask(dto);
         return flag == true ? success() : failure();
@@ -212,7 +219,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/publishTask")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
@@ -229,7 +236,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/cancelPublishTask")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
@@ -247,7 +254,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/startTask")
     //  @RequestPermissions("plm:task:startTask")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
@@ -265,7 +272,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/closeTask")
     //  @RequestPermissions("plm:task:closeTask")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
@@ -285,7 +292,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/finishTask")
     //  @RequestPermissions("plm:task:finishTask")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
@@ -303,7 +310,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/approvalPass")
     //  @RequestPermissions("plm:task:approvalPass")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
@@ -321,7 +328,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/approvalReject")
     //  @RequestPermissions("plm:task:approvalReject")
-    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,

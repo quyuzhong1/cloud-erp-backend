@@ -5,6 +5,7 @@ import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
@@ -68,7 +69,7 @@ public class ProjectInfoController extends BaseController {
      */
     @PostMapping("/paging")
     //@RequestPermissions("plm:project:paging")
-    @DataPermission(operationType = "query", tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "p")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "p")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);
