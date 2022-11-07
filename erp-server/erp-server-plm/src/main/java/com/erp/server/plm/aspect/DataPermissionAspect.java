@@ -170,13 +170,13 @@ public class DataPermissionAspect {
                 listt.add("'%" + s + "%'");
             }
             if (!listt.isEmpty()) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like any (" + StringUtils.join(listt, ",") + ")");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like any (array" + listt + ")");
             } else {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like any ('"+ user.getUid() +"')");
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like '%"+ user.getUid() +"%'");
             }
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " = '" + user.getUid() + "' ");
+            sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " like '%" + user.getUid() + "%' ");
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
     }
