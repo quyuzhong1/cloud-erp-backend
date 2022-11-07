@@ -96,7 +96,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
             }
         }
-        return resultList;
+        return resultList.stream().distinct().collect(Collectors.toList());
     }
 
 
@@ -128,18 +128,17 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
      */
     @Override
     public List<String> getDepartmentIds(String departmentId) {
-        List<String> resultList = new ArrayList<>();
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(departmentId)) {
-            LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.select(SysDepartmentEntity::getId);
-            queryWrapper.eq(SysDepartmentEntity::getParentId, departmentId);
-            List<Object> list = baseMapper.selectObjs(queryWrapper);
-            int size = list.size() + 1;
-            resultList = BeanMapperUtils.copyList(String.class, list);
-            resultList.add(departmentId);
+        List<SysDepartmentTreeDTO> treeList = baseMapper.findTree();
+        List<String> resultList = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(treeList)) {
+            for (SysDepartmentTreeDTO vo : treeList) {
+                //如果路径包含了 就说有
+                if (vo.getPath().contains(departmentId)) {
+                    resultList.add(vo.getId());
+                }
+            }
         }
-
-        return resultList;
+        return resultList.stream().distinct().collect(Collectors.toList());
     }
 
     /**
