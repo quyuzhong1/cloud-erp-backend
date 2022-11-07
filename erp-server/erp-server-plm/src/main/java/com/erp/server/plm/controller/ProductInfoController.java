@@ -81,13 +81,12 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:product:saveOrUpdate")
 
-/*    @DataPermission(operationType = "update",
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "plm:product:saveOrUpdate",
+            menuCode = "plm:product:updateOrUpdate",
             serviceClass = ProductInfoService.class,
-            entityName = "productInfoDTO",
             keyIdName = "id"
-    )*/
+    )
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
         Boolean flag = productInfoService.saveOrUpdateProduct(dto);
         return flag == true ? success() : failure();

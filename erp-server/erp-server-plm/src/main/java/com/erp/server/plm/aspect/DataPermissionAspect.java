@@ -83,7 +83,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        userInfo.setUid("1587039801131974658");
+        //userInfo.setUid("1587039801131974658");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -290,7 +290,11 @@ public class DataPermissionAspect {
         List<?> objects = service.listByIds(inputIdList);
         for (Object object : objects) {
             JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
-            users.add(jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString());
+            Object o = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true));
+            if (o == null) {
+                return;
+            }
+            users.add(o.toString());
         }
 
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
