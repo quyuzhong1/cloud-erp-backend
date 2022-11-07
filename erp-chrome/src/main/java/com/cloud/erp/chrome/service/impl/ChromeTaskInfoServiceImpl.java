@@ -3,6 +3,7 @@ package com.cloud.erp.chrome.service.impl;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.cloud.erp.chrome.constant.ErpPlatform;
 import com.cloud.erp.chrome.constant.TaskState;
@@ -48,6 +49,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         }
         LambdaQueryWrapper<ScheduleTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ScheduleTaskEntity::getPlatform,dto.getPlatform());
+        queryWrapper.le(ScheduleTaskEntity::getRetryCount,10);
         queryWrapper.and(st->st
             .eq(ScheduleTaskEntity::getTaskStatus,TaskState.NOT_START)
             .or(i->i
@@ -139,12 +141,30 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
      */
     @Override
     public void updateTaskState(Integer taskId, Integer status) {
+        this.updateTaskState(taskId,status,null);
+    }
+
+    /**
+     * 修改任务状态
+     * @author yl
+     * @date 2022-08-26 9:38
+     * @param taskId
+     * @param status
+     * @param remark 备注
+     * @return void
+     */
+    @Override
+    public void updateTaskState(Integer taskId, Integer status,String remark) {
+        ScheduleTaskEntity queryEntity=this.getById(taskId);
+        Integer retryCount=queryEntity==null?0:queryEntity.getRetryCount()+1;
+
         UpdateWrapper<ScheduleTaskEntity> updateWrapper=new UpdateWrapper<>();
         updateWrapper.lambda().eq(ScheduleTaskEntity::getId,taskId);
         updateWrapper.lambda().set(ScheduleTaskEntity::getTaskStatus, status);
         updateWrapper.lambda().set(ScheduleTaskEntity::getUpdateTime,new Date());
+        updateWrapper.lambda().set(remark!=null,ScheduleTaskEntity::getRemark,remark);
+        updateWrapper.lambda().set(status.equals(TaskState.TAKEN),ScheduleTaskEntity::getRetryCount,retryCount);
         this.update(updateWrapper);
-
     }
 
 }

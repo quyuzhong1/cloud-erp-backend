@@ -29,5 +29,12 @@ public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
      * @param status 状态
      */
     void updateTaskState(Integer taskId, Integer status);
+    /**
+     * 更新任务状态
+     * @param taskId 任务Id
+     * @param status 状态
+     * @param remark 备注
+     */
+    void updateTaskState(Integer taskId, Integer status,String remark);
 
 }
