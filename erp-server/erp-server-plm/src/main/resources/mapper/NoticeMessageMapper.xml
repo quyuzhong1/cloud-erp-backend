@@ -13,7 +13,7 @@
 
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                  nd.node_name LIKE  concat('%',#{params.searchKeyword},'%'))
+                  nd.node_name LIKE  concat('%',#{params.searchKeyword},'%')
             </if>
         </where>
 
