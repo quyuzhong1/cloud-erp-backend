@@ -8,16 +8,18 @@
         FROM sys_department_user sdu
         INNER JOIN sys_user_info sui ON sdu.user_id=sui.uid
         INNER JOIN sys_department sd ON sd.id=sdu.department_id
-        WHERE sdu.department_id IN
-        <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
-            #{departmentId}
-        </foreach>
-        AND sui.delete_state=1
+        WHERE sui.delete_state=1
+        <if test="departmentIds !=null  and  departmentIds.size>0">
+          AND  sdu.department_id IN
+            <foreach collection="departmentIds" item="departmentId" open="(" separator="," close=")">
+                #{departmentId}
+            </foreach>
+        </if>
         <if test="params.state !=null">
             AND sui.user_state=#{params.state}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-            AND  sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
+            AND sui.${params.searchType} LIKE concat('%',#{params.searchKeyword},'%')
         </if>
 
         ORDER BY sui.update_time DESC

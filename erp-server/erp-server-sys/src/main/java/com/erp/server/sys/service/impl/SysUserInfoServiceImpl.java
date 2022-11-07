@@ -298,12 +298,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             }
 
         }
-
         //当不为空的时候
         if (StringUtils.isNotBlank(flagId)) {
             LoginUser loginUser = SysInterceptor.threadLocal.get();
             String uid = loginUser.getUid();
-
             boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
             if (ifBinding) {
                 throw new ServiceException(ApiError.ERROR_9020);

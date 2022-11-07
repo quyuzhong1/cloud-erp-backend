@@ -19,7 +19,6 @@ public class DepartmentSearchDTO  implements Serializable {
 
     private String searchKeyword;
 
-    @NotBlank(message = "部门id不能为空")
     private String departmentId;
 
     //状态 1 正常  0 不正常
