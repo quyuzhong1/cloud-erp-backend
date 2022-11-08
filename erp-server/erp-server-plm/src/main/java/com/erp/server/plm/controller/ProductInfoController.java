@@ -110,7 +110,8 @@ public class ProductInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
             tableField = "charge_id",
             menuCode = "plm:product:remove",
-            serviceClass = ProductInfoServiceImpl.class)
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId")
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();

@@ -201,59 +201,6 @@ public class DataPermissionAspect {
         Class<? extends IService> serviceClass = dataPermission.serviceClass();
         IService<?> service = getIservice(joinPoint, serviceClass.getName());
 
-        List<String> inputIdList = new ArrayList<>();
-
-        Object arg = joinPoint.getArgs()[0];
-
-        Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(arg), Map.class);
-        String o = mapParam.get(dataPermission.keyIdName());
-        inputIdList.add(o);
-        if (CollectionUtils.isEmpty(inputIdList)) {
-            return;
-        }
-        List<Object> objects = (List<Object>) service.listByIds(inputIdList);
-        Object businessData = service.getById(arg.toString());
-        if (org.springframework.util.ObjectUtils.isEmpty(businessData)) {
-            return;
-        }
-
-        String s = JSONObject.toJSONString(businessData);
-
-        JSONObject jsonObject = JSONObject.parseObject(s);
-
-        if (jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)) == null) {
-            return;
-        }
-        String userId = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true)).toString();
-
-        if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
-            return;
-        } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            if (!userList.contains(userId)) {
-                throw new ServiceException(ApiError.ERROR_1013);
-            }
-        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            if (!user.equals(userId)) {
-                throw new ServiceException(ApiError.ERROR_1013);
-            }
-
-        }
-    }
-
-    /**
-     * 修改
-     * @Author Luo_WG
-     * @Date 2022/10/21 9:57
-     * @param userRequestPermissions 权限列表
-     * @param userList 部门用户列表
-     * @param user 用户信息
-     * @param dataPermission 自定义注解信息
-     * @return java.lang.String
-     **/
-    public void update(JoinPoint joinPoint, UserRequestPermissionsDTO userRequestPermissions, List<String> userList, LoginUser user, DataPermission dataPermission) {
-        Class<? extends IService> serviceClass = dataPermission.serviceClass();
-        IService<?> service = getIservice(joinPoint, serviceClass.getName());
-
         Object obj = joinPoint.getArgs()[0];
 
         List<Object> objList = new ArrayList<>();
@@ -265,7 +212,6 @@ public class DataPermissionAspect {
             objList = Collections.singletonList(obj);
         } else if (obj instanceof Map) {
             Map mapParam = (Map) obj;
-
         }
 
         List<String> inputIdList = new ArrayList<>();
@@ -301,7 +247,83 @@ public class DataPermissionAspect {
             if (o == null) {
                 return;
             }
-            users.add(o.toString());
+            users.addAll(Arrays.asList(o.toString().split(",")));
+        }
+        if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return;
+        } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            if (!userList.containsAll(users)) {
+                throw new ServiceException(ApiError.ERROR_1013);
+            }
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(user.getUid())) {
+                throw new ServiceException(ApiError.ERROR_1013);
+            }
+
+        }
+    }
+
+    /**
+     * 修改
+     * @Author Luo_WG
+     * @Date 2022/10/21 9:57
+     * @param userRequestPermissions 权限列表
+     * @param userList 部门用户列表
+     * @param user 用户信息
+     * @param dataPermission 自定义注解信息
+     * @return java.lang.String
+     **/
+    public void update(JoinPoint joinPoint, UserRequestPermissionsDTO userRequestPermissions, List<String> userList, LoginUser user, DataPermission dataPermission) {
+        Class<? extends IService> serviceClass = dataPermission.serviceClass();
+        IService<?> service = getIservice(joinPoint, serviceClass.getName());
+
+        Object obj = joinPoint.getArgs()[0];
+
+        List<Object> objList = new ArrayList<>();
+        if (obj instanceof List) {
+            objList = (List<Object>) obj;
+        } else if (obj instanceof String[]) {
+            objList = Arrays.asList((String[]) joinPoint.getArgs()[0]);
+        } else if (obj instanceof String) {
+            objList = Collections.singletonList(obj);
+        } else if (obj instanceof Map) {
+            Map mapParam = (Map) obj;
+        }
+
+        List<String> inputIdList = new ArrayList<>();
+        if (obj instanceof String) {
+            inputIdList.add(String.valueOf(obj));
+        } else {
+
+            Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+            Object o = null;
+            if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                Object entity = mapParam.get(dataPermission.entityName());
+                o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+            } else {
+                o = mapParam.get(dataPermission.keyIdName());
+            }
+            if(o != null){
+                if(o instanceof List){
+                    inputIdList = (List<String>) o;
+                } else if (o instanceof String){
+                    inputIdList.add(String.valueOf(o));
+                }
+            }
+        }
+
+        if (CollectionUtils.isEmpty(inputIdList)) {
+            return;
+        }
+        List<String> users = new ArrayList<>();
+        List<?> objects = service.listByIds(inputIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+            Object o = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true));
+            if (o == null) {
+                return;
+            }
+            users.addAll(Arrays.asList(o.toString().split(",")));
         }
 
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {

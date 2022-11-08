@@ -16,6 +16,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
 import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
+import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -239,6 +240,10 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:delete",
+            serviceClass = ProductDetailService.class)
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
