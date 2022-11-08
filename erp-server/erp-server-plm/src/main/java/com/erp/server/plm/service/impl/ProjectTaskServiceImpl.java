@@ -423,7 +423,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-                item.setChildList(getChildrenList(item, allList));
+                //item.setChildList(getChildrenList(item, allList));
             }
         }
 
