@@ -170,6 +170,11 @@ public class ProjectTaskController extends BaseController {
      */
     @GetMapping("/details")
 //    @RequestPermissions("plm:task:details")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:details",
+            serviceClass = ProjectTaskService.class
+    )
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
         return success(detailsDTO);
