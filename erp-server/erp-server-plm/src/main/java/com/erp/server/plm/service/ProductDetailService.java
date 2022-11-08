@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -12,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
-public interface ProductDetailService {
+public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     /**
      * @Description 产品信息查询列表

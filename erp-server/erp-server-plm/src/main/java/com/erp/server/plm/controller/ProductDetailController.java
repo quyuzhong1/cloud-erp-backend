@@ -131,6 +131,27 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+
+    /**
+     * 产品信息-多规格-产品详情-编辑
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:22
+     * @param dto 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
+     **/
+    @PostMapping("/getManySpecDetailByIdUpdate")
+    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:edit",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<ProductManyDetailDTO> getManySpecDetailByIdUpdate(@RequestBody ProductManySpecUpdateDTO dto) {
+        ProductManyDetailDTO list = productDetailService.getManySpecDetailById(dto.getProductId());
+        return this.success(list);
+    }
+
     /**
      * 产品信息-无规格-新增/修改
      * @Author Luo_WG
@@ -154,13 +175,6 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-/*    @DataPermission(operationType = "update",
-            tableField = "create_user_id",
-            menuCode = "plm:product:detail:saveOrUpdateManySpec",
-            serviceClass = ProductInfoService.class,
-            entityName = "productInfoDTO",
-            keyIdName = "id"
-    )*/
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();

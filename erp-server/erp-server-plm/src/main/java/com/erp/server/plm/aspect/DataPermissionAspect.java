@@ -83,7 +83,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        //userInfo.setUid("1587039801131974658");
+        userInfo.setUid("1587039801131974658");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -272,8 +272,15 @@ public class DataPermissionAspect {
         if (obj instanceof String) {
             inputIdList.add(String.valueOf(obj));
         } else {
-            Map<String, String> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
-            Object o = mapParam.get(dataPermission.keyIdName());
+
+            Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+            Object o = null;
+            if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                Object entity = mapParam.get(dataPermission.entityName());
+                o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+            } else {
+                o = mapParam.get(dataPermission.keyIdName());
+            }
             if(o != null){
                 if(o instanceof List){
                     inputIdList = (List<String>) o;

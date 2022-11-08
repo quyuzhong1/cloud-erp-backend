@@ -78,12 +78,6 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/update")
     //   @RequestPermissions("plm:task:update")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "charge_id",
-            menuCode = "plm:task:tasks:status",
-            serviceClass = ProjectTaskService.class,
-            keyIdName = "taskIdList"
-    )
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.updateTask(dto);
         return flag == true ? success() : failure();
@@ -116,6 +110,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/taskDetails")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:taskDetails",
+            serviceClass = ProjectTaskService.class
+    )
     //   @RequestPermissions("plm:task:taskDetails")
     public ApiResult<ProjectTaskDTO> taskDetails(String taskId) {
         ProjectTaskDTO taskDTO = taskService.taskDetails(taskId);

@@ -82,7 +82,7 @@ public class ProductInfoController extends BaseController {
     //@RequestPermissions("plm:product:saveOrUpdate")
 
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "charge_id",
             menuCode = "plm:product:updateOrUpdate",
             serviceClass = ProductInfoService.class,
             keyIdName = "id"
@@ -108,7 +108,7 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/remove")
     //@RequestPermissions("plm:product:remove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
-            tableField = "create_user_id",
+            tableField = "charge_id",
             menuCode = "plm:product:remove",
             serviceClass = ProductInfoServiceImpl.class)
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
