@@ -25,8 +25,8 @@
                     #{productId}
                 </foreach>
             </if>
-            <if test="params.param != '' and params.param != null">
-                ${params.param}
+            <if test="params.param!='' and params.param!=null">
+                AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
             </if>
         </where>
         ORDER BY pa.archive_time DESC

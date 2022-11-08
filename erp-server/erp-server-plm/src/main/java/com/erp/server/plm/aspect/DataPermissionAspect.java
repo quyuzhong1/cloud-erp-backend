@@ -83,7 +83,7 @@ public class DataPermissionAspect {
             return;
         }
         LoginUser userInfo = commonService.getUserInfo();
-        //userInfo.setUid("1587039801131974658");
+        //userInfo.setUid("1589827125536407554");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -178,13 +178,6 @@ public class DataPermissionAspect {
             sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE '%" + user.getUid() + "%' ");
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
-    }
-
-
-    public static void main(String[] args) {
-        String str = "asd";
-        String[] split = str.split(",");
-        System.out.println(split[0].toString());
     }
 
     /**
