@@ -159,7 +159,7 @@ public class ProductDetailController extends BaseController {
      * @param dto 产品信息表id
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
      **/
-    @GetMapping("/getNoSpecDetailByIdUpdate")
+    @PostMapping("/getNoSpecDetailByIdUpdate")
     //@RequestPermissions("plm:product:detail:getManySpecDetailById")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
