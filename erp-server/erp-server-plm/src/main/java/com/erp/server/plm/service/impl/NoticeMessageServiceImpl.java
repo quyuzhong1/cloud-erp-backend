@@ -85,9 +85,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         }
                         otherPeopleList.add(otherUserId);
                     }
-                    item.setOtherPeople(StringUtils.join(names, ","));
 
+                    item.setOtherPeople(StringUtils.join(names, ","));
                 }
+                item.setOtherPeopleList(otherPeopleList);
                 String itemPeople = item.getItemPeople();
                 item.setItemPeopleList(Arrays.asList(itemPeople.split(",")));
                 item.setItemPeopleName(NoticeItemPeopleEnum.getNameByFlags(itemPeople, ","));
