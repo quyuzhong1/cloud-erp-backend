@@ -153,6 +153,27 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 产品信息-无规格-产品详情-编辑
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
+     * @param dto 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     **/
+    @GetMapping("/getNoSpecDetailByIdUpdate")
+    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:edit",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )
+    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestBody ProductManySpecUpdateDTO dto) {
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(dto.getProductId());
+        return this.success(list);
+    }
+
+    /**
      * 产品信息-无规格-新增/修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
