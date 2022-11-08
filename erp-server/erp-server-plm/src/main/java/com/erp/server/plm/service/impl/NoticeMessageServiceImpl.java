@@ -161,9 +161,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         List<String> otherPeopleList = dto.getOtherPeopleList();
         if (CollectionUtils.isNotEmpty(itemPeopleList)) {
             messageEntity.setItemPeople(String.join(",", itemPeopleList));
+        }else{
+            messageEntity.setItemPeople("");
         }
         if (CollectionUtils.isNotEmpty(otherPeopleList)) {
             messageEntity.setOtherPeople(String.join(",", otherPeopleList));
+        }else{
+            messageEntity.setOtherPeople("");
         }
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
             throw new ServiceException(ApiError.ERROR_95055);

@@ -40,12 +40,17 @@ public class TaskSearchParamDTO {
 
     /**
      * 搜索类型
-     * name 任务名
-     * priority 任务优先级
-     * chargeId 负责人id
-     * createTime 创建时间
-     * status 状态
+     * priority 任务优秀级
+     * plan_end_time
+     * create_time 创建时间
+     * reality_end_time 实际接受时间
      */
-    @StateEnumValue(strValues = {"name", "priority", "chargeId", "status",  "createTime"}, message = "搜索类型有误")
+    @StateEnumValue(strValues = {"priority", "plan_end_time", "create_time", "reality_end_time" }, message = "搜索类型有误")
     private String searchType;
+
+    /**
+     * 排序
+     */
+    @StateEnumValue(strValues = {"desc","asc"}, message = "排序有误")
+    private String orderBy;
 }

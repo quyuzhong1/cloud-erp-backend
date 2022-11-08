@@ -10,13 +10,12 @@
         nd.id AS nodeId,nd.node_name
         FROM notice_message nm LEFT JOIN notice_node nd
         ON nm.node_id=nd.id
-
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
                   nd.node_name LIKE  concat('%',#{params.searchKeyword},'%')
             </if>
         </where>
-
+        ORDER BY nm.create_time DESC
    </select>
 
 </mapper>
