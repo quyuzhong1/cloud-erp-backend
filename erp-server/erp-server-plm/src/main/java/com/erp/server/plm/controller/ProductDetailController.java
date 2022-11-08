@@ -142,12 +142,12 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/getManySpecDetailByIdUpdate")
     //@RequestPermissions("plm:product:detail:getManySpecDetailById")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:detail:edit",
             serviceClass = ProductDetailService.class,
             keyIdName = "id"
-    )
+    )*/
     public ApiResult<ProductManyDetailDTO> getManySpecDetailByIdUpdate(@RequestBody ProductManySpecUpdateDTO dto) {
         ProductManyDetailDTO list = productDetailService.getManySpecDetailById(dto.getProductId());
         return this.success(list);
@@ -162,12 +162,12 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/getNoSpecDetailByIdUpdate")
     //@RequestPermissions("plm:product:detail:getManySpecDetailById")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:product:detail:edit",
             serviceClass = ProductDetailService.class,
             keyIdName = "id"
-    )
+    )*/
     //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
     public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestBody ProductManySpecUpdateDTO dto) {
         ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(dto.getProductId());
@@ -240,10 +240,10 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
             tableField = "charge_id",
             menuCode = "plm:product:detail:delete",
-            serviceClass = ProductDetailService.class)
+            serviceClass = ProductDetailService.class)*/
     public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
