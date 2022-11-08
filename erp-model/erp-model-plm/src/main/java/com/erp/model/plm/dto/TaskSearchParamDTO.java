@@ -53,4 +53,18 @@ public class TaskSearchParamDTO {
      */
     @StateEnumValue(strValues = {"desc","asc"}, message = "排序有误")
     private String orderBy;
+
+
+    /**
+     * 分组名 no 不分组
+     * product 产品分组
+     * planEndTime  计划结束时间
+     */
+    private String groupName;
+
+    /**
+     * 分组的标示 可能是时间 也可能是产品id
+
+     */
+    private String groupFlag;
 }

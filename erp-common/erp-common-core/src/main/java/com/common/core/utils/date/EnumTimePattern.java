@@ -165,7 +165,7 @@ public enum EnumTimePattern {
 	}
 
 	public static Date parseDate(String time) {
-		if (org.apache.commons.lang.StringUtils.isBlank(time)) {
+		if (StringUtils.isBlank(time)) {
 			return null;
 		}
 
@@ -200,30 +200,4 @@ public enum EnumTimePattern {
 	}
 
 
-	public static void main(String[] args) {
-		System.out.println("01:" + EnumTimePattern.parseDate("202102"));
-		System.out.println("02:" + EnumTimePattern.parseDate("20210226"));
-		System.out.println("03:" + EnumTimePattern.parseDate("20210226011839"));
-		System.out.println("04:" + EnumTimePattern.parseDate("20210226011839.339"));
-		System.out.println("05:" + EnumTimePattern.parseDate("2021-02"));
-		System.out.println("06:" + EnumTimePattern.parseDate("2021-02-26"));
-		System.out.println("07:" + EnumTimePattern.parseDate("2021-02-26 01:18"));
-		System.out.println("08:" + EnumTimePattern.parseDate("2021-02-26 01:18:39"));
-		System.out.println("09:" + EnumTimePattern.parseDate("2021-02-26 01:18:39.335"));
-		//UTD时间
-		System.out.println("10:" + EnumTimePattern.parseDate("2021-02-26T01:18:39Z"));
-		System.out.println("11:" + EnumTimePattern.parseDate("2021-02-26T01:18:39+10:00"));
-		System.out.println("12:" + EnumTimePattern.parseDate("2021-02-28T04:07:52.402Z"));
-		System.out.println("13:" + EnumTimePattern.parseDate("2021-02-26T01:18:39.445-10:00"));
-		System.out.println("14:" + EnumTimePattern.parseDate("2019-04-01T20:36:09.666Z"));
-		System.out.println("15:" + EnumTimePattern.parseDate("14.02.2019 11:38:40 UTC"));
-		System.out.println("16:" + EnumTimePattern.parseDate("2019-02-14 09:36:18 UTC"));
-		System.out.println("17:" + EnumTimePattern.parseDate("2018/12/31 02:08:08 UTC"));
-
-		//其他国家“方言式” 日期格式
-		System.out.println("18:" + EnumTimePattern.parseDate("Feb 25, 2021 11:18:39 pm"));
-		System.out.println("19:" + EnumTimePattern.parseDate("Feb 25, 2022, 11:18:39 pm"));
-
-		System.out.println("20:" + EnumTimePattern.parseDate("01/01/2020"));
-	}
 }

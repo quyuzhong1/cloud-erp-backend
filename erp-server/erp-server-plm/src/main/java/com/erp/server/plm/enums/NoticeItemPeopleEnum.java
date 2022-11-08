@@ -69,8 +69,5 @@ public enum NoticeItemPeopleEnum {
         return resultList;
     }
 
-    public static void main(String[] args) {
-        System.out.println(NoticeItemPeopleEnum.getAll());
-    }
 
 }

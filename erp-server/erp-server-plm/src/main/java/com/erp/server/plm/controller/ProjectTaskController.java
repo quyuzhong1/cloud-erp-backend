@@ -293,7 +293,6 @@ public class ProjectTaskController extends BaseController {
     }
 
 
-
     /**
      * 项目任务-任务分页列表 -状态操作-完成任务
      *
@@ -325,7 +324,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO  dto) {
+    public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalPass(dto);
         return result == true ? success() : failure();
     }
@@ -356,7 +355,7 @@ public class ProjectTaskController extends BaseController {
     @GetMapping("/findTaskProcess")
     //  @RequestPermissions("plm:task:findTaskProcess")
     public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
-        List<TaskProcessNodeDTO>  taskProcess = taskService.findTaskProcess(taskId);
+        List<TaskProcessNodeDTO> taskProcess = taskService.findTaskProcess(taskId);
         return success(taskProcess);
     }
 
@@ -365,6 +364,7 @@ public class ProjectTaskController extends BaseController {
      * 工作流
      * 审核通过 改变任务状态
      * 以及
+     *
      * @return
      */
     @PostMapping("/workflow/pass")
@@ -374,6 +374,16 @@ public class ProjectTaskController extends BaseController {
     }
 
 
+    /**
+     * 分组条件列表
+     *
+     * @return
+     */
+    @PostMapping("/group/condition/list")
+    public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
+        List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
+        return success(resultList);
+    }
 
 
 }

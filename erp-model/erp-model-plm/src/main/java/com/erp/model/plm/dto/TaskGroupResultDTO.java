@@ -15,7 +15,7 @@ public class TaskGroupResultDTO {
     /**
      * 名字
      */
-    private String name;
+    private String name="";
 
 
     /**

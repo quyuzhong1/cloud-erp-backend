@@ -47,5 +47,17 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
                           @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
+
+    List<TaskGroupResultDTO> toMeTaskGroup(@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList);
+
+    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(String userId, List<Integer> notStateList);
+
+    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList);
+
+    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList);
+
+    List<TaskGroupResultDTO> allTaskGroup( @Param("notStateList") List<Integer> notStateList);
+
+    List<TaskGroupResultDTO> taskPlanEndTimeGroup(List<Integer> notStateList);
 }
 
