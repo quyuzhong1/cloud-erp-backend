@@ -74,12 +74,12 @@ public class ProductDTO implements Serializable {
     /**
      * 产品等级
      */
-    @NotBlank(message = "产品等级不能为空")
     private String  grade;
 
     /**
      * 产品等级id
      */
+    @NotBlank(message = "产品等级不能为空")
     private String  gradeId;
 
     /**

@@ -117,6 +117,22 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    /**
+     * 查询 设置了全部的 文档id 管理员权限
+     *
+     * @param productId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-01 19:13
+     */
+    @Override
+    public List<String> getAllDeliveryDocsIdsAdmin(String productId) {
+        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(DocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
     @Override
     public SetDocsPowerDTO getDocsPower(String deliveryDocsId) {
         if (StringUtils.isBlank(deliveryDocsId)) {
