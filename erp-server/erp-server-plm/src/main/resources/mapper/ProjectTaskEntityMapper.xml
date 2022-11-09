@@ -261,4 +261,28 @@
     </select>
 
 
+    <select id="toMeProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        WHERE strpos (t.charge_id,#{userId})>0
+        <if test="params.groupFlag !=null  and params.groupFlag!=''">
+           AND  product_id=#{productId}
+        </if>
+        <if test="notStateList !=null and notStateList.size>0">
+            AND  status NOT IN
+            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+
+        ORDER BY ${searchType}  ${orderBy}
+
+
+
+    </select>
+
+
 </mapper>

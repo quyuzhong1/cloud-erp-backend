@@ -57,6 +57,19 @@ public class DateUtil {
     }
 
     /**
+     * 获取当天开始时间
+     *
+     * @return
+     */
+    public static Date getStartTime() {
+        Calendar todayStart = Calendar.getInstance();
+        todayStart.set(Calendar.SECOND, 0);
+        todayStart.set(Calendar.MINUTE, 0);
+        todayStart.set(Calendar.HOUR_OF_DAY, 0);
+        todayStart.set(Calendar.MILLISECOND, 0);
+        return todayStart.getTime();
+    }
+    /**
      * 对日期的【秒】进行加/减
      *
      * @param date    日期

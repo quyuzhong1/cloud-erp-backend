@@ -59,5 +59,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<TaskGroupResultDTO> allTaskGroup( @Param("notStateList") List<Integer> notStateList);
 
     List<TaskGroupResultDTO> taskPlanEndTimeGroup(List<Integer> notStateList);
+
+    Page toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList")List<Integer> notStateList, @Param("param") TaskSearchParamDTO params);
 }
 

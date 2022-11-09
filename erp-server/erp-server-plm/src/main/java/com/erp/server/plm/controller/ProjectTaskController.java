@@ -375,7 +375,7 @@ public class ProjectTaskController extends BaseController {
 
 
     /**
-     * 分组条件列表
+     * 任务列表-分组条件列表
      *
      * @return
      */
@@ -383,6 +383,18 @@ public class ProjectTaskController extends BaseController {
     public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
         return success(resultList);
+    }
+
+    /**
+     * 任务列表
+     *
+     *
+     * @return
+     */
+    @PostMapping("/expert/paging")
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.expertPaging(searchParamDTO);
+        return success(pagingVO);
     }
 
 
