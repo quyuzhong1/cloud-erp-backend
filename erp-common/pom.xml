@@ -19,9 +19,30 @@
         <module>erp-common-web</module>
     </modules>
 
+<!--    <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <name>nexus Repository RELEASES</name>
+            <url>http://172.16.110.11:8089/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>nexus</id>
+            <name>nexus Repository SNAPSHOTS</name>
+            <url>http://172.16.110.11:8089/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
-
-
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>2.3.4.RELEASE</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>-->
 
 
 </project>
