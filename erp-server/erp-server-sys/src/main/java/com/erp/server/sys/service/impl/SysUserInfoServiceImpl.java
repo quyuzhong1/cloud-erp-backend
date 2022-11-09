@@ -35,6 +35,7 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
