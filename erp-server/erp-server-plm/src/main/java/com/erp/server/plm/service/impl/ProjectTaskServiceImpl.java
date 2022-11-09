@@ -1046,9 +1046,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public List<ProjectTaskEntity> getByTaskIds(List<String> taskIds) {
-        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProjectTaskEntity::getId, taskIds);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskEntity::getId, taskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 
@@ -1184,40 +1187,233 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //是否是产品分组
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
-
         //不在的 任务状态
-        List<Integer> notStateList = new ArrayList<>();
-        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
-            notStateList.add(TaskStateEnum.CLOSE.getCode());
-            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
-            notStateList.add(TaskStateEnum.FINISH.getCode());
-            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
-        }
-
-
+        List<Integer> notStateList = getNoExistState(taskProperty, taskCondition);
         switch (taskProperty) {
             //分配给我  任务负责人=当前账号人的待完成/审核任务
             case TaskConstant.ASSIGN_TO_ME:
-                notStateList = getNoExistState(taskProperty, taskCondition);
                 //当不分组
                 if (!ifGroup) {
                     params.setGroupFlag("");
-                    query = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                    pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
                 } else {
                     //根据产品分组
                     if (ifProductGroup) {
                         //这个就是产品的id
-                        query = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                        pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.toMePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                    }
+                }
+                //我创建的  任务创建人=当前账号人
+            case TaskConstant.MY_CREATE:
+                //当不分组
+                if (!ifGroup) {
+                    params.setGroupFlag("");
+                    pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+                } else {
+                    //根据产品分组
+                    if (ifProductGroup) {
+                        //这个就是产品的id
+                        pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.myCreatePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                    }
+                }
+                //全部
+            case TaskConstant.ALL:
+                //当不分组
+                if (!ifGroup) {
+                    params.setGroupFlag("");
+                    pageData = baseMapper.allProductTaskList(query, notStateList, params);
+                } else {
+                    //根据产品分组
+                    if (ifProductGroup) {
+                        //这个就是产品的id
+                        pageData = baseMapper.allProductTaskList(query, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.allPlanTimeTaskList(query, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
                     }
                 }
 
-
         }
 
-        return null;
+        List<TaskPagingShowDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            //完成的状态
+            Integer finishState = TaskStateEnum.FINISH.getCode();
+            //获取到任务id 集合
+            List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //获取总的任务文档数
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+            //前置任务
+            List<ProjectTaskEntity> preTaskEntityList = this.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            //根据产品id 获取到所有的 任务信息
+            for (TaskPagingShowDTO item : records) {
+                String taskId = item.getId();
+                Integer state = item.getStatus();
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
+                    item.setIsSysTask(true);
+                }
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+                List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+                int totalPreTaskCount = preTaskIds.size();
+                //前置任务
+                item.setTotalPreTaskCount(totalPreTaskCount);
+                int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
+                item.setFinishPreTaskCount(finishPreTaskCount);
+
+                List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
+                item.setOperateList(operateList);
+            }
+        }
+
+        return new PagingVO(pageData);
     }
 
+
+    /**
+     * 获取操作列表
+     *
+     * @param state
+     * @param totalDocsCount
+     * @param finishDocsCount
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-11-09 15:06
+     */
+    private List<Map<String, Object>> getOperateList(Integer state, Integer totalDocsCount, Integer finishDocsCount) {
+        List<Map<String, Object>> operateList = new LinkedList<>();
+        Map<String, Object> taskMap = new HashMap<>();
+        String taskName = "";
+        String taskFlag = "";
+        Boolean taskShow = false;
+        if (TaskStateEnum.TO_BE_RELEASED.getCode().equals(state)) {
+            taskName = "发布任务";
+            taskFlag = "releasedTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.NOT_START.getCode().equals(state)) {
+            taskName = "开始任务";
+            taskFlag = "startTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state)) {
+            taskName = "审核任务";
+            taskFlag = "approvalTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.ING.getCode().equals(state)) {
+            taskName = "完成任务";
+            taskFlag = "finishTask";
+            taskShow = true;
+        }
+        taskMap.put("name", taskName);
+        taskMap.put("flag", taskFlag);
+        taskMap.put("isShow", taskShow);
+        operateList.add(taskMap);
+        Map<String, Object> detailsMap = new HashMap<>();
+        detailsMap.put("name", "查看详情");
+        detailsMap.put("flag", "taskDetails");
+        detailsMap.put("isShow", TaskStateEnum.FINISH.getCode().equals(state) ? true : false);
+        operateList.add(detailsMap);
+
+        Map<String, Object> uploadMap = new HashMap<>();
+        uploadMap.put("name", "上传文件");
+        uploadMap.put("flag", "uploadFile");
+        uploadMap.put("isShow", finishDocsCount != totalDocsCount ? true : false);
+        operateList.add(uploadMap);
+
+        Map<String, Object> moreMap = new HashMap<>();
+        moreMap.put("name", "更多");
+        moreMap.put("flag", "more");
+        moreMap.put("isShow", true);
+        operateList.add(moreMap);
+        return operateList;
+
+    }
+
+
+    /**
+     * 根据以计划结束时间分组 的标示
+     * 获取到计划的开始时间 和结束时间
+     *
+     * @return
+     */
+    public Map<String, Date> getPlanEndTime(String groupFlag) {
+        Map<String, Date> resultMap = new HashMap<>();
+        Date startTime = null;
+        Date endTime = null;
+        Date nowDay = new Date();
+        Date nowDayStartTime = DateUtil.getStartTime(nowDay);
+        //今天
+        if (TaskPlanEndTimeEnum.TODAY.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.getEndTime(nowDay);
+        }
+        //明天
+        if (TaskPlanEndTimeEnum.TOMORROW.getFlag().equals(groupFlag)) {
+            Date tomorrowDay = DateUtil.addDateDays(nowDay, 1);
+            startTime = DateUtil.getStartTime(tomorrowDay);
+            endTime = DateUtil.getEndTime(tomorrowDay);
+        }
+        //近三天
+        if (TaskPlanEndTimeEnum.LAST_THREE_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 2);
+        }
+        //近七天
+        if (TaskPlanEndTimeEnum.LAST_SEVEN_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 6);
+
+        }
+        //近十五天
+        if (TaskPlanEndTimeEnum.LAST_FIFTEEN_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 14);
+        }
+        //近三十天
+        if (TaskPlanEndTimeEnum.LAST_THIRTY_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 29);
+        }
+        //三十天后
+        if (TaskPlanEndTimeEnum.AFTER_THIRTY_DAYS.getFlag().equals(groupFlag)) {
+            startTime = DateUtil.addDateDays(nowDay, 29);
+        }
+        resultMap.put("startTime", startTime);
+        resultMap.put("endTime", endTime);
+        return resultMap;
+    }
 
     /**
      * 获取不在的状态列表
@@ -1405,7 +1601,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         total.setGroupFlag("");
         total.setTaskCount(totalTaskCount);
         resultList.add(total);
-        Date nowDay = DateUtil.getStartTime();
+        Date nowDay = DateUtil.getStartTime(new Date());
         String fmt = DateUtil.fmt_day;
         for (TaskPlanEndTimeEnum timeEnum : TaskPlanEndTimeEnum.values()) {
             TaskGroupResultDTO result = new TaskGroupResultDTO();

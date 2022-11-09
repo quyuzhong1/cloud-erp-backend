@@ -25,6 +25,9 @@ public class TaskSearchParamDTO {
 
     /**
      * 任务属性
+     * assignToMe 分配给我
+     * myCreate 我创造
+     * all 全部
      */
     @NotBlank(message = "任务查找属性不能为空")
     @StateEnumValue(strValues = {"assignToMe", "myCreate", "all"}, message = "任务属性有误")
@@ -50,6 +53,8 @@ public class TaskSearchParamDTO {
 
     /**
      * 排序
+     * desc  降序
+     * asc 升序
      */
     @StateEnumValue(strValues = {"desc","asc"}, message = "排序有误")
     private String orderBy="desc";

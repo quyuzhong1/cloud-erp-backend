@@ -18,6 +18,9 @@ public class TaskGroupParamDTO implements Serializable {
 
     /**
      * 任务属性
+     * assignToMe  分配给我,
+     * myCreate  我创造的,
+     * all  全部
      */
     @NotBlank(message = "任务查找属性不能为空")
     @StateEnumValue(strValues = {"assignToMe", "myCreate", "all"}, message = "任务属性有误")

@@ -220,6 +220,13 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.in(PreTaskEntity::getTaskId, sysTaskIds);
         return this.list(queryWrapper);
     }
+
+    @Override
+    public List<PreTaskEntity> getPreTaskListBytaskIds(List<String> taskIds) {
+        LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(PreTaskEntity::getTaskId, taskIds);
+        return this.list(queryWrapper);
+    }
 }
 
 

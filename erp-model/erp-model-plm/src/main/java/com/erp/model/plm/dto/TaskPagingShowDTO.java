@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname TaskPagingShowDTO
@@ -88,7 +89,8 @@ public class TaskPagingShowDTO implements Serializable {
     private Integer priority;
 
     /**
-     * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+     * 任务状态 任务状态 0:待发布 1:未开始 2:待审核 3 进行中, 4.已完成 5.已关闭
+     * 6 完成待审核 7 审核中   8 审核通过  9 审核不通过
      */
     private Integer status;
 
@@ -136,6 +138,8 @@ public class TaskPagingShowDTO implements Serializable {
      * 完成的前置任务数
      */
     private Integer  finishPreTaskCount=0;
+
+    private List<Map<String,Object>> operateList;
 
 
     /**

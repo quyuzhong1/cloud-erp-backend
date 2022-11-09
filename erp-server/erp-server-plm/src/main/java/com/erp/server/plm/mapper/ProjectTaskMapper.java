@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -60,6 +61,16 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskGroupResultDTO> taskPlanEndTimeGroup(List<Integer> notStateList);
 
-    Page toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList")List<Integer> notStateList, @Param("param") TaskSearchParamDTO params);
+    IPage toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
+
+    IPage toMePlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
+
+    IPage myCreateProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
+
+    IPage myCreatePlanEndTimeTaskList(Page query,@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,  @Param("startTime") Date startTime,@Param("endTime") Date endTime);
+
+    IPage allProductTaskList(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params")TaskSearchParamDTO params);
+
+    IPage allPlanTimeTaskList(Page query,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params, @Param("startTime")Date startTime,@Param("endTime") Date endTime);
 }
 
