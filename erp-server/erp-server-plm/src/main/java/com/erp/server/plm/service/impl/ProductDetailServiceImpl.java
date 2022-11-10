@@ -589,11 +589,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, id);
-        this.remove(queryWrapper);
-        //删除产品主表
-        LambdaQueryWrapper<ProductInfoEntity> wrapper = new LambdaQueryWrapper();
-        wrapper.eq(ProductInfoEntity::getId, id);
-        return  productInfoService.remove(wrapper);
+        List<ProductDetailEntity> list = this.list(queryWrapper);
+        list.forEach(req -> {
+            //1.删除证书信息
+            productCertificateService.removeCertificate(req.getSkuNo());
+            //2.删除包装信息
+            productPackService.removePack(req.getSkuNo());
+            //3.删除物流信息
+            productLogisticsService.removeLogistics(req.getSkuNo());
+            //4.删除销售信息
+            productSaleService.removeSale(req.getSkuNo());
+            //5.删除采购信息
+            productPurchaseService.removePurchase(req.getSkuNo());
+            //6.删除成本信息
+            productCostService.removeCost(req.getSkuNo());
+        });
+        return this.remove(queryWrapper);
     }
 
     /**
