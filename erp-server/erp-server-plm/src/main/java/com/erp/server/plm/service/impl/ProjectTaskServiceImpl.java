@@ -361,7 +361,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
@@ -407,9 +406,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
-            List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
+         //   List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
+
+            //产品id
+            List<String> productIds = list.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
+            List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
+                Integer state = item.getStatus();
+                item.setStatusName(TaskStateEnum.getName(state));
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
@@ -424,7 +429,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-                //item.setChildList(getChildrenList(item, allList));
+
+                List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
+                item.setOperateList(operateList);
+                ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);
+                if (product != null) {
+                    item.setProductName(product.getName());
+                }
             }
         }
 
@@ -1298,6 +1309,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalPreTaskCount(totalPreTaskCount);
                 int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
                 item.setFinishPreTaskCount(finishPreTaskCount);
+                //获取任务操作项
                 List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
                 item.setOperateList(operateList);
                 ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);

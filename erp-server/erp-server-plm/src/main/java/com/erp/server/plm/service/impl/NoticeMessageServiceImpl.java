@@ -13,6 +13,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
+import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.NoticeNodeEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -21,6 +22,7 @@ import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.NoticeMessageService;
 import com.erp.server.plm.service.NoticeNodeService;
+import com.erp.server.plm.service.UserCancelNoticeService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private NoticeNodeService noticeNodeService;
+
+    @Autowired
+    private UserCancelNoticeService userCancelNoticeService;
 
     @Override
     public PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -161,12 +166,12 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         List<String> otherPeopleList = dto.getOtherPeopleList();
         if (CollectionUtils.isNotEmpty(itemPeopleList)) {
             messageEntity.setItemPeople(String.join(",", itemPeopleList));
-        }else{
+        } else {
             messageEntity.setItemPeople("");
         }
         if (CollectionUtils.isNotEmpty(otherPeopleList)) {
             messageEntity.setOtherPeople(String.join(",", otherPeopleList));
-        }else{
+        } else {
             messageEntity.setOtherPeople("");
         }
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
@@ -196,6 +201,27 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             entity.setState(IsConstant.NO);
         }
         return this.updateById(entity);
+    }
+
+    /**
+     * 获取用户的通知节点列表
+     *
+     * @param userId
+     * @return java.util.List<com.erp.model.plm.dto.UserNoticeNodeDTO>
+     * @author yl
+     * @date 2022-11-10 15:23
+     */
+    @Override
+    public List<UserNoticeNodeDTO> getUserNoticeNode(String userId) {
+        //获取用户取消的通知表id
+        List<String> cancelNoticeIds = userCancelNoticeService.getUserCancelNoticeIds(userId);
+        List<UserNoticeNodeDTO> resultList = baseMapper.getUserNoticeNode(IsConstant.YES);
+        for (UserNoticeNodeDTO item : resultList) {
+            if(cancelNoticeIds.contains(item.getNoticeMessageId())){
+                item.setState(false);
+            }
+        }
+        return resultList;
     }
 
     /**
