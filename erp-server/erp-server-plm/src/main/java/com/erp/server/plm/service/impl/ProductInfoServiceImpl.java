@@ -140,6 +140,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private TemplateDocsPermissionService templateDocsPermissionService;
 
 
+    @Autowired
+    private ProductDetailService productDetailService;
+
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -242,7 +246,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            projectTaskService.addSysTask(entity.getId(),taskDocsNameList);
+            projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -322,9 +326,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             flag = this.updateById(entity);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
+                //删除任务
                 projectTaskService.removeTaskByProductId(productId);
                 //删除项目
                 projectInfoService.removeByProductId(productId);
+                productDetailService.deleteByProductId(productId);
+
             }
 
         }
@@ -435,11 +442,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIterateCount(0);
                 }
                 String projectChargeId = item.getProjectChargeId();
-                if(StringUtils.isNotBlank(projectChargeId)){
+                if (StringUtils.isNotBlank(projectChargeId)) {
                     item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
                 }
-                String  productChargeId=item.getProductChargeId();
-                if(StringUtils.isNotBlank(productChargeId)){
+                String productChargeId = item.getProductChargeId();
+                if (StringUtils.isNotBlank(productChargeId)) {
                     item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
                 }
 
@@ -529,7 +536,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
         //保存模板
-        String templateId = templateService.saveTemplate(templateName,productId);
+        String templateId = templateService.saveTemplate(templateName, productId);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -706,8 +713,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                          *  是否完成
                          */
                         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-                        List<String> taskIdList = taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                        List<ProjectTaskEntity> taskFinish=taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
+                        List<String> taskIdList = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                        List<ProjectTaskEntity> taskFinish = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
@@ -732,13 +739,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     String projectChargeName = commonService.getNameByIds(projectChargeIdList);
                     project.setChargeId(String.join(",", projectChargeIdList));
                     project.setChargeName(projectChargeName);
-                }else{
+                } else {
                     project.setChargeName("");
                     project.setChargeId("");
                 }
                 if (projectStatus != null) {
-                    if(!project.getProjectStatus().equals(projectStatus)){
-                        if(ProjectStateEnum.FINISH.getState().equals(projectStatus)){
+                    if (!project.getProjectStatus().equals(projectStatus)) {
+                        if (ProjectStateEnum.FINISH.getState().equals(projectStatus)) {
                             String productId = product.getId();
 
                             /**
@@ -753,7 +760,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         }
 
                     }
-
 
 
                     project.setProjectStatus(projectStatus);

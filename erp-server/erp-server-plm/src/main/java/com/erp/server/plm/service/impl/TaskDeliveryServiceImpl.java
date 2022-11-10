@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -441,6 +442,13 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             return listObjs(queryWrapper, Object::toString);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public List<TaskDeliveryDocsEntity> getDeliveryDocsByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
     }
 
 

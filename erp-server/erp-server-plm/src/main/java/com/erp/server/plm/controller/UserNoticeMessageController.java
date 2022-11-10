@@ -53,7 +53,7 @@ public class UserNoticeMessageController extends BaseController {
 
 
     /**
-     * 方法说明
+     * 更改状态
      *
      * @param
      * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
