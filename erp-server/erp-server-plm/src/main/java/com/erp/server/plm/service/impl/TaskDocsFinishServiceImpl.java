@@ -181,7 +181,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         String taskId = entity.getTaskId();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
         if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95040);
+            throw new ServiceException(ApiError.ERROR_95027);
         }
         Integer taskState = taskEntity.getStatus();
         //如果已完成了 或者有人审核了 就不能删除
@@ -190,8 +190,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
         //当是流程的时候
         if (generalApproval.equals(taskProperty) || reviewTask.equals(taskProperty)) {
-            if (TaskStateEnum.APPROVAL_PASS.getCode().equals(taskState)) {
-                throw new ServiceException(ApiError.ERROR_95007);
+            if (TaskStateEnum.FINISH.getCode().equals(taskState)) {
+                throw new ServiceException(ApiError.ERROR_95040);
             }
         }
 
