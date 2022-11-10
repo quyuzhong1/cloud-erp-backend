@@ -398,5 +398,18 @@ public class ProjectTaskController extends BaseController {
     }
 
 
+    /**
+     * 任务列表-任务操作更多列表
+     *
+     *
+     * @return
+     */
+    @PostMapping("/operate/moreList")
+    public ApiResult<List<Map<String,Object>>> operateMoreList(@Validated @RequestBody BaseIdDTO dto) {
+        List<Map<String,Object>> list = taskService.operateMoreList(dto.getId());
+        return success(list);
+    }
+
+
 }
 

@@ -101,4 +101,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<TaskGroupResultDTO> getGroupCondition(TaskGroupParamDTO dto);
 
     PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    List<Map<String, Object>> operateMoreList(String taskId);
 }

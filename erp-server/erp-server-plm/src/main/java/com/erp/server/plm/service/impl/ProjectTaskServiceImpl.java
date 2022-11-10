@@ -1210,7 +1210,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         pageData = baseMapper.toMePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
                     }
                 }
-                //我创建的  任务创建人=当前账号人
+                break;
+            //我创建的  任务创建人=当前账号人
             case TaskConstant.MY_CREATE:
                 //当不分组
                 if (!ifGroup) {
@@ -1230,7 +1231,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         pageData = baseMapper.myCreatePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
                     }
                 }
-                //全部
+                break;
+            //全部
             case TaskConstant.ALL:
                 //当不分组
                 if (!ifGroup) {
@@ -1250,7 +1252,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         pageData = baseMapper.allPlanTimeTaskList(query, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
                     }
                 }
-
+                break;
+            default:
+                break;
         }
 
         List<TaskPagingShowDTO> records = pageData.getRecords();
@@ -1305,6 +1309,83 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 获取任务更多操作的列表
+     *
+     * @param taskId 任务id
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-11-10 11:23
+     */
+    @Override
+    public List<Map<String, Object>> operateMoreList(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Integer taskState = taskEntity.getStatus();
+        //编辑任务
+        Map<String, Object> editTaskMap = new HashMap<>();
+        editTaskMap.put("name", "编辑任务");
+        editTaskMap.put("flag", "editTask");
+        editTaskMap.put("isShow", true);
+        resultList.add(editTaskMap);
+        //创建子任务
+        Map<String, Object> createChildTaskMap = new HashMap<>();
+        createChildTaskMap.put("name", "创建子任务");
+        createChildTaskMap.put("flag", "createChildTask");
+        createChildTaskMap.put("isShow", true);
+        resultList.add(createChildTaskMap);
+
+        boolean deleteTaskShow = true;
+        Integer IsFixed = taskEntity.getIsFixed();
+        //如果是固定任务
+        if (IsConstant.YES.equals(IsFixed)) {
+            deleteTaskShow = false;
+        }
+        //删除任务
+        Map<String, Object> deleteTaskMap = new HashMap<>();
+        deleteTaskMap.put("name", "删除任务");
+        deleteTaskMap.put("flag", "deleteTask");
+        deleteTaskMap.put("isShow", deleteTaskShow);
+        resultList.add(deleteTaskMap);
+
+        //关闭任务
+        Map<String, Object> closeTaskMap = new HashMap<>();
+        closeTaskMap.put("name", "关闭任务");
+        closeTaskMap.put("flag", "closeTask");
+        closeTaskMap.put("isShow", TaskStateEnum.ING.getCode().equals(taskState) ? true : false);
+        resultList.add(closeTaskMap);
+
+        //取消发布任务
+        Map<String, Object> cancelPublishTaskMap = new HashMap<>();
+        cancelPublishTaskMap.put("name", "取消发布");
+        cancelPublishTaskMap.put("flag", "cancelPublishTask");
+        cancelPublishTaskMap.put("isShow", TaskStateEnum.NOT_START.getCode().equals(taskState) ? true : false);
+        resultList.add(cancelPublishTaskMap);
+
+        //变更文档
+        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        Boolean changeDocsShow = true;
+        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+                && !approvalNoPassCode.equals(taskState)) {
+            changeDocsShow = false;
+        }
+        Map<String, Object> changeDocsMap = new HashMap<>();
+        changeDocsMap.put("name", "变更文档");
+        changeDocsMap.put("flag", "changeDocs");
+        changeDocsMap.put("isShow", changeDocsShow);
+        resultList.add(changeDocsMap);
+
+
+        return resultList;
     }
 
 
