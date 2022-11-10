@@ -264,7 +264,7 @@
     <select id="toMeProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        WHERE strpos (t.charge_id,#{userId})>0
+        WHERE strpos (charge_id,#{userId})>0
         <if test="params.groupFlag !=null  and params.groupFlag!=''">
             AND product_id=#{params.groupFlag}
         </if>
@@ -284,7 +284,7 @@
     <select id="toMePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        WHERE strpos (t.charge_id,#{userId})>0
+        WHERE strpos (charge_id,#{userId})>0
         <if test="notStateList !=null and notStateList.size>0">
             AND status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -295,10 +295,10 @@
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="startTime!=null ">
-            AND plan_end_time ge #{startTime}
+            AND plan_end_time &gt;= #{startTime}
         </if>
         <if test="endTime!=null ">
-            AND plan_end_time le #{endTime}
+            AND plan_end_time &lt;= #{endTime}
         </if>
         ORDER BY ${params.searchType} ${params.orderBy}
 
@@ -337,10 +337,10 @@
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="startTime!=null ">
-            AND plan_end_time ge #{startTime}
+            AND plan_end_time &gt;= #{startTime}
         </if>
         <if test="endTime!=null ">
-            AND plan_end_time le #{endTime}
+            AND plan_end_time &lt;= #{endTime}
         </if>
         ORDER BY ${params.searchType} ${params.orderBy}
 
@@ -381,10 +381,10 @@
                 AND name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="startTime!=null ">
-                AND plan_end_time ge #{startTime}
+                AND plan_end_time &gt;= #{startTime}
             </if>
             <if test="endTime!=null ">
-                AND plan_end_time le #{endTime}
+                AND plan_end_time &lt;= #{endTime}
             </if>
         </where>
         ORDER BY ${params.searchType} ${params.orderBy}
