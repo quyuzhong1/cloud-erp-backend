@@ -361,7 +361,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
-
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
@@ -407,9 +406,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
-            List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
+         //   List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
+
+            //产品id
+            List<String> productIds = list.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
+            List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
+                Integer state = item.getStatus();
+                item.setStatusName(TaskStateEnum.getName(state));
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
@@ -424,7 +429,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-                //item.setChildList(getChildrenList(item, allList));
+
+                List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
+                item.setOperateList(operateList);
+                ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);
+                if (product != null) {
+                    item.setProductName(product.getName());
+                }
             }
         }
 
@@ -1046,9 +1057,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public List<ProjectTaskEntity> getByTaskIds(List<String> taskIds) {
-        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProjectTaskEntity::getId, taskIds);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskEntity::getId, taskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 
@@ -1142,7 +1156,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<TaskGroupResultDTO> getGroupCondition(TaskGroupParamDTO dto) {
         String taskProperty = dto.getTaskProperty();
-        String userId = "1582313948525367297"; //commonService.getUserInfo().getUid();
+        String userId = commonService.getUserInfo().getUid();
         //任务条件 1 待完成  2 全部
         Integer taskCondition = dto.getTaskCondition();
         //product 产品  planEndTime 计划结束时间
@@ -1161,6 +1175,373 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 return new ArrayList<>();
         }
 
+
+    }
+
+    @Override
+    public PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        TaskSearchParamDTO params = searchParamDTO.getParams();
+        Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
+        //"assignToMe", "myCreate", "all"
+        String taskProperty = params.getTaskProperty();
+        //任务条件 1 待完成  2 全部
+        Integer taskCondition = params.getTaskCondition();
+        IPage pageData = new Page();
+        //分组的标示
+        String groupNameFlag = params.getGroupNameFlag();
+        //是否分组
+        Boolean ifGroup = false;
+        if (StringUtils.isNotBlank(groupNameFlag) && !groupNameFlag.equals("no")) {
+            ifGroup = true;
+        }
+        //是否是产品分组
+        Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
+        //不在的 任务状态
+        List<Integer> notStateList = getNoExistState(taskProperty, taskCondition);
+        switch (taskProperty) {
+            //分配给我  任务负责人=当前账号人的待完成/审核任务
+            case TaskConstant.ASSIGN_TO_ME:
+                //当不分组
+                if (!ifGroup) {
+                    params.setGroupFlag("");
+                    pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                } else {
+                    //根据产品分组
+                    if (ifProductGroup) {
+                        //这个就是产品的id
+                        pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.toMePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                    }
+                }
+                break;
+            //我创建的  任务创建人=当前账号人
+            case TaskConstant.MY_CREATE:
+                //当不分组
+                if (!ifGroup) {
+                    params.setGroupFlag("");
+                    pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+                } else {
+                    //根据产品分组
+                    if (ifProductGroup) {
+                        //这个就是产品的id
+                        pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.myCreatePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                    }
+                }
+                break;
+            //全部
+            case TaskConstant.ALL:
+                //当不分组
+                if (!ifGroup) {
+                    params.setGroupFlag("");
+                    pageData = baseMapper.allProductTaskList(query, notStateList, params);
+                } else {
+                    //根据产品分组
+                    if (ifProductGroup) {
+                        //这个就是产品的id
+                        pageData = baseMapper.allProductTaskList(query, notStateList, params);
+                    } else {
+                        //标示是是计划时间
+                        String groupFlag = params.getGroupFlag();
+                        //获取到时间
+                        Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                        //计划时间
+                        pageData = baseMapper.allPlanTimeTaskList(query, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+
+        List<TaskPagingShowDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            //完成的状态
+            Integer finishState = TaskStateEnum.FINISH.getCode();
+            //获取到任务id 集合
+            List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //获取总的任务文档数
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+            //前置任务
+            List<ProjectTaskEntity> preTaskEntityList = this.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+            //产品id
+            List<String> productIds = records.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
+            List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            //根据产品id 获取到所有的 任务信息
+            for (TaskPagingShowDTO item : records) {
+                String taskId = item.getId();
+                Integer state = item.getStatus();
+                item.setStatusName(TaskStateEnum.getName(state));
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
+                    item.setIsSysTask(true);
+                }
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+                List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+                int totalPreTaskCount = preTaskIds.size();
+                //前置任务
+                item.setTotalPreTaskCount(totalPreTaskCount);
+                int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
+                item.setFinishPreTaskCount(finishPreTaskCount);
+                //获取任务操作项
+                List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
+                item.setOperateList(operateList);
+                ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);
+                if (product != null) {
+                    item.setProductName(product.getName());
+                }
+
+            }
+        }
+
+        return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 获取任务更多操作的列表
+     *
+     * @param taskId 任务id
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-11-10 11:23
+     */
+    @Override
+    public List<Map<String, Object>> operateMoreList(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Integer taskState = taskEntity.getStatus();
+        //编辑任务
+        Map<String, Object> editTaskMap = new HashMap<>();
+        editTaskMap.put("name", "编辑任务");
+        editTaskMap.put("flag", "editTask");
+        editTaskMap.put("isShow", true);
+        resultList.add(editTaskMap);
+        //创建子任务
+        Map<String, Object> createChildTaskMap = new HashMap<>();
+        createChildTaskMap.put("name", "创建子任务");
+        createChildTaskMap.put("flag", "createChildTask");
+        createChildTaskMap.put("isShow", true);
+        resultList.add(createChildTaskMap);
+
+        boolean deleteTaskShow = true;
+        Integer IsFixed = taskEntity.getIsFixed();
+        //如果是固定任务
+        if (IsConstant.YES.equals(IsFixed)) {
+            deleteTaskShow = false;
+        }
+        //删除任务
+        Map<String, Object> deleteTaskMap = new HashMap<>();
+        deleteTaskMap.put("name", "删除任务");
+        deleteTaskMap.put("flag", "deleteTask");
+        deleteTaskMap.put("isShow", deleteTaskShow);
+        resultList.add(deleteTaskMap);
+
+        //关闭任务
+        Map<String, Object> closeTaskMap = new HashMap<>();
+        closeTaskMap.put("name", "关闭任务");
+        closeTaskMap.put("flag", "closeTask");
+        closeTaskMap.put("isShow", TaskStateEnum.ING.getCode().equals(taskState) ? true : false);
+        resultList.add(closeTaskMap);
+
+        //取消发布任务
+        Map<String, Object> cancelPublishTaskMap = new HashMap<>();
+        cancelPublishTaskMap.put("name", "取消发布");
+        cancelPublishTaskMap.put("flag", "cancelPublishTask");
+        cancelPublishTaskMap.put("isShow", TaskStateEnum.NOT_START.getCode().equals(taskState) ? true : false);
+        resultList.add(cancelPublishTaskMap);
+
+        //变更文档
+        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        Boolean changeDocsShow = true;
+        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+                && !approvalNoPassCode.equals(taskState)) {
+            changeDocsShow = false;
+        }
+        Map<String, Object> changeDocsMap = new HashMap<>();
+        changeDocsMap.put("name", "变更文档");
+        changeDocsMap.put("flag", "changeDocs");
+        changeDocsMap.put("isShow", changeDocsShow);
+        resultList.add(changeDocsMap);
+
+
+        return resultList;
+    }
+
+
+    /**
+     * 获取操作列表
+     *
+     * @param state
+     * @param totalDocsCount
+     * @param finishDocsCount
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-11-09 15:06
+     */
+    private List<Map<String, Object>> getOperateList(Integer state, Integer totalDocsCount, Integer finishDocsCount) {
+        List<Map<String, Object>> operateList = new LinkedList<>();
+        Map<String, Object> taskMap = new HashMap<>();
+        String taskName = "";
+        String taskFlag = "";
+        Boolean taskShow = false;
+        if (TaskStateEnum.TO_BE_RELEASED.getCode().equals(state)) {
+            taskName = "发布任务";
+            taskFlag = "releasedTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.NOT_START.getCode().equals(state)) {
+            taskName = "开始任务";
+            taskFlag = "startTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state)) {
+            taskName = "审核任务";
+            taskFlag = "approvalTask";
+            taskShow = true;
+        }
+        if (TaskStateEnum.ING.getCode().equals(state)) {
+            taskName = "完成任务";
+            taskFlag = "finishTask";
+            taskShow = true;
+        }
+        taskMap.put("name", taskName);
+        taskMap.put("flag", taskFlag);
+        taskMap.put("isShow", taskShow);
+        operateList.add(taskMap);
+        Map<String, Object> detailsMap = new HashMap<>();
+        detailsMap.put("name", "查看详情");
+        detailsMap.put("flag", "taskDetails");
+        detailsMap.put("isShow", TaskStateEnum.FINISH.getCode().equals(state) ? true : false);
+        operateList.add(detailsMap);
+
+        Map<String, Object> uploadMap = new HashMap<>();
+        uploadMap.put("name", "上传文件");
+        uploadMap.put("flag", "uploadFile");
+        uploadMap.put("isShow", finishDocsCount != totalDocsCount ? true : false);
+        operateList.add(uploadMap);
+
+        Map<String, Object> moreMap = new HashMap<>();
+        moreMap.put("name", "更多");
+        moreMap.put("flag", "more");
+        moreMap.put("isShow", true);
+        operateList.add(moreMap);
+        return operateList;
+
+    }
+
+
+    /**
+     * 根据以计划结束时间分组 的标示
+     * 获取到计划的开始时间 和结束时间
+     *
+     * @return
+     */
+    public Map<String, Date> getPlanEndTime(String groupFlag) {
+        Map<String, Date> resultMap = new HashMap<>();
+        Date startTime = null;
+        Date endTime = null;
+        Date nowDay = new Date();
+        Date nowDayStartTime = DateUtil.getStartTime(nowDay);
+        //今天
+        if (TaskPlanEndTimeEnum.TODAY.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.getEndTime(nowDay);
+        }
+        //明天
+        if (TaskPlanEndTimeEnum.TOMORROW.getFlag().equals(groupFlag)) {
+            Date tomorrowDay = DateUtil.addDateDays(nowDay, 1);
+            startTime = DateUtil.getStartTime(tomorrowDay);
+            endTime = DateUtil.getEndTime(tomorrowDay);
+        }
+        //近三天
+        if (TaskPlanEndTimeEnum.LAST_THREE_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 2);
+        }
+        //近七天
+        if (TaskPlanEndTimeEnum.LAST_SEVEN_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 6);
+
+        }
+        //近十五天
+        if (TaskPlanEndTimeEnum.LAST_FIFTEEN_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 14);
+        }
+        //近三十天
+        if (TaskPlanEndTimeEnum.LAST_THIRTY_DAYS.getFlag().equals(groupFlag)) {
+            startTime = nowDayStartTime;
+            endTime = DateUtil.addDateDays(nowDay, 29);
+        }
+        //三十天后
+        if (TaskPlanEndTimeEnum.AFTER_THIRTY_DAYS.getFlag().equals(groupFlag)) {
+            startTime = DateUtil.addDateDays(nowDay, 29);
+        }
+        resultMap.put("startTime", startTime);
+        resultMap.put("endTime", endTime);
+        return resultMap;
+    }
+
+    /**
+     * 获取不在的状态列表
+     *
+     * @param taskCondition
+     * @param taskProperty  "assignToMe", "myCreate", "all"
+     * @return java.util.List<java.lang.Integer>
+     * @author yl  1 待完成  2 全部
+     * @date 2022-11-09 9:47
+     */
+    public List<Integer> getNoExistState(String taskProperty, Integer taskCondition) {
+        List<Integer> noExistStateList = new ArrayList<>();
+        //待完成 待审核
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+            noExistStateList.add(TaskStateEnum.CLOSE.getCode());
+            noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            noExistStateList.add(TaskStateEnum.FINISH.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+        }
+        //全部
+        if (TaskConstant.ALL_TASK.equals(taskCondition)) {
+            //分配给我   状态包含所有状态-除了待发布
+            if (TaskConstant.ASSIGN_TO_ME.equals(taskProperty)) {
+                noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            }
+        }
+        return noExistStateList;
 
     }
 
@@ -1321,63 +1702,63 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         total.setGroupFlag("");
         total.setTaskCount(totalTaskCount);
         resultList.add(total);
-
-        Date nowDay = new Date();
+        Date nowDay = DateUtil.getStartTime(new Date());
         String fmt = DateUtil.fmt_day;
         for (TaskPlanEndTimeEnum timeEnum : TaskPlanEndTimeEnum.values()) {
             TaskGroupResultDTO result = new TaskGroupResultDTO();
             result.setName(timeEnum.getName());
             result.setGroupFlag(timeEnum.getFlag());
             String flag = timeEnum.getFlag();
-            //今天
             int taskCount = 0;
             //今天
             if (flag.equals(TaskPlanEndTimeEnum.TODAY.getFlag())) {
                 String todayStr = DateUtil.conversionDate(nowDay, fmt);
-                taskCount = (int) list.stream().filter(t -> t.getGroupFlag().equals(todayStr)).mapToInt(TaskGroupResultDTO::getTaskCount).sum();;
+                taskCount = list.stream().filter(t -> t.getGroupFlag().equals(todayStr)).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
             }
             //明天
             if (flag.equals(TaskPlanEndTimeEnum.TOMORROW.getFlag())) {
                 Date tomorrowDay = DateUtil.addDateDays(nowDay, 1);
                 String tomorrow = DateUtil.conversionDate(tomorrowDay, fmt);
-                taskCount = (int) list.stream().filter(t -> t.getGroupFlag().equals(tomorrow)).mapToInt(TaskGroupResultDTO::getTaskCount).sum();;
+                taskCount = list.stream().filter(t -> t.getGroupFlag().equals(tomorrow)).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
             }
             //近三天
             if (flag.equals(TaskPlanEndTimeEnum.LAST_THREE_DAYS.getFlag())) {
-                Date lastThree = DateUtil.addDateDays(nowDay, -3);
+                Date lastThree = DateUtil.addDateDays(nowDay, 2);
                 taskCount = list.stream().filter(t ->
-                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastThree) >= 0
-                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) <= 0
+                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastThree) <= 0
+                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) >= 0
                 ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
             }
             //近七天
             if (flag.equals(TaskPlanEndTimeEnum.LAST_SEVEN_DAYS.getFlag())) {
-                Date lastSeven = DateUtil.addDateDays(nowDay, -7);
-                taskCount = (int) list.stream().filter(t ->
-                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastSeven) >= 0
-                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) <= 0
-                ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();;
+                Date lastSeven = DateUtil.addDateDays(nowDay, 6);
+                taskCount = list.stream().filter(t ->
+                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastSeven) <= 0
+                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) >= 0
+                ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
+
             }
             //近十五天
             if (flag.equals(TaskPlanEndTimeEnum.LAST_FIFTEEN_DAYS.getFlag())) {
-                Date lastFifteen = DateUtil.addDateDays(nowDay, -15);
-                taskCount = (int) list.stream().filter(t ->
-                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastFifteen) >= 0
-                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) <= 0
-                ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();;
+                Date lastFifteen = DateUtil.addDateDays(nowDay, 14);
+                taskCount = list.stream().filter(t ->
+                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastFifteen) <= 0
+                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) >= 0
+                ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
+
             }
             //近三十天
             if (flag.equals(TaskPlanEndTimeEnum.LAST_THIRTY_DAYS.getFlag())) {
-                Date lastThirty = DateUtil.addDateDays(nowDay, -30);
-                taskCount = (int) list.stream().filter(t ->
-                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastThirty) >= 0
-                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) <= 0
+                Date lastThirty = DateUtil.addDateDays(nowDay, 29);
+                taskCount = list.stream().filter(t ->
+                        DateUtil.stringToDate(t.getGroupFlag()).compareTo(lastThirty) <= 0
+                                && DateUtil.stringToDate(t.getGroupFlag()).compareTo(nowDay) >= 0
                 ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
             }
             //三十天后
             if (flag.equals(TaskPlanEndTimeEnum.AFTER_THIRTY_DAYS.getFlag())) {
                 Date afterThirty = DateUtil.addDateDays(nowDay, 30);
-                taskCount = (int) list.stream().filter(t ->
+                taskCount = list.stream().filter(t ->
                         DateUtil.stringToDate(t.getGroupFlag()).compareTo(afterThirty) >= 0
                 ).mapToInt(TaskGroupResultDTO::getTaskCount).sum();
             }

@@ -48,6 +48,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
     public BusinessProcessEntity getProcessByBusinessType(String businessType) {
         LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
+        queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
 

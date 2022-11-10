@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname TaskPagingShowDTO
@@ -15,7 +16,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskPagingShowDTO  implements Serializable {
+public class TaskPagingShowDTO implements Serializable {
 
 
     /**
@@ -28,6 +29,10 @@ public class TaskPagingShowDTO  implements Serializable {
      */
     private String productId;
 
+    /**
+     * 产品名
+     */
+    private String productName="";
 
 
     /**
@@ -66,19 +71,16 @@ public class TaskPagingShowDTO  implements Serializable {
     private Date planEndTime;
 
 
-
     /**
      * 预警
      */
     private String warning;
 
 
-
     /**
      * 总的文档数
      */
     private Integer totalDocsCount;
-
 
 
     /**
@@ -92,9 +94,16 @@ public class TaskPagingShowDTO  implements Serializable {
     private Integer priority;
 
     /**
-     * 任务状态 任务状态 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
+     * 任务状态 任务状态 0:待发布 1:未开始 2:待审核 3 进行中, 4.已完成 5.已关闭
+     * 6 完成待审核 7 审核中   8 审核通过  9 审核不通过
      */
     private Integer status;
+
+    /**
+     * 状态名
+     */
+    private String statusName;
+
 
 
     /**
@@ -106,40 +115,49 @@ public class TaskPagingShowDTO  implements Serializable {
      * 是否是系统任务
      * true 是 false 不是
      */
-    private Boolean isSysTask=false;
+    private Boolean isSysTask = false;
 
     /**
      * 引用的系统任务id
-     *
      */
     private String quoteSysTaskId;
 
     /**
      * 父级id
-     *
      */
     private String pid;
 
 
     /**
      * 流程id
-     *
      */
     private String processId;
 
 
     /**
      * 流程任务id
-     *
      */
-    private String processTaskId="";
+    private String processTaskId = "";
+
+
+    /**
+     * 总的前置任务数
+     */
+    private Integer totalPreTaskCount=0;
+
+    /**
+     * 完成的前置任务数
+     */
+    private Integer  finishPreTaskCount=0;
+
+    private List<Map<String,Object>> operateList;
 
 
     /**
      * 子 任务
      */
-    @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
-    private List<TaskPagingShowDTO>  childList;
+    @JsonInclude(value = JsonInclude.Include.NON_EMPTY)
+    private List<TaskPagingShowDTO> childList;
 
 
 }
