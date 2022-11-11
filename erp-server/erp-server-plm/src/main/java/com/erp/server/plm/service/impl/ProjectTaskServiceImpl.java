@@ -406,11 +406,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
-         //   List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
+            //   List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
 
             //产品id
             List<String> productIds = list.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
-            List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
+            List<ProductInfoEntity> productList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(productIds)) {
+                productList = productInfoService.listByIds(productIds);
+            }
+
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
                 Integer state = item.getStatus();
