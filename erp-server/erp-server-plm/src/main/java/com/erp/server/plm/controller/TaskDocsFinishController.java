@@ -3,6 +3,7 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.TaskBatchUploadFileDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.server.plm.service.TaskDocsFinishService;
@@ -12,6 +13,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.erp.common.controller.BaseController;
+
+import java.util.List;
 
 /**
  *产品开发管理
@@ -37,6 +40,20 @@ public class TaskDocsFinishController extends BaseController {
     //  @RequestPermissions("plm:finish:docs:importFile")
     public ApiResult uploadFile(@ModelAttribute @Validated TaskUploadFileDTO dto) {
         Boolean flag = taskDocsFinishService.uploadFile(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 任务列表-批量上传文件
+     * @author yl
+     * @date 2022-10-14 11:05
+     * @return com.erp.common.dto.base.ApiResult
+     */
+    @PostMapping("batch/importFile")
+    //  @RequestPermissions("plm:finish:docs:importFile")
+    public ApiResult uploadFile(@ModelAttribute @Validated TaskBatchUploadFileDTO dto) {
+        Boolean flag = taskDocsFinishService.batchUploadFile(dto);
         return flag == true ? success() : failure();
     }
 

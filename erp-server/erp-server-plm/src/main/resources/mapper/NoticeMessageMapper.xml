@@ -25,5 +25,8 @@
         WHERE state=#{state}
         ORDER BY nm.create_time ASC
     </select>
+    <select id="getNodeFlag">
+
+    </select>
 
 </mapper>

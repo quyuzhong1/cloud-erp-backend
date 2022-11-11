@@ -36,7 +36,7 @@ public class FsService {
      */
     public Map<String, Object> getFsUser(FindThirdUserDTO dto) {
         String redirectUri = fsProperties.getRedirectLoginUri();
-        String thirdType=dto.getThirdType();
+        String thirdType = dto.getThirdType();
         if (StringUtils.isNotBlank(thirdType) && ThirdConstants.THIRD_BINDING_TYPE.equals(thirdType)) {
             redirectUri = fsProperties.getRedirectBindingUri();
         }
@@ -62,5 +62,71 @@ public class FsService {
 
         }
         return null;
+    }
+
+
+    /**
+     * 根据code 获取飞书用户信息
+     *
+     * @param code
+     * @return java.util.Map<java.lang.String, java.lang.Object>
+     * @author yl
+     * @date 2022-07-20 18:27
+     */
+    public Map<String, Object> getFsUserByCode(String code) {
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isNotBlank(tenantAccessToken)) {
+            return getUserAccessInfo(tenantAccessToken, code);
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取飞书自建应用的 tenant_access_token
+     *
+     * @param
+     * @return java.util.Map<java.lang.String, java.lang.Object>
+     * @author yl
+     * @date 2022-11-11 17:00
+     */
+    public String getFsTenantAccessToken() {
+        Map<String, Object> paramsMap = new HashMap<>();
+        paramsMap.put("app_id", fsProperties.getClientId());
+        paramsMap.put("app_secret", fsProperties.getClientSecret());
+        String bodyStr = OkHttpUtils.doPost(ThirdConstants.FS_TENANT_ACCESS_TOKEN, paramsMap, null);
+        if (StringUtils.isNotBlank(bodyStr)) {
+            Map<String, Object> tokenMap = JSONObject.parseObject(bodyStr, Map.class);
+            if (tokenMap.containsKey("code") && Integer.valueOf(tokenMap.get("code").toString()) == 0) {
+                return tokenMap.get("tenant_access_token").toString();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * 获取用户的 飞书accessToken
+     *
+     * @param
+     * @return java.util.Map<java.lang.String, java.lang.Object>
+     * @author yl
+     * @date 2022-11-11 17:47
+     */
+    public Map<String, Object> getUserAccessInfo(String appAccessToken, String code) {
+        Map<String, Object> paramsMap = new HashMap<>();
+        paramsMap.put("grant_type", ThirdConstants.FS_GRANT_TYPE);
+        paramsMap.put("code", code);
+        Map<String, String> headerMap = new HashMap<>();
+        String authorization = LoginConstant.FS_AUTHORIZATION + appAccessToken;
+        headerMap.put("Authorization", authorization);
+        headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
+        String userStr = OkHttpUtils.doPost(ThirdConstants.FS_USER_ACCESS_TOKEN, paramsMap, headerMap);
+        Map<String, Object> userMap = JSONObject.parseObject(userStr, Map.class);
+        return userMap;
+
+    }
+
+    public String getFsClientId() {
+        return fsProperties.getClientId();
     }
 }

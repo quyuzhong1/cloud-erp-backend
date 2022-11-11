@@ -19,6 +19,8 @@ public interface NoticeMessageMapper extends BaseMapper<NoticeMessageEntity> {
     IPage paging(Page query, @Param("params") BaseSearchDTO params,@Param("state") Integer state);
 
     List<UserNoticeNodeDTO> getUserNoticeNode(@Param("state") Integer state);
+
+    NoticeMessageEntity getByNodeFlag(@Param("nodeFlag") String nodeFlag);
 }
 
 

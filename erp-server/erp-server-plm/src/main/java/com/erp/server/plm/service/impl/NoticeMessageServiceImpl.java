@@ -17,6 +17,7 @@ import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.NoticeNodeEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.NoticeEnum;
 import com.erp.server.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.CommonService;
@@ -222,6 +223,25 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
         }
         return resultList;
+    }
+
+    
+    /**
+     * 新建任务发送通知
+     * @author yl
+     * @date 2022-11-11 10:27
+     * @param
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean newTaskNotice() {
+        String flag= NoticeEnum.NEW_TASK.getFlag();
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice=baseMapper.getByNodeFlag(flag);
+
+
+
+        return null;
     }
 
     /**
