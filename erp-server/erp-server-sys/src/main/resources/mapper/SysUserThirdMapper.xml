@@ -4,7 +4,7 @@
 
     <select id="getUserIdByThird" resultType="com.erp.model.sys.entity.SysUserInfoEntity">
       SELECT u.uid,u.user_name,u.real_name,u.mobile,u.last_login_time,u.delete_state,u.last_login_ip,
-      u.login_count,u.create_time,u.update_time,u.user_account,u.email,u.head_icon
+      u.login_count,u.create_time,u.update_time,u.user_account,u.email,u.head_icon,u.user_state
       FROM sys_user_info u INNER JOIN sys_user_third t
       ON t.user_id=u.uid WHERE t.third_union_id=#{params.thirdPartyUnionId}
       AND t.third_party_type=#{params.thirdPartyType}
