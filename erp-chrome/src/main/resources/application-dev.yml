@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-chrome
   datasource:
-    url: jdbc:postgresql://172.16.110.12:5432/erp-chrome?useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:postgresql://172.16.100.12:5432/erp-chrome?useSSL=false&serverTimezone=GMT%2B8
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: admin@viji

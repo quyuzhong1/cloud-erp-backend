@@ -8,7 +8,10 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.CountDTO;
+import com.erp.model.plm.dto.DeliveryDocsDTO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
@@ -21,7 +24,6 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -444,12 +446,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         return new ArrayList<>();
     }
 
-    @Override
-    public List<TaskDeliveryDocsEntity> getDeliveryDocsByTaskId(String taskId) {
-        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-        return this.list(queryWrapper);
-    }
+
 
 
     /**

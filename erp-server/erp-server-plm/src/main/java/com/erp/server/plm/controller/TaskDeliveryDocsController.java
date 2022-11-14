@@ -66,8 +66,8 @@ public class TaskDeliveryDocsController extends BaseController {
 
     @PostMapping("/deliveryDocsList")
     //  @RequestPermissions("plm:taskDocs:list")
-    public ApiResult<List<TaskDeliveryDocsEntity>> getDeliveryDocsByTaskId(@RequestBody @Validated BaseIdDTO dto) {
-        List<TaskDeliveryDocsEntity> list = taskDeliveryService.getDeliveryDocsByTaskId(dto.getId());
+    public ApiResult<List<DeliveryDocsDTO>> getDeliveryDocsByTaskId(@RequestBody @Validated BaseIdDTO dto) {
+        List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
     }
 
