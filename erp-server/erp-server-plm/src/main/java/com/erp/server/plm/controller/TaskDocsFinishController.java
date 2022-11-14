@@ -44,18 +44,6 @@ public class TaskDocsFinishController extends BaseController {
     }
 
 
-    /**
-     * 任务列表-批量上传文件
-     * @author yl
-     * @date 2022-10-14 11:05
-     * @return com.erp.common.dto.base.ApiResult
-     */
-    @PostMapping("batch/importFile")
-    //  @RequestPermissions("plm:finish:docs:importFile")
-    public ApiResult uploadFile(@ModelAttribute @Validated TaskBatchUploadFileDTO dto) {
-        Boolean flag = taskDocsFinishService.batchUploadFile(dto);
-        return flag == true ? success() : failure();
-    }
 
 
     /**

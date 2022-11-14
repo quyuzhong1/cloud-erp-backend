@@ -13,6 +13,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
+import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.NoticeNodeEntity;
@@ -20,10 +21,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.NoticeEnum;
 import com.erp.server.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.NoticeMessageService;
-import com.erp.server.plm.service.NoticeNodeService;
-import com.erp.server.plm.service.UserCancelNoticeService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +48,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private UserCancelNoticeService userCancelNoticeService;
+
+    @Autowired
+    private ProductInfoService productInfoService;
 
     @Override
     public PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -258,13 +259,42 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @author yl
      * @date 2022-11-14 16:16
      */
-    public List<String> getSetNotice(NoticeMessageEntity notice) {
+    public List<String> getSetNotice(NoticeMessageEntity notice, String productId) {
         List<String> resultList = new ArrayList<>();
         if (!Objects.isNull(notice)) {
             //其它人
             String otherPeoples = notice.getOtherPeople();
             if (StringUtils.isNotBlank(otherPeoples)) {
+                List<String> otherPeopleIds = Arrays.asList(otherPeoples.split(","));
+                resultList.addAll(otherPeopleIds);
+            }
+            //项目人员
+            String itemPeoples = notice.getItemPeople();
+            if (StringUtils.isNotEmpty(itemPeoples)) {
+                List<String> itemPeopleList = Arrays.asList(itemPeoples.split(","));
 
+                //这个是项目经理
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.ITEM_MANAGER.getFlag())) {
+                    ProductShowDTO product = productInfoService.getProductInfo(productId);
+                    if (!Objects.isNull(product)) {
+                        //项目负责人
+                        String projectChargeId = product.getProjectChargeId();
+                        if (StringUtils.isNotBlank(projectChargeId)) {
+                            List<String> projectChargeIdList = Arrays.asList(projectChargeId.split(","));
+                            resultList.addAll(projectChargeIdList);
+                        }
+
+                        //这个是产品经理
+                        if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag())) {
+                            String productChargeId = product.getProductChargeId();
+                            if (StringUtils.isNotBlank(productChargeId)) {
+                                List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
+                                resultList.addAll(productChargeIdList);
+                            }
+                        }
+                    }
+
+                }
             }
 
         }

@@ -35,5 +35,5 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
 
     void removeByTaskId(String taskId);
 
-    Boolean batchUploadFile(TaskBatchUploadFileDTO dto);
+
 }

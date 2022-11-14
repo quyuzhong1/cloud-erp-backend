@@ -135,7 +135,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             fileUrl = dto.getFileUrl();
         }
 
+        TaskDocsFinishEntity existEntity = getByDocsId(dto.getProductId(), dto.getTaskDocsId(), dto.getTaskId());
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
+        if(existEntity!=null){
+            finishEntity.setId(existEntity.getId());
+        }
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
         finishEntity.setProductId(dto.getProductId());
@@ -159,7 +163,26 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
 
-        return this.save(finishEntity);
+        return this.saveOrUpdate(finishEntity);
+    }
+
+    /**
+     * 获取已存在的交付文档
+     *
+     * @param productId
+     * @param taskDocsId
+     * @param taskId
+     * @return com.erp.model.plm.entity.TaskDocsFinishEntity
+     * @author yl
+     * @date 2022-11-14 17:48
+     */
+    private TaskDocsFinishEntity getByDocsId(String productId, String taskDocsId, String taskId) {
+        LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+        queryWrapper.eq(TaskDocsFinishEntity::getProductId, productId);
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskDocsId, taskDocsId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 
     /**
@@ -384,83 +407,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
         this.remove(queryWrapper);
-    }
-
-    /**
-     * 批量上传
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2022-11-11 15:31
-     */
-    @Override
-    public Boolean batchUploadFile(TaskBatchUploadFileDTO dto) {
-        List<TaskUploadFileDTO> list = dto.getUploadFileList();
-        String productId = dto.getProductId();
-        String taskId = dto.getTaskId();
-        //根据任务id 获取任务信息
-        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
-        List<TaskDocsFinishEntity> batchAddList = new ArrayList<>();
-        List<ProductOperateRecordDTO> batchOperateRecordList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(list)) {
-            LoginUser loginUser = commonService.getUserInfo();
-            //文件名
-            String fileName = "";
-            //文件地址
-            String fileUrl = "";
-            //文件后缀
-            String fileSuffix = "";
-            double fileSize = 0.0;
-            for (TaskUploadFileDTO item : list) {
-                //本地上传
-                if (IsConstant.NO.equals(item.getUploadType())) {
-                    MultipartFile multipartFile = item.getFile();
-                    double size = multipartFile.getSize();
-                    fileSize = size / (1024 * 1024);
-                    fileSize = (double) Math.round(fileSize * 100) / 100;
-                    fileName = item.getFile().getOriginalFilename().toLowerCase();
-                    fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-                    File file = FileUtil.multiToFile(multipartFile);
-                    fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                    if (StringUtils.isBlank(fileUrl)) {
-                        throw new ServiceException(ApiError.ERROR_95018);
-                    }
-                } else {
-                    fileUrl = item.getFileUrl();
-                }
-                TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
-                finishEntity.setCreateUserName(loginUser.getUserName());
-                finishEntity.setFileName(fileName);
-                finishEntity.setProductId(productId);
-                finishEntity.setTaskDocsId(item.getTaskDocsId());
-                finishEntity.setTaskId(taskId);
-                finishEntity.setFileUrl(fileUrl);
-                finishEntity.setCreateUserId(loginUser.getUid());
-                finishEntity.setFileType(TaskConstant.FILE_TYPE);
-                finishEntity.setFileSuffix(fileSuffix);
-                finishEntity.setFileSize(fileSize);
-                finishEntity.setUploadType(item.getUploadType());
-                finishEntity.setOldFileUrl(fileUrl);
-                finishEntity.setOldUploadType(item.getUploadType());
-                finishEntity.setOldFileName(fileName);
-                batchAddList.add(finishEntity);
-                //新增产品操作日志
-                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-                productOperateRecordDTO.setProductId(productId);
-                List<String> remarkList = new ArrayList<>();
-                remarkList.add("上传文件：[" + fileName + "]");
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-                batchOperateRecordList.add(productOperateRecordDTO);
-            }
-
-        }
-
-        productOperateRecordService.saveOrUpdateBatch(batchOperateRecordList);
-       return this.saveBatch(batchAddList);
     }
 
 

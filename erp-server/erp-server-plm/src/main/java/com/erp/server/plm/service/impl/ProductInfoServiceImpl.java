@@ -837,6 +837,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.getProductAndProjectList();
     }
 
+    /**
+     * 根据产品id 获取产品信息
+     * @author yl
+     * @date 2022-11-14 17:30
+     * @param productId
+     * @return com.erp.model.plm.dto.ProductShowDTO
+     */
+    @Override
+    public ProductShowDTO getProductInfo(String productId) {
+        return baseMapper.getProductInfo(productId);
+    }
+
 
     /**
      * /**
