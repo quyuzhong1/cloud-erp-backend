@@ -120,7 +120,7 @@ public class FsService {
         String authorization = LoginConstant.FS_AUTHORIZATION + appAccessToken;
         headerMap.put("Authorization", authorization);
         headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
-        String userStr = OkHttpUtils.doPost(ThirdConstants.FS_USER_ACCESS_TOKEN, paramsMap, headerMap);
+        String userStr = OkHttpUtils.doPostJson(ThirdConstants.FS_USER_ACCESS_TOKEN, paramsMap, headerMap);
         Map<String, Object> userMap = JSONObject.parseObject(userStr, Map.class);
         return userMap;
 
