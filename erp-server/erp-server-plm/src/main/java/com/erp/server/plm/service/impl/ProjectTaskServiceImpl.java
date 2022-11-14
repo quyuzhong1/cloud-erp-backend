@@ -1386,12 +1386,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         resultList.add(cancelPublishTaskMap);
 
         //变更文档
-        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
+        //只有任务完成了或者审核不通过才能变更流程
         Integer finishCode = TaskStateEnum.FINISH.getCode();
-        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
         Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Boolean changeDocsShow = true;
-        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+        if (!finishCode.equals(taskState)
                 && !approvalNoPassCode.equals(taskState)) {
             changeDocsShow = false;
         }

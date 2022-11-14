@@ -113,7 +113,7 @@ public class UserNoticeMessageController extends BaseController {
     public ApiResult checkBinding(@RequestBody @Validated FindUserByThirdDTO dto) {
         String useId = commonService.getUidByUnionId(dto.getThirdPartyType(), dto.getThirdPartyUnionId());
         if (StringUtils.isBlank(useId)) {
-            return failure(ApiError.ERROR_95056);
+            return failure(ApiError.ERROR_95056,null);
         }
         return success();
     }

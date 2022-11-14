@@ -3,8 +3,8 @@
 <mapper namespace="com.erp.server.sys.mapper.SysUserThirdMapper">
 
     <select id="getUserIdByThird" resultType="com.erp.model.sys.entity.SysUserInfoEntity">
-      SELECT uid,user_name,real_name,mobile,last_login_time,delete_state,last_login_ip,
-      login_count,create_time,update_time,user_account,email,head_icon
+      SELECT u.uid,u.user_name,u.real_name,u.mobile,u.last_login_time,u.delete_state,u.last_login_ip,
+      u.login_count,u.create_time,u.update_time,u.user_account,u.email,u.head_icon
       FROM sys_user_info u INNER JOIN sys_user_third t
       ON t.user_id=u.uid WHERE t.third_union_id=#{params.thirdPartyUnionId}
       AND t.third_party_type=#{params.thirdPartyType}
