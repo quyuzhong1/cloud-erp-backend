@@ -52,6 +52,7 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
 
-
-
+    //根据第三方平台 以及union id 获取用户id
+    @PostMapping("sys/feign/user/getUserIdByThird")
+    String getUidByUnionId(@RequestBody FindUserByThirdDTO third);
 }

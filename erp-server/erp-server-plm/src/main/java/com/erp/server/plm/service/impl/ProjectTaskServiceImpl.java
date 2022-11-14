@@ -967,17 +967,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
+        String updateJson=JSONObject.toJSONString(dto);
+        Map<String,Object> updateMap= JSONObject.parseObject(updateJson,Map.class);
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         //任务名
         String name = dto.getName();
-        Date planStartTime = dto.getPlanStartTime();
-        taskEntity.setPlanStartTime(planStartTime);
-        //结束时间
-        Date planEndTime = dto.getPlanEndTime();
-        taskEntity.setPlanEndTime(planEndTime);
+        if(updateMap.containsKey("planStartTime")){
+            Date planStartTime = dto.getPlanStartTime();
+            taskEntity.setPlanStartTime(planStartTime);
+        }
+        if(updateMap.containsKey("planEndTime")){
+            //结束时间
+            Date planEndTime = dto.getPlanEndTime();
+            taskEntity.setPlanEndTime(planEndTime);
+        }
+
+
         String chargeId = dto.getChargeId();
         if (StringUtils.isNotBlank(name)) {
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);

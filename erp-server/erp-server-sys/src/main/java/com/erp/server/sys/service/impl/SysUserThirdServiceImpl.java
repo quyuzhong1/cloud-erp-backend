@@ -3,7 +3,9 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
 import com.erp.common.vo.LoginUser;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
@@ -102,5 +104,18 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType,bindingThird);
         queryWrapper.eq(SysUserThirdEntity::getUserId,loginUser.getUid());
         return baseMapper.delete(queryWrapper)>0?true:false;
+    }
+
+    
+    /**
+     * 根据第三方绑定消息 获取用户实体
+     * @author yl
+     * @date 2022-11-14 10:33
+     * @param thirdDTO
+     * @return com.erp.model.sys.entity.SysUserInfoEntity
+     */
+    @Override
+    public SysUserInfoEntity getUserIdByThird(FindUserByThirdDTO thirdDTO) {
+        return baseMapper.getUserIdByThird(thirdDTO);
     }
 }

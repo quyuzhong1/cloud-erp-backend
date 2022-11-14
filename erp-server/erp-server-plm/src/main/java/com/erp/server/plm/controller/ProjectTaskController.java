@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.erp.common.controller.BaseController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +219,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/updateTask")
 //    @RequestPermissions("plm:task:updateTask")
-    public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto) {
+    public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);
         return result == true ? success() : failure();
     }
