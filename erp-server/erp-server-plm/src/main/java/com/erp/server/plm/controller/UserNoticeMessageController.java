@@ -58,7 +58,7 @@ public class UserNoticeMessageController extends BaseController {
      * @author yl
      * @date 2022-11-10 15:54
      */
-    @GetMapping("/list")
+    @PostMapping("/list")
     public ApiResult<List<UserNoticeNodeDTO>> userNoticeNodeList(@Validated @RequestBody BaseIdDTO dto) {
         String fsUnionId = dto.getId();
         //根据飞书的unionId 获取对应用户信息

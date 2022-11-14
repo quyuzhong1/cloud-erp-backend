@@ -263,6 +263,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (!Objects.isNull(notice)) {
             //其它人
             String otherPeoples = notice.getOtherPeople();
+            if (StringUtils.isNotBlank(otherPeoples)) {
+
+            }
 
         }
 
