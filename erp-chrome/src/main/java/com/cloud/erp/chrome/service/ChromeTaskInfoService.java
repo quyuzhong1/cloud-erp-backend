@@ -17,6 +17,11 @@ import java.util.List;
 public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
 
     /**
+     * 创建订单下载任务
+     * @param platform  系统平台
+     */
+    void createOrderTask(String platform);
+    /**
      * 查询任务列表
      * @param dto   查询参数
      * @return  任务列表
@@ -36,5 +41,6 @@ public interface ChromeTaskInfoService extends IService<ScheduleTaskEntity> {
      * @param remark 备注
      */
     void updateTaskState(Integer taskId, Integer status,String remark);
+
 
 }
