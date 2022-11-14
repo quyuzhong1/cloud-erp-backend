@@ -56,7 +56,7 @@ public class TaskDeliveryDocsController extends BaseController {
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
      */
-    @GetMapping("/list")
+    @PostMapping("/list")
     //  @RequestPermissions("plm:taskDocs:list")
     public ApiResult<List<DeliveryDocsDTO>> list(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
