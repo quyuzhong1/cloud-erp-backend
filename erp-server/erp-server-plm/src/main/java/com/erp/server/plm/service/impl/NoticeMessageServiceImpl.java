@@ -240,11 +240,34 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
+            //
+            String otherPeoples = notice.getOtherPeople();
 
         }
 
 
         return null;
+    }
+
+
+    /**
+     * 获取系统设置的通知人员
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-14 16:16
+     */
+    public List<String> getSetNotice(NoticeMessageEntity notice) {
+        List<String> resultList = new ArrayList<>();
+        if (!Objects.isNull(notice)) {
+            //其它人
+            String otherPeoples = notice.getOtherPeople();
+
+        }
+
+
+        return resultList;
     }
 
     /**
