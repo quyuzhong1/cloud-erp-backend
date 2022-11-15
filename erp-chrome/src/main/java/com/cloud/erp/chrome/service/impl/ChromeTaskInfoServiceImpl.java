@@ -117,7 +117,7 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         queryWrapper.and(st->st
             .eq(ScheduleTaskEntity::getTaskStatus,TaskState.NOT_START)
             .or(i->i
-                .ne(ScheduleTaskEntity::getTaskStatus,TaskState.FINISH)
+                .ne(ScheduleTaskEntity::getTaskStatus,TaskState.TAKEN)
                 .lt(ScheduleTaskEntity::getUpdateTime,DateUtil.offsetMinute(new Date(),-10))
             )
         );
