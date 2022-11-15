@@ -142,6 +142,7 @@ public enum ApiError implements Serializable {
     ERROR_95054(95054, "通知节点不存在"),
     ERROR_95055(95055, "项目人员/其他人员必须填写一个"),
     ERROR_95056(95056, "尚未绑定飞书，请在ERP系统[个人中心]绑定飞书后可查看通知"),
+    ERROR_95057(95057, "unionId不能为空"),
 
 
 

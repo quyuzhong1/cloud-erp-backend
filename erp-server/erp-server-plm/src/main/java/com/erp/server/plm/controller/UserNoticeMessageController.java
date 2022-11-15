@@ -2,18 +2,19 @@ package com.erp.server.plm.controller;
 
 import com.common.core.constant.ThirdConstants;
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.*;
 
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.dto.base.StateDTO;
-import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.FindThirdUserDTO;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.UpdateUserNoticeStateDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
+import com.erp.model.plm.entity.NoticeMessageRecordEntity;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.NoticeMessageRecordService;
 import com.erp.server.plm.service.NoticeMessageService;
 import com.erp.server.plm.service.UserCancelNoticeService;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,9 @@ public class UserNoticeMessageController extends BaseController {
     @Autowired
     private UserCancelNoticeService userCancelNoticeService;
 
+    @Autowired
+    private NoticeMessageRecordService noticeMessageRecordService;
+
     @Resource
     private FsService fsService;
 
@@ -65,6 +69,21 @@ public class UserNoticeMessageController extends BaseController {
         String userId = commonService.getUidByUnionId(ThirdConstants.FS_PLATFORM, fsUnionId);
         List<UserNoticeNodeDTO> resultList = noticeMessageService.getUserNoticeNode(userId);
         return success(resultList);
+    }
+
+
+    /**
+     * 消息通知-分页展示
+     *
+     * @param
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.UserNoticeNodeDTO>>
+     * @author yl
+     * @date 2022-11-10 15:54
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<List<NoticeMessageRecordEntity>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<List<NoticeMessageRecordEntity>> pagingVO = noticeMessageRecordService.paging(dto);
+        return success(pagingVO);
     }
 
 
@@ -113,7 +132,7 @@ public class UserNoticeMessageController extends BaseController {
     public ApiResult checkBinding(@RequestBody @Validated FindUserByThirdDTO dto) {
         String useId = commonService.getUidByUnionId(dto.getThirdPartyType(), dto.getThirdPartyUnionId());
         if (StringUtils.isBlank(useId)) {
-            return failure(ApiError.ERROR_95056,null);
+            return failure(ApiError.ERROR_95056, null);
         }
         return success();
     }

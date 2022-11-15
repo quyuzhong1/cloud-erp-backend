@@ -14,10 +14,10 @@ import java.util.Map;
 public enum TaskPlanEndTimeEnum {
     TODAY("今天", "today"),
     TOMORROW("明天", "tomorrow"),
-    LAST_THREE_DAYS("最近三天", "lastThreeDays"),
-    LAST_SEVEN_DAYS("最近七天", "lastSevenDays"),
-    LAST_FIFTEEN_DAYS("最近十五天", "lastFifteenDays"),
-    LAST_THIRTY_DAYS("最近三十天", "lastThirtyDays"),
+    LAST_THREE_DAYS("最近3天", "lastThreeDays"),
+    LAST_SEVEN_DAYS("最近7天", "lastSevenDays"),
+    LAST_FIFTEEN_DAYS("最近15天", "lastFifteenDays"),
+    LAST_THIRTY_DAYS("最近30天", "lastThirtyDays"),
     AFTER_THIRTY_DAYS("30天以后", "afterThirtyDays");
 
     private String name;
