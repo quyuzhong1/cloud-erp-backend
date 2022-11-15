@@ -223,9 +223,30 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public List<PreTaskEntity> getPreTaskListBytaskIds(List<String> taskIds) {
-        LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(PreTaskEntity::getTaskId, taskIds);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(PreTaskEntity::getTaskId, taskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
+
+    }
+
+    /**
+     * 根据前置任务id 集合 获取对应 任务id
+     * @author yl
+     * @date 2022-11-15 16:14
+     * @param preTaskIds
+     * @return java.util.List<com.erp.model.plm.entity.PreTaskEntity>
+     */
+    @Override
+    public List<PreTaskEntity> getPreTaskListByPreTaskIds(List<String> preTaskIds) {
+        if (CollectionUtils.isNotEmpty(preTaskIds)) {
+            LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(PreTaskEntity::getPreTaskId, preTaskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 }
 
