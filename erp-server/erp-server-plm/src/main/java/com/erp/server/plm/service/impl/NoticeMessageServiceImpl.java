@@ -17,6 +17,7 @@ import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.NoticeNodeEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.NoticeEnum;
 import com.erp.server.plm.enums.NoticeItemPeopleEnum;
@@ -24,6 +25,7 @@ import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -235,14 +237,21 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @author yl
      * @date 2022-11-11 10:27
      */
-    @Override
-    public Boolean newTaskNotice() {
+    //  @Override
+    public Boolean newTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         String flag = NoticeEnum.NEW_TASK.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
-            //
-            String otherPeoples = notice.getOtherPeople();
+            List<String> noticeUserIds = getSetNotice(notice, productId);
+            boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            for (ProjectTaskEntity task : taskList) {
+                String chargeId = task.getChargeId();
+                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                }
+            }
+
 
         }
 

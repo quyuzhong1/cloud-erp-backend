@@ -27,5 +27,5 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
     List<UserNoticeNodeDTO> getUserNoticeNode(String userId);
 
-    Boolean newTaskNotice();
+  //  Boolean newTaskNotice();
 }
