@@ -4,15 +4,55 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProjectTemplateEntity">
-        <id column="id" property="id" />
-        <result column="name" property="name" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
+        <id column="id" property="id" jdbcType="VARCHAR" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="type" property="type" jdbcType="Integer" />
+        <result column="status" property="status" jdbcType="Integer" />
+        <result column="product_id" property="productId" jdbcType="VARCHAR" />
+        <result column="create_user_name" property="createUserName" jdbcType="VARCHAR" />
+        <result column="create_user_id" property="createUserId" jdbcType="VARCHAR" />
+        <result column="update_user_name" property="updateUserName" jdbcType="VARCHAR" />
+        <result column="update_user_id" property="updateUserId" jdbcType="VARCHAR" />
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
     </resultMap>
 
     <select id="getStartItemSource" resultType="com.erp.model.plm.dto.StartItemSourceDTO">
          SELECT id AS flagId,name AS sourceName,${sourceType}  AS sourceType FROM project_template
 
+    </select>
+
+    <!-- 模板管理列表查询 -->
+    <select id="paging" resultType="com.erp.model.plm.entity.ProjectTemplateEntity" resultMap="BaseResultMap" >
+            SELECT
+                pt.id,
+                pt.name,
+                pt.type,
+                pt.product_id,
+                pt.create_time,
+                pt.update_time
+            FROM project_template pt
+            <where>
+                <if test="params.name != '' and params.name != null">
+                   AND pt.name LIKE concat('%', #{params.name} ,'%')
+                </if>
+                <if test="params.type != '' and params.type != null">
+                   AND pt.type = #{params.type}
+                </if>
+                <if test="params.status != '' and params.status != null">
+                    AND pt.status = #{params.status}
+                </if>
+                <if test="params.productId != '' and params.productId != null">
+                    AND pt.product_id = #{params.productId}
+                </if>
+                <if test="params.name != '' and params.name != null">
+                    AND pt.name LIKE concat('%', #{params.name} ,'%')
+                </if>
+                <if test="params.productId != '' and params.productId != null">
+                    AND pt.product_id = #{params.productId}
+                </if>
+            </where>
+            ORDER BY pt.create_time DESC
     </select>
 
 </mapper>

@@ -7,7 +7,6 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
-
 import com.erp.server.plm.mapper.TemplateTaskDocsNameMapper;
 import com.erp.server.plm.service.TaskDocsNameService;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -100,7 +98,6 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
 
         return sourceList;
     }
-
 
     /**
      * 获取到项目
