@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TemplateTaskMapper">
+
+
+    <sql id="Base_Column_List">
+        tt.id,tt.name,tt.pid,tt.type,tt.chargeName,tt.priority,tt.isFixed,tt.createUserName,tt.createUserId,tt.createTime,tpt.name as preTaskName
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.entity.TemplateTaskEntity">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        template_task tt
+        LEFT JOIN (SELECT a.task_id,b.name FROM template_pre_task a INNER JOIN template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id) tpt on tt.id = tpt.task_id
+        <where>
+            <if test="params.name != '' and params.name != null">
+                AND tt.name LIKE concat('%', #{params.name} ,'%')
+            </if>
+            <if test="params.type != '' and params.type != null">
+                AND tt.type = #{params.type}
+            </if>
+            <if test="params.chargeName != '' and params.chargeName != null">
+                AND tt.charge_name LIKE concat('%', #{chargeName} ,'%')
+            </if>
+            <if test="params.priority != '' and params.priority != null">
+                AND tt.priority = #{priority}
+            </if>
+            <if test="params.isFixed != '' and params.isFixed != null">
+                AND tt.is_fixed = #{isFixed}
+            </if>
+
+        </where>
+    </select>
+
+
+</mapper>

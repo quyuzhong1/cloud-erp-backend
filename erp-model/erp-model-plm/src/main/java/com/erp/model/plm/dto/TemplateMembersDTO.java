@@ -1,18 +1,26 @@
-package com.erp.model.plm.entity;
+package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 
- * @TableName template_members 模板成员表
+ * @author Will
+ * @version 1.0
+ * @description: 成员DTO
+ * @date 2022/11/15 14:01
  */
 @Data
-@TableName(value ="template_members")
-public class TemplateMembersEntity implements Serializable {
+@NoArgsConstructor
+public class TemplateMembersDTO implements Serializable {
+
     /**
      * id
      */
@@ -22,11 +30,13 @@ public class TemplateMembersEntity implements Serializable {
     /**
      * 成员id
      */
+    @NotBlank(message = "成员id不能为空")
     private String memberId;
 
     /**
      * 成员名称
      */
+    @NotBlank(message = "成员名称不能为空")
     private String memberName;
 
     /**
@@ -49,33 +59,20 @@ public class TemplateMembersEntity implements Serializable {
     /**
      * 创建人id
      */
-    @TableField("upcrteate_user_id")
     private String createUserId;
 
     /**
      * 创建人名称
      */
-    @TableField("crteate_user_name")
     private String createUserName;
 
     /**
      * 更新人id
      */
-    @TableField("update_user_id")
     private String updateUserId;
 
     /**
      * 更新人
      */
-    @TableField("update_user_name")
     private String updateUserName;
-
-    /**
-     * 是否是负责人 0 不是 1 是
-     */
-    private Short isCharge;
-
-    private static final long serialVersionUID = 1L;
-
-
 }

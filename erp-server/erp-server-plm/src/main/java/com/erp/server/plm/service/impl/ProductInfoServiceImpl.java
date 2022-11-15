@@ -7,7 +7,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -17,25 +16,22 @@ import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
+import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -528,8 +524,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板名
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
+        //模板类型（立项模板）
+        Integer templateType = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
         //保存模板
-        String templateId = templateService.saveTemplate(templateName,productId);
+        String templateId = templateService.saveTemplate(templateName,productId,templateType);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);

@@ -1,16 +1,27 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
-
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateDeliveryDocsMapper;
-import com.erp.server.plm.service.TaskDeliveryService;
-import com.erp.server.plm.service.TemplateDeliveryDocsService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +29,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -31,6 +41,18 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private TemplateDocsPermissionService templateDocsPermissionService;
+
+    @Autowired
+    private TemplateMembersService templateMembersService;
 
     /**
      * 交付文档
@@ -114,13 +136,83 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         return sourceList;
     }
 
+    @Override
+    public void removeByTaskIdAndTemplateId(String taskId, String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId,taskId);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
+        this.remove(queryWrapper);
+    }
 
+    @Override
+    public void removeByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
+        this.remove(queryWrapper);
+    }
+
+    @Override
+    public PagingVO<List<TemplateDeliveryDocsEntity>> paging(PagingDTO<TemplateDeliveryDocsDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        TemplateDeliveryDocsDTO params = dto.getParams();
+        List<String> findDeliveryDocsIds = new ArrayList<>();
+        IPage<TemplateDeliveryDocsEntity> pageData = baseMapper.paging(query, params, findDeliveryDocsIds);
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean saveOrUpdate(TemplateDeliveryDocsDTO dto) {
+        TemplateDeliveryDocsEntity entity = new TemplateDeliveryDocsEntity();
+        BeanMapperUtils.copy(dto,entity);
+        //获取登录人信息
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        if (StringUtils.isBlank(dto.getId())) {
+            entity.setCreateUserId(uid);
+            entity.setCreateUserName(userName);
+        } else {
+            entity.setUpdateUserId(uid);
+            entity.setUpdateUserName(userName);
+        }
+        //因为模板任务无主键，则无法用saveOrUpdate进行操作
+        if (StringUtils.isBlank(entity.getId())) {
+            return this.save(entity);
+        }
+        LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(TemplateDeliveryDocsEntity::getId,entity.getId());
+        updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,entity.getTemplateId());
+        updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName,entity.getDocsName());
+        return this.update(updateWrapper);
+    }
+
+    @Override
+    public Boolean deleteByTempalteId(String id, String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getId,id);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
+        return this.remove(queryWrapper);
+    }
+
+
+    /**
+     * @description: 根据模板id查询
+     * @author Will
+     * @date: 2022/11/14 18:07
+     * @param templateId
+     * @return List<TemplateDeliveryDocsEntity>
+     */
     public List<TemplateDeliveryDocsEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
         return this.list(queryWrapper);
 
     }
+
+
 }
 
 
