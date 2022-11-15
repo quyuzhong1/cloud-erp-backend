@@ -6,6 +6,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
+import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.model.sys.dto.UserDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
@@ -134,5 +135,16 @@ public class SysUserFeignController extends BaseController {
             }
         }
         return "";
+    }
+
+    /**
+     * 根据第三方平台 获取对应的 UnionId集合
+     *
+     * @return
+     */
+    @GetMapping("/getThirdUnionId")
+    public List<ThirdUnionDTO> getThirdUnionId(@RequestBody String platform) {
+        List<ThirdUnionDTO> thirdUnionIds = sysUserThirdService.getUnionByPlatform(platform);
+        return thirdUnionIds;
     }
 }

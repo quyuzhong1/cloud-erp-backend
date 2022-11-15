@@ -5,20 +5,27 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.ThirdConstants;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.third.dto.FsBatchSendMessageDTO;
+import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
+import com.erp.model.plm.entity.NoticeMessageRecordEntity;
 import com.erp.model.plm.entity.NoticeNodeEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.enums.NoticeEnum;
 import com.erp.server.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
@@ -30,10 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -53,6 +58,15 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private ProductInfoService productInfoService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private FsService fsService;
+
+    @Autowired
+    private NoticeMessageRecordService noticeMessageRecordService;
 
     @Override
     public PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -77,8 +91,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         item.setUpdateUserName(updateUser.getUserName());
                     }
                 }
-
-
                 //其它人
                 String otherPeople = item.getOtherPeople();
                 List<String> otherPeopleList = new ArrayList<>();
@@ -239,24 +251,102 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     //  @Override
     public Boolean newTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
+        ProductShowDTO product = productInfoService.getProductInfo(productId);
+        if (Objects.isNull(product)) {
+            return false;
+        }
         String flag = NoticeEnum.NEW_TASK.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
+        //所有的通知用户人
+        List<String> allNoticeUserIds = new ArrayList<>();
         if (!Objects.isNull(notice)) {
-            List<String> noticeUserIds = getSetNotice(notice, productId);
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getSetNotice(notice, product);
+            //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             for (ProjectTaskEntity task : taskList) {
                 String chargeId = task.getChargeId();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
                     List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                    chargeIdList.addAll(noticeUserIds);
+                    allNoticeUserIds = chargeIdList;
+                } else {
+                    allNoticeUserIds = noticeUserIds;
+                }
+                //排除关闭通知的人员 并去重
+                List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
+                List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+                FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+                List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                sendMessage.setUnionIds(unionIds);
+                Map<String, Object> contentMap = new HashMap<>();
+                String content = String.format(NoticeMessageConstant.NEW_TASK, task.getCreateUserName());
+                contentMap.put("text", content);
+                sendMessage.setContentMap(contentMap);
+                //发送消息的结果
+                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                //当发送成功后
+                if (sendResult) {
+                    List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                    for (String userId : acceptUserIds) {
+                        NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                        recordEntity.setChargeId(task.getChargeId());
+                        recordEntity.setMessageContent(content);
+                        recordEntity.setNoticeMessageId(noticeMessageId);
+                        recordEntity.setNoticeNode(flag);
+                        recordEntity.setNoticeUserId(userId);
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
+                        recordEntity.setProductId(product.getProductId());
+                        recordEntity.setProductName(product.getName());
+                        recordEntity.setTaskId(task.getId());
+                        recordEntity.setTaskName(task.getName());
+                        messageRecordList.add(recordEntity);
+                    }
+
                 }
             }
-
-
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
         }
 
 
         return null;
+    }
+
+
+    /**
+     * 根据第三方信息  获取到用户的unionid
+     *
+     * @param unionIdList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-15 11:14
+     */
+    public List<ThirdUnionDTO> getNoticeUnionIds(List<ThirdUnionDTO> unionIdList, List<String> userIds) {
+        List<ThirdUnionDTO> unionIds = unionIdList.stream().filter(u -> userIds.contains(u.getUserId())).collect(Collectors.toList());
+        return unionIds;
+    }
+
+    /**
+     * 根据t通知消息表id
+     * 以及要通知的人员 剔除掉关闭人的消息
+     *
+     * @param noticeId
+     * @param allNoticeUserIds
+     * @return void
+     * @author yl
+     * @date 2022-11-15 10:09
+     */
+    private List<String> eliminateCloseNotice(String noticeId, List<String> allNoticeUserIds) {
+        //获取取消通知的用户id
+        List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(noticeId);
+        List<String> resultList = allNoticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
+        return resultList;
     }
 
 
@@ -268,7 +358,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @author yl
      * @date 2022-11-14 16:16
      */
-    public List<String> getSetNotice(NoticeMessageEntity notice, String productId) {
+    public List<String> getSetNotice(NoticeMessageEntity notice, ProductShowDTO product) {
         List<String> resultList = new ArrayList<>();
         if (!Objects.isNull(notice)) {
             //其它人
@@ -284,7 +374,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
                 //这个是项目经理
                 if (itemPeopleList.contains(NoticeItemPeopleEnum.ITEM_MANAGER.getFlag())) {
-                    ProductShowDTO product = productInfoService.getProductInfo(productId);
                     if (!Objects.isNull(product)) {
                         //项目负责人
                         String projectChargeId = product.getProjectChargeId();

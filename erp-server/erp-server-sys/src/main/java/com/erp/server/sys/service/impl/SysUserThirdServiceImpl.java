@@ -3,7 +3,9 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.common.core.utils.BeanMapper;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
+import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
@@ -11,6 +13,9 @@ import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -101,21 +106,40 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
     public boolean removeThirdParty(String bindingThird) {
         LoginUser loginUser = SysInterceptor.threadLocal.get();
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType,bindingThird);
-        queryWrapper.eq(SysUserThirdEntity::getUserId,loginUser.getUid());
-        return baseMapper.delete(queryWrapper)>0?true:false;
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingThird);
+        queryWrapper.eq(SysUserThirdEntity::getUserId, loginUser.getUid());
+        return baseMapper.delete(queryWrapper) > 0 ? true : false;
     }
 
-    
+
     /**
      * 根据第三方绑定消息 获取用户实体
-     * @author yl
-     * @date 2022-11-14 10:33
+     *
      * @param thirdDTO
      * @return com.erp.model.sys.entity.SysUserInfoEntity
+     * @author yl
+     * @date 2022-11-14 10:33
      */
     @Override
     public SysUserInfoEntity getUserIdByThird(FindUserByThirdDTO thirdDTO) {
         return baseMapper.getUserIdByThird(thirdDTO);
+    }
+
+
+    /**
+     * 根据平台获取对应的用户与Union 关系
+     *
+     * @param platform
+     * @return java.util.List<com.erp.common.modules.third.dto.ThirdUnionDTO>
+     * @author yl
+     * @date 2022-11-15 11:03
+     */
+    @Override
+    public List<ThirdUnionDTO> getUnionByPlatform(String platform) {
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, platform);
+        List<SysUserThirdEntity> list = this.list(queryWrapper);
+        List<ThirdUnionDTO> resultList = BeanMapper.copyList(list, ThirdUnionDTO.class);
+        return resultList;
     }
 }

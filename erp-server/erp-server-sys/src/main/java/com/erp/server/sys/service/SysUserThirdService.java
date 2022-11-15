@@ -3,8 +3,11 @@ package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
+import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
+
+import java.util.List;
 
 /**
  * ${comments}
@@ -27,5 +30,8 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
     boolean removeThirdParty(String bindingThird);
 
     SysUserInfoEntity getUserIdByThird(FindUserByThirdDTO thirdDTO);
+
+
+    List<ThirdUnionDTO> getUnionByPlatform(String platform);
 }
 
