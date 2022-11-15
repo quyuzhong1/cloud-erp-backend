@@ -26,5 +26,7 @@ public interface SysRoleService extends IService<SysRoleEntity> {
 
 
     void copyRole(String roleId);
+
+    boolean saveRoleEntity(SysRoleEntity sysRole);
 }
 
