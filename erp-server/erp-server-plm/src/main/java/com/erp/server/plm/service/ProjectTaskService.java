@@ -103,4 +103,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     List<Map<String, Object>> operateMoreList(String taskId);
+
+    List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int i);
 }

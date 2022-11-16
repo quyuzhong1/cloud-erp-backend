@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -1408,6 +1409,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         return resultList;
+    }
+
+    /**
+     * 获取已过期 或者即将过期的任务
+     *
+     * @param nowDay
+     * @param days
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
+     * @author yl
+     * @date 2022-11-16 11:01
+     */
+    @Override
+    public List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int days) {
+        Date flagDate = DateUtil.addDateDays(nowDay, days);
+        Date startFlagDate = DateUtil.getStartTime(flagDate);
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(ProjectTaskEntity::getPlanEndTime, null);
+        //大于几天后的数据 而小于现在的日期
+        queryWrapper.eq(ProjectTaskEntity::getPlanEndTime, startFlagDate);
+        return this.list(queryWrapper);
     }
 
 
