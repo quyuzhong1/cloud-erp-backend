@@ -64,6 +64,7 @@ public enum ApiError implements Serializable {
     ERROR_9022(9022, "搜索类型有误"),
     ERROR_9023(9023, "部门名已存在"),
     ERROR_9024(9024, "邮箱已存在"),
+    ERROR_9025(9025, "角色名已存在"),
 
 
 
@@ -147,6 +148,10 @@ public enum ApiError implements Serializable {
     ERROR_95059(95059, "模板下已存在该角色"),
     ERROR_95060(95060, "请选择模板成员"),
     ERROR_95061(95061, "模板角色下已存在该成员"),
+    ERROR_95062(95062, "unionId不能为空"),
+
+
+
 
     ERROR_end(1000000, "系统错误");
 

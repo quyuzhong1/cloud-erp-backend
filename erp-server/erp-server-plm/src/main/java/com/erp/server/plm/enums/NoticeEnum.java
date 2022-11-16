@@ -11,6 +11,7 @@ public enum NoticeEnum {
     RELEASE_TASK("releaseTask", "发布任务"),
     START_TASK("startTask", "开始任务"),
     FINISH_TASK("finishTask", "完成任务"),
+    CLOSE_TASK("closeTask", "关闭任务"),
     APPROVAL_TASK("approvalTask", "审核任务"),
     DELETE_TASK("deleteTask", "删除任务"),
     EDIT_TASK("editTask", "编辑任务"),

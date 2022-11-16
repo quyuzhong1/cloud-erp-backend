@@ -967,19 +967,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public Boolean updateBaseTask(UpdateTaskDTO dto) {
-        String updateJson=JSONObject.toJSONString(dto);
-        Map<String,Object> updateMap= JSONObject.parseObject(updateJson,Map.class);
+        String updateJson = JSONObject.toJSONString(dto);
+        Map<String, Object> updateMap = JSONObject.parseObject(updateJson, Map.class);
         ProjectTaskEntity taskEntity = this.getById(dto.getTaskId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         //任务名
         String name = dto.getName();
-        if(updateMap.containsKey("planStartTime")){
+        if (updateMap.containsKey("planStartTime")) {
             Date planStartTime = dto.getPlanStartTime();
             taskEntity.setPlanStartTime(planStartTime);
         }
-        if(updateMap.containsKey("planEndTime")){
+        if (updateMap.containsKey("planEndTime")) {
             //结束时间
             Date planEndTime = dto.getPlanEndTime();
             taskEntity.setPlanEndTime(planEndTime);
@@ -1392,6 +1392,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Boolean changeDocsShow = true;
         if (!finishCode.equals(taskState)
                 && !approvalNoPassCode.equals(taskState)) {
+            changeDocsShow = false;
+        }
+        List<String> taskIds = new ArrayList<>();
+        taskIds.add(taskId);
+        List<TaskDocsFinishEntity> taskDocsList = finishService.getByTaskIds(taskIds);
+        if (CollectionUtils.isEmpty(taskDocsList)) {
             changeDocsShow = false;
         }
         Map<String, Object> changeDocsMap = new HashMap<>();
