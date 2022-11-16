@@ -32,9 +32,14 @@ public class ProjectTemplateDTO implements Serializable {
     private String name;
 
     /**
-     * 模板类型
+     * 模板类型(1立项模板,2项目模板)
      */
     private Integer type;
+
+    /**
+     * 模板类型名称
+     */
+    private String typeName;
 
     /**
      * 模板状态(1启用，0禁用)

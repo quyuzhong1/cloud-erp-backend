@@ -22,8 +22,8 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
-import com.erp.server.plm.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.erp.server.plm.service.ProjectTemplateService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +45,10 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
+        List<ProjectTemplateDTO> list = paging.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            list.forEach(obj-> obj.setTypeName(ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
+        }
         return new PagingVO(paging);
     }
 

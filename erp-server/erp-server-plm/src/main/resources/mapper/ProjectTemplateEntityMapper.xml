@@ -23,7 +23,7 @@
     </select>
 
     <!-- 模板管理列表查询 -->
-    <select id="paging" resultType="com.erp.model.plm.dto.ProjectTemplateDTO" resultMap="BaseResultMap" >
+    <select id="paging" resultType="com.erp.model.plm.dto.ProjectTemplateDTO" >
             SELECT
                 pt.id,
                 pt.name,
