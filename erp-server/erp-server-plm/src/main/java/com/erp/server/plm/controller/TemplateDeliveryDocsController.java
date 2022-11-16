@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 模板输出物
+ * 模板管理
  *
  * @author Will
  * @version 1.0
@@ -44,7 +44,7 @@ public class TemplateDeliveryDocsController extends BaseController {
     }
 
     /**
-     * 新增或者修改
+     * 输出物新增或者修改
      *
      * @author Will
      * @date: 2022/11/15 16:11

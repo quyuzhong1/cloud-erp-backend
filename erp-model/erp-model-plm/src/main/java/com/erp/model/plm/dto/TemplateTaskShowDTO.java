@@ -55,7 +55,7 @@ public class TemplateTaskShowDTO implements Serializable {
     /**
      * 前置任务id
      */
-    private Integer preTaskId;
+    private String preTaskId;
 
     /**
      * 前置任务名称

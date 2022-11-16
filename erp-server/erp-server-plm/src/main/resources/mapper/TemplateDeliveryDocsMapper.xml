@@ -15,7 +15,7 @@
            tdd.task_id,
            pte.status as templateStatus
         from template_delivery_docs tdd
-        left join project_template_entry pte on tdd.template_id = pte.id
+        left join project_template pte on tdd.template_id = pte.id
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and tdd.docs_name like concat('%', #{params.searchKeyword} ,'%')
