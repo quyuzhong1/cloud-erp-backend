@@ -10,13 +10,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -27,8 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -41,18 +43,6 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
-
-    @Autowired
-    private TemplateTaskService templateTaskService;
-
-    @Autowired
-    private TemplateRoleRefMembersService templateRoleRefMembersService;
-
-    @Autowired
-    private TemplateDocsPermissionService templateDocsPermissionService;
-
-    @Autowired
-    private TemplateMembersService templateMembersService;
 
     /**
      * 交付文档
@@ -152,11 +142,10 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     }
 
     @Override
-    public PagingVO<List<TemplateDeliveryDocsEntity>> paging(PagingDTO<TemplateDeliveryDocsDTO> dto) {
+    public PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        TemplateDeliveryDocsDTO params = dto.getParams();
-        List<String> findDeliveryDocsIds = new ArrayList<>();
-        IPage<TemplateDeliveryDocsEntity> pageData = baseMapper.paging(query, params, findDeliveryDocsIds);
+        BaseSearchDTO params = dto.getParams();
+        IPage<TemplateDeliveryDocsShowDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }
 
@@ -186,15 +175,40 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         updateWrapper.eq(TemplateDeliveryDocsEntity::getId,entity.getId());
         updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,entity.getTemplateId());
         updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName,entity.getDocsName());
+        updateWrapper.set(TemplateDeliveryDocsEntity::getDocsNameId,entity.getDocsNameId());
         return this.update(updateWrapper);
     }
 
     @Override
-    public Boolean deleteByTempalteId(String id, String templateId) {
+    public Boolean deleteTemplateDeliveryDocs(TemplateDeliveryDocsDeleteDTO dto) {
         LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateDeliveryDocsEntity::getId,id);
-        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getId,dto.getId());
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,dto.getTemplateId());
+        if (StringUtils.isNotBlank(dto.getTaskId())) {
+            queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId,dto.getTaskId());
+        }
         return this.remove(queryWrapper);
+    }
+
+    @Override
+    public void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList) {
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            List<String> docsIdList = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //删除交付文
+            removeTemplateDeliveryDocs(taskId,templateId,docsIdList);
+            //保存交付文档
+            List<TemplateDeliveryDocsEntity> saveList = new LinkedList<>();
+            for (DocsDTO item : deliveryDocsList) {
+                TemplateDeliveryDocsEntity entity = new TemplateDeliveryDocsEntity();
+                entity.setTemplateId(templateId);
+                entity.setDocsName(item.getName());
+                entity.setTaskId(taskId);
+                entity.setDocsNameId(item.getId());
+                entity.setIsSys(item.getIsSys());
+                saveList.add(entity);
+            }
+             this.saveBatch(saveList);
+        }
     }
 
 
@@ -212,6 +226,30 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
 
     }
 
+    private List<TemplateDeliveryDocsEntity> getExistDocs(String taskId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 根据任务id和模板id删除
+     * @author Will
+     * @date: 2022/11/16 10:31
+     * @param taskId
+     * @param templateId
+     * @param docsIdList
+
+     */
+    private void removeTemplateDeliveryDocs(String taskId,String templateId, List<String> docsIdList) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId, taskId);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
+        if (CollectionUtils.isNotEmpty(docsIdList)) {
+            queryWrapper.in(TemplateDeliveryDocsEntity::getId, docsIdList);
+        }
+        this.remove(queryWrapper);
+    }
 
 }
 

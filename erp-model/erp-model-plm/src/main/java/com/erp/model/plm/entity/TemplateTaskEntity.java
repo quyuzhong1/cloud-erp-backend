@@ -84,7 +84,7 @@ public class TemplateTaskEntity implements Serializable {
     private String phaseName;
 
     /**
-     * 是否是系统任务 1 是  0  不是
+     * 是否是固定任务 1 是  0  不是
      */
     @TableField("is_fixed")
     private Integer isFixed;

@@ -10,13 +10,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -25,7 +28,7 @@ import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
-import com.erp.server.plm.service.TemplateTaskDocsNameService;
+import com.erp.server.plm.service.TemplatePreTaskService;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +52,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TemplateDeliveryDocsService templateDeliveryDocsService;
     @Autowired
-    private TemplateTaskDocsNameService templateTaskDocsNameService;
+    private TemplatePreTaskService templatePreTaskService;
     /**
      * 保存模板任务
      *
@@ -120,7 +123,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
         List<TemplateTaskEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_95054);
+            throw new ServiceException(ApiError.ERROR_95058);
         }
         TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
         Integer IsFixed = entity.getIsFixed();
@@ -210,10 +213,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     @Override
-    public PagingVO<TemplateTaskDTO> paging(PagingDTO<TemplateTaskDTO> dto) {
+    public PagingVO<TemplateTaskShowDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(),dto.getPageSize());
-        TemplateTaskDTO params = dto.getParams();
-        IPage<TemplateTaskEntity> paging = baseMapper.paging(query, params);
+        BaseSearchDTO params = dto.getParams();
+        IPage<TemplateTaskShowDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
     }
 
@@ -235,6 +238,16 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         } else {
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
+        }
+
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        boolean flag = this.save(entity);
+        if (flag) {
+            //保存交付文档
+            templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
+            //保存前置任务
+            templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         }
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
         if (StringUtils.isBlank(entity.getId())) {
@@ -277,7 +290,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId,tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95053);
+            throw new ServiceException(ApiError.ERROR_95061);
         }
     }
 

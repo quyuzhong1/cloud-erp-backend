@@ -1,12 +1,16 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Will
@@ -55,11 +59,6 @@ public class TemplateTaskDTO implements Serializable {
          */
         private Date planStartTime;
 
-        /**·
-         * 审核人id 多个以逗号分割
-         */
-        private String approvalUserId;
-
         /**
          * j计划结束时间
          */
@@ -81,7 +80,7 @@ public class TemplateTaskDTO implements Serializable {
         private String phaseName;
 
         /**
-         * 是否是系统任务 1 是  0  不是
+         * 是否是固定任务 1 是  0  不是
          */
         private Integer isFixed;
 
@@ -93,17 +92,14 @@ public class TemplateTaskDTO implements Serializable {
         /**
          * 创建时间
          */
+        @TableField(value = "create_time",fill = FieldFill.INSERT)
         private Date createTime;
 
         /**
          * 更新时间
          */
+        @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
         private Date updateTime;
-
-        /**
-         * 引用系统任务的id
-         */
-        private String quoteSysTaskId;
 
         /**
          * 模板表id
@@ -111,12 +107,13 @@ public class TemplateTaskDTO implements Serializable {
         private String templateId;
 
         /**
-         * 任务属性 1： 立项任务  2：项目任务
+         * 交付文档
          */
-        private Integer property;
+        @Valid
+        private List<DocsDTO> deliveryDocsList;
 
-       /**
-        * 流程表id
-        */
-        private String businessProcessId;
+        /**
+         * 前置任务id
+         */
+        private List<String> preTaskIdList;
 }

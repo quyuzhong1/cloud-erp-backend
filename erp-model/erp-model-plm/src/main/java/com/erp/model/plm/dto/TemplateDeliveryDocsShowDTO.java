@@ -9,47 +9,37 @@ import java.util.Date;
 /**
  * @author Will
  * @version 1.0
- * @description: 项目模板DTO
- * @date 2022/11/11 11:36
+ * @description: 模板输出物列表DTO
+ * @date 2022/11/16 11:04
  */
 @Data
 @NoArgsConstructor
-public class ProjectTemplateDTO implements Serializable {
+public class TemplateDeliveryDocsShowDTO implements Serializable {
 
     /**
-     * 主键id
+     * id
      */
     private String id;
 
     /**
-     * 产品id
+     * 模板id
      */
-    private String productId;
+    private String templateId;
 
     /**
-     * 模板名称
+     * 文档名id
      */
-    private String name;
+    private String docsNameId;
 
     /**
-     * 模板类型
+     * 文档名
      */
-    private Integer type;
-
-    /**
-     * 模板状态(1启用，0禁用)
-     */
-    private Integer status;
+    private String docsName;
 
     /**
      * 创建人
      */
     private String createUserName;
-
-    /**
-     * 创建人id
-     */
-    private String createUserId;
 
     /**
      * 创建时间
@@ -60,11 +50,6 @@ public class ProjectTemplateDTO implements Serializable {
      * 更新人
      */
     private String updateUserName;
-
-    /**
-     * 更新人id
-     */
-    private String updateUserId;
 
     /**
      * 更新时间

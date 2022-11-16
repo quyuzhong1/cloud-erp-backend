@@ -3,7 +3,8 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,7 +23,7 @@ public interface TemplateTaskMapper  extends BaseMapper<TemplateTaskEntity> {
      * @date: 2022/11/14 9:35
      * @param query
      * @param params
-     * @return IPage<TemplateTaskEntity>
+     * @return IPage<TemplateTaskShowDTO>
      */
-    IPage<TemplateTaskEntity> paging(Page query, @Param("params") TemplateTaskDTO params);
+    IPage<TemplateTaskShowDTO> paging(Page query, @Param("params") BaseSearchDTO params);
 }

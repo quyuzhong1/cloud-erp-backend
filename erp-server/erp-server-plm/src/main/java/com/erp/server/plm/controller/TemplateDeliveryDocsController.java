@@ -2,10 +2,12 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
-import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
+import com.erp.model.plm.dto.TemplateDeliveryDocsDeleteDTO;
+import com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -33,11 +35,11 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @author Will
      * @date: 2022/11/15 16:11
      * @param dto
-     * @return ApiResult<PagingVO<List<TemplateDeliveryDocsEntity>>>
+     * @return ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<TemplateDeliveryDocsEntity>>> paging(@RequestBody PagingDTO<TemplateDeliveryDocsDTO> dto) {
-        PagingVO<List<TemplateDeliveryDocsEntity>> pagingVO = templateDeliveryDocsService.paging(dto);
+    public ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<List<TemplateDeliveryDocsShowDTO>> pagingVO = templateDeliveryDocsService.paging(dto);
         return success(pagingVO);
     }
 
@@ -64,8 +66,8 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @return ApiResult
      */
     @DeleteMapping("/delete")
-    public ApiResult delete(@RequestBody TemplateDeliveryDocsDTO dto) {
-        Boolean flag = templateDeliveryDocsService.deleteByTempalteId(dto.getId(),dto.getTemplateId());
+    public ApiResult delete(@RequestBody TemplateDeliveryDocsDeleteDTO dto) {
+        Boolean flag = templateDeliveryDocsService.deleteTemplateDeliveryDocs(dto);
         return flag == true ? success() : failure();
     }
 

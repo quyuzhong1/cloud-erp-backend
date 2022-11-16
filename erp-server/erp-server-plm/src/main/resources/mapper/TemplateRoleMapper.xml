@@ -5,7 +5,7 @@
 <mapper namespace="com.erp.server.plm.mapper.TemplateRoleMapper">
 
 
-    <select id="paging" resultType="com.erp.model.plm.dto.TemplateRoleDTO">
+    <select id="paging" resultType="com.erp.model.plm.dto.TemplateRoleShowDTO">
         select
             tr.id,
             tr.name,
@@ -14,18 +14,14 @@
             tm.create_user_id,
             tm.create_user_name,
             tm.create_time,
-            tm.update_time,
             tm.template_id,
             trrm.id as roleRefMemberId
         from  template_role tr
         left join template_role_ref_members trrm on tr.id = trrm.role_id and tr.template_id = trrm.template_id
         left join template_members tm on trrm.members_id = tm.member_id and tm.template_id = trrm.template_id
         <where>
-            <if test="params.name != '' and params.name != null">
-               and  tr.name like concat('%', #{params.name} ,'%')
-            </if>
-            <if test="params.memberName != '' and params.memberName != null">
-                and  tm.member_name like concat('%', #{memberName} ,'%')
+            <if test="params.searchKeyword != '' and params.searchKeyword != null">
+               and  tr.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
         </where>
     </select>

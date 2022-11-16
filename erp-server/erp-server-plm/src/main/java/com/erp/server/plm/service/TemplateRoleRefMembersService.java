@@ -48,4 +48,13 @@ public interface TemplateRoleRefMembersService extends IService<TemplateRoleRefM
 
      */
     Boolean updateByTemplateId(TemplateRoleRefMembersEntity templateRoleRefMembersEntity);
+    /**
+     * @description: 根据角色id和模板id查询
+     * @author Will
+     * @date: 2022/11/16 11:49
+     * @param roleId
+     * @param templateId
+     * @return List<TemplateRoleRefMembersEntity>
+     */
+    List<TemplateRoleRefMembersEntity> getByRoleIdAndTemplateId(String roleId, String templateId);
 }

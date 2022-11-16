@@ -10,8 +10,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
+import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateMembersDTO;
-import com.erp.model.plm.dto.TemplateRoleDTO;
+import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.TemplateMembersEntity;
 import com.erp.model.plm.entity.TemplateRoleRefMembersEntity;
@@ -20,6 +21,7 @@ import com.erp.server.plm.mapper.TemplateMembersMapper;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.TemplateMembersService;
 import com.erp.server.plm.service.TemplateRoleRefMembersService;
+import com.erp.server.plm.service.TemplateRoleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,9 +45,15 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     @Autowired
     private TemplateRoleRefMembersService templateRoleRefMembersService;
 
+    @Autowired
+    private TemplateRoleService templateRoleService;
+
+    @Autowired
+    private TemplateMembersService templateMembersService;
 
     @Autowired
     private TemplateMembersMapper templateMembersMapper;
+
 
 
     /**
@@ -102,10 +110,11 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     }
 
     @Override
-    public void removeByTemplateId(String templateId) {
+    public Boolean removeByIdAndTemplateId(String id,String templateId) {
         LambdaQueryWrapper<TemplateMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateMembersEntity::getTemplateId,templateId);
-        this.remove(queryWrapper);
+        queryWrapper.eq(TemplateMembersEntity::getId,id);
+        return this.remove(queryWrapper);
     }
 
     @Override
@@ -118,10 +127,10 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
     @Override
     @Transactional
-    public Boolean saveTemplateMembers(TemplateRoleDTO dto) {
+    public Boolean saveTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_95056);
+            throw new ServiceException(ApiError.ERROR_95060);
         }
         //角色和成员关联表数据集合
         List<TemplateRoleRefMembersEntity> roleRefMembersList = new ArrayList<>();
@@ -164,10 +173,11 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     }
 
     @Override
-    public Boolean updateTemplateMembers(TemplateRoleDTO dto) {
+    @Transactional
+    public Boolean updateTemplateMembers(TemplateMembersAddOrUpdateDTO dto) {
         List<TemplateMembersDTO> membersDtoList = dto.getMembersList();
         if (CollectionUtils.isEmpty(membersDtoList)) {
-            throw new ServiceException(ApiError.ERROR_95056);
+            throw new ServiceException(ApiError.ERROR_95060);
         }
         //编辑时成员仅有一个
         TemplateMembersDTO templateMembersDTO = membersDtoList.stream().findFirst().orElse(null);
@@ -176,7 +186,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         if (CollectionUtils.isNotEmpty(membersList)) {
             long count = membersList.stream().filter(obj -> obj.getMemberId().equals(templateMembersDTO.getMemberId()) && !obj.getId().equals(templateMembersDTO.getId())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95057);
+                throw new ServiceException(ApiError.ERROR_95061);
             }
         }
         //获取登录人信息
@@ -205,10 +215,32 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     }
 
     @Override
-    public Boolean deleteTemplateMembers(TemplateRoleDTO dto) {
+    @Transactional
+    public Boolean deleteTemplateMembers(TemplateRoleMembersDeleteDTO dto) {
 
-
-        return null;
+        TemplateRoleRefMembersEntity roleRefMembers = templateRoleRefMembersService.getByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
+        if (roleRefMembers == null) {
+            throw new ServiceException(ApiError.Default);
+        }
+        //删除成员表信息
+        Boolean templateMembersRemove = templateMembersService.removeByIdAndTemplateId(roleRefMembers.getMembersId(), roleRefMembers.getTemplateId());
+        if (!templateMembersRemove) {
+            throw new ServiceException(ApiError.Default);
+        }
+        //删除角色成员关联表信息
+        Boolean roleRefMembersRemove = this.removeByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
+        if (!roleRefMembersRemove) {
+            throw new ServiceException(ApiError.Default);
+        }
+        //如果角色表下面没有成员信息则删除角色
+        List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
+        if (CollectionUtils.isEmpty(list)) {
+            Boolean templateRoleRemove = templateRoleService.removeByIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
+            if (!templateRoleRemove) {
+                throw new ServiceException(ApiError.Default);
+            }
+        }
+        return true;
     }
 
 

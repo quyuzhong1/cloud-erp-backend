@@ -1,10 +1,12 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
+import com.erp.model.plm.dto.TemplateRoleShowDTO;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 
 import java.util.List;
@@ -30,9 +32,9 @@ public interface TemplateRoleService extends IService<TemplateRoleEntity> {
      * @author Will
      * @date: 2022/11/15 12:07
      * @param dto
-     * @return PagingVO<List<TemplateRoleDTO>>
+     * @return PagingVO<List<TemplateRoleShowDTO>>
      */
-    PagingVO<List<TemplateRoleDTO>> paging(PagingDTO<TemplateRoleDTO> dto);
+    PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<BaseSearchDTO> dto);
     /**
      * @description: 新增角色
      * @author Will
@@ -41,4 +43,21 @@ public interface TemplateRoleService extends IService<TemplateRoleEntity> {
      * @return Boolean
      */
     Boolean saveTemplateRole(TemplateRoleDTO dto);
+    /**
+     * @description: 根据成员id和模板id删除
+     * @author Will
+     * @date: 2022/11/16 11:39
+     * @param roleId
+     * @param templateId
+     * @return Boolean
+     */
+    Boolean removeByIdAndTemplateId(String roleId, String templateId);
+    /**
+     * @description: 查询模板下所有角色
+     * @author Will
+     * @date: 2022/11/16 12:05
+     * @param templateId
+     * @return List<TemplateRoleEntity>
+     */
+    List<TemplateRoleEntity> getAllRoles(String templateId);
 }

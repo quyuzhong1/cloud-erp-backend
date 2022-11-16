@@ -1,10 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 
 import java.util.List;
@@ -40,9 +40,9 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @author Will
      * @date: 2022/11/14 17:53
      * @param dto
-     * @return PagingVO<List<TemplateDeliveryDocsEntity>>
+     * @return PagingVO<List<TemplateDeliveryDocsShowDTO>>
      */
-    PagingVO<List<TemplateDeliveryDocsEntity>> paging(PagingDTO<TemplateDeliveryDocsDTO> dto);
+    PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<BaseSearchDTO> dto);
     /**
      * @description: 新增或者修改
      * @author Will
@@ -55,9 +55,18 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @description: 根据id和模板id删除
      * @author Will
      * @date: 2022/11/15 10:51
-     * @param id
-     * @param templateId
+     * @param dto
      * @return Boolean
      */
-    Boolean deleteByTempalteId(String id, String templateId);
+    Boolean deleteTemplateDeliveryDocs(TemplateDeliveryDocsDeleteDTO dto);
+    /**
+     * @description: 新增交付文档
+     * @author Will
+     * @date: 2022/11/16 10:16
+     * @param taskId
+     * @param templateId
+     * @param deliveryDocsList
+
+     */
+    void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList);
 }

@@ -73,17 +73,13 @@ public class TemplateDeliveryDocsEntity implements Serializable {
     /**
      * 是否是系统文档 1 是  0 不是
      */
-    private Short isSys;
+    private Integer isSys;
 
     /**
      * 文档名id
      */
     private String docsNameId;
 
-    /**
-     * 辅助字段：模板状态(1启用，0禁用)
-     */
-    private Integer status;
 
     private static final long serialVersionUID = 1L;
 

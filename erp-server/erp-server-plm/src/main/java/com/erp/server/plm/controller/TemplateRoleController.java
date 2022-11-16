@@ -2,9 +2,14 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
+import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
+import com.erp.model.plm.dto.TemplateRoleShowDTO;
+import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.service.TemplateMembersService;
 import com.erp.server.plm.service.TemplateRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +42,26 @@ public class TemplateRoleController extends BaseController {
      * @author Will
      * @date: 2022/11/15 13:58
      * @param dto
-     * @return ApiResult<PagingVO<List<TemplateRoleDTO>>>
+     * @return ApiResult<PagingVO<List<TemplateRoleShowDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<TemplateRoleDTO>>> paging(@RequestBody PagingDTO<TemplateRoleDTO> dto) {
-        PagingVO<List<TemplateRoleDTO>> pagingVO = templateRoleService.paging(dto);
+    public ApiResult<PagingVO<List<TemplateRoleShowDTO>>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<List<TemplateRoleShowDTO>> pagingVO = templateRoleService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 查询模板下所有角色
+     *
+     * @author Will
+     * @date: 2022/11/16 12:04
+     * @param templateId
+     * @return ApiResult<List<TemplateRoleEntity>>
+     */
+    @GetMapping("/getAllRoles")
+    public ApiResult<List<TemplateRoleEntity>> getAllRoles(@RequestParam("templateId") String templateId) {
+        List<TemplateRoleEntity> list = templateRoleService.getAllRoles(templateId);
+        return success(list);
     }
 
     /**
@@ -68,7 +87,7 @@ public class TemplateRoleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/saveTemplateMembers")
-    public ApiResult saveTemplateMembers(@RequestBody @Validated TemplateRoleDTO dto) {
+    public ApiResult saveTemplateMembers(@RequestBody @Validated TemplateMembersAddOrUpdateDTO dto) {
         Boolean flag = templateMembersService.saveTemplateMembers(dto);
         return flag ? success() : failure();
     }
@@ -82,7 +101,7 @@ public class TemplateRoleController extends BaseController {
      * @return ApiResult
      */
     @PutMapping("/updateTemplateMembers")
-    public ApiResult updateTemplateMembers(@RequestBody @Validated TemplateRoleDTO dto) {
+    public ApiResult updateTemplateMembers(@RequestBody @Validated TemplateMembersAddOrUpdateDTO dto) {
         Boolean flag = templateMembersService.updateTemplateMembers(dto);
         return flag ? success() : failure();
     }
@@ -96,7 +115,7 @@ public class TemplateRoleController extends BaseController {
      * @return ApiResult
      */
     @DeleteMapping("/deleteTemplateMembers")
-    public ApiResult deleteTemplateMembers(@RequestBody @Validated TemplateRoleDTO dto) {
+    public ApiResult deleteTemplateMembers(@RequestBody @Validated TemplateRoleMembersDeleteDTO dto) {
         Boolean flag = templateMembersService.deleteTemplateMembers(dto);
         return flag ? success() : failure();
     }

@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.ProjectTemplateDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
@@ -29,7 +30,7 @@ public interface ProjectTemplateMapper extends BaseMapper<ProjectTemplateEntity>
      * @date: 2022/11/11 12:19
      * @param query
      * @param params
-     * @return IPage<ProjectTemplateEntity>
+     * @return IPage<ProjectTemplateDTO>
      */
-    IPage<ProjectTemplateEntity> paging(Page query, @Param("params") ProjectTemplateDTO params);
+    IPage<ProjectTemplateDTO> paging(Page query, @Param("params") BaseSearchDTO params);
 }

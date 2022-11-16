@@ -2,9 +2,12 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.model.plm.dto.TemplateTaskDeleteDTO;
+import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +38,11 @@ public class TemplateTaskController extends BaseController {
      * @author Will
      * @date: 2022/11/14 9:25
      * @param dto
-     * @return ApiResult<PagingVO<TemplateTaskDTO>>
+     * @return ApiResult<PagingVO<TemplateTaskShowDTO>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<TemplateTaskDTO>> paging(@RequestBody PagingDTO<TemplateTaskDTO> dto) {
-        PagingVO<TemplateTaskDTO> pagingVO = templateTaskService.paging(dto);
+    public ApiResult<PagingVO<TemplateTaskShowDTO>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<TemplateTaskShowDTO> pagingVO = templateTaskService.paging(dto);
         return success(pagingVO);
     }
 
@@ -51,7 +54,7 @@ public class TemplateTaskController extends BaseController {
      * @param templateId
      * @return ApiResult
      */
-    @GetMapping("/getAllTaskForTemplate")
+    @GetMapping("/getAllTask")
     public ApiResult getAllTaskForTemplate(@RequestParam("templateId") String templateId) {
         List<TemplateTaskEntity> list = templateTaskService.getAllTaskByTemplateId(templateId);
         return success(list);
@@ -80,7 +83,7 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult
      */
     @DeleteMapping("/remove")
-    public ApiResult remove(@RequestBody TemplateTaskDTO dto) {
+    public ApiResult remove(@RequestBody @Validated TemplateTaskDeleteDTO dto) {
         Boolean flag = templateTaskService.removeTask(dto.getId(),dto.getTemplateId());
         return flag == true ? success() : failure();
     }

@@ -1,7 +1,8 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.TemplateRoleDTO;
+import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
+import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
 import com.erp.model.plm.entity.TemplateMembersEntity;
 
 
@@ -18,10 +19,11 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
      * @description: 根据模板id删除成员
      * @author Will
      * @date: 2022/11/14 17:11
+     * @param id
      * @param templateId
-
+     * @return Boolean
      */
-    void removeByTemplateId(String templateId);
+    Boolean removeByIdAndTemplateId(String id,String templateId);
     /**
      * @description: 判断是否是模板成员
      * @author Will
@@ -38,14 +40,14 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean saveTemplateMembers(TemplateRoleDTO dto);
+    Boolean saveTemplateMembers(TemplateMembersAddOrUpdateDTO dto);
     /**
      * @description: 成员编辑
      * @author Will
      * @date: 2022/11/15 15:06
      * @return Boolean
      */
-    Boolean updateTemplateMembers(TemplateRoleDTO dto);
+    Boolean updateTemplateMembers(TemplateMembersAddOrUpdateDTO dto);
     /**
      * @description: 删除成员
      * @author Will
@@ -53,5 +55,5 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean deleteTemplateMembers(TemplateRoleDTO dto);
+    Boolean deleteTemplateMembers(TemplateRoleMembersDeleteDTO dto);
 }

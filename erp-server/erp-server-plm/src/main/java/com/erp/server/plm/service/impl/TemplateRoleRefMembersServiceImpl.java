@@ -112,6 +112,14 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
         return this.update(updateWrapper);
     }
 
+    @Override
+    public List<TemplateRoleRefMembersEntity> getByRoleIdAndTemplateId(String roleId, String templateId) {
+        LambdaQueryWrapper<TemplateRoleRefMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateRoleRefMembersEntity::getRoleId,roleId);
+        queryWrapper.eq(TemplateRoleRefMembersEntity::getTemplateId,templateId);
+        return this.list(queryWrapper);
+    }
+
 
     public List<TemplateRoleRefMembersEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateRoleRefMembersEntity> queryWrapper = new LambdaQueryWrapper<>();

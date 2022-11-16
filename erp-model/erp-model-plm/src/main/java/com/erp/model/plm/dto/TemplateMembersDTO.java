@@ -54,25 +54,6 @@ public class TemplateMembersDTO implements Serializable {
     /**
      * 模板id
      */
+    @NotBlank(message = "模板id不能为空")
     private String templateId;
-
-    /**
-     * 创建人id
-     */
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    private String updateUserId;
-
-    /**
-     * 更新人
-     */
-    private String updateUserName;
 }

@@ -6,32 +6,19 @@
 
 
     <sql id="Base_Column_List">
-        tt.id,tt.name,tt.pid,tt.type,tt.chargeName,tt.priority,tt.isFixed,tt.createUserName,tt.createUserId,tt.createTime,tpt.name as preTaskName
+        tt.id,tt.name,tt.pid,tt.type,tt.charge_name,tt.priority,tt.is_fixed,tt.create_user_name,tt.create_user_id,tt.create_time,tpt.id as preTaskId,tpt.name as preTaskName
     </sql>
 
-    <select id="paging" resultType="com.erp.model.plm.entity.TemplateTaskEntity">
+    <select id="paging" resultType="com.erp.model.plm.dto.TemplateTaskShowDTO">
         SELECT
         <include refid="Base_Column_List" />
         FROM
         template_task tt
-        LEFT JOIN (SELECT a.task_id,b.name FROM template_pre_task a INNER JOIN template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id) tpt on tt.id = tpt.task_id
+        LEFT JOIN (SELECT a.task_id,b.id,b.name FROM template_pre_task a INNER JOIN template_task b ON a.pre_task_id = b.id and a.template_id = b.template_id) tpt on tt.id = tpt.task_id
         <where>
-            <if test="params.name != '' and params.name != null">
-                AND tt.name LIKE concat('%', #{params.name} ,'%')
+            <if test="params.searchKeyword != '' and params.searchKeyword != null">
+                AND tt.name LIKE concat('%', #{searchKeyword} ,'%')
             </if>
-            <if test="params.type != '' and params.type != null">
-                AND tt.type = #{params.type}
-            </if>
-            <if test="params.chargeName != '' and params.chargeName != null">
-                AND tt.charge_name LIKE concat('%', #{chargeName} ,'%')
-            </if>
-            <if test="params.priority != '' and params.priority != null">
-                AND tt.priority = #{priority}
-            </if>
-            <if test="params.isFixed != '' and params.isFixed != null">
-                AND tt.is_fixed = #{isFixed}
-            </if>
-
         </where>
     </select>
 

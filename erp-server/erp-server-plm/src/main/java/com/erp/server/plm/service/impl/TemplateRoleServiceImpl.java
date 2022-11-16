@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -16,6 +17,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
+import com.erp.model.plm.dto.TemplateRoleShowDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -107,10 +109,10 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
      * @return PagingVO<List<TemplateRoleDTO>>
      */
     @Override
-    public PagingVO<List<TemplateRoleDTO>> paging(PagingDTO<TemplateRoleDTO> dto) {
+    public PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        TemplateRoleDTO params = dto.getParams();
-        IPage<TemplateRoleDTO> paging = baseMapper.paging(query, params);
+        BaseSearchDTO params = dto.getParams();
+        IPage<TemplateRoleShowDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
     }
 
@@ -136,6 +138,21 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         return this.save(entity);
     }
 
+    @Override
+    public Boolean removeByIdAndTemplateId(String roleId, String templateId) {
+        LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateRoleEntity::getId, roleId);
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);
+        return this.remove(queryWrapper);
+    }
+
+    @Override
+    public List<TemplateRoleEntity> getAllRoles(String templateId) {
+        LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
+    }
+
 
     public List<TemplateRoleEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -158,7 +175,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         queryWrapper.eq(TemplateRoleEntity::getTemplateId,tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95055);
+            throw new ServiceException(ApiError.ERROR_95059);
         }
     }
 }

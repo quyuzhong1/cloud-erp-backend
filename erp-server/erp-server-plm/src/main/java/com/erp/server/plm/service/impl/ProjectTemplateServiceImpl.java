@@ -7,12 +7,15 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ProjectTemplateDTO;
+import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
+import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.server.plm.constant.IsConstant;
@@ -36,27 +39,12 @@ import java.util.List;
 @Service
 public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMapper, ProjectTemplateEntity> implements ProjectTemplateService {
 
-    @Autowired
-    private TemplateTaskService templateTaskService;
-
-    @Autowired
-    private TemplateDeliveryDocsService templateDeliveryDocsService;
-
-    @Autowired
-    private TemplateMembersService templateMembersService;
-
-    @Autowired
-    private TemplateRoleService templateRoleService;
-
-    @Autowired
-    private TemplateRoleRefMembersService templateRoleRefMembersService;
-
 
     @Override
-    public PagingVO<ProjectTemplateDTO> paging(PagingDTO<ProjectTemplateDTO> dto) {
+    public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProjectTemplateDTO params = dto.getParams();
-        IPage<ProjectTemplateEntity> paging = baseMapper.paging(query, params);
+        BaseSearchDTO params = dto.getParams();
+        IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
     }
 
@@ -68,7 +56,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @return Boolean
      */
     @Override
-    public Boolean saveOrUpdate(ProjectTemplateDTO dto) {
+    public Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto) {
         //验证模板名称是否已存在
         checkTemplateName(dto.getName());
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
@@ -105,32 +93,13 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
      * @return Boolean
      */
     @Override
-    public Boolean updateTemplateStatus(ProjectTemplateDTO dto) {
+    public Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto) {
         ProjectTemplateEntity entity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95051);
         }
         entity.setStatus(dto.getStatus());
         return this.updateById(entity);
-    }
-
-    @Override
-    public Boolean removeTemplate(String id) {
-        ProjectTemplateEntity entity = this.getById(id);
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95051);
-        }
-        //删除模板输出物
-        templateDeliveryDocsService.removeByTemplateId(id);
-        //删除成员
-        templateMembersService.removeByTemplateId(id);
-        //删除角色
-        templateRoleService.removeByTemplateId(id);
-        //删除角色和成员关系
-        templateRoleRefMembersService.removeByTemplateId(id);
-        //删除模板任务
-        templateTaskService.removeByTemplateId(id);
-        return this.removeById(id);
     }
 
     /**
