@@ -63,6 +63,11 @@ public class TemplateTaskShowDTO implements Serializable {
     private String preTaskName;
 
     /**
+     * 目标交付文档
+     */
+    private String docsNames;
+
+    /**
      * 是否是固定任务 1 是  0  不是
      */
     private Integer isFixed;
