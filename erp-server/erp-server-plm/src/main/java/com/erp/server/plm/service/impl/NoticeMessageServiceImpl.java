@@ -33,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.Project;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -255,6 +256,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean newTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -331,6 +333,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean releaseTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -406,6 +409,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean cancelReleaseTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -482,6 +486,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean startTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -557,6 +562,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean finishTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -646,6 +652,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean closeTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -722,6 +729,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean approvalTaskNotice(List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -807,6 +815,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean editTaskNotice(ProjectTaskEntity task, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -881,6 +890,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean deleteTaskNotice(ProjectTaskEntity task, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -955,6 +965,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean newProductNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1028,6 +1039,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean projectApprovalNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1101,6 +1113,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean startProjectNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1173,6 +1186,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean beginProjectNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1245,6 +1259,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean finishProjectNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1316,6 +1331,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean archiveProjectNotice(String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1387,6 +1403,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean remindRemarkNotice(String productId, String taskId, String comment) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
@@ -1531,6 +1548,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
+    @Async("customExecutor")
     public Boolean docChangesNotice(String productId, String taskId, String docName) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {

@@ -73,6 +73,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
+    @Autowired
+    private NoticeMessageService noticeMessageService;
+
 
     /**
      * 根据任务id 集合获取对应数据
@@ -305,6 +308,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
+            noticeMessageService.docChangesNotice(taskEntity.getProductId(),taskId,fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
@@ -514,6 +518,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
+            noticeMessageService.docChangesNotice(taskEntity.getProductId(),taskId,fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增产品操作日志
@@ -524,8 +529,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         }
-
-
         return flag;
     }
 

@@ -2,17 +2,23 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.TaskCommentDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskCommentEntity;
 import com.erp.server.plm.mapper.TaskCommentMapper;
 import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.NoticeMessageService;
+import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.TaskCommentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -25,6 +31,12 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private NoticeMessageService noticeMessageService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
 
     /**
      * 添加任务评论
@@ -36,13 +48,23 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
      */
     @Override
     public Boolean saveTaskComment(TaskCommentDTO dto) {
+        String taskId = dto.getTaskId();
         TaskCommentEntity entity = new TaskCommentEntity();
         LoginUser loginUser = commonService.getUserInfo();
         entity.setCreateUserId(loginUser.getUid());
         entity.setCreateUserName(loginUser.getUserName());
-        entity.setTaskId(dto.getTaskId());
+        entity.setTaskId(taskId);
         entity.setComment(dto.getComment());
-        return this.save(entity);
+        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Boolean flag = this.save(entity);
+        //保存成功 发送评论提醒
+        if (flag) {
+            noticeMessageService.remindRemarkNotice(taskEntity.getProductId(),taskId,dto.getComment());
+        }
+        return flag;
     }
 
     /**

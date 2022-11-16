@@ -105,6 +105,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
 
+    @Autowired
+    private NoticeMessageService noticeMessageService;
+
     /**
      * 项目概述
      *
@@ -192,6 +195,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (flag) {
             String productId = project.getProductId();
             String flagId = dto.getFlagId();
+
+            //异步启动消息
+            noticeMessageService.startProjectNotice(productId);
+
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
                 projectMembersService.add(productId, projectId, dto.getMembers());
@@ -510,6 +517,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         checkProjectFinish(productId);
         //添加归档信息
         Boolean flag = archiveService.saveArchive(productId);
+        if(flag){
+            //发送归档项目通知
+            noticeMessageService.archiveProjectNotice(productId);
+        }
         return flag;
     }
 

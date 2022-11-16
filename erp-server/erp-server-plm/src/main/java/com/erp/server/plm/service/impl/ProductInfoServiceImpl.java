@@ -68,6 +68,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectTemplateService templateService;
 
+    @Autowired
+    private NoticeMessageService noticeMessageService;
+
 
     @Autowired
     private TemplateMembersService templateMembersService;
@@ -250,6 +253,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             remarkList.add("新增了一个产品：[" + entity.getName() + "]");
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            //通知新建产品
+            noticeMessageService.newProductNotice(entity.getId());
         } else {
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -673,8 +678,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
-
-        ProductInfoEntity product = this.getById(dto.getProductId());
+        String productId = dto.getProductId();
+        ProductInfoEntity product = this.getById(productId);
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
@@ -704,7 +709,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (!product.getApprovalStatus().equals(approvalStatus)) {
                     product.setApprovalStatus(approvalStatus);
                     if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
-                        String productId = product.getId();
                         yesApproval = true;
                         /**
                          * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
@@ -717,12 +721,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
                     }
+
                 }
             }
 
             Boolean updateFlag = this.updateById(product);
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
+                //异步通知 产品立项
+                noticeMessageService.projectApprovalNotice(dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), product.getName());
             }
         }
@@ -744,10 +751,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (projectStatus != null) {
                     if (!project.getProjectStatus().equals(projectStatus)) {
                         if (ProjectStateEnum.FINISH.getState().equals(projectStatus)) {
-                            String productId = product.getId();
-
                             /**
-                             * 表示改成已立项 就要去检查该该产品下的 所有的任务
+                             * 表示改成已wanc 就要去检查该该产品下的 所有的任务
                              *  是否完成
                              */
                             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
@@ -755,11 +760,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             projectTaskService.checkTaskFinish(taskList);
                             preTaskService.checkPreTaskFinish(taskIdList);
                             projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                            //发送项目完成通知
+                            noticeMessageService.finishProjectNotice(productId);
                         }
 
+                        //开始项目
+                        if (ProjectStateEnum.YES_START.getState().equals(projectStatus)) {
+                            noticeMessageService.beginProjectNotice(productId);
+                        }
                     }
-
-
                     project.setProjectStatus(projectStatus);
                 }
                 projectInfoService.updateById(project);
@@ -837,10 +846,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 根据产品id 获取产品信息
-     * @author yl
-     * @date 2022-11-14 17:30
+     *
      * @param productId
      * @return com.erp.model.plm.dto.ProductShowDTO
+     * @author yl
+     * @date 2022-11-14 17:30
      */
     @Override
     public ProductShowDTO getProductInfo(String productId) {

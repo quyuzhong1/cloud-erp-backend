@@ -4,8 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -22,14 +20,13 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TemplateDeliveryDocsService;
-import com.erp.server.plm.service.TemplatePreTaskService;
-import com.erp.server.plm.service.TemplateTaskService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +46,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     private TemplateDeliveryDocsService templateDeliveryDocsService;
     @Autowired
     private TemplatePreTaskService templatePreTaskService;
+
+    @Autowired
+    private NoticeMessageService noticeMessageService;
+
+
     /**
      * 保存模板任务
      *
@@ -203,7 +205,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             }
         }
 
-        taskService.saveBatch(copyList);
+        Boolean flag = taskService.saveBatch(copyList);
+        if (flag) {
+            //发送新建任务通知
+            noticeMessageService.newTaskNotice(copyList, productId);
+        }
         return sourceList;
 
     }

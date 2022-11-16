@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     Boolean updateState(UpdateStateDTO dto);
 
     List<UserNoticeNodeDTO> getUserNoticeNode(String userId);
+
 
     Boolean newTaskNotice(List<ProjectTaskEntity> taskList,String productId);
 
@@ -49,10 +51,10 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     Boolean approvalTaskNotice(List<ProjectTaskEntity> taskList,String productId);
 
     //编辑任务通知
-    Boolean editTaskNotice(ProjectTaskEntity taskList,String productId);
+    Boolean editTaskNotice(ProjectTaskEntity task,String productId);
 
     //删除任务通知
-    Boolean deleteTaskNotice(ProjectTaskEntity taskList,String productId);
+    Boolean deleteTaskNotice(ProjectTaskEntity task,String productId);
 
     //新建产品发送通知
     Boolean newProductNotice(String productId);
