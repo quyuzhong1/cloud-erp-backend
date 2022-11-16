@@ -2,12 +2,13 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsDeleteDTO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
+import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -38,10 +39,25 @@ public class TemplateDeliveryDocsController extends BaseController {
      * @return ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+    public ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>> paging(@RequestBody PagingDTO<TemplateSearchDTO> dto) {
         PagingVO<List<TemplateDeliveryDocsShowDTO>> pagingVO = templateDeliveryDocsService.paging(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 获取模板下面所有的输出物
+     *
+     * @author Will
+     * @date: 2022/11/16 15:37
+     * @param templateId
+     * @return ApiResult
+     */
+    @GetMapping("/getAllDeliveryDocs")
+    public ApiResult<List<TemplateDeliveryDocsEntity>> getAllDeliveryDocsForTemplate(@RequestParam("templateId") String templateId) {
+        List<TemplateDeliveryDocsEntity> list = templateDeliveryDocsService.getAllDeliveryDocsForTemplate(templateId);
+        return success(list);
+    }
+
 
     /**
      * 输出物新增或者修改

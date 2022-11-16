@@ -1,12 +1,12 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public interface TemplateRoleService extends IService<TemplateRoleEntity> {
      * @param dto
      * @return PagingVO<List<TemplateRoleShowDTO>>
      */
-    PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<TemplateSearchDTO> dto);
     /**
      * @description: 新增角色
      * @author Will

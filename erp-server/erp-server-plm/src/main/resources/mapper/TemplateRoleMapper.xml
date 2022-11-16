@@ -23,6 +23,9 @@
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and  tr.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
+            <if test="params.templateId != '' and params.templateId != null">
+                and  tr.template_id like concat('%', #{params.templateId} ,'%')
+            </if>
         </where>
         ORDER BY tr.create_time DESC
     </select>

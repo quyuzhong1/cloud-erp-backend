@@ -50,6 +50,12 @@ public class ProjectTemplateEntity implements Serializable {
     private Integer status;
 
     /**
+     * 是否默认，项目模板存在默认数据(1默认，0非默认)
+     */
+    @TableField("is_default")
+    private Integer isDefault;
+
+    /**
      * 创建人
      */
     @TableField("create_user_name")

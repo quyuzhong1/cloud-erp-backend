@@ -3,8 +3,8 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,7 +23,7 @@ public interface TemplateRoleMapper extends BaseMapper<TemplateRoleEntity> {
      * @param params
      * @return IPage<TemplateRoleShowDTO>
      */
-    IPage<TemplateRoleShowDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<TemplateRoleShowDTO> paging(Page query, @Param("params") TemplateSearchDTO params);
 }
 
 

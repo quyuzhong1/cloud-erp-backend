@@ -2,9 +2,9 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
 import com.erp.model.plm.dto.TemplateTaskDeleteDTO;
 import com.erp.model.plm.dto.TemplateTaskShowDTO;
@@ -41,7 +41,7 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult<PagingVO<TemplateTaskShowDTO>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<TemplateTaskShowDTO>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+    public ApiResult<PagingVO<TemplateTaskShowDTO>> paging(@RequestBody PagingDTO<TemplateSearchDTO> dto) {
         PagingVO<TemplateTaskShowDTO> pagingVO = templateTaskService.paging(dto);
         return success(pagingVO);
     }
@@ -55,7 +55,7 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getAllTask")
-    public ApiResult getAllTaskForTemplate(@RequestParam("templateId") String templateId) {
+    public ApiResult<List<TemplateTaskEntity>> getAllTaskForTemplate(@RequestParam("templateId") String templateId) {
         List<TemplateTaskEntity> list = templateTaskService.getAllTaskByTemplateId(templateId);
         return success(list);
     }

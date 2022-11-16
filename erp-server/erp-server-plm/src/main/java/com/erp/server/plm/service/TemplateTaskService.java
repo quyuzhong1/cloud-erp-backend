@@ -1,10 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
 import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.model.plm.entity.TemplateTaskEntity;
@@ -31,7 +31,7 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * @param dto
      * @return PagingVO<TemplateTaskShowDTO>
      */
-    PagingVO<TemplateTaskShowDTO> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<TemplateTaskShowDTO> paging(PagingDTO<TemplateSearchDTO> dto);
     /**
      * @description: 模板任务新增或修改
      * @author Will

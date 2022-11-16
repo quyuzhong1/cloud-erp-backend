@@ -2,13 +2,9 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
-import com.erp.model.plm.dto.TemplateRoleDTO;
-import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
-import com.erp.model.plm.dto.TemplateRoleShowDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.service.TemplateMembersService;
 import com.erp.server.plm.service.TemplateRoleService;
@@ -45,7 +41,7 @@ public class TemplateRoleController extends BaseController {
      * @return ApiResult<PagingVO<List<TemplateRoleShowDTO>>>
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<TemplateRoleShowDTO>>> paging(@RequestBody PagingDTO<BaseSearchDTO> dto) {
+    public ApiResult<PagingVO<List<TemplateRoleShowDTO>>> paging(@RequestBody PagingDTO<TemplateSearchDTO> dto) {
         PagingVO<List<TemplateRoleShowDTO>> pagingVO = templateRoleService.paging(dto);
         return success(pagingVO);
     }

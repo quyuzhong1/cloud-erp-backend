@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,7 +24,7 @@ public interface TemplateDeliveryDocsMapper extends BaseMapper<TemplateDeliveryD
      * @param params
      * @return IPage<TemplateDeliveryDocsShowDTO>
      */
-    IPage<TemplateDeliveryDocsShowDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<TemplateDeliveryDocsShowDTO> paging(Page query, @Param("params") TemplateSearchDTO params);
 }
 
 

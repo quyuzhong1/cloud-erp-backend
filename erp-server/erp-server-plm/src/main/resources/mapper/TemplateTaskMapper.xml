@@ -18,7 +18,10 @@
         left join (select task_id,template_id,string_agg(docs_name, ',') as docsNames from template_delivery_docs group by template_id, task_id) tdd on tt.id = tdd.task_id and tt.template_id = tdd.template_id
         <where>
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
-                and tt.name like concat('%', #{searchKeyword} ,'%')
+                and tt.name like concat('%', #{params.searchKeyword} ,'%')
+            </if>
+            <if test="params.templateId != '' and params.templateId != null">
+                and tt.template_id like concat('%', #{params.templateId} ,'%')
             </if>
         </where>
         order by tt.create_time desc

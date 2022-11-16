@@ -21,7 +21,8 @@ import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateDeliveryDocsMapper;
-import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -142,9 +143,9 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     }
 
     @Override
-    public PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<TemplateSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BaseSearchDTO params = dto.getParams();
+        TemplateSearchDTO params = dto.getParams();
         IPage<TemplateDeliveryDocsShowDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }
@@ -209,6 +210,13 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             }
              this.saveBatch(saveList);
         }
+    }
+
+    @Override
+    public List<TemplateDeliveryDocsEntity> getAllDeliveryDocsForTemplate(String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
+        return this.list(queryWrapper);
     }
 
 

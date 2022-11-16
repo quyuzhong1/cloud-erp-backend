@@ -20,6 +20,9 @@
             <if test="params.searchKeyword != '' and params.searchKeyword != null">
                and tdd.docs_name like concat('%', #{params.searchKeyword} ,'%')
             </if>
+            <if test="params.templateId != '' and params.templateId != null">
+                and  tdd.template_id like concat('%', #{params.templateId} ,'%')
+            </if>
         </where>
         ORDER BY tdd.create_time DESC
     </select>

@@ -531,8 +531,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板名
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
-        //模板类型（立项模板）
-        Integer templateType = ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode();
+        //模板类型（项目模板）
+        Integer templateType = ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode();
         //保存模板
         String templateId = templateService.saveTemplate(templateName,productId,templateType);
         if (StringUtils.isNotBlank(templateId)) {

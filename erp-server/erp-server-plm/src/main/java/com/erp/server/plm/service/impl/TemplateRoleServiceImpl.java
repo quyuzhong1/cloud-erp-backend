@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -18,6 +17,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
+import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -109,9 +109,9 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
      * @return PagingVO<List<TemplateRoleDTO>>
      */
     @Override
-    public PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<List<TemplateRoleShowDTO>> paging(PagingDTO<TemplateSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BaseSearchDTO params = dto.getParams();
+        TemplateSearchDTO params = dto.getParams();
         IPage<TemplateRoleShowDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
     }

@@ -42,7 +42,7 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @param dto
      * @return PagingVO<List<TemplateDeliveryDocsShowDTO>>
      */
-    PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<List<TemplateDeliveryDocsShowDTO>> paging(PagingDTO<TemplateSearchDTO> dto);
     /**
      * @description: 新增或者修改
      * @author Will
@@ -69,4 +69,12 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
 
      */
     void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList);
+    /**
+     * @description: 查询模板下面所有输出物
+     * @author Will
+     * @date: 2022/11/16 15:31
+     * @param templateId
+     * @return List<TemplateDeliveryDocsEntity>
+     */
+    List<TemplateDeliveryDocsEntity> getAllDeliveryDocsForTemplate(String templateId);
 }
