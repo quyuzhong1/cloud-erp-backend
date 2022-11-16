@@ -20,6 +20,7 @@
                 AND tt.name LIKE concat('%', #{searchKeyword} ,'%')
             </if>
         </where>
+        ORDER BY tt.create_time DESC
     </select>
 
 

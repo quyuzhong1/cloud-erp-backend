@@ -24,6 +24,7 @@
                and  tr.name like concat('%', #{params.searchKeyword} ,'%')
             </if>
         </where>
+        ORDER BY tr.create_time DESC
     </select>
 
 </mapper>

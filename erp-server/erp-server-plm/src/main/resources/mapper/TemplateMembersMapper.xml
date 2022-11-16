@@ -22,6 +22,7 @@
         <where>
             trrm.role_id = #{roleId} and trrm.template_id = #{templateId}
         </where>
+        ORDER BY tm.create_time DESC
     </select>
 
 </mapper>
