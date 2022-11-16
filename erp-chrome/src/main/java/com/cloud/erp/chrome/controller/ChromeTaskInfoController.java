@@ -31,6 +31,12 @@ public class ChromeTaskInfoController extends BaseController {
 
 
     //获取到任务列表
+
+    /**
+     * 获取到任务列表
+     * @param dto
+     * @return
+     */
     @PostMapping("/findTaskList")
     public ApiResult getChromeList(@RequestBody @Validated FindTaskDTO dto) {
         List<ScheduleTaskEntity> list = chromeTaskInfoService.getChromeTaskList(dto);
