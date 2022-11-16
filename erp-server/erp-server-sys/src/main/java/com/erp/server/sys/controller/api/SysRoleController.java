@@ -51,7 +51,7 @@ public class SysRoleController extends BaseController {
      */
     @RequestMapping("/save")
     public ApiResult save(@RequestBody SysRoleEntity sysRole){
-        boolean flag=sysRoleService.save(sysRole);
+        boolean flag=sysRoleService.saveRoleEntity(sysRole);
         if(flag){
             return success();
         }else{

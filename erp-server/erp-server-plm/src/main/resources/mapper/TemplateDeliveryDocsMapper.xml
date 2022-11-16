@@ -5,6 +5,22 @@
 <mapper namespace="com.erp.server.plm.mapper.TemplateDeliveryDocsMapper">
 
 
-
+    <select id="paging" resultType="com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO">
+        select
+           tdd.id,
+           tdd.template_id,
+           tdd.docs_name,
+           tdd.create_time,
+           tdd.update_time,
+           tdd.task_id,
+           pte.status as templateStatus
+        from template_delivery_docs tdd
+        left join project_template_entry pte on tdd.template_id = pte.id
+        <where>
+            <if test="params.searchKeyword != '' and params.searchKeyword != null">
+               and tdd.docs_name like concat('%', #{params.searchKeyword} ,'%')
+            </if>
+        </where>
+    </select>
 
 </mapper>

@@ -57,6 +57,6 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/getUserIdByThird")
     String getUidByUnionId(@RequestBody FindUserByThirdDTO third);
 
-    @GetMapping("sys/feign/user/getThirdUnionId")
+    @PostMapping("sys/feign/user/getThirdUnionId")
     List<ThirdUnionDTO> getThirdUnionId(@RequestBody String fsPlatform);
 }

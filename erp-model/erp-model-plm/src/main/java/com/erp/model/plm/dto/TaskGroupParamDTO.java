@@ -42,7 +42,7 @@ public class TaskGroupParamDTO implements Serializable {
      * product 产品分组
      * planEndTime  计划结束时间
      */
-    @StateEnumValue(strValues = {"product", "planEndTime"}, message = "分组属性有误")
+    @StateEnumValue(strValues = {"no","product", "planEndTime"}, message = "分组属性有误")
     private String groupName;
 
 }

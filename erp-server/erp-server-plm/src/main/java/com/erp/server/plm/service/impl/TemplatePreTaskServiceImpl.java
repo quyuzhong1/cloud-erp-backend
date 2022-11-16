@@ -89,10 +89,45 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
 
     }
 
+    @Override
+    public void saveTemplatePreTaskList(String taskId, List<String> preTaskIdList, String templateId) {
+        //先删除前置任务
+        removeTemplatePreTask(taskId,templateId, preTaskIdList);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            List<TemplatePreTaskEntity> addList = new ArrayList<>();
+            for (String preTaskId : preTaskIdList) {
+                TemplatePreTaskEntity entity = new TemplatePreTaskEntity();
+                entity.setPreTaskId(preTaskId);
+                entity.setTaskId(taskId);
+                entity.setTemplateId(templateId);
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
+    }
+
     public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 根据任务和模板删除
+     * @author Will
+     * @date: 2022/11/16 10:28
+     * @param taskId
+     * @param templateId
+     * @param preTaskIdList
+     */
+    private void removeTemplatePreTask(String taskId,String templateId, List<String> preTaskIdList) {
+        LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
+        queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            queryWrapper.in(TemplatePreTaskEntity::getPreTaskId, preTaskIdList);
+        }
+        this.remove(queryWrapper);
     }
 }
 

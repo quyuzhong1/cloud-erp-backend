@@ -1452,6 +1452,77 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     }
 
     /**
+     * 定时任务发送任务预警信息  每天下午17点
+     * 发送通知
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-11-16 10:43
+     */
+    @Override
+    public void sendEarlyWarning() {
+        //获取即将到期的 任务列表
+        Date nowDay = new Date();
+        int flagDays = 3;
+        List<ProjectTaskEntity> beAlmostExpireTaskList = projectTaskService.getExpireTaskList(nowDay, flagDays);
+        String flag = NoticeEnum.EARLY_WARNING.getFlag();
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
+        if (!Objects.isNull(notice)) {
+            String noticeMessageId = notice.getId();
+            //如果包含任务负责人的话
+            boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            for (ProjectTaskEntity task : beAlmostExpireTaskList) {
+                String chargeId = task.getChargeId();
+                List<String> chargeIdList = new ArrayList<>();
+                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                    chargeIdList = Arrays.asList(chargeId.split(","));
+
+                }
+                //排除关闭通知的人员 并去重
+                List<String> noticeList = eliminateCloseNotice(notice.getId(), chargeIdList);
+                List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+                FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+                List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                sendMessage.setUnionIds(unionIds);
+                Map<String, Object> contentMap = new HashMap<>();
+                String warning = task.getName() + " 即将" + flagDays + "天 后过期";
+                String content = String.format(NoticeMessageConstant.EARLY_WARNING, warning);
+                contentMap.put("text", content);
+                sendMessage.setContentMap(contentMap);
+                //发送消息的结果
+                Boolean sendResult = fsService.batchSendMessage(sendMessage);
+                //当发送成功后
+                if (sendResult) {
+                    List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                    for (String userId : acceptUserIds) {
+                        NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                        recordEntity.setChargeId(task.getChargeId());
+                        recordEntity.setMessageContent(content);
+                        recordEntity.setNoticeMessageId(noticeMessageId);
+                        recordEntity.setNoticeNode(flag);
+                        recordEntity.setNoticeUserId(userId);
+                        recordEntity.setPlanEndTime(task.getPlanEndTime());
+                        recordEntity.setProductId(task.getProductId());
+                        recordEntity.setProductName("");
+                        recordEntity.setTaskId(task.getId());
+                        recordEntity.setTaskName(task.getName());
+                        messageRecordList.add(recordEntity);
+                    }
+                }
+            }
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
+        }
+
+    }
+
+    /**
      * 评论提醒 发送通知
      *
      * @param
@@ -1460,7 +1531,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-11 10:27
      */
     @Override
-    public Boolean docChangesNotice(String productId, String taskId,String docName) {
+    public Boolean docChangesNotice(String productId, String taskId, String docName) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1523,6 +1594,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
         return true;
     }
+
+
     /**
      * 根据第三方信息  获取到用户的unionid
      *

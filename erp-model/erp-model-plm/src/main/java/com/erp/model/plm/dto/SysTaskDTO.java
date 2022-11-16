@@ -29,6 +29,7 @@ public class SysTaskDTO implements Serializable {
      * 任务名
      */
     @NotBlank(message = "任务名不能为空")
+    @Size(max = 50,message = "任务名最大50字符")
     private String name;
 
     /**

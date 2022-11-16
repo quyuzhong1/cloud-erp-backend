@@ -142,7 +142,7 @@ public class SysUserFeignController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/getThirdUnionId")
+    @PostMapping("/getThirdUnionId")
     public List<ThirdUnionDTO> getThirdUnionId(@RequestBody String platform) {
         List<ThirdUnionDTO> thirdUnionIds = sysUserThirdService.getUnionByPlatform(platform);
         return thirdUnionIds;

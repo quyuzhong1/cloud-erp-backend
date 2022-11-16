@@ -78,4 +78,6 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
     //变更文档 发送通知
     Boolean docChangesNotice(String productId,String taskId,String docName);
+
+    void sendEarlyWarning();
 }

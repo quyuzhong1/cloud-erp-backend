@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -76,11 +77,34 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
             sysRoleUserService.copyRoleUser(copyRoleId, newRoleId);
 
             //复制角色下的权限
-            sysRoleMenuService.copyRoleMenu(copyRoleId,newRoleId);
+            sysRoleMenuService.copyRoleMenu(copyRoleId, newRoleId);
         }
 
 
+    }
 
+    @Override
+    public boolean saveRoleEntity(SysRoleEntity sysRole) {
+        checkRoleName(sysRole.getRoleName());
+        return this.save(sysRole);
+    }
+
+    /**
+     * 检查角色名是否存在
+     *
+     * @param roleName
+     * @return void
+     * @author yl
+     * @date 2022-11-15 18:39
+     */
+    private void checkRoleName(String roleName) {
+        LambdaQueryWrapper<SysRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysRoleEntity::getRoleName, roleName);
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_9025);
+        }
     }
 
 

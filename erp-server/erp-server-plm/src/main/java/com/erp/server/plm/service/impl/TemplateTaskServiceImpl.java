@@ -1,15 +1,34 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.TemplateDeliveryDocsService;
+import com.erp.server.plm.service.TemplatePreTaskService;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -31,8 +49,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private ProjectTaskService taskService;
-
-
+    @Autowired
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+    @Autowired
+    private TemplatePreTaskService templatePreTaskService;
     /**
      * 保存模板任务
      *
@@ -73,6 +93,64 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, flagTemplateId);
         queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
         return this.list(queryWrapper);
+    }
+    /**
+     * @description: 获取模板下面所有的任务
+     * @author Will
+     * @date: 2022/11/14 14:35
+     * @param templateId
+     * @return List<TemplateTaskEntity>
+     */
+    @Override
+    public List<TemplateTaskEntity> getAllTaskByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 删除模板任务
+     * @author Will
+     * @date: 2022/11/14 16:16
+     * @param id
+     * @param templateId
+     * @return Boolean
+     */
+    @Override
+    public Boolean removeTask(String id, String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getId,id);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        List<TemplateTaskEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95058);
+        }
+        TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
+        Integer IsFixed = entity.getIsFixed();
+        //如果是固定任务则不支持删除
+        if (IsConstant.YES.equals(IsFixed)) {
+            throw new ServiceException(ApiError.ERROR_95014);
+        }
+        //判断是否是子任务
+        checkTaskIfExistPid(id,templateId);
+        //删除任务交付文档数据
+        templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
+        //删除模板任务
+        return this.remove(queryWrapper);
+    }
+
+    /**
+     * @description: 根据模板id删除
+     * @author Will
+     * @date: 2022/11/14 16:54
+     * @param templateId
+
+     */
+    @Override
+    public void removeByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        this.remove(queryWrapper);
     }
 
     /**
@@ -134,6 +212,54 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     }
 
+    @Override
+    public PagingVO<TemplateTaskShowDTO> paging(PagingDTO<BaseSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(),dto.getPageSize());
+        BaseSearchDTO params = dto.getParams();
+        IPage<TemplateTaskShowDTO> paging = baseMapper.paging(query, params);
+        return new PagingVO(paging);
+    }
+
+    @Override
+    public Boolean saveOrUpdate(TemplateTaskDTO dto) {
+        //验证任务名称是否已存在
+        checkTemplateTaskName(dto.getName(),dto.getTemplateId());
+        TemplateTaskEntity entity = new TemplateTaskEntity();
+        BeanMapperUtils.copy(dto,entity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        if (StringUtils.isBlank(dto.getId())) {
+            entity.setCreateUserId(uid);
+            entity.setCreateUserName(userName);
+        } else {
+            entity.setUpdateUserId(uid);
+            entity.setUpdateUserName(userName);
+        }
+
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        boolean flag = this.save(entity);
+        if (flag) {
+            //保存交付文档
+            templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
+            //保存前置任务
+            templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
+        }
+        //因为模板任务无主键，则无法用saveOrUpdate进行操作
+        if (StringUtils.isBlank(entity.getId())) {
+          return this.save(entity);
+        }
+        LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
+        updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
+        updateWrapper.setEntity(entity);
+        return this.update(updateWrapper);
+    }
+
 
     /**
      * 获取项目任务
@@ -149,5 +275,33 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getProperty, TaskConstant.PROJECT_TASK);
         queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 验证模板名称是否已存在
+     * @author Will
+     * @date: 2022/11/14 14:05
+     * @param templateTaskName
+
+     */
+    private void checkTemplateTaskName(String templateTaskName , String tempalteId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getName,templateTaskName);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,tempalteId);
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95061);
+        }
+    }
+
+    //检查子任务
+    private void checkTaskIfExistPid(String taskId,String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getPid, taskId);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        Integer count = baseMapper.selectCount(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95024);
+        }
     }
 }
