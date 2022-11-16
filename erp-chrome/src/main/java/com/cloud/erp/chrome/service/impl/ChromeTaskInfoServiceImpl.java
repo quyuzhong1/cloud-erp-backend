@@ -123,7 +123,8 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         );
         queryWrapper.orderByAsc(ScheduleTaskEntity::getId);
         queryWrapper.last("LIMIT 1");
-//        System.out.println(queryWrapper.getTargetSql());
+        System.out.println(queryWrapper.getTargetSql());
+        System.out.println(queryWrapper.getSqlComment());
 
         List<ScheduleTaskEntity> taskList=baseMapper.selectList(queryWrapper);
         for(ScheduleTaskEntity task:taskList){
