@@ -19,6 +19,7 @@ import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
@@ -75,18 +76,60 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         if (StringUtils.isBlank(dto.getId())) {
             entity.setCreateUserId(uid);
             entity.setCreateUserName(userName);
-            //模板管理新增模板默认启动，并且类型为项目模板
+            //模板管理新增模板默认启动
             if (entity.getStatus() == null) {
                 entity.setStatus(IsConstant.YES);
-            }
-            if (entity.getType() == null) {
-                entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
             }
         } else {
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
         }
+        //先设置成非默认，项目模板
+        entity.setIsDefault(IsConstant.NO);
+        entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
+        if (ProjectTemplateShowTypeEnum.APPROVAL_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
+            //查询立项模板是否已存在
+            ProjectTemplateEntity approvalTemplate = getApprovalTemplate();
+            if (approvalTemplate != null && !approvalTemplate.getId().equals(dto.getId())) {
+                throw new ServiceException(ApiError.ERROR_95063);
+            }
+            entity.setType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        }
+        if (ProjectTemplateShowTypeEnum.PROJECT_DEFAULT_TEMPLATE.getCode().equals(dto.getTemplateType()) ) {
+            //查询项目默认模板是否已存在
+            ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
+            if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {
+                throw new ServiceException(ApiError.ERROR_95063);
+            }
+            entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
+            entity.setIsDefault(IsConstant.YES);
+        }
         return this.saveOrUpdate(entity);
+    }
+
+    /**
+     * @description: 查询立项模板
+     * @author Will
+     * @date: 2022/11/16 16:48
+     * @return ProjectTemplateEntity
+     */
+    private ProjectTemplateEntity getApprovalTemplate(){
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType,ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        return this.getOne(queryWrapper);
+    }
+
+    /**
+     * @description: 查询项目默认模板
+     * @author Will
+     * @date: 2022/11/16 16:48
+     * @return ProjectTemplateEntity
+     */
+    private ProjectTemplateEntity getProjectDefaultTemplate(){
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType,ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
+        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, "1");
+        return this.getOne(queryWrapper);
     }
 
     /**

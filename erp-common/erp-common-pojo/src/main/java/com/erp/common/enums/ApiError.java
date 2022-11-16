@@ -149,8 +149,8 @@ public enum ApiError implements Serializable {
     ERROR_95060(95060, "请选择模板成员"),
     ERROR_95061(95061, "模板角色下已存在该成员"),
     ERROR_95062(95062, "unionId不能为空"),
-
-
+    ERROR_95063(95063, "立项模板已存在"),
+    ERROR_95064(95064, "项目默认模板已存在"),
 
 
     ERROR_end(1000000, "系统错误");
