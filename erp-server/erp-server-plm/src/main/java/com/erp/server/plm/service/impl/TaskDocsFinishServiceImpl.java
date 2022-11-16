@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,7 +74,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
-    @Autowired
+    @Resource(name="noticeMessageService")
     private NoticeMessageService noticeMessageService;
 
 

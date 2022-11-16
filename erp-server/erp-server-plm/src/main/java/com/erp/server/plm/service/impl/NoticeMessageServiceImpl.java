@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 /**
  *
  */
-@Service
+@Service("noticeMessageService")
 public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, NoticeMessageEntity>
         implements NoticeMessageService {
 
