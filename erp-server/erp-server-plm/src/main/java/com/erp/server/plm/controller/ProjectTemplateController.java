@@ -64,7 +64,7 @@ public class ProjectTemplateController extends BaseController {
      * @return ApiResult
      */
     @PutMapping("/updateStatus")
-    public ApiResult updateTemplateStatus(@RequestBody ProjectTemplateUpdateStatusDTO dto) {
+    public ApiResult updateTemplateStatus(@RequestBody @Validated ProjectTemplateUpdateStatusDTO dto) {
         Boolean flag = projectTemplateService.updateTemplateStatus(dto);
         return flag ? success() : failure();
     }

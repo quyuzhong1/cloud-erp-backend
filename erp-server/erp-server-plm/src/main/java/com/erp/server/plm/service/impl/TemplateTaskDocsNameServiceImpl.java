@@ -4,9 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.CopySourceDTO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.TemplateTaskDocsNameMapper;
 import com.erp.server.plm.service.TaskDocsNameService;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;
@@ -15,8 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -99,6 +106,21 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         return sourceList;
     }
 
+    @Override
+    public Boolean saveDocsName(TmeplateDocsNameDTO dto) {
+        String name = dto.getName();
+        String templateId = dto.getTemplateId();
+        List<DocsDTO> docksNames = getDocsNameList(templateId);
+        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95012);
+        }
+        TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
+        entity.setName(name);
+        entity.setTemplateId(templateId);
+        return this.save(entity);
+    }
+
     /**
      * 获取到项目
      * @param templateId
@@ -108,6 +130,28 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
         return list(queryWrapper);
+    }
+
+    /**
+     * @description: 查询已存在的文档名称
+     * @author Will
+     * @date: 2022/11/16 12:58
+     * @param templateId
+     * @return List<DocsDTO>
+     */
+    @Override
+    public List<DocsDTO> getDocsNameList(String templateId) {
+        List<DocsDTO> resultList = new LinkedList<>();
+        LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId, templateId);
+        List<TemplateTaskDocsNameEntity> list = list(queryWrapper);
+        List<DocsDTO> docsNames = BeanMapper.copyList(list, DocsDTO.class);
+        int noSys = IsConstant.NO;
+        for (DocsDTO item : docsNames) {
+            item.setIsSys(noSys);
+        }
+        resultList.addAll(docsNames);
+        return resultList;
     }
 }
 
