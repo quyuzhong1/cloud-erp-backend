@@ -74,7 +74,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
-    @Resource(name="noticeMessageService")
+    @Autowired
     private NoticeMessageService noticeMessageService;
 
 
