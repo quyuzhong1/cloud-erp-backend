@@ -22,10 +22,15 @@
         SELECT nm.id AS noticeMessageId,nd.id AS nodeId,nd.node_name
         FROM notice_message nm LEFT JOIN notice_node nd
         ON nm.node_id=nd.id
-        WHERE state=#{state}
+        WHERE nm.state=#{state}
         ORDER BY nm.create_time ASC
     </select>
-    <select id="getNodeFlag">
+
+    <select id="getByNodeFlag" resultType="com.erp.model.plm.entity.NoticeMessageEntity">
+       SELECT nm.id,nm.node_id,nm.item_people,nm.other_people,nm.state
+       FROM notice_message nm INNER JOIN notice_node nd
+       ON nm.node_id=nd.id
+       WHERE nd.node_flag=#{nodeFlag}
 
     </select>
 

@@ -86,6 +86,13 @@ public class NoticeMessageRecordEntity implements Serializable {
      */
     private String chargeName;
 
+
+    /**
+     *是不是任务通知
+     * 1 是 就是表示 是任务负责人
+     * 0 不是 就是产品经理
+     */
+    private Integer isTask;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
