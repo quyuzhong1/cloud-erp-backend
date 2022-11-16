@@ -26,7 +26,7 @@ public class PlmJob {
     /**
      * 生成发送任务预警通知 每天17:00
      */
-    @XxlJob("sendTaskEarlyWarning")
+ //   @XxlJob("sendTaskEarlyWarning")
     public void sendEarlyWarning() {
         noticeMessageService.sendEarlyWarning();
     }
