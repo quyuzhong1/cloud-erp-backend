@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -38,9 +37,8 @@ public class TemplateMembersAddOrUpdateDTO implements Serializable {
     private String templateId;
 
     /**
-     * 角色成员中间表id
+     * 角色成员中间表id（修改的时候需要传）
      */
-    @NotNull(message = "角色成员中间表id不能为空")
     private String roleRefMembersId;
 
     /**
