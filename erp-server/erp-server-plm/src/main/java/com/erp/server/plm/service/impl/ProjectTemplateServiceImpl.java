@@ -99,7 +99,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             //查询项目默认模板是否已存在
             ProjectTemplateEntity projectDefaultTemplate = getProjectDefaultTemplate();
             if (projectDefaultTemplate != null && !projectDefaultTemplate.getId().equals(dto.getId())) {
-                throw new ServiceException(ApiError.ERROR_95063);
+                throw new ServiceException(ApiError.ERROR_95064);
             }
             entity.setType(ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
             entity.setIsDefault(IsConstant.YES);
