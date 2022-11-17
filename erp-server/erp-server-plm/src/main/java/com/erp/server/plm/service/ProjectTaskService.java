@@ -105,4 +105,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<Map<String, Object>> operateMoreList(String taskId);
 
     List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int i);
+
+    Boolean restartTask(OperateBaseTaskDTO dto);
 }

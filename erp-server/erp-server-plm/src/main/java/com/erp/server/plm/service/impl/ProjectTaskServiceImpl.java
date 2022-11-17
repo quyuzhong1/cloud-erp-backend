@@ -2320,6 +2320,43 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //发送通知
         noticeMessageService.approvalTaskNotice(list, dto.getProductId());
         return flag;
+    }
+
+    /**
+     * 从新开始
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-11-17 15:52
+     */
+    @Override
+    public Boolean restartTask(OperateBaseTaskDTO dto) {
+        List<String> taskIds = dto.getTaskIdList();
+        //获取所有的任务列表
+        List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
+        //检查任务状态是否一样
+        Integer state = checkTaskState(list);
+        //审核不通过
+        Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        if (!approvalNoPass.equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95066);
+        }
+        //一般任务有审核
+        Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
+        Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+        for (ProjectTaskEntity task : list) {
+            Integer taskProperty = getTaskProperty(task);
+            //一般任务有审核 状态改成进行中
+            if (taskProperty.equals(generalApproval)) {
+                task.setStatus(TaskStateEnum.ING.getCode());
+            }
+            //评审任务 从新开始 改为待审核
+            if (taskProperty.equals(reviewTask)) {
+                task.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+            }
+        }
+        return this.saveOrUpdateBatch(list);
 
     }
 

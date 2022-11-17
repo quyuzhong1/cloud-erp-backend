@@ -152,6 +152,7 @@ public enum ApiError implements Serializable {
     ERROR_95063(95063, "立项模板已存在"),
     ERROR_95064(95064, "项目默认模板已存在"),
     ERROR_95065(95065, "任务名不能超过50字符"),
+    ERROR_95066(95066, "只有审核不通过的任务,才可操作重新开始"),
 
 
     ERROR_end(1000000, "系统错误");

@@ -95,9 +95,9 @@ public class SysLoginAuthController extends BaseController {
             SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
             sysLoginUserVO.setAccessToken(accessToken);
             sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
-            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
             sysLoginUserVO.setPermissionList(info.getPermissionList());
             sysLoginUserVO.setUserName(info.getUserName());
+            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
             sysLoginUserVO.setHeadIcon(info.getHeadIcon());
             sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
             sysLoginUserVO.setBindingState(info.getBindingState());

@@ -344,8 +344,27 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
+    public ApiResult approvalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-重新开始
+     *
+     * @return
+     */
+    @PostMapping("/restartTask")
+    //  @RequestPermissions("plm:task:approvalReject")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "charge_id",
+//            menuCode = "plm:task:project:status",
+//            serviceClass = ProjectTaskService.class,
+//            keyIdName = "taskIdList"
+//    )
+    public ApiResult restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
+        Boolean result = taskService.restartTask(dto);
         return result == true ? success() : failure();
     }
 
