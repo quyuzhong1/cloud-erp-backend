@@ -128,7 +128,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     private ProjectTemplateEntity getProjectDefaultTemplate(){
         LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTemplateEntity::getType,ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode());
-        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, "1");
+        queryWrapper.eq(ProjectTemplateEntity::getIsDefault, IsConstant.YES);
         return this.getOne(queryWrapper);
     }
 
