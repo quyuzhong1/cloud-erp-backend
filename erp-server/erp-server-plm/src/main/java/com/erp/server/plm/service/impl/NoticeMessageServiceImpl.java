@@ -313,6 +313,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -390,6 +391,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -466,6 +468,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -543,6 +546,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -633,6 +637,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -709,6 +714,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -795,6 +801,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName(product.getName());
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
 
@@ -871,6 +878,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
                     recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
                     messageRecordList.add(recordEntity);
                 }
 
@@ -946,6 +954,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
                     recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
                     messageRecordList.add(recordEntity);
                 }
 
@@ -1020,6 +1029,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
 
@@ -1094,6 +1104,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
 
@@ -1168,6 +1179,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }
@@ -1241,6 +1253,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }
@@ -1314,6 +1327,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }
@@ -1386,6 +1400,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId("");
                     recordEntity.setTaskName("");
+                    recordEntity.setChargeName(product.getProductChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }
@@ -1460,6 +1475,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
                     recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }
@@ -1549,6 +1565,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         recordEntity.setProductName("");
                         recordEntity.setTaskId(task.getId());
                         recordEntity.setTaskName(task.getName());
+                        recordEntity.setChargeName(task.getChargeName());
                         messageRecordList.add(recordEntity);
                     }
                 }
@@ -1624,6 +1641,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     recordEntity.setProductName(product.getName());
                     recordEntity.setTaskId(task.getId());
                     recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
                     messageRecordList.add(recordEntity);
                 }
             }

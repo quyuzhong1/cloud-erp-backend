@@ -1879,7 +1879,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean publishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser = commonService.getUserInfo();
+        LoginUser loginUser =commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
@@ -1938,9 +1938,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             review.setProcessId(processId);
                             review.setRealityStartTime(nowDate);
                             review.setStatus(waitConfirmCode);
-                            //更改 时间 很流程id
-                            this.updateById(review);
-                            noticeList.add(review);
                             //保存操作记录
                             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
                             recordEntity.setTaskId(review.getId());
@@ -1949,6 +1946,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             recordEntity.setOperatorId(loginUser.getUid());
                             recordEntity.setOperatorName(loginUser.getUserName());
                             recordEntityList.add(recordEntity);
+
+                            //更改 时间 很流程id
+                            this.updateById(review);
+                            noticeList.add(review);
                         }
                     }
                 }
