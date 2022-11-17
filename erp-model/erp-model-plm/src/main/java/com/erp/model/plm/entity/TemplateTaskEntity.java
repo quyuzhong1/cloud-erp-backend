@@ -153,9 +153,4 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("business_process_id")
     private String businessProcessId;
 
-    /**
-     * 辅助字段：前置任务名称
-     */
-    private String preTaskName;
-
 }
