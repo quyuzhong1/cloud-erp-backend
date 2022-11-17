@@ -142,9 +142,9 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         List<TemplateMembersEntity> membersList = templateMembersMapper.getMembersByRoleIdAndTemplateId(dto.getId(), dto.getTemplateId());
         if (CollectionUtils.isNotEmpty(membersList)) {
             //录入成员
-            List<String> collect1 = membersDtoList.stream().map(TemplateMembersDTO::getMemberName).collect(Collectors.toList());
+            List<String> collect1 = membersDtoList.stream().map(TemplateMembersDTO::getMemberId).collect(Collectors.toList());
             //已存在成员
-            List<String> collect2 = membersList.stream().map(TemplateMembersEntity::getMemberName).collect(Collectors.toList());
+            List<String> collect2 = membersList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
             List<String> intersectionList = (List<String>) CollectionUtils.intersection(collect1, collect2);
             //表示有交集不能再次生成
             if (CollectionUtils.isNotEmpty(intersectionList)) {
@@ -158,7 +158,27 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
-        membersDtoList.stream().forEach(obj->{
+        List<TemplateMembersEntity> membersEntityList = BeanMapper.copyList(membersDtoList, TemplateMembersEntity.class);
+        List<String> memberIdList = membersEntityList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
+        //根据成员id集合查询
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
+        if (CollectionUtils.isEmpty(userList)) {
+            throw  new ServiceException(ApiError.ERROR_9011);
+        }
+        membersEntityList.stream().forEach(obj->{
+            //成员数据处理
+            String memberName = userList.stream().filter(e -> e.getUserId().equals(obj.getMemberId())).map(FindUserDTO::getUserName).findAny().orElse(null);
+            obj.setMemberName(memberName);
+            obj.setTemplateId(dto.getTemplateId());
+            obj.setCreateUserId(uid);
+            obj.setCreateUserName(userName);
+        });
+        boolean flag = this.saveBatch(membersEntityList);
+        if (!flag) {
+            throw new ServiceException(ApiError.Default);
+        }
+        membersEntityList.stream().forEach(obj->{
+            //关联表数据处理
             TemplateRoleRefMembersEntity roleRefMembersEntity = new TemplateRoleRefMembersEntity();
             roleRefMembersEntity.setCreateUserId(uid);
             roleRefMembersEntity.setCreateUserName(userName);
@@ -168,23 +188,8 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             roleRefMembersList.add(roleRefMembersEntity);
         });
         //新增角色和成员关联表数据
-        boolean flag = templateRoleRefMembersService.saveBatch(roleRefMembersList);
-        if (!flag) {
-            throw new ServiceException(ApiError.Default);
-        }
-        List<TemplateMembersEntity> membersEntityList = BeanMapper.copyList(membersDtoList, TemplateMembersEntity.class);
-        List<String> memberIdList = membersEntityList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
-        //根据成员id集合查询
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
-        if (CollectionUtils.isEmpty(userList)) {
-            throw  new ServiceException(ApiError.ERROR_9011);
-        }
-        membersEntityList.stream().forEach(obj->{
-            String memberName = userList.stream().filter(e -> e.getUserId().equals(obj.getMemberId())).map(FindUserDTO::getUserName).findAny().orElse(null);
-            obj.setMemberName(memberName);
-        });
-
-        return this.saveBatch(membersEntityList);
+        boolean add = templateRoleRefMembersService.saveBatch(roleRefMembersList);
+        return add;
     }
 
     @Override
@@ -224,6 +229,12 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //根据id和模板id修改
         TemplateMembersEntity templateMembersEntity = new TemplateMembersEntity();
         BeanMapperUtils.copy(templateMembersDTO,templateMembersEntity);
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(templateMembersDTO.getMemberId());
+        if (ObjectUtils.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        templateMembersEntity.setMemberName(findUserDTO.getUserName());
+        templateMembersEntity.setTemplateId(dto.getTemplateId());
         templateMembersEntity.setUpdateUserId(uid);
         templateMembersEntity.setUpdateUserName(userName);
         return this.updateByTemplateId(templateMembersEntity);
@@ -243,7 +254,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             throw new ServiceException(ApiError.Default);
         }
         //删除角色成员关联表信息
-        Boolean roleRefMembersRemove = this.removeByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
+        Boolean roleRefMembersRemove = templateRoleRefMembersService.removeByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
         if (!roleRefMembersRemove) {
             throw new ServiceException(ApiError.Default);
         }

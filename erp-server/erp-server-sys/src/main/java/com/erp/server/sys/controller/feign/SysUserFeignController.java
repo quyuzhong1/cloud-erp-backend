@@ -156,4 +156,15 @@ public class SysUserFeignController extends BaseController {
         List<FindUserDTO> list = sysUserInfoService.getUserListByUserIds(userIds);
         return list;
     }
+
+    /**
+     * 根据用户id获取用户
+     *
+     * @return
+     */
+    @PostMapping("/getUserByUserId")
+    public FindUserDTO getUserByUserId(@RequestBody String userId) {
+        FindUserDTO dto = sysUserInfoService.getUserByUserId(userId);
+        return dto;
+    }
 }

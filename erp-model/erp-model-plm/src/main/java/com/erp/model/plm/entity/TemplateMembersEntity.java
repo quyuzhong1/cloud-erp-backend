@@ -49,13 +49,13 @@ public class TemplateMembersEntity implements Serializable {
     /**
      * 创建人id
      */
-    @TableField("upcrteate_user_id")
+    @TableField("create_user_id")
     private String createUserId;
 
     /**
      * 创建人名称
      */
-    @TableField("crteate_user_name")
+    @TableField("create_user_name")
     private String createUserName;
 
     /**

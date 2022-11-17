@@ -29,15 +29,4 @@ public class TemplateMembersDTO implements Serializable {
      */
     @NotBlank(message = "成员id不能为空")
     private String memberId;
-
-    /**
-     * 成员名称
-     */
-    private String memberName;
-
-    /**
-     * 模板id
-     */
-    @NotBlank(message = "模板id不能为空")
-    private String templateId;
 }
