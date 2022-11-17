@@ -33,7 +33,7 @@ public class TemplateRoleEntity implements Serializable {
     /**
      * 创建人id
      */
-    @TableField("upcrteate_user_id")
+    @TableField("crteate_user_id")
     private String createUserId;
 
     /**
