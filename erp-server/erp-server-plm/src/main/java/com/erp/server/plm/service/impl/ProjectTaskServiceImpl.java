@@ -1383,6 +1383,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         createChildTaskMap.put("flag", "createChildTask");
         createChildTaskMap.put("isShow", true);
         resultList.add(createChildTaskMap);
+        List<String> taskIds = Arrays.asList(taskId);
+        //获取总的任务文档数
+        List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+        List<TaskDocsFinishEntity> taskDocsList = finishService.getByTaskIds(taskIds);
+        Map<String, Object> uploadMap = new HashMap<>();
+        uploadMap.put("name", "上传文件");
+        uploadMap.put("flag", "uploadFile");
+        Boolean uploadFileFlag = true;
+        int totalCount = 0;
+        if (CollectionUtils.isNotEmpty(taskDocsCounts)) {
+            totalCount = taskDocsCounts.get(0).getCount();
+        }
+        if (totalCount == taskDocsList.size()) {
+            uploadFileFlag = false;
+        }
+        uploadMap.put("isShow", uploadFileFlag);
+        resultList.add(uploadMap);
 
         boolean deleteTaskShow = true;
         Integer IsFixed = taskEntity.getIsFixed();
@@ -1397,19 +1414,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         deleteTaskMap.put("isShow", deleteTaskShow);
         resultList.add(deleteTaskMap);
 
-        //关闭任务
-        Map<String, Object> closeTaskMap = new HashMap<>();
-        closeTaskMap.put("name", "关闭任务");
-        closeTaskMap.put("flag", "closeTask");
-        closeTaskMap.put("isShow", TaskStateEnum.ING.getCode().equals(taskState) ? true : false);
-        resultList.add(closeTaskMap);
-
-        //取消发布任务
-        Map<String, Object> cancelPublishTaskMap = new HashMap<>();
-        cancelPublishTaskMap.put("name", "取消发布");
-        cancelPublishTaskMap.put("flag", "cancelPublishTask");
-        cancelPublishTaskMap.put("isShow", TaskStateEnum.NOT_START.getCode().equals(taskState) ? true : false);
-        resultList.add(cancelPublishTaskMap);
 
         //变更文档
         //只有任务完成了或者审核不通过才能变更流程
@@ -1420,10 +1424,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 && !approvalNoPassCode.equals(taskState)) {
             changeDocsShow = false;
         }
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(taskId);
+
         //如果没有上传文档也不显示
-        List<TaskDocsFinishEntity> taskDocsList = finishService.getByTaskIds(taskIds);
+
         if (CollectionUtils.isEmpty(taskDocsList)) {
             changeDocsShow = false;
         }
@@ -1513,11 +1516,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsMap.put("isShow", TaskStateEnum.FINISH.getCode().equals(state) ? true : false);
         operateList.add(detailsMap);
 
-        Map<String, Object> uploadMap = new HashMap<>();
-        uploadMap.put("name", "上传文件");
-        uploadMap.put("flag", "uploadFile");
-        uploadMap.put("isShow", finishDocsCount != totalDocsCount ? true : false);
-        operateList.add(uploadMap);
 
         Map<String, Object> moreMap = new HashMap<>();
         moreMap.put("name", "更多");
