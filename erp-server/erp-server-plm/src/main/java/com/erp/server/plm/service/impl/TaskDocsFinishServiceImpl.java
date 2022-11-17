@@ -307,7 +307,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(taskEntity.getProductId(),taskId,fileName);
+            noticeMessageService.docChangesNotice(taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
@@ -361,11 +361,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         if (StringUtils.isNotBlank(processId)) {
             //更改任务的状态为未待审核 以及流程id
             taskEntity.setProcessId(processId);
-            if (taskEntity.getType().equals(TaskTypeEnum.GENERAL_TASK.getCode())) {
-                taskEntity.setStatus(TaskStateEnum.FINISH_WAIT_CONFIRM.getCode());
-            } else {
-                taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
-            }
+            taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
             return projectTaskService.updateById(taskEntity);
         }
@@ -517,7 +513,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(taskEntity.getProductId(),taskId,fileName);
+            noticeMessageService.docChangesNotice(taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增产品操作日志

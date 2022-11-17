@@ -151,6 +151,7 @@ public enum ApiError implements Serializable {
     ERROR_95062(95062, "unionId不能为空"),
     ERROR_95063(95063, "立项模板已存在"),
     ERROR_95064(95064, "项目默认模板已存在"),
+    ERROR_95065(95065, "任务名不能超过50字符"),
 
 
     ERROR_end(1000000, "系统错误");

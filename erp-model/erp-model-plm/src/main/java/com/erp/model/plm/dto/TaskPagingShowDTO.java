@@ -159,5 +159,10 @@ public class TaskPagingShowDTO implements Serializable {
     @JsonInclude(value = JsonInclude.Include.NON_EMPTY)
     private List<TaskPagingShowDTO> childList;
 
+    /**
+     * 前置任务名
+     */
+    private List<String> preTaskNameList;
+
 
 }

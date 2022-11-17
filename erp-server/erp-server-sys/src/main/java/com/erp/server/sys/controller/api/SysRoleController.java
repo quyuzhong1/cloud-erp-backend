@@ -4,9 +4,12 @@ package com.erp.server.sys.controller.api;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.ApiError;
+import com.erp.model.sys.dto.CopyRoleDTO;
 import com.erp.model.sys.entity.SysRoleEntity;
 import com.erp.server.sys.service.SysRoleService;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -79,8 +82,8 @@ public class SysRoleController extends BaseController {
     }
 
     @PostMapping("/copy")
-    public ApiResult copy(String roleId){
-        sysRoleService.copyRole(roleId);
+   public ApiResult copy(@RequestBody @Validated CopyRoleDTO dto){
+        sysRoleService.copyRole(dto.getRoleId());
         return success();
     }
 
