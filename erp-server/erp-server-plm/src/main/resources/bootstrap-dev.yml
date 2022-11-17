@@ -21,19 +21,6 @@ fdfs:
     - 172.16.100.12:22122
 
 
-#xxl:
-#  job:
-#    admin:
-#      addresses: http://127.0.0.1:7080/job-admin
-#
-#    accessToken: 7A3224E0B086038B
-#    executor:
-#      appname: xxl-job-executor-maban
-#      address:
-#      ip:
-#      port: 9999
-#      logpath: /data/log/xxl-job/jobhandler
-#      logretentiondays: 30
 
 
 
