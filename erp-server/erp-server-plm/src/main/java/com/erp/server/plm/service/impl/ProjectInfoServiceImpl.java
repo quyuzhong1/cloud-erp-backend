@@ -25,12 +25,12 @@ import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import groovy.lang.Lazy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

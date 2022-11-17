@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -10,7 +11,6 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
-import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
@@ -22,24 +22,20 @@ import com.erp.server.plm.enums.BusinessProcessEnum;
 import com.erp.server.plm.enums.TaskProcessTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.enums.TaskTypeEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import groovy.lang.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -76,6 +72,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     private TaskDeliveryService taskDeliveryService;
 
     @Autowired
+    @Lazy
     private NoticeMessageService noticeMessageService;
 
 
