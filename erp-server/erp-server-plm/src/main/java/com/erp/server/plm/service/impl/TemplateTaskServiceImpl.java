@@ -15,6 +15,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.TemplatePhaseEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -43,8 +44,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private ProjectTaskService taskService;
+
     @Autowired
     private TemplateDeliveryDocsService templateDeliveryDocsService;
+
     @Autowired
     private TemplatePreTaskService templatePreTaskService;
 
@@ -52,6 +55,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Lazy
     private NoticeMessageService noticeMessageService;
 
+    @Autowired
+    private TemplatePhaseService templatePhaseService;
 
     /**
      * 保存模板任务
@@ -243,7 +248,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
         }
-
+        //阶段名称
+        if (StringUtils.isNotBlank(dto.getPhaseId())) {
+            TemplatePhaseEntity phaseEntity = templatePhaseService.getByIdAndTemplateId(dto.getPhaseId(), dto.getTemplateId());
+            if (ObjectUtils.isEmpty(phaseEntity)) {
+                throw new ServiceException(ApiError.ERROR_95041);
+            }
+            entity.setPhaseName(phaseEntity.getName());
+        }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(entity);

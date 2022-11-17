@@ -19,6 +19,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateDeliveryDocsMapper;
 import com.erp.server.plm.service.TaskDeliveryService;
@@ -169,6 +170,8 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         if (StringUtils.isBlank(dto.getId())) {
             entity.setCreateUserId(uid);
             entity.setCreateUserName(userName);
+            //输出物状态默认启用
+            entity.setStatus(IsConstant.YES);
         } else {
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
@@ -227,6 +230,15 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto) {
+        LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,dto.getTemplateId());
+        updateWrapper.eq(TemplateDeliveryDocsEntity::getId,dto.getId());
+        updateWrapper.set(TemplateDeliveryDocsEntity::getStatus,dto.getStatus());
+        return this.update(updateWrapper);
     }
 
 

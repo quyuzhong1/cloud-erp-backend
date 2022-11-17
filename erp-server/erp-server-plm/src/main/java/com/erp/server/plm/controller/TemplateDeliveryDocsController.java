@@ -4,10 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
-import com.erp.model.plm.dto.TemplateDeliveryDocsDeleteDTO;
-import com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO;
-import com.erp.model.plm.dto.TemplateSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -59,7 +56,7 @@ public class TemplateDeliveryDocsController extends BaseController {
     }
 
     /**
-     * 删除输出物
+     * 输出物删除
      *
      * @author Will
      * @date: 2022/11/14 14:58
@@ -70,6 +67,20 @@ public class TemplateDeliveryDocsController extends BaseController {
     public ApiResult delete(@RequestBody TemplateDeliveryDocsDeleteDTO dto) {
         Boolean flag = templateDeliveryDocsService.deleteTemplateDeliveryDocs(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 输出物修改状态
+     *
+     * @author Will
+     * @date: 2022/11/17 9:33
+     * @param dto
+     * @return ApiResult
+     */
+    @PutMapping("/updateStatus")
+    public ApiResult updateStatus(@RequestBody @Validated TemplateDeliveryDocsUpdateStatusDTO dto) {
+        Boolean flag = templateDeliveryDocsService.updateStatus(dto);
+        return flag ? success() : failure();
     }
 
 }

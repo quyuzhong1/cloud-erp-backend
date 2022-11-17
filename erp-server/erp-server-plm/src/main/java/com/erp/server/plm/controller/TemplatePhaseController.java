@@ -1,0 +1,69 @@
+package com.erp.server.plm.controller;
+
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.BasicTemplateIdDTO;
+import com.erp.model.plm.dto.BatchTemplatePhaseDTO;
+import com.erp.model.plm.dto.TemplatePhaseDTO;
+import com.erp.server.plm.service.TemplatePhaseService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 模板管理
+ *
+ * @author Will
+ * @version 1.0
+ * @date 2022/11/17 9:58
+ */
+@RestController
+@RequestMapping("plm/templatePhase")
+public class TemplatePhaseController extends BaseController {
+
+    @Autowired
+    private TemplatePhaseService templatePhaseService;
+
+
+    /**
+     * 模板阶段查询
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list")
+    public ApiResult<List<TemplatePhaseDTO>> list(@RequestBody @Validated BasicTemplateIdDTO dto) {
+        List<TemplatePhaseDTO> resultList = templatePhaseService.findList(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 模板阶段新增或修改
+     *
+     * @author Will
+     * @date: 2022/11/17 10:17
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/batchSaveOrUpdate")
+    public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTemplatePhaseDTO dto) {
+        templatePhaseService.batchSaveOrUpdate(dto);
+        return success();
+    }
+
+    /**
+     * 模板阶段删除
+     *
+     * @author Will
+     * @date: 2022/11/17 10:17
+     * @param id
+     * @return ApiResult
+     */
+    @DeleteMapping("/remove")
+    public ApiResult remove(String id,String templateId) {
+        Boolean flag = templatePhaseService.removeTemplatePhase(id,templateId);
+        return flag == true ? success() : failure();
+    }
+}

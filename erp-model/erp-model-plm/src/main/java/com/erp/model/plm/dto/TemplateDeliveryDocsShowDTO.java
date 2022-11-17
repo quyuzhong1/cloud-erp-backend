@@ -37,9 +37,9 @@ public class TemplateDeliveryDocsShowDTO implements Serializable {
     private String docsName;
 
     /**
-     * 辅助字段：模板状态(1启用，0禁用)
+     * 输出物状态(1启用，0禁用)
      */
-    private Integer templateStatus;
+    private Integer status;
 
     /**
      * 创建人

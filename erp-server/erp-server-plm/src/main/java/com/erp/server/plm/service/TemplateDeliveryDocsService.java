@@ -1,7 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -77,4 +76,12 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @return List<TemplateDeliveryDocsEntity>
      */
     List<TemplateDeliveryDocsEntity> getAllDeliveryDocsForTemplate(String templateId);
+    /**
+     * @description: 修改状态
+     * @author Will
+     * @date: 2022/11/17 9:45
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto);
 }
