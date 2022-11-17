@@ -42,20 +42,6 @@ public class TemplateDeliveryDocsController extends BaseController {
 
 
     /**
-     * 输出物新增或者修改
-     *
-     * @author Will
-     * @date: 2022/11/15 16:11
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Validated TemplateDeliveryDocsDTO dto) {
-        Boolean flag = templateDeliveryDocsService.saveOrUpdate(dto);
-        return flag ? success() : failure();
-    }
-
-    /**
      * 输出物删除
      *
      * @author Will

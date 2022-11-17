@@ -210,6 +210,13 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             List<String> docsIdList = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
             //删除交付文
             removeTemplateDeliveryDocs(taskId,templateId,docsIdList);
+            //获取登录人信息
+            LoginUser loginUser = PlmInterceptor.threadLocal.get();
+            if (ObjectUtils.isEmpty(loginUser)) {
+                throw new ServiceException(ApiError.ERROR_9011);
+            }
+            String uid = loginUser.getUid();
+            String userName = loginUser.getUserName();
             //保存交付文档
             List<TemplateDeliveryDocsEntity> saveList = new LinkedList<>();
             for (DocsDTO item : deliveryDocsList) {
@@ -219,6 +226,8 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
                 entity.setTaskId(taskId);
                 entity.setDocsNameId(item.getId());
                 entity.setIsSys(item.getIsSys());
+                entity.setCreateUserId(uid);
+                entity.setCreateUserName(userName);
                 saveList.add(entity);
             }
              this.saveBatch(saveList);

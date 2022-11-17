@@ -2,18 +2,23 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskDocsNameMapper;
 import com.erp.server.plm.service.TaskDocsNameService;
+import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import com.erp.server.plm.service.TemplateTaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +40,10 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
 
     @Autowired
     private TaskDocsNameService taskDocsNameService;
+
+    @Autowired
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
 
     /**
      * 保存模板 文档名
@@ -118,7 +127,25 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
         entity.setName(name);
         entity.setTemplateId(templateId);
-        return this.save(entity);
+        boolean flag = this.save(entity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        if (flag) {
+            //保存交付文档名称的同时保存输出物数据
+            TemplateDeliveryDocsEntity templateDeliveryDocsEntity = new TemplateDeliveryDocsEntity();
+            templateDeliveryDocsEntity.setTemplateId(templateId);
+            templateDeliveryDocsEntity.setDocsNameId(entity.getId());
+            templateDeliveryDocsEntity.setDocsName(name);
+            templateDeliveryDocsEntity.setStatus(IsConstant.YES);
+            templateDeliveryDocsEntity.setCreateUserId(uid);
+            templateDeliveryDocsEntity.setCreateUserName(userName);
+            templateDeliveryDocsService.save(templateDeliveryDocsEntity);
+        }
+        return true;
     }
 
     /**

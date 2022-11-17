@@ -32,6 +32,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -57,6 +58,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private TemplatePhaseService templatePhaseService;
+
+    @Autowired
+    private CommonService commonService;
 
     /**
      * 保存模板任务
@@ -248,6 +252,18 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
         }
+
+        List<String> chargeId = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeId);
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
+            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
+            entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        entity.setChargeId(String.join(",", chargeId));
+        entity.setChargeName(chargeNames);
+
         //阶段名称
         if (StringUtils.isNotBlank(dto.getPhaseId())) {
             TemplatePhaseEntity phaseEntity = templatePhaseService.getByIdAndTemplateId(dto.getPhaseId(), dto.getTemplateId());

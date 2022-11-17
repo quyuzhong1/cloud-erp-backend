@@ -1,13 +1,12 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -104,4 +103,21 @@ public class TemplateTaskDTO implements Serializable {
          * 前置任务id
          */
         private List<String> preTaskIdList;
+
+        /**
+         * 业务流程表id
+         */
+        private String businessProcessId;
+
+        /**
+         * 审核人集合
+         */
+        private List<UserInfoDTO> approvalUserIds;
+
+        /**
+         * 负责人id
+         */
+        @NotNull(message = "任务负责人集合不能为空")
+        @Size(min = 1,message = "负责人至少有一个")
+        private List<String> chargeIds;
 }
