@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.TemplateDeliveryDocsDTO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsDeleteDTO;
 import com.erp.model.plm.dto.TemplateDeliveryDocsShowDTO;
 import com.erp.model.plm.dto.TemplateSearchDTO;
-import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -42,20 +41,6 @@ public class TemplateDeliveryDocsController extends BaseController {
     public ApiResult<PagingVO<List<TemplateDeliveryDocsShowDTO>>> paging(@RequestBody PagingDTO<TemplateSearchDTO> dto) {
         PagingVO<List<TemplateDeliveryDocsShowDTO>> pagingVO = templateDeliveryDocsService.paging(dto);
         return success(pagingVO);
-    }
-
-    /**
-     * 获取模板下面所有的输出物
-     *
-     * @author Will
-     * @date: 2022/11/16 15:37
-     * @param templateId
-     * @return ApiResult
-     */
-    @GetMapping("/getAllDeliveryDocs")
-    public ApiResult<List<TemplateDeliveryDocsEntity>> getAllDeliveryDocsForTemplate(@RequestParam("templateId") String templateId) {
-        List<TemplateDeliveryDocsEntity> list = templateDeliveryDocsService.getAllDeliveryDocsForTemplate(templateId);
-        return success(list);
     }
 
 

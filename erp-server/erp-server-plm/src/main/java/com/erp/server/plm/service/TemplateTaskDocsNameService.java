@@ -33,4 +33,13 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return List<DocsDTO>
      */
     List<DocsDTO> getDocsNameList(String templateId);
+    /**
+     * @description: 根据交付文档名称id和模板id查询
+     * @author Will
+     * @date: 2022/11/16 19:58
+     * @param docsNameId
+     * @param templateId
+     * @return TemplateTaskDocsNameEntity
+     */
+    TemplateTaskDocsNameEntity getByIdAndTemplateId(String docsNameId, String templateId);
 }

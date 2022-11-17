@@ -7,10 +7,8 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.model.sys.dto.UserDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
-import com.erp.server.sys.service.SysRoleService;
 import com.erp.server.sys.service.SysRoleUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
@@ -146,5 +144,16 @@ public class SysUserFeignController extends BaseController {
     public List<ThirdUnionDTO> getThirdUnionId(@RequestBody String platform) {
         List<ThirdUnionDTO> thirdUnionIds = sysUserThirdService.getUnionByPlatform(platform);
         return thirdUnionIds;
+    }
+
+    /**
+     * 根据用户ids获取用户list
+     *
+     * @return
+     */
+    @PostMapping("/getUserListByUserIds")
+    public List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds) {
+        List<FindUserDTO> list = sysUserInfoService.getUserListByUserIds(userIds);
+        return list;
     }
 }

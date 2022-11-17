@@ -153,6 +153,14 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         resultList.addAll(docsNames);
         return resultList;
     }
+
+    @Override
+    public TemplateTaskDocsNameEntity getByIdAndTemplateId(String docsNameId, String templateId) {
+        LambdaQueryWrapper<TemplateTaskDocsNameEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskDocsNameEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateTaskDocsNameEntity::getId,docsNameId);
+        return this.getOne(queryWrapper);
+    }
 }
 
 

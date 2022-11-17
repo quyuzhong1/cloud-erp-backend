@@ -710,5 +710,21 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return baseMapper.getDepUserList(deptList);
     }
 
+    @Override
+    public List<FindUserDTO> getUserListByUserIds(List<String> userIds) {
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysUserInfoEntity::getUid,userIds);
+        List<FindUserDTO> resultList = new LinkedList<>();
+        List<SysUserInfoEntity> list = this.list(queryWrapper);
+        for (SysUserInfoEntity item : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(item.getUid());
+            userDTO.setUserName(item.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
+    }
+
 
 }

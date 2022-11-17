@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -19,10 +18,12 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
+import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateDeliveryDocsMapper;
 import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TemplateDeliveryDocsService;
+import com.erp.server.plm.service.TemplateTaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,10 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
 
     @Autowired
     private TaskDeliveryService taskDeliveryService;
+
+    @Autowired
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
+
 
     /**
      * 交付文档
@@ -167,6 +172,11 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         } else {
             entity.setUpdateUserId(uid);
             entity.setUpdateUserName(userName);
+        }
+        //根据交付文档名称id、模板id查询名称
+        TemplateTaskDocsNameEntity templateTaskDocsNameEntity = templateTaskDocsNameService.getByIdAndTemplateId(entity.getDocsNameId(), entity.getTemplateId());
+        if (templateTaskDocsNameEntity != null) {
+            entity.setDocsName(templateTaskDocsNameEntity.getName());
         }
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
         if (StringUtils.isBlank(entity.getId())) {

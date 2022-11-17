@@ -8,13 +8,10 @@ import com.erp.model.plm.dto.TemplateSearchDTO;
 import com.erp.model.plm.dto.TemplateTaskDTO;
 import com.erp.model.plm.dto.TemplateTaskDeleteDTO;
 import com.erp.model.plm.dto.TemplateTaskShowDTO;
-import com.erp.model.plm.entity.TemplateTaskEntity;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 模板管理
@@ -46,19 +43,6 @@ public class TemplateTaskController extends BaseController {
         return success(pagingVO);
     }
 
-    /**
-     * 获取模板下面所有的任务
-     *
-     * @author Will
-     * @date: 2022/11/14 14:37
-     * @param templateId
-     * @return ApiResult
-     */
-    @GetMapping("/getAllTask")
-    public ApiResult<List<TemplateTaskEntity>> getAllTaskForTemplate(@RequestParam("templateId") String templateId) {
-        List<TemplateTaskEntity> list = templateTaskService.getAllTaskByTemplateId(templateId);
-        return success(list);
-    }
 
     /**
      * 模板任务新增或修改

@@ -59,4 +59,8 @@ public interface SysUserFeign {
 
     @PostMapping("sys/feign/user/getThirdUnionId")
     List<ThirdUnionDTO> getThirdUnionId(@RequestBody String fsPlatform);
+
+    //根据userIds查询用户集合
+    @GetMapping("sys/feign/user/getUserListByUserIds")
+    List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 }

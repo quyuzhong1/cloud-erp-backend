@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateMembersDTO;
@@ -16,6 +17,7 @@ import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.TemplateMembersEntity;
 import com.erp.model.plm.entity.TemplateRoleRefMembersEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateMembersMapper;
 import com.erp.server.plm.service.ProjectMembersService;
@@ -54,6 +56,8 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     @Autowired
     private TemplateMembersMapper templateMembersMapper;
 
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -169,6 +173,17 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             throw new ServiceException(ApiError.Default);
         }
         List<TemplateMembersEntity> membersEntityList = BeanMapper.copyList(membersDtoList, TemplateMembersEntity.class);
+        List<String> memberIdList = membersEntityList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
+        //根据成员id集合查询
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
+        if (CollectionUtils.isEmpty(userList)) {
+            throw  new ServiceException(ApiError.ERROR_9011);
+        }
+        membersEntityList.stream().forEach(obj->{
+            String memberName = userList.stream().filter(e -> e.getUserId().equals(obj.getMemberId())).map(FindUserDTO::getUserName).findAny().orElse(null);
+            obj.setMemberName(memberName);
+        });
+
         return this.saveBatch(membersEntityList);
     }
 
