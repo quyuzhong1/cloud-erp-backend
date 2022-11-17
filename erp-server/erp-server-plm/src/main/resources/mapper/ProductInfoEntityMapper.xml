@@ -124,4 +124,21 @@
         WHERE P.id=#{productId}
     </select>
 
+
+    <select id="getProductInfoByIds" resultType="com.erp.model.plm.dto.ProductShowDTO">
+           SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
+        p.type,p.approval_status,pi.charge_name AS projectChargeName,
+        p.create_time,
+        pi.end_time FROM product_info p LEFT JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE P.id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+
+        </foreach>
+
+    </select>
+
 </mapper>

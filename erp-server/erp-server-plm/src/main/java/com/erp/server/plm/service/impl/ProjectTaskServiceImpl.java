@@ -1336,7 +1336,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 int totalPreTaskCount = preTaskIds.size();
                 //前置任务
                 item.setTotalPreTaskCount(totalPreTaskCount);
-                List<String> preTaskNameList= preTaskEntityList.stream().filter(t->preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.toList());
+                List<String> preTaskNameList = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.toList());
                 int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
                 item.setPreTaskNameList(preTaskNameList);
                 item.setFinishPreTaskCount(finishPreTaskCount);
@@ -1454,12 +1454,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int days) {
         Date flagDate = DateUtil.addDateDays(nowDay, days);
-        Date startFlagDate = DateUtil.getStartTime(flagDate);
-        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.ne(ProjectTaskEntity::getPlanEndTime, null);
-        //大于几天后的数据 而小于现在的日期
-        queryWrapper.eq(ProjectTaskEntity::getPlanEndTime, startFlagDate);
-        return this.list(queryWrapper);
+        Date flagDateEnd = DateUtil.getStartTime(flagDate);
+        //今天开始时间
+        Date startNowDate = DateUtil.getStartTime(nowDay);
+        return baseMapper.getExpireWarnTaskList(startNowDate, flagDateEnd, TaskStateEnum.FINISH.getCode());
     }
 
 
@@ -1499,7 +1497,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskFlag = "finishTask";
             taskShow = true;
         }
-       //审核不通过 就要重新开始
+        //审核不通过 就要重新开始
         if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
             taskName = "重新开始";
             taskFlag = "restartTask";

@@ -541,7 +541,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板类型（项目模板）
         Integer templateType = ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode();
         //保存模板
-        String templateId = templateService.saveTemplate(templateName,productId,templateType);
+        String templateId = templateService.saveTemplate(templateName, productId, templateType);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -857,6 +857,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public ProductShowDTO getProductInfo(String productId) {
         return baseMapper.getProductInfo(productId);
+    }
+
+    @Override
+    public List<ProductShowDTO> getProductInfoByIds(List<String> productIds) {
+        if (CollectionUtils.isNotEmpty(productIds)) {
+            return baseMapper.getProductInfoByIds(productIds);
+        }
+        return new ArrayList<>();
     }
 
 

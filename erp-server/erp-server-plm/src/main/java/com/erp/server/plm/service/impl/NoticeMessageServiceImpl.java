@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -1484,6 +1485,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         int flagDays = 3;
         List<ProjectTaskEntity> beAlmostExpireTaskList = projectTaskService.getExpireTaskList(nowDay, flagDays);
         String flag = NoticeEnum.EARLY_WARNING.getFlag();
+        //今天的开始时间
+        Date nowDayStartTime = DateUtil.getStartTime(nowDay);
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
@@ -1494,21 +1497,38 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            List<String> productIds = beAlmostExpireTaskList.stream().map(ProjectTaskEntity::getProductId).distinct().collect(Collectors.toList());
+            List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
             for (ProjectTaskEntity task : beAlmostExpireTaskList) {
+                ProductShowDTO product = productList.stream().filter(p -> p.getProductId().equals(task.getProductId())).findFirst().orElse(null);
+                List<String> noticeUserIds = getSetNotice(notice, product);
                 String chargeId = task.getChargeId();
                 List<String> chargeIdList = new ArrayList<>();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
                     chargeIdList = Arrays.asList(chargeId.split(","));
-
+                    noticeUserIds.addAll(chargeIdList);
                 }
                 //排除关闭通知的人员 并去重
-                List<String> noticeList = eliminateCloseNotice(notice.getId(), chargeIdList);
+                List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
                 Map<String, Object> contentMap = new HashMap<>();
-                String warning = task.getName() + " 即将" + flagDays + "天 后过期";
+
+
+                Date planEndTime = task.getPlanEndTime();
+                //获取计划时间的开始时间
+                Date planEndStartTime = DateUtil.getStartTime(planEndTime);
+                //比较差值
+                int diffDay = DateUtil.getDiffDay(nowDayStartTime, planEndStartTime);
+                //表示 计划结束时间大于今天时间
+                String warning = "";
+                if (diffDay > 0) {
+                    warning = task.getName() + " 即将" + diffDay + "天 后过期";
+                } else {
+                    warning = task.getName() + " 已过期" + Math.abs(diffDay) + "天";
+                }
                 String content = String.format(NoticeMessageConstant.EARLY_WARNING, warning);
                 contentMap.put("text", content);
                 sendMessage.setContentMap(contentMap);

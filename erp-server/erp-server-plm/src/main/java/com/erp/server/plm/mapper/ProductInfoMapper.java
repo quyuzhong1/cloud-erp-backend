@@ -32,4 +32,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductProjectDTO> getProductAndProjectList();
 
     ProductShowDTO getProductInfo(@Param("productId") String productId);
+
+    List<ProductShowDTO> getProductInfoByIds(@Param("productIds") List<String> productIds);
 }

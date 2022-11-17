@@ -62,4 +62,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
 
     ProductShowDTO getProductInfo(String productId);
+
+    List<ProductShowDTO> getProductInfoByIds(List<String> productIds);
 }
