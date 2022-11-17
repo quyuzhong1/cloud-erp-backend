@@ -419,11 +419,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(userEntity, vo);
         //后面还有编写
         String uid = userEntity.getUid();
+
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        //全局菜单
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
