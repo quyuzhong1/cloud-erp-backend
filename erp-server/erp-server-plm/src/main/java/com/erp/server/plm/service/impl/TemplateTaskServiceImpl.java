@@ -21,6 +21,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.*;
+import groovy.lang.Lazy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     private TemplatePreTaskService templatePreTaskService;
 
     @Autowired
+    @Lazy
     private NoticeMessageService noticeMessageService;
 
 

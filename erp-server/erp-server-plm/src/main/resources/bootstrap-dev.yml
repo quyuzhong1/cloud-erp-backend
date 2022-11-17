@@ -6,7 +6,7 @@ spring:
         namespace: dev-lwg
       config:
         server-addr: 172.16.100.12
-        namespace: dev
+        namespace: test
         file-extension: yml
         shared-configs: common.yml,db-plm.yml,erp-third-party.yml
 #显示日期的

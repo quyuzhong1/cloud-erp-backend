@@ -25,6 +25,7 @@ import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import groovy.lang.Lazy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -106,6 +107,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     private TemplateDocsPermissionService templateDocsPermissionService;
 
     @Autowired
+    @Lazy
     private NoticeMessageService noticeMessageService;
 
     /**
