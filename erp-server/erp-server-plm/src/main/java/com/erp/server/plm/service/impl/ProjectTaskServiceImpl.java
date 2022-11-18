@@ -382,6 +382,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+            statusList.add(TaskStateEnum.APPROVAL_ING.getCode());
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(processIds)) {
@@ -1229,6 +1230,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
         //不在的 任务状态
         List<Integer> notStateList = getNoExistState(taskProperty, taskCondition);
+        List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
         switch (taskProperty) {
             //分配给我  任务负责人=当前账号人的待完成/审核任务
             case TaskConstant.ASSIGN_TO_ME:
@@ -1321,6 +1323,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
+                }
+                TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(item.getProcessId())).findFirst().orElse(null);
+                if (workflowTask != null) {
+                    item.setProcessTaskId(workflowTask.getTaskId());
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
@@ -1879,7 +1885,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean publishTask(OperateBaseTaskDTO dto) {
-        LoginUser loginUser =commonService.getUserInfo();
+        LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
