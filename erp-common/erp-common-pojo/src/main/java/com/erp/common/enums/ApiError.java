@@ -43,6 +43,7 @@ public enum ApiError implements Serializable {
     ERROR_1011(1011, "账户已禁用!"),
     ERROR_1012(1012, "Excel解析数据时发生异常"),
     ERROR_1013(1013, "您没有权限操作"),
+    ERROR_1014(1014, "请勿重复操作"),
 
 
     /**

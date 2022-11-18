@@ -137,10 +137,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
 
         TaskDocsFinishEntity existEntity = getByDocsId(dto.getProductId(), dto.getTaskDocsId(), dto.getTaskId());
-        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         if (existEntity != null) {
-            finishEntity.setId(existEntity.getId());
+            throw new ServiceException(ApiError.ERROR_1014);
         }
+        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
+
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
         finishEntity.setProductId(dto.getProductId());
