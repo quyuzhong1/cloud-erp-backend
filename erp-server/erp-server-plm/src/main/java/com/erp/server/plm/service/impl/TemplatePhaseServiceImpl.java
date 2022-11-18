@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
@@ -15,6 +14,7 @@ import com.erp.model.plm.dto.TemplatePhaseDTO;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TemplatePhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
@@ -138,11 +138,13 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
 
     @Override
     public List<TemplatePhaseDTO> findList(BasicTemplateIdDTO dto) {
+        List<TemplatePhaseDTO> resultList = new ArrayList<>();
         String templateId = dto.getTemplateId();
-        LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplatePhaseEntity::getTemplateId,templateId);
-        List<TemplatePhaseEntity> list = this.list(queryWrapper);
-        List<TemplatePhaseDTO> resultList = BeanMapperUtils.copyList(TemplatePhaseDTO.class, list);
+        //根据模板id 获取到对应的阶段名
+        List<TemplatePhaseDTO> phaseList = getTaskPhaseByTemplateId(templateId);
+        if (CollectionUtils.isNotEmpty(phaseList)) {
+            resultList.addAll(phaseList);
+        }
         return resultList;
     }
 
@@ -220,6 +222,30 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95043);
         }
+    }
+
+    private List<TemplatePhaseDTO> getTaskPhaseByTemplateId(String templateId) {
+        List<TemplatePhaseDTO> list = baseMapper.getTemplatePhaseByTemplateId(templateId);
+        String flagName = TaskConstant.APPROVAL_TASK_NAME;
+        if (CollectionUtils.isEmpty(list)) {
+            TemplatePhaseDTO dto = new TemplatePhaseDTO();
+            dto.setName(flagName);
+            list.add(dto);
+        }
+        List<TemplatePhaseDTO> resultList = new ArrayList<>();
+        List<TemplatePhaseDTO> otherList = new ArrayList<>();
+        for (TemplatePhaseDTO item : list) {
+            if (flagName.equals(item.getName())) {
+                item.setIsProjectApproval(IsConstant.YES);
+                item.setIfQuote(true);
+                resultList.add(item);
+            } else {
+                otherList.add(item);
+            }
+
+        }
+        resultList.addAll(otherList);
+        return resultList;
     }
 }
 

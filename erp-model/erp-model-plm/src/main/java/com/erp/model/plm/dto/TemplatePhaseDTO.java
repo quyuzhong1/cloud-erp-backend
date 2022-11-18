@@ -27,4 +27,12 @@ public class TemplatePhaseDTO implements Serializable {
     @NotBlank(message = "阶段名不能为空")
     private String name;
 
+    /**
+     * 阶段名
+     * 是否是立项阶段
+     */
+    private Integer isProjectApproval=0;
+
+    private Boolean ifQuote=false;
+
 }
