@@ -30,7 +30,7 @@ public class TemplateTaskController extends BaseController {
 
 
     /**
-     * 模板任务列表查询
+     * 模板详情-模板任务-列表分页查询
      *
      * @author Will
      * @date: 2022/11/14 9:25
@@ -45,7 +45,7 @@ public class TemplateTaskController extends BaseController {
 
 
     /**
-     * 模板任务新增或修改
+     * 模板详情-模板任务-新增或修改
      *
      * @author Will
      * @date: 2022/11/14 9:25
@@ -59,7 +59,7 @@ public class TemplateTaskController extends BaseController {
     }
 
     /**
-     * 删除模板任务
+     * 模板详情-模板任务-删除
      *
      * @author Will
      * @date: 2022/11/14 14:58

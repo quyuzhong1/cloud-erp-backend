@@ -33,7 +33,7 @@ public class TemplateRoleController extends BaseController {
     private TemplateMembersService templateMembersService;
 
     /**
-     * 角色成员列表查询
+     * 模板详情-角色成员-列表分页查询
      *
      * @author Will
      * @date: 2022/11/15 13:58
@@ -47,7 +47,7 @@ public class TemplateRoleController extends BaseController {
     }
 
     /**
-     * 查询模板下所有角色
+     * 模板详情-角色成员-查询所有角色
      *
      * @author Will
      * @date: 2022/11/16 12:04
@@ -61,7 +61,7 @@ public class TemplateRoleController extends BaseController {
     }
 
     /**
-     * 新增角色
+     * 模板详情-角色成员-新增角色
      *
      * @author Will
      * @date: 2022/11/15 14:00
@@ -75,7 +75,7 @@ public class TemplateRoleController extends BaseController {
     }
 
     /**
-     * 新增成员
+     * 模板详情-角色成员-新增成员
      *
      * @author Will
      * @date: 2022/11/15 15:04
@@ -89,7 +89,7 @@ public class TemplateRoleController extends BaseController {
     }
 
     /**
-     * 删除成员
+     * 模板详情-角色成员-删除成员
      *
      * @author Will
      * @date: 2022/11/15 15:57

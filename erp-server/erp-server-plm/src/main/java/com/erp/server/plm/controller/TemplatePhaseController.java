@@ -29,7 +29,7 @@ public class TemplatePhaseController extends BaseController {
 
 
     /**
-     * 模板阶段查询
+     * 模板详情-模板阶段-下拉框数据
      *
      * @param dto
      * @return
@@ -41,7 +41,7 @@ public class TemplatePhaseController extends BaseController {
     }
 
     /**
-     * 模板阶段新增或修改
+     * 模板详情-模板阶段-新增或修改
      *
      * @author Will
      * @date: 2022/11/17 10:17
@@ -55,7 +55,7 @@ public class TemplatePhaseController extends BaseController {
     }
 
     /**
-     * 模板阶段删除
+     * 模板详情-模板阶段-删除
      *
      * @author Will
      * @date: 2022/11/17 10:17

@@ -26,7 +26,7 @@ public class TemplateTaskDocsNameController extends BaseController {
     private TemplateTaskDocsNameService templateTaskDocsNameService;
 
     /**
-     * 保存交付文档名称
+     * 模板详情-输出物-新增文档
      *
      * @author Will
      * @date: 2022/11/16 13:02
@@ -40,7 +40,7 @@ public class TemplateTaskDocsNameController extends BaseController {
     }
 
     /**
-     * 修改交付文档名称
+     * 模板详情-输出物-编辑文档
      *
      * @author Will
      * @date: 2022/11/17 13:02
@@ -55,7 +55,7 @@ public class TemplateTaskDocsNameController extends BaseController {
 
 
     /**
-     * 查询交付文档名称
+     * 模板详情-输出物-交付文档名称下拉数据
      *
      * @author Will
      * @date: 2022/11/16 13:02

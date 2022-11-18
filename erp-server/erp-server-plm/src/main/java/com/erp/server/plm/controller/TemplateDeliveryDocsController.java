@@ -27,7 +27,7 @@ public class TemplateDeliveryDocsController extends BaseController {
     private TemplateDeliveryDocsService templateDeliveryDocsService;
 
     /**
-     * 输出物列表查询
+     * 模板详情-输出物-列表分页查询
      *
      * @author Will
      * @date: 2022/11/15 16:11
@@ -42,7 +42,7 @@ public class TemplateDeliveryDocsController extends BaseController {
 
 
     /**
-     * 输出物删除
+     * 模板详情-输出物-删除
      *
      * @author Will
      * @date: 2022/11/14 14:58
@@ -56,7 +56,7 @@ public class TemplateDeliveryDocsController extends BaseController {
     }
 
     /**
-     * 输出物修改状态
+     * 模板详情-输出物-修改状态
      *
      * @author Will
      * @date: 2022/11/17 9:33

@@ -28,7 +28,7 @@ public class ProjectTemplateController extends BaseController {
     private ProjectTemplateService projectTemplateService;
 
     /**
-     * 模板管理列表查询
+     * 模板管理-列表分页查询
      *
      * @author Will
      * @date: 2022/11/11 14:53
@@ -42,7 +42,7 @@ public class ProjectTemplateController extends BaseController {
     }
 
     /**
-     * 模板管理新增或修改
+     * 模板管理-新增或修改
      *
      * @author Will
      * @date: 2022/11/11 15:33
@@ -56,7 +56,7 @@ public class ProjectTemplateController extends BaseController {
     }
 
     /**
-     * 修改模板状态
+     * 模板管理-修改状态
      *
      * @author Will
      * @date: 2022/11/11 15:33
