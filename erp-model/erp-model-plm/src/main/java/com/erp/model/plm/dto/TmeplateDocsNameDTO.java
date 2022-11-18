@@ -16,6 +16,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class TmeplateDocsNameDTO implements Serializable {
 
+
+    /**
+     * 输出物id
+     */
+    private String deliveryDocsId;
     /**
      * 文档名
      */

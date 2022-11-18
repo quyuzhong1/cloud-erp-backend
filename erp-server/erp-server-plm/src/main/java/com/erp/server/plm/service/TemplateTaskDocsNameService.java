@@ -42,4 +42,12 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return TemplateTaskDocsNameEntity
      */
     TemplateTaskDocsNameEntity getByIdAndTemplateId(String docsNameId, String templateId);
+    /**
+     * @description: 修改交付文档
+     * @author Will
+     * @date: 2022/11/18 9:06
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateDocsName(TmeplateDocsNameDTO dto);
 }

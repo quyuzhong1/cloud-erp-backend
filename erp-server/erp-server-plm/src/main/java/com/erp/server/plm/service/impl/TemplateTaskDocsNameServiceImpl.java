@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,6 +24,7 @@ import com.erp.server.plm.service.TemplateTaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -188,6 +190,42 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         queryWrapper.eq(TemplateTaskDocsNameEntity::getId,docsNameId);
         return this.getOne(queryWrapper);
     }
+
+    @Override
+    @Transactional
+    public Boolean updateDocsName(TmeplateDocsNameDTO dto) {
+        String name = dto.getName();
+        String templateId = dto.getTemplateId();
+        List<DocsDTO> docksNames = getDocsNameList(templateId);
+        List<String> names = docksNames.stream().map(DocsDTO::getName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95012);
+        }
+        TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
+        entity.setName(name);
+        entity.setTemplateId(templateId);
+        boolean flag = this.save(entity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        if (flag) {
+            //更新输出物关联的文件名和文件名id
+            LambdaUpdateWrapper<TemplateDeliveryDocsEntity> updateWrapper = new LambdaUpdateWrapper();
+            updateWrapper.eq(TemplateDeliveryDocsEntity::getId,dto.getDeliveryDocsId());
+            updateWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,dto.getTemplateId());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsNameId,entity.getId());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getDocsName,entity.getName());
+            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserId,uid);
+            updateWrapper.set(TemplateDeliveryDocsEntity::getUpdateUserName,userName);
+            templateDeliveryDocsService.update(updateWrapper);
+        }
+        return true;
+    }
+
+
 }
 
 

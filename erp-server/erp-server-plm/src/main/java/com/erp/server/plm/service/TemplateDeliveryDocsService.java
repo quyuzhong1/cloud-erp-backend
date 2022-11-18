@@ -84,4 +84,14 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
      * @return Boolean
      */
     Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto);
+
+    /**
+     * @description: 根据输出物id和模板id查询
+     * @author Will
+     * @date: 2022/11/18 9:12
+     * @param deliveryDocsId
+     * @param templateId
+     * @return TemplateDeliveryDocsEntity
+     */
+    TemplateDeliveryDocsEntity getByIdAndTemplateId(String deliveryDocsId, String templateId);
 }

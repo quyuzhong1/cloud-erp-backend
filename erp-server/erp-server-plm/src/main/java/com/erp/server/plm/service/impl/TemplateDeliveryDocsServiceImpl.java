@@ -250,6 +250,14 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         return this.update(updateWrapper);
     }
 
+    @Override
+    public TemplateDeliveryDocsEntity getByIdAndTemplateId(String deliveryDocsId, String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getId,deliveryDocsId);
+        return this.getOne(queryWrapper);
+    }
+
 
     /**
      * @description: 根据模板id查询

@@ -40,6 +40,21 @@ public class TemplateTaskDocsNameController extends BaseController {
     }
 
     /**
+     * 修改交付文档名称
+     *
+     * @author Will
+     * @date: 2022/11/17 13:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PutMapping("/update")
+    public ApiResult updateDocsName(@RequestBody @Validated TmeplateDocsNameDTO dto) {
+        Boolean flag = templateTaskDocsNameService.updateDocsName(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
      * 查询交付文档名称
      *
      * @author Will

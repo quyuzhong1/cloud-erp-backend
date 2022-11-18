@@ -89,20 +89,6 @@ public class TemplateRoleController extends BaseController {
     }
 
     /**
-     * 编辑成员
-     *
-     * @author Will
-     * @date: 2022/11/15 15:05
-     * @param dto
-     * @return ApiResult
-     */
-    @PutMapping("/updateTemplateMembers")
-    public ApiResult updateTemplateMembers(@RequestBody @Validated TemplateMembersAddOrUpdateDTO dto) {
-        Boolean flag = templateMembersService.updateTemplateMembers(dto);
-        return flag ? success() : failure();
-    }
-
-    /**
      * 删除成员
      *
      * @author Will
