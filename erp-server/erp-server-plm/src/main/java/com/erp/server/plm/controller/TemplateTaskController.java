@@ -4,7 +4,10 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.TemplateSearchDTO;
+import com.erp.model.plm.dto.TemplateTaskDTO;
+import com.erp.model.plm.dto.TemplateTaskParamDTO;
+import com.erp.model.plm.dto.TemplateTaskShowDTO;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -81,7 +84,7 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/list")
-    public ApiResult list(String templateId) {
+    public ApiResult list(@RequestParam("templateId") String templateId) {
         List<Map<String, Object>> list = templateTaskService.getTaskListByTemplateId(templateId);
         return success(list);
     }
@@ -90,11 +93,11 @@ public class TemplateTaskController extends BaseController {
      * 模板详情-模板任务-任务详情数据
      *
      * @author Will
-     * @date: 2022/11/18 14:58
+     * @date: 2022/11/18 14:32
      * @param dto
-     * @return ApiResult
+     * @return ApiResult<TemplateTaskDTO>
      */
-    @GetMapping("/taskDetails")
+    @PostMapping("/taskDetails")
     public ApiResult<TemplateTaskDTO> taskDetails(@RequestBody @Validated TemplateTaskParamDTO dto) {
         TemplateTaskDTO taskDTO = templateTaskService.taskDetails(dto);
         return success(taskDTO);

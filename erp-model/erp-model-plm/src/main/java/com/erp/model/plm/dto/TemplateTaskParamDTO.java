@@ -15,6 +15,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class TemplateTaskParamDTO implements Serializable {
+
     /**
      * 任务id
      */
