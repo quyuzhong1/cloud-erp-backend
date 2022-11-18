@@ -10,7 +10,7 @@ import lombok.Data;
  * 文档变更记录
  * @TableName docs_change_record
  */
-@TableName(value ="docs_change_record")
+@TableName(value ="docs_change_log")
 @Data
 public class DocsChangeRecordEntity implements Serializable {
     /**

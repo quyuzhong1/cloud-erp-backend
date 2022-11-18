@@ -10,7 +10,7 @@ import java.util.Date;
  * 产品操作记录表
  * @TableName product_operate_record
  */
-@TableName(value ="product_operate_record")
+@TableName(value ="product_operate_log")
 @Data
 public class ProductOperateRecordEntity implements Serializable {
     /**

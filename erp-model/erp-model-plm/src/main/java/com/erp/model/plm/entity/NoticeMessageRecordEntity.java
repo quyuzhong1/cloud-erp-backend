@@ -10,7 +10,7 @@ import java.util.Date;
  * 消息通知记录表
  * @TableName notice_message_record
  */
-@TableName(value ="notice_message_record")
+@TableName(value ="notice_message_log")
 @Data
 public class NoticeMessageRecordEntity implements Serializable {
     /**

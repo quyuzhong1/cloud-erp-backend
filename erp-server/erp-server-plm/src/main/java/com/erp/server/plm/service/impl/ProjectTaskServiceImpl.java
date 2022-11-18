@@ -2032,7 +2032,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean closeTask(OperateBaseTaskDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         List<String> taskIds = dto.getTaskIdList();
-
         //进行中
         Integer ingCode = TaskStateEnum.ING.getCode();
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
@@ -2326,6 +2325,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         noticeMessageService.approvalTaskNotice(list, dto.getProductId());
         return flag;
     }
+
+
 
     /**
      * 从新开始

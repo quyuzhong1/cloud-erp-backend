@@ -64,6 +64,10 @@ public interface NoticeMessageConstant {
     String ARCHIVE_PROJECT = "项目状态: %s 已归档【%s】";
 
 
+    //项目信息
+    String PROJECT_CONTENT= "**任务名称：**%s\n**产品名称：**%s\n**截止日期：**%s\n**%s：**%s";
+
+
 
 
 

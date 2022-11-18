@@ -11,6 +11,7 @@ public interface ThirdConstants {
     String FS_GRANT_TYPE = "authorization_code";
 
     String FS_MESSAGE_TEXT = "text";
+    String FS_MESSAGE_INTERACTIVE = "interactive";
 
 
     String FS_TOKEN_URL = "https://passport.feishu.cn/suite/passport/oauth/token";

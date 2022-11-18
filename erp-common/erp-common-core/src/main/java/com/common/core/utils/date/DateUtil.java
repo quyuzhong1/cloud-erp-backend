@@ -357,7 +357,7 @@ public class DateUtil {
     public static String conversionDate(Date date, String fmt) {
         if (date != null) {
             if (StringUtils.isBlank(fmt)) {
-                fmt = DateUtil.fmt;
+                fmt = DateUtil.fmt_day;
             }
             SimpleDateFormat sdf = new SimpleDateFormat(fmt);
             return sdf.format(date.getTime());

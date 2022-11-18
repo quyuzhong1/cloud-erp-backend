@@ -154,10 +154,10 @@ public class FsService {
             headerMap.put("Authorization", authorization);
             headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("msg_type", ThirdConstants.FS_MESSAGE_TEXT);
+            bodyMap.put("msg_type", ThirdConstants.FS_MESSAGE_INTERACTIVE);
             //用户的unionIds
             bodyMap.put("union_ids", dto.getUnionIds());
-            bodyMap.put("content", dto.getContentMap());
+            bodyMap.put("card", dto.getContentMap());
             String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_BATCH_SEND_MESSAGE_URL, bodyMap, headerMap);
             Map<String, Object> resultMap = JSONObject.parseObject(resultStr, Map.class);
             if (resultMap != null && resultMap.containsKey("code")) {
