@@ -32,6 +32,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -238,7 +239,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Transactional
     public Boolean saveOrUpdate(TemplateTaskDTO dto) {
         //验证任务名称是否已存在
-        checkTemplateTaskName(dto.getName(),dto.getTemplateId());
+        checkTemplateTaskName(dto);
         TemplateTaskEntity entity = new TemplateTaskEntity();
         BeanMapperUtils.copy(dto,entity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
@@ -280,12 +281,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (StringUtils.isBlank(entity.getId())) {
              this.save(entity);
         } else {
-
-            LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
-            updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
-            updateWrapper.setEntity(entity);
-            this.update(updateWrapper);
+            this.updateByIdAndTemplateId(entity);
         }
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
@@ -293,6 +289,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
     }
+
+
 
 
     /**
@@ -312,18 +310,17 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
-     * @description: 验证模板名称是否已存在
+     * @description: 验证模板任务名称是否已存在
      * @author Will
      * @date: 2022/11/14 14:05
-     * @param templateTaskName
-
+     * @param dto
      */
-    private void checkTemplateTaskName(String templateTaskName , String tempalteId) {
+    private void checkTemplateTaskName(TemplateTaskDTO dto) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskEntity::getName,templateTaskName);
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,tempalteId);
-        int count = this.count(queryWrapper);
-        if (count > 0) {
+        queryWrapper.eq(TemplateTaskEntity::getName,dto.getName());
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,dto.getTemplateId());
+        TemplateTaskEntity entity = this.getOne(queryWrapper);
+        if (Objects.nonNull(entity) && !entity.getId().equals(dto.getId())) {
             throw new ServiceException(ApiError.ERROR_95057);
         }
     }
@@ -337,5 +334,34 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95024);
         }
+    }
+
+    /**
+     * @description: 任务编辑时需要更新字段
+     * @author Will
+     * @date: 2022/11/18 10:38
+     * @param entity
+
+     */
+    private void updateByIdAndTemplateId(TemplateTaskEntity entity) {
+        LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
+        updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseId,entity.getPhaseId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseName,entity.getPhaseName());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserId,entity.getUpdateUserId());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserName,entity.getUpdateUserName());
+        updateWrapper.set(TemplateTaskEntity::getName,entity.getName());
+        updateWrapper.set(TemplateTaskEntity::getApprovalUserId,entity.getApprovalUserId());
+        updateWrapper.set(TemplateTaskEntity::getBusinessProcessId,entity.getBusinessProcessId());
+        updateWrapper.set(TemplateTaskEntity::getChargeId,entity.getChargeId());
+        updateWrapper.set(TemplateTaskEntity::getChargeName,entity.getChargeName());
+        updateWrapper.set(TemplateTaskEntity::getDescription,entity.getDescription());
+        updateWrapper.set(TemplateTaskEntity::getIsFixed,entity.getIsFixed());
+        updateWrapper.set(TemplateTaskEntity::getPlanEndTime,entity.getPlanEndTime());
+        updateWrapper.set(TemplateTaskEntity::getPlanStartTime,entity.getPlanStartTime());
+        updateWrapper.set(TemplateTaskEntity::getPriority,entity.getPriority());
+        updateWrapper.set(TemplateTaskEntity::getType,entity.getType());
+        this.update(updateWrapper);
     }
 }

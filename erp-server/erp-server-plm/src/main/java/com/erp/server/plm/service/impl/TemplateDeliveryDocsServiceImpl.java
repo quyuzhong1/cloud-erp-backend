@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -209,9 +208,8 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     @Transactional
     public void saveTemplateDeliveryDocsList(String taskId, String templateId, List<DocsDTO> deliveryDocsList) {
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
-            List<String> docsIdList = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
-            //删除交付文
-            removeTemplateDeliveryDocs(taskId,templateId,docsIdList);
+            //删除交付文档
+            removeTemplateDeliveryDocs(taskId,templateId);
             //获取登录人信息
             LoginUser loginUser = PlmInterceptor.threadLocal.get();
             if (ObjectUtils.isEmpty(loginUser)) {
@@ -287,16 +285,11 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
      * @date: 2022/11/16 10:31
      * @param taskId
      * @param templateId
-     * @param docsIdList
-
      */
-    private void removeTemplateDeliveryDocs(String taskId,String templateId, List<String> docsIdList) {
+    private void removeTemplateDeliveryDocs(String taskId,String templateId) {
         LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTaskId, taskId);
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
-        if (CollectionUtils.isNotEmpty(docsIdList)) {
-            queryWrapper.in(TemplateDeliveryDocsEntity::getId, docsIdList);
-        }
         this.remove(queryWrapper);
     }
 
