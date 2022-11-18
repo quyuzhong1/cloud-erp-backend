@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
 import com.erp.model.plm.dto.BatchTemplatePhaseDTO;
 import com.erp.model.plm.dto.TemplatePhaseDTO;
+import com.erp.model.plm.dto.TemplatePhaseDeleteDTO;
 import com.erp.server.plm.service.TemplatePhaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -58,12 +59,12 @@ public class TemplatePhaseController extends BaseController {
      *
      * @author Will
      * @date: 2022/11/17 10:17
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @DeleteMapping("/remove")
-    public ApiResult remove(String id,String templateId) {
-        Boolean flag = templatePhaseService.removeTemplatePhase(id,templateId);
+    public ApiResult remove(@RequestBody @Validated TemplatePhaseDeleteDTO dto) {
+        Boolean flag = templatePhaseService.removeTemplatePhase(dto.getId(),dto.getTemplateId());
         return flag == true ? success() : failure();
     }
 }

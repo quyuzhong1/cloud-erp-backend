@@ -126,6 +126,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      * @return Boolean
      */
     @Override
+    @Transactional
     public Boolean removeTask(String id, String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getId,id);
@@ -234,6 +235,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     @Override
+    @Transactional
     public Boolean saveOrUpdate(TemplateTaskDTO dto) {
         //验证任务名称是否已存在
         checkTemplateTaskName(dto.getName(),dto.getTemplateId());
@@ -274,22 +276,22 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
-        boolean flag = this.save(entity);
-        if (flag) {
-            //保存交付文档
-            templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
-            //保存前置任务
-            templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
-        }
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
         if (StringUtils.isBlank(entity.getId())) {
-          return this.save(entity);
+             this.save(entity);
+        } else {
+
+            LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
+            updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
+            updateWrapper.setEntity(entity);
+            this.update(updateWrapper);
         }
-        LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
-        updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
-        updateWrapper.setEntity(entity);
-        return this.update(updateWrapper);
+        //保存交付文档
+        templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
+        //保存前置任务
+        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
+        return true;
     }
 
 
@@ -322,7 +324,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId,tempalteId);
         int count = this.count(queryWrapper);
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95061);
+            throw new ServiceException(ApiError.ERROR_95057);
         }
     }
 
