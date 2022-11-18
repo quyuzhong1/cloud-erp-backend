@@ -519,7 +519,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
         if(!result){
-            throw new ServiceException(ApiError.ERROR_1008);
+            throw new ServiceException(ApiError.ERROR_1014);
         }
         boolean flag = ValidatorUtil.isEmail(email);
         if (!flag) {
