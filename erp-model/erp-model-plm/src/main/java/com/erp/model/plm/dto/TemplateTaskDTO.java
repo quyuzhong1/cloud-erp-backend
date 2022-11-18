@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,11 +57,13 @@ public class TemplateTaskDTO implements Serializable {
         /**
          * 计划开始时间
          */
+        @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
         private Date planStartTime;
 
         /**
          * j计划结束时间
          */
+        @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
         private Date planEndTime;
 
         /**
@@ -124,4 +127,9 @@ public class TemplateTaskDTO implements Serializable {
         @NotNull(message = "任务负责人集合不能为空")
         @Size(min = 1,message = "负责人至少有一个")
         private List<String> chargeIds;
+
+        /**
+         * 设置里程碑(0否，1是)
+         */
+        private Integer isMilepost;
 }
