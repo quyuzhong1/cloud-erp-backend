@@ -106,6 +106,15 @@ public class TemplatePreTaskServiceImpl extends ServiceImpl<TemplatePreTaskMappe
         }
     }
 
+    @Override
+    public List<String> getTemplatePreTaskIdList(String taskId, String templateId) {
+        LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplatePreTaskEntity::getTaskId, taskId);
+        queryWrapper.eq(TemplatePreTaskEntity::getTemplateId,templateId);
+        queryWrapper.select(TemplatePreTaskEntity::getPreTaskId);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
     public List<TemplatePreTaskEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplatePreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplatePreTaskEntity::getTemplateId, templateId);

@@ -110,6 +110,10 @@ public class TemplateTaskDTO implements Serializable {
         private String businessProcessId;
 
         /**
+         * 业务流程名
+         */
+        private String businessName="";
+        /**
          * 审核人集合
          */
         private List<UserInfoDTO> approvalUserIds;

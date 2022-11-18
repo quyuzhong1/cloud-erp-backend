@@ -9,12 +9,12 @@ import java.io.Serializable;
 /**
  * @author Will
  * @version 1.0
- * @description: 模板任务删除DTO
+ * @description: 模板任务参数DTO
  * @date 2022/11/16 9:51
  */
 @Data
 @NoArgsConstructor
-public class TemplateTaskDeleteDTO implements Serializable {
+public class TemplateTaskParamDTO implements Serializable {
     /**
      * 任务id
      */

@@ -4,14 +4,14 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.TemplateSearchDTO;
-import com.erp.model.plm.dto.TemplateTaskDTO;
-import com.erp.model.plm.dto.TemplateTaskDeleteDTO;
-import com.erp.model.plm.dto.TemplateTaskShowDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.TemplateTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 模板管理
@@ -67,11 +67,37 @@ public class TemplateTaskController extends BaseController {
      * @return ApiResult
      */
     @DeleteMapping("/remove")
-    public ApiResult remove(@RequestBody @Validated TemplateTaskDeleteDTO dto) {
+    public ApiResult remove(@RequestBody @Validated TemplateTaskParamDTO dto) {
         Boolean flag = templateTaskService.removeTask(dto.getId(),dto.getTemplateId());
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 模板详情-模板任务-获取前置任务列表
+     *
+     * @author Will
+     * @date: 2022/11/18 14:58
+     * @param templateId
+     * @return ApiResult
+     */
+    @GetMapping("/list")
+    public ApiResult list(String templateId) {
+        List<Map<String, Object>> list = templateTaskService.getTaskListByTemplateId(templateId);
+        return success(list);
+    }
 
+    /**
+     * 模板详情-模板任务-任务详情数据
+     *
+     * @author Will
+     * @date: 2022/11/18 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @GetMapping("/taskDetails")
+    public ApiResult<TemplateTaskDTO> taskDetails(@RequestBody @Validated TemplateTaskParamDTO dto) {
+        TemplateTaskDTO taskDTO = templateTaskService.taskDetails(dto);
+        return success(taskDTO);
+    }
 
 }

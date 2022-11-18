@@ -3,13 +3,11 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.CopySourceDTO;
-import com.erp.model.plm.dto.TemplateSearchDTO;
-import com.erp.model.plm.dto.TemplateTaskDTO;
-import com.erp.model.plm.dto.TemplateTaskShowDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.TemplateTaskEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname TemplateTaskService
@@ -64,4 +62,22 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
 
      */
     void removeByTemplateId(String templateId);
+
+    /**
+     * @description: 获取前置任务列表
+     * @author Will
+     * @date: 2022/11/18 11:33
+     * @param templateId
+     * @return List<Map<Object>>
+     */
+    List<Map<String, Object>> getTaskListByTemplateId(String templateId);
+
+    /**
+     * @description: 任务详情数据
+     * @author Will
+     * @date: 2022/11/18 11:39
+     * @param dto
+     * @return TemplateTaskDTO
+     */
+    TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto);
 }

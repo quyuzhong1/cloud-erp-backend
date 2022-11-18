@@ -26,4 +26,9 @@
         ORDER BY tdd.create_time DESC
     </select>
 
+    <select id="getDocsByTaskIdAndTemplateId" resultType="com.erp.model.plm.dto.DocsDTO">
+        SELECT id ,docs_name AS name,is_sys FROM template_delivery_docs
+        WHERE task_id = #{taskId} AND template_id = #{templateId}
+    </select>
+
 </mapper>

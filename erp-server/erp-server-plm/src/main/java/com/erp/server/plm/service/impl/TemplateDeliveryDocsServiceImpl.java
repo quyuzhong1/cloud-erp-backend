@@ -258,6 +258,11 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public List<DocsDTO> getDocsByTaskIdAndTemplateId(String taskId, String templateId) {
+        return baseMapper.getDocsByTaskIdAndTemplateId(taskId,templateId);
+    }
+
 
     /**
      * @description: 根据模板id查询

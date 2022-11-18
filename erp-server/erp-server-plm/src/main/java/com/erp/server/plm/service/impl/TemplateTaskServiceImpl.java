@@ -11,9 +11,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TemplatePhaseEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
@@ -30,9 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -62,6 +62,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private BusinessProcessService businessProcessService;
+
 
     /**
      * 保存模板任务
@@ -162,6 +166,60 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
         this.remove(queryWrapper);
+    }
+
+    @Override
+    public List<Map<String, Object>> getTaskListByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(TemplateTaskEntity::getId, TemplateTaskEntity::getName);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        return this.listMaps(queryWrapper);
+    }
+
+    @Override
+    public TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto) {
+
+        TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(),dto.getTemplateId());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        TemplateTaskDTO resultDTO = new TemplateTaskDTO();
+        BeanMapper.copy(taskEntity, resultDTO);
+        String chargeId = taskEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        }
+        String approvalUserId = taskEntity.getApprovalUserId();
+        List<String> approvalUserIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(approvalUserId)) {
+            approvalUserIdList = Arrays.asList(approvalUserId.split(","));
+        }
+        List<UserInfoDTO> approvalUserList = new ArrayList<>();
+        List<FindUserDTO> userList = commonService.getAllUser();
+        for (String userId : approvalUserIdList) {
+            UserInfoDTO u = new UserInfoDTO();
+            u.setUserId(userId);
+            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
+                    equals(userId)).findFirst().orElse(null);
+            if (!Objects.isNull(user)) {
+                u.setUserName(user.getUserName());
+            } else {
+                u.setUserName("");
+            }
+            approvalUserList.add(u);
+        }
+        resultDTO.setApprovalUserIds(approvalUserList);
+        resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(),dto.getTemplateId()));
+        String businessProcessId = resultDTO.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (processEntity != null) {
+                resultDTO.setBusinessName(processEntity.getBusinessName());
+            }
+
+        }
+        resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(),dto.getTemplateId()));
+        return resultDTO;
     }
 
     /**
@@ -307,6 +365,21 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getProperty, TaskConstant.PROJECT_TASK);
         queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 根据id和模板id查询
+     * @author Will
+     * @date: 2022/11/18 11:42
+     * @param id
+     * @param templateId
+     * @return TemplateTaskEntity
+     */
+    public TemplateTaskEntity getByIdAndTemplateId(String id,String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateTaskEntity::getId, id);
+        return this.getOne(queryWrapper);
     }
 
     /**
