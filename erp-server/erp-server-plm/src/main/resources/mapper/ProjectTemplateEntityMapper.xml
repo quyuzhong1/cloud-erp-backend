@@ -31,7 +31,8 @@
                 pt.product_id,
                 pt.create_time,
                 pt.update_time,
-                pt.is_default
+                pt.is_default,
+                pt.status
             FROM project_template pt
             <where>
                 <if test="params.searchKeyword != '' and params.searchKeyword != null">
