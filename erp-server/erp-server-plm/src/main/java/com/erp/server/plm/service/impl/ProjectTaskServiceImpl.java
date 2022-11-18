@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -101,6 +102,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Lazy
     private NoticeMessageService noticeMessageService;
 
+    @Autowired
+    private ProductArchiveService productArchiveService;
 
     /**
      * 添加系统的产品任务
@@ -2366,6 +2369,82 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     }
 
+    /**
+     * @description: 根据产品id获取里程碑任务
+     * @author Will
+     * @date: 2022/11/18 16:20
+     * @param productId
+     * @return List<ProductMilepostDTO>
+     */
+    @Override
+    public List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId) {
+        //返回结果
+        List<ProductMilepostDTO> resultList = new ArrayList<>();
+        //查询产品信息，创建初始里程碑
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        if (ObjectUtils.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        ProductMilepostDTO startDto = new ProductMilepostDTO();
+        startDto.setName(ProductMilepostEnum.START_MILEPOST_MILEPOST.getName());
+        resultList.add(startDto);
+        //判断产品是否立项
+        if (ApprovalStatusEnum.APPROVAL.equals(productInfoEntity.getApprovalStatus())) {
+            //创建立项里程碑
+            ProductMilepostDTO approvalDto = new ProductMilepostDTO();
+            approvalDto.setName(ProductMilepostEnum.PROJECT_APPROVAL_MILEPOST.getName());
+            resultList.add(approvalDto);
+            //查询产品下面的任务
+            List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+            if (CollectionUtils.isEmpty(taskList)) {
+                throw new ServiceException(ApiError.ERROR_95027);
+            }
+            taskList.stream().filter(e->IsConstant.YES.equals(e.getIsMilepost())).forEach(obj->{
+                //创建产品任务里程碑
+                ProductMilepostDTO dto = new ProductMilepostDTO();
+                dto.setTaskId(obj.getId());
+                dto.setName(obj.getName());
+                resultList.add(dto);
+            });
+            //查询产品是否已经归档
+            ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
+            if (ObjectUtils.isNotEmpty(productArchiveEntity)) {
+                //创建归档里程碑
+                ProductMilepostDTO archiveDto = new ProductMilepostDTO();
+                archiveDto.setName(ProductMilepostEnum.PROJECT_ARCHIVE_MILEPOST.getName());
+                resultList.add(archiveDto);
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto) {
+        Integer type = dto.getType();
+        ProductMilepostDateDTO dateDTO =new ProductMilepostDateDTO();
+        switch (type) {
+            case 1:
+                //创建里程碑结束时间
+                dateDTO = this.getStartMilepostDate(dto.getProductId(),dateDTO);
+                break;
+            case 2:
+                //立项里程碑结束时间
+                dateDTO = this.getApprovalMilepostDate(dto.getProductId(),dateDTO);
+                break;
+            case 3:
+                //任务里程碑结束时间
+                dateDTO = this.getTaskMilepostDate(dto.getTaskId(),dateDTO);
+                break;
+            case 4:
+                //归档里程碑结束时间
+                dateDTO = this.getArchiveMilepostDate(dto.getProductId(),dateDTO);
+                break;
+            default:
+                break;
+        }
+        return dateDTO;
+    }
+
 
     /**
      * 查看任务流程情况
@@ -2686,5 +2765,62 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return warning;
     }
 
+    /**
+     * @description: 创建里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     */
+    private ProductMilepostDateDTO getStartMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        dateDTO.setRealityEndTime(productInfoEntity.getCreateTime());
+        return dateDTO;
+
+    };
+
+    /**
+     * @description: 立项里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     */
+    private ProductMilepostDateDTO getApprovalMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        dateDTO.setRealityEndTime(productInfoEntity.getApprovalTime());
+        return dateDTO;
+    };
+
+    /**
+     * @description: 任务里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     * @param taskId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     */
+    private ProductMilepostDateDTO getTaskMilepostDate(String taskId,ProductMilepostDateDTO dateDTO) {
+        ProjectTaskEntity projectTaskEntity = this.getById(taskId);
+        dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
+        dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
+        return dateDTO;
+    };
+
+    /**
+     * @description: 归档里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     */
+    private ProductMilepostDateDTO getArchiveMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+        ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
+        dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
+        return dateDTO;
+    };
 
 }

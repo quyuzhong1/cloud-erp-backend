@@ -3,36 +3,35 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 角色用户关系表
- * @TableName template_role_ref_members
+ * @author Will
+ * @version 1.0
+ * @description: TODO
+ * @date 2022/11/18 14:44
  */
 @Data
-@TableName(value ="template_role_ref_members")
-public class TemplateRoleRefMembersEntity implements Serializable {
+@TableName(value ="project_sys_task_ref_sku")
+public class ProjectTaskSysRefSkuEntity {
+
     /**
-     * 
+     * 表id
      */
     @TableId(value = "id",type = IdType.ASSIGN_ID)
     private String id;
 
     /**
-     * 成员表id
+     * 系统任务id
      */
-    private String membersId;
+    @TableField("sys_task_id")
+    private String sysTaskId;
 
     /**
-     * 项目角色表id
+     * skuid
      */
-    private String roleId;
-
-    /**
-     * 模板id
-     */
-    private String templateId;
+    @TableField("sku_id")
+    private String skuId;
 
     /**
      * 创建时间
@@ -69,8 +68,4 @@ public class TemplateRoleRefMembersEntity implements Serializable {
      */
     @TableField("update_user_name")
     private String updateUserName;
-
-    private static final long serialVersionUID = 1L;
-
-
 }

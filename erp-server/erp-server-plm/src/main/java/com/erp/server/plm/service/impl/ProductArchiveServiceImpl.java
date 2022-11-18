@@ -161,4 +161,11 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
         List<String> list = this.listObjs(queryWrapper, Object::toString);
         return list;
     }
+
+    @Override
+    public ProductArchiveEntity getArchiveByProductId(String productId) {
+        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductArchiveEntity::getProductId,productId);
+        return this.getOne(queryWrapper);
+    }
 }

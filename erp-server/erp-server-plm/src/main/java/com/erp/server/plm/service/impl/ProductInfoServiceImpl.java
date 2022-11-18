@@ -710,6 +710,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (approvalStatus != null) {
                 if (!product.getApprovalStatus().equals(approvalStatus)) {
                     product.setApprovalStatus(approvalStatus);
+                    //清空立项时间
+                    product.setApprovalTime(null);
                     if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
                         yesApproval = true;
                         /**
@@ -722,6 +724,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                        product.setApprovalTime(new Date());
                     }
 
                 }
