@@ -201,8 +201,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 //获取到任务处理的情况
                 List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
                 for (MemberPagingShowDTO item : list) {
-                    String memberId = item.getMemberId();
-                    RoleRefMemberEntity ref = refList.stream().filter(r -> r.getMembersId().equals(memberId)).findFirst().orElse(null);
+                    String membersId = item.getId();
+                    RoleRefMemberEntity ref = refList.stream().filter(r -> r.getMembersId().equals(membersId)).findFirst().orElse(null);
                     if (ref != null) {
                         item.setRoleId(ref.getRoleId());
                         ProjectRoleEntity role = roleList.stream().filter(r -> r.getId().equals(ref.getRoleId())).findFirst().orElse(null);

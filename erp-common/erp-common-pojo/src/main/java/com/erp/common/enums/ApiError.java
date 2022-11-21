@@ -66,8 +66,8 @@ public enum ApiError implements Serializable {
     ERROR_9023(9023, "部门名已存在"),
     ERROR_9024(9024, "邮箱已存在"),
     ERROR_9025(9025, "角色名已存在"),
-
-
+    ERROR_9026(9026, "系统编号类型已存在"),
+    ERROR_9027(9027, "生成编号失败"),
 
     /**
      * 工作流错误
