@@ -2205,10 +2205,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean approvalPass(TaskOperateDTO dto) {
-        boolean result = redisService.setNx(JSONObject.toJSONString(dto.getTaskDataList()), 1, 1, TimeUnit.MINUTES);
-        if(!result){
-            throw new ServiceException(ApiError.ERROR_1014);
-        }
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
         //根据任务id 获取所有的任务列表
@@ -2271,6 +2267,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         noticeMessageService.approvalTaskNotice(list, dto.getProductId());
+        String keyFlag = userId + JSONObject.toJSONString(dto.getTaskDataList());
+        boolean result = redisService.setNx(keyFlag, 1, 1, TimeUnit.MINUTES);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1014);
+        }
         return true;
     }
 
@@ -2340,7 +2341,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
 
-
     /**
      * 从新开始
      *
@@ -2380,11 +2380,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
+     * @param productId
+     * @return List<ProductMilepostDTO>
      * @description: 根据产品id获取里程碑任务
      * @author Will
      * @date: 2022/11/18 16:20
-     * @param productId
-     * @return List<ProductMilepostDTO>
      */
     @Override
     public List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId) {
@@ -2409,7 +2409,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isEmpty(taskList)) {
                 throw new ServiceException(ApiError.ERROR_95027);
             }
-            taskList.stream().filter(e->IsConstant.YES.equals(e.getIsMilepost())).forEach(obj->{
+            taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost())).forEach(obj -> {
                 //创建产品任务里程碑
                 ProductMilepostDTO dto = new ProductMilepostDTO();
                 dto.setTaskId(obj.getId());
@@ -2431,23 +2431,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto) {
         Integer type = dto.getType();
-        ProductMilepostDateDTO dateDTO =new ProductMilepostDateDTO();
+        ProductMilepostDateDTO dateDTO = new ProductMilepostDateDTO();
         switch (type) {
             case 1:
                 //创建里程碑结束时间
-                dateDTO = this.getStartMilepostDate(dto.getProductId(),dateDTO);
+                dateDTO = this.getStartMilepostDate(dto.getProductId(), dateDTO);
                 break;
             case 2:
                 //立项里程碑结束时间
-                dateDTO = this.getApprovalMilepostDate(dto.getProductId(),dateDTO);
+                dateDTO = this.getApprovalMilepostDate(dto.getProductId(), dateDTO);
                 break;
             case 3:
                 //任务里程碑结束时间
-                dateDTO = this.getTaskMilepostDate(dto.getTaskId(),dateDTO);
+                dateDTO = this.getTaskMilepostDate(dto.getTaskId(), dateDTO);
                 break;
             case 4:
                 //归档里程碑结束时间
-                dateDTO = this.getArchiveMilepostDate(dto.getProductId(),dateDTO);
+                dateDTO = this.getArchiveMilepostDate(dto.getProductId(), dateDTO);
                 break;
             default:
                 break;
@@ -2776,61 +2776,69 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     * @description: 创建里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
      * @param productId
      * @param dateDTO
      * @return ProductMilepostDateDTO
+     * @description: 创建里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getStartMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getStartMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         dateDTO.setRealityEndTime(productInfoEntity.getCreateTime());
         return dateDTO;
 
-    };
+    }
+
+    ;
 
     /**
-     * @description: 立项里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
      * @param productId
      * @param dateDTO
      * @return ProductMilepostDateDTO
+     * @description: 立项里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getApprovalMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getApprovalMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         dateDTO.setRealityEndTime(productInfoEntity.getApprovalTime());
         return dateDTO;
-    };
+    }
+
+    ;
 
     /**
-     * @description: 任务里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
      * @param taskId
      * @param dateDTO
      * @return ProductMilepostDateDTO
+     * @description: 任务里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getTaskMilepostDate(String taskId,ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
         ProjectTaskEntity projectTaskEntity = this.getById(taskId);
         dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
         dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
         return dateDTO;
-    };
+    }
+
+    ;
 
     /**
-     * @description: 归档里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
      * @param productId
      * @param dateDTO
      * @return ProductMilepostDateDTO
+     * @description: 归档里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getArchiveMilepostDate(String productId,ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getArchiveMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
         ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
         dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
         return dateDTO;
-    };
+    }
+
+    ;
 
 }
