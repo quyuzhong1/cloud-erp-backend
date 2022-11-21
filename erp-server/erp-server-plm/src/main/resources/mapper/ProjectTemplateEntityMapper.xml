@@ -32,9 +32,9 @@
                 pt.create_time,
                 pt.update_time,
                 pt.create_user_id,
-                pt.create_user,
+                pt.create_user_name,
                 pt.update_user_id,
-                pt.update_user,
+                pt.update_user_name,
                 pt.is_default,
                 pt.status
             FROM project_template pt
