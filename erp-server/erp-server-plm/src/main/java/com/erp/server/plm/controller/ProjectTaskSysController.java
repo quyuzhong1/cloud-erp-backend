@@ -1,20 +1,17 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProjectTaskDTO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
+import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
 import com.erp.server.plm.service.ProjectTaskSysService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.erp.common.controller.BaseController;
 
 import java.util.List;
 import java.util.Map;
@@ -65,7 +62,7 @@ public class ProjectTaskSysController extends BaseController {
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:sys:task:paging")
-    public ApiResult<PagingVO<SysTaskPagingDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+    public ApiResult<PagingVO<SysTaskPagingDTO>> paging(@RequestBody @Validated PagingDTO<SysTaskPagingSearchDTO> dto) {
         PagingVO<SysTaskPagingDTO> pagingVO = projectTaskSysService.paging(dto);
         return success(pagingVO);
     }

@@ -7,7 +7,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -17,27 +16,25 @@ import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProjectStateEnum;
+import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -71,6 +68,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectTemplateService templateService;
+
+    @Autowired
+    @Lazy
+    private NoticeMessageService noticeMessageService;
 
 
     @Autowired
@@ -138,6 +139,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
+
+
+    @Autowired
+    private ProductDetailService productDetailService;
 
 
     /**
@@ -242,7 +247,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            projectTaskService.addSysTask(entity.getId(),taskDocsNameList);
+            projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());
@@ -250,6 +255,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             remarkList.add("新增了一个产品：[" + entity.getName() + "]");
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            //通知新建产品
+            noticeMessageService.newProductNotice(entity.getId());
         } else {
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -322,9 +329,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             flag = this.updateById(entity);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
+                //删除任务
                 projectTaskService.removeTaskByProductId(productId);
                 //删除项目
                 projectInfoService.removeByProductId(productId);
+                productDetailService.deleteByProductId(productId);
+
             }
 
         }
@@ -435,11 +445,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     item.setIterateCount(0);
                 }
                 String projectChargeId = item.getProjectChargeId();
-                if(StringUtils.isNotBlank(projectChargeId)){
+                if (StringUtils.isNotBlank(projectChargeId)) {
                     item.setProjectChargeIdList(Arrays.asList(projectChargeId.split(",")));
                 }
-                String  productChargeId=item.getProductChargeId();
-                if(StringUtils.isNotBlank(productChargeId)){
+                String productChargeId = item.getProductChargeId();
+                if (StringUtils.isNotBlank(productChargeId)) {
                     item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
                 }
 
@@ -528,8 +538,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //模板名
         String templateName = dto.getTemplateName();
         String productId = dto.getProductId();
+        //模板类型（项目模板）
+        Integer templateType = ProjectTemplateTypeEnum.PROJECT_TEMPLATE.getCode();
         //保存模板
-        String templateId = templateService.saveTemplate(templateName,productId);
+        String templateId = templateService.saveTemplate(templateName, productId, templateType);
         if (StringUtils.isNotBlank(templateId)) {
             //保存团队成员
             templateMembersService.saveMember(templateId, productId);
@@ -668,8 +680,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
-
-        ProductInfoEntity product = this.getById(dto.getProductId());
+        String productId = dto.getProductId();
+        ProductInfoEntity product = this.getById(productId);
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
@@ -698,26 +710,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (approvalStatus != null) {
                 if (!product.getApprovalStatus().equals(approvalStatus)) {
                     product.setApprovalStatus(approvalStatus);
+                    //清空立项时间
+                    product.setApprovalTime(null);
                     if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
-                        String productId = product.getId();
                         yesApproval = true;
                         /**
                          * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
                          *  是否完成
                          */
                         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-                        List<String> taskIdList = taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                        List<ProjectTaskEntity> taskFinish=taskList.stream().filter(t->TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
+                        List<String> taskIdList = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                        List<ProjectTaskEntity> taskFinish = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                        product.setApprovalTime(new Date());
                     }
+
                 }
             }
 
             Boolean updateFlag = this.updateById(product);
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
+                //异步通知 产品立项
+                noticeMessageService.projectApprovalNotice(dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), product.getName());
             }
         }
@@ -732,17 +749,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                     String projectChargeName = commonService.getNameByIds(projectChargeIdList);
                     project.setChargeId(String.join(",", projectChargeIdList));
                     project.setChargeName(projectChargeName);
-                }else{
+                } else {
                     project.setChargeName("");
                     project.setChargeId("");
                 }
                 if (projectStatus != null) {
-                    if(!project.getProjectStatus().equals(projectStatus)){
-                        if(ProjectStateEnum.FINISH.getState().equals(projectStatus)){
-                            String productId = product.getId();
-
+                    if (!project.getProjectStatus().equals(projectStatus)) {
+                        if (ProjectStateEnum.FINISH.getState().equals(projectStatus)) {
                             /**
-                             * 表示改成已立项 就要去检查该该产品下的 所有的任务
+                             * 表示改成已wanc 就要去检查该该产品下的 所有的任务
                              *  是否完成
                              */
                             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
@@ -750,12 +765,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             projectTaskService.checkTaskFinish(taskList);
                             preTaskService.checkPreTaskFinish(taskIdList);
                             projectTaskService.checkSonTaskFinish(taskIdList, productId);
+                            //发送项目完成通知
+                            noticeMessageService.finishProjectNotice(productId);
                         }
 
+                        //开始项目
+                        if (ProjectStateEnum.YES_START.getState().equals(projectStatus)) {
+                            noticeMessageService.beginProjectNotice(productId);
+                        }
                     }
-
-
-
                     project.setProjectStatus(projectStatus);
                 }
                 projectInfoService.updateById(project);
@@ -829,6 +847,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public List<ProductProjectDTO> getProductAndProjectList() {
         return baseMapper.getProductAndProjectList();
+    }
+
+    /**
+     * 根据产品id 获取产品信息
+     *
+     * @param productId
+     * @return com.erp.model.plm.dto.ProductShowDTO
+     * @author yl
+     * @date 2022-11-14 17:30
+     */
+    @Override
+    public ProductShowDTO getProductInfo(String productId) {
+        return baseMapper.getProductInfo(productId);
+    }
+
+    @Override
+    public List<ProductShowDTO> getProductInfoByIds(List<String> productIds) {
+        if (CollectionUtils.isNotEmpty(productIds)) {
+            return baseMapper.getProductInfoByIds(productIds);
+        }
+        return new ArrayList<>();
     }
 
 

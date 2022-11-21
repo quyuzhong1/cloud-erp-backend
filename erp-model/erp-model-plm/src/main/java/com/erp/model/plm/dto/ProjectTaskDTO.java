@@ -4,7 +4,6 @@ import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -43,7 +42,7 @@ public class ProjectTaskDTO  implements Serializable {
     private String pid;
 
     /**
-     * 产品idid
+     * 产品id
      */
     @NotBlank(message = "产品id不能为空")
     private String productId;
@@ -53,6 +52,7 @@ public class ProjectTaskDTO  implements Serializable {
      * 任务名
      */
     @NotBlank(message = "任务名不能为空")
+    @Size(max = 50,message = "任务名最大50字符")
     private String name;
 
 
@@ -136,8 +136,6 @@ public class ProjectTaskDTO  implements Serializable {
      */
     private List<UserInfoDTO> approvalUserIds;
 
-
-
     /**
      * 交付文档
      *
@@ -145,6 +143,9 @@ public class ProjectTaskDTO  implements Serializable {
     @Valid
     private List<DocsDTO>  deliveryDocsList;
 
-
+    /**
+     * 设置里程碑(0否，1是)
+     */
+    private Integer isMilepost;
 
 }

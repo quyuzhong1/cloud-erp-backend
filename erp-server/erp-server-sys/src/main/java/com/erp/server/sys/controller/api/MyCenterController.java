@@ -38,6 +38,9 @@ public class MyCenterController extends BaseController {
     private SysUserInfoService sysUserInfoService;
 
 
+
+
+
     @RequestMapping("/bindingThirdParty")
     public ApiResult binding(@RequestBody SysUserThirdDTO dto) {
         sysUserInfoService.bindingThirdParty(dto);

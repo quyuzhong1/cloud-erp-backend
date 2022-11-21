@@ -419,11 +419,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         BeanMapperUtils.copy(userEntity, vo);
         //后面还有编写
         String uid = userEntity.getUid();
+
         List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        //全局菜单
         List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
         List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.FUNCTION_TYPE);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
         vo.setPermissionList(permissionList);
         vo.setOverallMenuList(overallMenuList);
         vo.setLeftMenuList(leftMenuList);
@@ -517,6 +517,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public void sedEmail(EmailVerifyCodeDTO dto) {
         String email = dto.getEmail();
+        boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
+        if(!result){
+            throw new ServiceException(ApiError.ERROR_1014);
+        }
         boolean flag = ValidatorUtil.isEmail(email);
         if (!flag) {
             throw new ServiceException(ApiError.ERROR_1008);
@@ -584,8 +588,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
-        queryWrapper.eq(SysUserInfoEntity::getUserState,SysConstant.YES_STATE);
-        queryWrapper.eq(SysUserInfoEntity::getDeleteState,SysConstant.YES_STATE);
+        queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
+        queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
         }
@@ -619,6 +623,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 检查邮箱验证码是否正确
+     *
      * @param email
      * @param verifyCode
      * @return void
@@ -685,10 +690,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 根据用户id 获取到所属部门的所有用户id
-     * @Author Luo_WG
-     * @Date 2022/10/19 14:17
+     *
      * @param userId 用户id
      * @return java.util.List<java.lang.String>
+     * @Author Luo_WG
+     * @Date 2022/10/19 14:17
      **/
     public List<String> getDepUserList(String userId) {
         List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
@@ -708,6 +714,34 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return new ArrayList<String>();
         }
         return baseMapper.getDepUserList(deptList);
+    }
+
+    @Override
+    public List<FindUserDTO> getUserListByUserIds(List<String> userIds) {
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysUserInfoEntity::getUid, userIds);
+        List<FindUserDTO> resultList = new LinkedList<>();
+        List<SysUserInfoEntity> list = this.list(queryWrapper);
+        for (SysUserInfoEntity item : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(item.getUid());
+            userDTO.setUserName(item.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
+    }
+
+    @Override
+    public FindUserDTO getUserByUserId(String userId) {
+        LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUserInfoEntity::getUid, userId);
+        SysUserInfoEntity entity = this.getOne(queryWrapper);
+        FindUserDTO userDTO = new FindUserDTO();
+        userDTO.setUserId(entity.getUid());
+        userDTO.setUserName(entity.getUserName());
+        userDTO.setIsMyState(0);
+        return userDTO;
     }
 
 

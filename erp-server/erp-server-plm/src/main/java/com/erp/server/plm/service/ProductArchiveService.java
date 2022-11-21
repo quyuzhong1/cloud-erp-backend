@@ -23,4 +23,13 @@ public interface ProductArchiveService extends IService<ProductArchiveEntity> {
     Boolean saveArchive(String productId);
 
     List<String> getArchiveProductIds();
+
+    /**
+     * @description: 根据产品id查询归档数据
+     * @author Will
+     * @date: 2022/11/18 16:13
+     * @param productId
+     * @return ProductArchiveEntity
+     */
+    ProductArchiveEntity getArchiveByProductId(String productId);
 }

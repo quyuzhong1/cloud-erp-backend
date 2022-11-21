@@ -1,16 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Date;
-
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -85,6 +80,12 @@ public class ProductInfoEntity implements Serializable {
      */
     @TableField("approval_status")
     private Integer approvalStatus;
+
+    /**
+     * 立项日期
+     */
+    @TableField(value = "approval_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    private Date approvalTime;
 
     /**
      * 以JSON 字符串保存

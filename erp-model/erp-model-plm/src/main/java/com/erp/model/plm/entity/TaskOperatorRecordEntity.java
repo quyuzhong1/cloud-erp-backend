@@ -15,7 +15,7 @@ import java.util.Date;
  * @param
  * @return
  **/
-@TableName(value ="task_operator_record")
+@TableName(value ="task_operator_log")
 @Data
 public class TaskOperatorRecordEntity implements Serializable {
     /**

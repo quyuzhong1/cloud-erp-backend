@@ -1,6 +1,12 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.ProjectTemplateDTO;
+import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
+import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 
@@ -15,8 +21,32 @@ import java.util.List;
  * @since 2022-09-13
  */
 public interface ProjectTemplateService extends IService<ProjectTemplateEntity> {
-
-    String saveTemplate(String templateName,String productId);
+    
+    String saveTemplate(String templateName , String productId , Integer templateType);
 
     List<StartItemSourceDTO> startItemSource(Integer sourceType);
+    /**
+     * @description: 模板管理列表查询
+     * @author Will
+     * @date: 2022/11/11 12:01
+     * @param dto
+     * @return PagingVO<ProjectTemplateDTO>
+     */
+    PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto);
+    /**
+     * @description: 新增或修改模板
+     * @author Will
+     * @date: 2022/11/11 14:57
+     * @param dto
+     * @return Boolean
+     */
+    Boolean saveOrUpdate(ProjectTemplateSaveOrUpdateDTO dto);
+    /**
+     * @description: 更新模板状态
+     * @author Will
+     * @date: 2022/11/11 15:38
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto);
 }

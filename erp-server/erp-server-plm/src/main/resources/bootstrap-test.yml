@@ -2,12 +2,12 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.110.12
+        server-addr: 172.16.100.12
         namespace: test
       config:
-        server-addr: 172.16.110.12
+        server-addr: 172.16.100.12
         namespace: test
-        shared-configs: common.yml,db-plm.yml
+        shared-configs: common.yml,db-plm.yml,erp-third-party.yml
 
   #显示日期的
   jackson:
@@ -18,7 +18,7 @@ fdfs:
   connect-timeout: 600
   so-timeout: 1500
   tracker-list:
-    - 172.16.110.12:22122
+    - 172.16.100.12:22122
 
 
 

@@ -3,15 +3,34 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskSysMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.SysTaskPagingDTO">
-        SELECT id,name,type,charge_id,charge_name,
-        COALESCE((SELECT name FROM project_task_sys t WHERE t.id=pts.pre_task_id ),'') preTaskName,
-        pre_task_id,plan_start_time,plan_end_time,priority,
-        COALESCE((SELECT name FROM sys_project_phase sp WHERE sp.id=pts.phase_id ),'') AS phaseName,
-        description,is_fixed,create_user_id,create_user_name,create_time
+        SELECT
+               pts.id,
+               pts.name,
+               pts.type,
+               pts.charge_id,
+               pts.charge_name,
+               COALESCE((SELECT name FROM project_task_sys t WHERE t.id=pts.pre_task_id ),'') preTaskName,
+               pts.pre_task_id,
+               pts.plan_start_time,
+               pts.plan_end_time,
+               pts.priority,
+               COALESCE(spp.name,'') AS phaseName,
+               pts.description,
+               pts.is_fixed,
+               pts.create_user_id,
+               pts.create_user_name,
+               pts.create_time
         FROM project_task_sys pts
+        left join sys_project_phase spp on pts.phase_id = spp.id
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
                 AND name LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+            <if test="params.type !=null and params.type!='' and params.type == 1">
+                AND spp.name = '立项阶段'
+            </if>
+            <if test="params.type !=null and params.type!='' and params.type == 2">
+                AND spp.name != '立项阶段'
             </if>
         </where>
         ORDER BY create_time DESC

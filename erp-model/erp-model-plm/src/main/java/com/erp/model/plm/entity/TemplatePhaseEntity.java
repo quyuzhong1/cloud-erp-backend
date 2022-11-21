@@ -37,7 +37,7 @@ public class TemplatePhaseEntity implements Serializable {
     private Date updateTime;
 
     /**
-     * 产品id  
+     * 模板id
      */
     private String templateId;
 

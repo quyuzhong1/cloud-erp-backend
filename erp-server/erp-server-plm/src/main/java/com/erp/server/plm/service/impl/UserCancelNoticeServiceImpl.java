@@ -57,6 +57,22 @@ public class UserCancelNoticeServiceImpl extends ServiceImpl<UserCancelNoticeMap
         return true;
     }
 
+    /**
+     * 获取取消通知的用户id
+     *
+     * @param noticeId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-15 10:14
+     */
+    @Override
+    public List<String> cancelNoticeUserIds(String noticeId) {
+        LambdaQueryWrapper<UserCancelNoticeEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(UserCancelNoticeEntity::getUserId);
+        queryWrapper.eq(UserCancelNoticeEntity::getCancelNoticeId, noticeId);
+        return listObjs(queryWrapper,Object::toString);
+    }
+
 
     /**
      * 添加取消的消息表

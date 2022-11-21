@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.*;
+import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +53,18 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/getRoleIdList")
     List<String> getRoleIdList(@RequestBody String userId);
 
+    //根据第三方平台 以及union id 获取用户id
+    @PostMapping("sys/feign/user/getUserIdByThird")
+    String getUidByUnionId(@RequestBody FindUserByThirdDTO third);
 
+    @PostMapping("sys/feign/user/getThirdUnionId")
+    List<ThirdUnionDTO> getThirdUnionId(@RequestBody String fsPlatform);
 
+    //根据userId查询用户
+    @GetMapping("sys/feign/user/getUserByUserId")
+    FindUserDTO getUserByUserId(@RequestBody String userId);
+
+    //根据userIds查询用户集合
+    @GetMapping("sys/feign/user/getUserListByUserIds")
+    List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 }

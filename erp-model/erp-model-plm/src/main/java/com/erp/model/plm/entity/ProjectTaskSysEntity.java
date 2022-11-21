@@ -125,5 +125,9 @@ public class ProjectTaskSysEntity implements Serializable {
     @TableField("business_process_id")
     private String businessProcessId;
 
-
+    /**
+     * 设置里程碑(0否，1是)
+     */
+    @TableField("is_milepost")
+    private Integer isMilepost;
 }

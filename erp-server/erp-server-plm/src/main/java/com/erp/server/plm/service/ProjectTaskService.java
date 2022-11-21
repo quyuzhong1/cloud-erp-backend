@@ -103,4 +103,32 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     List<Map<String, Object>> operateMoreList(String taskId);
+
+    List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int i);
+
+    Boolean restartTask(OperateBaseTaskDTO dto);
+    /**
+     * @description: 根据产品id获取里程碑任务
+     * @author Will
+     * @date: 2022/11/18 15:08
+     * @param productId
+     * @return List<ProductMilepostDTO>
+     */
+    List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId);
+    /**
+     * @description: 查询里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 16:47
+     * @param dto
+     * @return ProductMilepostDateDTO
+     */
+    ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto);
+    /**
+     * @description: 查询产品各个阶段任务完成进度
+     * @author Will
+     * @date: 2022/11/21 9:27
+     * @param productId
+     * @return List<ProductPhaseProgressDTO>
+     */
+    List<ProductPhaseProgressDTO> getFinishProgressList(String productId);
 }

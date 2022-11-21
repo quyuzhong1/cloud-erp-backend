@@ -31,6 +31,9 @@ public class SysUserInfoDTO implements Serializable {
     //@Size(max = 10,message = "真实名最大长度为10")
     private String realName;
 
+
+    private String email;
+
     //电话
     @NotBlank(message = "电话不能为空")
     private String mobile;

@@ -2,10 +2,10 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -18,7 +18,6 @@ import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -126,9 +125,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     }
 
     @Override
-    public PagingVO<SysTaskPagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<SysTaskPagingDTO> paging(PagingDTO<SysTaskPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BaseSearchDTO params = dto.getParams();
+        SysTaskPagingSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         List<SysTaskPagingDTO> list = pageData.getRecords();
         //获取所有的系统任务的 文档名

@@ -30,4 +30,8 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     IPage myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 
     List<ProductProjectDTO> getProductAndProjectList();
+
+    ProductShowDTO getProductInfo(@Param("productId") String productId);
+
+    List<ProductShowDTO> getProductInfoByIds(@Param("productIds") List<String> productIds);
 }

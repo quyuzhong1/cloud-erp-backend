@@ -1,24 +1,39 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.plm.dto.CopySourceDTO;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.vo.LoginUser;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.TemplatePhaseEntity;
 import com.erp.model.plm.entity.TemplateTaskEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TemplateTaskService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Classname TemplateTaskServiceImpl
@@ -31,6 +46,25 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private ProjectTaskService taskService;
+
+    @Autowired
+    private TemplateDeliveryDocsService templateDeliveryDocsService;
+
+    @Autowired
+    private TemplatePreTaskService templatePreTaskService;
+
+    @Autowired
+    @Lazy
+    private NoticeMessageService noticeMessageService;
+
+    @Autowired
+    private TemplatePhaseService templatePhaseService;
+
+    @Autowired
+    private CommonService commonService;
+
+    @Autowired
+    private BusinessProcessService businessProcessService;
 
 
     /**
@@ -73,6 +107,119 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, flagTemplateId);
         queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
         return this.list(queryWrapper);
+    }
+    /**
+     * @description: 获取模板下面所有的任务
+     * @author Will
+     * @date: 2022/11/14 14:35
+     * @param templateId
+     * @return List<TemplateTaskEntity>
+     */
+    @Override
+    public List<TemplateTaskEntity> getAllTaskByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 删除模板任务
+     * @author Will
+     * @date: 2022/11/14 16:16
+     * @param id
+     * @param templateId
+     * @return Boolean
+     */
+    @Override
+    @Transactional
+    public Boolean removeTask(String id, String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getId,id);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        List<TemplateTaskEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95058);
+        }
+        TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
+        Integer IsFixed = entity.getIsFixed();
+        //如果是固定任务则不支持删除
+        if (IsConstant.YES.equals(IsFixed)) {
+            throw new ServiceException(ApiError.ERROR_95014);
+        }
+        //判断是否是子任务
+        checkTaskIfExistPid(id,templateId);
+        //删除任务交付文档数据
+        templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
+        //删除模板任务
+        return this.remove(queryWrapper);
+    }
+
+    /**
+     * @description: 根据模板id删除
+     * @author Will
+     * @date: 2022/11/14 16:54
+     * @param templateId
+
+     */
+    @Override
+    public void removeByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        this.remove(queryWrapper);
+    }
+
+    @Override
+    public List<Map<String, Object>> getTaskListByTemplateId(String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(TemplateTaskEntity::getId, TemplateTaskEntity::getName);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        return this.listMaps(queryWrapper);
+    }
+
+    @Override
+    public TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto) {
+
+        TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(),dto.getTemplateId());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        TemplateTaskDTO resultDTO = new TemplateTaskDTO();
+        BeanMapper.copy(taskEntity, resultDTO);
+        String chargeId = taskEntity.getChargeId();
+        if (StringUtils.isNotBlank(chargeId)) {
+            resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        }
+        String approvalUserId = taskEntity.getApprovalUserId();
+        List<String> approvalUserIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(approvalUserId)) {
+            approvalUserIdList = Arrays.asList(approvalUserId.split(","));
+        }
+        List<UserInfoDTO> approvalUserList = new ArrayList<>();
+        List<FindUserDTO> userList = commonService.getAllUser();
+        for (String userId : approvalUserIdList) {
+            UserInfoDTO u = new UserInfoDTO();
+            u.setUserId(userId);
+            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
+                    equals(userId)).findFirst().orElse(null);
+            if (!Objects.isNull(user)) {
+                u.setUserName(user.getUserName());
+            } else {
+                u.setUserName("");
+            }
+            approvalUserList.add(u);
+        }
+        resultDTO.setApprovalUserIds(approvalUserList);
+        resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(),dto.getTemplateId()));
+        String businessProcessId = resultDTO.getBusinessProcessId();
+        if (StringUtils.isNotBlank(businessProcessId)) {
+            BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
+            if (processEntity != null) {
+                resultDTO.setBusinessName(processEntity.getBusinessName());
+            }
+
+        }
+        resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(),dto.getTemplateId()));
+        return resultDTO;
     }
 
     /**
@@ -129,10 +276,79 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             }
         }
 
-        taskService.saveBatch(copyList);
+        Boolean flag = taskService.saveBatch(copyList);
+        if (flag) {
+            //发送新建任务通知
+            noticeMessageService.newTaskNotice(copyList, productId);
+        }
         return sourceList;
 
     }
+
+    @Override
+    public PagingVO<TemplateTaskShowDTO> paging(PagingDTO<TemplateSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(),dto.getPageSize());
+        TemplateSearchDTO params = dto.getParams();
+        IPage<TemplateTaskShowDTO> paging = baseMapper.paging(query, params);
+        return new PagingVO(paging);
+    }
+
+    @Override
+    @Transactional
+    public Boolean saveOrUpdate(TemplateTaskDTO dto) {
+        //验证任务名称是否已存在
+        checkTemplateTaskName(dto);
+        TemplateTaskEntity entity = new TemplateTaskEntity();
+        BeanMapperUtils.copy(dto,entity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        if (StringUtils.isBlank(dto.getId())) {
+            entity.setCreateUserId(uid);
+            entity.setCreateUserName(userName);
+        } else {
+            entity.setUpdateUserId(uid);
+            entity.setUpdateUserName(userName);
+        }
+
+        List<String> chargeId = dto.getChargeIds();
+        String chargeNames = commonService.getNameByIds(chargeId);
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
+            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
+            entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        entity.setChargeId(String.join(",", chargeId));
+        entity.setChargeName(chargeNames);
+
+        //阶段名称
+        if (StringUtils.isNotBlank(dto.getPhaseId())) {
+            TemplatePhaseEntity phaseEntity = templatePhaseService.getByIdAndTemplateId(dto.getPhaseId(), dto.getTemplateId());
+            if (ObjectUtils.isEmpty(phaseEntity)) {
+                throw new ServiceException(ApiError.ERROR_95041);
+            }
+            entity.setPhaseName(phaseEntity.getName());
+        }
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        //因为模板任务无主键，则无法用saveOrUpdate进行操作
+        if (StringUtils.isBlank(entity.getId())) {
+             this.save(entity);
+        } else {
+            this.updateByIdAndTemplateId(entity);
+        }
+        //保存交付文档
+        templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
+        //保存前置任务
+        templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
+        return true;
+    }
+
+
 
 
     /**
@@ -149,5 +365,76 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.eq(TemplateTaskEntity::getProperty, TaskConstant.PROJECT_TASK);
         queryWrapper.orderByAsc(TemplateTaskEntity::getPid);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * @description: 根据id和模板id查询
+     * @author Will
+     * @date: 2022/11/18 11:42
+     * @param id
+     * @param templateId
+     * @return TemplateTaskEntity
+     */
+    public TemplateTaskEntity getByIdAndTemplateId(String id,String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateTaskEntity::getId, id);
+        return this.getOne(queryWrapper);
+    }
+
+    /**
+     * @description: 验证模板任务名称是否已存在
+     * @author Will
+     * @date: 2022/11/14 14:05
+     * @param dto
+     */
+    private void checkTemplateTaskName(TemplateTaskDTO dto) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getName,dto.getName());
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,dto.getTemplateId());
+        TemplateTaskEntity entity = this.getOne(queryWrapper);
+        if (Objects.nonNull(entity) && !entity.getId().equals(dto.getId())) {
+            throw new ServiceException(ApiError.ERROR_95057);
+        }
+    }
+
+    //检查子任务
+    private void checkTaskIfExistPid(String taskId,String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskEntity::getPid, taskId);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        Integer count = baseMapper.selectCount(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95024);
+        }
+    }
+
+    /**
+     * @description: 任务编辑时需要更新字段
+     * @author Will
+     * @date: 2022/11/18 10:38
+     * @param entity
+
+     */
+    private void updateByIdAndTemplateId(TemplateTaskEntity entity) {
+        LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
+        updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseId,entity.getPhaseId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseName,entity.getPhaseName());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserId,entity.getUpdateUserId());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserName,entity.getUpdateUserName());
+        updateWrapper.set(TemplateTaskEntity::getName,entity.getName());
+        updateWrapper.set(TemplateTaskEntity::getApprovalUserId,entity.getApprovalUserId());
+        updateWrapper.set(TemplateTaskEntity::getBusinessProcessId,entity.getBusinessProcessId());
+        updateWrapper.set(TemplateTaskEntity::getChargeId,entity.getChargeId());
+        updateWrapper.set(TemplateTaskEntity::getChargeName,entity.getChargeName());
+        updateWrapper.set(TemplateTaskEntity::getDescription,entity.getDescription());
+        updateWrapper.set(TemplateTaskEntity::getIsFixed,entity.getIsFixed());
+        updateWrapper.set(TemplateTaskEntity::getPlanEndTime,entity.getPlanEndTime());
+        updateWrapper.set(TemplateTaskEntity::getPlanStartTime,entity.getPlanStartTime());
+        updateWrapper.set(TemplateTaskEntity::getPriority,entity.getPriority());
+        updateWrapper.set(TemplateTaskEntity::getType,entity.getType());
+        this.update(updateWrapper);
     }
 }

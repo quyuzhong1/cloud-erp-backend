@@ -2,7 +2,7 @@ spring:
   application:
     name:  erp-chrome
   profiles:
-    active: pro
+    active: prod
 server:
   port: 7040
 

@@ -1,14 +1,11 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-
-import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.Date;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * <p>
@@ -170,5 +167,11 @@ public class ProjectTaskEntity implements Serializable {
     //流程表id
     @TableField("business_process_id")
     private String businessProcessId;
+
+    /**
+     * 设置里程碑(0否，1是)
+     */
+    @TableField("is_milepost")
+    private Integer isMilepost;
 
 }

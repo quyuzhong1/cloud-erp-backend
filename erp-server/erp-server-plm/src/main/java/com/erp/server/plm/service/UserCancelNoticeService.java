@@ -15,4 +15,6 @@ public interface UserCancelNoticeService extends IService<UserCancelNoticeEntity
     List<String> getUserCancelNoticeIds(String userId);
 
     Boolean updateState(String userId, String id, Boolean state);
+
+    List<String> cancelNoticeUserIds(String noticeId);
 }

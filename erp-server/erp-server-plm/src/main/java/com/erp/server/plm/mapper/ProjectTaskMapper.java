@@ -72,5 +72,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     IPage allProductTaskList(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params")TaskSearchParamDTO params);
 
     IPage allPlanTimeTaskList(Page query,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params, @Param("startTime")Date startTime,@Param("endTime") Date endTime);
+
+    List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
 }
 

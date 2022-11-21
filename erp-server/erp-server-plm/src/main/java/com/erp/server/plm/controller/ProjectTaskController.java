@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.annotation.DataPermission;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.erp.common.controller.BaseController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:task:paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
+   // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -217,7 +219,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/updateTask")
 //    @RequestPermissions("plm:task:updateTask")
-    public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto) {
+    public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);
         return result == true ? success() : failure();
     }
@@ -342,8 +344,27 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult approvalNoPass(@RequestBody TaskOperateDTO dto) {
+    public ApiResult approvalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-重新开始
+     *
+     * @return
+     */
+    @PostMapping("/restartTask")
+    //  @RequestPermissions("plm:task:approvalReject")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "charge_id",
+//            menuCode = "plm:task:project:status",
+//            serviceClass = ProjectTaskService.class,
+//            keyIdName = "taskIdList"
+//    )
+    public ApiResult restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
+        Boolean result = taskService.restartTask(dto);
         return result == true ? success() : failure();
     }
 

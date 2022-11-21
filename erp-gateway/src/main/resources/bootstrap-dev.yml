@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.110.12
+        server-addr: 172.16.100.12
         namespace: dev-lwg
       config:
-        server-addr: 172.16.110.12
+        server-addr: 172.16.100.12
         namespace: dev
         file-extension: yml
         shared-configs: gateway.yml,common.yml
