@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicTemplateIdDTO;
@@ -228,9 +229,15 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         List<TemplatePhaseDTO> list = baseMapper.getTemplatePhaseByTemplateId(templateId);
         String flagName = TaskConstant.APPROVAL_TASK_NAME;
         if (CollectionUtils.isEmpty(list)) {
-            TemplatePhaseDTO dto = new TemplatePhaseDTO();
-            dto.setName(flagName);
-            list.add(dto);
+            TemplatePhaseEntity entry = new TemplatePhaseEntity();
+            entry.setName(flagName);
+            entry.setTemplateId(templateId);
+            boolean flag = this.save(entry);
+            if (flag) {
+                TemplatePhaseDTO dto = new TemplatePhaseDTO();
+                BeanMapperUtils.copy(entry,dto);
+                list.add(dto);
+            }
         }
         List<TemplatePhaseDTO> resultList = new ArrayList<>();
         List<TemplatePhaseDTO> otherList = new ArrayList<>();
