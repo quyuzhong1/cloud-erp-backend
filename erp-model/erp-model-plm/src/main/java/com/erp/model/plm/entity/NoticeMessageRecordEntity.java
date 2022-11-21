@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -69,6 +70,7 @@ public class NoticeMessageRecordEntity implements Serializable {
     /**
      *预计结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planEndTime;
     /**
      * 通知的用户id

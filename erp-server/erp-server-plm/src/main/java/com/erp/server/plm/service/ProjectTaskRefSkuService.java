@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -11,4 +13,5 @@ import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
  */
 public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEntity> {
 
+    void addTaskSkuRef(String taskId, String productId, List<String> refSkuIdList);
 }

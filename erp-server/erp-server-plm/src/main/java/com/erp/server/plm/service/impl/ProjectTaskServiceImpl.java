@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -111,8 +112,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private TaskRefSkuConfigService taskRefSkuConfigService;
 
     @Autowired
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+
+    @Resource
     private ProjectTaskRefSkuMapper projectTaskRefSkuMapper;
 
 
@@ -584,9 +591,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
+
+            //保存SKU配置 字段 关系表
+      //      taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+            //保存任务与SKU 关系表
+       //     projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(),taskEntity.getProductId(),dto.getRefSkuIdList());
             List<ProjectTaskEntity> taskList = new ArrayList<>();
             taskList.add(taskEntity);
-
             noticeMessageService.newTaskNotice(taskList, dto.getProductId());
         }
 

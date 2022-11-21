@@ -148,4 +148,30 @@ public class ProjectTaskDTO  implements Serializable {
      */
     private Integer isMilepost;
 
+
+    /**
+     * 关联sku 表id集合
+     */
+    private List<String> refSkuIdList;
+
+
+    /**
+     * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
+     */
+ //   @NotBlank(message = "字段配置类型 不能为空")
+  //  @StateEnumValue(strValues = {"createSku","fillProductInfo"}, message = "字段配置类型有误")
+    private String fieldConfigType;
+
+
+    /**
+     * sku表id
+     */
+    private String refSkuId;
+
+    /**
+     * 勾选字段后的json 字段
+     */
+    private String fieldJson;
+    
+
 }

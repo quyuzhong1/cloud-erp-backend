@@ -365,6 +365,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (Objects.isNull(product)) {
             return false;
         }
+        LoginUser loginUser = commonService.getUserInfo();
         String flag = NoticeEnum.RELEASE_TASK.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
@@ -394,7 +395,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK, task.getCreateUserName());
+                String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK, loginUser.getUserName());
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -445,7 +446,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         String flag = NoticeEnum.CANCEL_RELEASE.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
-
+        LoginUser loginUser = commonService.getUserInfo();
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
             List<String> noticeUserIds = getSetNotice(notice, product);
@@ -472,7 +473,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.CANCEL_RELEASE, task.getCreateUserName());
+                String messageContent = String.format(NoticeMessageConstant.CANCEL_RELEASE, loginUser.getUserName());
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -522,6 +523,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             return false;
         }
         String flag = NoticeEnum.START_TASK.getFlag();
+        LoginUser loginUser = commonService.getUserInfo();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
@@ -550,7 +552,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.START_TASK, task.getCreateUserName());
+                String messageContent = String.format(NoticeMessageConstant.START_TASK, loginUser.getUserName());
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -602,6 +604,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         String flag = NoticeEnum.FINISH_TASK.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
+        LoginUser loginUser = commonService.getUserInfo();
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
             List<String> noticeUserIds = getSetNotice(notice, product);
@@ -641,7 +644,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, task.getCreateUserName());
+                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, loginUser.getUserName());
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -690,6 +693,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             return false;
         }
         String flag = NoticeEnum.CLOSE_TASK.getFlag();
+        LoginUser loginUser = commonService.getUserInfo();
+
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
@@ -718,7 +723,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.CLOSE_TASK, task.getCreateUserName());
+                String messageContent = String.format(NoticeMessageConstant.CLOSE_TASK, loginUser.getUserName());
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -768,6 +773,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             return false;
         }
         String flag = NoticeEnum.APPROVAL_TASK.getFlag();
+        LoginUser loginUser = commonService.getUserInfo();
+
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
@@ -805,7 +812,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     approvalResult = "审核不通过";
                 }
 
-                String messageContent = String.format(NoticeMessageConstant.APPROVAL_TASK, task.getCreateUserName(), approvalResult);
+                String messageContent = String.format(NoticeMessageConstant.APPROVAL_TASK, loginUser.getUserName(), approvalResult);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -855,6 +862,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             return false;
         }
         String flag = NoticeEnum.EDIT_TASK.getFlag();
+        LoginUser loginUser = commonService.getUserInfo();
+
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         //所有的通知用户人
@@ -882,7 +891,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.EDIT_TASK, task.getCreateUserName(), task.getName());
+            String messageContent = String.format(NoticeMessageConstant.EDIT_TASK,loginUser.getUserName(), task.getName());
             String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -931,6 +940,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             return false;
         }
         String flag = NoticeEnum.DELETE_TASK.getFlag();
+        LoginUser loginUser = commonService.getUserInfo();
+
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         //所有的通知用户人
@@ -958,7 +969,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.DELETE_TASK, task.getCreateUserName(), task.getName());
+            String messageContent = String.format(NoticeMessageConstant.DELETE_TASK, loginUser.getUserName(), task.getName());
             String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -1599,7 +1610,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     }
 
     /**
-     * 评论提醒 发送通知
+     * 变更 发送通知
      *
      * @param
      * @return java.lang.Boolean

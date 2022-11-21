@@ -1,0 +1,83 @@
+package com.erp.server.plm.service.impl;
+
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
+import com.erp.server.plm.service.TaskRefSkuConfigService;
+
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+
+/**
+ * 任务sku配置关系表(TaskRefSkuConfig)表服务实现类
+ *
+ * @author Lambda
+ * @since 2022-11-21 14:01:00
+ */
+@Service("taskRefSkuConfigService")
+public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMapper, TaskRefSkuConfigEntity> implements TaskRefSkuConfigService {
+    @Resource
+    private TaskRefSkuConfigMapper taskRefSkuConfigMapper;
+
+
+    /**
+     * 通过主键删除数据
+     *
+     * @param id 主键
+     * @return 是否成功
+     */
+    @Override
+    public boolean deleteById(String id) {
+        return this.taskRefSkuConfigMapper.deleteById(id) > 0;
+    }
+
+    /**
+     * 添加任务 与 sku 配置 字段的关系
+     *
+     * @param taskId
+     * @param productId
+     * @param fieldConfigType
+     * @param fieldJson
+     * @return void
+     * @author yl
+     * @date 2022-11-21 15:31
+     */
+    @Override
+    public void addSkuField(String taskId, String productId, String fieldConfigType, String fieldJson) {
+        TaskRefSkuConfigEntity existEntity = getByTaskId(taskId, productId);
+        TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
+        if (existEntity != null) {
+            addEntity.setId(existEntity.getId());
+        }
+        addEntity.setFieldJson(fieldJson);
+        addEntity.setTaskId(taskId);
+        addEntity.setProductId(productId);
+        addEntity.setFieldConfigType(fieldConfigType);
+        this.saveOrUpdate(addEntity);
+
+    }
+
+
+    /**
+     * 根据任务id 和 产品ｉｄ 获取关系表
+     *
+     * @param
+     * @return com.erp.model.plm.entity.TaskRefSkuConfigEntity
+     * @author yl
+     * @date 2022-11-21 15:33
+     */
+    public TaskRefSkuConfigEntity getByTaskId(String taskId, String productId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getTaskId, taskId);
+        queryWrapper.eq(TaskRefSkuConfigEntity::getProductId, productId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+
+    }
+}
+
+    
+

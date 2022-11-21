@@ -1,10 +1,16 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Will
@@ -13,6 +19,51 @@ import org.springframework.stereotype.Service;
  * @date 2022/11/18 14:56
  */
 @Service
-public class ProjectTaskRefSkuServiceImpl  extends ServiceImpl<ProjectTaskRefSkuMapper, ProjectTaskRefSkuEntity> implements ProjectTaskRefSkuService {
+public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuMapper, ProjectTaskRefSkuEntity> implements ProjectTaskRefSkuService {
 
+
+    /**
+     * 保存任务与sku 关系表
+     *
+     * @param taskId
+     * @param productId
+     * @param refSkuIdList
+     * @return void
+     * @author yl
+     * @date 2022-11-21 15:46
+     */
+    @Override
+    @Transactional
+    public void addTaskSkuRef(String taskId, String productId, List<String> refSkuIdList) {
+        deleteByTaskId(taskId);
+
+        List<ProjectTaskRefSkuEntity> addList = new ArrayList<>(CollectionUtils.isEmpty(refSkuIdList) ? 10 : refSkuIdList.size());
+        for (String skuId : refSkuIdList) {
+            ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
+            addEntity.setProductId(productId);
+            addEntity.setTaskId(taskId);
+            addEntity.setSkuId(skuId);
+            addList.add(addEntity);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+
+
+    }
+
+    /**
+     * 根据任务id 删除 任务与sku 关系
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-11-21 15:47
+     */
+    public void deleteByTaskId(String taskId) {
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+        this.remove(queryWrapper);
+
+    }
 }
