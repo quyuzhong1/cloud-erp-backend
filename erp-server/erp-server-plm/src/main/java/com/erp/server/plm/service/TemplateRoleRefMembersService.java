@@ -66,4 +66,12 @@ public interface TemplateRoleRefMembersService extends IService<TemplateRoleRefM
      * @return Boolean
      */
     Boolean removeByIdAndTemplateId(String roleRefMembersId, String templateId);
+    /**
+     * @description: 根据模板id查询
+     * @author Will
+     * @date: 2022/11/21 16:47
+     * @param templateId
+     * @return List<TemplateRoleRefMembersEntity>
+     */
+    List<TemplateRoleRefMembersEntity> getByTemplateId(String templateId);
 }

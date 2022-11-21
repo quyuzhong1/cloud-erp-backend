@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
 import com.erp.model.plm.entity.TemplateMembersEntity;
 
+import java.util.List;
 
 
 /**
@@ -56,4 +57,12 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
      * @return Boolean
      */
     Boolean deleteTemplateMembers(TemplateRoleMembersDeleteDTO dto);
+    /**
+     * @description: 根据模板id查询
+     * @author Will
+     * @date: 2022/11/21 16:42
+     * @param templateId
+     * @return List<TemplateMembersEntity>
+     */
+    List<TemplateMembersEntity> getByTemplateId(String templateId);
 }

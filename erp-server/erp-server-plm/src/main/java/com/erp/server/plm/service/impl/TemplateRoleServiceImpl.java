@@ -153,7 +153,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         return this.list(queryWrapper);
     }
 
-
+    @Override
     public List<TemplateRoleEntity> getByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);

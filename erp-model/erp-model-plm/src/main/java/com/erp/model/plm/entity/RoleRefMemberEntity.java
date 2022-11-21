@@ -1,10 +1,11 @@
 package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 
@@ -12,6 +13,7 @@ import lombok.Data;
  */
 @TableName(value ="role_ref_members")
 @Data
+@Accessors(chain = true)
 public class RoleRefMemberEntity implements Serializable {
     /**
      * 

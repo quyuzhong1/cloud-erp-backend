@@ -144,6 +144,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProductDetailService productDetailService;
 
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -248,6 +250,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
             projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
+            //默认查询立项模板中的成员信息
+            projectMembersService.addRoleAndMembersByApproval(entity.getId());
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(entity.getId());

@@ -60,4 +60,12 @@ public interface TemplateRoleService extends IService<TemplateRoleEntity> {
      * @return List<TemplateRoleEntity>
      */
     List<TemplateRoleEntity> getAllRoles(String templateId);
+    /**
+     * @description: 根据模板id查询
+     * @author Will
+     * @date: 2022/11/21 16:32
+     * @param templateId
+
+     */
+    List<TemplateRoleEntity> getByTemplateId(String templateId);
 }
