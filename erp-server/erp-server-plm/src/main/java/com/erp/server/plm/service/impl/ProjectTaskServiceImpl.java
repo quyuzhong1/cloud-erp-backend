@@ -945,21 +945,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskEntity.setPhaseName(phaseName);
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+
+        List<String> updateField = getUpdateField(dto);
+        if (updateField.size() > 0) {
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(dto.getProductId());
+            productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+        }
+
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
-
-            List<String> updateField = getUpdateField(dto);
-            if (updateField.size() > 0) {
-                //新增产品操作日志
-                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-                productOperateRecordDTO.setProductId(dto.getProductId());
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
-                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-            }
 
             noticeMessageService.editTaskNotice(taskEntity, taskEntity.getProductId());
         }
