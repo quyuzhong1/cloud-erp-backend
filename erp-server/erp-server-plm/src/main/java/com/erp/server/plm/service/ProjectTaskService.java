@@ -123,4 +123,12 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return ProductMilepostDateDTO
      */
     ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto);
+    /**
+     * @description: 查询产品各个阶段任务完成进度
+     * @author Will
+     * @date: 2022/11/21 9:27
+     * @param productId
+     * @return List<ProductPhaseProgressDTO>
+     */
+    List<ProductPhaseProgressDTO> getFinishProgressList(String productId);
 }

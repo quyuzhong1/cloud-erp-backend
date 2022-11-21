@@ -28,6 +28,7 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
+import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -109,6 +110,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private RedisService redisService;
+
+
+    @Autowired
+    private ProjectTaskRefSkuMapper projectTaskRefSkuMapper;
 
 
     /**
@@ -2428,6 +2433,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return resultList;
     }
 
+    /**
+     * @description: 查询里程碑结束时间
+     * @author Will
+     * @date: 2022/11/21 9:28
+     * @param dto
+     * @return ProductMilepostDateDTO
+     */
     @Override
     public ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto) {
         Integer type = dto.getType();
@@ -2453,6 +2465,71 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 break;
         }
         return dateDTO;
+    }
+
+    /**
+     * @description: 查询任务完成进度
+     * @author Will
+     * @date: 2022/11/21 10:39
+     * @param productId
+     * @return List<ProductPhaseProgressDTO>
+     */
+    @Override
+    public List<ProductPhaseProgressDTO> getFinishProgressList(String productId) {
+        //查询产品信息
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        if (ObjectUtils.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        //查询产品下面的任务
+        List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+        Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
+        //查询产品下面的sku
+        List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
+        //结果集
+        List<ProductPhaseProgressDTO> resultList = new ArrayList<>();
+
+        for (Map.Entry<String,List<ProjectTaskEntity>> entry: map.entrySet()) {
+            //阶段进度对象
+            ProductPhaseProgressDTO phaseDto = new ProductPhaseProgressDTO();
+            //阶段名称
+            String phaseName = entry.getKey();
+            //阶段下任务集合
+            List<ProjectTaskEntity> value = entry.getValue();
+            //任务总数量
+            long totalCount = value.stream().count();
+            //任务完成数量
+            long finishCount = value.stream().filter(obj -> TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).count();
+
+            List<ProductSkuProgressDTO> skuList = new ArrayList<>();
+            phaseDto.setPhaseName(phaseName);
+            phaseDto.setTotalQty(totalCount);
+            phaseDto.setFinishQty(finishCount);
+           //添加sku任务进度
+            if (CollectionUtils.isNotEmpty(refList)) {
+                Map<String, List<ProductTaskRefSkuDTO>> refMap = refList.stream().collect(Collectors.groupingBy(ProductTaskRefSkuDTO::getSkuId));
+                for (Map.Entry<String,List<ProductTaskRefSkuDTO>> refEntry: refMap.entrySet()) {
+                    List<ProductTaskRefSkuDTO> refValue = refEntry.getValue();
+                    //sku进度对象
+                    ProductSkuProgressDTO skuDto = new ProductSkuProgressDTO();
+                    //任务id集合
+                    List<String> taskIds = refValue.stream().distinct().map(ProductTaskRefSkuDTO::getTaskId).collect(Collectors.toList());
+                    //sku名称
+                    String skuName = refEntry.getValue().get(0).getSkuName();
+                    //sku下任务总数
+                    long skuTotalCount = refValue.stream().count();
+                    //sku下任务完成数量
+                    long skuFinishCount = value.stream().filter(obj -> taskIds.contains(obj.getId()) && TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus())).count();
+                    skuDto.setSkuName(skuName);
+                    skuDto.setTotalQty(skuTotalCount);
+                    skuDto.setFinishQty(skuFinishCount);
+                    skuList.add(skuDto);
+                }
+                phaseDto.setSkuList(skuList);
+            }
+            resultList.add(phaseDto);
+        }
+        return resultList;
     }
 
 

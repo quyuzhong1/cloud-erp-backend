@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.ProductMilepostDTO;
 import com.erp.model.plm.dto.ProductMilepostDateDTO;
 import com.erp.model.plm.dto.ProductMilepostParamDTO;
+import com.erp.model.plm.dto.ProductPhaseProgressDTO;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -27,21 +28,21 @@ public class ProjectTaskProgressController extends BaseController {
     private ProjectTaskService projectTaskService;
 
     /**
-     * 产品管理-任务进度-产品里程碑
+     * 任务进度-产品里程碑
      *
      * @author Will
      * @date: 2022/11/18 15:06
      * @param productId
      * @return ApiResult
      */
-    @GetMapping("/list")
-    public ApiResult<List<ProductMilepostDTO>> list(@RequestParam("productId") String productId) {
+    @GetMapping("/milepostList")
+    public ApiResult<List<ProductMilepostDTO>> milepostList(@RequestParam("productId") String productId) {
         List<ProductMilepostDTO> list = projectTaskService.getMilepostTaskListByProductId(productId);
         return success(list);
     }
 
     /**
-     * 查询里程碑结束时间
+     * 任务进度-查询里程碑结束时间
      *
      * @author Will
      * @date: 2022/11/18 16:48
@@ -52,6 +53,21 @@ public class ProjectTaskProgressController extends BaseController {
     public ApiResult<ProductMilepostDateDTO> getMilepostDate(@RequestBody @Validated ProductMilepostParamDTO dto) {
         ProductMilepostDateDTO dateDto = projectTaskService.getMilepostDate(dto);
         return success(dateDto);
+    }
+
+
+    /**
+     * 任务进度-任务完成进度
+     *
+     * @author Will
+     * @date: 2022/11/21 9:25
+     * @param productId
+     * @return ApiResult<List<ProductPhaseProgressDTO>>
+     */
+    @GetMapping("/getFinishProgressList")
+    public ApiResult<List<ProductPhaseProgressDTO>> getFinishProgressList(@RequestParam("productId") String productId) {
+        List<ProductPhaseProgressDTO> list = projectTaskService.getFinishProgressList(productId);
+        return success(list);
     }
 
 }

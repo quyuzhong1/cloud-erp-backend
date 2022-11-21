@@ -3,5 +3,20 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskRefSkuMapper">
 
 
+    <select id="getTaskRefSkuName" resultType="com.erp.model.plm.dto.ProductTaskRefSkuDTO">
+        select
+               a.id as taskId,
+               a.name as taskName,
+               c.id as skuId,
+               c.name as skuName
+        from project_task a
+        inner join project_task_ref_sku b on a.id = b.task_id
+        inner join product_detail c on b.sku_id = c.id
+        <where>
+            <if test="productId != '' and productId != null">
+                and product_id = #{productId}
+            </if>
+        </where>
+    </select>
 
 </mapper>
