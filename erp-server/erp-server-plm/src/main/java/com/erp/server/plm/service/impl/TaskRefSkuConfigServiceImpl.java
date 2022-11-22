@@ -7,6 +7,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -47,16 +48,18 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
      */
     @Override
     public void addSkuField(String taskId, String productId, String fieldConfigType, String fieldJson) {
-        TaskRefSkuConfigEntity existEntity = getByTaskId(taskId, productId);
-        TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
-        if (existEntity != null) {
-            addEntity.setId(existEntity.getId());
+        if(StringUtils.isNotBlank(fieldConfigType)){
+            TaskRefSkuConfigEntity existEntity = getByTaskId(taskId, productId);
+            TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
+            if (existEntity != null) {
+                addEntity.setId(existEntity.getId());
+            }
+            addEntity.setFieldJson(fieldJson);
+            addEntity.setTaskId(taskId);
+            addEntity.setProductId(productId);
+            addEntity.setFieldConfigType(fieldConfigType);
+            this.saveOrUpdate(addEntity);
         }
-        addEntity.setFieldJson(fieldJson);
-        addEntity.setTaskId(taskId);
-        addEntity.setProductId(productId);
-        addEntity.setFieldConfigType(fieldConfigType);
-        this.saveOrUpdate(addEntity);
 
     }
 
