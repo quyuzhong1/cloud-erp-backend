@@ -68,7 +68,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         checkCategoryName(categoryName);
         BasicCategoryEntity found = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(found)) {
-            throw new ServiceException(ApiError.ERROR_95070);
+            throw new ServiceException(ApiError.ERROR_95072);
         }
         checkCategoryCode(dto.getCode(),found.getPid());
         LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
@@ -262,7 +262,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         if (StringUtils.isBlank(pid)) {
             //一级分类必须要填分类代码
             if (StringUtils.isBlank(code)) {
-                throw new ServiceException(ApiError.ERROR_95067);
+                throw new ServiceException(ApiError.ERROR_95069);
             } else {
                 Boolean flag = false;
                 for (int i = 65;i <= 90; i++) {
@@ -272,14 +272,14 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                     }
                 }
                 if (!flag) {
-                    throw new ServiceException(ApiError.ERROR_95069);
+                    throw new ServiceException(ApiError.ERROR_95071);
                 }
                 LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
                 queryWrapper.eq(BasicCategoryEntity::getCode, code);
                 queryWrapper.last("LIMIT 1");
                 int count = this.count(queryWrapper);
                 if (count > 0) {
-                    throw new ServiceException(ApiError.ERROR_95068);
+                    throw new ServiceException(ApiError.ERROR_95070);
                 }
             }
         }
