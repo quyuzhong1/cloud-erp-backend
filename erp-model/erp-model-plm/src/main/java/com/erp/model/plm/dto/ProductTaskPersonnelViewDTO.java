@@ -14,10 +14,10 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ProductTaskViewDTO implements Serializable {
+public class ProductTaskPersonnelViewDTO implements Serializable {
 
     /**
-     * 名称
+     * 人员名称（分组条件）
      */
     private String name;
 
@@ -50,4 +50,10 @@ public class ProductTaskViewDTO implements Serializable {
      * 任务状态
      */
     private String statusName;
+
+    /**
+     * 是否存在下级（0否，1是）
+     */
+    private Integer isSubordinate;
+
 }
