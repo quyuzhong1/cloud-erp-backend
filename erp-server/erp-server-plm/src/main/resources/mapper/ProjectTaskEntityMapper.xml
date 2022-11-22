@@ -184,7 +184,7 @@
 
     <select id="toMeTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE strpos (t.charge_id,#{userId})>0
+        FROM project_task t WHERE (strpos (charge_id,#{userId})>0 OR strpos (approval_user_id,#{userId})>0)
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -196,7 +196,7 @@
 
     <select id="toMeTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE strpos (t.charge_id,#{userId})>0
+        FROM project_task t WHERE (strpos (charge_id,#{userId})>0 OR strpos (approval_user_id,#{userId})>0)
         AND t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN

@@ -3,7 +3,9 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -20,6 +22,7 @@ public class SaveProductTemplateDTO implements Serializable {
      * 模板名称
      */
     @NotBlank(message = "模板名不能为空")
+    @Size(max=50,message ="最多50字符")
     private String templateName;
 
     /**

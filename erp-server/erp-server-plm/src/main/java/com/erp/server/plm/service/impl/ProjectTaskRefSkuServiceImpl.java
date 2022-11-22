@@ -36,20 +36,19 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Transactional
     public void addTaskSkuRef(String taskId, String productId, List<String> refSkuIdList) {
         deleteByTaskId(taskId);
-
         List<ProjectTaskRefSkuEntity> addList = new ArrayList<>(CollectionUtils.isEmpty(refSkuIdList) ? 10 : refSkuIdList.size());
-        for (String skuId : refSkuIdList) {
-            ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
-            addEntity.setProductId(productId);
-            addEntity.setTaskId(taskId);
-            addEntity.setSkuId(skuId);
-            addList.add(addEntity);
+        if (CollectionUtils.isNotEmpty(refSkuIdList)) {
+            for (String skuId : refSkuIdList) {
+                ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
+                addEntity.setProductId(productId);
+                addEntity.setTaskId(taskId);
+                addEntity.setSkuId(skuId);
+                addList.add(addEntity);
+            }
+            if (CollectionUtils.isNotEmpty(addList)) {
+                this.saveBatch(addList);
+            }
         }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            this.saveBatch(addList);
-        }
-
-
     }
 
     /**
