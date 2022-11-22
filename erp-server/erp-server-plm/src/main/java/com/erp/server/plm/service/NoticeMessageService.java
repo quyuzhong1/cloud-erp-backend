@@ -30,56 +30,56 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     List<UserNoticeNodeDTO> getUserNoticeNode(String userId);
 
 
-    Boolean newTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean newTaskNotice(String userName, List<ProjectTaskEntity> taskList,String productId);
 
     //发布任务通知
-    Boolean releaseTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean releaseTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //取消发布任务通知
-    Boolean cancelReleaseTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean cancelReleaseTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //开始任务通知
-    Boolean startTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean startTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //完成任务通知
-    Boolean finishTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean finishTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //关闭任务通知
-    Boolean closeTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean closeTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //审核任务通知
-    Boolean approvalTaskNotice(List<ProjectTaskEntity> taskList,String productId);
+    Boolean approvalTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
     //编辑任务通知
-    Boolean editTaskNotice(ProjectTaskEntity task,String productId);
+    Boolean editTaskNotice(String userName,ProjectTaskEntity task,String productId);
 
     //删除任务通知
-    Boolean deleteTaskNotice(ProjectTaskEntity task,String productId);
+    Boolean deleteTaskNotice(String userName,ProjectTaskEntity task,String productId);
 
     //新建产品发送通知
-    Boolean newProductNotice(String productId);
+    Boolean newProductNotice(String userName,String productId);
 
     //产品立项发送通知
-    Boolean projectApprovalNotice(String productId);
+    Boolean projectApprovalNotice(String userName,String productId);
 
     //启动项目 发送通知
-    Boolean startProjectNotice(String productId);
+    Boolean startProjectNotice(String userName,String productId);
 
     //开始项目 发送通知
-    Boolean beginProjectNotice(String productId);
+    Boolean beginProjectNotice(String userName,String productId);
 
     //完成项目 发送通知
-    Boolean finishProjectNotice(String productId);
+    Boolean finishProjectNotice(String userName,String productId);
 
     //归档项目 发送通知
-    Boolean archiveProjectNotice(String productId);
+    Boolean archiveProjectNotice(String userName,String productId);
 
 
     //评论提醒 发送通知
-    Boolean remindRemarkNotice(String productId,String taskId,String comment);
+    Boolean remindRemarkNotice(String userName,String productId,String taskId,String comment);
 
     //变更文档 发送通知
-    Boolean docChangesNotice(String productId,String taskId,String docName);
+    Boolean docChangesNotice(String userName,String productId,String taskId,String docName);
 
     void sendEarlyWarning();
 }

@@ -64,7 +64,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         Boolean flag = this.save(entity);
         //保存成功 发送评论提醒
         if (flag) {
-            noticeMessageService.remindRemarkNotice(taskEntity.getProductId(),taskId,dto.getComment());
+            noticeMessageService.remindRemarkNotice(loginUser.getUserName(),taskEntity.getProductId(),taskId,dto.getComment());
         }
         return flag;
     }

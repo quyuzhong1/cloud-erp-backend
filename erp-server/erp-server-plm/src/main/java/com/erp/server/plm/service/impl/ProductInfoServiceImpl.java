@@ -266,7 +266,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             //通知新建产品
-            noticeMessageService.newProductNotice(entity.getId());
+            noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -689,6 +689,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     @Transactional
     public void updateProduct(UpdateProductDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
         String productId = dto.getProductId();
         ProductInfoEntity product = this.getById(productId);
         //是否已立项
@@ -743,7 +744,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
-                noticeMessageService.projectApprovalNotice(dto.getProductId());
+                noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), product.getName());
             }
         }
@@ -775,12 +776,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             preTaskService.checkPreTaskFinish(taskIdList);
                             projectTaskService.checkSonTaskFinish(taskIdList, productId);
                             //发送项目完成通知
-                            noticeMessageService.finishProjectNotice(productId);
+                            noticeMessageService.finishProjectNotice(loginUser.getUserName(),productId);
                         }
 
                         //开始项目
                         if (ProjectStateEnum.YES_START.getState().equals(projectStatus)) {
-                            noticeMessageService.beginProjectNotice(productId);
+                            noticeMessageService.beginProjectNotice(loginUser.getUserName(),productId);
                         }
                     }
                     project.setProjectStatus(projectStatus);

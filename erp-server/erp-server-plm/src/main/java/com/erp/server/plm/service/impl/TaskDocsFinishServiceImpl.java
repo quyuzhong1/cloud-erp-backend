@@ -306,7 +306,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(taskEntity.getProductId(), taskId, fileName);
+            noticeMessageService.docChangesNotice(loginUser.getUserName(),taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
@@ -343,7 +343,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Integer taskType = taskEntity.getType();
         String approvalUserId = "";
         //如果是一般任务就是任务自定义审核人审核
-        if (TaskTypeEnum.GENERAL_TASK.equals(taskType)) {
+        if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
             approvalUserId = taskEntity.getApprovalUserId();
         } else {
             //如果是 评审任务 就是任务负责人
@@ -512,7 +512,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(taskEntity.getProductId(), taskId, fileName);
+            noticeMessageService.docChangesNotice(loginUser.getUserName(),taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增产品操作日志

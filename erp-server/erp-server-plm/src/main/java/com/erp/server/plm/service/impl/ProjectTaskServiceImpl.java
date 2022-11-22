@@ -135,6 +135,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     @Override
     public void addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList) {
+        LoginUser loginUser = commonService.getUserInfo();
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         //添加前置任务
@@ -174,7 +175,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             //异步发送通知
-            noticeMessageService.newTaskNotice(addTaskList, productId);
+            noticeMessageService.newTaskNotice(loginUser.getUserName(), addTaskList, productId);
 
             //处理前置任务
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
@@ -301,6 +302,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public void copyTaskBySys(String saveProductId, String saveProjectId) {
+        LoginUser loginUser = commonService.getUserInfo();
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         //保存除了立项阶段的 阶段名
@@ -336,7 +338,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             //异步发送通知
-            noticeMessageService.newTaskNotice(sendMessageList, saveProductId);
+            noticeMessageService.newTaskNotice(loginUser.getUserName(), sendMessageList, saveProductId);
 
             //处理前置任务
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
@@ -598,7 +600,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
             List<ProjectTaskEntity> taskList = new ArrayList<>();
             taskList.add(taskEntity);
-            noticeMessageService.newTaskNotice(taskList, dto.getProductId());
+            noticeMessageService.newTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
         }
 
         return flag;
@@ -634,6 +636,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean removeTask(String taskId) {
         ProjectTaskEntity entity = this.getById(taskId);
         Integer IsFixed = entity.getIsFixed();
+        LoginUser loginUser = commonService.getUserInfo();
         //如果是固定任务
         if (IsConstant.YES.equals(IsFixed)) {
             throw new ServiceException(ApiError.ERROR_95014);
@@ -648,7 +651,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskRefSkuConfigService.deleteByTaskId(taskId);
 
             //发送删除任务通知
-            noticeMessageService.deleteTaskNotice(entity, entity.getProductId());
+            noticeMessageService.deleteTaskNotice(loginUser.getUserName(), entity, entity.getProductId());
         }
         return flag;
     }
@@ -932,9 +935,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
+
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
+        LoginUser loginUser = commonService.getUserInfo();
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
         String phaseName = "";
         if (phaseEntity != null) {
@@ -980,7 +985,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //保存任务与SKU 关系表
             projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
 
-            noticeMessageService.editTaskNotice(taskEntity, taskEntity.getProductId());
+            noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         }
         return flag;
     }
@@ -1030,6 +1035,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        LoginUser loginUser = commonService.getUserInfo();
         //任务名
         String name = dto.getName();
         if (updateMap.containsKey("planStartTime")) {
@@ -1053,7 +1059,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String chargeName = commonService.getNameById(chargeId);
             taskEntity.setChargeName(chargeName);
         }
-        noticeMessageService.editTaskNotice(taskEntity, taskEntity.getProductId());
+        noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         return this.updateById(taskEntity);
     }
 
@@ -1903,7 +1909,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             this.updateTaskState(taskIdList, ingCode, new Date(), null);
             taskOperatorRecordService.batchSaveRecord(taskIds, TaskStateEnum.NOT_START.getCode(), ingCode, loginUser.getUid(), loginUser.getUserName(), "");
             //发送开始任务通知
-            noticeMessageService.startTaskNotice(generalTasks, dto.getProductId());
+            noticeMessageService.startTaskNotice(loginUser.getUserName(), generalTasks, dto.getProductId());
         }
 
         return true;
@@ -1940,7 +1946,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(generalTaskIds, releasedCode, TaskStateEnum.NOT_START.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
             //发布任务消息
-            noticeMessageService.releaseTaskNotice(generalTasks, dto.getProductId());
+            noticeMessageService.releaseTaskNotice(loginUser.getUserName(), generalTasks, dto.getProductId());
         }
         //审核任务
         Integer reviewTaskCode = TaskTypeEnum.REVIEW_TASK.getCode();
@@ -1999,7 +2005,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     }
                 }
                 //发送通知
-                noticeMessageService.releaseTaskNotice(noticeList, dto.getProductId());
+                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), noticeList, dto.getProductId());
                 taskOperatorRecordService.saveBatch(recordEntityList);
             }
         }
@@ -2052,7 +2058,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.TO_BE_RELEASED.getCode(), null, null);
         if (flag) {
             //发送取消发布的 通知
-            noticeMessageService.cancelReleaseTaskNotice(list, dto.getProductId());
+            noticeMessageService.cancelReleaseTaskNotice(loginUser.getUserName(), list, dto.getProductId());
             taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         }
         return flag;
@@ -2085,7 +2091,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
             //发送关闭任务通知
-            noticeMessageService.closeTaskNotice(list, dto.getProductId());
+            noticeMessageService.closeTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         }
         return flag;
 
@@ -2218,7 +2224,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //发送完成任务通知
-        noticeMessageService.finishTaskNotice(list, dto.getProductId());
+        noticeMessageService.finishTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         return true;
     }
 
@@ -2322,7 +2328,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 workflowFeign.taskPass(approveProcess);
             }
         }
-        noticeMessageService.approvalTaskNotice(list, dto.getProductId());
+        noticeMessageService.approvalTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         String keyFlag = userId + JSONObject.toJSONString(dto.getTaskDataList());
         boolean result = redisService.setNx(keyFlag, 1, 1, TimeUnit.MINUTES);
         if (!result) {
@@ -2392,7 +2398,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         taskCommentService.batchSaveTaskComment(taskCommentList);
         //发送通知
-        noticeMessageService.approvalTaskNotice(list, dto.getProductId());
+        noticeMessageService.approvalTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         return flag;
     }
 

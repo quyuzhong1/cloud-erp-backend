@@ -175,7 +175,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Transactional
     public Boolean startProject(StartProjectDTO dto) {
 
-
+        LoginUser loginUser = commonService.getUserInfo();
         //项目id
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
@@ -208,7 +208,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             String flagId = dto.getFlagId();
 
             //异步启动消息
-            noticeMessageService.startProjectNotice(productId);
+            noticeMessageService.startProjectNotice(loginUser.getUserName(), productId);
 
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
@@ -524,13 +524,14 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public boolean archive(String productId) {
+        LoginUser loginUser = commonService.getUserInfo();
         //检查项目完成情况
         checkProjectFinish(productId);
         //添加归档信息
         Boolean flag = archiveService.saveArchive(productId);
         if (flag) {
             //发送归档项目通知
-            noticeMessageService.archiveProjectNotice(productId);
+            noticeMessageService.archiveProjectNotice(loginUser.getUserName(), productId);
         }
         return flag;
     }

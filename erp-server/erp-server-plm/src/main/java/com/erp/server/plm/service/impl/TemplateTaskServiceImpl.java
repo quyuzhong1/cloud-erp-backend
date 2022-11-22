@@ -108,12 +108,13 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         queryWrapper.isNull(TemplateTaskEntity::getQuoteSysTaskId);
         return this.list(queryWrapper);
     }
+
     /**
+     * @param templateId
+     * @return List<TemplateTaskEntity>
      * @description: 获取模板下面所有的任务
      * @author Will
      * @date: 2022/11/14 14:35
-     * @param templateId
-     * @return List<TemplateTaskEntity>
      */
     @Override
     public List<TemplateTaskEntity> getAllTaskByTemplateId(String templateId) {
@@ -123,19 +124,19 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
-     * @description: 删除模板任务
-     * @author Will
-     * @date: 2022/11/14 16:16
      * @param id
      * @param templateId
      * @return Boolean
+     * @description: 删除模板任务
+     * @author Will
+     * @date: 2022/11/14 16:16
      */
     @Override
     @Transactional
     public Boolean removeTask(String id, String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskEntity::getId,id);
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateTaskEntity::getId, id);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         List<TemplateTaskEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_95058);
@@ -147,7 +148,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             throw new ServiceException(ApiError.ERROR_95014);
         }
         //判断是否是子任务
-        checkTaskIfExistPid(id,templateId);
+        checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
         //删除模板任务
@@ -155,16 +156,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
+     * @param templateId
      * @description: 根据模板id删除
      * @author Will
      * @date: 2022/11/14 16:54
-     * @param templateId
-
      */
     @Override
     public void removeByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         this.remove(queryWrapper);
     }
 
@@ -179,7 +179,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Override
     public TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto) {
 
-        TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(),dto.getTemplateId());
+        TemplateTaskEntity taskEntity = this.getByIdAndTemplateId(dto.getId(), dto.getTemplateId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
@@ -209,7 +209,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             approvalUserList.add(u);
         }
         resultDTO.setApprovalUserIds(approvalUserList);
-        resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(),dto.getTemplateId()));
+        resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(), dto.getTemplateId()));
         String businessProcessId = resultDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
@@ -218,7 +218,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             }
 
         }
-        resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(),dto.getTemplateId()));
+        resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
         return resultDTO;
     }
 
@@ -235,6 +235,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Override
     public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList) {
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
+        LoginUser loginUser = commonService.getUserInfo();
         //来源信息
         List<CopySourceDTO> sourceList = new ArrayList<>();
         List<ProjectTaskEntity> copyList = new ArrayList<>(list.size());
@@ -279,7 +280,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         Boolean flag = taskService.saveBatch(copyList);
         if (flag) {
             //发送新建任务通知
-            noticeMessageService.newTaskNotice(copyList, productId);
+            noticeMessageService.newTaskNotice(loginUser.getUserName(),copyList, productId);
         }
         return sourceList;
 
@@ -287,7 +288,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Override
     public PagingVO<TemplateTaskShowDTO> paging(PagingDTO<TemplateSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(),dto.getPageSize());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         TemplateSearchDTO params = dto.getParams();
         IPage<TemplateTaskShowDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
@@ -299,7 +300,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //验证任务名称是否已存在
         checkTemplateTaskName(dto);
         TemplateTaskEntity entity = new TemplateTaskEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
@@ -337,7 +338,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         //因为模板任务无主键，则无法用saveOrUpdate进行操作
         if (StringUtils.isBlank(entity.getId())) {
-             this.save(entity);
+            this.save(entity);
         } else {
             this.updateByIdAndTemplateId(entity);
         }
@@ -347,8 +348,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
     }
-
-
 
 
     /**
@@ -368,14 +367,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
-     * @description: 根据id和模板id查询
-     * @author Will
-     * @date: 2022/11/18 11:42
      * @param id
      * @param templateId
      * @return TemplateTaskEntity
+     * @description: 根据id和模板id查询
+     * @author Will
+     * @date: 2022/11/18 11:42
      */
-    public TemplateTaskEntity getByIdAndTemplateId(String id,String templateId) {
+    public TemplateTaskEntity getByIdAndTemplateId(String id, String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         queryWrapper.eq(TemplateTaskEntity::getId, id);
@@ -383,15 +382,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
+     * @param dto
      * @description: 验证模板任务名称是否已存在
      * @author Will
      * @date: 2022/11/14 14:05
-     * @param dto
      */
     private void checkTemplateTaskName(TemplateTaskDTO dto) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TemplateTaskEntity::getName,dto.getName());
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,dto.getTemplateId());
+        queryWrapper.eq(TemplateTaskEntity::getName, dto.getName());
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, dto.getTemplateId());
         TemplateTaskEntity entity = this.getOne(queryWrapper);
         if (Objects.nonNull(entity) && !entity.getId().equals(dto.getId())) {
             throw new ServiceException(ApiError.ERROR_95057);
@@ -399,10 +398,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     //检查子任务
-    private void checkTaskIfExistPid(String taskId,String templateId) {
+    private void checkTaskIfExistPid(String taskId, String templateId) {
         LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getPid, taskId);
-        queryWrapper.eq(TemplateTaskEntity::getTemplateId,templateId);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         Integer count = baseMapper.selectCount(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95024);
@@ -410,31 +409,30 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     }
 
     /**
+     * @param entity
      * @description: 任务编辑时需要更新字段
      * @author Will
      * @date: 2022/11/18 10:38
-     * @param entity
-
      */
     private void updateByIdAndTemplateId(TemplateTaskEntity entity) {
         LambdaUpdateWrapper<TemplateTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(TemplateTaskEntity::getId,entity.getId());
-        updateWrapper.eq(TemplateTaskEntity::getTemplateId,entity.getTemplateId());
-        updateWrapper.set(TemplateTaskEntity::getPhaseId,entity.getPhaseId());
-        updateWrapper.set(TemplateTaskEntity::getPhaseName,entity.getPhaseName());
-        updateWrapper.set(TemplateTaskEntity::getUpdateUserId,entity.getUpdateUserId());
-        updateWrapper.set(TemplateTaskEntity::getUpdateUserName,entity.getUpdateUserName());
-        updateWrapper.set(TemplateTaskEntity::getName,entity.getName());
-        updateWrapper.set(TemplateTaskEntity::getApprovalUserId,entity.getApprovalUserId());
-        updateWrapper.set(TemplateTaskEntity::getBusinessProcessId,entity.getBusinessProcessId());
-        updateWrapper.set(TemplateTaskEntity::getChargeId,entity.getChargeId());
-        updateWrapper.set(TemplateTaskEntity::getChargeName,entity.getChargeName());
-        updateWrapper.set(TemplateTaskEntity::getDescription,entity.getDescription());
-        updateWrapper.set(TemplateTaskEntity::getIsFixed,entity.getIsFixed());
-        updateWrapper.set(TemplateTaskEntity::getPlanEndTime,entity.getPlanEndTime());
-        updateWrapper.set(TemplateTaskEntity::getPlanStartTime,entity.getPlanStartTime());
-        updateWrapper.set(TemplateTaskEntity::getPriority,entity.getPriority());
-        updateWrapper.set(TemplateTaskEntity::getType,entity.getType());
+        updateWrapper.eq(TemplateTaskEntity::getId, entity.getId());
+        updateWrapper.eq(TemplateTaskEntity::getTemplateId, entity.getTemplateId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseId, entity.getPhaseId());
+        updateWrapper.set(TemplateTaskEntity::getPhaseName, entity.getPhaseName());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserId, entity.getUpdateUserId());
+        updateWrapper.set(TemplateTaskEntity::getUpdateUserName, entity.getUpdateUserName());
+        updateWrapper.set(TemplateTaskEntity::getName, entity.getName());
+        updateWrapper.set(TemplateTaskEntity::getApprovalUserId, entity.getApprovalUserId());
+        updateWrapper.set(TemplateTaskEntity::getBusinessProcessId, entity.getBusinessProcessId());
+        updateWrapper.set(TemplateTaskEntity::getChargeId, entity.getChargeId());
+        updateWrapper.set(TemplateTaskEntity::getChargeName, entity.getChargeName());
+        updateWrapper.set(TemplateTaskEntity::getDescription, entity.getDescription());
+        updateWrapper.set(TemplateTaskEntity::getIsFixed, entity.getIsFixed());
+        updateWrapper.set(TemplateTaskEntity::getPlanEndTime, entity.getPlanEndTime());
+        updateWrapper.set(TemplateTaskEntity::getPlanStartTime, entity.getPlanStartTime());
+        updateWrapper.set(TemplateTaskEntity::getPriority, entity.getPriority());
+        updateWrapper.set(TemplateTaskEntity::getType, entity.getType());
         this.update(updateWrapper);
     }
 }
