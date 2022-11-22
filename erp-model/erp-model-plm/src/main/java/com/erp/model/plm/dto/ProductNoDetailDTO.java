@@ -149,11 +149,6 @@ public class ProductNoDetailDTO {
     private BigDecimal sampleFee;
 
     /**
-     * 首批量产入库日期
-     */
-    private Date firstBatchInDate;
-
-    /**
      * 是否客户定制(0否，1是)
      */
     private Integer isCustomized;

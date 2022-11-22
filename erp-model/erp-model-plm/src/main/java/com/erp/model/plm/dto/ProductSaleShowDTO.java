@@ -104,7 +104,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 首季度目标销量
      */
-    private BigDecimal firstQuarterTargetQty;
+    private BigDecimal targetSaleQty;
 
     /**
      * 销售渠道

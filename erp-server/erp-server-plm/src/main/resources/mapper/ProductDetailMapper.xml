@@ -168,7 +168,6 @@
         pd.entrusted_develop_cost,
         pd.mold_cost,
         pd.sample_fee,
-        pd.first_batch_in_date,
         pd.is_customized
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id

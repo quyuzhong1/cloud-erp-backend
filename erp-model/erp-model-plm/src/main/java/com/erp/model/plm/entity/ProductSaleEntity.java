@@ -97,8 +97,8 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 首季度目标销量
      */
-    @TableField(value = "first_quarter_target_qty")
-    private BigDecimal firstQuarterTargetQty;
+    @TableField(value = "target_sale_qty")
+    private BigDecimal targetSaleQty;
 
     /**
      * 销售渠道
