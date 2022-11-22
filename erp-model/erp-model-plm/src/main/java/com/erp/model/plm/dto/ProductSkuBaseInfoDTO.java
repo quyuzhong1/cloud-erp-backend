@@ -74,7 +74,7 @@ public class ProductSkuBaseInfoDTO {
     private BigDecimal entrustedDevelopCost;
 
     /**
-     * 样本成本
+     * 模具成本
      */
     private BigDecimal moldCost;
 

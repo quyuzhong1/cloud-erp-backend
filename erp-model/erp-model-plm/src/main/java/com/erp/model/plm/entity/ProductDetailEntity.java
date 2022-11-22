@@ -122,7 +122,7 @@ public class ProductDetailEntity implements Serializable {
     private BigDecimal entrustedDevelopCost;
 
     /**
-     * 样本成本
+     * 模具成本
      */
     @TableField(value = "mold_cost")
     private BigDecimal moldCost;

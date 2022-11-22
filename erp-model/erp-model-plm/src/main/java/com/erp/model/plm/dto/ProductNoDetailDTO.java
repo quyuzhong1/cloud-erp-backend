@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -139,7 +138,7 @@ public class ProductNoDetailDTO {
     private BigDecimal entrustedDevelopCost;
 
     /**
-     * 样本成本
+     * 模具成本
      */
     private BigDecimal moldCost;
 
