@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         implements NoticeMessageService {
 
     @Autowired
+    @Lazy
     private CommonService commonService;
 
     @Autowired

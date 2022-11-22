@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -95,13 +96,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private TaskRefSkuConfigService taskRefSkuConfigService;
+
 
     /**
+     * @param pagingDTO:查询参数
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      * @Description 产品信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param pagingDTO:查询参数
-     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
@@ -112,11 +116,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param name:产品名称
+     * @return ProductDetailShowDTO
      * @Description 条件查询产品信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param name:产品名称
-     * @return ProductDetailShowDTO
      **/
     @Override
     public ProductDetailShowDTO getProductBy(String name, String skuNo) {
@@ -124,11 +128,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      * @Description 无规格产品信息明细
      * @Author Luo_WG
      * @Date 2022/9/22 12:19
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      **/
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailById(String productId) {
@@ -166,11 +170,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
      * @Description 多规格产品信息明细
      * @Author Luo_WG
      * @Date 2022/9/22 12:19
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
      **/
     @Override
     public ProductManyDetailDTO getManySpecDetailById(String productId) {
@@ -231,11 +235,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.String
      * @Description 保存/修改产品sku信息表数据-无规格
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
-     * @return java.lang.String
      **/
     @Override
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
@@ -254,11 +258,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productDetailList 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 保存/修改产品sku信息表数据-批量
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productDetailList 新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
@@ -279,11 +283,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 新增无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
-     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -374,11 +378,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productManySpecDTO:新增产品多规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 新增多规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:52
-     * @param productManySpecDTO:新增产品多规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -396,7 +400,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //检查sku是否重复
         for (int i = 0; i < productDetailList.size(); i++) {
             if (this.checkSkuNo(productDetailList.get(i).getSkuNo(), productDetailList.get(i).getId())) {
-                throw new ServiceException(ApiError.ERROR_95015.code,ApiError.ERROR_95015.msg + " 第"+ (i+1) +"行");
+                throw new ServiceException(ApiError.ERROR_95015.code, ApiError.ERROR_95015.msg + " 第" + (i + 1) + "行");
             }
         }
 
@@ -462,11 +466,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param variantAutoAddDTO:自动生成请求参数
+     * @return java.lang.Boolean
      * @Description 多规格自动生成
      * @Author Luo_WG
      * @Date 2022/9/26 14:54
-     * @param variantAutoAddDTO:自动生成请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -513,7 +517,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < models.size(); i++) {
                 sb.append(models.get(i).getAuthor());
-                if (i+1 < models.size()) {
+                if (i + 1 < models.size()) {
                     sb.append(",");
                 }
             }
@@ -542,22 +546,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         boolean bool = this.saveBatch(list);
-        if(!bool){
+        if (!bool) {
             throw new ServiceException(1, "新增sku明细失败！");
         }
         return this.queryByProductId(id);
     }
 
     /**
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 删除多规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param skuId:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean delete(String skuId){
+    public Boolean delete(String skuId) {
         //1.删除证书信息
         productCertificateService.removeCertificate(skuId);
         //2.删除包装信息
@@ -570,22 +574,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPurchaseService.removePurchase(skuId);
         //6.删除成本信息
         productCostService.removeCost(skuId);
-        //7.删除sku信息
+
+        //7.删除任务关联sku 信息
+        taskRefSkuConfigService.removeTaskRefSku(skuId);
+
+        //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
         return this.remove(queryWrapper);
     }
 
     /**
+     * @param id:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 根据产品id删除产品信息
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param id:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean deleteByProductId(String id){
+    public Boolean deleteByProductId(String id) {
         //删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, id);
@@ -608,29 +616,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 删除多规格sku信息-批量
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param skuId:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean deleteBatch(List<String> skuId){
+    public Boolean deleteBatch(List<String> skuId) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getId, skuId);
         return this.remove(queryWrapper);
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      * @Description 根据产品主键id查询sku明细
      * @Author Luo_WG
      * @Date 2022/9/26 18:25
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     @Override
-    public List<ProductDetailEntity> queryByProductId(String productId){
+    public List<ProductDetailEntity> queryByProductId(String productId) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         return this.list(queryWrapper);
@@ -638,26 +646,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
     /**
+     * @param skuList:sku集合
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
-     * @param skuList:sku集合
      **/
     public Boolean checkSkuNos(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getSkuNo, skuList);
         int count = this.count(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
+     * @param sku:sku
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
-     * @param sku:sku
      **/
     public Boolean checkSkuNo(String sku, String id) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
@@ -666,19 +674,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductDetailEntity::getId, id);
         }
         int count = this.count(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
-     * @Description 检查spu编号是否重复
-     * @Author Luo_WG
-     * @Date 2022/9/27 9:28
      * @param id:主键id
      * @param spuNo:spu编号
      * @return void
+     * @Description 检查spu编号是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
      **/
     public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
@@ -688,19 +696,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
         Integer count = productInfoMapper.selectCount(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
-     * @Description 检查产品名称是否重复
-     * @Author Luo_WG
-     * @Date 2022/9/27 9:28
      * @param name:产品名称
      * @param id:主键id
      * @return void
+     * @Description 检查产品名称是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
      **/
     public Boolean checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
@@ -710,18 +718,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
         Integer count = productInfoMapper.selectCount(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
+     * @param sku：sku
+     * @return com.erp.model.plm.entity.ProductDetailEntity
      * @Description 根据sku查询sku表信息
      * @Author Luo_WG
      * @Date 2022/9/28 17:04
-     * @param sku：sku
-     * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     public ProductDetailEntity getProductIdBySku(String sku) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
@@ -731,11 +739,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * 根据产品id 获取对应的sku
+     *
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2022-11-21 17:17
+     */
+    @Override
+    public List<ProductDetailEntity> getSkuListByProductId(String productId) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductDetailEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 导入无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
-     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -748,7 +771,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
-        if(StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())){
+        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
             ProductImagesDTO productImagesDTO = new ProductImagesDTO();
             productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
             productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
@@ -756,7 +779,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productImagesService.updateProductImage(productImagesDTO);
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        if(StringUtils.isBlank(productSkuBaseInfoDTO.getId())){
+        if (StringUtils.isBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
             skuId = productIdBySku.getId();
         }
@@ -830,14 +853,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 获取数据导出excel
+     *
+     * @param productSkuExcelDTO exportSkuExcelDTO
+     * @param response           response
+     * @return void
      * @Author Luo_WG
      * @Date 2022/10/10 12:09
-     * @param productSkuExcelDTO exportSkuExcelDTO
-     * @param response response
-     * @return void
      **/
     @Override
-    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
+    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {

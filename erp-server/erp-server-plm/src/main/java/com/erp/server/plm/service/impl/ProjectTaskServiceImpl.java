@@ -593,9 +593,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
 
             //保存SKU配置 字段 关系表
-      //      taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+            taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
             //保存任务与SKU 关系表
-       //     projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(),taskEntity.getProductId(),dto.getRefSkuIdList());
+            projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
             List<ProjectTaskEntity> taskList = new ArrayList<>();
             taskList.add(taskEntity);
             noticeMessageService.newTaskNotice(taskList, dto.getProductId());
@@ -644,6 +644,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
+
+            taskRefSkuConfigService.deleteByTaskId(taskId);
+
             //发送删除任务通知
             noticeMessageService.deleteTaskNotice(entity, entity.getProductId());
         }
@@ -759,12 +762,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
             if (!Objects.isNull(processEntity) &&
-                    BusinessProcessEnum.DOCS_CHANGE.getBusinessType().equals(processEntity.getBusinessType())) {
+                    BusinessProcessEnum.DOCS_CHANGE.getBusinessKey().equals(processEntity.getBusinessType())) {
                 Integer taskState = detailsDTO.getTaskState();
                 detailsDTO.setChangeDocsProcessState(TaskStateEnum.getName(taskState));
             }
         }
-
         StringBuffer planTime = new StringBuffer();
         if (detailsDTO.getPlanStartTime() != null) {
             planTime.append(DateUtil.conversionDate(detailsDTO.getPlanStartTime(), DateUtil.fmt_day));
@@ -972,6 +974,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
             preTaskService.savePreTask(taskEntity.getId(), dto.getPreTaskIdList(), dto.getProductId());
+
+            //保存SKU配置 字段 关系表
+            taskRefSkuConfigService.addSkuField(taskEntity.getId(), taskEntity.getProductId(), dto.getFieldConfigType(), dto.getFieldJson());
+            //保存任务与SKU 关系表
+            projectTaskRefSkuService.addTaskSkuRef(taskEntity.getId(), taskEntity.getProductId(), dto.getRefSkuIdList());
 
             noticeMessageService.editTaskNotice(taskEntity, taskEntity.getProductId());
         }
@@ -1942,8 +1949,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          */
         List<ProjectTaskEntity> reviewList = list.stream().filter(t -> reviewTaskCode.equals(t.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(reviewList)) {
-            String businessType = BusinessProcessEnum.REVIEW_TASK.getBusinessType();
-            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessType(businessType);
+            String businessKey = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
+            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
             //该流程是 任务负责人会签审核的
             if (!Objects.isNull(processEntity)) {
                 List<TaskOperatorRecordEntity> recordEntityList = new ArrayList<>();
@@ -1958,8 +1965,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
                         startProcess.setUserId(loginUser.getUid());
                         Map<String, Object> parameterMap = new HashMap<>();
+                        String params = processEntity.getParam();
+                        if (StringUtils.isNotBlank(params)) {
+                            String[] paramList = params.split(",");
+                            if (paramList.length == 1) {
+                                parameterMap.put(paramList[0], Arrays.asList(chargeId.split(",")));
+                            }
+                        }
                         //taskChargeIds
-                        parameterMap.put("taskChargeIdList", Arrays.asList(chargeId.split(",")));
                         startProcess.setParameterMap(parameterMap);
                         //启动一个流程
                         ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
@@ -2172,8 +2185,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                                 startProcess.setBusinessKey(processEntity.getBusinessKey());
                                 startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
                                 startProcess.setUserId(loginUser.getUid());
-                                Map<String, Object> parameterMap = new HashMap<>();
-                                parameterMap.put("memberChargeList", membersIds);
+                                Map<String, Object> parameterMap = getProcessParameter(processEntity, membersIds);
                                 startProcess.setParameterMap(parameterMap);
                                 //启动流程
                                 ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
@@ -2208,6 +2220,33 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //发送完成任务通知
         noticeMessageService.finishTaskNotice(list, dto.getProductId());
         return true;
+    }
+
+    /**
+     * 获取到流程所需要的参数
+     *
+     * @param processEntity
+     * @param approvalUserIds 审核人
+     * @return java.util.Map<java.lang.String, java.lang.Object>
+     * @author yl
+     * @date 2022-11-22 14:36
+     */
+    private Map<String, Object> getProcessParameter(BusinessProcessEntity processEntity, List<String> approvalUserIds) {
+        String param = processEntity.getParam();
+        Map<String, Object> map = new HashMap<>();
+        if (StringUtils.isNotBlank(param)) {
+            String[] paramList = param.split(",");
+            String businessKey = processEntity.getBusinessKey();
+            String generalTask = BusinessProcessEnum.GENERAL_TASK.getBusinessKey();
+            if (!generalTask.equals(businessKey)) {
+                for (int i = 0; i < approvalUserIds.size(); i++) {
+                    map.put(paramList[i], approvalUserIds.get(i));
+                }
+            } else {
+                map.put(paramList[0], approvalUserIds);
+            }
+        }
+        return map;
     }
 
 
@@ -2446,11 +2485,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
+     * @param dto
+     * @return ProductMilepostDateDTO
      * @description: 查询里程碑结束时间
      * @author Will
      * @date: 2022/11/21 9:28
-     * @param dto
-     * @return ProductMilepostDateDTO
      */
     @Override
     public ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto) {
@@ -2480,11 +2519,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
+     * @param productId
+     * @return List<ProductPhaseProgressDTO>
      * @description: 查询任务完成进度
      * @author Will
      * @date: 2022/11/21 10:39
-     * @param productId
-     * @return List<ProductPhaseProgressDTO>
      */
     @Override
     public List<ProductPhaseProgressDTO> getFinishProgressList(String productId) {
@@ -2501,7 +2540,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //结果集
         List<ProductPhaseProgressDTO> resultList = new ArrayList<>();
 
-        for (Map.Entry<String,List<ProjectTaskEntity>> entry: map.entrySet()) {
+        for (Map.Entry<String, List<ProjectTaskEntity>> entry : map.entrySet()) {
             //阶段进度对象
             ProductPhaseProgressDTO phaseDto = new ProductPhaseProgressDTO();
             //阶段名称
@@ -2517,10 +2556,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             phaseDto.setPhaseName(phaseName);
             phaseDto.setTotalQty(totalCount);
             phaseDto.setFinishQty(finishCount);
-           //添加sku任务进度
+            //添加sku任务进度
             if (CollectionUtils.isNotEmpty(refList)) {
                 Map<String, List<ProductTaskRefSkuDTO>> refMap = refList.stream().collect(Collectors.groupingBy(ProductTaskRefSkuDTO::getSkuId));
-                for (Map.Entry<String,List<ProductTaskRefSkuDTO>> refEntry: refMap.entrySet()) {
+                for (Map.Entry<String, List<ProductTaskRefSkuDTO>> refEntry : refMap.entrySet()) {
                     List<ProductTaskRefSkuDTO> refValue = refEntry.getValue();
                     //sku进度对象
                     ProductSkuProgressDTO skuDto = new ProductSkuProgressDTO();

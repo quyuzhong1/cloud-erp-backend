@@ -39,4 +39,10 @@ public class BusinessProcessDTO implements Serializable {
      * 业务属性
      */
     private String businessType;
+
+
+    /**
+     * 所需要的参数
+     */
+    private String param;
 }

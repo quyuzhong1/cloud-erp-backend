@@ -177,6 +177,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     ProductDetailEntity getProductIdBySku(String sku);
+    
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-11-21 17:13
+     * @param productId
+     * @return 
+     */
+    List<ProductDetailEntity> getSkuListByProductId(String productId);
+    
 
     /**
      * @Description 新增无规格sku信息

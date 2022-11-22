@@ -12,10 +12,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProjectInfoEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -110,6 +107,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Lazy
     private NoticeMessageService noticeMessageService;
 
+
+    @Autowired
+    private ProductDetailService productDetailService;
+
     /**
      * 项目概述
      *
@@ -173,12 +174,20 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     @Transactional
     public Boolean startProject(StartProjectDTO dto) {
+
+
         //项目id
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
         if (Objects.isNull(project)) {
             throw new ServiceException(ApiError.ERROR_95026);
         }
+        //检查是否有SKU生成
+//        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
+//        if (CollectionUtils.isEmpty(skuList)) {
+//            throw new ServiceException(ApiError.ERROR_95067);
+//        }
+
         List<String> chargeIdList = dto.getChargeIdList();
         String chargeName = commonService.getNameByIds(chargeIdList);
         //负责人id
@@ -519,7 +528,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         checkProjectFinish(productId);
         //添加归档信息
         Boolean flag = archiveService.saveArchive(productId);
-        if(flag){
+        if (flag) {
             //发送归档项目通知
             noticeMessageService.archiveProjectNotice(productId);
         }
@@ -697,7 +706,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         list.add(notStartMap);
 
 
-
         //待审核
         Map<String, Object> waitConfirmMap = new HashMap<>();
         waitConfirmMap.put("name", ProductInfoStateEnum.WAIT_APPROVAL.getName());
@@ -728,7 +736,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         finishMap.put("name", ProductInfoStateEnum.FINISH.getName());
         finishMap.put("value", finishValue);
         list.add(finishMap);
-
 
 
         Map<String, Object> approvalPassMap = new HashMap<>();

@@ -135,13 +135,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         } else {
             fileUrl = dto.getFileUrl();
         }
-
+        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         TaskDocsFinishEntity existEntity = getByDocsId(dto.getProductId(), dto.getTaskDocsId(), dto.getTaskId());
         if (existEntity != null) {
-            throw new ServiceException(ApiError.ERROR_1014);
+            finishEntity.setId(existEntity.getId());
         }
-        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
-
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
         finishEntity.setProductId(dto.getProductId());
@@ -335,7 +333,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      */
     public Boolean startChangeDocsProcess(String userId, ProjectTaskEntity taskEntity) {
         //这里需要启动一个变更流程
-        BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessType(BusinessProcessEnum.DOCS_CHANGE.getBusinessType());
+        BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
         StartProcessDTO startProcess = new StartProcessDTO();
         startProcess.setUserId(userId);
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());

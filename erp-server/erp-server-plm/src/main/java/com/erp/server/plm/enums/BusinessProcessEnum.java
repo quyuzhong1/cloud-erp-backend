@@ -9,23 +9,27 @@ package com.erp.server.plm.enums;
 public enum BusinessProcessEnum {
 
     REVIEW_TASK("reviewTask", "评审任务"),
-    DOCS_CHANGE("changeDocs", "文档变更");
+    DOCS_CHANGE("changeDocs", "文档变更"),
+    GENERAL_TASK("generalTask", "一般任务审核流程"),
+    CONCEPT_DESIGN("conceptDesign", "产品概念设计申请流程"),
+    ID_CONFIRM("idConfirm", "ID确认书流程"),
+    PROJECT_APPROVAL("projectApproval", "立项会议流程");
 
 
-    private String businessType;
+    private String businessKey;
 
     private String businessName;
 
     public void setBusinessType(String businessType) {
-        this.businessType = businessType;
+        this.businessKey = businessType;
     }
 
     public void setBusinessName(String businessName) {
         this.businessName = businessName;
     }
 
-    public String getBusinessType() {
-        return businessType;
+    public String getBusinessKey() {
+        return businessKey;
     }
 
     public String getBusinessName() {
@@ -33,7 +37,7 @@ public enum BusinessProcessEnum {
     }
 
     BusinessProcessEnum(String businessType, String businessName) {
-        this.businessType = businessType;
+        this.businessKey = businessType;
         this.businessName = businessName;
     }
 }

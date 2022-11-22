@@ -23,4 +23,8 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
 
 
     void addSkuField(String taskId, String productId, String fieldConfigType, String fieldJson);
+
+    void deleteByTaskId(String taskId);
+
+    void removeTaskRefSku(String skuId);
 }

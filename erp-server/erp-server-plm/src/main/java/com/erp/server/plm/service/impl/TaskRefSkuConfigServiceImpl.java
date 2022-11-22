@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  * @author Lambda
  * @since 2022-11-21 14:01:00
  */
-@Service("taskRefSkuConfigService")
+@Service
 public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMapper, TaskRefSkuConfigEntity> implements TaskRefSkuConfigService {
     @Resource
     private TaskRefSkuConfigMapper taskRefSkuConfigMapper;
@@ -57,6 +57,38 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         addEntity.setProductId(productId);
         addEntity.setFieldConfigType(fieldConfigType);
         this.saveOrUpdate(addEntity);
+
+    }
+
+    /**
+     * 根据任务id 删除 表字段关系
+     *
+     * @param taskId
+     * @return void
+     * @author yl
+     * @date 2022-11-21 17:52
+     */
+    @Override
+    public void deleteByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getTaskId, taskId);
+        this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 删除SKU 后需要删除SKU 关联关系
+     *
+     * @param skuId
+     * @return void
+     * @author yl
+     * @date 2022-11-22 9:21
+     */
+    @Override
+    public void removeTaskRefSku(String skuId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getSkuId, skuId);
+        this.remove(queryWrapper);
 
     }
 
