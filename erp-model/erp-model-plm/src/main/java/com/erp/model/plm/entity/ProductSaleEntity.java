@@ -95,6 +95,24 @@ public class ProductSaleEntity implements Serializable {
     private Integer saleState;
 
     /**
+     * 首季度目标销量
+     */
+    @TableField(value = "first_quarter_target_qty")
+    private BigDecimal firstQuarterTargetQty;
+
+    /**
+     * 销售渠道
+     */
+    @TableField(value = "sale_channel")
+    private String saleChannel;
+
+    /**
+     * 是否可销售(0否，1是)
+     */
+    @TableField(value = "is_may_sale")
+    private Integer isMaySale;
+
+    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)

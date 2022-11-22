@@ -102,6 +102,21 @@ public class ProductSaleShowDTO implements Serializable {
     private String dataUrl;
 
     /**
+     * 首季度目标销量
+     */
+    private BigDecimal firstQuarterTargetQty;
+
+    /**
+     * 销售渠道
+     */
+    private String saleChannel;
+
+    /**
+     * 是否可销售(0否，1是)
+     */
+    private Integer isMaySale;
+
+    /**
      * 创建时间
      */
     private Date createTime;

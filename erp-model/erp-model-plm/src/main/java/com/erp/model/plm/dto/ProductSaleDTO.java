@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -84,6 +86,25 @@ public class ProductSaleDTO implements Serializable {
      * 产品上市（含培训）资料链接
      */
     private String dataUrl;
+
+    /**
+     * 首季度目标销量
+     */
+    private BigDecimal firstQuarterTargetQty;
+
+    /**
+     * 销售渠道
+     */
+    @NotBlank(message = "销售渠道不能为空")
+    private String saleChannel;
+
+    /**
+     * 是否可销售(0否，1是)
+     */
+    @NotNull(message = "是否可销售不能为空")
+    @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
+    private Integer isMaySale;
+
 
     private static final long serialVersionUID = 1L;
 }

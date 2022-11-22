@@ -164,7 +164,12 @@
         pd.plan_listing_time,
         pd.unit_id,
         unit.name AS unit_name,
-        pd.product_state
+        pd.product_state,
+        pd.entrusted_develop_cost,
+        pd.mold_cost,
+        pd.sample_fee,
+        pd.first_batch_in_date,
+        pd.is_customized
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id

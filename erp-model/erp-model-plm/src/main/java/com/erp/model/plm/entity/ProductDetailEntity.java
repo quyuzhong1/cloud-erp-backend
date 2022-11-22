@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -115,6 +116,36 @@ public class ProductDetailEntity implements Serializable {
     private String chargeName;
 
     /**
+     * 委托开发成本
+     */
+    @TableField(value = "entrusted_develop_cost")
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 样本成本
+     */
+    @TableField(value = "mold_cost")
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    @TableField(value = "sample_fee")
+    private BigDecimal sampleFee;
+
+    /**
+     * 首批量产入库日期
+     */
+    @TableField(value = "first_batch_in_date")
+    private Date firstBatchInDate;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    @TableField(value = "is_customized")
+    private Integer isCustomized;
+
+    /**
      * 创建人名称
      */
     @TableField(value = "create_user_name")
@@ -125,6 +156,7 @@ public class ProductDetailEntity implements Serializable {
      */
     @TableField(value = "update_user_name")
     private String updateUserName;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

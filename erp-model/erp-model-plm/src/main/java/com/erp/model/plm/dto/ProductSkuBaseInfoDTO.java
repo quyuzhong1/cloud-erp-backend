@@ -4,6 +4,8 @@ import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -65,5 +67,33 @@ public class ProductSkuBaseInfoDTO {
      * 品名
      */
     private String name;
+
+    /**
+     * 委托开发成本
+     */
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 样本成本
+     */
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    private BigDecimal sampleFee;
+
+    /**
+     * 首批量产入库日期
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
+    private Date firstBatchInDate;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    @NotNull(message = "是否客户定制不能为空")
+    @StateEnumValue(intValues = {0, 1}, message = "是否客户定制值错误")
+    private Integer isCustomized;
 
 }
