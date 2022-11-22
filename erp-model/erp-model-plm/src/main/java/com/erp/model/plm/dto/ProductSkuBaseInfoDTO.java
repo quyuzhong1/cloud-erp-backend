@@ -84,12 +84,6 @@ public class ProductSkuBaseInfoDTO {
     private BigDecimal sampleFee;
 
     /**
-     * 首批量产入库日期
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private Date firstBatchInDate;
-
-    /**
      * 是否客户定制(0否，1是)
      */
     @NotNull(message = "是否客户定制不能为空")

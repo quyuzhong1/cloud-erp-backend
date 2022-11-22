@@ -134,12 +134,6 @@ public class ProductDetailEntity implements Serializable {
     private BigDecimal sampleFee;
 
     /**
-     * 首批量产入库日期
-     */
-    @TableField(value = "first_batch_in_date")
-    private Date firstBatchInDate;
-
-    /**
      * 是否客户定制(0否，1是)
      */
     @TableField(value = "is_customized")

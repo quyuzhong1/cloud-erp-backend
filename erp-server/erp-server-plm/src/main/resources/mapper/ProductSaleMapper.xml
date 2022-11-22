@@ -32,7 +32,7 @@
         sale_country,listing_time,delisting_time,
         is_finished_img,is_finished_video,sale_state,
         pd.create_time,pd.create_user_id,pd.update_time,
-        pd.update_user_id,data_url,ps.first_quarter_target_qty,
+        pd.update_user_id,data_url,ps.target_sale_qty,
         ps.sale_channel,ps.is_may_sale
     </sql>
 
