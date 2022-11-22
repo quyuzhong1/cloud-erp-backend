@@ -1,43 +1,38 @@
-package com.erp.server.sys.controller.api;
+package com.erp.server.sys.controller.feign;
 
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.server.sys.service.SysCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 系统编码
- *
  * @author Will
  * @version 1.0
- * @description:
- * @date 2022/11/21 11:33
+ * @description: TODO
+ * @date 2022/11/21 19:15
  */
 @RestController
-@RequestMapping("/sys/code")
-public class SysCodeController extends BaseController {
+@RequestMapping("sys/feign/code")
+public class SysCodeFeignController extends BaseController {
 
     @Autowired
     private SysCodeService sysCodeService;
 
-
     /**
-     * 系统编码-根据编码信息生成系统编码
+     * 根据编码信息生成对应的系统编号
      *
      * @author Will
-     * @date: 2022/11/21 12:14
+     * @date: 2022/11/21 19:18
      * @param dto
-     * @return ApiResult
+     * @return String
      */
-    @RequestMapping("/getSysCode")
-    public ApiResult getSysCode(@RequestBody @Validated SysCodeDTO dto) {
+    @PostMapping("/getSysCode")
+    public String getSysCode(@RequestBody SysCodeDTO dto) {
         String sysCode = sysCodeService.getSysCode(dto);
-        return success(sysCode);
+        return sysCode;
     }
-
 }

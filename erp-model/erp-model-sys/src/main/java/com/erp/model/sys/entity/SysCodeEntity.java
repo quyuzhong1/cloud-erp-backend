@@ -35,30 +35,6 @@ public class SysCodeEntity implements Serializable {
     private Integer num;
 
     /**
-     * 颜色编码
-     */
-    @TableField("color_code")
-    private String colorCode;
-
-    /**
-     * 销售渠道
-     */
-    @TableField("sale_channel")
-    private String saleChannel;
-
-    /**
-     * 迭代版本
-     */
-    @TableField("version")
-    private String version;
-
-    /**
-     * 客户定制
-     */
-    @TableField("category")
-    private String customized;
-
-    /**
      * 编码类型
      */
     @TableField("type")

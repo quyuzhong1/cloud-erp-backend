@@ -13,14 +13,6 @@ import com.erp.model.sys.entity.SysCodeEntity;
 public interface SysCodeService extends IService<SysCodeEntity> {
 
     /**
-     * @description: 保存系统编码数据
-     * @author Will
-     * @date: 2022/11/21 12:08
-     * @param dto
-     * @return boolean
-     */
-    boolean saveSysCode(SysCodeDTO dto);
-    /**
      * @description: 根据编码信息生成系统编码
      * @author Will
      * @date: 2022/11/21 12:15

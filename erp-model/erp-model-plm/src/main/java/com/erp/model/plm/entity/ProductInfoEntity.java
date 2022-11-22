@@ -218,6 +218,10 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "is_finished_product_dev")
     private Integer isFinishedProductDev;
 
-
+    /**
+     * 版本
+     */
+    @TableField(value = "version")
+    private String version;
 
 }

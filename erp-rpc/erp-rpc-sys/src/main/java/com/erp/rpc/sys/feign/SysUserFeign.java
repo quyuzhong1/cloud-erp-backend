@@ -67,4 +67,7 @@ public interface SysUserFeign {
     //根据userIds查询用户集合
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
+
+    @PostMapping("sys/feign/user/getSysCode")
+    String getSysCode(@RequestBody SysCodeDTO dto);
 }

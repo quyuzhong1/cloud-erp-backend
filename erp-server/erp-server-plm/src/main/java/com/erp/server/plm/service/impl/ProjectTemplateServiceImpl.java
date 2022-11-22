@@ -48,7 +48,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         List<ProjectTemplateDTO> list = paging.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(obj-> obj.setTypeName(ProjectTemplateTypeEnum.getNameByCode(obj.getType())));
+            list.forEach(obj-> obj.setTypeName( obj.getIsDefault() == 1 ? ProjectTemplateTypeEnum.getNameByCode(obj.getType()).concat("【默认】") : ProjectTemplateTypeEnum.getNameByCode(obj.getType()) ));
         }
         return new PagingVO(paging);
     }
@@ -145,7 +145,16 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95051);
         }
+        //获取登录人信息
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
         entity.setStatus(dto.getStatus());
+        entity.setUpdateUserId(uid);
+        entity.setUpdateUserName(userName);
         return this.updateById(entity);
     }
 
@@ -160,10 +169,19 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Override
     public String saveTemplate(String templateName,String productId,Integer templateType) {
         checkTemplateName(templateName);
+        //获取登录人信息
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        String uid = loginUser.getUid();
+        String userName = loginUser.getUserName();
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         entity.setName(templateName);
         entity.setProductId(productId);
         entity.setType(templateType);
+        entity.setCreateUserId(uid);
+        entity.setCreateUserName(userName);
         if (this.save(entity)) {
             return entity.getId();
         }
