@@ -1,10 +1,8 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -28,9 +26,17 @@ public class SaveBasicCategoryDTO  {
     private String name;
 
     /**
+     * 分类代码
+     */
+    @Size(min = 0, max = 1, message = "分类代码长度只能有一个字符")
+    private String code;
+
+    /**
      * 父 级id
      */
     @NotBlank(message = "父级id不能为空")
     private String pid;
+
+
 
 }

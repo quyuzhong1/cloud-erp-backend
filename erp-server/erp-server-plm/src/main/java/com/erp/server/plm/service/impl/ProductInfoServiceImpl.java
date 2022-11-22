@@ -240,7 +240,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setUpdateUserId(loginUser.getUid());
             entity.setUpdateUserName(loginUser.getUserName());
         }
-
+        if (entity.getType().intValue() == 1) {
+            entity.setVersion(1);
+        } else {
+            //查询关联产品版本
+            ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
+            entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+        }
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
@@ -275,7 +281,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         return flag;
     }
-
 
     /**
      * 修改产品的分类

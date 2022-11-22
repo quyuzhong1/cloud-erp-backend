@@ -38,6 +38,9 @@ public class UpdateBasicNameDTO {
     @NotBlank(message = "名称不能为空")
     private String name;
 
-
+    /**
+     * 分类代码
+     */
+    private String code;
 
 }

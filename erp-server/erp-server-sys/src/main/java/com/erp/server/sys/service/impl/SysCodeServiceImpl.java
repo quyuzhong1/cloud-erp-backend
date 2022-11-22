@@ -9,8 +9,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.web.service.RedisLock;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.LoginUser;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
+import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysCodeMapper;
 import com.erp.server.sys.service.SysCodeService;
 import org.springframework.stereotype.Service;
@@ -45,13 +47,12 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
             throw new ServiceException(ApiError.ERROR_9026);
         }
-
         try {
             //生成单号
             SysCodeDTO codeDto = getOrSaveSysCode(dto);
             StringBuffer sysCode = new StringBuffer();
             sysCode.append(codeDto.getCategory())
-                    .append(codeDto.getNum())
+                    .append(String.format("%03d",codeDto.getNum()))
                     .append(codeDto.getColorCode())
                     .append(codeDto.getSaleChannel())
                     .append(codeDto.getVersion())
@@ -79,6 +80,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         LambdaQueryWrapper<SysCodeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysCodeEntity::getType,dto.getType());
         queryWrapper.eq(SysCodeEntity::getCategory,dto.getCategory());
+        queryWrapper.last("LIMIT 1");
         SysCodeEntity sysCodeEntity = this.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(sysCodeEntity)) {
             dto.setNum(sysCodeEntity.getNum());
@@ -86,9 +88,14 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             return dto;
         }
         SysCodeEntity entity = new SysCodeEntity();
+        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        if (ObjectUtils.isNotEmpty(loginUser)) {
+            entity.setCreateUserId(loginUser.getUid());
+            entity.setCreateUserName(loginUser.getUserName());
+        }
         BeanMapperUtils.copy(dto,entity);
         boolean flag = this.save(entity);
-        dto.setNum(entity.getNum());
+        dto.setNum(1);
         dto.setId(entity.getId());
         if (!flag) {
             throw new ServiceException(ApiError.Default);

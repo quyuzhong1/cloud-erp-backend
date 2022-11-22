@@ -68,6 +68,6 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 
-    @PostMapping("sys/feign/user/getSysCode")
+    @PostMapping("sys/feign/code/getSysCode")
     String getSysCode(@RequestBody SysCodeDTO dto);
 }

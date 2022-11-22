@@ -3,21 +3,18 @@ package com.erp.server.plm.controller;
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
-import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
-import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -31,7 +28,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 产品管理
@@ -683,4 +681,5 @@ public class ProductDetailController extends BaseController {
         List<ProductDetailEntity> resultList = productDetailService.getSkuListByProductId(dto.getId());
         return success(resultList);
     }
+
 }

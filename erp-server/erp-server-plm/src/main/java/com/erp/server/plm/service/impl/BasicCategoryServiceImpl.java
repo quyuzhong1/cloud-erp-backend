@@ -2,8 +2,11 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicCategoryDTO;
@@ -44,6 +47,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName);
+        checkCategoryCode(dto.getCode(),dto.getPid());
         BasicCategoryEntity entity = new BasicCategoryEntity();
         entity.setPid(dto.getPid());
         entity.setName(categoryName);
@@ -62,6 +66,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
         checkCategoryName(categoryName);
+        BasicCategoryEntity found = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(found)) {
+            throw new ServiceException(ApiError.ERROR_95070);
+        }
+        checkCategoryCode(dto.getCode(),found.getPid());
         LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BasicCategoryEntity::getName, categoryName);
         updateWrapper.eq(BasicCategoryEntity::getId, dto.getId());
@@ -128,6 +137,23 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
 
         return resultList;
+    }
+
+    /**
+     * @description: 根据产品分类id获取最高级分类
+     * @author Will
+     * @date: 2022/11/22 12:22
+     * @param id
+     * @return String
+     */
+    @Override
+    public void getBestEntity(String id,BasicCategoryEntity bestEntity) {
+        BasicCategoryEntity entity = this.getById(id);
+        if (entity.getPid().equals("0")) {
+            BeanMapperUtils.copy(entity,bestEntity);
+            return;
+        }
+         getBestEntity(entity.getPid(),bestEntity);
     }
 
     /**
@@ -205,6 +231,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     }
 
 
+
+
     /**
      * 检查分类名是否重复
      *
@@ -222,6 +250,41 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             throw new ServiceException(ApiError.ERROR_95000);
         }
     }
+
+    /**
+     * @description: 分类编码信息验证
+     * @author Will
+     * @date: 2022/11/22 12:11
+     * @param code
+     * @param pid
+     */
+    private void checkCategoryCode(String code,String pid) {
+        if (StringUtils.isBlank(pid)) {
+            //一级分类必须要填分类代码
+            if (StringUtils.isBlank(code)) {
+                throw new ServiceException(ApiError.ERROR_95067);
+            } else {
+                Boolean flag = false;
+                for (int i = 65;i <= 90; i++) {
+                    char c = (char) (i);
+                    if ( code.equals(String.valueOf(c)) ) {
+                       flag = true;
+                    }
+                }
+                if (!flag) {
+                    throw new ServiceException(ApiError.ERROR_95069);
+                }
+                LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+                queryWrapper.eq(BasicCategoryEntity::getCode, code);
+                queryWrapper.last("LIMIT 1");
+                int count = this.count(queryWrapper);
+                if (count > 0) {
+                    throw new ServiceException(ApiError.ERROR_95068);
+                }
+            }
+        }
+    }
+
 
     /**
      * @param categoryName：类别名称

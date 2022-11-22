@@ -1,17 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
-import com.erp.common.vo.LoginUser;
-import com.erp.model.plm.dto.ProductVariantPropertyDTO;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
-import com.erp.model.plm.entity.ProductVariantPropertyEntity;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductVariantOptionMapper;
 import com.erp.server.plm.service.ProductVariantOptionService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -74,6 +67,13 @@ public class ProductVariantOptionServiceImpl extends ServiceImpl<ProductVariantO
         LambdaQueryWrapper<ProductVariantOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantOptionEntity::getProductId, productId);
         return this.remove(queryWrapper);
+    }
+
+    @Override
+    public List<ProductVariantOptionEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<ProductVariantOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductVariantOptionEntity::getProductId, productId);
+        return this.list(queryWrapper);
     }
 }
 

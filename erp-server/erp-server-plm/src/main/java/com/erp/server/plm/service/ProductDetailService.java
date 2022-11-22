@@ -1,15 +1,11 @@
 package com.erp.server.plm.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -206,6 +202,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return void
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
-    
-
+    /**
+     * @description: 生成skuNo
+     * @author Will
+     * @date: 2022/11/22 14:19
+     * @param productId
+     * @param variantColorProperty
+     * @return String
+     */
+    String getSkuNo(String productId,String variantColorProperty);
 }

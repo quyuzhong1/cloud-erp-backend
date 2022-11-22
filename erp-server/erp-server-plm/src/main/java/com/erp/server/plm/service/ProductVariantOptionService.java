@@ -46,4 +46,12 @@ public interface ProductVariantOptionService extends IService<ProductVariantOpti
      **/
     Boolean deleteByProductId(String productId);
 
+    /**
+     * @description:
+     * @author Will
+     * @date: 2022/11/22 11:10
+     * @param productId
+     * @return List<ProductVariantOptionEntity>
+     */
+    List<ProductVariantOptionEntity> getByProductId(String productId);
 }

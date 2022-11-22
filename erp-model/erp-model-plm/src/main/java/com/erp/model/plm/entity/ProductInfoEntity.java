@@ -222,6 +222,6 @@ public class ProductInfoEntity implements Serializable {
      * 版本
      */
     @TableField(value = "version")
-    private String version;
+    private Integer version;
 
 }
