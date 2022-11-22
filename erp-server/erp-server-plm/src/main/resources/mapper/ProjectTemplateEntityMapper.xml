@@ -19,7 +19,7 @@
 
     <select id="getStartItemSource" resultType="com.erp.model.plm.dto.StartItemSourceDTO">
          SELECT id AS flagId,name AS sourceName,${sourceType}  AS sourceType FROM project_template
-         where  type = 2 and is_default = 0
+         where  type = 2 and is_default = 0 and status = 1
     </select>
 
     <!-- 模板管理列表查询 -->

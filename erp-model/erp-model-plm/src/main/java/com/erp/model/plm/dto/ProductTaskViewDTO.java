@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author Will
@@ -14,4 +15,39 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class ProductTaskViewDTO implements Serializable {
+
+    /**
+     * 名称
+     */
+    private String name;
+
+    /**
+     * 任务名称
+     */
+    private String taskName;
+
+    /**
+     * 计划开始日期
+     */
+    private Date planStartTime;
+
+    /**
+     * 计划结束日期
+     */
+    private Date planEndTime;
+
+    /**
+     * 实际开始日期
+     */
+    private Date realityStartTime;
+
+    /**
+     * 实际结束日期
+     */
+    private Date realityEndTime;
+
+    /**
+     * 任务状态
+     */
+    private String statusName;
 }
