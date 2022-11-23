@@ -55,6 +55,11 @@ public class ProductInfoDTO {
     private String chargeId;
 
     /**
+     * 产品等级id
+     */
+    private String gradeId;
+
+    /**
      * 产品等级
      */
     private String grade;

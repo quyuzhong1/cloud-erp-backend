@@ -303,7 +303,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
-        productSpuBaseInfoDTO.setGrade("");
+
+        //产品等级
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productSpuBaseInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productSpuBaseInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
+
         //1.修改产品表 主表信息
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
@@ -403,8 +412,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
-        productInfoDTO.setGrade("");
-
+        //产品等级
+        if (StringUtils.isNotBlank(productInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
             productInfoService.updateSpec(productInfoDTO);
         }

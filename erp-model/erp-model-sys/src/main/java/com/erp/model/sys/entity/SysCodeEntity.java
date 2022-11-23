@@ -16,6 +16,8 @@ import java.util.Date;
 @TableName("sys_code")
 public class SysCodeEntity implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * 主键id
      */

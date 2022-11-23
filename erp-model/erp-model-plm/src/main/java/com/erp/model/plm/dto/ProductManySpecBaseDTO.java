@@ -55,6 +55,12 @@ public class ProductManySpecBaseDTO {
      */
     private String propertyId;
 
+
+    /**
+     * 产品等级id
+     */
+    private String gradeId;
+
     /**
      * 产品等级
      */
