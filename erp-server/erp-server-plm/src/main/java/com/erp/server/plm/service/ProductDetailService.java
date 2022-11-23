@@ -202,13 +202,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return void
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
-    /**
-     * @description: 生成skuNo
-     * @author Will
-     * @date: 2022/11/22 14:19
-     * @param productId
-     * @param variantColorProperty
-     * @return String
-     */
-    String getSkuNo(String productId,String variantColorProperty);
+
 }
