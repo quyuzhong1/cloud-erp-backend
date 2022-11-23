@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 任务sku配置关系表(TaskRefSkuConfig)表服务实现类
@@ -48,7 +49,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
      */
     @Override
     public void addSkuField(String taskId, String productId, String fieldConfigType, String fieldJson) {
-        if(StringUtils.isNotBlank(fieldConfigType)){
+        if (StringUtils.isNotBlank(fieldConfigType)) {
             TaskRefSkuConfigEntity existEntity = getByTaskId(taskId, productId);
             TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
             if (existEntity != null) {
@@ -93,6 +94,21 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         queryWrapper.eq(TaskRefSkuConfigEntity::getSkuId, skuId);
         this.remove(queryWrapper);
 
+    }
+
+    /**
+     * 根据任务id 集合 获取对应关系
+     *
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.entity.TaskRefSkuConfigEntity>
+     * @author yl
+     * @date 2022-11-23 11:48
+     */
+    @Override
+    public List<TaskRefSkuConfigEntity> getByTaskIds(List<String> taskIds) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TaskRefSkuConfigEntity::getTaskId, taskIds);
+        return this.list(queryWrapper);
     }
 
 

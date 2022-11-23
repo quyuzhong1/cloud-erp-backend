@@ -270,7 +270,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean newTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean newTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -362,7 +362,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean releaseTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean releaseTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -377,56 +377,93 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
-            //消息通知记录
+            String productChargeId = product.getProductChargeId();
+            Date endTime = product.getEndTime();
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeUserIds);
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK_OTHER, userName, taskList.size());
+            String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+            Boolean result = batchSendFsMessage(unionIds, messageContent, projectContent);
+            if (result) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(productChargeId);
+                    recordEntity.setMessageContent(messageContent);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(flag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setPlanEndTime(endTime);
+                    recordEntity.setProductId(product.getProductId());
+                    recordEntity.setProductName(product.getName());
+                    recordEntity.setTaskId("");
+                    recordEntity.setTaskName("");
+                    recordEntity.setChargeName("");
+                    messageRecordList.add(recordEntity);
+                }
+            }
+            //通知的任务负责人
+            List<String> noticeTaskChargeIdList = new ArrayList<>();
+            //消息通知记录
             for (ProjectTaskEntity task : taskList) {
                 //所有的通知用户人
-                List<String> allNoticeUserIds = new ArrayList<>();
                 String chargeId = task.getChargeId();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
                     List<String> chargeIdList = Arrays.asList(chargeId.split(","));
-                    allNoticeUserIds.addAll(noticeUserIds);
-                    allNoticeUserIds.addAll(chargeIdList);
-                } else {
-                    allNoticeUserIds = noticeUserIds;
+                    noticeTaskChargeIdList.addAll(chargeIdList);
                 }
-                //排除关闭通知的人员 并去重
-                List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
-                List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
-                FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
-                List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
-                sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName);
-                String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
-                Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
-                sendMessage.setContentMap(contentMap);
-                //发送消息的结果
-                Boolean sendResult = fsService.batchSendMessage(sendMessage);
-                //当发送成功后
-                if (sendResult) {
-                    List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
-                    for (String userId : acceptUserIds) {
-                        NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
-                        recordEntity.setChargeId(task.getChargeId());
-                        recordEntity.setMessageContent(messageContent);
-                        recordEntity.setNoticeMessageId(noticeMessageId);
-                        recordEntity.setNoticeNode(flag);
-                        recordEntity.setNoticeUserId(userId);
-                        recordEntity.setPlanEndTime(task.getPlanEndTime());
-                        recordEntity.setProductId(product.getProductId());
-                        recordEntity.setProductName(product.getName());
-                        recordEntity.setTaskId(task.getId());
-                        recordEntity.setTaskName(task.getName());
-                        recordEntity.setChargeName(task.getChargeName());
-                        messageRecordList.add(recordEntity);
-                    }
+            }
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeTaskChargeIdList);
+            List<ThirdUnionDTO> noticeTaskChargeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            List<String> taskChargeUnionIds = noticeTaskChargeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            String taskChargeMessageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName, taskList.size());
+            String taskChargeProjectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+            //发送消息的结果
+            Boolean sendResult = batchSendFsMessage(taskChargeUnionIds, taskChargeMessageContent, taskChargeProjectContent);
+            //当发送成功后
+            if (sendResult) {
+                List<String> acceptUserIds = noticeTaskChargeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(productChargeId);
+                    recordEntity.setMessageContent(taskChargeMessageContent);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(flag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setPlanEndTime(endTime);
+                    recordEntity.setProductId(product.getProductId());
+                    recordEntity.setProductName(product.getName());
+                    recordEntity.setTaskId("");
+                    recordEntity.setTaskName("");
+                    recordEntity.setChargeName("");
+                    messageRecordList.add(recordEntity);
+                }
 
-                }
             }
             //保存发送消息通知记录
             noticeMessageRecordService.saveBatch(messageRecordList);
         }
         return true;
+    }
+
+
+    /**
+     * 批量发送信息
+     *
+     * @param
+     * @return boolean
+     * @author yl
+     * @date 2022-11-23 12:26
+     */
+    public boolean batchSendFsMessage(List<String> noticeUnionList, String messageContent, String projectContent) {
+        FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+        sendMessage.setUnionIds(noticeUnionList);
+        Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
+        //发送消息的结果
+        Boolean sendResult = fsService.batchSendMessage(sendMessage);
+        return sendResult;
     }
 
     /**
@@ -439,7 +476,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean cancelReleaseTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean cancelReleaseTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -473,7 +510,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.CANCEL_RELEASE,userName);
+                String messageContent = String.format(NoticeMessageConstant.CANCEL_RELEASE, userName);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -517,7 +554,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean startTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean startTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -551,7 +588,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.START_TASK,userName);
+                String messageContent = String.format(NoticeMessageConstant.START_TASK, userName);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -594,7 +631,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean finishTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean finishTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -642,7 +679,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK,userName);
+                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, userName);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -685,7 +722,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean closeTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean closeTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -719,7 +756,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.CLOSE_TASK,userName);
+                String messageContent = String.format(NoticeMessageConstant.CLOSE_TASK, userName);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -763,7 +800,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean approvalTaskNotice(String userName,List<ProjectTaskEntity> taskList, String productId) {
+    public Boolean approvalTaskNotice(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -806,7 +843,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     approvalResult = "审核不通过";
                 }
 
-                String messageContent = String.format(NoticeMessageConstant.APPROVAL_TASK,userName, approvalResult);
+                String messageContent = String.format(NoticeMessageConstant.APPROVAL_TASK, userName, approvalResult);
                 String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -850,7 +887,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean editTaskNotice(String userName,ProjectTaskEntity task, String productId) {
+    public Boolean editTaskNotice(String userName, ProjectTaskEntity task, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -883,7 +920,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.EDIT_TASK,userName,task.getName());
+            String messageContent = String.format(NoticeMessageConstant.EDIT_TASK, userName, task.getName());
             String projectContent = getProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -926,7 +963,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean deleteTaskNotice(String userName,ProjectTaskEntity task, String productId) {
+    public Boolean deleteTaskNotice(String userName, ProjectTaskEntity task, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1002,7 +1039,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean newProductNotice(String userName,String productId) {
+    public Boolean newProductNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1076,7 +1113,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean projectApprovalNotice(String userName,String productId) {
+    public Boolean projectApprovalNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1149,7 +1186,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean startProjectNotice(String userName,String productId) {
+    public Boolean startProjectNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1180,7 +1217,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.START_PROJECT,userName,product.getName());
+            String messageContent = String.format(NoticeMessageConstant.START_PROJECT, userName, product.getName());
             String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -1222,7 +1259,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean beginProjectNotice(String userName,String productId) {
+    public Boolean beginProjectNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1253,7 +1290,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.BEGIN_PROJECT,userName,product.getName());
+            String messageContent = String.format(NoticeMessageConstant.BEGIN_PROJECT, userName, product.getName());
             String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -1295,7 +1332,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean finishProjectNotice(String userName,String productId) {
+    public Boolean finishProjectNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1326,7 +1363,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.FINISH_PROJECT,  userName,product.getName());
+            String messageContent = String.format(NoticeMessageConstant.FINISH_PROJECT, userName, product.getName());
             String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -1367,7 +1404,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean archiveProjectNotice(String userName,String productId) {
+    public Boolean archiveProjectNotice(String userName, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1398,7 +1435,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
-            String messageContent = String.format(NoticeMessageConstant.ARCHIVE_PROJECT,userName, product.getName());
+            String messageContent = String.format(NoticeMessageConstant.ARCHIVE_PROJECT, userName, product.getName());
             String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
             Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
             sendMessage.setContentMap(contentMap);
@@ -1439,7 +1476,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean remindRemarkNotice(String userName,String productId, String taskId, String comment) {
+    public Boolean remindRemarkNotice(String userName, String productId, String taskId, String comment) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -1602,7 +1639,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean docChangesNotice(String userName,String productId, String taskId, String docName) {
+    public Boolean docChangesNotice(String userName, String productId, String taskId, String docName) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;

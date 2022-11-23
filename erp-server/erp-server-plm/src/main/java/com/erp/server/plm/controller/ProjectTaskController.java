@@ -230,12 +230,12 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/publishTask")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "charge_id",
-//            menuCode = "plm:task:tasks:status",
-//            serviceClass = ProjectTaskService.class,
-//            keyIdName = "taskIdList"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:tasks:status",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
     public ApiResult publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
         Boolean result = taskService.publishTask(dto);
         return result == true ? success() : failure();

@@ -20,11 +20,11 @@ public enum NoticeEnum {
     REMIND_REMARK("remindRemark", "评论提醒"),
     EARLY_WARNING("earlyWarning","预警提醒"),
     NEW_PRODUCT("newProduct","新建产品"),
-    PROJECT_APPROVAL("projectApproval ","产品立项"),
-    START_PROJECT ("startProject ","启动项目"),
+    PROJECT_APPROVAL("projectApproval","产品立项"),
+    START_PROJECT ("startProject","启动项目"),
     BEGIN_PROJECT("beginProject","开始项目"),
-    FINISH_PROJECT("finishProject ","完成项目"),
-    ARCHIVE_PROJECT("archiveProject  ","归档项目");
+    FINISH_PROJECT("finishProject","完成项目"),
+    ARCHIVE_PROJECT("archiveProject","归档项目");
 
 
 

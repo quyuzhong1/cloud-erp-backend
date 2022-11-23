@@ -12,7 +12,10 @@ public interface NoticeMessageConstant {
     String NEW_TASK = "状态操作: [%s],新建了一条任务";
 
     //发布任务
-    String RELEASE_TASK = "状态操作: [%s],分配了1条任务给你，请及时查看";
+    String RELEASE_TASK = "状态操作: [%s],分配了%s条任务给你，请及时查看";
+
+    //发布任务
+    String RELEASE_TASK_OTHER = "状态操作: [%s]发布了%s条任务";
 
     //取消发布
     String CANCEL_RELEASE = "状态操作: [%s],将状态由【已发布】变更为【待发布】";

@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 
+import java.util.List;
+
 /**
  * 任务sku配置关系表(TaskRefSkuConfig)表服务接口
  *
@@ -27,4 +29,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     void deleteByTaskId(String taskId);
 
     void removeTaskRefSku(String skuId);
+
+    List<TaskRefSkuConfigEntity> getByTaskIds(List<String> sysTaskIds);
 }

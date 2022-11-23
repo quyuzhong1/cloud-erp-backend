@@ -56,6 +56,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private PreTaskService preTaskService;
 
+    @Autowired
+    private TaskRefSkuConfigService taskRefSkuConfigService;
+
 
     @Override
     @Transactional
@@ -99,6 +102,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
             //保存前置任务
             preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
+
+            //保存SKU配置 字段 关系表
+            taskRefSkuConfigService.addSkuField(entity.getId(),"", dto.getFieldConfigType(), dto.getFieldJson());
+
         }
         return flag;
     }
@@ -236,7 +243,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         String approvalUserId = sysEntity.getApprovalUserId();
         List<String> approvalUserIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(approvalUserId)&&!approvalUserId.toLowerCase().equals("null")) {
+        if (StringUtils.isNotBlank(approvalUserId) && !approvalUserId.toLowerCase().equals("null")) {
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();

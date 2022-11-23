@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -179,6 +180,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
             //处理前置任务
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
+            //处理sku 关系
+            List<TaskRefSkuConfigEntity> sysTaskRefSkuConfigList = taskRefSkuConfigService.getByTaskIds(sysTaskIds);
+            List<TaskRefSkuConfigEntity> copyRefConfigList = new ArrayList<>(sysTaskRefSkuConfigList.size());
+            for (TaskRefSkuConfigEntity item : sysTaskRefSkuConfigList) {
+                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(item.getTaskId()))
+                        .findFirst().orElse(null);
+                if (source != null) {
+                    TaskRefSkuConfigEntity addRefConfig = new TaskRefSkuConfigEntity();
+                    addRefConfig.setTaskId(source.getNewCreateId());
+                    addRefConfig.setFieldConfigType(item.getFieldConfigType());
+                    addRefConfig.setFieldJson(item.getFieldJson());
+                    copyRefConfigList.add(addRefConfig);
+                }
+
+            }
+            taskRefSkuConfigService.saveBatch(copyRefConfigList);
 
             List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
             //以系统任务的id 分组
@@ -2314,7 +2331,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
-
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
@@ -2323,6 +2339,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             comment = "";
         }
 
+        String keyFlag = userId + JSONObject.toJSONString(dto.getTaskDataList());
+        boolean result = redisService.setNx(keyFlag, 1, 1, TimeUnit.MINUTES);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1014);
+        }
         //这里需要去 调用审核通过的工作流
         for (ProjectTaskEntity item : list) {
             TaskHandleDataDTO handleData = taskDataList.stream().filter(d -> d.getProcessId().equals(item.getProcessId())).findFirst().orElse(null);
@@ -2332,15 +2353,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 approveProcess.setProcessInstanceId(item.getProcessId());
                 approveProcess.setUserId(userId);
                 approveProcess.setComment(comment);
-                workflowFeign.taskPass(approveProcess);
+                CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
+                    return workflowFeign.taskPass(approveProcess);
+                });
+
             }
         }
         noticeMessageService.approvalTaskNotice(loginUser.getUserName(), list, dto.getProductId());
-        String keyFlag = userId + JSONObject.toJSONString(dto.getTaskDataList());
-        boolean result = redisService.setNx(keyFlag, 1, 1, TimeUnit.MINUTES);
-        if (!result) {
-            throw new ServiceException(ApiError.ERROR_1014);
-        }
+
         return true;
     }
 
