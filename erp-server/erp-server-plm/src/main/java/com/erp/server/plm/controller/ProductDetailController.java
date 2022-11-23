@@ -682,4 +682,5 @@ public class ProductDetailController extends BaseController {
         return success(resultList);
     }
 
+
 }

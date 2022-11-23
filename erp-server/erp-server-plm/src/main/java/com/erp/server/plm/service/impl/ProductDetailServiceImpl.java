@@ -898,6 +898,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+    /**
+     * @description: 根据产品id和颜色生产sku编号
+     * @author Will
+     * @date: 2022/11/23 10:01
+     * @param productId
+     * @param variantColorProperty
+     * @return String
+     */
     @Override
     public String getSkuNo(String productId,String variantColorProperty){
         //产品信息
@@ -918,9 +926,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         dto.setColorCode(VariantColorEnum.getCode(variantColorProperty));
         dto.setType(SysNoEnum.SKU_NO.getCode());
         //产品销售渠道
-        dto.setSaleChannel("CN");
-        //产品是否是客户定制，展示还未加是否客户定制字段
-        dto.setCustomized("DZ");
+        if (StringUtils.isBlank(entity.getSalesChannel())) {
+            throw new ServiceException(ApiError.ERROR_95073);
+        }
+        dto.setSalesChannel(entity.getSalesChannel());
+        //产品是否是客户定制
+        if (entity.getIsCustomized().equals(IsConstant.YES)) {
+            dto.setCustomized("DZ");
+        } else {
+            dto.setCustomized("");
+        }
         //产品的版本 1-9，A-Z
         int version = entity.getVersion().intValue();
         if (9 >= version ) {

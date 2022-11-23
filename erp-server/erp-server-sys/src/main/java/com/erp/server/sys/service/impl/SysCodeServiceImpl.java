@@ -54,7 +54,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             sysCode.append(codeDto.getCategory())
                     .append(String.format("%03d",codeDto.getNum()))
                     .append(codeDto.getColorCode())
-                    .append(codeDto.getSaleChannel())
+                    .append(codeDto.getSalesChannel())
                     .append(codeDto.getVersion())
                     .append(codeDto.getCustomized());
             if (StringUtils.isBlank(sysCode)) {
@@ -113,7 +113,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
     private void updateNumByCode (String id,Integer num) {
         LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(SysCodeEntity::getId,id);
-        updateWrapper.set(SysCodeEntity::getNum,num);
+        updateWrapper.set(SysCodeEntity::getNum,num + 1);
         this.update(updateWrapper);
     }
 

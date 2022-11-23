@@ -38,7 +38,7 @@ public class SysCodeDTO implements Serializable {
     /**
      * 销售渠道
      */
-    private String saleChannel;
+    private String salesChannel;
 
     /**
      * 迭代版本
