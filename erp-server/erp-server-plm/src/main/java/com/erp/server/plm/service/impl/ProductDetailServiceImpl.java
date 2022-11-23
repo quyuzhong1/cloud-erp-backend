@@ -534,28 +534,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             varianList.add(sb.toString());
         }
-
+        //过滤掉重复的变体属性
+        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
         //把变体属性放入实体类
         List<ProductDetailEntity> list = new ArrayList<>();
         for (String req : varianList) {
+            //判断是否已经存在该变体属性
+            long count = detailEntityList.stream().filter(obj -> req.equals(obj.getVariantProperty())).count();
+            if (count > 0) {
+                continue;
+            }
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
-            productDetailEntity.setSkuNo("");
+            //获取颜色
+            List<String> split = Arrays.asList(req.split(","));
+            String  variantColor= Arrays.stream(VariantColorEnum.values()).filter(obj-> split.contains(obj.getName())).map(VariantColorEnum::getName).findAny().orElse(null);
+            if (StringUtils.isBlank(variantColor)) {
+                throw new ServiceException(ApiError.ERROR_95074);
+            }
+            //生成sku编码
+            String skuNo = this.getSkuNo(productSpuBaseInfoDTO.getId(), variantColor);
+            productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
             list.add(productDetailEntity);
-        }
-
-        //过滤掉重复的变体属性
-        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
-        for (ProductDetailEntity req : detailEntityList) {
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i).getVariantProperty().equals(req.getVariantProperty())) {
-                    list.remove(i);
-                }
-            }
         }
 
         boolean bool = this.saveBatch(list);
