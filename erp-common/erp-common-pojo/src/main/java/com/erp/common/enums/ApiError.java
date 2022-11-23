@@ -162,7 +162,7 @@ public enum ApiError implements Serializable {
     ERROR_95072(95072, "产品分类不存在"),
     ERROR_95073(95073, "产品销售渠道不能为空"),
     ERROR_95074(95074, "sku变体颜色不能为空"),
-
+    ERROR_95075(95075, "任务视图导出类型必填"),
 
     ERROR_end(1000000, "系统错误");
 

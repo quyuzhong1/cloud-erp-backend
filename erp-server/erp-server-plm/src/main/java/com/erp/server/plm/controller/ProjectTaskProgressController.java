@@ -6,7 +6,7 @@ import com.erp.model.plm.dto.ProductMilepostDTO;
 import com.erp.model.plm.dto.ProductMilepostDateDTO;
 import com.erp.model.plm.dto.ProductMilepostParamDTO;
 import com.erp.model.plm.dto.ProductPhaseProgressDTO;
-import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.ProjectTaskProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +25,7 @@ import java.util.List;
 public class ProjectTaskProgressController extends BaseController {
 
     @Autowired
-    private ProjectTaskService projectTaskService;
+    private ProjectTaskProgressService projectTaskProgressService;
 
     /**
      * 任务进度-产品里程碑
@@ -37,7 +37,7 @@ public class ProjectTaskProgressController extends BaseController {
      */
     @GetMapping("/milepostList")
     public ApiResult<List<ProductMilepostDTO>> milepostList(@RequestParam("productId") String productId) {
-        List<ProductMilepostDTO> list = projectTaskService.getMilepostTaskListByProductId(productId);
+        List<ProductMilepostDTO> list = projectTaskProgressService.getMilepostTaskListByProductId(productId);
         return success(list);
     }
 
@@ -51,7 +51,7 @@ public class ProjectTaskProgressController extends BaseController {
      */
     @PostMapping("/getMilepostDate")
     public ApiResult<ProductMilepostDateDTO> getMilepostDate(@RequestBody @Validated ProductMilepostParamDTO dto) {
-        ProductMilepostDateDTO dateDto = projectTaskService.getMilepostDate(dto);
+        ProductMilepostDateDTO dateDto = projectTaskProgressService.getMilepostDate(dto);
         return success(dateDto);
     }
 
@@ -66,7 +66,7 @@ public class ProjectTaskProgressController extends BaseController {
      */
     @GetMapping("/getFinishProgressList")
     public ApiResult<List<ProductPhaseProgressDTO>> getFinishProgressList(@RequestParam("productId") String productId) {
-        List<ProductPhaseProgressDTO> list = projectTaskService.getFinishProgressList(productId);
+        List<ProductPhaseProgressDTO> list = projectTaskProgressService.getFinishProgressList(productId);
         return success(list);
     }
 

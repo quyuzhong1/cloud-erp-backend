@@ -44,6 +44,6 @@ public class ProductTaskViewSearchDTO implements Serializable {
     /**
      * 查询类型（1按人员查看，2按产品查看，3按阶段查看，4按量产入库时间查看）
      */
-    private String type;
+    private Integer type;
 
 }

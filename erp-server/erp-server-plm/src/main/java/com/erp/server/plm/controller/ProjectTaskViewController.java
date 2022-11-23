@@ -3,7 +3,7 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.*;
-import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.ProjectTaskViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,7 +25,7 @@ import java.util.List;
 public class ProjectTaskViewController extends BaseController {
 
     @Autowired
-    private ProjectTaskService projectTaskService;
+    private ProjectTaskViewService projectTaskViewService;
 
     /**
      *
@@ -37,7 +37,7 @@ public class ProjectTaskViewController extends BaseController {
      */
     @PostMapping("/getPersonnelView")
     public ApiResult<List<ProductTaskPersonnelViewDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskPersonnelViewDTO> list = projectTaskService.getPersonnelView(dto);
+        List<ProductTaskPersonnelViewDTO> list = projectTaskViewService.getPersonnelView(dto);
         return success(list);
     }
 
@@ -51,7 +51,7 @@ public class ProjectTaskViewController extends BaseController {
      */
     @PostMapping("/getProductView")
     public ApiResult<List<ProductTaskProductViewDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskProductViewDTO> list = projectTaskService.getProductView(dto);
+        List<ProductTaskProductViewDTO> list = projectTaskViewService.getProductView(dto);
         return success(list);
     }
 
@@ -65,7 +65,7 @@ public class ProjectTaskViewController extends BaseController {
      */
     @PostMapping("/getPhaseView")
     public ApiResult<List<ProductTaskPhaseViewDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskPhaseViewDTO> list = projectTaskService.getPhaseView(dto);
+        List<ProductTaskPhaseViewDTO> list = projectTaskViewService.getPhaseView(dto);
         return success(list);
     }
 
@@ -79,13 +79,20 @@ public class ProjectTaskViewController extends BaseController {
      */
     @PostMapping("/getInWarehouseTimeView")
     public ApiResult<List<ProductTaskInWarehouseTimeViewDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskInWarehouseTimeViewDTO> list = projectTaskService.getInWarehouseTimeView(dto);
+        List<ProductTaskInWarehouseTimeViewDTO> list = projectTaskViewService.getInWarehouseTimeView(dto);
         return success(list);
     }
 
+    /**
+     * @description: 任务视图导出
+     * @author Will
+     * @date: 2022/11/23 18:45
+     * @param dto
+     * @param response
 
+     */
     @PostMapping(value = "/exportExcel")
     public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {
-        projectTaskService.exportExcel(dto, response);
+        projectTaskViewService.exportExcel(dto, response);
     }
 }

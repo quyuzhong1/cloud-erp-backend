@@ -28,7 +28,7 @@ public class ProductMilepostParamDTO implements Serializable {
     private String productId;
 
     /**
-     * 产品id
+     * 任务id
      */
     private String taskId;
 }

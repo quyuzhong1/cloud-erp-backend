@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -108,69 +107,5 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int i);
 
     Boolean restartTask(OperateBaseTaskDTO dto);
-    /**
-     * @description: 根据产品id获取里程碑任务
-     * @author Will
-     * @date: 2022/11/18 15:08
-     * @param productId
-     * @return List<ProductMilepostDTO>
-     */
-    List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId);
-    /**
-     * @description: 查询里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 16:47
-     * @param dto
-     * @return ProductMilepostDateDTO
-     */
-    ProductMilepostDateDTO getMilepostDate(ProductMilepostParamDTO dto);
-    /**
-     * @description: 查询产品各个阶段任务完成进度
-     * @author Will
-     * @date: 2022/11/21 9:27
-     * @param productId
-     * @return List<ProductPhaseProgressDTO>
-     */
-    List<ProductPhaseProgressDTO> getFinishProgressList(String productId);
-    /**
-     * @description: 项目视图按人员查询
-     * @author Will
-     * @date: 2022/11/23 11:50
-     * @param dto
-     * @return List<ProductTaskPersonnelViewDTO>
-     */
-    List<ProductTaskPersonnelViewDTO> getPersonnelView(ProductTaskViewSearchDTO dto);
-    /**
-     * @description: 项目视图按产品查询
-     * @author Will
-     * @date: 2022/11/23 11:51
-     * @param dto 
-     * @return List<ProductTaskProductViewDTO> 
-     */
-    List<ProductTaskProductViewDTO> getProductView(ProductTaskViewSearchDTO dto);
-    /**
-     * @description: 项目视图按阶段查询
-     * @author Will
-     * @date: 2022/11/23 11:51
-     * @param dto 
-     * @return List<ProductTaskPhaseViewDTO> 
-     */
-    List<ProductTaskPhaseViewDTO> getPhaseView(ProductTaskViewSearchDTO dto);
-    /**
-     * @description: 项目视图按量产入库时间查询
-     * @author Will
-     * @date: 2022/11/23 11:51
-     * @param dto 
-     * @return List<ProductTaskInWarehouseTimeViewDTO>
-     */
-    List<ProductTaskInWarehouseTimeViewDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto);
-    /**
-     * @description: 项目视图导出
-     * @author Will
-     * @date: 2022/11/23 16:16
-     * @param dto
-     * @param response
 
-     */
-    void exportExcel(ProductTaskViewSearchDTO dto, HttpServletResponse response);
 }
