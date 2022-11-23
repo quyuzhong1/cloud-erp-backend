@@ -13,9 +13,7 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BusinessProcessEntity;
-import com.erp.model.plm.entity.ProjectTaskSysEntity;
-import com.erp.model.plm.entity.SysTaskPhaseEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
@@ -272,6 +270,12 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         sysTaskDTO.setPreTaskIdList(preTaskIdList);
+        TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
+        if (refSku != null) {
+            sysTaskDTO.setFieldJson(refSku.getFieldJson());
+            sysTaskDTO.setFieldConfigType(refSku.getFieldConfigType());
+        }
+
         return sysTaskDTO;
     }
 

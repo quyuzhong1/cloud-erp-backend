@@ -113,6 +113,23 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
 
 
     /**
+     * 根据任务id获取配置信息
+     *
+     * @param taskId
+     * @return com.erp.model.plm.entity.TaskRefSkuConfigEntity
+     * @author yl
+     * @date 2022-11-23 19:20
+     */
+    @Override
+    public TaskRefSkuConfigEntity getByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getTaskId, taskId);
+        queryWrapper.last("LIMIT 1");
+        return getOne(queryWrapper);
+    }
+
+
+    /**
      * 根据任务id 和 产品ｉｄ 获取关系表
      *
      * @param

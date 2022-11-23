@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -37,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -868,6 +871,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         detailsDTO.setOutputDocsList(docsList);
+        TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        if (refSku != null) {
+            detailsDTO.setFieldJson(refSku.getFieldJson());
+            detailsDTO.setFieldConfigType(refSku.getFieldConfigType());
+        }
+        detailsDTO.setRefSkuIdList(taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList()));
         return detailsDTO;
     }
 
@@ -1132,6 +1142,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
             approvalUserList.add(u);
         }
+
+        TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        if (refSku != null) {
+            resultDTO.setFieldJson(refSku.getFieldJson());
+            resultDTO.setFieldConfigType(refSku.getFieldConfigType());
+        }
+        resultDTO.setRefSkuIdList(taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList()));
+
         resultDTO.setApprovalUserIds(approvalUserList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
         String businessProcessId = resultDTO.getBusinessProcessId();
@@ -2797,5 +2816,71 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return warning;
     }
+
+    /**
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     * @description: 创建里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     */
+    private ProductMilepostDateDTO getStartMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        dateDTO.setRealityEndTime(productInfoEntity.getCreateTime());
+        return dateDTO;
+
+    }
+
+    ;
+
+    /**
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     * @description: 立项里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     */
+    private ProductMilepostDateDTO getApprovalMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        dateDTO.setRealityEndTime(productInfoEntity.getApprovalTime());
+        return dateDTO;
+    }
+
+    ;
+
+    /**
+     * @param taskId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     * @description: 任务里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     */
+    private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
+        ProjectTaskEntity projectTaskEntity = this.getById(taskId);
+        dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
+        dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
+        return dateDTO;
+    }
+
+    ;
+
+    /**
+     * @param productId
+     * @param dateDTO
+     * @return ProductMilepostDateDTO
+     * @description: 归档里程碑结束时间
+     * @author Will
+     * @date: 2022/11/18 18:37
+     */
+    private ProductMilepostDateDTO getArchiveMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+        ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
+        dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
+        return dateDTO;
+    }
+
+    ;
 
 }

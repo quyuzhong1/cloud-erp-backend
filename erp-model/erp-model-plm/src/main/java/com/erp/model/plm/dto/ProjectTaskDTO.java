@@ -163,10 +163,6 @@ public class ProjectTaskDTO  implements Serializable {
     private String fieldConfigType;
 
 
-    /**
-     * sku表id
-     */
-    private String refSkuId;
 
     /**
      * 勾选字段后的json 字段

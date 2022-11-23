@@ -51,6 +51,13 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         }
     }
 
+    @Override
+    public List<ProjectTaskRefSkuEntity> getByTaskId(String taskId) {
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+        return this.list(queryWrapper);
+    }
+
     /**
      * 根据任务id 删除 任务与sku 关系
      *

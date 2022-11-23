@@ -31,4 +31,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     void removeTaskRefSku(String skuId);
 
     List<TaskRefSkuConfigEntity> getByTaskIds(List<String> sysTaskIds);
+
+    TaskRefSkuConfigEntity getByTaskId(String taskId);
 }

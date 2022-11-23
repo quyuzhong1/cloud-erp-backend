@@ -14,4 +14,6 @@ import java.util.List;
 public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEntity> {
 
     void addTaskSkuRef(String taskId, String productId, List<String> refSkuIdList);
+
+    List<ProjectTaskRefSkuEntity> getByTaskId(String taskId);
 }
