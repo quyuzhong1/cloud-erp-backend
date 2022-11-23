@@ -104,17 +104,17 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 首季度目标销量
      */
-    private BigDecimal targetSaleQty;
+    private BigDecimal targetSalesQty;
 
     /**
      * 销售渠道
      */
-    private String saleChannel;
+    private String salesChannel;
 
     /**
      * 是否可销售(0否，1是)
      */
-    private Integer isMaySale;
+    private Integer isMarketable;
 
     /**
      * 创建时间

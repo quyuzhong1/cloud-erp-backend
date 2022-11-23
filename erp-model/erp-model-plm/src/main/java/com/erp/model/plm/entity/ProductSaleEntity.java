@@ -97,20 +97,20 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 首季度目标销量
      */
-    @TableField(value = "target_sale_qty")
-    private BigDecimal targetSaleQty;
+    @TableField(value = "target_sales_qty")
+    private BigDecimal targetSalesQty;
 
     /**
      * 销售渠道
      */
-    @TableField(value = "sale_channel")
-    private String saleChannel;
+    @TableField(value = "sales_channel")
+    private String salesChannel;
 
     /**
      * 是否可销售(0否，1是)
      */
-    @TableField(value = "is_may_sale")
-    private Integer isMaySale;
+    @TableField(value = "is_marketable")
+    private Integer isMarketable;
 
     /**
      * 创建时间

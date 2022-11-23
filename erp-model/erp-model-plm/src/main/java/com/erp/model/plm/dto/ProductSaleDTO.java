@@ -90,20 +90,20 @@ public class ProductSaleDTO implements Serializable {
     /**
      * 首季度目标销量
      */
-    private BigDecimal targetSaleQty;
+    private BigDecimal targetSalesQty;
 
     /**
      * 销售渠道
      */
     @NotBlank(message = "销售渠道不能为空")
-    private String saleChannel;
+    private String salesChannel;
 
     /**
      * 是否可销售(0否，1是)
      */
     @NotNull(message = "是否可销售不能为空")
     @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
-    private Integer isMaySale;
+    private Integer isMarketable;
 
 
     private static final long serialVersionUID = 1L;
