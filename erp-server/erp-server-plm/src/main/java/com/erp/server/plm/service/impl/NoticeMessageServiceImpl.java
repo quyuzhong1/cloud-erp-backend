@@ -385,27 +385,32 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeUserIds);
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK_OTHER, userName, taskList.size());
-            String projectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
-            Boolean result = batchSendFsMessage(unionIds, messageContent, projectContent);
-            if (result) {
-                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
-                for (String userId : acceptUserIds) {
-                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
-                    recordEntity.setChargeId(productChargeId);
-                    recordEntity.setMessageContent(messageContent);
-                    recordEntity.setNoticeMessageId(noticeMessageId);
-                    recordEntity.setNoticeNode(flag);
-                    recordEntity.setNoticeUserId(userId);
-                    recordEntity.setPlanEndTime(endTime);
-                    recordEntity.setProductId(product.getProductId());
-                    recordEntity.setProductName(product.getName());
-                    recordEntity.setTaskId("");
-                    recordEntity.setTaskName("");
-                    recordEntity.setChargeName("");
-                    messageRecordList.add(recordEntity);
+            if(CollectionUtils.isNotEmpty(taskList)){
+                String messageContent = String.format(NoticeMessageConstant.RELEASE_TASK_OTHER, userName, taskList.size());
+                String taskName=taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                String projectContent = getProjectContent(taskName, product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+                Boolean result = batchSendFsMessage(unionIds, messageContent, projectContent);
+                if (result) {
+                    List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                    for (String userId : acceptUserIds) {
+                        NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                        recordEntity.setChargeId(productChargeId);
+                        recordEntity.setMessageContent(messageContent);
+                        recordEntity.setNoticeMessageId(noticeMessageId);
+                        recordEntity.setNoticeNode(flag);
+                        recordEntity.setNoticeUserId(userId);
+                        recordEntity.setPlanEndTime(endTime);
+                        recordEntity.setProductId(product.getProductId());
+                        recordEntity.setProductName(product.getName());
+                        recordEntity.setTaskId("");
+                        recordEntity.setTaskName("");
+                        recordEntity.setChargeName("");
+                        messageRecordList.add(recordEntity);
+                    }
                 }
             }
+
+
             //通知的任务负责人
             List<String> noticeTaskChargeIdList = new ArrayList<>();
             //消息通知记录
@@ -428,8 +433,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 List<ThirdUnionDTO> list = item.getValue();
                 List<String> taskChargeUnionIds = list.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 Long count = taskList.stream().filter(t -> t.getChargeId().contains(userId)).count();
+                String taskName=taskList.stream().filter(t -> t.getChargeId().contains(userId)).map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                 String taskChargeMessageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName, count);
-                String taskChargeProjectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+                String taskChargeProjectContent = getProjectContent(taskName, product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
                 //发送消息的结果
                 Boolean sendResult = batchSendFsMessage(taskChargeUnionIds, taskChargeMessageContent, taskChargeProjectContent);
                 //当发送成功后
