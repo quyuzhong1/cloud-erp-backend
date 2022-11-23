@@ -30,7 +30,7 @@
        SELECT nm.id,nm.node_id,nm.item_people,nm.other_people,nm.state
        FROM notice_message nm INNER JOIN notice_node nd
        ON nm.node_id=nd.id
-       WHERE nd.node_flag=#{nodeFlag}
+       WHERE nd.node_flag=#{nodeFlag} AND nm.state=1
 
     </select>
 
