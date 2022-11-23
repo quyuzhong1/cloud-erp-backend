@@ -2244,7 +2244,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String[] paramList = param.split(",");
             String businessKey = processEntity.getBusinessKey();
             String generalTask = BusinessProcessEnum.GENERAL_TASK.getBusinessKey();
-            if (!generalTask.equals(businessKey)) {
+            String docsChange = BusinessProcessEnum.DOCS_CHANGE.getBusinessKey();
+            String reviewTask = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
+            List<String> list = new ArrayList<>(3);
+            list.add(generalTask);
+            list.add(docsChange);
+            list.add(reviewTask);
+            if (!list.contains(businessKey)) {
                 for (int i = 0; i < approvalUserIds.size(); i++) {
                     map.put(paramList[i], approvalUserIds.get(i));
                 }
