@@ -14,7 +14,7 @@
         SELECT pm.is_charge,pm.id, ref.id AS roleRefMemberId,pr.id AS roleId,pr.name AS roleName,
         pm.member_id,pm.member_name,pm.create_time,pm.create_user_id,pm.create_user_name
         FROM project_members pm
-        INNER JOIN role_ref_members ref  on ref.members_id=pm.member_id
+        INNER JOIN role_ref_members ref  on ref.members_id=pm.id
         INNER JOIN project_role pr on ref.role_id=pr.id
         WHERE pm.product_id =#{productId} AND ref.product_id=#{productId}
         <if test="roleIds !=null and roleIds.size>0">

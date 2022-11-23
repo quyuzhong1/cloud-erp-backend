@@ -45,6 +45,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
             String[] params = param.split(",");
             info.setAuditorTotal(params.length);
             info.setParam(param);
+            info.setBusinessKey(item.getBusinessKey());
             String businessKey = item.getBusinessKey();
             String generalTask = BusinessProcessEnum.GENERAL_TASK.getBusinessKey();
             if (generalTask.equals(businessKey)) {

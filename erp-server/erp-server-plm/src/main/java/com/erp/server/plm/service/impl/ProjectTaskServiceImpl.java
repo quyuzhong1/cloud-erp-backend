@@ -819,6 +819,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //当审核通过就是完成
             if (isApprovalPass) {
                 docs.setOldFileUrl(docs.getFileUrl());
+                docs.setOldFileName(docs.getFileName());
                 docs.setOldUploadType(docs.getUploadType());
             }
 

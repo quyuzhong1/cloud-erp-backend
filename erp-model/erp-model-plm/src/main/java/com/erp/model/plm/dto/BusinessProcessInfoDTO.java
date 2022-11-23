@@ -26,6 +26,11 @@ public class BusinessProcessInfoDTO  implements Serializable {
      */
     private String businessName;
 
+    /**
+     * 业务key
+     */
+    private String businessKey;
+
 
     /**
      * 业务名称
