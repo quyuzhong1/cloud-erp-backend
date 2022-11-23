@@ -172,9 +172,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-09-20 16:05
      */
     @Override
-    @Transactional
     public Boolean startProject(StartProjectDTO dto) {
-
         LoginUser loginUser = commonService.getUserInfo();
         //项目id
         String projectId = dto.getProjectId();

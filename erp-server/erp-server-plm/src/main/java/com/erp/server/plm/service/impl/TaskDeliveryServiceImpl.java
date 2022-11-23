@@ -281,7 +281,17 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public List<DeliveryDocsDTO> getByTaskId(String taskId) {
-        return baseMapper.getByTaskId(taskId);
+        List<DeliveryDocsDTO> list = baseMapper.getByTaskId(taskId);
+        ProjectTaskEntity task = projectTaskService.getById(taskId);
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        for (DeliveryDocsDTO item : list) {
+            if (task != null && finish.equals(task.getStatus())) {
+                item.setOldFileName(item.getFileName());
+                item.setOldFileUrl(item.getFileUrl());
+                item.setOldUploadType(item.getUploadType());
+            }
+        }
+        return list;
     }
 
 
@@ -445,8 +455,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         return new ArrayList<>();
     }
-
-
 
 
     /**
