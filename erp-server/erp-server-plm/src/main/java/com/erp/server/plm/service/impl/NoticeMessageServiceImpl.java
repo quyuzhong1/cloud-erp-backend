@@ -414,18 +414,23 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     noticeTaskChargeIdList.addAll(chargeIdList);
                 }
             }
-            //排除关闭通知的人员 并去重
-            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeTaskChargeIdList);
-            List<ThirdUnionDTO> noticeTaskChargeUnionList = getNoticeUnionIds(unionIdList, noticeList);
-            List<String> taskChargeUnionIds = noticeTaskChargeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
-            String taskChargeMessageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName, taskList.size());
-            String taskChargeProjectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
-            //发送消息的结果
-            Boolean sendResult = batchSendFsMessage(taskChargeUnionIds, taskChargeMessageContent, taskChargeProjectContent);
-            //当发送成功后
-            if (sendResult) {
-                List<String> acceptUserIds = noticeTaskChargeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
-                for (String userId : acceptUserIds) {
+
+            //获取取消通知的用户id
+            List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(notice.getId());
+            List<String> resultList = noticeTaskChargeIdList.stream().filter(n -> !cancelNoticeUserIds.contains(n)).collect(Collectors.toList());
+            List<ThirdUnionDTO> noticeTaskChargeUnionList = getNoticeUnionIds(unionIdList, resultList);
+            Map<String, List<ThirdUnionDTO>> groupMap = noticeTaskChargeUnionList.stream().collect(Collectors.groupingBy(ThirdUnionDTO::getUserId));
+            for (Map.Entry<String, List<ThirdUnionDTO>> item : groupMap.entrySet()) {
+                String userId = item.getKey();
+                List<ThirdUnionDTO> list = item.getValue();
+                List<String> taskChargeUnionIds = list.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                Long count = taskList.stream().filter(t -> t.getChargeId().contains(userId)).count();
+                String taskChargeMessageContent = String.format(NoticeMessageConstant.RELEASE_TASK, userName, count);
+                String taskChargeProjectContent = getProjectContent("", product.getName(), DateUtil.conversionDate(product.getEndTime(), ""), productCharge, product.getProductChargeName());
+                //发送消息的结果
+                Boolean sendResult = batchSendFsMessage(taskChargeUnionIds, taskChargeMessageContent, taskChargeProjectContent);
+                //当发送成功后
+                if (sendResult) {
                     NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
                     recordEntity.setChargeId(productChargeId);
                     recordEntity.setMessageContent(taskChargeMessageContent);
@@ -461,6 +466,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
         sendMessage.setUnionIds(noticeUnionList);
         Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
+        sendMessage.setContentMap(contentMap);
         //发送消息的结果
         Boolean sendResult = fsService.batchSendMessage(sendMessage);
         return sendResult;
