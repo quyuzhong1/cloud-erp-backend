@@ -555,7 +555,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95074);
             }
             //生成sku编码
-            String skuNo = this.getSkuNo(productSpuBaseInfoDTO.getId(), variantColor);
+            String skuNo = this.getSkuNo(id, variantColor);
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
