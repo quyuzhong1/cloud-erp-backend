@@ -107,9 +107,9 @@ public class ProductSaleShowDTO implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售渠道
+     * 销售平台
      */
-    private String salesChannel;
+    private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)

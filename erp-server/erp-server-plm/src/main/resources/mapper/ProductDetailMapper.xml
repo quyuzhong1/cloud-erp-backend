@@ -165,10 +165,11 @@
         pd.unit_id,
         unit.name AS unit_name,
         pd.product_state,
-        pd.entrusted_develop_cost,
-        pd.mold_cost,
-        pd.sample_fee,
-        pd.is_customized
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id
@@ -196,7 +197,12 @@
         pi.function_desc,
         pi.usage_desc,
         pi.pirate_risk,
-        pi.materials
+        pi.materials,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel
         FROM product_info pi
         WHERE pi.delete_state = 0
             AND pi.id = #{productId}

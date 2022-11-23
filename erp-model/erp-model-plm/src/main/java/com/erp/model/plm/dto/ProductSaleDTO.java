@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -93,15 +91,13 @@ public class ProductSaleDTO implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售渠道
+     * 销售平台
      */
-    @NotBlank(message = "销售渠道不能为空")
-    private String salesChannel;
+    private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)
      */
-    @NotNull(message = "是否可销售不能为空")
     @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
     private Integer isMarketable;
 

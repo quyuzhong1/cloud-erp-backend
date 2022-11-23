@@ -153,6 +153,11 @@ public class ProductNoDetailDTO {
     private Integer isCustomized;
 
     /**
+     * 销售渠道
+     */
+    private String salesChannel;
+
+    /**
      * 产品分类id集合
      */
     private List<String> categoryIdList;

@@ -101,10 +101,10 @@ public class ProductSaleEntity implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售渠道
+     * 销售平台
      */
-    @TableField(value = "sales_channel")
-    private String salesChannel;
+    @TableField(value = "sales_platform")
+    private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)

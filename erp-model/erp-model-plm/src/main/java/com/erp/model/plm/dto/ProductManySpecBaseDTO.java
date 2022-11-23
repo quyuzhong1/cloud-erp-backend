@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -98,6 +99,31 @@ public class ProductManySpecBaseDTO {
      * 主要材质
      */
     private String materials;
+
+    /**
+     * 委托开发成本
+     */
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 模具成本
+     */
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    private BigDecimal sampleFee;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    private Integer isCustomized;
+
+    /**
+     * 销售渠道
+     */
+    private String salesChannel;
 
     /**
      * 产品分类id集合
