@@ -33,7 +33,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void copyTaskByProject(String saveProductId, String saveProjectId,String  flagProjectId);
 
 
-    void copyTaskBySys(String productId, String projectId);
+    List<ProjectTaskEntity> copyTaskBySys(String productId, String projectId);
 
 
     PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);

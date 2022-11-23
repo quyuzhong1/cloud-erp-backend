@@ -214,7 +214,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (SourceType.NEW.equals(sourceType)) {
                 projectMembersService.add(productId, projectId, dto.getMembers());
                 //从复制系统项目任务
-                projectTaskService.copyTaskBySys(productId, projectId);
+                List<ProjectTaskEntity> addProjectTaskList = projectTaskService.copyTaskBySys(productId, projectId);
+                //异步发送通知
+                noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
             }
             //如果是 从项目复制 那么从项目表 里面复制 复制成员
             if (SourceType.PROJECT.equals(sourceType)) {

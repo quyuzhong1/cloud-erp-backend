@@ -347,6 +347,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-18 15:12
      */
     private String getProjectContent(String taskName, String productName, String date, String chargeFlag, String chargeName) {
+        if (StringUtils.isBlank(date)) {
+            date = "-";
+        }
         String projectContent = String.format(NoticeMessageConstant.PROJECT_CONTENT, taskName, productName, date, chargeFlag, chargeName);
         return projectContent;
     }

@@ -317,15 +317,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional
-    public void copyTaskBySys(String saveProductId, String saveProjectId) {
-        LoginUser loginUser = commonService.getUserInfo();
+    public List<ProjectTaskEntity> copyTaskBySys(String saveProductId, String saveProjectId) {
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
+        List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
+
         //保存除了立项阶段的 阶段名
         List<CopySourceDTO> projectPhaseList = projectPhaseService.saveSysPhase(saveProductId);
 
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
-            List<ProjectTaskEntity> sendMessageList = new ArrayList<>(sysTaskList.size());
             List<CopySourceDTO> sourceList = new ArrayList<>(sysTaskList.size());
             List<TaskDocsNameEntity> docsNameList = taskDocsNameService.getDocsNameByProductId(saveProductId);
             for (ProjectTaskSysEntity item : sysTaskList) {
@@ -348,16 +348,29 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 boolean flag = this.save(entity);
                 if (flag) {
-                    sendMessageList.add(entity);
+                    addTaskList.add(entity);
                     taskDeliveryService.saveTaskDeliveryDocs(saveProductId, entity.getId(), item.getId(), docsNameList);
                 }
             }
 
-            //异步发送通知
-            noticeMessageService.newTaskNotice(loginUser.getUserName(), sendMessageList, saveProductId);
-
             //处理前置任务
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
+
+            List<TaskRefSkuConfigEntity> sysTaskRefSkuConfigList = taskRefSkuConfigService.getByTaskIds(sysTaskIds);
+            List<TaskRefSkuConfigEntity> addTaskRefSkuList = new ArrayList<>(sysTaskRefSkuConfigList.size());
+            for (TaskRefSkuConfigEntity item : sysTaskRefSkuConfigList) {
+                CopySourceDTO source = sourceList.stream().filter(s -> s.getDataId().equals(item.getTaskId()))
+                        .findFirst().orElse(null);
+                if (source != null) {
+                    TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
+                    addEntity.setFieldJson(item.getFieldJson());
+                    addEntity.setFieldConfigType(item.getFieldConfigType());
+                    addEntity.setTaskId(source.getNewCreateId());
+                    addEntity.setProductId(saveProductId);
+                    addTaskRefSkuList.add(addEntity);
+                }
+            }
+            taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
 
             List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
             //以系统任务的id 分组
@@ -387,7 +400,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-
+        return addTaskList;
     }
 
     /**
@@ -2184,6 +2197,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Date nowDate = new Date();
         this.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+        //发送完成任务通知
+        noticeMessageService.finishTaskNotice(loginUser.getUserName(), noProcessList, dto.getProductId());
 
         //当有流程的不为空
         if (CollectionUtils.isNotEmpty(processList)) {
@@ -2240,8 +2255,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        //发送完成任务通知
-        noticeMessageService.finishTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         return true;
     }
 

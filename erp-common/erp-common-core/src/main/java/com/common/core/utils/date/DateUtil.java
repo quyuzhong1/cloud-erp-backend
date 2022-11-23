@@ -362,7 +362,7 @@ public class DateUtil {
             SimpleDateFormat sdf = new SimpleDateFormat(fmt);
             return sdf.format(date.getTime());
         }
-        return "";
+        return "-";
     }
 
 
