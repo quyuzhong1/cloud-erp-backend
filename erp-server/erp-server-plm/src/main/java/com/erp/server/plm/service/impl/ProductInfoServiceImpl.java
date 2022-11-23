@@ -215,7 +215,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:06
      */
     @Override
-    @Transactional
     public Boolean saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
@@ -255,7 +254,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
+            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
+            //异步发送通知
+            noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
             //默认查询立项模板中的成员信息
             projectMembersService.addRoleAndMembersByApproval(entity.getId());
             //新增产品操作日志
@@ -776,12 +777,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             preTaskService.checkPreTaskFinish(taskIdList);
                             projectTaskService.checkSonTaskFinish(taskIdList, productId);
                             //发送项目完成通知
-                            noticeMessageService.finishProjectNotice(loginUser.getUserName(),productId);
+                            noticeMessageService.finishProjectNotice(loginUser.getUserName(), productId);
                         }
 
                         //开始项目
                         if (ProjectStateEnum.YES_START.getState().equals(projectStatus)) {
-                            noticeMessageService.beginProjectNotice(loginUser.getUserName(),productId);
+                            noticeMessageService.beginProjectNotice(loginUser.getUserName(), productId);
                         }
                     }
                     project.setProjectStatus(projectStatus);

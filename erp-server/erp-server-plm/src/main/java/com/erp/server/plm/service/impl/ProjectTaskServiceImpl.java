@@ -135,7 +135,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Transactional
     @Override
-    public void addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList) {
+    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList) {
         LoginUser loginUser = commonService.getUserInfo();
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
@@ -175,8 +175,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
 
-            //异步发送通知
-            noticeMessageService.newTaskNotice(loginUser.getUserName(), addTaskList, productId);
 
             //处理前置任务
             List<String> sysTaskIds = sysTaskList.stream().map(ProjectTaskSysEntity::getId).collect(Collectors.toList());
@@ -225,6 +223,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
+        return addTaskList;
 
     }
 

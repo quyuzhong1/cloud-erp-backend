@@ -22,7 +22,7 @@ import java.util.Map;
 public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
-    void addSysTask(String id,List<TaskDocsNameEntity> taskDocsNameList);
+    List<ProjectTaskEntity> addSysTask(String id,List<TaskDocsNameEntity> taskDocsNameList);
 
     void removeTaskByProductId(String productId);
 
