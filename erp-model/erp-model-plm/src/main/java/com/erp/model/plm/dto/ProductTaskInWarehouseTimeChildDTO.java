@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ProductTaskInWarehouseViewDTO implements Serializable {
+public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
 
     /**
      * 产品名称
@@ -24,22 +24,27 @@ public class ProductTaskInWarehouseViewDTO implements Serializable {
     /**
      * 产品状态
      */
-    private String productStatus;
+    private Integer approvalStatus;
 
     /**
-     * 入库时间
+     * 产品状态名称
      */
-    private Date inTime;
+    private String approvalStatusName;
+
+    /**
+     * skuNo
+     */
+    private String skuNo;
+
+    /**
+     * 首批量产入库时间(计划上市时间)
+     */
+    private Date planListingTime;
 
     /**
      * 产品经理
      */
-    private String productManager;
-
-    /**
-     * 是否存在下级（0否，1是）
-     */
-    private Integer isSubordinate;
+    private String chargeName;
 
     /**
      * 时间区间（分组条件）

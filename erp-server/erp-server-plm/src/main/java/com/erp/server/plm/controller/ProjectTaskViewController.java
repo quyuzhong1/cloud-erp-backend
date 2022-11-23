@@ -2,13 +2,15 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.model.plm.dto.ProductTaskPersonnelViewDTO;
-import com.erp.model.plm.dto.ProductTaskViewSearchDTO;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.erp.model.plm.dto.*;
+import com.erp.server.plm.service.ProjectTaskService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -22,10 +24,68 @@ import java.util.List;
 @RequestMapping("/plm/task/view")
 public class ProjectTaskViewController extends BaseController {
 
+    @Autowired
+    private ProjectTaskService projectTaskService;
 
-    @GetMapping("/viewList")
-    public ApiResult<List<ProductTaskPersonnelViewDTO>> viewList(@RequestBody ProductTaskViewSearchDTO dto) {
+    /**
+     *
+     * 任务视图-按人员查看
+     * @author Will
+     * @date: 2022/11/23 11:32
+     * @param dto
+     * @return ApiResult<List<ProductTaskPersonnelViewDTO>>
+     */
+    @PostMapping("/getPersonnelView")
+    public ApiResult<List<ProductTaskPersonnelViewDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskPersonnelViewDTO> list = projectTaskService.getPersonnelView(dto);
+        return success(list);
+    }
 
-        return success();
+    /**
+     *
+     * 任务视图-按产品查看
+     * @author Will
+     * @date: 2022/11/23 11:33
+     * @param dto
+     * @return ApiResult<List<ProductTaskProductViewDTO>>
+     */
+    @PostMapping("/getProductView")
+    public ApiResult<List<ProductTaskProductViewDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskProductViewDTO> list = projectTaskService.getProductView(dto);
+        return success(list);
+    }
+
+    /**
+     *
+     * 任务视图-按阶段查看
+     * @author Will
+     * @date: 2022/11/23 11:34
+     * @param dto
+     * @return ApiResult<List<ProductTaskPhaseViewDTO>>
+     */
+    @PostMapping("/getPhaseView")
+    public ApiResult<List<ProductTaskPhaseViewDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskPhaseViewDTO> list = projectTaskService.getPhaseView(dto);
+        return success(list);
+    }
+
+    /**
+     *
+     * 任务视图-按量产入库时间查看
+     * @author Will
+     * @date: 2022/11/23 11:34
+     * @param dto
+     * @return ApiResult<List<ProductTaskInWarehouseTimeViewDTO>>
+     */
+    @PostMapping("/getInWarehouseTimeView")
+    public ApiResult<List<ProductTaskInWarehouseTimeViewDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskInWarehouseTimeViewDTO> list = projectTaskService.getInWarehouseTimeView(dto);
+        return success(list);
+    }
+
+
+    @PostMapping(value = "/exportExcel")
+    public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {
+        projectTaskService.exportExcel(dto, response);
     }
 }

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -2626,6 +2628,165 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(phaseDto);
         }
         return resultList;
+    }
+
+    /**
+     * @description: 项目视图按人员查询
+     * @author Will
+     * @date: 2022/11/23 12:00
+     * @param dto
+     * @return List<ProductTaskPersonnelViewDTO>
+     */
+    @Override
+    public List<ProductTaskPersonnelViewDTO> getPersonnelView(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = baseMapper.getAllTaskViewByCharge(dto);
+        //返回结果集
+        List<ProductTaskPersonnelViewDTO> resultList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        //根据人员分组
+        Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getChargeId));
+        for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
+            List<ProductTaskViewDTO> value = entry.getValue();
+            String chargeName = value.get(0).getChargeName();
+            ProductTaskPersonnelViewDTO parentDto = new ProductTaskPersonnelViewDTO();
+            parentDto.setChargeId(entry.getKey());
+            parentDto.setChargeName(chargeName);
+            //同一人员下的任务
+            List<ProductTaskPersonnelChildDTO> childrenList = new LinkedList<>();
+            value.forEach(obj->{
+                ProductTaskPersonnelChildDTO childDto = new ProductTaskPersonnelChildDTO();
+                BeanMapperUtils.copy(obj,childDto);
+                childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
+                childrenList.add(childDto);
+            });
+            parentDto.setChildrenList(childrenList);
+            resultList.add(parentDto);
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 项目视图按产品查询
+     * @author Will
+     * @date: 2022/11/23 12:00
+     * @param dto
+     * @return List<ProductTaskProductViewDTO>
+     */
+    @Override
+    public List<ProductTaskProductViewDTO> getProductView(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = baseMapper.getAllTaskView(dto);
+        //返回结果集
+        List<ProductTaskProductViewDTO> resultList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        //根据产品分组
+        Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getProductId));
+        for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
+            List<ProductTaskViewDTO> value = entry.getValue();
+            String productName = value.get(0).getProductName();
+            ProductTaskProductViewDTO parentDto = new ProductTaskProductViewDTO();
+            parentDto.setProductId(entry.getKey());
+            parentDto.setProductName(productName);
+            //同一产品下的任务
+            List<ProductTaskProductChildDTO> childrenList = new LinkedList<>();
+            value.forEach(obj->{
+                ProductTaskProductChildDTO childDto = new ProductTaskProductChildDTO();
+                BeanMapperUtils.copy(obj,childDto);
+                childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
+                childrenList.add(childDto);
+            });
+            parentDto.setChildrenList(childrenList);
+            resultList.add(parentDto);
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 项目视图按阶段查询
+     * @author Will
+     * @date: 2022/11/23 12:01
+     * @param dto
+     * @return List<ProductTaskPhaseViewDTO>
+     */
+    @Override
+    public List<ProductTaskPhaseViewDTO> getPhaseView(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = baseMapper.getAllTaskView(dto);
+        //返回结果集
+        List<ProductTaskPhaseViewDTO> resultList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        //根据产品分组
+        Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getPhaseName));
+        int seq = 1;
+        for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
+            List<ProductTaskViewDTO> value = entry.getValue();
+            ProductTaskPhaseViewDTO parentDto = new ProductTaskPhaseViewDTO();
+            parentDto.setSeq(seq);
+            parentDto.setPhaseName(entry.getKey());
+            //同一阶段下的任务
+            List<ProductTaskPhaseChildDTO> childrenList = new LinkedList<>();
+            int finalSeq = seq;
+            value.forEach(obj->{
+                ProductTaskPhaseChildDTO childDto = new ProductTaskPhaseChildDTO();
+                BeanMapperUtils.copy(obj,childDto);
+                childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
+                childDto.setSeq(finalSeq);
+                childrenList.add(childDto);
+            });
+            parentDto.setChildrenList(childrenList);
+            resultList.add(parentDto);
+            seq ++;
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 项目视图按量产入库时间查询
+     * @author Will
+     * @date: 2022/11/23 12:01
+     * @param dto
+     * @return List<ProductTaskInWarehouseTimeViewDTO>
+     */
+    @Override
+    public List<ProductTaskInWarehouseTimeViewDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskInWarehouseTimeChildDTO> list = baseMapper.getAllTaskInWarehouseTimeView(dto);
+        //返回结果集
+        List<ProductTaskInWarehouseTimeViewDTO> resultList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        //根据产品分组
+        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().filter(obj-> StringUtils.isNotBlank(obj.getTimeInterval())).collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
+        for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
+            List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();
+            String timeInterval = value.get(0).getTimeInterval();
+            ProductTaskInWarehouseTimeViewDTO parentDto = new ProductTaskInWarehouseTimeViewDTO();
+            parentDto.setTimeInterval(timeInterval);
+            //同一时间区间下的任务
+            List<ProductTaskInWarehouseTimeChildDTO> childrenList = new LinkedList<>();
+            value.forEach(obj->{
+                ProductTaskInWarehouseTimeChildDTO childDto = new ProductTaskInWarehouseTimeChildDTO();
+                BeanMapperUtils.copy(obj,childDto);
+                childDto.setApprovalStatusName(ApprovalStatusEnum.getName(obj.getApprovalStatus()));
+                childrenList.add(childDto);
+            });
+            parentDto.setChildrenList(childrenList);
+            resultList.add(parentDto);
+        }
+        return resultList;
+    }
+
+    @Override
+    public void exportExcel(ProductTaskViewSearchDTO dto, HttpServletResponse response) {
+
     }
 
 

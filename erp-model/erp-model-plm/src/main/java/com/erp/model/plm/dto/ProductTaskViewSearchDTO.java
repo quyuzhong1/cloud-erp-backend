@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 项目视图查询条件DTO
  * @date 2022/11/22 18:43
  */
 @Data
@@ -19,12 +19,12 @@ public class ProductTaskViewSearchDTO implements Serializable {
     /**
      * 人员
      */
-    private List<String> nameList;
+    private List<String> chargeIds;
 
     /**
      * 产品
      */
-    private List<String> productList;
+    private List<String> productIds;
 
     /**
      * 审核状态
@@ -35,6 +35,11 @@ public class ProductTaskViewSearchDTO implements Serializable {
      * 产品状态
      */
     private List<String> productStatusList;
+
+    /**
+     * 项目状态
+     */
+    private List<String> projectStatusList;
 
     /**
      * 查询类型（1按人员查看，2按产品查看，3按阶段查看，4按量产入库时间查看）

@@ -3,7 +3,6 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -74,5 +73,31 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     IPage<TaskPagingShowDTO> allPlanTimeTaskList(Page query,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params, @Param("startTime")Date startTime,@Param("endTime") Date endTime);
 
     List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
+    /**
+     * @description: 任务视图查询所有任务(根据负责人拆分)
+     * @author Will
+     * @date: 2022/11/23 15:54
+     * @param dto
+     * @return List<ProductTaskViewDTO>
+     */
+    List<ProductTaskViewDTO> getAllTaskViewByCharge(@Param("dto") ProductTaskViewSearchDTO dto);
+
+    /**
+     * @description: 任务视图查询所有任务
+     * @author Will
+     * @date: 2022/11/23 15:55
+     * @param dto
+     * @return List<ProductTaskViewDTO>
+     */
+    List<ProductTaskViewDTO> getAllTaskView(@Param("dto") ProductTaskViewSearchDTO dto);
+    /**
+    /**
+     * @description: 任务视图查询所有量产入库数据
+     * @author Will
+     * @date: 2022/11/23 15:56
+     * @param dto
+     * @return List<ProductTaskInWarehouseTimeChildDTO>
+     */
+    List<ProductTaskInWarehouseTimeChildDTO> getAllTaskInWarehouseTimeView(@Param("dto") ProductTaskViewSearchDTO dto);
 }
 

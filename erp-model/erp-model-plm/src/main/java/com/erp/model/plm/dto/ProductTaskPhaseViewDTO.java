@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @author Will
@@ -17,43 +17,18 @@ import java.util.Date;
 public class ProductTaskPhaseViewDTO implements Serializable {
 
     /**
-     * 阶段名称（分组条件）
+     * 阶段id不可用，阶段名称分组，seq用于前端固定上下级
+     */
+    private Integer seq;
+
+    /**
+     * 阶段名称
      */
     private String phaseName;
 
     /**
-     * 任务名称
+     * 子集
      */
-    private String taskName;
-
-    /**
-     * 计划开始日期
-     */
-    private Date planStartTime;
-
-    /**
-     * 计划结束日期
-     */
-    private Date planEndTime;
-
-    /**
-     * 实际开始日期
-     */
-    private Date realityStartTime;
-
-    /**
-     * 实际结束日期
-     */
-    private Date realityEndTime;
-
-    /**
-     * 任务状态
-     */
-    private String statusName;
-
-    /**
-     * 是否存在下级（0否，1是）
-     */
-    private Integer isSubordinate;
+    private List<ProductTaskPhaseChildDTO> childrenList;
 
 }
