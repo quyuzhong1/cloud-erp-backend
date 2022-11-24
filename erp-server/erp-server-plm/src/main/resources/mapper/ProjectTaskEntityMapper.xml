@@ -301,7 +301,7 @@
             AND plan_end_time &lt;= #{endTime}
         </if>
         <if test="params.param!='' and params.param!=null">
-            ${params.param})
+            ${params.param}
         </if>
         ORDER BY ${params.searchType} ${params.orderBy}
 
@@ -324,11 +324,12 @@
                 AND name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="params.param!='' and params.param!=null">
-                ${params.param})
+                ${params.param}
             </if>
+            ORDER BY ${params.searchType} ${params.orderBy}
         </where>
 
-        ORDER BY ${params.searchType} ${params.orderBy}
+
     </select>
 
     <select id="myCreatePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
@@ -351,7 +352,7 @@
                 AND plan_end_time &lt;= #{endTime}
             </if>
             <if test="params.param!='' and params.param!=null">
-                ${params.param})
+                ${params.param}
             </if>
             ORDER BY ${params.searchType} ${params.orderBy}
         </where>
