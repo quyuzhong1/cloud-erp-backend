@@ -33,7 +33,7 @@ public class ProjectTaskViewController extends BaseController {
      * @author Will
      * @date: 2022/11/23 11:32
      * @param dto
-     * @return ApiResult<List<ProductTaskPersonnelViewDTO>>
+     * @return ApiResult<List<ProductTaskPersonnelChildDTO>>
      */
     @PostMapping("/getPersonnelView")
     public ApiResult<List<ProductTaskPersonnelChildDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
@@ -47,11 +47,11 @@ public class ProjectTaskViewController extends BaseController {
      * @author Will
      * @date: 2022/11/23 11:33
      * @param dto
-     * @return ApiResult<List<ProductTaskProductViewDTO>>
+     * @return ApiResult<List<ProductTaskProductChildDTO>>
      */
     @PostMapping("/getProductView")
-    public ApiResult<List<ProductTaskProductViewDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskProductViewDTO> list = projectTaskViewService.getProductView(dto);
+    public ApiResult<List<ProductTaskProductChildDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskProductChildDTO> list = projectTaskViewService.getProductView(dto);
         return success(list);
     }
 
@@ -61,11 +61,11 @@ public class ProjectTaskViewController extends BaseController {
      * @author Will
      * @date: 2022/11/23 11:34
      * @param dto
-     * @return ApiResult<List<ProductTaskPhaseViewDTO>>
+     * @return ApiResult<List<ProductTaskPhaseChildDTO>>
      */
     @PostMapping("/getPhaseView")
-    public ApiResult<List<ProductTaskPhaseViewDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskPhaseViewDTO> list = projectTaskViewService.getPhaseView(dto);
+    public ApiResult<List<ProductTaskPhaseChildDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskPhaseChildDTO> list = projectTaskViewService.getPhaseView(dto);
         return success(list);
     }
 
@@ -75,11 +75,11 @@ public class ProjectTaskViewController extends BaseController {
      * @author Will
      * @date: 2022/11/23 11:34
      * @param dto
-     * @return ApiResult<List<ProductTaskInWarehouseTimeViewDTO>>
+     * @return ApiResult<List<ProductTaskInWarehouseTimeChildDTO>>
      */
     @PostMapping("/getInWarehouseTimeView")
-    public ApiResult<List<ProductTaskInWarehouseTimeViewDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskInWarehouseTimeViewDTO> list = projectTaskViewService.getInWarehouseTimeView(dto);
+    public ApiResult<List<ProductTaskInWarehouseTimeChildDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskViewService.getInWarehouseTimeView(dto);
         return success(list);
     }
 

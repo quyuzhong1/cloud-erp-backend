@@ -16,6 +16,17 @@ import java.util.Date;
 @NoArgsConstructor
 public class ProductTaskProductChildDTO implements Serializable {
 
+
+    /**
+     * id（用于前端展示）
+     */
+    private Integer id;
+
+    /**
+     * 父级id（用于前端展示）
+     */
+    private Integer parentId;
+
     /**
      * 任务名称
      */

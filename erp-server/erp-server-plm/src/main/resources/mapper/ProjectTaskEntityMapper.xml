@@ -595,12 +595,13 @@
     <select id="getAllTaskInWarehouseTimeView" resultType="com.erp.model.plm.dto.ProductTaskInWarehouseTimeChildDTO">
         select
             pi.name as productName,
-            pi.approval_status,
             pi.charge_name,
             pd.sku_no,
             pd.plan_listing_time,
-            pi.charge_name,
-            to_char(pd.plan_listing_time, 'YYYYMM') as timeInterval
+            COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
+            COALESCE(pi2.project_status,pi.approval_status) as status,
+            case when COALESCE(pi2.project_status,-1) = -1 then 0
+                 else 1 end as isProjectStatus
         from  product_info pi
         inner join product_detail pd on pi.id = pd.product_id
         left join project_info pi2 on pi.id = pi2.product_id

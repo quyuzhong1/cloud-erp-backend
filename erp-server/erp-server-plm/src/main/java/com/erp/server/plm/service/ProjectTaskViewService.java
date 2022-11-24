@@ -18,7 +18,7 @@ public interface ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 11:50
      * @param dto
-     * @return List<ProductTaskPersonnelViewDTO>
+     * @return List<ProductTaskPersonnelChildDTO>
      */
     List<ProductTaskPersonnelChildDTO> getPersonnelView(ProductTaskViewSearchDTO dto);
     /**
@@ -26,25 +26,25 @@ public interface ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 11:51
      * @param dto
-     * @return List<ProductTaskProductViewDTO>
+     * @return List<ProductTaskProductChildDTO>
      */
-    List<ProductTaskProductViewDTO> getProductView(ProductTaskViewSearchDTO dto);
+    List<ProductTaskProductChildDTO> getProductView(ProductTaskViewSearchDTO dto);
     /**
      * @description: 项目视图按阶段查询
      * @author Will
      * @date: 2022/11/23 11:51
      * @param dto
-     * @return List<ProductTaskPhaseViewDTO>
+     * @return List<ProductTaskPhaseChildDTO>
      */
-    List<ProductTaskPhaseViewDTO> getPhaseView(ProductTaskViewSearchDTO dto);
+    List<ProductTaskPhaseChildDTO> getPhaseView(ProductTaskViewSearchDTO dto);
     /**
      * @description: 项目视图按量产入库时间查询
      * @author Will
      * @date: 2022/11/23 11:51
      * @param dto
-     * @return List<ProductTaskInWarehouseTimeViewDTO>
+     * @return List<ProductTaskInWarehouseTimeChildDTO>
      */
-    List<ProductTaskInWarehouseTimeViewDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto);
+    List<ProductTaskInWarehouseTimeChildDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto);
     /**
      * @description: 项目视图导出
      * @author Will

@@ -17,6 +17,16 @@ import java.util.Date;
 public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
 
     /**
+     * id（用于前端展示）
+     */
+    private Integer id;
+
+    /**
+     * 父级id（用于前端展示）
+     */
+    private Integer parentId;
+
+    /**
      * 产品名称
      */
     private String productName;
@@ -24,12 +34,27 @@ public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
     /**
      * 产品状态
      */
-    private Integer approvalStatus;
+    private Integer status;
 
     /**
      * 产品状态名称
      */
-    private String approvalStatusName;
+    private String statusName;
+
+    /**
+     * 是否是项目状态
+     */
+    private Integer isProjectStatus;
+
+    /**
+     * 项目状态
+     */
+    private Integer projectStatus;
+
+    /**
+     * 项目状态名称
+     */
+    private String projectStatusName;
 
     /**
      * skuNo

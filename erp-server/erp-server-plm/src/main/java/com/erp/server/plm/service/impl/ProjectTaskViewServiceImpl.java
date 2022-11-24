@@ -10,6 +10,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.ProjectTaskViewService;
@@ -47,7 +48,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 12:00
      * @param dto
-     * @return List<ProductTaskPersonnelViewDTO>
+     * @return List<ProductTaskPersonnelChildDTO>
      */
     @Override
     public List<ProductTaskPersonnelChildDTO> getPersonnelView(ProductTaskViewSearchDTO dto) {
@@ -98,19 +99,20 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 12:00
      * @param dto
-     * @return List<ProductTaskProductViewDTO>
+     * @return List<ProductTaskProductChildDTO>
      */
     @Override
-    public List<ProductTaskProductViewDTO> getProductView(ProductTaskViewSearchDTO dto) {
+    public List<ProductTaskProductChildDTO> getProductView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
         List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskProductView(dto);
         //返回结果集
-        List<ProductTaskProductViewDTO> resultList = new LinkedList<>();
+        List<ProductTaskProductChildDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
         //根据产品分组
         Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getProductId));
+        int parentId = 1;
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
             //最小计划开始时间
@@ -118,21 +120,27 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             //最大计划结束时间
             Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             String productName = value.get(0).getProductName();
-            ProductTaskProductViewDTO parentDto = new ProductTaskProductViewDTO();
+            ProductTaskProductChildDTO parentDto = new ProductTaskProductChildDTO();
+            parentDto.setId(parentId);
+            parentDto.setParentId(IsConstant.NO);
             parentDto.setProductId(entry.getKey());
             parentDto.setProductName(productName);
             parentDto.setPlanStartTime(minStartTime);
             parentDto.setPlanEndTime(maxEndTime);
+            parentId ++;
             //同一产品下的任务
             List<ProductTaskProductChildDTO> childrenList = new LinkedList<>();
-            value.forEach(obj->{
+            for (ProductTaskViewDTO obj:value) {
                 ProductTaskProductChildDTO childDto = new ProductTaskProductChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
+                childDto.setId(parentId);
+                childDto.setParentId(parentDto.getId());
                 childrenList.add(childDto);
-            });
-            parentDto.setChildrenList(childrenList);
+                parentId ++;
+            };
             resultList.add(parentDto);
+            resultList.addAll(childrenList);
         }
         return resultList;
     }
@@ -142,44 +150,46 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 12:01
      * @param dto
-     * @return List<ProductTaskPhaseViewDTO>
+     * @return List<ProductTaskPhaseChildDTO>
      */
     @Override
-    public List<ProductTaskPhaseViewDTO> getPhaseView(ProductTaskViewSearchDTO dto) {
+    public List<ProductTaskPhaseChildDTO> getPhaseView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
         List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPhaseView(dto);
         //返回结果集
-        List<ProductTaskPhaseViewDTO> resultList = new LinkedList<>();
+        List<ProductTaskPhaseChildDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
         //根据产品分组
         Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getPhaseName));
-        int seq = 1;
+        int parentId = 1;
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
             //最小计划开始时间
             Date minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
             //最大计划结束时间
             Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
-            ProductTaskPhaseViewDTO parentDto = new ProductTaskPhaseViewDTO();
-            parentDto.setSeq(seq);
+            ProductTaskPhaseChildDTO parentDto = new ProductTaskPhaseChildDTO();
+            parentDto.setId(parentId);
+            parentDto.setParentId(IsConstant.NO);
             parentDto.setPhaseName(entry.getKey());
             parentDto.setPlanEndTime(minStartTime);
             parentDto.setPlanEndTime(maxEndTime);
+            parentId ++;
             //同一阶段下的任务
             List<ProductTaskPhaseChildDTO> childrenList = new LinkedList<>();
-            int finalSeq = seq;
-            value.forEach(obj->{
+            for (ProductTaskViewDTO obj:value) {
                 ProductTaskPhaseChildDTO childDto = new ProductTaskPhaseChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
-                childDto.setSeq(finalSeq);
+                childDto.setId(parentId);
+                childDto.setParentId(parentDto.getId());
                 childrenList.add(childDto);
-            });
-            parentDto.setChildrenList(childrenList);
+                parentId ++;
+            };
             resultList.add(parentDto);
-            seq ++;
+            resultList.addAll(childrenList);
         }
         return resultList;
     }
@@ -189,34 +199,42 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 12:01
      * @param dto
-     * @return List<ProductTaskInWarehouseTimeViewDTO>
+     * @return List<ProductTaskInWarehouseTimeChildDTO>
      */
     @Override
-    public List<ProductTaskInWarehouseTimeViewDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto) {
+    public List<ProductTaskInWarehouseTimeChildDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
         List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskMapper.getAllTaskInWarehouseTimeView(dto);
         //返回结果集
-        List<ProductTaskInWarehouseTimeViewDTO> resultList = new LinkedList<>();
+        List<ProductTaskInWarehouseTimeChildDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
         //根据产品分组
         Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().filter(obj-> StringUtils.isNotBlank(obj.getTimeInterval())).collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
+        int parentId = 1;
         for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
             List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();
             String timeInterval = value.get(0).getTimeInterval();
-            ProductTaskInWarehouseTimeViewDTO parentDto = new ProductTaskInWarehouseTimeViewDTO();
+            ProductTaskInWarehouseTimeChildDTO parentDto = new ProductTaskInWarehouseTimeChildDTO();
             parentDto.setTimeInterval(timeInterval);
+            parentDto.setId(parentId);
+            parentDto.setParentId(IsConstant.NO);
+            parentId ++;
             //同一时间区间下的任务
             List<ProductTaskInWarehouseTimeChildDTO> childrenList = new LinkedList<>();
-            value.forEach(obj->{
+            for (ProductTaskInWarehouseTimeChildDTO obj:value) {
                 ProductTaskInWarehouseTimeChildDTO childDto = new ProductTaskInWarehouseTimeChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
-                childDto.setApprovalStatusName(ApprovalStatusEnum.getName(obj.getApprovalStatus()));
+                //判断是项目状态还是产品状态
+                childDto.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
+                childDto.setId(parentId);
+                childDto.setParentId(parentDto.getId());
                 childrenList.add(childDto);
-            });
-            parentDto.setChildrenList(childrenList);
+                parentId ++;
+            };
             resultList.add(parentDto);
+            resultList.addAll(childrenList);
         }
         return resultList;
     }
@@ -257,7 +275,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().sorted(Comparator.comparing(ProductTaskViewDTO::getChargeId)).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
         String fileName = getFileName("按人员导出");
         ExcelUtil.export(fileName, "按人员导出", excelList, ProductTaskViewPersonnelExcelDTO.class, response);
@@ -276,7 +294,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().sorted(Comparator.comparing(ProductTaskViewDTO::getProductId)).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewProductExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewProductExcelDTO.class, list);
         String fileName = getFileName("按产品导出");
         ExcelUtil.export(fileName, "按产品导出", excelList, ProductTaskViewProductExcelDTO.class, response);
@@ -295,7 +313,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().sorted(Comparator.comparing(ProductTaskViewDTO::getPhaseName)).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewPhaseExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPhaseExcelDTO.class, list);
         String fileName = getFileName("按阶段导出");
         ExcelUtil.export(fileName, "按阶段导出", excelList, ProductTaskViewPhaseExcelDTO.class, response);
@@ -315,7 +333,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        list.forEach(obj->{obj.setApprovalStatusName(ApprovalStatusEnum.getName(obj.getApprovalStatus()));});
+        list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).forEach(obj->{obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));});
         List<ProductTaskViewInWarehouseTimeExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewInWarehouseTimeExcelDTO.class, list);
         String fileName = getFileName("按量产入库时间导出");
         ExcelUtil.export(fileName, "按量产入库时间导出", excelList, ProductTaskViewInWarehouseTimeExcelDTO.class, response);
