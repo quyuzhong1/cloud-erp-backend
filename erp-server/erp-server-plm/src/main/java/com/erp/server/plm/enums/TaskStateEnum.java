@@ -14,7 +14,6 @@ public enum TaskStateEnum {
     ING(3, "进行中"),
     FINISH(4, "已完成"),
     CLOSE(5, "已取消"),
-    FINISH_WAIT_CONFIRM(6, "完成待审核"),
     APPROVAL_ING(7, "审核中"),
     APPROVAL_PASS(8, "审核通过"),
     APPROVAL_NO_PASS(9, "审核不通过");

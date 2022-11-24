@@ -877,7 +877,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             detailsDTO.setFieldConfigType(refSku.getFieldConfigType());
         }
         detailsDTO.setRefSkuIdList(skuIdList);
-        List<String> skuNoList=productDetailList.stream().filter(d->skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<String> skuNoList = productDetailList.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
         detailsDTO.setRefSkuNoList(skuNoList);
         return detailsDTO;
     }
@@ -1153,7 +1153,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultDTO.setFieldConfigType(refSku.getFieldConfigType());
         }
         resultDTO.setRefSkuIdList(skuIdList);
-        List<String> skuNoList=productDetailList.stream().filter(d->skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<String> skuNoList = productDetailList.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
         resultDTO.setRefSkuNoList(skuNoList);
 
 
@@ -2357,12 +2357,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //检查任务状态是否一样
         Integer state = checkTaskState(list);
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
-        Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
         // 只有待审核 和 完成待审核 的状态 才可以审核通过
         if (!waitConfirmCode.equals(state) &&
-                !finishWaitConfirmCode.equals(state) &&
                 !approvalIngCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
@@ -2433,12 +2431,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer state = checkTaskState(list);
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
-        //审核中
-        Integer finishWaitConfirmCode = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+
         //待审核
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
-        if (!approvalIngCode.equals(state) && !finishWaitConfirmCode.equals(state)
-                && !waitConfirmCode.equals(state)
+        if (!approvalIngCode.equals(state) && !waitConfirmCode.equals(state)
         ) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
