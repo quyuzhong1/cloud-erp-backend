@@ -3,8 +3,6 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 /**
  * @author Will
  * @version 1.0
@@ -33,22 +31,22 @@ public class ProductTaskViewDTO {
     /**
      * 计划开始日期
      */
-    private Date planStartTime;
+    private String planStartTime;
 
     /**
      * 计划结束日期
      */
-    private Date planEndTime;
+    private String planEndTime;
 
     /**
      * 实际开始日期
      */
-    private Date realityStartTime;
+    private String realityStartTime;
 
     /**
      * 实际结束日期
      */
-    private Date realityEndTime;
+    private String realityEndTime;
 
     /**
      * 任务状态名称

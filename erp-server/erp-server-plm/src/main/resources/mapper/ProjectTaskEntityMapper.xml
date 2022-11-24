@@ -423,10 +423,10 @@
             pi.name as productName,
             pi.approval_status,
             pt.name as taskName,
-            pt.plan_start_time,
-            pt.plan_end_time,
-            pt.reality_start_time,
-            pt.reality_end_time,
+            to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+            to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+            to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+            to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
             pt.status,
             regexp_split_to_table(pt.charge_id,',') as charge_id,
             regexp_split_to_table(pt.charge_name,',') as charge_name,
@@ -472,7 +472,7 @@
                 </foreach>
             </if>
         </where>
-        order by t.charge_id desc , t.id desc
+        order by t.charge_id desc, t.plan_start_time asc, t.id desc
     </select>
 
     <select id="getAllTaskProductView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
@@ -481,10 +481,10 @@
         pi.name as productName,
         pi.approval_status,
         pt.name as taskName,
-        pt.plan_start_time,
-        pt.plan_end_time,
-        pt.reality_start_time,
-        pt.reality_end_time,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
         pt.status,
         pt.charge_id as charge_id,
         pt.charge_name as charge_name,
@@ -529,7 +529,7 @@
                 </foreach>
             </if>
         </where>
-        order by pi.id desc , pt.id desc
+        order by pi.id desc, pt.plan_start_time asc, pt.id desc
     </select>
 
     <select id="getAllTaskPhaseView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
@@ -538,10 +538,10 @@
         pi.name as productName,
         pi.approval_status,
         pt.name as taskName,
-        pt.plan_start_time,
-        pt.plan_end_time,
-        pt.reality_start_time,
-        pt.reality_end_time,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
         pt.status,
         pt.charge_id as charge_id,
         pt.charge_name as charge_name,
@@ -588,7 +588,7 @@
                 </foreach>
             </if>
         </where>
-        order by pt.phase_id desc , pt.id desc
+        order by pt.phase_name desc, pt.plan_start_time asc, pt.id desc
     </select>
 
 
@@ -597,7 +597,7 @@
             pi.name as productName,
             pi.charge_name,
             pd.sku_no,
-            pd.plan_listing_time,
+            to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
             COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
             COALESCE(pi2.project_status,pi.approval_status) as status,
             case when COALESCE(pi2.project_status,-1) = -1 then 0
@@ -631,7 +631,7 @@
                 </foreach>
             </if>
         </where>
-        order by to_char(pd.plan_listing_time, 'YYYYMM') asc , pd.id desc
+        order by to_char(pd.plan_listing_time, 'YYYYMM') asc, pd.plan_listing_time asc, pd.id desc
     </select>
 
 

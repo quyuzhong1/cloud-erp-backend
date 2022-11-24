@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author Will
@@ -64,7 +63,7 @@ public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
     /**
      * 首批量产入库时间(计划上市时间)
      */
-    private Date planListingTime;
+    private String planListingTime;
 
     /**
      * 产品经理

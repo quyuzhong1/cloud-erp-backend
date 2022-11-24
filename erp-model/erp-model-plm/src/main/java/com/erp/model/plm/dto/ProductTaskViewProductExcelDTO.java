@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author Will
@@ -30,22 +29,22 @@ public class ProductTaskViewProductExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "计划开始日期", index = 2)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planStartTime;
+    private String planStartTime;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "计划结束日期", index = 3)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date planEndTime;
+    private String planEndTime;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "实际开始日期", index = 4)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date realityStartTime;
+    private String realityStartTime;
 
     @ColumnWidth(20)
     @ExcelProperty(value = "实际结束日期", index = 5)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private Date realityEndTime;
+    private String realityEndTime;
 
     @ColumnWidth(10)
     @ExcelProperty(value = "任务状态", index = 6)
