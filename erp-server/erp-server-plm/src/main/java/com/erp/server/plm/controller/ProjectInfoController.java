@@ -7,20 +7,16 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
-import com.erp.model.plm.dto.StartProjectDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -99,9 +95,15 @@ public class ProjectInfoController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getProjectStatusSelect")
-    public ApiResult<Map<Integer, String>> getProjectStatusSelect() {
-        Map<Integer, String> map = Arrays.stream(ProjectStateEnum.values()).collect(Collectors.toMap(ProjectStateEnum::getState, ProjectStateEnum::getName));
-        return success(map);
+    public ApiResult<List<SelectShowDTO>> getProjectStatusSelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(ProjectStateEnum.values()).forEach(obj->{
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setCode(obj.getState());
+            dto.setValue(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
     }
 
 }

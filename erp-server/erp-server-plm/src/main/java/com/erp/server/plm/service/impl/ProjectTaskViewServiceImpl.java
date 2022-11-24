@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
@@ -31,6 +32,9 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
 
     @Autowired
     private ProjectTaskMapper projectTaskMapper;
+
+    @Autowired(required = false)
+    private HttpServletResponse response;
 
     /**
      * @description: 项目视图按人员查询
@@ -222,9 +226,9 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-
-
-
+        List<ProductTaskPersonnelChildDTO> childList = BeanMapperUtils.copyList(ProductTaskPersonnelChildDTO.class, list);
+        childList.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        ExcelUtil.export("", "任务视图-按人员导出", childList, TaskExcelDTO.class, response);
     }
 
     /**

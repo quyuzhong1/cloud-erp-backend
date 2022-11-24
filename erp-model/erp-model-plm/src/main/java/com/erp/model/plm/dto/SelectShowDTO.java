@@ -1,0 +1,25 @@
+package com.erp.model.plm.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: 下拉框返回DTO
+ * @date 2022/11/24 11:01
+ */
+@Data
+@NoArgsConstructor
+public class SelectShowDTO {
+
+    /**
+     * 下拉框代码
+     */
+    private Integer code;
+
+    /**
+     * 下拉框值
+     */
+    private String value;
+}

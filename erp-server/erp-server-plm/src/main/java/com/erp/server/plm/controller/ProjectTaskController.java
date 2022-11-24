@@ -18,11 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * 产品开发管理
@@ -436,9 +432,15 @@ public class ProjectTaskController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getTaskStatusSelect")
-    public ApiResult<Map<Integer, String>> getTaskStatusSelect() {
-        Map<Integer, String> map = Arrays.stream(TaskStateEnum.values()).collect(Collectors.toMap(TaskStateEnum::getCode, TaskStateEnum::getName));
-        return success(map);
+    public ApiResult<List<SelectShowDTO>> getTaskStatusSelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(TaskStateEnum.values()).forEach(obj->{
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setCode(obj.getCode());
+            dto.setValue(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
     }
 }
 
