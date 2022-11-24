@@ -443,9 +443,9 @@
         left join project_info pi2 on pi.id = pi2.product_id) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
-                and t.charge_id in
-                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
-                    #{item}
+                and
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
+                    t.charge_id like concat('%',#{item},'%')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -500,9 +500,9 @@
         left join project_info pi2 on pi.id = pi2.product_id
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
-                and pt.charge_id in
-                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
-                    #{item}
+                and
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
+                    pt.charge_id like concat('%',#{item},'%')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -559,9 +559,9 @@
         left join project_info pi2 on pi.id = pi2.product_id
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
-                and pt.charge_id in
-                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
-                    #{item}
+                and
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
+                    pt.charge_id like concat('%',#{item},'%')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -608,9 +608,9 @@
         left join project_info pi2 on pi.id = pi2.product_id
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
-                and pi.charge_id in
-                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
-                    #{item}
+                and
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
+                    pi.charge_id like concat('%',#{item},'%')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
