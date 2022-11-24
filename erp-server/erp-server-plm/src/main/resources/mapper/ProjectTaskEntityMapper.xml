@@ -310,48 +310,51 @@
     <select id="myCreateProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        WHERE create_user_id=#{userId}
-        <if test="params.groupFlag !=null  and params.groupFlag!=''">
-            AND product_id=#{params.groupFlag}
-        </if>
-        <if test="notStateList !=null and notStateList.size>0">
-            AND status NOT IN
-            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
-        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
-        </if>
-        <if test="params.param!='' and params.param!=null">
-           ${params.param})
-        </if>
+        <where>
+            <if test="params.groupFlag !=null  and params.groupFlag!=''">
+                AND product_id=#{params.groupFlag}
+            </if>
+            <if test="notStateList !=null and notStateList.size>0">
+                AND status NOT IN
+                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+                AND name LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+            <if test="params.param!='' and params.param!=null">
+                ${params.param})
+            </if>
+        </where>
+
         ORDER BY ${params.searchType} ${params.orderBy}
     </select>
 
     <select id="myCreatePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        WHERE create_user_id=#{userId}
-        <if test="notStateList !=null and notStateList.size>0">
-            AND status NOT IN
-            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
-        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
-        </if>
-        <if test="startTime!=null ">
-            AND plan_end_time &gt;= #{startTime}
-        </if>
-        <if test="endTime!=null ">
-            AND plan_end_time &lt;= #{endTime}
-        </if>
-        <if test="params.param!='' and params.param!=null">
-            ${params.param})
-        </if>
-        ORDER BY ${params.searchType} ${params.orderBy}
+        <where>
+            <if test="notStateList !=null and notStateList.size>0">
+                AND status NOT IN
+                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+                AND name LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+            <if test="startTime!=null ">
+                AND plan_end_time &gt;= #{startTime}
+            </if>
+            <if test="endTime!=null ">
+                AND plan_end_time &lt;= #{endTime}
+            </if>
+            <if test="params.param!='' and params.param!=null">
+                ${params.param})
+            </if>
+            ORDER BY ${params.searchType} ${params.orderBy}
+        </where>
 
     </select>
 
@@ -412,31 +415,29 @@
     </select>
 
 
-
-
     <select id="getAllTaskPersonnelView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
-       select
-              t.*
-       from
+        select
+        t.*
+        from
         (select
-            pi.id,
-            pi.name as productName,
-            pi.approval_status,
-            pt.name as taskName,
-            to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
-            to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
-            to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
-            to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
-            pt.status,
-            regexp_split_to_table(pt.charge_id,',') as charge_id,
-            regexp_split_to_table(pt.charge_name,',') as charge_name,
-            pt.phase_name,
-            pi2.project_status,
-            case when pt.plan_end_time is null then 0
-                 when pt.reality_end_time is null then 0
-                 when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-                 when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
-                 else 0 end isDelay
+        pi.id,
+        pi.name as productName,
+        pi.approval_status,
+        pt.name as taskName,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
+        pt.status,
+        regexp_split_to_table(pt.charge_id,',') as charge_id,
+        regexp_split_to_table(pt.charge_name,',') as charge_name,
+        pt.phase_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+        when pt.reality_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
+        when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') then 1
+        else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id) t
@@ -490,10 +491,10 @@
         pt.charge_name as charge_name,
         pi2.project_status,
         case when pt.plan_end_time is null then 0
-             when pt.reality_end_time is null then 0
-             when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-             when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
-             else 0 end isDelay
+        when pt.reality_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
+        when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') then 1
+        else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
@@ -549,10 +550,10 @@
         pt.phase_name,
         pi2.project_status,
         case when pt.plan_end_time is null then 0
-             when pt.reality_end_time is null then 0
-             when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-             when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
-             else 0 end isDelay
+        when pt.reality_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
+        when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') then 1
+        else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
@@ -594,15 +595,15 @@
 
     <select id="getAllTaskInWarehouseTimeView" resultType="com.erp.model.plm.dto.ProductTaskInWarehouseTimeChildDTO">
         select
-            pi.name as productName,
-            pi.charge_name,
-            pd.sku_no,
-            to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
-            COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
-            COALESCE(pi2.project_status,pi.approval_status) as status,
-            case when COALESCE(pi2.project_status,-1) = -1 then 0
-                 else 1 end as isProjectStatus
-        from  product_info pi
+        pi.name as productName,
+        pi.charge_name,
+        pd.sku_no,
+        to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
+        COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
+        COALESCE(pi2.project_status,pi.approval_status) as status,
+        case when COALESCE(pi2.project_status,-1) = -1 then 0
+        else 1 end as isProjectStatus
+        from product_info pi
         inner join product_detail pd on pi.id = pd.product_id
         left join project_info pi2 on pi.id = pi2.product_id
         <where>
