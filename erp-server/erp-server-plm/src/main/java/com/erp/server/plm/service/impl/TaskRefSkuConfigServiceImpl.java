@@ -128,6 +128,20 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         return getOne(queryWrapper);
     }
 
+    /**
+     * 根据产品id获取sku 与字段的配置关系表
+     * @author yl
+     * @date 2022-11-24 16:32
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.TaskRefSkuConfigEntity>
+     */
+    @Override
+    public List<TaskRefSkuConfigEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskRefSkuConfigEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
 
     /**
      * 根据任务id 和 产品ｉｄ 获取关系表

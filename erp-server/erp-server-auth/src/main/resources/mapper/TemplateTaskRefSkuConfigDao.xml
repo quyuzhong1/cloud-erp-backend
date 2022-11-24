@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.dao.TemplateTaskRefSkuConfigDao">
+
+    <resultMap type="com.erp.server.plm.entity.TemplateTaskRefSkuConfig" id="TemplateTaskRefSkuConfigMap">
+        <result property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="taskId" column="task_id" jdbcType="VARCHAR"/>
+        <result property="fieldConfigType" column="field_config_type" jdbcType="VARCHAR"/>
+        <result property="fieldJson" column="field_json" jdbcType="VARCHAR"/>
+        <result property="templateId" column="template_id" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="TemplateTaskRefSkuConfigMap">
+        select
+          id, task_id, field_config_type, field_json, template_id, create_time, update_time
+        from template_task_ref_sku_config
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="TemplateTaskRefSkuConfigMap">
+        select
+          id, task_id, field_config_type, field_json, template_id, create_time, update_time
+        from template_task_ref_sku_config
+        <where>
+            <if test="id != null and id != ''">
+                and id = #{id}
+            </if>
+            <if test="taskId != null and taskId != ''">
+                and task_id = #{taskId}
+            </if>
+            <if test="fieldConfigType != null and fieldConfigType != ''">
+                and field_config_type = #{fieldConfigType}
+            </if>
+            <if test="fieldJson != null and fieldJson != ''">
+                and field_json = #{fieldJson}
+            </if>
+            <if test="templateId != null and templateId != ''">
+                and template_id = #{templateId}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+        </where>
+        limit #{pageable.offset}, #{pageable.pageSize}
+    </select>
+
+    <!--统计总行数-->
+    <select id="count" resultType="java.lang.Long">
+        select count(1)
+        from template_task_ref_sku_config
+        <where>
+            <if test="id != null and id != ''">
+                and id = #{id}
+            </if>
+            <if test="taskId != null and taskId != ''">
+                and task_id = #{taskId}
+            </if>
+            <if test="fieldConfigType != null and fieldConfigType != ''">
+                and field_config_type = #{fieldConfigType}
+            </if>
+            <if test="fieldJson != null and fieldJson != ''">
+                and field_json = #{fieldJson}
+            </if>
+            <if test="templateId != null and templateId != ''">
+                and template_id = #{templateId}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into template_task_ref_sku_config(task_id, field_config_type, field_json, template_id, create_time, update_time)
+        values (#{taskId}, #{fieldConfigType}, #{fieldJson}, #{templateId}, #{createTime}, #{updateTime})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into template_task_ref_sku_config(task_id, field_config_type, field_json, template_id, create_time, update_time)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+        (#{entity.taskId}, #{entity.fieldConfigType}, #{entity.fieldJson}, #{entity.templateId}, #{entity.createTime}, #{entity.updateTime})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into template_task_ref_sku_config(task_id, field_config_type, field_json, template_id, create_time, update_time)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.taskId}, #{entity.fieldConfigType}, #{entity.fieldJson}, #{entity.templateId}, #{entity.createTime}, #{entity.updateTime})
+        </foreach>
+        on duplicate key update
+        task_id = values(task_id),
+        field_config_type = values(field_config_type),
+        field_json = values(field_json),
+        template_id = values(template_id),
+        create_time = values(create_time),
+        update_time = values(update_time)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update template_task_ref_sku_config
+        <set>
+            <if test="taskId != null and taskId != ''">
+                task_id = #{taskId},
+            </if>
+            <if test="fieldConfigType != null and fieldConfigType != ''">
+                field_config_type = #{fieldConfigType},
+            </if>
+            <if test="fieldJson != null and fieldJson != ''">
+                field_json = #{fieldJson},
+            </if>
+            <if test="templateId != null and templateId != ''">
+                template_id = #{templateId},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from template_task_ref_sku_config where id = #{id}
+    </delete>
+
+</mapper>
+

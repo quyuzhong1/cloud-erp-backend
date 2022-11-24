@@ -147,6 +147,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectMembersService projectMembersService;
 
+    @Autowired
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -572,6 +575,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             templatePreTaskService.saveTemplatePreTask(templateId, productId);
             //保存文档权限
             templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId);
+            //保存sku 与任务 配置关系
+            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId,productId);
         }
 
         return true;

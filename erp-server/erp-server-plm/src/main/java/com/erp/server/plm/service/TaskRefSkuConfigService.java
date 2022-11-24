@@ -33,4 +33,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     List<TaskRefSkuConfigEntity> getByTaskIds(List<String> sysTaskIds);
 
     TaskRefSkuConfigEntity getByTaskId(String taskId);
+
+    List<TaskRefSkuConfigEntity> getByProductId(String productId);
 }

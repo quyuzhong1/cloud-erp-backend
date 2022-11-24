@@ -111,6 +111,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private ProductDetailService productDetailService;
 
+
+    @Autowired
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+    @Autowired
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
+
     /**
      * 项目概述
      *
@@ -181,7 +188,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             throw new ServiceException(ApiError.ERROR_95026);
         }
         //检查是否有SKU生成
-//        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
+        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
 //        if (CollectionUtils.isEmpty(skuList)) {
 //            throw new ServiceException(ApiError.ERROR_95067);
 //        }
@@ -213,6 +220,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectMembersService.add(productId, projectId, dto.getMembers());
                 //从复制系统项目任务
                 List<ProjectTaskEntity> addProjectTaskList = projectTaskService.copyTaskBySys(productId, projectId);
+                //已经添加的任务id
+                List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList,productId,skuList);
                 //异步发送通知
                 noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
             }
@@ -244,10 +256,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(flagId, productId, projectId, phaseSourceList);
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
+
+                //这个是复制任务与 sku 配置字段关系
+                templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId,productId,taskSourceList);
+
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
                 templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
+
+                List<String>  addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList,productId,skuList);
 
             }
 

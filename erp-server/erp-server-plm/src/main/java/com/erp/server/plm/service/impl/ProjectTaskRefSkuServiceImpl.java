@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
@@ -56,6 +57,33 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 项目启动后 所 保存的任务 自动关联 sku
+     *
+     * @param addTaskIdList
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-11-24 17:10
+     */
+    @Override
+    public void saveBatchTaskRefSku(List<String> addTaskIdList, String productId, List<ProductDetailEntity> skuList) {
+        List<ProjectTaskRefSkuEntity> addList = new ArrayList<>();
+        for (String taskId : addTaskIdList) {
+            for (ProductDetailEntity item : skuList) {
+                ProjectTaskRefSkuEntity ref = new ProjectTaskRefSkuEntity();
+                ref.setSkuId(item.getId());
+                ref.setTaskId(taskId);
+                ref.setProductId(productId);
+                addList.add(ref);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+
     }
 
     /**
