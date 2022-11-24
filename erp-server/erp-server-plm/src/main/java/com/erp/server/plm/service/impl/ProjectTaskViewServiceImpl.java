@@ -70,7 +70,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             String chargeName = value.get(0).getChargeName();
             ProductTaskPersonnelChildDTO parentDto = new ProductTaskPersonnelChildDTO();
             parentDto.setId(parentId);
-            parentDto.setPraentId(IsConstant.NO);
+            parentDto.setParentId(IsConstant.NO);
             parentDto.setChargeId(entry.getKey());
             parentDto.setChargeName(chargeName);
             parentDto.setPlanStartTime(minStartTime);
@@ -83,7 +83,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 BeanMapperUtils.copy(obj,childDto);
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
                 childDto.setId(parentId);
-                childDto.setPraentId(parentDto.getId());
+                childDto.setParentId(parentDto.getId());
                 childrenList.add(childDto);
                 parentId ++;
             };

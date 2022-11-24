@@ -24,7 +24,7 @@ public class ProductTaskPersonnelChildDTO implements Serializable {
     /**
      * 父级id（用于前端展示）
      */
-    private Integer praentId;
+    private Integer parentId;
 
     /**
      * 产品名称

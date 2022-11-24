@@ -24,19 +24,19 @@ public class ProductTaskViewInWarehouseTimeExcelDTO implements Serializable {
     private String timeInterval;
 
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品名称", index = 0)
+    @ExcelProperty(value = "产品名称", index = 1)
     private String productName;
 
     @ColumnWidth(10)
-    @ExcelProperty(value = "产品状态/项目状态", index = 0)
+    @ExcelProperty(value = "产品状态/项目状态", index = 2)
     private String statusName;
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "首批量产入库时间", index = 0)
+    @ExcelProperty(value = "首批量产入库时间", index = 3)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "产品经理", index = 0)
+    @ExcelProperty(value = "产品经理", index = 4)
     private String chargeName;
 }
