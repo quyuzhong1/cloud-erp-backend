@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -24,6 +25,16 @@ public class ProductTaskPersonnelViewDTO implements Serializable {
      * 人员名称（分组条件）
      */
     private String chargeName;
+
+    /**
+     * 计划开始日期
+     */
+    private Date planStartTime;
+
+    /**
+     * 计划结束日期
+     */
+    private Date planEndTime;
 
     /**
      * 子集

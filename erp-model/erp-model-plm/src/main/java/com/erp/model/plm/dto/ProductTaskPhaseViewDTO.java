@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,6 +26,16 @@ public class ProductTaskPhaseViewDTO implements Serializable {
      * 阶段名称
      */
     private String phaseName;
+
+    /**
+     * 计划开始日期
+     */
+    private Date planStartTime;
+
+    /**
+     * 计划结束日期
+     */
+    private Date planEndTime;
 
     /**
      * 子集

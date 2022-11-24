@@ -18,10 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -64,10 +61,16 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getChargeId));
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
+            //最小计划开始时间
+            Date minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
+            //最大计划结束时间
+            Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             String chargeName = value.get(0).getChargeName();
             ProductTaskPersonnelViewDTO parentDto = new ProductTaskPersonnelViewDTO();
             parentDto.setChargeId(entry.getKey());
             parentDto.setChargeName(chargeName);
+            parentDto.setPlanStartTime(minStartTime);
+            parentDto.setPlanEndTime(maxEndTime);
             //同一人员下的任务
             List<ProductTaskPersonnelChildDTO> childrenList = new LinkedList<>();
             value.forEach(obj->{
@@ -102,10 +105,16 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getProductId));
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
+            //最小计划开始时间
+            Date minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
+            //最大计划结束时间
+            Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             String productName = value.get(0).getProductName();
             ProductTaskProductViewDTO parentDto = new ProductTaskProductViewDTO();
             parentDto.setProductId(entry.getKey());
             parentDto.setProductName(productName);
+            parentDto.setPlanStartTime(minStartTime);
+            parentDto.setPlanEndTime(maxEndTime);
             //同一产品下的任务
             List<ProductTaskProductChildDTO> childrenList = new LinkedList<>();
             value.forEach(obj->{
@@ -141,9 +150,15 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         int seq = 1;
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
+            //最小计划开始时间
+            Date minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
+            //最大计划结束时间
+            Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             ProductTaskPhaseViewDTO parentDto = new ProductTaskPhaseViewDTO();
             parentDto.setSeq(seq);
             parentDto.setPhaseName(entry.getKey());
+            parentDto.setPlanEndTime(minStartTime);
+            parentDto.setPlanEndTime(maxEndTime);
             //同一阶段下的任务
             List<ProductTaskPhaseChildDTO> childrenList = new LinkedList<>();
             int finalSeq = seq;
@@ -234,8 +249,8 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
         list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
         String fileName = getFileName("按人员导出");
         ExcelUtil.export(fileName, "按人员导出", excelList, ProductTaskViewPersonnelExcelDTO.class, response);
         return;
