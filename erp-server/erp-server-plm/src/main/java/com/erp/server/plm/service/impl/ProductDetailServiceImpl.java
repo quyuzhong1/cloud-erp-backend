@@ -27,6 +27,7 @@ import com.erp.server.plm.enums.VariantColorEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -926,8 +927,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<ProductDetailEntity> getByIdList(List<String> skuIdList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProductDetailEntity::getId, skuIdList);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 }
