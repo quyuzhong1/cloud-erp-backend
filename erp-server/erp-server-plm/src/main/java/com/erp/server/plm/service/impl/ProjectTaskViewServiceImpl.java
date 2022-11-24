@@ -3,6 +3,8 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.web.service.RedisService;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
@@ -16,9 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +36,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
 
     @Autowired
     private ProjectTaskMapper projectTaskMapper;
+
+    @Autowired
+    private RedisService redisService;
+
 
     @Autowired(required = false)
     private HttpServletResponse response;
@@ -193,7 +201,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     @Override
     public void exportExcel(ProductTaskViewSearchDTO dto, HttpServletResponse response) {
         //导出时类型必填
-        if (ObjectUtils.isNotNull(dto.getType())) {
+        if (ObjectUtils.isNull(dto.getType())) {
             throw new ServiceException(ApiError.ERROR_95075);
         }
         switch (dto.getType()) {
@@ -226,9 +234,27 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<ProductTaskPersonnelChildDTO> childList = BeanMapperUtils.copyList(ProductTaskPersonnelChildDTO.class, list);
-        childList.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
-        ExcelUtil.export("", "任务视图-按人员导出", childList, TaskExcelDTO.class, response);
+        List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
+        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        String fileName = getFileName("按人员导出");
+        ExcelUtil.export(fileName, "按人员导出", excelList, ProductTaskViewPersonnelExcelDTO.class, response);
+        return;
+    }
+
+    private String getFileName(String fileName) {
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(fileName);
+        sb.append(date);
+        String redisKey = "file:name:" + date;
+        Integer last = redisService.getCacheObject(redisKey);
+        Integer lastNo = 1;
+        if (last != null) {
+            lastNo = last + 1;
+        }
+        redisService.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
+        return sb.append(lastNo).toString();
+
     }
 
     /**

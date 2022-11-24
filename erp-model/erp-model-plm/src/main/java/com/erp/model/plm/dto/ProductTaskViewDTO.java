@@ -51,6 +51,11 @@ public class ProductTaskViewDTO {
     private Date realityEndTime;
 
     /**
+     * 任务状态名称
+     */
+    private String statusName;
+
+    /**
      * 任务状态
      */
     private Integer status;

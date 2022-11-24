@@ -99,8 +99,8 @@ public class ProjectInfoController extends BaseController {
         List<SelectShowDTO> list = new ArrayList<>();
         Arrays.stream(ProjectStateEnum.values()).forEach(obj->{
             SelectShowDTO dto = new SelectShowDTO();
-            dto.setCode(obj.getState());
-            dto.setValue(obj.getName());
+            dto.setValue(obj.getState());
+            dto.setLabel(obj.getName());
             list.add(dto);
         });
         return success(list);

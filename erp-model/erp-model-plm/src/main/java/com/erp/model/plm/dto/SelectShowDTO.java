@@ -14,12 +14,12 @@ import lombok.NoArgsConstructor;
 public class SelectShowDTO {
 
     /**
-     * 下拉框代码
-     */
-    private Integer code;
-
-    /**
      * 下拉框值
      */
-    private String value;
+    private Integer value;
+
+    /**
+     * 下拉框标签名称
+     */
+    private String label;
 }

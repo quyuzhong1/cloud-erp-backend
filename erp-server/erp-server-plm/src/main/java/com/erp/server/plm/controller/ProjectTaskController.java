@@ -436,8 +436,8 @@ public class ProjectTaskController extends BaseController {
         List<SelectShowDTO> list = new ArrayList<>();
         Arrays.stream(TaskStateEnum.values()).forEach(obj->{
             SelectShowDTO dto = new SelectShowDTO();
-            dto.setCode(obj.getCode());
-            dto.setValue(obj.getName());
+            dto.setValue(obj.getCode());
+            dto.setLabel(obj.getName());
             list.add(dto);
         });
         return success(list);
