@@ -190,4 +190,10 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private List<String> refSkuIdList;
 
+
+    /**
+     * 关联sku 表sku 名字集合
+     */
+    private List<String> refSkuNoList;
+
 }
