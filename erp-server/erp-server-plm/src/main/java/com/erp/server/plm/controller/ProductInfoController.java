@@ -6,20 +6,22 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.common.enums.DataAttributeEnum;
+import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
-import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -167,6 +169,17 @@ public class ProductInfoController extends BaseController {
         productInfoService.exportProductData(dto);
     }
 
+    /**
+     * 产品列表-立项状态下拉框
+     * @author Will
+     * @date: 2022/11/24 10:24
+     * @return ApiResult
+     */
+    @GetMapping("/getApprovalStatusSelect")
+    public ApiResult getApprovalStatusSelect() {
+        Map<Integer, String> map = Arrays.stream(ApprovalStatusEnum.values()).collect(Collectors.toMap(ApprovalStatusEnum::getState, ApprovalStatusEnum::getName));
+        return success(map);
+    }
 
 
 }

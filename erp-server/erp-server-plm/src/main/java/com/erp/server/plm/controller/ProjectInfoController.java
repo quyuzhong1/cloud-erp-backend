@@ -2,7 +2,7 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
@@ -11,14 +11,16 @@ import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.StartItemSourceDTO;
 import com.erp.model.plm.dto.StartProjectDTO;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
-
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -90,7 +92,17 @@ public class ProjectInfoController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 项目列表-项目状态下拉框
+     * @author Will
+     * @date: 2022/11/24 10:26
+     * @return ApiResult
+     */
+    @GetMapping("/getProjectStatusSelect")
+    public ApiResult getProjectStatusSelect() {
+        Map<Integer, String> map = Arrays.stream(ProjectStateEnum.values()).collect(Collectors.toMap(ProjectStateEnum::getState, ProjectStateEnum::getName));
+        return success(map);
+    }
 
 }
 

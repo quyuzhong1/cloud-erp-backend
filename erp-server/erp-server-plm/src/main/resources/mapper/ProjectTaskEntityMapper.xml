@@ -402,66 +402,10 @@
            WHERE   status!=#{state} AND plan_end_time &lt; #{startTime}
     </select>
 
-    <select id="getAllTaskView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
-        select
-            pi.id as productId,
-            pi.name as productName,
-            pi.approval_status,
-            pt.name as taskName,
-            pt.plan_start_time,
-            pt.plan_end_time,
-            pt.reality_start_time,
-            pt.reality_end_time,
-            pt.status,
-            pt.charge_id as charge_id,
-            pt.charge_name as charge_name,
-            pt.phase_id,
-            pt.phase_name,
-            pi2.project_status,
-            case when pt.plan_end_time is null then 0
-                 when pt.reality_end_time is null then 0
-                 when to_char(pt.plan_end_time, 'YYYYMMDD') >= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-                 when to_char(pt.reality_end_time, 'YYYYMMDD') > to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
-                 else 0 end isDelay
-        from product_info pi
-        inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id
-        <where>
-            <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
-                and pt.charge_id in
-                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="dto.productIds != null and dto.productIds.size() > 0">
-                and pi.id in
-                <foreach collection="dto.productIds" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="dto.approvalStatusList != null and dto.approvalStatusList.size() > 0">
-                and pt.status in
-                <foreach collection="dto.approvalStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="dto.productStatusList != null and dto.productStatusList.size() > 0">
-                and pi.approval_status in
-                <foreach collection="dto.productStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="dto.projectStatusList != null and dto.projectStatusList.size() > 0">
-                and pi2.project_status in
-                <foreach collection="dto.projectStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-        </where>
-    </select>
 
 
-    <select id="getAllTaskViewByCharge" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
+
+    <select id="getAllTaskPersonnelView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
        select
               t.*
        from
@@ -519,9 +463,124 @@
                 </foreach>
             </if>
         </where>
+        order by t.charge_id desc , t.id desc
     </select>
 
+    <select id="getAllTaskProductView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
+        select
+        pi.id as productId,
+        pi.name as productName,
+        pi.approval_status,
+        pt.name as taskName,
+        pt.plan_start_time,
+        pt.plan_end_time,
+        pt.reality_start_time,
+        pt.reality_end_time,
+        pt.status,
+        pt.charge_id as charge_id,
+        pt.charge_name as charge_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+             when pt.reality_end_time is null then 0
+             when to_char(pt.plan_end_time, 'YYYYMMDD') >= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
+             when to_char(pt.reality_end_time, 'YYYYMMDD') > to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+             else 0 end isDelay
+        from product_info pi
+        inner join project_task pt on pi.id = pt.product_id
+        left join project_info pi2 on pi.id = pi2.product_id
+        <where>
+            <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
+                and pt.charge_id in
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.productIds != null and dto.productIds.size() > 0">
+                and pi.id in
+                <foreach collection="dto.productIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.approvalStatusList != null and dto.approvalStatusList.size() > 0">
+                and pt.status in
+                <foreach collection="dto.approvalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.productStatusList != null and dto.productStatusList.size() > 0">
+                and pi.approval_status in
+                <foreach collection="dto.productStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.projectStatusList != null and dto.projectStatusList.size() > 0">
+                and pi2.project_status in
+                <foreach collection="dto.projectStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by pi.id desc , pt.id desc
+    </select>
 
+    <select id="getAllTaskPhaseView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
+        select
+        pi.id as productId,
+        pi.name as productName,
+        pi.approval_status,
+        pt.name as taskName,
+        pt.plan_start_time,
+        pt.plan_end_time,
+        pt.reality_start_time,
+        pt.reality_end_time,
+        pt.status,
+        pt.charge_id as charge_id,
+        pt.charge_name as charge_name,
+        pt.phase_id,
+        pt.phase_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+             when pt.reality_end_time is null then 0
+             when to_char(pt.plan_end_time, 'YYYYMMDD') >= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
+             when to_char(pt.reality_end_time, 'YYYYMMDD') > to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+             else 0 end isDelay
+        from product_info pi
+        inner join project_task pt on pi.id = pt.product_id
+        left join project_info pi2 on pi.id = pi2.product_id
+        <where>
+            <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
+                and pt.charge_id in
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.productIds != null and dto.productIds.size() > 0">
+                and pi.id in
+                <foreach collection="dto.productIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.approvalStatusList != null and dto.approvalStatusList.size() > 0">
+                and pt.status in
+                <foreach collection="dto.approvalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.productStatusList != null and dto.productStatusList.size() > 0">
+                and pi.approval_status in
+                <foreach collection="dto.productStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.projectStatusList != null and dto.projectStatusList.size() > 0">
+                and pi2.project_status in
+                <foreach collection="dto.projectStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by pt.phase_id desc , pt.id desc
+    </select>
 
 
     <select id="getAllTaskInWarehouseTimeView" resultType="com.erp.model.plm.dto.ProductTaskInWarehouseTimeChildDTO">
@@ -562,6 +621,7 @@
                 </foreach>
             </if>
         </where>
+        order by to_char(pd.plan_listing_time, 'YYYYMM') asc , pd.id desc
     </select>
 
 
