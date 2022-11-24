@@ -19,27 +19,27 @@ public class ProductTaskViewSearchDTO implements Serializable {
     /**
      * 人员
      */
-    private List<String> chargeIds;
+    private List<Integer> chargeIds;
 
     /**
      * 产品
      */
-    private List<String> productIds;
+    private List<Integer> productIds;
 
     /**
      * 审核状态
      */
-    private List<String> approvalStatusList;
+    private List<Integer> approvalStatusList;
 
     /**
      * 产品状态
      */
-    private List<String> productStatusList;
+    private List<Integer> productStatusList;
 
     /**
      * 项目状态
      */
-    private List<String> projectStatusList;
+    private List<Integer> projectStatusList;
 
     /**
      * 查询类型（1按人员查看，2按产品查看，3按阶段查看，4按量产入库时间查看）
