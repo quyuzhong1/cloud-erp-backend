@@ -99,7 +99,7 @@ public class ProjectInfoController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getProjectStatusSelect")
-    public ApiResult getProjectStatusSelect() {
+    public ApiResult<Map<Integer, String>> getProjectStatusSelect() {
         Map<Integer, String> map = Arrays.stream(ProjectStateEnum.values()).collect(Collectors.toMap(ProjectStateEnum::getState, ProjectStateEnum::getName));
         return success(map);
     }

@@ -176,7 +176,7 @@ public class ProductInfoController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getApprovalStatusSelect")
-    public ApiResult getApprovalStatusSelect() {
+    public ApiResult<Map<Integer, String>> getApprovalStatusSelect() {
         Map<Integer, String> map = Arrays.stream(ApprovalStatusEnum.values()).collect(Collectors.toMap(ApprovalStatusEnum::getState, ApprovalStatusEnum::getName));
         return success(map);
     }

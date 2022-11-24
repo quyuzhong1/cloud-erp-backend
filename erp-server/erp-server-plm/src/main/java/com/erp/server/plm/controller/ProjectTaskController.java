@@ -436,7 +436,7 @@ public class ProjectTaskController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/getTaskStatusSelect")
-    public ApiResult getTaskStatusSelect() {
+    public ApiResult<Map<Integer, String>> getTaskStatusSelect() {
         Map<Integer, String> map = Arrays.stream(TaskStateEnum.values()).collect(Collectors.toMap(TaskStateEnum::getCode, TaskStateEnum::getName));
         return success(map);
     }
