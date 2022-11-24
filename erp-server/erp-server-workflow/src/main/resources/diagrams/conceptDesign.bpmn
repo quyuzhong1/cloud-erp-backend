@@ -15,9 +15,6 @@
       <bpmn:outgoing>Flow_1fveahx</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="Activity_1tp3191" name="总经理" camunda:assignee="${generalManager}">
-      <bpmn:extensionElements>
-        <camunda:taskListener class="" event="assignment" />
-      </bpmn:extensionElements>
       <bpmn:incoming>Flow_1fveahx</bpmn:incoming>
       <bpmn:outgoing>Flow_0mlj2fb</bpmn:outgoing>
     </bpmn:userTask>
@@ -32,31 +29,31 @@
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_concept_design">
-      <bpmndi:BPMNEdge id="Flow_1cirz9w_di" bpmnElement="Flow_1cirz9w">
-        <di:waypoint x="215" y="120" />
-        <di:waypoint x="320" y="120" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_03ua6nn_di" bpmnElement="Flow_03ua6nn">
-        <di:waypoint x="420" y="120" />
-        <di:waypoint x="580" y="120" />
+      <bpmndi:BPMNEdge id="Flow_0mlj2fb_di" bpmnElement="Flow_0mlj2fb">
+        <di:waypoint x="870" y="120" />
+        <di:waypoint x="962" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1fveahx_di" bpmnElement="Flow_1fveahx">
         <di:waypoint x="680" y="120" />
         <di:waypoint x="770" y="120" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0mlj2fb_di" bpmnElement="Flow_0mlj2fb">
-        <di:waypoint x="870" y="120" />
-        <di:waypoint x="962" y="120" />
+      <bpmndi:BPMNEdge id="Flow_03ua6nn_di" bpmnElement="Flow_03ua6nn">
+        <di:waypoint x="420" y="120" />
+        <di:waypoint x="580" y="120" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Activity_0yr983s_di" bpmnElement="Activity_1f8le4t">
-        <dc:Bounds x="320" y="80" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1cirz9w_di" bpmnElement="Flow_1cirz9w">
+        <di:waypoint x="215" y="120" />
+        <di:waypoint x="320" y="120" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="102" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="186" y="145" width="23" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0yr983s_di" bpmnElement="Activity_1f8le4t">
+        <dc:Bounds x="320" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1rjhdcm_di" bpmnElement="Activity_1y5ejsp">
         <dc:Bounds x="580" y="80" width="100" height="80" />
