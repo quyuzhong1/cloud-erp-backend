@@ -781,7 +781,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         }
 
                         //开始项目
-                        if (ProjectStateEnum.YES_START.getState().equals(projectStatus)) {
+                        if (ProjectStateEnum.ING.getState().equals(projectStatus)) {
                             noticeMessageService.beginProjectNotice(loginUser.getUserName(), productId);
                         }
                     }

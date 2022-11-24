@@ -108,4 +108,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean restartTask(OperateBaseTaskDTO dto);
 
+    PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 }
