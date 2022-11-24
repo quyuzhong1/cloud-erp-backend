@@ -401,16 +401,49 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
-     * 任务列表
+     *  全部 任务列表
      *
      *
      * @return
      */
-    @PostMapping("/expert/paging")
+    @PostMapping("/all/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.expertPaging(searchParamDTO);
         return success(pagingVO);
     }
+
+    /**
+     * 分配给我任务列表
+     * @return
+     */
+
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:expert:paging:assignToMe",
+            tableAlias = "project_task"
+    )
+    @PostMapping("/assignToMe/paging")
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMePaging(searchParamDTO);
+        return success(pagingVO);
+    }
+
+    /**
+     * 我创造的任务列表
+     * @return
+     */
+
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:task:expert:paging:myCreate",
+            tableAlias = "project_task"
+    )
+    @PostMapping("/myCreate/paging")
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.myCreatePaging(searchParamDTO);
+        return success(pagingVO);
+    }
+
 
 
     /**

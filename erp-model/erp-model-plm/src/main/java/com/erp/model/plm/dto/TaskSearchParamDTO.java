@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -15,7 +16,7 @@ import javax.validation.constraints.NotNull;
  * @Created by yl
  */
 @Data
-public class TaskSearchParamDTO {
+public class TaskSearchParamDTO  extends PermissionsDTO {
 
     /**
      * 搜索关键字
