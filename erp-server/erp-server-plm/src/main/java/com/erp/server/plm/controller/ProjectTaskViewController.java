@@ -36,8 +36,8 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskPersonnelViewDTO>>
      */
     @PostMapping("/getPersonnelView")
-    public ApiResult<List<ProductTaskPersonnelViewDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
-        List<ProductTaskPersonnelViewDTO> list = projectTaskViewService.getPersonnelView(dto);
+    public ApiResult<List<ProductTaskPersonnelChildDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
+        List<ProductTaskPersonnelChildDTO> list = projectTaskViewService.getPersonnelView(dto);
         return success(list);
     }
 

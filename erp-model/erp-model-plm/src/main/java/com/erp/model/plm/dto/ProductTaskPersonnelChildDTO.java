@@ -17,6 +17,16 @@ import java.util.Date;
 public class ProductTaskPersonnelChildDTO implements Serializable {
 
     /**
+     * id（用于前端展示）
+     */
+    private Integer id;
+
+    /**
+     * 父级id（用于前端展示）
+     */
+    private Integer praentId;
+
+    /**
      * 产品名称
      */
     private String productName;

@@ -426,7 +426,7 @@
             case when pt.plan_end_time is null then 0
                  when pt.reality_end_time is null then 0
                  when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-                 when to_char(pt.reality_end_time, 'YYYYMMDD') &lt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+                 when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
                  else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
@@ -483,7 +483,7 @@
         case when pt.plan_end_time is null then 0
              when pt.reality_end_time is null then 0
              when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-             when to_char(pt.reality_end_time, 'YYYYMMDD') &lt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+             when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
              else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
@@ -542,7 +542,7 @@
         case when pt.plan_end_time is null then 0
              when pt.reality_end_time is null then 0
              when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
-             when to_char(pt.reality_end_time, 'YYYYMMDD') &lt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+             when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
              else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id

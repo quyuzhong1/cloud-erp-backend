@@ -8,6 +8,7 @@ import com.common.web.service.RedisService;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
@@ -49,16 +50,17 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @return List<ProductTaskPersonnelViewDTO>
      */
     @Override
-    public List<ProductTaskPersonnelViewDTO> getPersonnelView(ProductTaskViewSearchDTO dto) {
+    public List<ProductTaskPersonnelChildDTO> getPersonnelView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
         List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPersonnelView(dto);
         //返回结果集
-        List<ProductTaskPersonnelViewDTO> resultList = new LinkedList<>();
+        List<ProductTaskPersonnelChildDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
         //根据人员分组
         Map<String, List<ProductTaskViewDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskViewDTO::getChargeId));
+        int parentId = 1;
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
             //最小计划开始时间
@@ -66,21 +68,27 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             //最大计划结束时间
             Date maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             String chargeName = value.get(0).getChargeName();
-            ProductTaskPersonnelViewDTO parentDto = new ProductTaskPersonnelViewDTO();
+            ProductTaskPersonnelChildDTO parentDto = new ProductTaskPersonnelChildDTO();
+            parentDto.setId(parentId);
+            parentDto.setPraentId(IsConstant.NO);
             parentDto.setChargeId(entry.getKey());
             parentDto.setChargeName(chargeName);
             parentDto.setPlanStartTime(minStartTime);
             parentDto.setPlanEndTime(maxEndTime);
+            parentId ++;
             //同一人员下的任务
             List<ProductTaskPersonnelChildDTO> childrenList = new LinkedList<>();
-            value.forEach(obj->{
+            for (ProductTaskViewDTO obj:value) {
                 ProductTaskPersonnelChildDTO childDto = new ProductTaskPersonnelChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
+                childDto.setId(parentId);
+                childDto.setPraentId(parentDto.getId());
                 childrenList.add(childDto);
-            });
-            parentDto.setChildrenList(childrenList);
+                parentId ++;
+            };
             resultList.add(parentDto);
+            resultList.addAll(childrenList);
         }
         return resultList;
     }
@@ -256,6 +264,71 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         return;
     }
 
+    /**
+     * @description: 按产品导出
+     * @author Will
+     * @date: 2022/11/23 18:52
+     * @param dto
+     */
+    private void exportExcelByProduct(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskProductView(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        List<ProductTaskViewProductExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewProductExcelDTO.class, list);
+        String fileName = getFileName("按产品导出");
+        ExcelUtil.export(fileName, "按产品导出", excelList, ProductTaskViewProductExcelDTO.class, response);
+        return;
+    }
+
+    /**
+     * @description: 按阶段导出
+     * @author Will
+     * @date: 2022/11/23 18:53
+     * @param dto
+     */
+    private void exportExcelByPhase(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPhaseView(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        List<ProductTaskViewPhaseExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPhaseExcelDTO.class, list);
+        String fileName = getFileName("按阶段导出");
+        ExcelUtil.export(fileName, "按阶段导出", excelList, ProductTaskViewPhaseExcelDTO.class, response);
+        return;
+    }
+
+    /**
+     * @description: 按量产入库时间导出
+     * @author Will
+     * @date: 2022/11/23 18:53
+     * @param dto
+
+     */
+    private void exportExcelByInWarehouseTime(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskMapper.getAllTaskInWarehouseTimeView(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        list.forEach(obj->{obj.setApprovalStatusName(ApprovalStatusEnum.getName(obj.getApprovalStatus()));});
+        List<ProductTaskViewInWarehouseTimeExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewInWarehouseTimeExcelDTO.class, list);
+        String fileName = getFileName("按量产入库时间导出");
+        ExcelUtil.export(fileName, "按量产入库时间导出", excelList, ProductTaskViewInWarehouseTimeExcelDTO.class, response);
+        return;
+    }
+
+    /**
+     * @description: 导出文件名称
+     * @author Will
+     * @date: 2022/11/24 14:23
+     * @param fileName
+     * @return String
+     */
     private String getFileName(String fileName) {
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -271,37 +344,4 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         return sb.append(lastNo).toString();
 
     }
-
-    /**
-     * @description: 按产品导出
-     * @author Will
-     * @date: 2022/11/23 18:52
-     * @param dto
-     */
-    private void exportExcelByProduct(ProductTaskViewSearchDTO dto) {
-
-    }
-
-    /**
-     * @description: 按阶段导出
-     * @author Will
-     * @date: 2022/11/23 18:53
-     * @param dto
-     */
-    private void exportExcelByPhase(ProductTaskViewSearchDTO dto) {
-
-    }
-
-    /**
-     * @description: 按入库时间导出
-     * @author Will
-     * @date: 2022/11/23 18:53
-     * @param dto
-
-     */
-    private void exportExcelByInWarehouseTime(ProductTaskViewSearchDTO dto) {
-
-    }
-
-
 }

@@ -20,7 +20,7 @@ public interface ProjectTaskViewService {
      * @param dto
      * @return List<ProductTaskPersonnelViewDTO>
      */
-    List<ProductTaskPersonnelViewDTO> getPersonnelView(ProductTaskViewSearchDTO dto);
+    List<ProductTaskPersonnelChildDTO> getPersonnelView(ProductTaskViewSearchDTO dto);
     /**
      * @description: 项目视图按产品查询
      * @author Will
