@@ -1,30 +1,28 @@
 package com.erp.server.plm.controller;
 
 
-import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
-import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.dto.TaskOperateDTO;
-import com.erp.server.plm.service.*;
-import com.erp.server.plm.service.impl.*;
-import com.erp.server.plm.utils.ApplicationContextUtils;
+import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.service.PreTaskService;
+import com.erp.server.plm.service.ProductInfoService;
+import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -431,6 +429,16 @@ public class ProjectTaskController extends BaseController {
         return success(list);
     }
 
-
+    /**
+     * 任务列表-任务状态下拉框
+     * @author Will
+     * @date: 2022/11/24 10:28
+     * @return ApiResult
+     */
+    @GetMapping("/getTaskStatusSelect")
+    public ApiResult<Map<Integer, String>> getTaskStatusSelect() {
+        Map<Integer, String> map = Arrays.stream(TaskStateEnum.values()).collect(Collectors.toMap(TaskStateEnum::getCode, TaskStateEnum::getName));
+        return success(map);
+    }
 }
 

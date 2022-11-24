@@ -42,7 +42,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     @Override
     public List<ProductTaskPersonnelViewDTO> getPersonnelView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskViewByCharge(dto);
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPersonnelView(dto);
         //返回结果集
         List<ProductTaskPersonnelViewDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
@@ -80,7 +80,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     @Override
     public List<ProductTaskProductViewDTO> getProductView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskView(dto);
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskProductView(dto);
         //返回结果集
         List<ProductTaskProductViewDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
@@ -118,7 +118,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
     @Override
     public List<ProductTaskPhaseViewDTO> getPhaseView(ProductTaskViewSearchDTO dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskView(dto);
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPhaseView(dto);
         //返回结果集
         List<ProductTaskPhaseViewDTO> resultList = new LinkedList<>();
         if (CollectionUtils.isEmpty(list)) {
@@ -218,7 +218,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      */
     private void exportExcelByPersonnel(ProductTaskViewSearchDTO dto) {
         //查询所有任务
-        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskViewByCharge(dto);
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskPersonnelView(dto);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }

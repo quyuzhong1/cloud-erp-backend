@@ -74,22 +74,32 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
     /**
-     * @description: 任务视图查询所有任务(根据负责人拆分)
+     * @description: 任务视图查询根据负责人所有任务
      * @author Will
      * @date: 2022/11/23 15:54
      * @param dto
      * @return List<ProductTaskViewDTO>
      */
-    List<ProductTaskViewDTO> getAllTaskViewByCharge(@Param("dto") ProductTaskViewSearchDTO dto);
+    List<ProductTaskViewDTO> getAllTaskPersonnelView(@Param("dto") ProductTaskViewSearchDTO dto);
 
     /**
-     * @description: 任务视图查询所有任务
+     * @description: 任务视图根据产品查询所有任务
      * @author Will
      * @date: 2022/11/23 15:55
      * @param dto
      * @return List<ProductTaskViewDTO>
      */
-    List<ProductTaskViewDTO> getAllTaskView(@Param("dto") ProductTaskViewSearchDTO dto);
+    List<ProductTaskViewDTO> getAllTaskProductView(@Param("dto") ProductTaskViewSearchDTO dto);
+
+    /**
+     * @description: 任务视图根据阶段查询所有任务
+     * @author Will
+     * @date: 2022/11/23 15:55
+     * @param dto
+     * @return List<ProductTaskViewDTO>
+     */
+    List<ProductTaskViewDTO> getAllTaskPhaseView(@Param("dto") ProductTaskViewSearchDTO dto);
+
     /**
     /**
      * @description: 任务视图查询所有量产入库数据
