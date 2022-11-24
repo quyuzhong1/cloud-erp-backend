@@ -56,4 +56,8 @@ public class ProductTaskProductChildDTO implements Serializable {
      */
     private String productName;
 
+    /**
+     * 是否延期(0否，1是)
+     */
+    private Integer isDelay;
 }

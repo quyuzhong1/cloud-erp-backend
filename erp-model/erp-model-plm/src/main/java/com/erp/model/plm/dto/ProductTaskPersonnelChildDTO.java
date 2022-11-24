@@ -60,4 +60,9 @@ public class ProductTaskPersonnelChildDTO implements Serializable {
      * 人员名称
      */
     private String chargeName;
+
+    /**
+     * 是否延期(0否，1是)
+     */
+    private Integer isDelay;
 }

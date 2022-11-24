@@ -217,6 +217,13 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @param dto
      */
     private void exportExcelByPersonnel(ProductTaskViewSearchDTO dto) {
+        //查询所有任务
+        List<ProductTaskViewDTO> list = projectTaskMapper.getAllTaskViewByCharge(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+
+
 
     }
 

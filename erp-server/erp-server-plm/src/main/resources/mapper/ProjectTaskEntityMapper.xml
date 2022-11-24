@@ -417,7 +417,12 @@
             pt.charge_name as charge_name,
             pt.phase_id,
             pt.phase_name,
-            pi2.project_status
+            pi2.project_status,
+            case when pt.plan_end_time is null then 0
+                 when pt.reality_end_time is null then 0
+                 when to_char(pt.plan_end_time, 'YYYYMMDD') >= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
+                 when to_char(pt.reality_end_time, 'YYYYMMDD') > to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+                 else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
@@ -473,7 +478,12 @@
             regexp_split_to_table(pt.charge_id,',') as charge_id,
             regexp_split_to_table(pt.charge_name,',') as charge_name,
             pt.phase_name,
-            pi2.project_status
+            pi2.project_status,
+            case when pt.plan_end_time is null then 0
+                 when pt.reality_end_time is null then 0
+                 when to_char(pt.plan_end_time, 'YYYYMMDD') >= to_char(pt.reality_end_time, 'YYYYMMDD')  then 0
+                 when to_char(pt.reality_end_time, 'YYYYMMDD') > to_char(pt.plan_end_time, 'YYYYMMDD')  then 1
+                 else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id) t

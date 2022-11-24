@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 产品管理
+ * 任务视图
  *
  * @author Will
  * @version 1.0
@@ -84,12 +84,11 @@ public class ProjectTaskViewController extends BaseController {
     }
 
     /**
-     * @description: 任务视图导出
+     *  任务视图-导出
      * @author Will
      * @date: 2022/11/23 18:45
      * @param dto
      * @param response
-
      */
     @PostMapping(value = "/exportExcel")
     public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {

@@ -75,4 +75,8 @@ public class ProductTaskViewDTO {
      */
     private String phaseName;
 
+    /**
+     * 是否延期(0否，1是)
+     */
+    private Integer isDelay;
 }
