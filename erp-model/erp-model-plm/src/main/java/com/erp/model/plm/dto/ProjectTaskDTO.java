@@ -154,6 +154,11 @@ public class ProjectTaskDTO  implements Serializable {
      */
     private List<String> refSkuIdList;
 
+    /**
+     * 关联sku 表sku 名字集合
+     */
+    private List<String> refSkuNoList;
+
 
     /**
      * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息

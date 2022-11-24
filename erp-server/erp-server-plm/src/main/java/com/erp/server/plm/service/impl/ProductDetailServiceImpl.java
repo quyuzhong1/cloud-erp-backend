@@ -554,7 +554,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             //获取颜色
             List<String> split = Arrays.asList(req.split(","));
-            String  variantColor= Arrays.stream(VariantColorEnum.values()).filter(obj-> split.contains(obj.getName())).map(VariantColorEnum::getName).findAny().orElse(null);
+            String variantColor = Arrays.stream(VariantColorEnum.values()).filter(obj -> split.contains(obj.getName())).map(VariantColorEnum::getName).findAny().orElse(null);
             if (StringUtils.isBlank(variantColor)) {
                 throw new ServiceException(ApiError.ERROR_95074);
             }
@@ -921,6 +921,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public List<ProductDetailEntity> getByIdList(List<String> skuIdList) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProductDetailEntity::getId, skuIdList);
+        return this.list(queryWrapper);
     }
 
 }

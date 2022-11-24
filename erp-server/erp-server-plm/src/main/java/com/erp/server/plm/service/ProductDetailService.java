@@ -203,4 +203,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
 
+    /**
+     * 根据sku id集合
+     * @author yl
+     * @date 2022-11-24 9:20
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 }

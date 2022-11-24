@@ -119,8 +119,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //文件后缀
         String fileSuffix = "";
         double fileSize = 0.0;
+        Integer uploadType = dto.getUploadType();
         //本地上传
-        if (IsConstant.NO.equals(dto.getUploadType())) {
+        if (IsConstant.NO.equals(uploadType)) {
             MultipartFile multipartFile = dto.getFile();
             double size = multipartFile.getSize();
             fileSize = size / (1024 * 1024);
@@ -137,8 +138,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         TaskDocsFinishEntity existEntity = getByDocsId(dto.getProductId(), dto.getTaskDocsId(), dto.getTaskId());
+        Boolean isUpdate = false;
         if (existEntity != null) {
             finishEntity.setId(existEntity.getId());
+            isUpdate = true;
         }
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
@@ -150,10 +153,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
-        finishEntity.setUploadType(dto.getUploadType());
-        finishEntity.setOldFileUrl(fileUrl);
-        finishEntity.setOldUploadType(dto.getUploadType());
-        finishEntity.setOldFileName(fileName);
+        finishEntity.setUploadType(uploadType);
+        if (!isUpdate) {
+            finishEntity.setOldFileUrl(fileUrl);
+            finishEntity.setOldUploadType(dto.getUploadType());
+            finishEntity.setOldFileName(fileName);
+        }
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());
@@ -274,8 +279,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //文件后缀
         String fileSuffix = "";
         double fileSize = 0.0;
+        Integer uploadType = dto.getUploadType();
         //本地上传
-        if (IsConstant.NO.equals(dto.getUploadType())) {
+        if (IsConstant.NO.equals(uploadType)) {
             MultipartFile multipartFile = dto.getFile();
             double size = multipartFile.getSize();
             fileSize = size / (1024 * 1024);
@@ -290,11 +296,16 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         } else {
             fileUrl = dto.getFileUrl();
         }
+
+
         finishEntity.setOldFileUrl(finishEntity.getFileUrl());
         finishEntity.setOldUploadType(finishEntity.getUploadType());
         finishEntity.setOldFileName(finishEntity.getFileName());
+
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
+        finishEntity.setUploadType(uploadType);
+
         finishEntity.setUpdateUserId(loginUser.getUid());
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setUpdateUserName(loginUser.getUserName());
@@ -306,7 +317,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(loginUser.getUserName(),taskEntity.getProductId(), taskId, fileName);
+            noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
@@ -501,6 +512,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setOldFileName(finishEntity.getFileName());
         finishEntity.setFileName(fileName);
         finishEntity.setFileUrl(fileUrl);
+        finishEntity.setUploadType(dto.getUploadType());
         finishEntity.setUpdateUserId(loginUser.getUid());
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setUpdateUserName(loginUser.getUserName());
@@ -512,7 +524,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean flag = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (flag) {
-            noticeMessageService.docChangesNotice(loginUser.getUserName(),taskEntity.getProductId(), taskId, fileName);
+            noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, fileName);
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增产品操作日志

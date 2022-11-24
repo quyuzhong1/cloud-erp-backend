@@ -5,11 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -122,8 +119,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private ProjectTaskRefSkuService projectTaskRefSkuService;
 
 
-    @Resource
-    private ProjectTaskRefSkuMapper projectTaskRefSkuMapper;
+    @Autowired
+    private ProductDetailService productDetailService;
 
 
     /**
@@ -873,11 +870,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setOutputDocsList(docsList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
         if (refSku != null) {
             detailsDTO.setFieldJson(refSku.getFieldJson());
             detailsDTO.setFieldConfigType(refSku.getFieldConfigType());
         }
-        detailsDTO.setRefSkuIdList(taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList()));
+        detailsDTO.setRefSkuIdList(skuIdList);
+        List<String> skuNoList=productDetailList.stream().filter(d->skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+        detailsDTO.setRefSkuNoList(skuNoList);
         return detailsDTO;
     }
 
@@ -1145,11 +1146,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
         if (refSku != null) {
             resultDTO.setFieldJson(refSku.getFieldJson());
             resultDTO.setFieldConfigType(refSku.getFieldConfigType());
         }
-        resultDTO.setRefSkuIdList(taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList()));
+        resultDTO.setRefSkuIdList(skuIdList);
+        List<String> skuNoList=productDetailList.stream().filter(d->skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+        resultDTO.setRefSkuNoList(skuNoList);
+
 
         resultDTO.setApprovalUserIds(approvalUserList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
@@ -2588,8 +2594,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已完成
         Integer finishState = TaskStateEnum.FINISH.getCode();
 
-        //完成待审核
-        Integer finishWaitConfirmState = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
 
         //审核中
         Integer approvalIngState = TaskStateEnum.APPROVAL_ING.getCode();
@@ -2603,7 +2607,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity notStartEntity = recordList.stream().filter(r -> r.getAfterState().equals(notStart)).findFirst().orElse(null);
         TaskOperatorRecordEntity ingStateEntity = recordList.stream().filter(r -> r.getAfterState().equals(ingState)).findFirst().orElse(null);
         TaskOperatorRecordEntity finishStateEntity = recordList.stream().filter(r -> r.getAfterState().equals(finishState)).findFirst().orElse(null);
-        TaskOperatorRecordEntity finishWaitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(finishWaitConfirmState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalIngEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalIngState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalPassState)).findFirst().orElse(null);
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
@@ -2642,8 +2645,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(notStartEntity, notStart));
             //添加进行中
             resultList.add(getProcessNode(ingStateEntity, ingState));
-            //添加完成待审核
-            resultList.add(getProcessNode(finishWaitConfirmEntity, finishWaitConfirmState));
+            //添加待审核
+            resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState));
             //添加审核中
             resultList.add(getProcessNode(approvalIngEntity, approvalIngState));
 
@@ -2651,7 +2654,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
             } else {
                 //添加审核通过
-                resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+                resultList.add(getProcessNode(finishStateEntity, finishState));
             }
 
         }
@@ -2664,7 +2667,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState));
             } else {
                 //添加审核通过
-                resultList.add(getProcessNode(approvalPassEntity, approvalPassState));
+                resultList.add(getProcessNode(finishStateEntity, finishState));
             }
         }
 
