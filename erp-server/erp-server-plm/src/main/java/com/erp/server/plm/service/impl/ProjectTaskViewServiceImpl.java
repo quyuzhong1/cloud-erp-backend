@@ -221,6 +221,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setTimeInterval(timeInterval);
             parentDto.setId(parentId);
             parentDto.setParentId(IsConstant.NO);
+            parentDto.setProductName(StringUtils.isBlank(timeInterval) ? "" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
             parentId ++;
             //同一时间区间下的任务
             List<ProductTaskInWarehouseTimeChildDTO> childrenList = new LinkedList<>();
@@ -341,7 +342,11 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return;
         }
         //根据时间区间排序
-        list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).forEach(obj->{obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));});
+        list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).forEach(obj->{
+            String timeInterval = obj.getTimeInterval();
+            obj.setTimeInterval(StringUtils.isBlank(timeInterval) ? "" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
+            obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
+        });
         List<ProductTaskViewInWarehouseTimeExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewInWarehouseTimeExcelDTO.class, list);
         String fileName = getFileName("按量产入库时间导出");
         ExcelUtil.export(fileName, "按量产入库时间导出", excelList, ProductTaskViewInWarehouseTimeExcelDTO.class, response);

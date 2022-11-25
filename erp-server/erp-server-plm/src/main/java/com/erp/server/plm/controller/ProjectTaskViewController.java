@@ -36,6 +36,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskPersonnelChildDTO>>
      */
     @PostMapping("/getPersonnelView")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "t")
     public ApiResult<List<ProductTaskPersonnelChildDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskPersonnelChildDTO> list = projectTaskViewService.getPersonnelView(dto);
         return success(list);
@@ -50,6 +51,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskProductChildDTO>>
      */
     @PostMapping("/getProductView")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getProductView", tableAlias = "t")
     public ApiResult<List<ProductTaskProductChildDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskProductChildDTO> list = projectTaskViewService.getProductView(dto);
         return success(list);
@@ -64,6 +66,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskPhaseChildDTO>>
      */
     @PostMapping("/getPhaseView")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPhaseView", tableAlias = "t")
     public ApiResult<List<ProductTaskPhaseChildDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskPhaseChildDTO> list = projectTaskViewService.getPhaseView(dto);
         return success(list);
@@ -78,6 +81,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskInWarehouseTimeChildDTO>>
      */
     @PostMapping("/getInWarehouseTimeView")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getInWarehouseTimeView", tableAlias = "t")
     public ApiResult<List<ProductTaskInWarehouseTimeChildDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskViewService.getInWarehouseTimeView(dto);
         return success(list);
@@ -91,6 +95,7 @@ public class ProjectTaskViewController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
     public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {
         projectTaskViewService.exportExcel(dto, response);
     }
