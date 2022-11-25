@@ -1695,22 +1695,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         createChildTaskMap.put("flag", "createChildTask");
         createChildTaskMap.put("isShow", true);
         resultList.add(createChildTaskMap);
-        List<String> taskIds = Arrays.asList(taskId);
-        //获取总的任务文档数
-        List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
-        List<TaskDocsFinishEntity> taskDocsList = finishService.getByTaskIds(taskIds);
         Map<String, Object> uploadMap = new HashMap<>();
-        uploadMap.put("name", "上传文件");
+        uploadMap.put("name", "上传交付物");
         uploadMap.put("flag", "uploadFile");
-        Boolean uploadFileFlag = true;
-        int totalCount = 0;
-        if (CollectionUtils.isNotEmpty(taskDocsCounts)) {
-            totalCount = taskDocsCounts.get(0).getCount();
-        }
-        if (totalCount == taskDocsList.size()) {
-            uploadFileFlag = false;
-        }
-        uploadMap.put("isShow", uploadFileFlag);
+        uploadMap.put("isShow", true);
         resultList.add(uploadMap);
 
         boolean deleteTaskShow = true;
@@ -1736,19 +1724,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 && !approvalNoPassCode.equals(taskState)) {
             changeDocsShow = false;
         }
-
-        //如果没有上传文档也不显示
-
-        if (CollectionUtils.isEmpty(taskDocsList)) {
-            changeDocsShow = false;
-        }
         String processId = taskEntity.getProcessId();
         if (StringUtils.isBlank(processId)) {
             changeDocsShow = false;
         }
-
         Map<String, Object> changeDocsMap = new HashMap<>();
-        changeDocsMap.put("name", "变更文档");
+        changeDocsMap.put("name", "变更交付物");
         changeDocsMap.put("flag", "changeDocs");
         changeDocsMap.put("isShow", changeDocsShow);
         resultList.add(changeDocsMap);
