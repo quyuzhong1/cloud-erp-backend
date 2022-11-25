@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
-import java.text.Collator;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -212,7 +211,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return resultList;
         }
         //根据产品分组
-        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().filter(obj-> StringUtils.isNotBlank(obj.getTimeInterval())).collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
+        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
         int parentId = 1;
         for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
             List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();
@@ -221,7 +220,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setTimeInterval(timeInterval);
             parentDto.setId(parentId);
             parentDto.setParentId(IsConstant.NO);
-            parentDto.setProductName(StringUtils.isBlank(timeInterval) ? "" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
+            parentDto.setProductName(StringUtils.isBlank(timeInterval) ? "无时间" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
             parentId ++;
             //同一时间区间下的任务
             List<ProductTaskInWarehouseTimeChildDTO> childrenList = new LinkedList<>();
@@ -278,7 +277,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return;
         }
         //根据人员排序
-        list.stream().sorted(Comparator.comparing(ProductTaskViewDTO::getChargeId)).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewPersonnelExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPersonnelExcelDTO.class, list);
         String fileName = getFileName("按人员导出");
         ExcelUtil.export(fileName, "按人员导出", excelList, ProductTaskViewPersonnelExcelDTO.class, response);
@@ -298,7 +297,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return;
         }
         //根据产品排序
-        list.stream().sorted(Comparator.comparing(ProductTaskViewDTO::getProductId)).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewProductExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewProductExcelDTO.class, list);
         String fileName = getFileName("按产品导出");
         ExcelUtil.export(fileName, "按产品导出", excelList, ProductTaskViewProductExcelDTO.class, response);
@@ -318,10 +317,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return;
         }
         //根据阶段名称排序
-        list.stream().sorted((o1,o2)-> {
-            Collator instance = Collator.getInstance(Locale.CHINA);
-            return instance.compare(o1.getPhaseName(),o2.getPhaseName());
-        }).forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
+        list.stream().forEach(obj->{obj.setStatusName(TaskStateEnum.getName(obj.getStatus()));});
         List<ProductTaskViewPhaseExcelDTO> excelList = BeanMapperUtils.copyList(ProductTaskViewPhaseExcelDTO.class, list);
         String fileName = getFileName("按阶段导出");
         ExcelUtil.export(fileName, "按阶段导出", excelList, ProductTaskViewPhaseExcelDTO.class, response);
@@ -333,7 +329,6 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
      * @author Will
      * @date: 2022/11/23 18:53
      * @param dto
-
      */
     private void exportExcelByInWarehouseTime(ProductTaskViewSearchDTO dto) {
         //查询所有任务
@@ -342,7 +337,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return;
         }
         //根据时间区间排序
-        list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).forEach(obj->{
+        list.stream().forEach(obj->{
             String timeInterval = obj.getTimeInterval();
             obj.setTimeInterval(StringUtils.isBlank(timeInterval) ? "" : timeInterval.substring(0,4).concat("年").concat(timeInterval.substring(4).concat("月")));
             obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
