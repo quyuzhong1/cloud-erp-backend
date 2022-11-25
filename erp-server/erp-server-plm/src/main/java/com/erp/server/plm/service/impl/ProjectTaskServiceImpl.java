@@ -1648,11 +1648,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95027);
         }
         Integer taskState = taskEntity.getStatus();
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+
         //编辑任务
         Map<String, Object> editTaskMap = new HashMap<>();
         editTaskMap.put("name", "编辑任务");
         editTaskMap.put("flag", "editTask");
-        editTaskMap.put("isShow", true);
+        if (finishCode.equals(taskState)) {
+            editTaskMap.put("isShow", false);
+        } else {
+            editTaskMap.put("isShow", true);
+        }
+
         resultList.add(editTaskMap);
         //创建子任务
         Map<String, Object> createChildTaskMap = new HashMap<>();
@@ -1694,7 +1701,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //变更文档
         //只有任务完成了或者审核不通过才能变更流程
-        Integer finishCode = TaskStateEnum.FINISH.getCode();
+
         Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Boolean changeDocsShow = true;
         if (!finishCode.equals(taskState)
