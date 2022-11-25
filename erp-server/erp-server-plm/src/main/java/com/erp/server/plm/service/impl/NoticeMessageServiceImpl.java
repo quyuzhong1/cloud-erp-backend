@@ -1085,12 +1085,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-            for (ProjectTaskEntity task : taskList) {
-                String chargeId = task.getChargeId();
-                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
-                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
-                    noticeUserIds.addAll(chargeIdList);
+            if(isContainsTaskCharge){
+                List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+                for (ProjectTaskEntity task : taskList) {
+                    String chargeId = task.getChargeId();
+                    if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                        List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                        noticeUserIds.addAll(chargeIdList);
+                    }
                 }
             }
             //排除关闭通知的人员 并去重
@@ -1159,14 +1161,17 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-            for (ProjectTaskEntity task : taskList) {
-                String chargeId = task.getChargeId();
-                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
-                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
-                    noticeUserIds.addAll(chargeIdList);
+            if(isContainsTaskCharge){
+                List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+                for (ProjectTaskEntity task : taskList) {
+                    String chargeId = task.getChargeId();
+                    if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                        List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                        noticeUserIds.addAll(chargeIdList);
+                    }
                 }
             }
+
             //排除关闭通知的人员 并去重
             List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
@@ -1232,12 +1237,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-            for (ProjectTaskEntity task : taskList) {
-                String chargeId = task.getChargeId();
-                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
-                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
-                    noticeUserIds.addAll(chargeIdList);
+            if(isContainsTaskCharge){
+                List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+                for (ProjectTaskEntity task : taskList) {
+                    String chargeId = task.getChargeId();
+                    if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                        List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                        noticeUserIds.addAll(chargeIdList);
+                    }
                 }
             }
             //排除关闭通知的人员 并去重
@@ -1305,12 +1312,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-            for (ProjectTaskEntity task : taskList) {
-                String chargeId = task.getChargeId();
-                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
-                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
-                    noticeUserIds.addAll(chargeIdList);
+            if(isContainsTaskCharge){
+                List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+                for (ProjectTaskEntity task : taskList) {
+                    String chargeId = task.getChargeId();
+                    if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                        List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                        noticeUserIds.addAll(chargeIdList);
+                    }
                 }
             }
             //排除关闭通知的人员 并去重
