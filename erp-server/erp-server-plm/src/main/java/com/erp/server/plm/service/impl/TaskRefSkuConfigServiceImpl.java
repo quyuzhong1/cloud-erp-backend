@@ -7,10 +7,12 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -107,8 +109,12 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
     @Override
     public List<TaskRefSkuConfigEntity> getByTaskIds(List<String> taskIds) {
         LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(TaskRefSkuConfigEntity::getTaskId, taskIds);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            queryWrapper.in(TaskRefSkuConfigEntity::getTaskId, taskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
+
     }
 
 
@@ -130,10 +136,11 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
 
     /**
      * 根据产品id获取sku 与字段的配置关系表
-     * @author yl
-     * @date 2022-11-24 16:32
+     *
      * @param productId
      * @return java.util.List<com.erp.model.plm.entity.TaskRefSkuConfigEntity>
+     * @author yl
+     * @date 2022-11-24 16:32
      */
     @Override
     public List<TaskRefSkuConfigEntity> getByProductId(String productId) {
