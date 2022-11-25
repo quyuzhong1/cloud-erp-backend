@@ -472,6 +472,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取总的任务文档数
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+
+            //任务关联字段配置
+            List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(taskIds);
+
             Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
             //   List<TaskPagingShowDTO> allList = getAllChildrenList(productId);
@@ -497,6 +501,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
                     totalDocsCount = countDTO.getCount();
+                }
+                TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (refSku != null) {
+                    item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
@@ -1319,6 +1327,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (StringUtils.isNotBlank(groupNameFlag) && !groupNameFlag.equals("no")) {
             ifGroup = true;
         }
+
         //是否是产品分组
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
         //不在的 任务状态
@@ -1350,6 +1359,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             Integer finishState = TaskStateEnum.FINISH.getCode();
             //获取到任务id 集合
             List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //任务关联字段配置
+            List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(taskIds);
             //获取总的任务文档数
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
@@ -1383,6 +1394,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
+                TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (refSku != null) {
+                    item.setTaskFieldConfigType(refSku.getFieldConfigType());
+                }
                 List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
                 int totalPreTaskCount = preTaskIds.size();
                 //前置任务
@@ -1464,6 +1479,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             Integer finishState = TaskStateEnum.FINISH.getCode();
             //获取到任务id 集合
             List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //任务关联字段配置
+            List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(taskIds);
             //获取总的任务文档数
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
@@ -1493,6 +1510,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
                     totalDocsCount = countDTO.getCount();
+                }
+                TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (refSku != null) {
+                    item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
@@ -1579,6 +1600,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
             //获取总的任务文档数
             List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            //任务关联字段配置
+            List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(taskIds);
             List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
             List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
             //前置任务
@@ -1599,6 +1622,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(item.getProcessId())).findFirst().orElse(null);
                 if (workflowTask != null) {
                     item.setProcessTaskId(workflowTask.getTaskId());
+                }
+
+                TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (refSku != null) {
+                    item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);

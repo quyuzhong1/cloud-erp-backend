@@ -150,6 +150,12 @@ public class TaskPagingShowDTO implements Serializable {
      */
     private Integer  finishPreTaskCount=0;
 
+    /**
+     * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
+     */
+    private String taskFieldConfigType="";
+    
+
     private List<Map<String,Object>> operateList;
 
 
