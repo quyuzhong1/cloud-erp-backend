@@ -189,6 +189,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
+        queryWrapper.orderByDesc(ProductDetailEntity::getId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
         productManyDetail.setProductManySkuDetailList(list);
         //产品成本信息查询列表
