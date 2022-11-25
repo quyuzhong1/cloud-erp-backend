@@ -155,12 +155,12 @@ public class DataPermissionAspect {
             sqlString = new StringBuilder();
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            List<String> listt = new ArrayList<>();
+            List<String> list = new ArrayList<>();
             for (String s : userList) {
-                listt.add("'%" + s + "%'");
+                list.add("'%" + s + "%'");
             }
-            if (!listt.isEmpty()) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE ANY (ARRAY" + listt + " )");
+            if (!list.isEmpty()) {
+                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE ANY (ARRAY" + list + " )");
             } else {
                 sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE '%" + user.getUid() + "%'");
             }

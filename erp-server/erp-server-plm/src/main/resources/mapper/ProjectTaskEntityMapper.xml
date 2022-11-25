@@ -330,8 +330,9 @@
             <if test="params.param!='' and params.param!=null">
                 ${params.param}
             </if>
-            ORDER BY ${params.searchType} ${params.orderBy}
         </where>
+
+        ORDER BY ${params.searchType} ${params.orderBy}
 
 
     </select>
@@ -358,8 +359,8 @@
             <if test="params.param!='' and params.param!=null">
                 ${params.param}
             </if>
-            ORDER BY ${params.searchType} ${params.orderBy}
         </where>
+        ORDER BY ${params.searchType} ${params.orderBy}
 
     </select>
 

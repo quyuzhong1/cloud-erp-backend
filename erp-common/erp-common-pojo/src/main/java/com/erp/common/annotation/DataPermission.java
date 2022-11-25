@@ -55,6 +55,11 @@ public @interface DataPermission {
     String keyIdName() default "";
 
 
+    /**
+     *
+     */
+
+
 
 
 
