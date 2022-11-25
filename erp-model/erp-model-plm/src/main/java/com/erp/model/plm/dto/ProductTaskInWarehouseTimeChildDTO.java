@@ -31,29 +31,19 @@ public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
     private String productName;
 
     /**
-     * 产品状态
+     * 产品/项目状态
      */
     private Integer status;
 
     /**
-     * 产品状态名称
+     * 产品/项目名称
      */
     private String statusName;
 
     /**
-     * 是否是项目状态
+     * 是否是项目状态（0否，1是）
      */
     private Integer isProjectStatus;
-
-    /**
-     * 项目状态
-     */
-    private Integer projectStatus;
-
-    /**
-     * 项目状态名称
-     */
-    private String projectStatusName;
 
     /**
      * skuNo

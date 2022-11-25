@@ -474,7 +474,7 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param!='' and dto.param!=null">
+            <if test="dto.param != '' and dto.param != null">
                 ${dto.param}
             </if>
         </where>
@@ -538,7 +538,7 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param!='' and dto.param!=null">
+            <if test="dto.param != '' and dto.param != null">
                 ${dto.param}
             </if>
         </where>
@@ -604,7 +604,7 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param!='' and dto.param!=null">
+            <if test="dto.param != '' and dto.param != null">
                 ${dto.param}
             </if>
         </where>
@@ -621,6 +621,8 @@
             pi.name as productName,
             pi.charge_id,
             pi.charge_name,
+            pi.approval_status,
+            pi2.project_status,
             pd.id as skuId,
             pd.sku_no,
             to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
@@ -656,7 +658,7 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param!='' and dto.param!=null">
+            <if test="dto.param != '' and dto.param != null">
                 ${dto.param}
             </if>
         </where>
