@@ -68,7 +68,10 @@ public interface NoticeMessageConstant {
 
 
     //项目信息
-    String PROJECT_CONTENT= "**任务名称：**%s\n**产品名称：**%s\n**截止日期：**%s\n**%s：**%s";
+    String PROJECT_CONTENT= "**产品名称: **%s\n**%s：**%s";
+
+    //
+    String Task_PROJECT_CONTENT= "**任务名称：**%s\n**产品名称：**%s\n**截止日期：**%s\n**%s：**%s";
 
 
 

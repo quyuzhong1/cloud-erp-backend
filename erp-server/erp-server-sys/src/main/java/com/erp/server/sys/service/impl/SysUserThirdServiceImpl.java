@@ -142,4 +142,21 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         List<ThirdUnionDTO> resultList = BeanMapper.copyList(list, ThirdUnionDTO.class);
         return resultList;
     }
+
+
+    /**
+     * 根据用户id 删除绑定关系
+     *
+     * @param userIds
+     * @return void
+     * @author yl
+     * @date 2022-11-25 11:26
+     */
+    @Override
+    public void deleteByUserIds(List<String> userIds) {
+        LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysUserThirdEntity::getUserId, userIds);
+        this.remove(queryWrapper);
+
+    }
 }

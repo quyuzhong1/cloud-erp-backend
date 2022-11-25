@@ -33,5 +33,14 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
 
 
     List<ThirdUnionDTO> getUnionByPlatform(String platform);
+
+    /**
+     * 根据用户id 删除绑定关系
+     * @author yl
+     * @date 2022-11-25 11:26
+     * @param userIds
+     * @return void
+     */
+    void deleteByUserIds(List<String> userIds);
 }
 

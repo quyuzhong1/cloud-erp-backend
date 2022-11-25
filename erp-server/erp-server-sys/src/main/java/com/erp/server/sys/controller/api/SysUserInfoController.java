@@ -10,6 +10,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,9 @@ public class SysUserInfoController extends BaseController {
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
+
+    @Autowired
+    private SysUserThirdService sysUserThirdService;
 
 
     /**
@@ -84,6 +88,7 @@ public class SysUserInfoController extends BaseController {
     @RequestMapping("/remove")
     public ApiResult delete(@RequestBody List<String> uids) {
         sysUserInfoService.removeByIds(uids);
+        sysUserThirdService.deleteByUserIds(uids);
         return success();
     }
 
@@ -92,8 +97,6 @@ public class SysUserInfoController extends BaseController {
         sysUserInfoService.updateState(stateDTO);
         return success();
     }
-
-
 
 
 }
