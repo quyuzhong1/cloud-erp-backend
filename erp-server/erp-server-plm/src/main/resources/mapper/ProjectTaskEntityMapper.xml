@@ -277,6 +277,10 @@
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
+
+        <if test="params.param!='' and params.param!=null">
+            ${params.param}
+        </if>
         ORDER BY ${params.searchType} ${params.orderBy}
 
     </select>
