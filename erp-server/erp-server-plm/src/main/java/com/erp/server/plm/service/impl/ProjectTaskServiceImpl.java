@@ -1308,7 +1308,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskSearchParamDTO params = searchParamDTO.getParams();
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
-        String taskProperty = TaskConstant.ASSIGN_TO_ME;
+        String taskProperty = TaskConstant.ALL;
         //任务条件 1 待完成  2 全部
         Integer taskCondition = params.getTaskCondition();
         IPage pageData = new Page();
