@@ -1,7 +1,9 @@
 package com.erp.server.plm.controller;
 
+import com.erp.common.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.server.plm.service.ProjectTaskViewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +38,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskPersonnelChildDTO>>
      */
     @PostMapping("/getPersonnelView")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "t")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "t")
     public ApiResult<List<ProductTaskPersonnelChildDTO>> getPersonnelView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskPersonnelChildDTO> list = projectTaskViewService.getPersonnelView(dto);
         return success(list);
@@ -51,7 +53,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskProductChildDTO>>
      */
     @PostMapping("/getProductView")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getProductView", tableAlias = "t")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getProductView", tableAlias = "t")
     public ApiResult<List<ProductTaskProductChildDTO>> getProductView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskProductChildDTO> list = projectTaskViewService.getProductView(dto);
         return success(list);
@@ -66,7 +68,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskPhaseChildDTO>>
      */
     @PostMapping("/getPhaseView")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPhaseView", tableAlias = "t")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPhaseView", tableAlias = "t")
     public ApiResult<List<ProductTaskPhaseChildDTO>> getPhaseView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskPhaseChildDTO> list = projectTaskViewService.getPhaseView(dto);
         return success(list);
@@ -81,7 +83,7 @@ public class ProjectTaskViewController extends BaseController {
      * @return ApiResult<List<ProductTaskInWarehouseTimeChildDTO>>
      */
     @PostMapping("/getInWarehouseTimeView")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getInWarehouseTimeView", tableAlias = "t")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getInWarehouseTimeView", tableAlias = "t")
     public ApiResult<List<ProductTaskInWarehouseTimeChildDTO>> getInWarehouseTimeView(@RequestBody ProductTaskViewSearchDTO dto) {
         List<ProductTaskInWarehouseTimeChildDTO> list = projectTaskViewService.getInWarehouseTimeView(dto);
         return success(list);
@@ -95,7 +97,7 @@ public class ProjectTaskViewController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
     public void exportProduct(@RequestBody ProductTaskViewSearchDTO dto, HttpServletResponse response) {
         projectTaskViewService.exportExcel(dto, response);
     }
