@@ -1709,7 +1709,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          */
         Integer approval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
         Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
-        Integer taskProperty = getTaskProperty(taskEntity);
         resultList.add(editTaskMap);
         Boolean uploadFlag = false;
         Map<String, Object> uploadMap = new HashMap<>();
@@ -1720,16 +1719,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(taskDocsCounts)) {
             totalCount = taskDocsCounts.get(0).getCount();
         }
-        //如果任务类型为一般任务/审核任务时
-        if (approval.equals(taskProperty) || reviewTask.equals(taskProperty)) {
-            //表示有交付物 有交付物[文档+信息填写]时，显示上传文档
-            if (totalCount > 0||(skuConfigEntity!=null&&StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType()))) {
-                uploadFlag = true;
-            }
+        //表示有交付物 有交付物[文档+信息填写]时，显示上传文档
+        if (totalCount > 0 || (skuConfigEntity != null && StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType()))) {
+            uploadFlag = true;
         }
-
         //有交付且上传完成后，任务状态审核中，审核通过，已完成后不可点击【上传文档】
-        if(finishCode.equals(taskState)||approvalIngPassCode.equals(taskState)){
+        if (finishCode.equals(taskState) || approvalIngPassCode.equals(taskState)) {
             uploadFlag = false;
         }
 
