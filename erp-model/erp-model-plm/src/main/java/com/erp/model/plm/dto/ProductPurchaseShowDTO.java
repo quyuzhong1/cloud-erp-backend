@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品采购信息表（VO）
@@ -131,6 +132,11 @@ public class ProductPurchaseShowDTO implements Serializable {
      * 实际首批到货量
      */
     private Long actualArrivalQty;
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
 }

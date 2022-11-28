@@ -20,6 +20,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
@@ -101,6 +102,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SysCodeService sysCodeService;
 
+    @Resource
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
     /**
      * @param pagingDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
@@ -179,21 +183,45 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public ProductManyDetailDTO getManySpecDetailById(String productId) {
+        //任务与sku 关系
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByProductId(productId);
+        //任务与配置字段 关系
+        List<TaskRefSkuConfigEntity> refSkuFiledConfigList = taskRefSkuConfigService.getDisableFieldByProductId(productId);
+
         ProductManyDetailDTO productManyDetail = new ProductManyDetailDTO();
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
+        //基础信息 禁用字段
+        List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
+        manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
         //获取多级分类
         List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
         manySpecDetailById.setCategoryIdList(categoryIdList);
         productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
+
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         queryWrapper.orderByDesc(ProductDetailEntity::getId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
+        for (ProductDetailEntity item : list) {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, item.getId(), refSkuFiledConfigList);
+            //基础信息 禁用字段
+            List<String> manySkuDetailDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SKU_DETAIL_LIST, skuFiledConfigList);
+            item.setDisableFieldList(manySkuDetailDisableFields);
+        }
+
+
         productManyDetail.setProductManySkuDetailList(list);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
+        for (ProductCostShowDTO costShow : costShowDTOList) {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, costShow.getSkuId(), refSkuFiledConfigList);
+            //成本信息 禁用字段
+            List<String> costDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_COST_SHOW_LIST, skuFiledConfigList);
+            costShow.setDisableFieldList(costDisableFields);
+        }
+
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
@@ -203,12 +231,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 req.setCreateUserName(findUserDTO.getUserName());
             }
+
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //采购信息 禁用字段
+            List<String> purchaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PURCHASE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(purchaseDisableFields);
+
         });
 
         productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         productManyDetail.setRemarkEntityList(remarkEntityList);
+
         //产品销售信息查询列表
         List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
         saleShowDTOList.forEach(req -> {
@@ -218,22 +253,97 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setSaleCountryName(StringUtils.join(nameList, ","));
             }
+
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //销售信息 禁用字段
+            List<String> saleDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_SALE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(saleDisableFields);
         });
 
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);
         //产品包装信息查询列表
         List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);
+        packShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //包装 禁用字段
+            List<String> packDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PACK_SHOW, skuFiledConfigList);
+            req.setDisableFieldList(packDisableFields);
+        });
         productManyDetail.setProductPackShowDTOS(packShowDTOList);
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
+        logisticsShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //物流 禁用字段
+            List<String> logisticsDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_LOGISTICS_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(logisticsDisableFields);
+        });
+
         productManyDetail.setProductLogisticsShowDTOList(logisticsShowDTOList);
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
+        certificateShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //证书 禁用字段
+            List<String> certificateDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_CERTIFICATE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(certificateDisableFields);
+        });
+
         productManyDetail.setProductCertificateShowDTOList(certificateShowDTOList);
         //产品选择的变体查询
         List<ProductVariantOptionEntity> productVariantOptionEntityList = productVariantOptionService.list(productId);
         productManyDetail.setProductVariantOptionEntityList(productVariantOptionEntityList);
         return productManyDetail;
+    }
+
+
+    /**
+     * 根据skuid  以及查询对应的任务字段关系
+     *
+     * @param taskRefSkuList
+     * @param skuId
+     * @param refSkuFiledConfigList
+     * @return java.util.List<com.erp.model.plm.entity.TaskRefSkuConfigEntity>
+     * @author yl
+     * @date 2022-11-28 14:42
+     */
+    private List<TaskRefSkuConfigEntity> getSkuFiledConfigList(List<ProjectTaskRefSkuEntity> taskRefSkuList, String skuId, List<TaskRefSkuConfigEntity> refSkuFiledConfigList) {
+        List<String> taskIdList = taskRefSkuList.stream().filter(t -> t.getSkuId().equals(skuId)).map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+        List<TaskRefSkuConfigEntity> resultList = refSkuFiledConfigList.stream().filter(f -> taskIdList.contains(f.getTaskId())).collect(Collectors.toList());
+        return resultList;
+    }
+
+
+    /**
+     * 并集获取到禁用的字段
+     *
+     * @param flag
+     * @param refSkuFiledConfigList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-28 14:03
+     */
+    public List<String> getByFileldFlag(String flag, List<TaskRefSkuConfigEntity> refSkuFiledConfigList) {
+        List<String> resultList = new ArrayList<>(10);
+        try {
+            for (TaskRefSkuConfigEntity skuField : refSkuFiledConfigList) {
+                String fieldJson = skuField.getFieldJson();
+                if (StringUtils.isNotBlank(fieldJson)) {
+                    Map<String, Object> fieldMap = JSONObject.parseObject(fieldJson);
+                    if (fieldMap.containsKey(flag)) {
+                        List<Map<String, Object>> fieldInfoList = (List<Map<String, Object>>) fieldMap.get(flag);
+                        for (Map<String, Object> fieldInfoMap : fieldInfoList) {
+                            if (fieldInfoMap.containsKey("prop")) {
+                                resultList.add(fieldInfoMap.get("prop").toString());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("getByFileFlag ", e);
+        }
+        return resultList.stream().distinct().collect(Collectors.toList());
     }
 
     /**

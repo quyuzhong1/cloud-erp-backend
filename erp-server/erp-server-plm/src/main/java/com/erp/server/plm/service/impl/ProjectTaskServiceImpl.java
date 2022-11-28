@@ -1671,13 +1671,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<Map<String, Object>> operateMoreList(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
+        TaskRefSkuConfigEntity skuConfigEntity = taskRefSkuConfigService.getByTaskId(taskId);
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         Integer taskState = taskEntity.getStatus();
         Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+        Integer approvalIngPassCode = TaskStateEnum.APPROVAL_ING.getCode();
 
+        List<String> taskIds = Arrays.asList(taskId);
         //编辑任务
         Map<String, Object> editTaskMap = new HashMap<>();
         editTaskMap.put("name", "编辑任务");
@@ -1688,17 +1692,49 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             editTaskMap.put("isShow", true);
         }
 
-        resultList.add(editTaskMap);
+
         //创建子任务
         Map<String, Object> createChildTaskMap = new HashMap<>();
         createChildTaskMap.put("name", "创建子任务");
         createChildTaskMap.put("flag", "createChildTask");
         createChildTaskMap.put("isShow", true);
         resultList.add(createChildTaskMap);
+
+        /**
+         * 获取任务属性
+         * 是一般任务 还是一般带审核  还是待审核
+         * 0 一般任务
+         * 1 有文档审核任务
+         * 2 评审任务
+         */
+        Integer approval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
+        Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
+        Integer taskProperty = getTaskProperty(taskEntity);
+        resultList.add(editTaskMap);
+        Boolean uploadFlag = false;
         Map<String, Object> uploadMap = new HashMap<>();
         uploadMap.put("name", "上传交付物");
         uploadMap.put("flag", "uploadFile");
-        uploadMap.put("isShow", true);
+        List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+        int totalCount = 0;
+        if (CollectionUtils.isNotEmpty(taskDocsCounts)) {
+            totalCount = taskDocsCounts.get(0).getCount();
+        }
+        //如果任务类型为一般任务/审核任务时
+        if (approval.equals(taskProperty) || reviewTask.equals(taskProperty)) {
+            //表示有交付物 有交付物[文档+信息填写]时，显示上传文档
+            if (totalCount > 0||(skuConfigEntity!=null&&StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType()))) {
+                uploadFlag = true;
+            }
+        }
+
+        //有交付且上传完成后，任务状态审核中，审核通过，已完成后不可点击【上传文档】
+        if(finishCode.equals(taskState)||approvalIngPassCode.equals(taskState)){
+            uploadFlag = false;
+        }
+
+
+        uploadMap.put("isShow", uploadFlag);
         resultList.add(uploadMap);
 
         boolean deleteTaskShow = true;
@@ -1718,7 +1754,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //变更文档
         //只有任务完成了或者审核不通过才能变更流程
 
-        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+
         Boolean changeDocsShow = true;
         if (!finishCode.equals(taskState)
                 && !approvalNoPassCode.equals(taskState)) {

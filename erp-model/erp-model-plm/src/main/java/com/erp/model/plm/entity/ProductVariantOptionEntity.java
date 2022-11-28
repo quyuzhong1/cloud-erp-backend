@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 产品选择的变体属性表
@@ -38,6 +39,8 @@ public class ProductVariantOptionEntity implements Serializable {
      */
     @TableField(value = "variant_value")
     private String variantValue;
+
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

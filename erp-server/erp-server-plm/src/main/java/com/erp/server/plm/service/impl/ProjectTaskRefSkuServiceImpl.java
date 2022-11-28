@@ -87,6 +87,20 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     }
 
     /**
+     * 根据产品id 获取对应关系
+     * @author yl
+     * @date 2022-11-28 12:12
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskRefSkuEntity>
+     */
+    @Override
+    public List<ProjectTaskRefSkuEntity> getByProductId(String productId) {
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
+    /**
      * 根据任务id 删除 任务与sku 关系
      *
      * @param

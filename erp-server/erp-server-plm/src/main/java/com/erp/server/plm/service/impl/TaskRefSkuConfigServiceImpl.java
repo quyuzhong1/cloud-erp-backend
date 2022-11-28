@@ -3,8 +3,11 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
+import com.erp.server.plm.service.ProjectTaskRefSkuService;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -25,6 +28,8 @@ import java.util.List;
 public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMapper, TaskRefSkuConfigEntity> implements TaskRefSkuConfigService {
     @Resource
     private TaskRefSkuConfigMapper taskRefSkuConfigMapper;
+
+
 
 
     /**
@@ -147,6 +152,24 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskRefSkuConfigEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据产品id 获取被禁用的字段
+     *
+     * @param productId
+     * @return com.erp.model.plm.entity.TaskRefSkuConfigEntity
+     * @author yl
+     * @date 2022-11-28 11:04
+     */
+    @Override
+    public List<TaskRefSkuConfigEntity> getDisableFieldByProductId(String productId) {
+        List<Integer> stateList = new ArrayList<>(10);
+        stateList.add(TaskStateEnum.APPROVAL_ING.getCode());
+        stateList.add(TaskStateEnum.APPROVAL_NO_PASS.getCode());
+        stateList.add(TaskStateEnum.FINISH.getCode());
+        List<TaskRefSkuConfigEntity> resultList = baseMapper.getDisableFieldByProductId(productId, stateList);
+        return resultList;
     }
 
 

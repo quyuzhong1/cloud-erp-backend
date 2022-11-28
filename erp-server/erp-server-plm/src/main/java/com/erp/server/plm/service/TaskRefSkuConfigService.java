@@ -35,4 +35,13 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     TaskRefSkuConfigEntity getByTaskId(String taskId);
 
     List<TaskRefSkuConfigEntity> getByProductId(String productId);
+
+    /**
+     * 根据产品id 获取被禁用的字段
+     * @author yl
+     * @date 2022-11-28 11:04
+     * @param productId
+     * @return com.erp.model.plm.entity.TaskRefSkuConfigEntity
+     */
+    List<TaskRefSkuConfigEntity> getDisableFieldByProductId(String productId);
 }

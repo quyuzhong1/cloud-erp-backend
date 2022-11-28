@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品销售信息表请求参数
@@ -145,6 +146,12 @@ public class ProductSaleShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
+
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
 }

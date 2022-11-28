@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品包装信息列表数据（VO）
@@ -94,5 +95,11 @@ public class ProductPackShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
+
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
 }

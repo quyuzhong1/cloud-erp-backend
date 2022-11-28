@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
 * @Description 产品sku表
@@ -126,6 +127,13 @@ public class ProductDetailEntity implements Serializable {
     @TableField(value = "update_user_name")
     private String updateUserName;
 
+
+
+    /**
+     *禁止修改的字段
+     */
+    @TableField(exist = false)
+    private List<String> disableFieldList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

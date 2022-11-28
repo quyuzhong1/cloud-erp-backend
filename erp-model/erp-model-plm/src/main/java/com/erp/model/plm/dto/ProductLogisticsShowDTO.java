@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品物流信息表
@@ -110,6 +111,11 @@ public class ProductLogisticsShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
 }
