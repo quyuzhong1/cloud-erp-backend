@@ -21,4 +21,6 @@ public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEnti
     void saveBatchTaskRefSku(List<String> addTaskIdList, String productId,List<ProductDetailEntity> skuList);
 
     List<ProjectTaskRefSkuEntity> getByProductId(String productId);
+
+    List<String> checkTaskRefSkuFinish(String id);
 }

@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
+import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -22,6 +26,9 @@ import java.util.List;
 @Service
 public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuMapper, ProjectTaskRefSkuEntity> implements ProjectTaskRefSkuService {
 
+
+    @Autowired
+    private ProductDetailService productDetailService;
 
     /**
      * 保存任务与sku 关系表
@@ -88,16 +95,35 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
 
     /**
      * 根据产品id 获取对应关系
-     * @author yl
-     * @date 2022-11-28 12:12
+     *
      * @param productId
      * @return java.util.List<com.erp.model.plm.entity.ProjectTaskRefSkuEntity>
+     * @author yl
+     * @date 2022-11-28 12:12
      */
     @Override
     public List<ProjectTaskRefSkuEntity> getByProductId(String productId) {
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskRefSkuEntity::getProductId, productId);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 完成任务的时候 检查 关联的sku 是否已完成
+     *
+     * @param taskId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-11-28 18:14
+     */
+    @Override
+    public List<String> checkTaskRefSkuFinish(String taskId) {
+        List<ProjectTaskRefSkuEntity> list = getByTaskId(taskId);
+        List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        List<String> notFinishList =productDetailService.getNotFinish(skuIdList);
+
+        return notFinishList;
     }
 
     /**

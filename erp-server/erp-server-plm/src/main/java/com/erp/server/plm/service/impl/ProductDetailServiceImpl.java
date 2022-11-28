@@ -1045,4 +1045,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return new ArrayList<>();
     }
 
+
+    /**
+     * 获取那些sku 没有完成
+     *
+     * @param skuIdList
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.String>>
+     * @author yl
+     * @date 2022-11-28 18:29
+     */
+    @Override
+    public List<String> getNotFinish(List<String> skuIdList) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(ProductDetailEntity::getSkuNo);
+            queryWrapper.eq(ProductDetailEntity::getIsFinishTask, IsConstant.NO);
+            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
+            return listObjs(queryWrapper,Object::toString);
+        }
+        return new ArrayList<>();
+
+    }
+
+
 }

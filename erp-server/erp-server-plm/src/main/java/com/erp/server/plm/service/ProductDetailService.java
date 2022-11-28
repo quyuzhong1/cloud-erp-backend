@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 public interface ProductDetailService extends IService<ProductDetailEntity> {
 
@@ -211,4 +212,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      */
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
+
+    List<String> getNotFinish(List<String> skuIdList);
 }

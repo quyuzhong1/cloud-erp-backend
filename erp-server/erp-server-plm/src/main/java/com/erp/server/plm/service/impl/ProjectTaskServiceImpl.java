@@ -945,12 +945,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
         }
         if (dto.getPlanStartTime() != null) {
-            if (!projectTaskEntity.getPlanStartTime().equals(dto.getPlanStartTime())) {
+            if (!dto.getPlanStartTime().equals(projectTaskEntity.getPlanStartTime())) {
                 list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
             }
         }
         if (dto.getPlanEndTime() != null) {
-            if (!projectTaskEntity.getPlanEndTime().equals(dto.getPlanEndTime())) {
+            if (!dto.getPlanEndTime().equals(projectTaskEntity.getPlanEndTime())) {
                 list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
             }
         }

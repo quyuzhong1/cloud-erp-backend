@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
+import com.erp.server.plm.service.ProjectTaskRefSkuService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -39,6 +40,9 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private ProductInfoService productInfoService;
 
+    @Autowired
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
     /**
      * 项目任务-分页列表
      *
@@ -47,7 +51,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/paging")
     //  @RequestPermissions("plm:task:paging")
-   // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
+    // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -401,8 +405,7 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
-     *  全部 任务列表
-     *
+     * 全部 任务列表
      *
      * @return
      */
@@ -414,6 +417,7 @@ public class ProjectTaskController extends BaseController {
 
     /**
      * 分配给我任务列表
+     *
      * @return
      */
 
@@ -430,6 +434,7 @@ public class ProjectTaskController extends BaseController {
 
     /**
      * 我创造的任务列表
+     *
      * @return
      */
 
@@ -445,29 +450,28 @@ public class ProjectTaskController extends BaseController {
     }
 
 
-
     /**
      * 任务列表-任务操作更多列表
-     *
      *
      * @return
      */
     @PostMapping("/operate/moreList")
-    public ApiResult<List<Map<String,Object>>> operateMoreList(@Validated @RequestBody BaseIdDTO dto) {
-        List<Map<String,Object>> list = taskService.operateMoreList(dto.getId());
+    public ApiResult<List<Map<String, Object>>> operateMoreList(@Validated @RequestBody BaseIdDTO dto) {
+        List<Map<String, Object>> list = taskService.operateMoreList(dto.getId());
         return success(list);
     }
 
     /**
      * 任务列表-任务状态下拉框
+     *
+     * @return ApiResult
      * @author Will
      * @date: 2022/11/24 10:28
-     * @return ApiResult
      */
     @GetMapping("/getTaskStatusSelect")
     public ApiResult<List<SelectShowDTO>> getTaskStatusSelect() {
         List<SelectShowDTO> list = new ArrayList<>();
-        Arrays.stream(TaskStateEnum.values()).forEach(obj->{
+        Arrays.stream(TaskStateEnum.values()).forEach(obj -> {
             SelectShowDTO dto = new SelectShowDTO();
             dto.setValue(obj.getCode());
             dto.setLabel(obj.getName());
@@ -476,8 +480,19 @@ public class ProjectTaskController extends BaseController {
         return success(list);
     }
 
-
-
+    /**
+     * 完成任务- 查询任务关联的sku是否已完成
+     *
+     * @param id
+     * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2022-11-28 18:11
+     */
+    @GetMapping("/checkTaskRefSkuFinish")
+    public ApiResult checkTaskRefSkuFinish(BaseIdDTO id) {
+        List<String> notFinishList = projectTaskRefSkuService.checkTaskRefSkuFinish(id.getId());
+        return success(notFinishList);
+    }
 
 }
 
