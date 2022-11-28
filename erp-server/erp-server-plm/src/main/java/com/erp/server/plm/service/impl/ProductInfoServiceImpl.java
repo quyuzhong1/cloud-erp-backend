@@ -465,8 +465,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (StringUtils.isNotBlank(productChargeId)) {
                     item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
                 }
-
-
                 Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
 

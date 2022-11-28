@@ -16,7 +16,8 @@ public enum TaskStateEnum {
     CLOSE(5, "已取消"),
     APPROVAL_ING(7, "审核中"),
     APPROVAL_PASS(8, "审核通过"),
-    APPROVAL_NO_PASS(9, "审核不通过");
+    APPROVAL_NO_PASS(9, "审核不通过"),
+    PORTION_FINISH(10, "部分完成");
 
 
     private Integer code;

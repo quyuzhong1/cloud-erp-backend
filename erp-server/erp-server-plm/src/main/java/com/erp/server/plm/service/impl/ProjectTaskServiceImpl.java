@@ -491,9 +491,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String taskId = item.getId();
                 Integer state = item.getStatus();
                 item.setStatusName(TaskStateEnum.getName(state));
+
+                String chargeId = item.getChargeId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
+                }
+                if (StringUtils.isNotBlank(chargeId)) {
+                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                } else {
+                    item.setChargeIdList(new ArrayList<>());
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
@@ -1103,7 +1110,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setName(name);
         }
         if (CollectionUtils.isNotEmpty(chargeIdList)) {
-            taskEntity.setChargeId(String.join(",",chargeIdList));
+            taskEntity.setChargeId(String.join(",", chargeIdList));
             String chargeName = commonService.getNameByIds(chargeIdList);
             taskEntity.setChargeName(chargeName);
         }
@@ -1380,6 +1387,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
                 }
+                String chargeId = item.getChargeId();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                } else {
+                    item.setChargeIdList(new ArrayList<>());
+                }
                 TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(item.getProcessId())).findFirst().orElse(null);
                 if (workflowTask != null) {
                     item.setProcessTaskId(workflowTask.getTaskId());
@@ -1500,6 +1513,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
                 }
+
+                String chargeId = item.getChargeId();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                } else {
+                    item.setChargeIdList(new ArrayList<>());
+                }
                 TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(item.getProcessId())).findFirst().orElse(null);
                 if (workflowTask != null) {
                     item.setProcessTaskId(workflowTask.getTaskId());
@@ -1614,6 +1634,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             for (TaskPagingShowDTO item : records) {
                 String taskId = item.getId();
                 Integer state = item.getStatus();
+                String chargeId = item.getChargeId();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                } else {
+                    item.setChargeIdList(new ArrayList<>());
+                }
                 item.setStatusName(TaskStateEnum.getName(state));
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
