@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -65,5 +66,11 @@ public class ProductSkuBaseInfoDTO {
      * 品名
      */
     private String name;
+
+    /**
+     * 是否已完成任务
+     * 0 没有 1 已完成
+     */
+    private Integer isFinishTask;
 
 }
