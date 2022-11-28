@@ -5,6 +5,7 @@ import com.erp.common.enums.DataAttributeEnum;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.lang.annotation.*;
+import java.util.List;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -55,9 +56,7 @@ public @interface DataPermission {
     String keyIdName() default "";
 
 
-    /**
-     *
-     */
+
 
 
 
