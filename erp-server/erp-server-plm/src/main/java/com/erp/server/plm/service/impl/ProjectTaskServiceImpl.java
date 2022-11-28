@@ -1097,14 +1097,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
 
-        String chargeId = dto.getChargeId();
+        List<String> chargeIdList = dto.getChargeIdList();
         if (StringUtils.isNotBlank(name)) {
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
         }
-        if (StringUtils.isNotBlank(chargeId)) {
-            taskEntity.setChargeId(chargeId);
-            String chargeName = commonService.getNameById(chargeId);
+        if (CollectionUtils.isNotEmpty(chargeIdList)) {
+            taskEntity.setChargeId(String.join(",",chargeIdList));
+            String chargeName = commonService.getNameByIds(chargeIdList);
             taskEntity.setChargeName(chargeName);
         }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());

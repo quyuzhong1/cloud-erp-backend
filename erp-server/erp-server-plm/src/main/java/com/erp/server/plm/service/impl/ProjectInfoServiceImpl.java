@@ -189,9 +189,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
         //检查是否有SKU生成
         List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
-//        if (CollectionUtils.isEmpty(skuList)) {
-//            throw new ServiceException(ApiError.ERROR_95067);
-//        }
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95067);
+        }
 
         List<String> chargeIdList = dto.getChargeIdList();
         String chargeName = commonService.getNameByIds(chargeIdList);
