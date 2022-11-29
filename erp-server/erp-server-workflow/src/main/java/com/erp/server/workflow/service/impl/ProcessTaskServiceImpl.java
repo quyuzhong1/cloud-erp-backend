@@ -162,5 +162,22 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         return vo;
     }
 
+    @Override
+    public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
+        List<TaskShowDTO> resultList = new ArrayList<>();
+        if (StringUtils.isNotBlank(processId)) {
+            List<Task> tasks = taskService.createTaskQuery().taskId(processId).list();
+            for (Task task : tasks) {
+                TaskShowDTO vo = new TaskShowDTO();
+                vo.setAssignee(task.getAssignee());
+                vo.setProcessInstanceId(task.getProcessInstanceId());
+                vo.setTaskId(task.getId());
+                vo.setNodeId(task.getTaskDefinitionKey());
+                resultList.add(vo);
+            }
+        }
+        return resultList;
+    }
+
 
 }

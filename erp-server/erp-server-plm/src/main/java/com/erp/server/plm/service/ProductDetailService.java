@@ -214,4 +214,28 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 
     List<String> getNotFinish(List<String> skuIdList);
+    /**
+     * @description: 审核通过
+     * @author Will
+     * @date: 2022/11/28 14:51
+     * @param dto
+     * @return Boolean
+     */
+    Boolean approvalPass(ProductDetailOperateDTO dto);
+    /**
+     * @description: 审核不通过
+     * @author Will
+     * @date: 2022/11/28 14:51
+     * @param dto
+     * @return Boolean
+     */
+    Boolean approvalReject(ProductDetailOperateDTO dto);
+    /**
+     * @description: 设置审批人
+     * @author Will
+     * @date: 2022/11/28 16:43
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateApprover(ProductDetailApproveParamDTO dto);
 }

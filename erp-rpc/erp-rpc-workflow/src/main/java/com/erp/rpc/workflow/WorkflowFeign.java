@@ -25,11 +25,15 @@ public interface WorkflowFeign {
     @PostMapping("workflow/feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
 
-    //获取我待办的任务列表
+    //根据人员获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDo")
     List<TaskShowDTO> queryMyToDo(@RequestParam(value="userId") String userId);
 
     //审核任务通过
     @PostMapping("workflow/feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
+
+    //根据审核任务id获取我待办的任务列表
+    @PostMapping("workflow/feign/process/queryMyToDoByTaskId")
+    List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam(value="taskId") String taskId);
 }

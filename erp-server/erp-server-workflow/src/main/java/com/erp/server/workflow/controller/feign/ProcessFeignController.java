@@ -44,7 +44,7 @@ public class ProcessFeignController extends BaseController {
     }
 
 
-    //查看任务
+    //根据人员查看任务
     @PostMapping("/queryMyToDo")
     public List<TaskShowDTO> queryMyToDo(String userId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDo(userId);
@@ -57,4 +57,12 @@ public class ProcessFeignController extends BaseController {
         ProcessNodeDTO node = processTaskService.taskPass(dto);
         return node;
     }
+
+    //根据审核任务id查看任务
+    @PostMapping("/queryMyToDoByTaskId")
+    public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
+        List<TaskShowDTO> list = processTaskService.queryMyToDoByTaskId(processId);
+        return list;
+    }
+
 }

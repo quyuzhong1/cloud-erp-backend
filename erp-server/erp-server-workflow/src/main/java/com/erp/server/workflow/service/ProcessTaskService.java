@@ -29,5 +29,12 @@ public interface ProcessTaskService {
     void removeTask(String taskId);
 
     TaskShowDTO queryTaskInfo(ApproveProcessDTO dto);
-
+    /**
+     * @description: 根据审核任务id查看任务
+     * @author Will
+     * @date: 2022/11/28 15:20
+     * @param processId
+     * @return List<TaskShowDTO>
+     */
+    List<TaskShowDTO> queryMyToDoByTaskId(String processId);
 }

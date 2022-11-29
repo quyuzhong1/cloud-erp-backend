@@ -682,5 +682,43 @@ public class ProductDetailController extends BaseController {
         return success(resultList);
     }
 
+    /**
+     * @description: 设置审批人
+     * @author Will
+     * @date: 2022/11/28 16:43
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateApprover")
+    public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
+        Boolean result = productDetailService.updateApprover(dto);
+        return result == true ? success() : failure();
+    }
+
+   /**
+    * 产品信息-状态操作-审核通过
+    * @author Will
+    * @date: 2022/11/28 16:37
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalPass(dto);
+        return result == true ? success() : failure();
+    }
+
+   /**
+    * 产品信息-状态操作-审核不通过
+    * @author Will
+    * @date: 2022/11/28 16:37
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/approvalReject")
+    public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalReject(dto);
+        return result == true ? success() : failure();
+    }
 
 }

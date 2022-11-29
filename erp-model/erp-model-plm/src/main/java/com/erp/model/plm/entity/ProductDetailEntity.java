@@ -135,13 +135,35 @@ public class ProductDetailEntity implements Serializable {
     @TableField(value = "is_finish_task")
     private Integer isFinishTask;
 
-
-
     /**
      *禁止修改的字段
      */
     @TableField(exist = false)
     private List<String> disableFieldList;
+
+    /**
+     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过
+     */
+    @TableField("status")
+    private Integer status;
+
+    /**
+     * 流程id
+     */
+    @TableField("process_id")
+    private String processId;
+
+    /**
+     * 流程表id
+     */
+    @TableField("business_process_id")
+    private String businessProcessId;
+
+    /**
+     * 是否变更（0否，1是）
+     */
+    private Integer isChange;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
