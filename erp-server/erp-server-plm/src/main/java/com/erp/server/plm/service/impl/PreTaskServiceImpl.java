@@ -119,9 +119,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
             taskDeliveryService.removeByTaskId(dto.getTaskId());
             taskDocsFinishService.removeByTaskId(dto.getTaskId());
         }
-
-
-        return remove(queryWrapper);
+        return flag;
     }
 
     /**
