@@ -169,6 +169,7 @@ public enum ApiError implements Serializable {
     ERROR_95073(95073, "产品销售渠道不能为空"),
     ERROR_95074(95074, "sku变体颜色不能为空"),
     ERROR_95075(95075, "任务视图导出类型必填"),
+    ERROR_95076(95076, "保存任务失败,该产品已归档或该项目已归档"),
 
     ERROR_end(1000000, "系统错误");
 

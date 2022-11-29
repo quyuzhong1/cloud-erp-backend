@@ -481,6 +481,20 @@ public class ProjectTaskController extends BaseController {
     }
 
 
+    /**
+     * 完成sku
+     *
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2022-11-29 14:42
+     */
+    @PostMapping(value = "/finishSku")
+    public ApiResult finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
+        taskService.taskFinishSku(dto);
+        return success();
+    }
+
 
 }
 

@@ -111,4 +111,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    void taskFinishSku(TaskFinishSkuDTO dto);
 }

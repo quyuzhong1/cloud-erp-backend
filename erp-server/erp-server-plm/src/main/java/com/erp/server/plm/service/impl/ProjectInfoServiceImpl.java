@@ -224,7 +224,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
 
                 //将已保存的任务id 与sku 关联 在一起
-                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList,productId,skuList);
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
                 //异步发送通知
                 noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
             }
@@ -258,16 +258,16 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
 
                 //这个是复制任务与 sku 配置字段关系
-                templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId,productId,taskSourceList);
+                templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
 
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
                 templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
 
-                List<String>  addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
                 //将已保存的任务id 与sku 关联 在一起
-                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList,productId,skuList);
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
 
             }
 
@@ -554,6 +554,23 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             noticeMessageService.archiveProjectNotice(loginUser.getUserName(), productId);
         }
         return flag;
+    }
+
+
+    /**
+     * 根据产品id 获取项目信息
+     *
+     * @param productId
+     * @return com.erp.model.plm.entity.ProjectInfoEntity
+     * @author yl
+     * @date 2022-11-29 15:33
+     */
+    @Override
+    public ProjectInfoEntity getByProductId(String productId) {
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
+        queryWrapper.last("LIMIT 1");
+        return getOne(queryWrapper);
     }
 
 

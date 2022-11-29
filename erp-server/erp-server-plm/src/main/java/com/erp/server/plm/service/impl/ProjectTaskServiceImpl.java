@@ -57,6 +57,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private ProjectTaskSysService projectTaskSysService;
 
 
+
+
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
@@ -598,6 +600,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean save(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
+        productInfoService.checkProduct(dto.getProductId());
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -646,6 +649,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return flag;
     }
+
+
+
 
 
     /**
@@ -1682,6 +1688,41 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         return new PagingVO(pageData);
+    }
+
+    /**
+     * 完成任务
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-11-29 14:59
+     */
+    @Override
+    public void taskFinishSku(TaskFinishSkuDTO dto) {
+        String taskId = dto.getTaskId();
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        List<String> requestSkuIds = dto.getSkuIdList();
+        if (CollectionUtils.isNotEmpty(requestSkuIds)) {
+            requestSkuIds = requestSkuIds.stream().distinct().collect(Collectors.toList());
+            //表示全部完成
+            if (requestSkuIds.size() == skuIdList.size() && skuIdList.containsAll(requestSkuIds)) {
+                Integer state = taskEntity.getStatus();
+                //如果是部分完成 就变成已完成
+                if (TaskStateEnum.PORTION_FINISH.getCode().equals(state)) {
+                    taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
+                    this.updateById(taskEntity);
+                }
+            }
+
+        }
+
+
     }
 
     /**

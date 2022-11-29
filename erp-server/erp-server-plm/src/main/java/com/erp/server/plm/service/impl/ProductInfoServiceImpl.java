@@ -860,7 +860,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public List<ProductProjectDTO> getProductAndProjectList() {
         //获取到归档的产品id
         List<String> archiveProductIdList = archiveService.getArchiveProductIds();
-        return baseMapper.getProductAndProjectList(archiveProductIdList,ProjectStateEnum.FINISH.getState());
+        return baseMapper.getProductAndProjectList(archiveProductIdList, ProjectStateEnum.FINISH.getState());
     }
 
     /**
@@ -884,6 +884,28 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return new ArrayList<>();
     }
 
+    /**
+     * 检查产品是否已归档或者已完成
+     *
+     * @param productId
+     * @return void
+     * @author yl
+     * @date 2022-11-29 15:23
+     */
+    public void checkProduct(String productId) {
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        if (archiveProductIds.contains(productId)) {
+            throw new ServiceException(ApiError.ERROR_95076);
+        }
+        ProjectInfoEntity projectInfo = projectInfoService.getByProductId(productId);
+        if (!Objects.isNull(projectInfo)) {
+            Integer projectState = projectInfo.getProjectStatus();
+            if(ProjectStateEnum.FINISH.getState().equals(projectState)){
+                throw new ServiceException(ApiError.ERROR_95076);
+            }
+
+        }
+    }
 
     /**
      * /**
