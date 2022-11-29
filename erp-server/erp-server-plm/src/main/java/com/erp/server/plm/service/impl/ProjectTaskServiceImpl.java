@@ -2435,6 +2435,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
 
+        //是否确认完成
+        Boolean isConfirmFinish = dto.getIsConfirmFinish();
+        //当不是的时候
+        if (!isConfirmFinish) {
+            //查询是否有未完成的sku
+            List<String> notFinishSkuList = projectTaskRefSkuService.checkTaskRefSkuFinish(taskIds);
+            if (CollectionUtils.isNotEmpty(notFinishSkuList)) {
+                String skuNo = notFinishSkuList.stream().collect(Collectors.joining(","));
+                String warning = ApiError.ERROR_800.msg;
+                String warningMsg = String.format(warning, skuNo);
+                throw new ServiceException(ApiError.ERROR_800.code, warningMsg);
+            }
+
+        }
 
         //一般任务 列表
         List<ProjectTaskEntity> generalTasks = list.stream().filter(t -> generalTaskCode.equals(t.getType())).collect(Collectors.toList());

@@ -480,19 +480,7 @@ public class ProjectTaskController extends BaseController {
         return success(list);
     }
 
-    /**
-     * 完成任务- 查询任务关联的sku是否已完成
-     *
-     * @param taskIdList
-     * @return com.erp.common.dto.base.ApiResult
-     * @author yl
-     * @date 2022-11-28 18:11
-     */
-    @PostMapping("/checkTaskRefSkuFinish")
-    public ApiResult checkTaskRefSkuFinish(@RequestBody List<String> taskIdList) {
-        List<String> notFinishList = projectTaskRefSkuService.checkTaskRefSkuFinish(taskIdList);
-        return success(notFinishList);
-    }
+
 
 }
 

@@ -25,6 +25,8 @@ public enum ApiError implements Serializable {
     ERROR_403(403, "您未登录,请登录后操作"),
 
 
+
+
     /**
      * 通用错误
      */
@@ -45,6 +47,10 @@ public enum ApiError implements Serializable {
     ERROR_1013(1013, "您没有权限操作"),
     ERROR_1014(1014, "请勿重复操作"),
 
+    /**
+     * 警告信息 从800 开始
+     */
+    ERROR_800(800,"存在[%s]尚未填写完成，是否确认提交"),
 
     /**
      * 系统错误码

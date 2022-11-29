@@ -34,4 +34,12 @@ public class OperateBaseTaskDTO implements Serializable {
     private String productId;
 
 
+    /**
+     *是否确定完成
+     * true 表示确定
+     *
+     */
+    private Boolean isConfirmFinish=false;
+
+
 }
