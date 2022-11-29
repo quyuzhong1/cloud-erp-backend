@@ -23,7 +23,7 @@ import java.util.List;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+    IPage<TaskPagingShowDTO> paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
                  @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
                  @Param("statusList") List<Integer> statusList, @Param("param") String param
                  );
@@ -48,17 +48,17 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
 
-    List<TaskGroupResultDTO> toMeTaskGroup(@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(String userId, List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(@Param("param") String param, List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("param") String param, @Param("notStateList") List<Integer> notStateList);
 
     List<TaskGroupResultDTO> allTaskGroup( @Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> taskPlanEndTimeGroup(List<Integer> notStateList);
+    List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("notStateList") List<Integer> notStateList);
 
     IPage<TaskPagingShowDTO> toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
 

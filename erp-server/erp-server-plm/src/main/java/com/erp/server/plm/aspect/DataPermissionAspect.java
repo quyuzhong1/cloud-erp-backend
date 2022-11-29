@@ -178,7 +178,17 @@ public class DataPermissionAspect {
 
 
             } else {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + dataPermission.tableField() + " LIKE '%" + user.getUid() + "%'");
+                if (tableFieldSize == 1) {
+                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                }else{
+                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                    if (tableFieldSize > 1) {
+                        sqlString.append(" OR ");
+                        for (int i = 1; i < tableFieldSize; i++) {
+                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' )");
+                        }
+                    }
+                }
             }
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {

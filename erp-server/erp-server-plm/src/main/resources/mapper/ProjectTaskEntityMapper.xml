@@ -184,51 +184,68 @@
 
     <select id="toMeTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE (strpos (charge_id,#{userId})>0 OR strpos (approval_user_id,#{userId})>0)
+        FROM project_task t
+        <where>
+            <if test="notStateList !=null and notStateList.size>0">
+                t.status NOT IN
+                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+            <if test="param!=null and param!=''">
+                ${param}
+            </if>
+        </where>
+
+        GROUP BY t.product_id
+    </select>
+
+    <select id="toMeTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
+        SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
+        FROM project_task t WHERE
+         t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
-        GROUP BY t.product_id
-    </select>
-
-    <select id="toMeTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
-        SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE (strpos (charge_id,#{userId})>0 OR strpos (approval_user_id,#{userId})>0)
-        AND t.plan_end_time IS NOT NULL
-        <if test="notStateList !=null and notStateList.size>0">
-            AND t.status NOT IN
-            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
+        <if test="param!=null and param!=''">
+            ${param}
         </if>
         GROUP BY t.plan_end_time
     </select>
 
     <select id="myCreateTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE t.create_user_id=#{userId}
-        <if test="notStateList !=null and notStateList.size>0">
-            AND t.status NOT IN
-            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
+        FROM project_task t
+        <where>
+            <if test="notStateList !=null and notStateList.size>0">
+                 t.status NOT IN
+                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+            <if test="param!=null and param!=''">
+                ${param}
+            </if>
+        </where>
+
         GROUP BY t.product_id
     </select>
 
 
     <select id="myCreateTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE t.create_user_id=#{userId}
-        AND t.plan_end_time IS NOT NULL
+        FROM project_task t WHERE  t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
+        </if>
+        <if test="param!=null and param!=''">
+            ${param}
         </if>
         GROUP BY t.plan_end_time
     </select>

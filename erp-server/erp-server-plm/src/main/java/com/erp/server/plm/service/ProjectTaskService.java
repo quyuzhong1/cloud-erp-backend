@@ -113,4 +113,22 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     void taskFinishSku(TaskFinishSkuDTO dto);
+
+    /**
+     * 分配给我
+     * @author yl
+     * @date 2022-11-29 16:23
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
+     */
+    List<TaskGroupResultDTO> getGroupAssignToMeCondition(TaskGroupParamDTO dto);
+
+    /**
+     * 我创造的分组条件
+     * @author yl
+     * @date 2022-11-29 16:37
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
+     */
+    List<TaskGroupResultDTO> groupMyCreateConditionList(TaskGroupParamDTO dto);
 }

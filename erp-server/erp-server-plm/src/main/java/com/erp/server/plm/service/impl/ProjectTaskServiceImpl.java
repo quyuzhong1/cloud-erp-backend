@@ -57,8 +57,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private ProjectTaskSysService projectTaskSysService;
 
 
-
-
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
@@ -649,9 +647,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return flag;
     }
-
-
-
 
 
     /**
@@ -1297,26 +1292,115 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public List<TaskGroupResultDTO> getGroupCondition(TaskGroupParamDTO dto) {
-        String taskProperty = dto.getTaskProperty();
-        String userId = commonService.getUserInfo().getUid();
         //任务条件 1 待完成  2 全部
         Integer taskCondition = dto.getTaskCondition();
         //product 产品  planEndTime 计划结束时间
         String groupName = dto.getGroupName();
-        switch (taskProperty) {
-            //分配给我  任务负责人=当前账号人的待完成/审核任务
-            case TaskConstant.ASSIGN_TO_ME:
-                return toMeTaskGroupResult(userId, taskCondition, groupName);
-            //我创建的  创建人=当前账号人的待完成/审核任务
-            case TaskConstant.MY_CREATE:
-                return myCreateGroupResult(userId, taskCondition, groupName);
-            //全部任务
-            case TaskConstant.ALL:
-                return allGroupResult(taskCondition, groupName);
-            default:
-                return new ArrayList<>();
+        //不在的 任务状态
+        List<Integer> notStateList = new ArrayList<>();
+        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+            notStateList.add(TaskStateEnum.CLOSE.getCode());
+            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            notStateList.add(TaskStateEnum.FINISH.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+        }
+        List<TaskGroupResultDTO> resultList = new ArrayList<>();
+        //当是产品的时候
+        if (TaskConstant.PRODUCT.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(notStateList);
+            resultList = getProductGroup(list);
+        }
+        //以计划结束时间
+        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(notStateList);
+            resultList = getPlanEndTimeGroup(list);
+        }
+        return resultList;
+
+
+    }
+
+    /**
+     * 分配给我 分组条件
+     *
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2022-11-08 11:24
+     */
+    @Override
+    public List<TaskGroupResultDTO> getGroupAssignToMeCondition(TaskGroupParamDTO dto) {
+        //任务条件 1 待完成  2 全部
+        Integer taskCondition = dto.getTaskCondition();
+        //product 产品  planEndTime 计划结束时间
+        String groupName = dto.getGroupName();
+
+        //分配给我  任务负责人=当前账号人的待完成/审核任务
+        //不在的 任务状态
+        List<Integer> notStateList = new ArrayList<>();
+        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+            notStateList.add(TaskStateEnum.CLOSE.getCode());
+            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            notStateList.add(TaskStateEnum.FINISH.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+        }
+        //状态包含所有状态-除了待发布
+        if (TaskConstant.ALL_TASK.equals(taskCondition)) {
+            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+        }
+        List<TaskGroupResultDTO> resultList = new ArrayList<>();
+        //当是产品的时候
+        if (TaskConstant.PRODUCT.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.toMeTaskGroup(dto.getParam(), notStateList);
+            resultList = getProductGroup(list);
+        }
+        //以计划结束时间
+        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.toMeTaskPlanEndTimeGroup(dto.getParam(), notStateList);
+            resultList = getPlanEndTimeGroup(list);
+        }
+        return resultList;
+
+    }
+
+    /**
+     * 我创造的 分组条件
+     *
+     * @param dto
+     * @return
+     * @author yl
+     * @date 2022-11-08 11:24
+     */
+    @Override
+    public List<TaskGroupResultDTO> groupMyCreateConditionList(TaskGroupParamDTO dto) {
+        //任务条件 1 待完成  2 全部
+        Integer taskCondition = dto.getTaskCondition();
+        //product 产品  planEndTime 计划结束时间
+        String groupName = dto.getGroupName();
+        //不在的 任务状态
+        List<Integer> notStateList = new ArrayList<>();
+        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+            notStateList.add(TaskStateEnum.CLOSE.getCode());
+            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            notStateList.add(TaskStateEnum.FINISH.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+        }
+        List<TaskGroupResultDTO> resultList = new ArrayList<>();
+        //当是产品的时候
+        if (TaskConstant.PRODUCT.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskGroup(dto.getParam(), notStateList);
+            resultList = getProductGroup(list);
+        }
+        //以计划结束时间
+        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
+            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskPlanEndTimeGroup(dto.getParam(), notStateList);
+            resultList = getPlanEndTimeGroup(list);
         }
 
+        return resultList;
 
     }
 
@@ -1995,115 +2079,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return noExistStateList;
 
     }
-
-
-    /**
-     * 所有任务 任务列表 分组数据
-     *
-     * @param taskCondition
-     * @param groupName
-     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
-     * @author yl
-     * @date 2022-11-08 17:12
-     */
-    private List<TaskGroupResultDTO> allGroupResult(Integer taskCondition, String groupName) {
-        //不在的 任务状态
-        List<Integer> notStateList = new ArrayList<>();
-        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
-            notStateList.add(TaskStateEnum.CLOSE.getCode());
-            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
-            notStateList.add(TaskStateEnum.FINISH.getCode());
-            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
-        }
-        List<TaskGroupResultDTO> resultList = new ArrayList<>();
-
-        //当是产品的时候
-        if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(notStateList);
-            resultList = getProductGroup(list);
-        }
-        //以计划结束时间
-        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(notStateList);
-            resultList = getPlanEndTimeGroup(list);
-        }
-        return resultList;
-    }
-
-
-    /**
-     * 我创建的分组
-     *
-     * @param userId
-     * @param taskCondition
-     * @param groupName
-     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
-     * @author yl
-     * @date 2022-11-08 17:03
-     */
-    private List<TaskGroupResultDTO> myCreateGroupResult(String userId, Integer taskCondition, String groupName) {
-        //不在的 任务状态
-        List<Integer> notStateList = new ArrayList<>();
-        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
-            notStateList.add(TaskStateEnum.CLOSE.getCode());
-            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
-            notStateList.add(TaskStateEnum.FINISH.getCode());
-            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
-        }
-        List<TaskGroupResultDTO> resultList = new ArrayList<>();
-        //当是产品的时候
-        if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskGroup(userId, notStateList);
-            resultList = getProductGroup(list);
-        }
-        //以计划结束时间
-        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskPlanEndTimeGroup(userId, notStateList);
-            resultList = getPlanEndTimeGroup(list);
-        }
-
-        return resultList;
-    }
-
-    /**
-     * 任务列表 分配给我 获取分组列表数据
-     *
-     * @param taskCondition 任务条件 1 待完成  2 全部
-     * @param groupName
-     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
-     * @author yl
-     * @date 2022-11-08 12:26
-     */
-    public List<TaskGroupResultDTO> toMeTaskGroupResult(String userId, Integer taskCondition, String groupName) {
-        //不在的 任务状态
-        List<Integer> notStateList = new ArrayList<>();
-        //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
-            notStateList.add(TaskStateEnum.CLOSE.getCode());
-            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
-            notStateList.add(TaskStateEnum.FINISH.getCode());
-            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
-        }
-        //状态包含所有状态-除了待发布
-        if (TaskConstant.ALL_TASK.equals(taskCondition)) {
-            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
-        }
-        List<TaskGroupResultDTO> resultList = new ArrayList<>();
-        //当是产品的时候
-        if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.toMeTaskGroup(userId, notStateList);
-            resultList = getProductGroup(list);
-        }
-        //以计划结束时间
-        if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.toMeTaskPlanEndTimeGroup(userId, notStateList);
-            resultList = getPlanEndTimeGroup(list);
-        }
-        return resultList;
-    }
-
 
     /**
      * 获取产品分组数据

@@ -405,6 +405,38 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
+     * 任务列表-分配给我-分组条件列表
+     *
+     * @return
+     */
+    @PostMapping("/group/condition/assignToMe/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id,approval_user_id",
+            menuCode = "plm:task:expert:paging:assignToMe",
+            tableAlias = "t"
+    )
+    public ApiResult<List<TaskGroupResultDTO>> groupAssignToMeConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
+        List<TaskGroupResultDTO> resultList = taskService.getGroupAssignToMeCondition(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 任务列表-我创造的-分组条件列表
+     *
+     * @return
+     */
+    @PostMapping("/group/condition/myCreate/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:task:expert:paging:myCreate",
+            tableAlias = "t"
+    )
+    public ApiResult<List<TaskGroupResultDTO>> groupMyCreateConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
+        List<TaskGroupResultDTO> resultList = taskService.groupMyCreateConditionList(dto);
+        return success(resultList);
+    }
+
+    /**
      * 全部 任务列表
      *
      * @return
@@ -422,7 +454,7 @@ public class ProjectTaskController extends BaseController {
      */
 
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id",
+            tableField = "charge_id,approval_user_id",
             menuCode = "plm:task:expert:paging:assignToMe",
             tableAlias = "project_task"
     )
@@ -482,7 +514,7 @@ public class ProjectTaskController extends BaseController {
 
 
     /**
-     * 完成sku
+     * 配置表单-输出物-完成sku
      *
      * @param dto
      * @return

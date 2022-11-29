@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -14,17 +15,9 @@ import java.io.Serializable;
  * @Created by yl
  */
 @Data
-public class TaskGroupParamDTO implements Serializable {
+public class TaskGroupParamDTO extends PermissionsDTO {
 
-    /**
-     * 任务属性
-     * assignToMe  分配给我,
-     * myCreate  我创造的,
-     * all  全部
-     */
-    @NotBlank(message = "任务查找属性不能为空")
-    @StateEnumValue(strValues = {"assignToMe", "myCreate", "all"}, message = "任务属性有误")
-    private String taskProperty;
+
 
 
     /**
