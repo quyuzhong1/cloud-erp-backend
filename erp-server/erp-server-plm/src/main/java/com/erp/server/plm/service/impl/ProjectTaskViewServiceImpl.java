@@ -79,6 +79,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentId ++;
             //同一人员下的任务
             List<ProductTaskPersonnelChildDTO> childrenList = new LinkedList<>();
+            List<ProductTaskPersonnelChildDTO> notTime = new LinkedList<>();
             for (ProductTaskViewDTO obj:value) {
                 ProductTaskPersonnelChildDTO childDto = new ProductTaskPersonnelChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
@@ -167,14 +168,14 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         for (Map.Entry<String,List<ProductTaskViewDTO>> entry : map.entrySet()) {
             List<ProductTaskViewDTO> value = entry.getValue();
             //最小计划开始时间
-            String minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
+             String minStartTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanStartTime)).map(ProductTaskViewDTO::getPlanStartTime).findFirst().orElse(null);
             //最大计划结束时间
             String maxEndTime = value.stream().filter(obj-> ObjectUtils.isNotNull(obj.getPlanEndTime())).sorted(Comparator.comparing(ProductTaskViewDTO::getPlanEndTime).reversed()).map(ProductTaskViewDTO::getPlanEndTime).findFirst().orElse(null);
             ProductTaskPhaseChildDTO parentDto = new ProductTaskPhaseChildDTO();
             parentDto.setId(parentId);
             parentDto.setParentId(IsConstant.NO);
             parentDto.setPhaseName(entry.getKey());
-            parentDto.setPlanEndTime(minStartTime);
+            parentDto.setPlanStartTime(minStartTime);
             parentDto.setPlanEndTime(maxEndTime);
             parentId ++;
             //同一阶段下的任务
