@@ -484,6 +484,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isNotEmpty(productIds)) {
                 productList = productInfoService.listByIds(productIds);
             }
+            List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+            //前置任务
+            List<ProjectTaskEntity> preTaskEntityList = this.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
 
             for (TaskPagingShowDTO item : list) {
                 String taskId = item.getId();
@@ -521,6 +524,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (product != null) {
                     item.setProductName(product.getName());
                 }
+
+                List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+                int totalPreTaskCount = preTaskIds.size();
+                item.setTotalPreTaskCount(totalPreTaskCount);
+                List<String> preTaskNameList = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.toList());
+                int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finish.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
+                item.setPreTaskNameList(preTaskNameList);
+                item.setFinishPreTaskCount(finishPreTaskCount);
+
             }
         }
 
@@ -1821,6 +1833,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<Map<String, Object>> operateMoreList(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         TaskRefSkuConfigEntity skuConfigEntity = taskRefSkuConfigService.getByTaskId(taskId);
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        Boolean taskRefSkuFlag = CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0;
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -1856,8 +1870,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          * 1 有文档审核任务
          * 2 评审任务
          */
-        Integer approval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
-        Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
         resultList.add(editTaskMap);
         Boolean uploadFlag = false;
         Map<String, Object> uploadMap = new HashMap<>();
@@ -1869,7 +1881,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             totalCount = taskDocsCounts.get(0).getCount();
         }
         //表示有交付物 有交付物[文档+信息填写]时，显示上传文档
-        if (totalCount > 0 || (skuConfigEntity != null && StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType()))) {
+        if (totalCount > 0 || (skuConfigEntity != null && StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType()))||taskRefSkuFlag) {
             uploadFlag = true;
         }
         //有交付且上传完成后，任务状态审核中，审核通过，已完成后不可点击【上传文档】
