@@ -111,7 +111,7 @@
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
         WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1
-        AND pj.project_status!=#{projectStatus}
+        AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
         <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
             AND pi.id NOT IN
             <foreach collection="archiveProductIdList" item="archiveProductId" open="(" separator="," close=")">
