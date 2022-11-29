@@ -23,10 +23,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.ApprovalStatusEnum;
-import com.erp.server.plm.enums.ProjectStateEnum;
-import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
-import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -574,7 +571,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //保存文档权限
             templateDocsPermissionService.saveTemplateDocsPermission(templateId, productId);
             //保存sku 与任务 配置关系
-            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId,productId);
+            templateTaskRefSkuConfigService.saveTemplateTaskRefSkuConfig(templateId, productId);
         }
 
         return true;
@@ -609,12 +606,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     /**
-     * @param :产品基础信息请求参数
-     * @return java.lang.Boolean
-     * @Description 无规格sku修改产品信息
-     * @Author Luo_WG
-     * @Date 2022/9/21 18:44
-     **/
+     * H获取关联产品信息 排斥已完成 和归档的
+     *
+     * @param
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.Object>>
+     * @author yl
+     * @date 2022-11-29 10:39
+     */
     @Override
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -860,7 +858,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public List<ProductProjectDTO> getProductAndProjectList() {
-        return baseMapper.getProductAndProjectList();
+        //获取到归档的产品id
+        List<String> archiveProductIdList = archiveService.getArchiveProductIds();
+        return baseMapper.getProductAndProjectList(archiveProductIdList,ProjectStateEnum.FINISH.getState());
     }
 
     /**

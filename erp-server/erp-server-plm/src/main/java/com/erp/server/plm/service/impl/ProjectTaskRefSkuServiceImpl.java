@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
@@ -112,18 +113,37 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     /**
      * 完成任务的时候 检查 关联的sku 是否已完成
      *
-     * @param taskId
+     * @param taskIdList
      * @return java.lang.Boolean
      * @author yl
      * @date 2022-11-28 18:14
      */
     @Override
-    public List<String> checkTaskRefSkuFinish(String taskId) {
-        List<ProjectTaskRefSkuEntity> list = getByTaskId(taskId);
+    public List<String> checkTaskRefSkuFinish(List<String> taskIdList) {
+        List<ProjectTaskRefSkuEntity> list = getByTaskIdList(taskIdList);
         List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
-        List<String> notFinishList =productDetailService.getNotFinish(skuIdList);
+        List<BaseIdDTO> notFinishList = productDetailService.getNotFinish(skuIdList);
 
-        return notFinishList;
+        return notFinishList.stream().map(BaseIdDTO::getName).distinct().collect(Collectors.toList());
+    }
+
+
+    /**
+     * 根据任务id 集合获取对应sku 关系
+     *
+     * @return
+     * @parms
+     * @author yl
+     * @date 2022-11-29
+     */
+    @Override
+    public List<ProjectTaskRefSkuEntity> getByTaskIdList(List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskRefSkuEntity::getTaskId, taskIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
     /**

@@ -26,6 +26,9 @@ public interface NoticeMessageConstant {
     //完成任务
     String FINISH_TASK = "状态操作: [%s] 将状态由【进行中】变更为【已完成】";
 
+    //部分完成任务
+    String  PORTION_FINISH_TASK = "状态操作: [%s] 将状态由【进行中】变更为【已完成】";
+
     //关闭任务
     String CLOSE_TASK = "状态操作: [%s] 将状态由【进行中】变更为【已关闭】";
 

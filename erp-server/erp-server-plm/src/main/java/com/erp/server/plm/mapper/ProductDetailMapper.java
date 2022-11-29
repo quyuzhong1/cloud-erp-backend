@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -67,6 +68,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      **/
     List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
+    List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList,@Param("finishTaskState") Integer finishTaskState);
 }
 
 

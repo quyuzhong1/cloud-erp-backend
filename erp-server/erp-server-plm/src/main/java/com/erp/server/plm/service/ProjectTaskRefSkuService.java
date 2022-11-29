@@ -22,5 +22,7 @@ public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEnti
 
     List<ProjectTaskRefSkuEntity> getByProductId(String productId);
 
-    List<String> checkTaskRefSkuFinish(String id);
+    List<String> checkTaskRefSkuFinish(List<String> taskIdList);
+
+    List<ProjectTaskRefSkuEntity> getByTaskIdList(List<String> noProcessTaskIds);
 }

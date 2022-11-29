@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -213,5 +214,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 
-    List<String> getNotFinish(List<String> skuIdList);
+    List<BaseIdDTO> getNotFinish(List<String> skuIdList);
 }

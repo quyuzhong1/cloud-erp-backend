@@ -44,6 +44,10 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     //完成任务通知
     Boolean finishTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 
+    //部分完成任务通知
+    Boolean portionFinishTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
+
+
     //关闭任务通知
     Boolean closeTaskNotice(String userName,List<ProjectTaskEntity> taskList,String productId);
 

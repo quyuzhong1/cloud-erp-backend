@@ -9,7 +9,7 @@ package com.erp.server.plm.enums;
 public enum TaskStateEnum {
 
     TO_BE_RELEASED(0, "待发布"),
-    NOT_START(1, "待开始"),
+    NOT_START(1, "未开始"),
     WAIT_CONFIRM(2, "待审核"),
     ING(3, "进行中"),
     FINISH(4, "已完成"),

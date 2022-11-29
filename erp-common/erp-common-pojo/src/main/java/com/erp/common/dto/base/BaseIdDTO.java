@@ -18,4 +18,6 @@ public class BaseIdDTO implements Serializable {
 
     @NotBlank(message = "id不能为空")
     private String id;
+
+    private String name;
 }

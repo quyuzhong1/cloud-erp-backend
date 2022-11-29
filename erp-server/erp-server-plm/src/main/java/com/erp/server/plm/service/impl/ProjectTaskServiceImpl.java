@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -27,17 +28,14 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
-import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -2469,9 +2467,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         Date nowDate = new Date();
         this.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
+        //任务与sku 的关联
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskIdList(noProcessTaskIds);
+        List<String> skuIds = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        List<BaseIdDTO> noFinishList = productDetailService.getNotFinish(skuIds);
+        //这个是没有完成的skuid 集合
+        List<String> noFinishSkuIdList = noFinishList.stream().map(BaseIdDTO::getId).collect(Collectors.toList());
+        //没有完成的sku的 任务id
+        List<String> noFinishSkuTaskIdList = taskRefSkuList.stream().filter(r -> noFinishSkuIdList.contains(r.getSkuId())).map(ProjectTaskRefSkuEntity::getTaskId).distinct().collect(Collectors.toList());
+        this.updateTaskState(noFinishSkuTaskIdList, TaskStateEnum.PORTION_FINISH.getCode(), null, nowDate);
+        //发送部分完成任务通知
+        List<ProjectTaskEntity> portionFinishList = list.stream().filter(p -> noFinishSkuTaskIdList.contains(p.getId())).collect(Collectors.toList());
+        noticeMessageService.portionFinishTaskNotice(loginUser.getUserName(), portionFinishList, dto.getProductId());
+        List<String> finishSkuTaskIdList = noProcessTaskIds.stream().filter(t -> !noFinishSkuTaskIdList.contains(t)).collect(Collectors.toList());
+        this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
+
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         //发送完成任务通知
-        noticeMessageService.finishTaskNotice(loginUser.getUserName(), noProcessList, dto.getProductId());
+        List<ProjectTaskEntity> finishSkuTaskList = list.stream().filter(p -> finishSkuTaskIdList.contains(p.getId())).collect(Collectors.toList());
+        noticeMessageService.finishTaskNotice(loginUser.getUserName(), finishSkuTaskList, dto.getProductId());
 
         //当有流程的不为空
         if (CollectionUtils.isNotEmpty(processList)) {
@@ -2798,6 +2812,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         queryWrapper.last("LIMIT 1");
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
         if (!Objects.isNull(taskEntity)) {
+            List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
+            List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+            List<BaseIdDTO> notFinishList = productDetailService.getNotFinish(skuIdList);
+            if (CollectionUtils.isNotEmpty(notFinishList)) {
+                taskEntity.setStatus(TaskStateEnum.PORTION_FINISH.getCode());
+            } else {
+                taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
+            }
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
             recordEntity.setTaskId(taskEntity.getId());
@@ -2806,7 +2828,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             recordEntity.setOperatorId(loginUser.getUid());
             recordEntity.setOperatorName(loginUser.getUserName());
             taskEntity.setRealityEndTime(new Date());
-            taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
 
             this.updateById(taskEntity);
             taskOperatorRecordService.save(recordEntity);

@@ -301,4 +301,16 @@
         </if>
 
     </select>
+
+    <select id="getNotFinish" resultType="com.erp.common.dto.base.BaseIdDTO">
+      SELECT id,sku_no  AS name FROM product_detail
+      WHERE  is_finish_task =#{finishTaskState}
+      <if test="skuIdList!=null and skuIdList.size>0 " >
+          AND id IN
+          <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+              #{skuId}
+          </foreach>
+      </if>
+
+    </select>
 </mapper>

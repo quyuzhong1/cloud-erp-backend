@@ -405,9 +405,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
                 //模板成员
                 List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
-                List<Pair<String,String>> addRoleList = new ArrayList<>();
-                oldRefList.stream().forEach(obj->{
-
+                List<Pair<String, String>> addRoleList = new ArrayList<>();
+                oldRefList.stream().forEach(obj -> {
                     TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
 
                     TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
@@ -415,10 +414,12 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     if (CollectionUtils.isNotEmpty(addRoleList)) {
                         //如果已经新增过则无需再次新增
                         Pair<String, String> pair = addRoleList.stream().filter(e -> e.getKey().equals(oldRole.getId())).findAny().orElse(null);
-                        obj.setRoleId(pair.getValue());
+                        if (pair != null) {
+                            obj.setRoleId(pair.getValue());
+                        }
                     } else {
                         ProjectRoleEntity newRole = new ProjectRoleEntity();
-                        BeanMapperUtils.copy(oldRole,newRole);
+                        BeanMapperUtils.copy(oldRole, newRole);
                         newRole.setProductId(productId);
                         newRole.setId(null);
                         projectRoleService.save(newRole);
@@ -430,14 +431,14 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     }
                     //新增成员
                     ProjectMembersEntity newMembers = new ProjectMembersEntity();
-                    BeanMapperUtils.copy(oldMembers,newMembers);
+                    BeanMapperUtils.copy(oldMembers, newMembers);
                     newMembers.setProductId(productId);
                     newMembers.setId(null);
                     this.save(newMembers);
                     obj.setMembersId(newMembers.getId());
                 });
                 List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
-                roleRefMemberList.stream().forEach(obj->obj.setProductId(productId).setId(null));
+                roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
                 roleRefMemberService.saveBatch(roleRefMemberList);
             }
         }

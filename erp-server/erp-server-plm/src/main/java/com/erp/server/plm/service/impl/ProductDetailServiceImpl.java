@@ -10,6 +10,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -1055,16 +1056,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date 2022-11-28 18:29
      */
     @Override
-    public List<String> getNotFinish(List<String> skuIdList) {
+    public List<BaseIdDTO> getNotFinish(List<String> skuIdList) {
         if (CollectionUtils.isNotEmpty(skuIdList)) {
-            LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.select(ProductDetailEntity::getSkuNo);
-            queryWrapper.eq(ProductDetailEntity::getIsFinishTask, IsConstant.NO);
-            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
-            return listObjs(queryWrapper,Object::toString);
+            return baseMapper.getNotFinish(skuIdList,IsConstant.NO);
         }
         return new ArrayList<>();
-
     }
 
 
