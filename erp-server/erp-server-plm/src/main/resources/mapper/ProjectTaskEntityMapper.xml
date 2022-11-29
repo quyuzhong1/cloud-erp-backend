@@ -550,7 +550,7 @@
                 ${dto.param}
             </if>
         </where>
-        order by t.create_time desc, t.plan_end_time asc, t.taskId desc
+        order by t.create_time desc,t.productId asc, t.plan_end_time asc, t.taskId desc
     </select>
 
     <select id="getAllTaskPhaseView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
@@ -619,13 +619,13 @@
                 ${dto.param}
             </if>
         </where>
-        order by t.create_time desc, t.plan_end_time asc, t.taskId desc
+        order by t.create_time desc, t.phase_name asc, t.plan_end_time asc, t.taskId desc
     </select>
 
 
     <select id="getAllTaskInWarehouseTimeView" resultType="com.erp.model.plm.dto.ProductTaskInWarehouseTimeChildDTO">
         select
-        t.*
+            t.*
         from
         (select
             pi.id as productId,

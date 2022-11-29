@@ -89,6 +89,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childrenList.add(childDto);
                 parentId ++;
             };
+            //无时间的设置在末尾
+            if (CollectionUtils.isNotEmpty(childrenList)) {
+                childrenList = childrenList.stream().sorted(Comparator.comparing(e -> e.getPlanEndTime(),Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+            }
             resultList.add(parentDto);
             resultList.addAll(childrenList);
         }
@@ -140,6 +144,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childrenList.add(childDto);
                 parentId ++;
             };
+            //无时间的设置在末尾
+            if (CollectionUtils.isNotEmpty(childrenList)) {
+                childrenList = childrenList.stream().sorted(Comparator.comparing(e -> e.getPlanEndTime(),Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+            }
             resultList.add(parentDto);
             resultList.addAll(childrenList);
         }
@@ -189,6 +197,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childrenList.add(childDto);
                 parentId ++;
             };
+            //无时间的设置在末尾
+            if (CollectionUtils.isNotEmpty(childrenList)) {
+                childrenList = childrenList.stream().sorted(Comparator.comparing(e -> e.getPlanEndTime(),Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+            }
             resultList.add(parentDto);
             resultList.addAll(childrenList);
         }
@@ -235,6 +247,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childrenList.add(childDto);
                 parentId ++;
             };
+            //无时间的设置在末尾
+            if (CollectionUtils.isNotEmpty(childrenList)) {
+                childrenList = childrenList.stream().sorted(Comparator.comparing(e -> e.getPlanListingTime(),Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+            }
             resultList.add(parentDto);
             resultList.addAll(childrenList);
         }
