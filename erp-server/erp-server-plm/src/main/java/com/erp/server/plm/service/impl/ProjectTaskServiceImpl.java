@@ -2044,13 +2044,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer releasedState = TaskStateEnum.TO_BE_RELEASED.getCode();
         //未开始
         Integer notStartState = TaskStateEnum.NOT_START.getCode();
-        //已取消
-        Integer closeState = TaskStateEnum.CLOSE.getCode();
+        //进行中
+        Integer ingState = TaskStateEnum.ING.getCode();
+
+        //审核不通过
+        Integer approvalNoPassState = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         //待审核
         Integer waitConfirmState = TaskStateEnum.WAIT_CONFIRM.getCode();
+        //部分完成
+        Integer portionFinishState = TaskStateEnum.PORTION_FINISH.getCode();
+
         stateList.add(releasedState);
         stateList.add(notStartState);
-        stateList.add(closeState);
+        stateList.add(ingState);
+        stateList.add(approvalNoPassState);
+        stateList.add(portionFinishState);
         if (!generalTaskFlag) {
             stateList.add(waitConfirmState);
         }
