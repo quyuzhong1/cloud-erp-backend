@@ -74,18 +74,21 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setParentId(IsConstant.NO);
             parentDto.setChargeId(entry.getKey());
             parentDto.setChargeName(chargeName);
-            parentDto.setPlanStartTime(minStartTime);
-            parentDto.setPlanEndTime(maxEndTime);
+            parentDto.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));
+            parentDto.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
             parentId ++;
             //同一人员下的任务
             List<ProductTaskPersonnelChildDTO> childrenList = new LinkedList<>();
-            List<ProductTaskPersonnelChildDTO> notTime = new LinkedList<>();
             for (ProductTaskViewDTO obj:value) {
                 ProductTaskPersonnelChildDTO childDto = new ProductTaskPersonnelChildDTO();
                 BeanMapperUtils.copy(obj,childDto);
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
                 childDto.setId(parentId);
                 childDto.setParentId(parentDto.getId());
+                childDto.setPlanStartTime(StringUtils.isEmpty(childDto.getPlanStartTime()) ? childDto.getPlanStartTime() : childDto.getPlanStartTime().concat(" 00:00:00"));
+                childDto.setPlanEndTime(StringUtils.isEmpty(childDto.getPlanEndTime()) ? childDto.getPlanEndTime() : childDto.getPlanEndTime().concat(" 23:59:59"));
+                childDto.setRealityStartTime(StringUtils.isEmpty(childDto.getRealityStartTime()) ? childDto.getRealityStartTime() : childDto.getRealityStartTime().concat(" 00:00:00"));
+                childDto.setRealityEndTime(StringUtils.isEmpty(childDto.getRealityEndTime()) ? childDto.getRealityEndTime() : childDto.getRealityEndTime().concat(" 23:59:59"));
                 childrenList.add(childDto);
                 parentId ++;
             };
