@@ -1228,6 +1228,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return  productDetailApproverService.saveOrUpdate(entity);
     }
 
+    @Override
+    public void productDetailProcessPass(String processId) {
+
+    }
+
 
     /**
      * @description: 更新产品信息状态

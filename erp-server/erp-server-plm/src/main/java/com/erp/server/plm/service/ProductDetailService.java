@@ -8,7 +8,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Map;
 
 public interface ProductDetailService extends IService<ProductDetailEntity> {
 
@@ -238,4 +237,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean updateApprover(ProductDetailApproveParamDTO dto);
+    /**
+     * @description: 审核通过
+     * @author Will
+     * @date: 2022/11/30 17:22
+     * @param processId
+
+     */
+    void productDetailProcessPass(String processId);
 }

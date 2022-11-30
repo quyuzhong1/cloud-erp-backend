@@ -1,13 +1,10 @@
 package com.erp.server.workflow.listeners;
 
-import com.common.core.utils.OkHttpUtils;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * SKU审核监听
@@ -16,14 +13,13 @@ import java.util.Map;
  */
 @Service
 public class ProductDetailResultListener implements ExecutionListener {
-    @Value("${plmUrl}")
-    private String plmUrl;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
         String  parentActivityInstanceId=  delegateExecution.getParentActivityInstanceId();
-        Map<String, Object> params = new HashMap<>();
-        params.put("processId", parentActivityInstanceId);
-        OkHttpUtils.doPost(plmUrl, params, null);
+        plmTaskFeign.productDetailProcessPass(parentActivityInstanceId);
     }
 }

@@ -721,4 +721,11 @@ public class ProductDetailController extends BaseController {
         return result == true ? success() : failure();
     }
 
+
+    @PostMapping("/productDetailProcessPass")
+    public ApiResult productDetailProcessPass(String processId) {
+        productDetailService.productDetailProcessPass(processId);
+        return success();
+    }
+
 }
