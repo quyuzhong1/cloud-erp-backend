@@ -133,8 +133,8 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setParentId(IsConstant.NO);
             parentDto.setProductId(entry.getKey());
             parentDto.setProductName(productName);
-            parentDto.setPlanStartTime(minStartTime);
-            parentDto.setPlanEndTime(maxEndTime);
+            parentDto.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));
+            parentDto.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
             parentId ++;
             //同一产品下的任务
             List<ProductTaskProductChildDTO> childrenList = new LinkedList<>();
@@ -144,6 +144,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
                 childDto.setId(parentId);
                 childDto.setParentId(parentDto.getId());
+                childDto.setPlanStartTime(StringUtils.isEmpty(childDto.getPlanStartTime()) ? childDto.getPlanStartTime() : childDto.getPlanStartTime().concat(" 00:00:00"));
+                childDto.setPlanEndTime(StringUtils.isEmpty(childDto.getPlanEndTime()) ? childDto.getPlanEndTime() : childDto.getPlanEndTime().concat(" 23:59:59"));
+                childDto.setRealityStartTime(StringUtils.isEmpty(childDto.getRealityStartTime()) ? childDto.getRealityStartTime() : childDto.getRealityStartTime().concat(" 00:00:00"));
+                childDto.setRealityEndTime(StringUtils.isEmpty(childDto.getRealityEndTime()) ? childDto.getRealityEndTime() : childDto.getRealityEndTime().concat(" 23:59:59"));
                 childrenList.add(childDto);
                 parentId ++;
             };
@@ -186,8 +190,8 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setId(parentId);
             parentDto.setParentId(IsConstant.NO);
             parentDto.setPhaseName(entry.getKey());
-            parentDto.setPlanStartTime(minStartTime);
-            parentDto.setPlanEndTime(maxEndTime);
+            parentDto.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));
+            parentDto.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
             parentId ++;
             //同一阶段下的任务
             List<ProductTaskPhaseChildDTO> childrenList = new LinkedList<>();
@@ -197,6 +201,10 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childDto.setStatusName(TaskStateEnum.getName(obj.getStatus()));
                 childDto.setId(parentId);
                 childDto.setParentId(parentDto.getId());
+                childDto.setPlanStartTime(StringUtils.isEmpty(childDto.getPlanStartTime()) ? childDto.getPlanStartTime() : childDto.getPlanStartTime().concat(" 00:00:00"));
+                childDto.setPlanEndTime(StringUtils.isEmpty(childDto.getPlanEndTime()) ? childDto.getPlanEndTime() : childDto.getPlanEndTime().concat(" 23:59:59"));
+                childDto.setRealityStartTime(StringUtils.isEmpty(childDto.getRealityStartTime()) ? childDto.getRealityStartTime() : childDto.getRealityStartTime().concat(" 00:00:00"));
+                childDto.setRealityEndTime(StringUtils.isEmpty(childDto.getRealityEndTime()) ? childDto.getRealityEndTime() : childDto.getRealityEndTime().concat(" 23:59:59"));
                 childrenList.add(childDto);
                 parentId ++;
             };
@@ -247,6 +255,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childDto.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
                 childDto.setId(parentId);
                 childDto.setParentId(parentDto.getId());
+                childDto.setPlanListingTime(StringUtils.isEmpty(childDto.getPlanListingTime()) ? childDto.getPlanListingTime() : childDto.getPlanListingTime().concat(" 00:00:00"));
                 childrenList.add(childDto);
                 parentId ++;
             };
