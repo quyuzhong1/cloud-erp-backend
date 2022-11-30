@@ -224,7 +224,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             return resultList;
         }
         //根据产品分组
-        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
+        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
         int parentId = 1;
         for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
             List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();

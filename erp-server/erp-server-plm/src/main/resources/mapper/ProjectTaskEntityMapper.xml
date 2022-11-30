@@ -460,9 +460,8 @@
                 pt.phase_name,
                 pi2.project_status,
                 case when pt.plan_end_time is null then 0
-                    when pt.reality_end_time is null then 0
-                    when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
-                    when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
+                    when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+                    when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
                     else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
@@ -525,9 +524,8 @@
             pt.charge_name as charge_name,
             pi2.project_status,
             case when pt.plan_end_time is null then 0
-                when pt.reality_end_time is null then 0
-                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
-                when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
+                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+                when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
                 else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
@@ -591,9 +589,8 @@
             pt.phase_name,
             pi2.project_status,
             case when pt.plan_end_time is null then 0
-                when pt.reality_end_time is null then 0
-                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(pt.reality_end_time, 'YYYYMMDD') then 0
-                when to_char(pt.reality_end_time, 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
+                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+                when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
                 else 0 end isDelay,
             pp.create_time
         from product_info pi
