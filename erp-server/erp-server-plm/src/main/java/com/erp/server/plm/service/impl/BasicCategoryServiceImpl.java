@@ -46,11 +46,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public void addCategory(SaveBasicCategoryDTO dto) {
         String categoryName = dto.getName();
-        checkCategoryName(categoryName);
-        checkCategoryCode(dto.getCode(),dto.getPid());
+        checkCategoryName(categoryName,null);
+        checkCategoryCode(dto.getCode(),dto.getPid(),null);
         BasicCategoryEntity entity = new BasicCategoryEntity();
         entity.setPid(dto.getPid());
         entity.setName(categoryName);
+        entity.setCode(dto.getCode());
         this.save(entity);
     }
 
@@ -65,14 +66,15 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public Boolean updateCategory(UpdateBasicNameDTO dto) {
         String categoryName = dto.getName();
-        checkCategoryName(categoryName);
+        checkCategoryName(categoryName,dto.getId());
         BasicCategoryEntity found = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(found)) {
             throw new ServiceException(ApiError.ERROR_95072);
         }
-        checkCategoryCode(dto.getCode(),found.getPid());
+        checkCategoryCode(dto.getCode(),found.getPid(),dto.getId());
         LambdaUpdateWrapper<BasicCategoryEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BasicCategoryEntity::getName, categoryName);
+        updateWrapper.set(BasicCategoryEntity::getCode,dto.getCode());
         updateWrapper.eq(BasicCategoryEntity::getId, dto.getId());
         return this.update(updateWrapper);
     }
@@ -241,12 +243,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @author yl
      * @date 2022-09-13 12:17
      */
-    private void checkCategoryName(String categoryName) {
+    private void checkCategoryName(String categoryName,String id) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
         queryWrapper.last("LIMIT 1");
-        int count = this.count(queryWrapper);
-        if (count > 0) {
+        BasicCategoryEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
             throw new ServiceException(ApiError.ERROR_95000);
         }
     }
@@ -257,9 +259,10 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date: 2022/11/22 12:11
      * @param code
      * @param pid
+     * @param id
      */
-    private void checkCategoryCode(String code,String pid) {
-        if (StringUtils.isBlank(pid)) {
+    private void checkCategoryCode(String code,String pid,String id) {
+        if ("0".equals(pid)) {
             //一级分类必须要填分类代码
             if (StringUtils.isBlank(code)) {
                 throw new ServiceException(ApiError.ERROR_95069);
@@ -277,8 +280,8 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
                 queryWrapper.eq(BasicCategoryEntity::getCode, code);
                 queryWrapper.last("LIMIT 1");
-                int count = this.count(queryWrapper);
-                if (count > 0) {
+                BasicCategoryEntity entity = this.getOne(queryWrapper);
+                if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
                     throw new ServiceException(ApiError.ERROR_95070);
                 }
             }
