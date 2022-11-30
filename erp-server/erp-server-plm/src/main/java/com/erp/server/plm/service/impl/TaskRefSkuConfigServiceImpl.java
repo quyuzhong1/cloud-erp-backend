@@ -30,8 +30,6 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
     private TaskRefSkuConfigMapper taskRefSkuConfigMapper;
 
 
-
-
     /**
      * 通过主键删除数据
      *
@@ -57,7 +55,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
     @Override
     public void addSkuField(String taskId, String productId, String fieldConfigType, String fieldJson) {
         if (StringUtils.isNotBlank(fieldConfigType)) {
-            TaskRefSkuConfigEntity existEntity = getByTaskId(taskId, productId);
+            TaskRefSkuConfigEntity existEntity = getByTaskId(taskId);
             TaskRefSkuConfigEntity addEntity = new TaskRefSkuConfigEntity();
             if (existEntity != null) {
                 addEntity.setId(existEntity.getId());
@@ -135,6 +133,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
     public TaskRefSkuConfigEntity getByTaskId(String taskId) {
         LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskRefSkuConfigEntity::getTaskId, taskId);
+        queryWrapper.orderByDesc(TaskRefSkuConfigEntity::getCreateTime);
         queryWrapper.last("LIMIT 1");
         return getOne(queryWrapper);
     }

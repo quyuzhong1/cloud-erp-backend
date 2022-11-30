@@ -40,8 +40,7 @@ public class ProjectTaskController extends BaseController {
     @Autowired
     private ProductInfoService productInfoService;
 
-    @Autowired
-    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
 
     /**
      * 项目任务-分页列表
