@@ -132,4 +132,14 @@ public class TemplateTaskDTO implements Serializable {
          * 设置里程碑(0否，1是)
          */
         private Integer isMilepost;
+
+        /**
+         * 字段配置类型
+         */
+        private String fieldConfigType="";
+
+        /**
+         * 勾选字段后的json 字段
+         */
+        private String fieldJson="";
 }

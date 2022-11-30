@@ -27,4 +27,8 @@ public interface TemplateTaskRefSkuConfigService  extends IService<TemplateTaskR
     void saveTemplateTaskRefSkuConfig(String templateId, String productId);
 
     void copyTemplateTaskSkuConfig(String flagId, String productId, List<CopySourceDTO> taskSourceList);
+
+    void addTemplateTaskRefSkuConfig(String taskId,String templateId, String fieldConfigType, String fieldJson);
+
+    TemplateTaskRefSkuConfigEntity getByTaskId(String id);
 }

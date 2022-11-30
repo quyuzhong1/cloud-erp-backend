@@ -9,6 +9,7 @@ import com.erp.server.plm.mapper.TemplateTaskRefSkuConfigMapper;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 import com.erp.server.plm.service.TemplateTaskRefSkuConfigService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +85,49 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
             taskRefSkuConfigService.saveBatch(copyList);
         }
 
+    }
+
+
+    /**
+     * @param taskId          任务id
+     * @param templateId      模板id
+     * @param fieldConfigType 属性
+     * @param fieldJson
+     * @return void
+     * @author yl
+     * @date 2022-11-30 10:34
+     */
+    @Override
+    public void addTemplateTaskRefSkuConfig(String taskId, String templateId, String fieldConfigType, String fieldJson) {
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            TemplateTaskRefSkuConfigEntity existEntity = getByTaskId(taskId);
+            TemplateTaskRefSkuConfigEntity addEntity = new TemplateTaskRefSkuConfigEntity();
+            if (existEntity != null) {
+                addEntity.setId(existEntity.getId());
+            }
+            addEntity.setFieldJson(fieldJson);
+            addEntity.setTaskId(taskId);
+            addEntity.setTemplateId(templateId);
+            addEntity.setFieldConfigType(fieldConfigType);
+            this.saveOrUpdate(addEntity);
+        }
+
+    }
+
+    /**
+     * 根据任务id 获取到对应的关系
+     *
+     * @param taskId
+     * @return com.erp.model.plm.entity.TemplateTaskRefSkuConfigEntity
+     * @author yl
+     * @date 2022-11-30 10:35
+     */
+    @Override
+    public TemplateTaskRefSkuConfigEntity getByTaskId(String taskId) {
+        LambdaQueryWrapper<TemplateTaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateTaskRefSkuConfigEntity::getTaskId, taskId);
+        queryWrapper.last("LIMIT 1");
+        return getOne(queryWrapper);
 
     }
 

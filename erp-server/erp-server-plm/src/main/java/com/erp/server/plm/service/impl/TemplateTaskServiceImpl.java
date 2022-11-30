@@ -63,7 +63,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private BusinessProcessService businessProcessService;
 
-
+    @Autowired
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
 
 
     /**
@@ -90,7 +91,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             this.saveBatch(saveList);
         }
     }
-
 
 
     /**
@@ -219,6 +219,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
         }
         resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
+        TemplateTaskRefSkuConfigEntity  skuConfigEntity=templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
+        if (skuConfigEntity != null) {
+            resultDTO.setFieldJson(skuConfigEntity.getFieldJson());
+            resultDTO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
+        }
+
         return resultDTO;
     }
 
@@ -280,7 +286,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         Boolean flag = taskService.saveBatch(copyList);
         if (flag) {
             //发送新建任务通知
-            noticeMessageService.newTaskNotice(loginUser.getUserName(),copyList, productId);
+            noticeMessageService.newTaskNotice(loginUser.getUserName(), copyList, productId);
         }
         return sourceList;
 
@@ -344,6 +350,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //保存交付文档
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
+
+        //保存模板配置信息
+        templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(),dto.getTemplateId(),dto.getFieldConfigType(), dto.getFieldJson());
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;

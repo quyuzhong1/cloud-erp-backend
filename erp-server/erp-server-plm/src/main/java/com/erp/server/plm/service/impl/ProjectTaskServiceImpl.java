@@ -619,10 +619,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
+        /**
+         *  如果是立项阶段  如果是一般任务就变成待开始
+         */
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
             if (IsConstant.NO.equals(dto.getType())) {
                 taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
+            }
+            if(IsConstant.YES.equals(dto.getType())){
+
             }
 
         }
