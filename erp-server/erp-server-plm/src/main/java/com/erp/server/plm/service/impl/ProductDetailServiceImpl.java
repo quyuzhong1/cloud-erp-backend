@@ -701,7 +701,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
             //初始状态为待审核
-            Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
+            Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
             BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
             if (!Objects.isNull(processEntity)) {
                 StartProcessDTO startProcess = new StartProcessDTO();
@@ -710,15 +710,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
                 startProcess.setUserId(loginUser.getUid());
                 //审核人1
-                List<String> firstApproveIds = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
+                List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
                 //审核人2
-                List<String> secondApproveIds = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
+                List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
                 //审核人3
-                List<String> thirdApproveIds = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
+                List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
                 Map<String, Object> parameterMap = new HashMap<>();
-                parameterMap.put("firstApproveIds",firstApproveIds);
-                parameterMap.put("secondApproveIds",secondApproveIds);
-                parameterMap.put("thirdApproveIds",thirdApproveIds);
+                parameterMap.put("firstApproveIdList",firstApproveIdList);
+                parameterMap.put("secondApproveIdList",secondApproveIdList);
+                parameterMap.put("thirdApproveIdList",thirdApproveIdList);
                 startProcess.setParameterMap(parameterMap);
                 //启动流程
                 ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
@@ -1158,14 +1158,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         //查询审核任务下所有待办
+        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         List<TaskShowDTO> taskShowList = workflowFeign.queryMyToDoByTaskId(taskShowDTO.getTaskId());
         if (CollectionUtils.isEmpty(taskShowList)) {
-            throw new ServiceException(ApiError.Default);
-        }
-        long count = taskShowList.stream().filter(obj -> !obj.getAssignee().equals(userId)).count();
-        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        if (count > 0) {
             code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+        } else {
+            long count = taskShowList.stream().filter(obj -> !obj.getAssignee().equals(userId)).count();
+            if (count > 0) {
+                code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+            }
         }
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);

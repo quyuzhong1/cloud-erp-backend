@@ -54,6 +54,8 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     public List<TaskShowDTO> queryMyToDo(String userId) {
         List<TaskShowDTO> resultList = new ArrayList<>();
         if (StringUtils.isNotBlank(userId)) {
+            List<Task> list = taskService.createTaskQuery().taskNameLike("第一审核人").list();
+            List<Task> lists = taskService.createTaskQuery().list();
             List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
             for (Task task : tasks) {
                 TaskShowDTO vo = new TaskShowDTO();
