@@ -16,7 +16,7 @@
             AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
-            AND charge_id =#{userId}
+            AND  strpos (charge_id,#{userId})>0
         </if>
         <if test="statusList !=null and statusList.size>0">
             AND status IN
