@@ -180,4 +180,12 @@ public class TaskPagingShowDTO implements Serializable {
     private List<String> preTaskNameList;
 
 
+    /**
+     * 能否编辑任务
+     */
+    private  Boolean ifEditTask;
+
+
+
+
 }

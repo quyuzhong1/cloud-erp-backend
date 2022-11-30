@@ -174,4 +174,11 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("is_milepost")
     private Integer isMilepost;
 
+    /**
+     * 否有对sku 进行变更 默认没有 0 没有 1  有
+     */
+    @TableField("is_sku_change")
+    private Integer isSkuChange;
+
+
 }

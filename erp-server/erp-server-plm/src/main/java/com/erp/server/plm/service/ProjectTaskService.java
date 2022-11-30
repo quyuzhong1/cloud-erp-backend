@@ -131,4 +131,14 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
      */
     List<TaskGroupResultDTO> groupMyCreateConditionList(TaskGroupParamDTO dto);
+
+    
+    /**
+     * 交付文档 填写 是否更改了sku
+     * @author yl
+     * @date 2022-11-30 12:31
+     * @param dto
+     * @return void
+     */
+    void skuChangeResult(StateDTO dto);
 }

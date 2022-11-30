@@ -31,6 +31,7 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -517,7 +518,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-
+                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                item.setIfEditTask(ifEditTask);
                 List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
                 item.setOperateList(operateList);
                 ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);
@@ -619,19 +621,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (phaseEntity != null) {
             phaseName = phaseEntity.getName();
         }
-        /**
-         *  如果是立项阶段  如果是一般任务就变成待开始
-         */
-        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
-            taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
-            if (IsConstant.NO.equals(dto.getType())) {
-                taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
-            }
-            if(IsConstant.YES.equals(dto.getType())){
 
-            }
-
-        }
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
         //自定义审核人
@@ -640,6 +630,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
         }
+        /**
+         *  如果是立项阶段
+         *  自动完成一步
+         */
+        Boolean isProjectApprovalPhase = false;
+        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
+            isProjectApprovalPhase = true;
+            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
+        }
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //是否是一般任务 true 是
+        Boolean isGeneralTask = generalTask.equals(dto.getType());
         taskEntity.setChargeId(String.join(",", chargeId));
         taskEntity.setChargeName(chargeNames);
         taskEntity.setPhaseName(phaseName);
@@ -661,9 +664,85 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<ProjectTaskEntity> taskList = new ArrayList<>();
             taskList.add(taskEntity);
             noticeMessageService.newTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+
+            //如果是立项阶段
+            if (isProjectApprovalPhase) {
+
+                Integer afterState = TaskStateEnum.NOT_START.getCode();
+                //如果不是是一般任务
+                if (!isGeneralTask) {
+                    afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+                }
+                //保存任务记录
+                taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
+                //发布任务通知
+                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+
+            }
+
         }
 
         return flag;
+    }
+
+
+    /**
+     * 立项阶段任务 自动操作一步
+     * taskType 任务属性 是一般任务 还是评审任务
+     *
+     * @param
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     * @author yl
+     * @date 2022-11-30 10:56
+     */
+    public ProjectTaskEntity automationTask(ProjectTaskEntity taskEntity, Integer taskType, List<String> chargeIdList, String userId) {
+        //审核任务
+        Integer reviewTask = TaskTypeEnum.REVIEW_TASK.getCode();
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+
+        taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        //如果是一般任务就变成待开始
+        if (generalTask.equals(taskType)) {
+            taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
+        }
+        //如果是审核任务就变成开启流程并变成待审核
+        if (reviewTask.equals(taskType)) {
+            String businessKey = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
+            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
+            if (processEntity != null) {
+                //评审任务 由任务负责人审核
+                if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                    Date nowDate = new Date();
+                    //待审核
+                    Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
+                    StartProcessDTO startProcess = new StartProcessDTO();
+                    startProcess.setBusinessKey(processEntity.getBusinessKey());
+                    startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                    startProcess.setUserId(userId);
+                    Map<String, Object> parameterMap = new HashMap<>();
+                    String params = processEntity.getParam();
+                    if (StringUtils.isNotBlank(params)) {
+                        String[] paramList = params.split(",");
+                        if (paramList.length == 1) {
+                            parameterMap.put(paramList[0], chargeIdList);
+                        }
+                    }
+                    startProcess.setParameterMap(parameterMap);
+                    //启动一个流程
+                    ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
+                    //这个是流程Id
+                    String processId = process.getProcessId();
+                    //流程id 不为空 表示成功
+                    if (StringUtils.isNotBlank(processId)) {
+                        taskEntity.setProcessId(processId);
+                        taskEntity.setRealityStartTime(nowDate);
+                        taskEntity.setStatus(waitConfirmCode);
+                    }
+                }
+            }
+        }
+        return taskEntity;
     }
 
 
@@ -1422,6 +1501,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     }
 
+    /**
+     * 保存或者修改sku 是否有被修改
+     * 在完成任务的时候用到
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2022-11-30 14:01
+     */
+    @Override
+    public void skuChangeResult(StateDTO dto) {
+        ProjectTaskEntity taskEntity = this.getById(dto.getId());
+        if (taskEntity != null) {
+            taskEntity.setIsSkuChange(dto.getState());
+            this.updateById(taskEntity);
+        }
+    }
+
     @Override
     public PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         LoginUser loginUser = commonService.getUserInfo();
@@ -1525,6 +1622,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
                 item.setPreTaskNameList(preTaskNameList);
                 item.setFinishPreTaskCount(finishPreTaskCount);
+
+                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                item.setIfEditTask(ifEditTask);
                 //获取任务操作项
                 List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
                 item.setOperateList(operateList);
@@ -1659,6 +1759,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (product != null) {
                     item.setProductName(product.getName());
                 }
+                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                item.setIfEditTask(ifEditTask);
 
             }
         }
@@ -1785,7 +1887,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (product != null) {
                     item.setProductName(product.getName());
                 }
-
+                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                item.setIfEditTask(ifEditTask);
             }
         }
 
@@ -1855,13 +1958,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Map<String, Object> editTaskMap = new HashMap<>();
         editTaskMap.put("name", "编辑任务");
         editTaskMap.put("flag", "editTask");
-        if (finishCode.equals(taskState)) {
-            editTaskMap.put("isShow", false);
-        } else {
-            editTaskMap.put("isShow", true);
-        }
-
-
+        Boolean ifEditTask = getIfEditTask(taskEntity.getType(),taskEntity.getStatus());
+        editTaskMap.put("isShow", ifEditTask);
         //创建子任务
         Map<String, Object> createChildTaskMap = new HashMap<>();
         createChildTaskMap.put("name", "创建子任务");
@@ -1932,6 +2030,42 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         return resultList;
+    }
+
+    /**
+     * 待发布，未开始，待审核，已取消可编辑
+     * 一般任务 待审核也不能编辑
+     * 获取能否编辑任务
+     *
+     * @param taskType
+     * @param taskState
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-11-30 14:58
+     */
+    public Boolean getIfEditTask(Integer taskType, Integer taskState) {
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //是否是一般任务 true 就是
+        Boolean generalTaskFlag = generalTask.equals(taskType);
+        //待发布
+        Integer releasedState = TaskStateEnum.TO_BE_RELEASED.getCode();
+        //未开始
+        Integer notStartState = TaskStateEnum.NOT_START.getCode();
+        //已取消
+        Integer closeState = TaskStateEnum.CLOSE.getCode();
+
+        //待审核
+        Integer waitConfirmState = TaskStateEnum.WAIT_CONFIRM.getCode();
+
+        List<Integer> stateList = new ArrayList<>(5);
+        stateList.add(releasedState);
+        stateList.add(notStartState);
+        stateList.add(closeState);
+        if (!generalTaskFlag) {
+            stateList.add(waitConfirmState);
+        }
+
+        return stateList.contains(taskState);
     }
 
     /**
@@ -2466,9 +2600,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         this.checkSonTaskFinish(allTaskIds, dto.getProductId());
         //检查文档是否有上传
         finishService.checkTaskDocsUpload(allTaskIds);
+        //检查sku 信息是否更改过
+        List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(allTaskIds);
+        //这个是有配置表单的任务id
+        List<String> configTaskIds = refSkuConfigList.stream().filter(r -> StringUtils.isNotBlank(r.getFieldConfigType())).map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+        Integer noSkuChange = IsConstant.NO;
+        //这个是没有改变sku 的任务id 集合
+        List<String> noSkuChangeTaskIds = list.stream().filter(l -> l.getIsSkuChange().equals(noSkuChange)).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        //如果 包含没有改变的sku  就要提醒
+        if (configTaskIds.containsAll(noSkuChangeTaskIds)) {
+            throw new ServiceException(ApiError.ERROR_95077);
+        }
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
-
         //是否确认完成
         Boolean isConfirmFinish = dto.getIsConfirmFinish();
         //当不是的时候
@@ -3196,7 +3340,5 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
         return dateDTO;
     }
-
-    ;
 
 }

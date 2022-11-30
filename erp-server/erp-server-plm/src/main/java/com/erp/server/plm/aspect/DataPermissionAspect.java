@@ -167,11 +167,11 @@ public class DataPermissionAspect {
                 if (tableFieldSize == 1) {
                     sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE ANY (ARRAY" + list + " )");
                 } else {
-                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE ANY (ARRAY" + list + " )");
+                    sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE ANY (ARRAY" + list + " )");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE ANY (ARRAY" + list + " ))");
+                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE ANY (ARRAY" + list + " )))");
                         }
                     }
                 }
@@ -181,11 +181,11 @@ public class DataPermissionAspect {
                 if (tableFieldSize == 1) {
                     sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
                 }else{
-                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                    sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' )");
+                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' ))");
                         }
                     }
                 }
@@ -195,11 +195,11 @@ public class DataPermissionAspect {
             if (tableFieldSize == 1) {
                 sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
             } else {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
                 if (tableFieldSize > 1) {
                     sqlString.append(" OR ");
                     for (int i = 1; i < tableFieldSize; i++) {
-                        sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' )");
+                        sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' ))");
                     }
                 }
             }

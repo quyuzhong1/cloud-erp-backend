@@ -83,4 +83,29 @@ public class TaskOperatorRecordServiceImpl extends ServiceImpl<TaskOperatorRecor
             this.saveBatch(saveList);
         }
     }
+
+
+    /**
+     * 保存任务操作记录
+     *
+     * @param taskId
+     * @param beforeState
+     * @param afterState
+     * @param uid
+     * @param userName
+     * @return void
+     * @author yl
+     * @date 2022-11-30 14:43
+     */
+    @Override
+    public void addTaskOperator(String taskId, Integer beforeState, Integer afterState, String uid, String userName) {
+        //保存操作记录
+        TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+        recordEntity.setTaskId(taskId);
+        recordEntity.setBeforeState(beforeState);
+        recordEntity.setAfterState(afterState);
+        recordEntity.setOperatorId(uid);
+        recordEntity.setOperatorName(userName);
+        this.save(recordEntity);
+    }
 }
