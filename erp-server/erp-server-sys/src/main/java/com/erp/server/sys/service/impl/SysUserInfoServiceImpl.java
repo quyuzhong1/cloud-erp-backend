@@ -30,9 +30,7 @@ import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.SysRoleUserEntity;
-import com.erp.model.sys.entity.SysUserInfoEntity;
-import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
@@ -79,7 +77,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private MailService mailService;
 
     @Resource
-    private SysDepartmentService sysDepartmentService;
+    private SysMenuService sysMenuService;
+
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
@@ -518,7 +517,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public void sedEmail(EmailVerifyCodeDTO dto) {
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
-        if(!result){
+        if (!result) {
             throw new ServiceException(ApiError.ERROR_1014);
         }
         boolean flag = ValidatorUtil.isEmail(email);
@@ -685,6 +684,23 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @date 2022-10-15 11:22
      */
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
+
+//        //获取用户角色id
+//        List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(userId);
+//        //这个是查询角色与对应菜单的关系
+//        List<SysRoleMenuEntity> roleRefMenuList = sysRoleMenuService.getMenuRefRoleByRoleIds(roleIdList);
+//        //菜单id集合
+//        List<String> menuIdList = roleRefMenuList.stream().map(SysRoleMenuEntity::getMenuId).distinct().collect(Collectors.toList());
+//
+//        List<SysMenuEntity> menuList = sysMenuService.listByIds(menuIdList);
+//        List<UserRequestPermissionsDTO> resultList = new ArrayList<>(menuList.size());
+//        for (SysMenuEntity menu : menuList) {
+//            UserRequestPermissionsDTO result = new UserRequestPermissionsDTO();
+//            result.setPermissionsCode(menu.getMenuCode());
+//            Integer dataScope = roleRefMenuList.stream().filter(r -> r.getMenuId().equals(menu.getMenuId())).map(SysRoleMenuEntity::getDataScope).max(Integer::compareTo).get();
+//            result.setDataScope(dataScope);
+//            resultList.add(result);
+//        }
         return baseMapper.getRequestPermissionsList(userId);
     }
 
