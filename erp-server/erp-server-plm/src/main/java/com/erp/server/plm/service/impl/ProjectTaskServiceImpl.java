@@ -518,7 +518,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setTotalDocsCount(totalDocsCount);
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
-                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                Boolean ifEditTask = getIfEditTask(item.getType(), item.getStatus());
                 item.setIfEditTask(ifEditTask);
                 List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
                 item.setOperateList(operateList);
@@ -1623,7 +1623,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setPreTaskNameList(preTaskNameList);
                 item.setFinishPreTaskCount(finishPreTaskCount);
 
-                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                Boolean ifEditTask = getIfEditTask(item.getType(), item.getStatus());
                 item.setIfEditTask(ifEditTask);
                 //获取任务操作项
                 List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
@@ -1759,7 +1759,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (product != null) {
                     item.setProductName(product.getName());
                 }
-                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                Boolean ifEditTask = getIfEditTask(item.getType(), item.getStatus());
                 item.setIfEditTask(ifEditTask);
 
             }
@@ -1887,7 +1887,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (product != null) {
                     item.setProductName(product.getName());
                 }
-                Boolean ifEditTask = getIfEditTask(item.getType(),item.getStatus());
+                Boolean ifEditTask = getIfEditTask(item.getType(), item.getStatus());
                 item.setIfEditTask(ifEditTask);
             }
         }
@@ -1951,14 +1951,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer taskState = taskEntity.getStatus();
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
-        Integer approvalIngPassCode = TaskStateEnum.APPROVAL_ING.getCode();
 
         List<String> taskIds = Arrays.asList(taskId);
         //编辑任务
         Map<String, Object> editTaskMap = new HashMap<>();
         editTaskMap.put("name", "编辑任务");
         editTaskMap.put("flag", "editTask");
-        Boolean ifEditTask = getIfEditTask(taskEntity.getType(),taskEntity.getStatus());
+        Boolean ifEditTask = getIfEditTask(taskEntity.getType(), taskEntity.getStatus());
         editTaskMap.put("isShow", ifEditTask);
         //创建子任务
         Map<String, Object> createChildTaskMap = new HashMap<>();
@@ -1975,7 +1974,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          * 2 评审任务
          */
         resultList.add(editTaskMap);
-        Boolean uploadFlag = false;
         Map<String, Object> uploadMap = new HashMap<>();
         uploadMap.put("name", "上传交付物");
         uploadMap.put("flag", "uploadFile");
@@ -1984,16 +1982,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(taskDocsCounts)) {
             totalCount = taskDocsCounts.get(0).getCount();
         }
+
+        Boolean uploadFlag = getIfUpload(taskEntity.getType(), taskState);
         //表示有交付物 有交付物[文档+信息填写]时，显示上传文档
-        if (totalCount > 0 || (skuConfigEntity != null && StringUtils.isNotBlank(skuConfigEntity.getFieldConfigType())) || taskRefSkuFlag) {
-            uploadFlag = true;
-        }
-        //有交付且上传完成后，任务状态审核中，审核通过，已完成后不可点击【上传文档】
-        if (finishCode.equals(taskState) || approvalIngPassCode.equals(taskState)) {
+        if (totalCount == 0 && Objects.isNull(skuConfigEntity) && !taskRefSkuFlag) {
             uploadFlag = false;
         }
-
-
         uploadMap.put("isShow", uploadFlag);
         resultList.add(uploadMap);
 
@@ -2030,6 +2024,37 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         return resultList;
+    }
+
+
+    /**
+     * 获取是否可以显示上传交付物
+     *
+     * @param taskState
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-11-30 15:52
+     */
+    public Boolean getIfUpload(Integer taskType, Integer taskState) {
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //是否是一般任务 true 就是
+        Boolean generalTaskFlag = generalTask.equals(taskType);
+        List<Integer> stateList = new ArrayList<>();
+        //待发布
+        Integer releasedState = TaskStateEnum.TO_BE_RELEASED.getCode();
+        //未开始
+        Integer notStartState = TaskStateEnum.NOT_START.getCode();
+        //已取消
+        Integer closeState = TaskStateEnum.CLOSE.getCode();
+        //待审核
+        Integer waitConfirmState = TaskStateEnum.WAIT_CONFIRM.getCode();
+        stateList.add(releasedState);
+        stateList.add(notStartState);
+        stateList.add(closeState);
+        if (!generalTaskFlag) {
+            stateList.add(waitConfirmState);
+        }
+        return stateList.contains(taskState);
     }
 
     /**
