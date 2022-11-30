@@ -2,7 +2,9 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
 
@@ -19,5 +21,7 @@ public class BatchTaskPhaseDTO {
     @NotBlank(message = "产品id不能为空")
     private String productId;
 
+
+    @Valid
     List<TaskPhaseDTO> taskPhases;
 }

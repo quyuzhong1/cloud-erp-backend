@@ -2007,14 +2007,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //变更文档
         //只有任务完成了或者审核不通过才能变更流程
-        Boolean changeDocsShow = true;
-        if (!finishCode.equals(taskState)
-                && !approvalNoPassCode.equals(taskState)) {
-            changeDocsShow = false;
-        }
-        String processId = taskEntity.getProcessId();
-        if (StringUtils.isBlank(processId)) {
-            changeDocsShow = false;
+        Boolean changeDocsShow = false;
+        if (finishCode.equals(taskState)
+                || approvalNoPassCode.equals(taskState)) {
+            changeDocsShow = true;
         }
         Map<String, Object> changeDocsMap = new HashMap<>();
         changeDocsMap.put("name", "变更交付物");
