@@ -400,14 +400,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         //配置表单属性
         String fieldJson = dto.getFieldJson();
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //如果配置表单 一般任务 一定要走流程
         if (StringUtils.isNotBlank(fieldJson)) {
             Integer type = dto.getType();
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                String businessProcessId = dto.getBusinessProcessId();
-                if (StringUtils.isBlank(businessProcessId)) {
+                if (CollectionUtils.isEmpty(approvalUserIds)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
@@ -424,8 +425,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
-        //自定义审核人
-        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));

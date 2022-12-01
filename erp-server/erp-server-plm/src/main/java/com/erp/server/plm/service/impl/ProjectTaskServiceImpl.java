@@ -640,20 +640,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         productInfoService.checkProduct(dto.getProductId());
         //配置表单属性
         String fieldJson = dto.getFieldJson();
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //如果配置表单 一般任务 一定要走流程
         if (StringUtils.isNotBlank(fieldJson)) {
             Integer type = dto.getType();
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                String businessProcessId = dto.getBusinessProcessId();
-                if (StringUtils.isBlank(businessProcessId)) {
+                if (CollectionUtils.isEmpty(approvalUserIds)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-
         }
-
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -665,8 +664,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
-        //自定义审核人
-        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
@@ -2676,7 +2674,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
         //是否确认完成
-        Boolean isConfirmFinish = dto.getIsConfirmFinish();
+        Boolean isConfirmFinish = dto.getIsConfirmFinish()==null?false:dto.getIsConfirmFinish();
         //当不是的时候
         if (!isConfirmFinish) {
             //查询是否有未完成的sku

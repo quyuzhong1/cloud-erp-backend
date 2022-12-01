@@ -70,6 +70,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
+
+        //自定义审核人
+        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //配置表单属性
         String fieldJson = dto.getFieldJson();
         //如果配置表单 一般任务 一定要走流程
@@ -78,16 +81,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                String businessProcessId = dto.getBusinessProcessId();
-                if (StringUtils.isBlank(businessProcessId)) {
+                if (CollectionUtils.isEmpty(approvalUserIds)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
         }
 
 
-        //自定义审核人
-        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));
