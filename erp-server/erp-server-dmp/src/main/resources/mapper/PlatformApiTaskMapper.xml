@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.task.mapper.PlatformApiTaskMapper">
+
+    <sql id="Base_Column_List">
+        id,platform_id,api_id,
+        api_code,api_name,interval_time,
+        last_time,next_time,state,
+        create_time
+    </sql>
+
+    <select id="selectApiTask" resultType="com.erp.server.dmp.entity.dto.JobTaskDTO">
+        SELECT
+        pat.id,
+        pat.platform_id,
+        pat.api_id,
+        pat.interval_time,
+        pat.last_time,
+        pat.next_time,
+        pat.state,
+        pat.create_time,
+        pa.api_code,
+        pa.api_name,
+        p.task_name
+        FROM platform_api_task pat
+        INNER JOIN platform_api pa ON pat.api_id = pa.id
+        INNER JOIN platform p ON pa.platform_id = p.id
+        WHERE
+        <![CDATA[  pat.next_time < #{localTime}]]>
+        AND state=1
+        limit #{pageSize} offset #{pageNumber}
+    </select>
+
+    <insert id="batchInsert" parameterType="com.erp.server.dmp.entity.dmp.PlatformApiTaskEntity">
+        insert into platform_api_task
+        (platform_id, api_id, api_code, api_name, interval_time,
+        last_time, next_time, state, create_time)
+        values
+        <foreach collection="taskEntityList" item="task" separator=",">
+            (#{task.platformId}, #{task.apiId}, #{task.apiCode}, #{task.apiName}, #{task.intervalTime},
+            #{task.lastTime}, #{task.nextTime}, #{task.state}, #{task.createTime})
+        </foreach>
+    </insert>
+
+    <update id="updateTaskTypeState">
+        UPDATE platform_api_task SET state = 2 WHERE id IN
+        <foreach item="task" collection="jobTaskDTOList" separator="," open="(" close=")" index="">
+            #{task.id}
+        </foreach>
+    </update>
+</mapper>

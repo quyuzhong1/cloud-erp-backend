@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.pull.mapper.DmpSkuInfoMapper">
+
+    <sql id="Base_Column_List">
+        id,sku_no,name_cn,
+        name_en,default_cost,status,
+        sku_create_time,sku_update_time,brand_name,
+        parent_category_name,category_name,sale_price,
+        declare_price,developer_id,developer_name
+    </sql>
+</mapper>

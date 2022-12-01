@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.pull.mapper.DmpReturnOrderInfoMapper">
+
+    <sql id="Base_Column_List">
+        id,platform_order_id,shop_no,
+        shop_name,paid_time,express_time,
+        status,sales_record_number,order_fee,
+        order_weight,platform_name,country_name_en,
+        country_name_cn,buyer_user_id,buyer_name,
+        employee_id,employee_name,remark,
+        return_create_time,refund_ime,currency_code,
+        currency_rate
+    </sql>
+</mapper>

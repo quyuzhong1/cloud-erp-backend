@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.task.mapper.PlatformApiMapper">
+
+    <sql id="Base_Column_List">
+        id,platform_id,
+        api_code,api_name,is_finished_task
+    </sql>
+
+    <!-- 查出没有生成任务的接口-->
+    <select id="selectPlatformApiNoTask" resultType="com.erp.server.dmp.entity.dmp.PlatformApiEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM platform_api WHERE is_finished_task = 0
+    </select>
+
+    <update id="updatePlatformApiState">
+        UPDATE platform_api SET is_finished_task = 1 WHERE id IN
+        <foreach item="task" collection="taskEntityList" separator="," open="(" close=")" index="">
+            #{task.apiId}
+        </foreach>
+    </update>
+</mapper>
