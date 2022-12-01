@@ -1251,6 +1251,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //重新启动流程
         this.productDetailStartProcess(entity);
+        //反审核后更新是否申请变更
+        entity.setIsChange(IsConstant.NO);
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }

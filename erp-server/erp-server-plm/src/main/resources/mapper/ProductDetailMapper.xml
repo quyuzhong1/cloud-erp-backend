@@ -46,6 +46,7 @@
         pi.pirate_risk,
         pc.retail_price,
         pd.product_state,
+        pd.status,
         pd.create_user_id,
         pd.create_time,
         pi.spec_type
@@ -60,6 +61,14 @@
 
         <if test="params.productId != '' and params.productId != null">
             AND pd.product_id = #{params.productId}
+        </if>
+
+        <if test="params.status != '' and params.status != null">
+            AND pd.status = #{params.status}
+        </if>
+
+        <if test="params.isChange != '' and params.isChange != null">
+            AND pd.is_change = #{params.isChange}
         </if>
 
         <if test="params.stateList.size() > 0 and params.stateList != null">
