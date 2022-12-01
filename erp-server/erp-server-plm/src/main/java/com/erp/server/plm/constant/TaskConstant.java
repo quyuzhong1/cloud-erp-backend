@@ -1,5 +1,6 @@
 package com.erp.server.plm.constant;
 
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.apache.poi.ss.formula.functions.T;
 
 /**
@@ -28,6 +29,14 @@ public interface TaskConstant {
 
     //我创建的
     String MY_CREATE = "myCreate";
+
+
+    //生成sku
+    String CREATE_SKU = "createSku";
+
+    //填写sku
+    String FILL_PRODUCT_INFO = "fillProductInfo";
+
 
     //所有任务
     String ALL = "all";

@@ -640,20 +640,33 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         productInfoService.checkProduct(dto.getProductId());
         //配置表单属性
-        String fieldJson = dto.getFieldJson();
+        String fieldConfigType = dto.getFieldConfigType();
+        List<String> refSkuIdList = dto.getRefSkuIdList();
+        //生成sku
+        String createSku = TaskConstant.CREATE_SKU;
+        //填写sku
+        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
+        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
+        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType));
+
+        //第二种 sku 没有  并且 表单属性不为空 且为生成
+        Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && createSku.equals(fieldConfigType));
+
+
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
-        //如果配置表单 一般任务 一定要走流程
-        if (StringUtils.isNotBlank(fieldJson)) {
-            Integer type = dto.getType();
-            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-            //如果是一般任务 必须要有审核流程
+        Integer type = dto.getType();
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //如果是一般任务 必须要有审核流程
+        if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalUserIds)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
         }
+
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -679,8 +692,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             isProjectApprovalPhase = true;
             taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
         }
-        //一般任务
-        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+
         //是否是一般任务 true 是
         Boolean isGeneralTask = generalTask.equals(dto.getType());
         taskEntity.setChargeId(String.join(",", chargeId));

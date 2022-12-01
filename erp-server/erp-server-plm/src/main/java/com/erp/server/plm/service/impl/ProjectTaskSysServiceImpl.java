@@ -71,14 +71,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
 
+
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //配置表单属性
-        String fieldJson = dto.getFieldJson();
+        String fieldConfigType = dto.getFieldConfigType();
         Integer type = dto.getType();
         //如果配置表单 一般任务 一定要走流程
-        if (StringUtils.isNotBlank(fieldJson)) {
-
+        if (StringUtils.isNotBlank(fieldConfigType)) {
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
