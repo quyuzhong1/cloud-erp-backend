@@ -452,6 +452,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
+            statusList.add(TaskStateEnum.PORTION_FINISH.getCode());
             pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
@@ -1129,7 +1130,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         BeanMapper.copy(dto, taskEntity);
         LoginUser loginUser = commonService.getUserInfo();
         Integer type = dto.getType();
-        Boolean isGeneral=TaskTypeEnum.GENERAL_TASK.getCode().equals(type);
+        Boolean isGeneral = TaskTypeEnum.GENERAL_TASK.getCode().equals(type);
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
         String phaseName = "";
         if (phaseEntity != null) {
@@ -1148,7 +1149,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
         }
         //当是评审任务的时候
-        if(!isGeneral){
+        if (!isGeneral) {
             taskEntity.setApprovalUserId("");
         }
         List<String> chargeId = dto.getChargeIds();
