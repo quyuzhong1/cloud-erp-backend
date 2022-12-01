@@ -2106,14 +2106,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已取消
         Integer closeState = TaskStateEnum.CLOSE.getCode();
 
-        //待审核
-        Integer waitConfirmState = TaskStateEnum.WAIT_CONFIRM.getCode();
-
         List<Integer> stateList = new ArrayList<>(5);
         stateList.add(releasedState);
         stateList.add(notStartState);
         stateList.add(closeState);
-        stateList.add(waitConfirmState);
+
         return stateList.contains(taskState);
     }
 
