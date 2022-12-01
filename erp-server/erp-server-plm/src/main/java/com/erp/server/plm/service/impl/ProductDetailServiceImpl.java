@@ -1135,6 +1135,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
+        //验证sku关联任务是否审核通过
+
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -1158,8 +1160,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         //查询审核任务下所有待办
-        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        List<TaskShowDTO> taskShowList = workflowFeign.queryMyToDoByTaskId(taskShowDTO.getTaskId());
+        Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+        /*List<TaskShowDTO> taskShowList = workflowFeign.queryMyToDoByTaskId(taskShowDTO.getTaskId());
         if (CollectionUtils.isEmpty(taskShowList)) {
             code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
         } else {
@@ -1167,7 +1169,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (count > 0) {
                 code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
             }
-        }
+        }*/
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
@@ -1230,7 +1232,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public void productDetailProcessPass(String processId) {
-
+        LoginUser loginUser = commonService.getUserInfo();
+        LambdaQueryWrapper< ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductDetailEntity::getProcessId, processId);
+        queryWrapper.last("LIMIT 1");
+        ProductDetailEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity)) {
+            entity.setStatus(ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+            entity.setUpdateUserId(loginUser.getUid());
+            entity.setUpdateUserName(loginUser.getUserName());
+            this.updateById(entity);
+        }
     }
 
 
