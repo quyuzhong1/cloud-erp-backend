@@ -234,8 +234,12 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
-        //根据产品分组
-        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = list.stream().sorted(Comparator.comparing(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)).collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval));
+        //根据产品分组,时间为空的放最后面
+        Map<String, List<ProductTaskInWarehouseTimeChildDTO>> map = new LinkedHashMap<>(list.stream()
+                .collect(Collectors.groupingBy(ProductTaskInWarehouseTimeChildDTO::getTimeInterval)));
+        List<ProductTaskInWarehouseTimeChildDTO>  strValue= map.get("");
+        map.remove("");
+        map.put("",strValue);
         int parentId = 1;
         for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
             List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();
@@ -259,10 +263,6 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
                 childrenList.add(childDto);
                 parentId ++;
             };
-            //无时间的设置在末尾
-            if (CollectionUtils.isNotEmpty(childrenList)) {
-                childrenList = childrenList.stream().sorted(Comparator.comparing(e -> e.getPlanListingTime(),Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
-            }
             resultList.add(parentDto);
             resultList.addAll(childrenList);
         }

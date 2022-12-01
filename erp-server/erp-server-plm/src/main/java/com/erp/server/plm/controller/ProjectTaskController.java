@@ -485,7 +485,7 @@ public class ProjectTaskController extends BaseController {
     @GetMapping("/getTaskStatusSelect")
     public ApiResult<List<SelectShowDTO>> getTaskStatusSelect() {
         List<SelectShowDTO> list = new ArrayList<>();
-        Arrays.stream(TaskStateEnum.values()).forEach(obj -> {
+        Arrays.stream(TaskStateEnum.values()).filter(obj ->!TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getCode())).forEach(obj -> {
             SelectShowDTO dto = new SelectShowDTO();
             dto.setValue(obj.getCode());
             dto.setLabel(obj.getName());
