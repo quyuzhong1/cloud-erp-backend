@@ -31,7 +31,6 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -2114,10 +2113,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         stateList.add(releasedState);
         stateList.add(notStartState);
         stateList.add(closeState);
-        if (!generalTaskFlag) {
-            stateList.add(waitConfirmState);
-        }
-
+        stateList.add(waitConfirmState);
         return stateList.contains(taskState);
     }
 
@@ -2789,7 +2785,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             //发送完成待审核的消息
-            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), finishSkuTaskList, dto.getProductId());
+            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), waitConfirmNoticeList, dto.getProductId());
         }
 
         return true;
