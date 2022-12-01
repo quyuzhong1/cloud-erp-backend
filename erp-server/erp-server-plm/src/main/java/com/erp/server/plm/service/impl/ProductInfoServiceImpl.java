@@ -254,7 +254,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList);
+            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList,loginUser);
             //异步发送通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
             //默认查询立项模板中的成员信息

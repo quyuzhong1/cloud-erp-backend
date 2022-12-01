@@ -134,7 +134,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Transactional
     @Override
-    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList) {
+    public List<ProjectTaskEntity> addSysTask(String productId, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser) {
         // 这是立项任务任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.APPROVAL_TASK);
         //添加前置任务
@@ -146,11 +146,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             for (ProjectTaskSysEntity item : sysTaskList) {
                 CopySourceDTO source = new CopySourceDTO();
                 ProjectTaskEntity entity = new ProjectTaskEntity();
+                Integer taskType = item.getType();
                 BeanMapper.copy(item, entity);
                 entity.setQuoteSysTaskId(item.getId());
                 entity.setProductId(productId);
+                String chargeId = item.getChargeId();
+                List chargeIdList = new ArrayList();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    chargeIdList = Arrays.asList(chargeId.split(","));
+                }
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
+                entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
+
+                //一般任务
+                Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+                //是否是一般任务 true 是
+                Boolean isGeneralTask = generalTask.equals(taskType);
+
                 String id = IdWorker.getIdStr();
                 entity.setId(id);
                 source.setNewCreateId(id);
@@ -162,7 +175,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 boolean flag = this.save(entity);
                 if (flag) {
                     addTaskList.add(entity);
+
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
+
+                    Integer afterState = TaskStateEnum.NOT_START.getCode();
+                    //如果不是是一般任务
+                    if (!isGeneralTask) {
+                        afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+                    }
+                    //保存任务记录
+                    taskOperatorRecordService.addTaskOperator(entity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
+                    //发布任务通知
+                    List<ProjectTaskEntity> taskList = new ArrayList<>(1);
+                    taskList.add(entity);
+                    noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
                 }
                 //新增产品操作日志
                 ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -667,7 +693,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
             //如果是立项阶段
             if (isProjectApprovalPhase) {
-
                 Integer afterState = TaskStateEnum.NOT_START.getCode();
                 //如果不是是一般任务
                 if (!isGeneralTask) {
@@ -677,7 +702,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
                 //发布任务通知
                 noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
-
             }
 
         }
@@ -2637,7 +2661,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是没有改变sku 的任务id 集合
         List<String> noSkuChangeTaskIds = list.stream().filter(l -> l.getIsSkuChange().equals(noSkuChange)).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         //如果 包含没有改变的sku  就要提醒
-        if (configTaskIds.containsAll(noSkuChangeTaskIds)) {
+        if (CollectionUtils.isNotEmpty(noSkuChangeTaskIds) && configTaskIds.containsAll(noSkuChangeTaskIds)) {
             throw new ServiceException(ApiError.ERROR_95077);
         }
         //一般任务code

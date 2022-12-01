@@ -16,8 +16,14 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.BusinessProcessEnum;
+import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.TemplateTaskMapper;
 import com.erp.server.plm.service.*;
@@ -66,6 +72,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
 
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     /**
      * 保存模板任务
@@ -219,7 +227,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
         }
         resultDTO.setPreTaskIdList(templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId()));
-        TemplateTaskRefSkuConfigEntity  skuConfigEntity=templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
+        TemplateTaskRefSkuConfigEntity skuConfigEntity = templateTaskRefSkuConfigService.getByTaskId(taskEntity.getId());
         if (skuConfigEntity != null) {
             resultDTO.setFieldJson(skuConfigEntity.getFieldJson());
             resultDTO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
@@ -254,6 +262,19 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 taskEntity.setProductId(productId);
                 taskEntity.setProjectId(projectId);
                 taskEntity.setId(taskId);
+                String chargeId = item.getChargeId();
+                List<String> chargeIdList = new ArrayList<>();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    chargeIdList = Arrays.asList(chargeId.split(","));
+                }
+                /**
+                 *  如果是立项阶段
+                 *  自动完成一步
+                 */
+                if (TaskConstant.APPROVAL_TASK_NAME.equals(item.getPhaseName())) {
+                    taskEntity = automationTask(taskEntity, taskEntity.getType(), chargeIdList, loginUser.getUid());
+                }
+
                 source.setNewCreateId(taskId);
                 source.setDataId(item.getId());
                 CopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getDataId()
@@ -287,9 +308,79 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (flag) {
             //发送新建任务通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), copyList, productId);
+
+            //找出立项任务 的一般任务集合
+            Integer approvalTask = TaskConstant.APPROVAL_TASK;
+            //一般任务
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            List<ProjectTaskEntity> projectApprovalTaskList = copyList.stream().filter(p -> p.getProperty().equals(approvalTask)).collect(Collectors.toList());
+            //立项任务 发送发布任务通知
+            noticeMessageService.releaseTaskNotice(loginUser.getUserName(), projectApprovalTaskList, productId);
+
         }
         return sourceList;
 
+    }
+
+    /**
+     * 立项任务 自动发布
+     *
+     * @param taskEntity
+     * @param taskType
+     * @param chargeIdList
+     * @param userId
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     * @author yl
+     * @date 2022-12-01 10:28
+     */
+    private ProjectTaskEntity automationTask(ProjectTaskEntity taskEntity, Integer taskType, List<String> chargeIdList, String userId) {
+        //审核任务
+        Integer reviewTask = TaskTypeEnum.REVIEW_TASK.getCode();
+        //一般任务
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+
+        taskEntity.setProperty(TaskConstant.APPROVAL_TASK);
+        //如果是一般任务就变成待开始
+        if (generalTask.equals(taskType)) {
+            taskEntity.setStatus(TaskStateEnum.NOT_START.getCode());
+        }
+        //如果是审核任务就变成开启流程并变成待审核
+        if (reviewTask.equals(taskType)) {
+            String businessKey = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
+            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
+            if (processEntity != null) {
+                //评审任务 由任务负责人审核
+                if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                    Date nowDate = new Date();
+                    //待审核
+                    Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
+                    StartProcessDTO startProcess = new StartProcessDTO();
+                    startProcess.setBusinessKey(processEntity.getBusinessKey());
+                    startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                    startProcess.setUserId(userId);
+                    Map<String, Object> parameterMap = new HashMap<>();
+                    String params = processEntity.getParam();
+                    if (StringUtils.isNotBlank(params)) {
+                        String[] paramList = params.split(",");
+                        if (paramList.length == 1) {
+                            parameterMap.put(paramList[0], chargeIdList);
+                        }
+                    }
+                    startProcess.setParameterMap(parameterMap);
+                    //启动一个流程
+                    ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
+                    //这个是流程Id
+                    String processId = process.getProcessId();
+                    //流程id 不为空 表示成功
+                    if (StringUtils.isNotBlank(processId)) {
+                        taskEntity.setProcessId(processId);
+                        taskEntity.setRealityStartTime(nowDate);
+                        taskEntity.setStatus(waitConfirmCode);
+                    }
+                }
+            }
+        }
+        return taskEntity;
     }
 
     @Override
@@ -352,7 +443,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templateDeliveryDocsService.saveTemplateDeliveryDocsList(entity.getId(), dto.getTemplateId(), deliveryDocsList);
 
         //保存模板配置信息
-        templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(),dto.getTemplateId(),dto.getFieldConfigType(), dto.getFieldJson());
+        templateTaskRefSkuConfigService.addTemplateTaskRefSkuConfig(entity.getId(), dto.getTemplateId(), dto.getFieldConfigType(), dto.getFieldJson());
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
