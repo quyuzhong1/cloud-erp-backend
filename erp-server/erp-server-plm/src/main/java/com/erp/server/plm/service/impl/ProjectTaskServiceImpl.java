@@ -638,6 +638,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean save(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         productInfoService.checkProduct(dto.getProductId());
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        //如果配置表单 一般任务 一定要走流程
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            Integer type = dto.getType();
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //如果是一般任务 必须要有审核流程
+            if (generalTask.equals(type)) {
+                String businessProcessId = dto.getBusinessProcessId();
+                if (StringUtils.isBlank(businessProcessId)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
+
+        }
+
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
