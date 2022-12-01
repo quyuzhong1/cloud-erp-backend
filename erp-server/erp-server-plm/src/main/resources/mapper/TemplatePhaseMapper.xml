@@ -5,4 +5,9 @@
 <mapper namespace="com.erp.server.plm.mapper.TemplatePhaseMapper">
 
 
+    <select id="getTemplatePhaseByTemplateId" resultType="com.erp.model.plm.dto.TemplatePhaseDTO">
+        SELECT ID,NAME FROM  template_phase WHERE template_id = #{templateId}
+        ORDER BY create_time ASC
+    </select>
+
 </mapper>

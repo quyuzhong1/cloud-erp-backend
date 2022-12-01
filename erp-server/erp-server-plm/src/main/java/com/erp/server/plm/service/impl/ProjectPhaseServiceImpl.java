@@ -24,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -80,6 +81,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
      * @date 2022-09-14 16:52
      */
     @Override
+    @Transactional
     public void batchSaveOrUpdate(BatchTaskPhaseDTO dto) {
         List<TaskPhaseDTO> list = dto.getTaskPhases();
         String productId = dto.getProductId();
@@ -89,6 +91,9 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             chekPhaseName(list, productId);
             List<ProjectPhaseEntity> updateList = new LinkedList<>();
             for (TaskPhaseDTO item : list) {
+                if (StringUtils.isBlank(item.getName())) {
+                    throw new ServiceException(ApiError.ERROR_95002);
+                }
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setId(item.getId());
                 entity.setName(item.getName());
@@ -200,13 +205,13 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         List<SysTaskPhaseEntity> sysPhaseNames = sysTaskPhaseService.getSysTaskPhaseNames();
 
         if (CollectionUtils.isNotEmpty(sysPhaseNames)) {
-            List<ProjectPhaseEntity>  existList=projectPhaseService.getByProductId(productId);
+            List<ProjectPhaseEntity> existList = projectPhaseService.getByProductId(productId);
             List<CopySourceDTO> sourceList = new ArrayList<>(sysPhaseNames.size());
             List<ProjectPhaseEntity> saveList = new ArrayList<>();
             for (SysTaskPhaseEntity item : sysPhaseNames) {
-                ProjectPhaseEntity exist= existList.stream().filter(e->e.getName().equals(item.getName())).findFirst().orElse(null);
+                ProjectPhaseEntity exist = existList.stream().filter(e -> e.getName().equals(item.getName())).findFirst().orElse(null);
                 CopySourceDTO source = new CopySourceDTO();
-                if(Objects.isNull(exist)){
+                if (Objects.isNull(exist)) {
                     ProjectPhaseEntity phaseEntity = new ProjectPhaseEntity();
                     phaseEntity.setName(item.getName());
                     phaseEntity.setProductId(productId);
@@ -215,7 +220,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                     phaseEntity.setId(id);
                     source.setNewCreateId(id);
                     saveList.add(phaseEntity);
-                }else{
+                } else {
                     source.setNewCreateId(exist.getId());
                 }
                 source.setDataId(item.getId());

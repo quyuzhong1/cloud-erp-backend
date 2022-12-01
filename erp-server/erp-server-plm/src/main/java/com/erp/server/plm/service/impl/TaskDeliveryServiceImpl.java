@@ -8,11 +8,15 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.CountDTO;
+import com.erp.model.plm.dto.DeliveryDocsDTO;
+import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.server.plm.constant.AdminUserConstant;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
@@ -20,7 +24,6 @@ import com.erp.server.plm.mapper.TaskDocsMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -147,36 +150,44 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         List<String> findDeliveryDocsIds = new ArrayList<>();
-        /**
-         * 根据产品id 获取当前登录人 是否是 任务负责人
-         * 如果是就要添加对应的 文档id
-         */
-        List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(params.getFlagId(), userId);
-        if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
-            findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
-        }
-        /**
-         * 查询用户是否在该角色下 在的话 就查询对应的文档id
-         */
-        List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
-        if (CollectionUtils.isNotEmpty(userRoleIds)) {
-            List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
-            if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
-                findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+
+        //如果是管理员
+        if (userId.equals(AdminUserConstant.ID)) {
+            List<String> allDeliveryDocsIdsAdmin = docsPermissionService.getAllDeliveryDocsIdsAdmin(params.getFlagId());
+            findDeliveryDocsIds.addAll(allDeliveryDocsIdsAdmin);
+        } else {
+            /**
+             * 根据产品id 获取当前登录人 是否是 任务负责人
+             * 如果是就要添加对应的 文档id
+             */
+            List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(params.getFlagId(), userId);
+            if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
+                findDeliveryDocsIds.addAll(taskChargeDeliveryDocsIds);
+            }
+            /**
+             * 查询用户是否在该角色下 在的话 就查询对应的文档id
+             */
+            List<String> userRoleIds = roleRefMemberService.getUserRole(userId, params.getFlagId());
+            if (CollectionUtils.isNotEmpty(userRoleIds)) {
+                List<String> roleDeliveryDocsIds = docsPermissionService.getDocsIdsByRoleIds(userRoleIds, params.getFlagId());
+                if (CollectionUtils.isNotEmpty(roleDeliveryDocsIds)) {
+                    findDeliveryDocsIds.addAll(roleDeliveryDocsIds);
+                }
+            }
+            /**
+             * 查询设置全部的的人可以看的
+             */
+            List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
+            if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
+                //查询是否是项目成员
+                Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
+                //如果是项目成员 可以看到所有设置全部的
+                if (ifExistProjectMember) {
+                    findDeliveryDocsIds.addAll(allDeliveryDocsIds);
+                }
             }
         }
-        /**
-         * 查询设置全部的的人可以看的
-         */
-        List<String> allDeliveryDocsIds = docsPermissionService.getAllDeliveryDocsIds(params.getFlagId());
-        if (CollectionUtils.isNotEmpty(allDeliveryDocsIds)) {
-            //查询是否是项目成员
-            Boolean ifExistProjectMember = projectMembersService.ifProjectMember(userId, params.getFlagId());
-            //如果是项目成员 可以看到所有设置全部的
-            if (ifExistProjectMember) {
-                findDeliveryDocsIds.addAll(allDeliveryDocsIds);
-            }
-        }
+
         findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());
 
         IPage pageData = new Page();
@@ -270,7 +281,17 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     @Override
     public List<DeliveryDocsDTO> getByTaskId(String taskId) {
-        return baseMapper.getByTaskId(taskId);
+        List<DeliveryDocsDTO> list = baseMapper.getByTaskId(taskId);
+        ProjectTaskEntity task = projectTaskService.getById(taskId);
+        Integer finish = TaskStateEnum.FINISH.getCode();
+        for (DeliveryDocsDTO item : list) {
+            if (task != null && finish.equals(task.getStatus())) {
+                item.setOldFileName(item.getFileName());
+                item.setOldFileUrl(item.getFileUrl());
+                item.setOldUploadType(item.getUploadType());
+            }
+        }
+        return list;
     }
 
 

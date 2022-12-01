@@ -2,10 +2,10 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -13,12 +13,10 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BusinessProcessEntity;
-import com.erp.model.plm.entity.ProjectTaskSysEntity;
-import com.erp.model.plm.entity.SysTaskPhaseEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.interceptor.PlmInterceptor;
+import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,6 +55,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private PreTaskService preTaskService;
 
+    @Autowired
+    private TaskRefSkuConfigService taskRefSkuConfigService;
+
 
     @Override
     @Transactional
@@ -70,11 +71,30 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
 
+
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        Integer type = dto.getType();
+        //如果配置表单 一般任务 一定要走流程
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //如果是一般任务 必须要有审核流程
+            if (generalTask.equals(type)) {
+                if (CollectionUtils.isEmpty(approvalUserIds)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
+        }
+        Boolean isReview=TaskTypeEnum.REVIEW_TASK.getCode().equals(type);
+
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        if(isReview){
+            entity.setApprovalUserId("");
         }
         String chargeNames = commonService.getNameByIds(chargeIds);
         entity.setChargeName(chargeNames);
@@ -100,6 +120,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
             //保存前置任务
             preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
+
+            //保存SKU配置 字段 关系表
+            taskRefSkuConfigService.addSkuField(entity.getId(),"", dto.getFieldConfigType(), dto.getFieldJson());
+
         }
         return flag;
     }
@@ -126,9 +150,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     }
 
     @Override
-    public PagingVO<SysTaskPagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<SysTaskPagingDTO> paging(PagingDTO<SysTaskPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BaseSearchDTO params = dto.getParams();
+        SysTaskPagingSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         List<SysTaskPagingDTO> list = pageData.getRecords();
         //获取所有的系统任务的 文档名
@@ -237,7 +261,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
         String approvalUserId = sysEntity.getApprovalUserId();
         List<String> approvalUserIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(approvalUserId)&&!approvalUserId.toLowerCase().equals("null")) {
+        if (StringUtils.isNotBlank(approvalUserId) && !approvalUserId.toLowerCase().equals("null")) {
             approvalUserIdList = Arrays.asList(approvalUserId.split(","));
         }
         List<UserInfoDTO> approvalUserList = new ArrayList<>();
@@ -266,6 +290,12 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<String> preTaskIdList = preTaskService.getPreTaskIdList(taskId);
         sysTaskDTO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         sysTaskDTO.setPreTaskIdList(preTaskIdList);
+        TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
+        if (refSku != null) {
+            sysTaskDTO.setFieldJson(refSku.getFieldJson());
+            sysTaskDTO.setFieldConfigType(refSku.getFieldConfigType());
+        }
+
         return sysTaskDTO;
     }
 

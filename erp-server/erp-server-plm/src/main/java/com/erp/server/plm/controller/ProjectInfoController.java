@@ -2,21 +2,20 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
-import com.erp.model.plm.dto.StartProjectDTO;
+import com.erp.model.plm.dto.*;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.erp.common.controller.BaseController;
-
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -68,7 +67,7 @@ public class ProjectInfoController extends BaseController {
      */
     @PostMapping("/paging")
     //@RequestPermissions("plm:project:paging")
-    //@DataPermission(operationType = "query", tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "p")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "pt")
     public ApiResult<PagingVO<List<ProductShowDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<List<ProductShowDTO>> pagingVO = projectInfoService.paging(dto);
         return success(pagingVO);
@@ -89,7 +88,23 @@ public class ProjectInfoController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 项目列表-项目状态下拉框
+     * @author Will
+     * @date: 2022/11/24 10:26
+     * @return ApiResult
+     */
+    @GetMapping("/getProjectStatusSelect")
+    public ApiResult<List<SelectShowDTO>> getProjectStatusSelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(ProjectStateEnum.values()).forEach(obj->{
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setValue(obj.getState());
+            dto.setLabel(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
+    }
 
 }
 

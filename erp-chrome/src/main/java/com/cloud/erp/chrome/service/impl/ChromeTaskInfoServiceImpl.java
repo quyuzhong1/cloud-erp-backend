@@ -1,9 +1,12 @@
 package com.cloud.erp.chrome.service.impl;
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.cloud.erp.chrome.constant.BusinessType;
 import com.cloud.erp.chrome.constant.ErpPlatform;
 import com.cloud.erp.chrome.constant.TaskState;
 import com.cloud.erp.chrome.dto.FindTaskDTO;
@@ -33,6 +36,68 @@ import java.util.List;
 @Service
 public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper, ScheduleTaskEntity> implements ChromeTaskInfoService {
 
+    @Override
+    public void createOrderTask(String platform) {
+        Date nextDate = queryLatestTaskDate(platform, BusinessType.ORDER);
+
+        while(nextDate.compareTo(DateUtil.yesterday())<=0){
+            //创建任务
+            saveTask(platform,BusinessType.ORDER,nextDate);
+
+            // 日期递增
+            nextDate=DateUtil.offsetDay(nextDate,1);
+        }
+
+    }
+
+    /**
+     * 查询最新任务时间, 按ID倒序
+     * @return 返回日期，如果从未生成任务，则返回当年第一天
+     */
+    private Date queryLatestTaskDate(String platform,String businessType) {
+        Date nextDate=DateUtil.beginOfYear(new Date());
+
+        LambdaQueryWrapper<ScheduleTaskEntity> queryWrapper = new LambdaQueryWrapper<ScheduleTaskEntity>();
+        queryWrapper.eq(ScheduleTaskEntity::getPlatform,platform);
+        queryWrapper.eq(ScheduleTaskEntity::getBusinessType,businessType);
+        queryWrapper.orderByDesc(ScheduleTaskEntity::getEndTime);
+        queryWrapper.last("LIMIT 1");
+        ScheduleTaskEntity result=this.getOne(queryWrapper);
+
+        if (null!=result){
+            nextDate=result.getEndTime();
+        }
+
+        return nextDate;
+    }
+
+    /**
+     * 保存调度任务
+     * @param platform  平台
+     * @param businessType  业务类型
+     * @param nextDate  日期
+     */
+    private void saveTask(String platform, String businessType, Date nextDate) {
+        try {
+            DateTime startTime=DateUtil.beginOfDay(nextDate);
+            DateTime endTime=DateUtil.offsetDay(startTime,1);
+            Date nowDate=new Date();
+
+            // 创建任务
+            ScheduleTaskEntity entity=new ScheduleTaskEntity();
+            entity.setPlatform(platform);
+            entity.setBusinessType(businessType);
+            entity.setStartTime(startTime);
+            entity.setEndTime(endTime);
+            entity.setCreateTime(nowDate);
+            entity.setUpdateTime(nowDate);
+            this.save(entity);
+        } catch (Exception e) {
+            log.error("addMaBanTask 出错了 e==",e);
+            throw new RuntimeException("创建管易云爬虫任务出错:"+ e.getMessage());
+        }
+    }
+
     /**
      * 获取任务列表
      * @param dto   查询过滤参数
@@ -48,16 +113,18 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
         }
         LambdaQueryWrapper<ScheduleTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ScheduleTaskEntity::getPlatform,dto.getPlatform());
+        queryWrapper.le(ScheduleTaskEntity::getRetryCount,10);
         queryWrapper.and(st->st
             .eq(ScheduleTaskEntity::getTaskStatus,TaskState.NOT_START)
             .or(i->i
-                .ne(ScheduleTaskEntity::getTaskStatus,TaskState.FINISH)
+                .eq(ScheduleTaskEntity::getTaskStatus,TaskState.TAKEN)
                 .lt(ScheduleTaskEntity::getUpdateTime,DateUtil.offsetMinute(new Date(),-10))
             )
         );
         queryWrapper.orderByAsc(ScheduleTaskEntity::getId);
         queryWrapper.last("LIMIT 1");
-//        System.out.println(queryWrapper.getTargetSql());
+        System.out.println(queryWrapper.getTargetSql());
+        System.out.println(queryWrapper.getSqlComment());
 
         List<ScheduleTaskEntity> taskList=baseMapper.selectList(queryWrapper);
         for(ScheduleTaskEntity task:taskList){
@@ -139,12 +206,30 @@ public class ChromeTaskInfoServiceImpl extends ServiceImpl<ChromeTaskInfoMapper,
      */
     @Override
     public void updateTaskState(Integer taskId, Integer status) {
+        this.updateTaskState(taskId,status,null);
+    }
+
+    /**
+     * 修改任务状态
+     * @author yl
+     * @date 2022-08-26 9:38
+     * @param taskId
+     * @param status
+     * @param remark 备注
+     * @return void
+     */
+    @Override
+    public void updateTaskState(Integer taskId, Integer status,String remark) {
+        ScheduleTaskEntity queryEntity=this.getById(taskId);
+        Integer retryCount=queryEntity==null?0:queryEntity.getRetryCount()+1;
+
         UpdateWrapper<ScheduleTaskEntity> updateWrapper=new UpdateWrapper<>();
         updateWrapper.lambda().eq(ScheduleTaskEntity::getId,taskId);
         updateWrapper.lambda().set(ScheduleTaskEntity::getTaskStatus, status);
         updateWrapper.lambda().set(ScheduleTaskEntity::getUpdateTime,new Date());
+        updateWrapper.lambda().set(remark!=null,ScheduleTaskEntity::getRemark,remark);
+        updateWrapper.lambda().set(status.equals(TaskState.TAKEN),ScheduleTaskEntity::getRetryCount,retryCount);
         this.update(updateWrapper);
-
     }
 
 }

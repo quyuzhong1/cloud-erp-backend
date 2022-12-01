@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -11,10 +12,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProjectInfoEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -24,12 +22,12 @@ import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,6 +103,21 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Autowired
     private TemplateDocsPermissionService templateDocsPermissionService;
 
+    @Autowired
+    @Lazy
+    private NoticeMessageService noticeMessageService;
+
+
+    @Autowired
+    private ProductDetailService productDetailService;
+
+
+    @Autowired
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+    @Autowired
+    private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
+
     /**
      * 项目概述
      *
@@ -166,14 +179,20 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-09-20 16:05
      */
     @Override
-    @Transactional
     public Boolean startProject(StartProjectDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
         //项目id
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
         if (Objects.isNull(project)) {
             throw new ServiceException(ApiError.ERROR_95026);
         }
+        //检查是否有SKU生成
+        List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95067);
+        }
+
         List<String> chargeIdList = dto.getChargeIdList();
         String chargeName = commonService.getNameByIds(chargeIdList);
         //负责人id
@@ -192,11 +211,22 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (flag) {
             String productId = project.getProductId();
             String flagId = dto.getFlagId();
+
+            //异步启动消息
+            noticeMessageService.startProjectNotice(loginUser.getUserName(), productId);
+
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
                 projectMembersService.add(productId, projectId, dto.getMembers());
                 //从复制系统项目任务
-                projectTaskService.copyTaskBySys(productId, projectId);
+                List<ProjectTaskEntity> addProjectTaskList = projectTaskService.copyTaskBySys(productId, projectId);
+                //已经添加的任务id
+                List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
+                //异步发送通知
+                noticeMessageService.newTaskNotice(loginUser.getUserName(), addProjectTaskList, productId);
             }
             //如果是 从项目复制 那么从项目表 里面复制 复制成员
             if (SourceType.PROJECT.equals(sourceType)) {
@@ -226,10 +256,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<CopySourceDTO> taskSourceList = templateTaskService.copyTemplateTask(flagId, productId, projectId, phaseSourceList);
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
+
+                //这个是复制任务与 sku 配置字段关系
+                templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
                 templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
+
+                List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                //将已保存的任务id 与sku 关联 在一起
+                projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
 
             }
 
@@ -506,11 +544,33 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     public boolean archive(String productId) {
+        LoginUser loginUser = commonService.getUserInfo();
         //检查项目完成情况
         checkProjectFinish(productId);
         //添加归档信息
         Boolean flag = archiveService.saveArchive(productId);
+        if (flag) {
+            //发送归档项目通知
+            noticeMessageService.archiveProjectNotice(loginUser.getUserName(), productId);
+        }
         return flag;
+    }
+
+
+    /**
+     * 根据产品id 获取项目信息
+     *
+     * @param productId
+     * @return com.erp.model.plm.entity.ProjectInfoEntity
+     * @author yl
+     * @date 2022-11-29 15:33
+     */
+    @Override
+    public ProjectInfoEntity getByProductId(String productId) {
+        LambdaQueryWrapper<ProjectInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectInfoEntity::getProductId, productId);
+        queryWrapper.last("LIMIT 1");
+        return getOne(queryWrapper);
     }
 
 
@@ -619,8 +679,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //已完成
         Integer finish = TaskStateEnum.FINISH.getCode();
 
-        //完成待确认
-        Integer finishWaitConfirm = TaskStateEnum.FINISH_WAIT_CONFIRM.getCode();
+
         //审核中
         Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
         //审核不通过
@@ -658,9 +717,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (finish.equals(status)) {
                 finishValue++;
             }
-            if (finishWaitConfirm.equals(status)) {
-                finishWaitConfirmValue++;
-            }
+
             if (noPass.equals(status)) {
                 approvalNoPassValue++;
             }
@@ -682,7 +739,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         notStartMap.put("name", ProductInfoStateEnum.NOT_START.getName());
         notStartMap.put("value", notStartValue);
         list.add(notStartMap);
-
 
 
         //待审核
@@ -715,7 +771,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         finishMap.put("name", ProductInfoStateEnum.FINISH.getName());
         finishMap.put("value", finishValue);
         list.add(finishMap);
-
 
 
         Map<String, Object> approvalPassMap = new HashMap<>();

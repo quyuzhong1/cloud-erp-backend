@@ -2,22 +2,24 @@ package com.erp.server.plm.controller;
 
 
 import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
-import com.erp.server.plm.service.impl.ProductInfoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +50,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/paging")
    // @RequestPermissions("plm:product:paging")
-    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:paging", tableAlias = "p")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -80,6 +82,13 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:product:saveOrUpdate")
+
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:updateOrUpdate",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
         Boolean flag = productInfoService.saveOrUpdateProduct(dto);
         return flag == true ? success() : failure();
@@ -100,7 +109,11 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/remove")
     //@RequestPermissions("plm:product:remove")
-    @DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:remove", serviceClass = ProductInfoServiceImpl.class)
+    /*@DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
+            tableField = "charge_id",
+            menuCode = "plm:product:remove",
+            serviceClass = ProductInfoService.class,
+            keyIdName = "productId")*/
     public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
         return flag == true ? success() : failure();
@@ -117,6 +130,10 @@ public class ProductInfoController extends BaseController {
      */
     @GetMapping("/info")
    // @RequestPermissions("plm:product:info")
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:info",
+            serviceClass = ProductInfoServiceImpl.class)*/
     public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productId);
         return success(info);
@@ -152,6 +169,23 @@ public class ProductInfoController extends BaseController {
         productInfoService.exportProductData(dto);
     }
 
+    /**
+     * 产品列表-立项状态下拉框
+     * @author Will
+     * @date: 2022/11/24 10:24
+     * @return ApiResult
+     */
+    @GetMapping("/getApprovalStatusSelect")
+    public ApiResult<List<SelectShowDTO>> getApprovalStatusSelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(ApprovalStatusEnum.values()).forEach(obj->{
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setValue(obj.getState());
+            dto.setLabel(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
+    }
 
 
 }

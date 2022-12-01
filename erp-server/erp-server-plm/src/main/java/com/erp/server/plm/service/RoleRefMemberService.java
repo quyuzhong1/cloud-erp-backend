@@ -14,9 +14,9 @@ public interface RoleRefMemberService extends IService<RoleRefMemberEntity> {
 
     List<RoleRefMemberDTO> getByRoleIds(List<String> roleIds);
 
-    void saveOrUpdateRef(String roleRefMemberId, String id, String roleId,String productId);
+    void saveRef(List<String>  membersTableIds, String roleId,String productId);
 
-    void checkRoleMember(String id,String roleId,String memberId);
+    void checkRoleMember(String id,String roleId,List<String> memberIds,String productId);
 
     List<RoleRefMemberEntity> getByProductId(String productId);
 

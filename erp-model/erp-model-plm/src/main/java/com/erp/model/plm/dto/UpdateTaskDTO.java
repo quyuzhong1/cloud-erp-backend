@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Classname UpdateTaskDTO
@@ -33,9 +34,9 @@ public class UpdateTaskDTO  implements Serializable {
     private String name;
 
     /**
-     *负责人id
+     *负责人id集合
      */
-    private String chargeId;
+    private List<String> chargeIdList;
 
 
     /**

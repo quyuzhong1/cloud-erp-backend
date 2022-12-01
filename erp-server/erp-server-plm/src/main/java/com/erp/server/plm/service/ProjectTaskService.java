@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -22,7 +23,7 @@ import java.util.Map;
 public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
-    void addSysTask(String id,List<TaskDocsNameEntity> taskDocsNameList);
+    List<ProjectTaskEntity> addSysTask(String id, List<TaskDocsNameEntity> taskDocsNameList, LoginUser loginUser );
 
     void removeTaskByProductId(String productId);
 
@@ -33,7 +34,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void copyTaskByProject(String saveProductId, String saveProjectId,String  flagProjectId);
 
 
-    void copyTaskBySys(String productId, String projectId);
+    List<ProjectTaskEntity> copyTaskBySys(String productId, String projectId);
 
 
     PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);
@@ -97,4 +98,48 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
 
     void checkTaskFinish(List<ProjectTaskEntity> list);
+
+    List<TaskGroupResultDTO> getGroupCondition(TaskGroupParamDTO dto);
+
+    PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    List<Map<String, Object>> operateMoreList(String taskId);
+
+    List<ProjectTaskEntity> getExpireTaskList(Date nowDay, int i);
+
+    Boolean restartTask(OperateBaseTaskDTO dto);
+
+    PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+
+    void taskFinishSku(TaskFinishSkuDTO dto);
+
+    /**
+     * 分配给我
+     * @author yl
+     * @date 2022-11-29 16:23
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
+     */
+    List<TaskGroupResultDTO> getGroupAssignToMeCondition(TaskGroupParamDTO dto);
+
+    /**
+     * 我创造的分组条件
+     * @author yl
+     * @date 2022-11-29 16:37
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.TaskGroupResultDTO>
+     */
+    List<TaskGroupResultDTO> groupMyCreateConditionList(TaskGroupParamDTO dto);
+
+    
+    /**
+     * 交付文档 填写 是否更改了sku
+     * @author yl
+     * @date 2022-11-30 12:31
+     * @param dto
+     * @return void
+     */
+    void skuChangeResult(StateDTO dto);
 }

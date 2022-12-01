@@ -3,14 +3,13 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
+import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -23,7 +22,7 @@ import java.util.Map;
 @Mapper
 public interface ProjectTaskSysMapper extends BaseMapper<ProjectTaskSysEntity> {
 
-    IPage paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage paging(Page query, @Param("params") SysTaskPagingSearchDTO params);
 
     List<SysTaskPagingDTO> getSysTaskDocsNames();
 }

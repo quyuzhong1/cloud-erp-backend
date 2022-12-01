@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,8 +10,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -23,19 +21,23 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
+import com.erp.server.plm.enums.VariantColorEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,13 +97,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private BasicDictService basicDictService;
 
+    @Resource
+    private TaskRefSkuConfigService taskRefSkuConfigService;
+
+    @Resource
+    private SysCodeService sysCodeService;
+
+    @Resource
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
 
     /**
+     * @param pagingDTO:查询参数
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      * @Description 产品信息查询列表
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param pagingDTO:查询参数
-     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
@@ -112,11 +122,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param name:产品名称
+     * @return ProductDetailShowDTO
      * @Description 条件查询产品信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
-     * @param name:产品名称
-     * @return ProductDetailShowDTO
      **/
     @Override
     public ProductDetailShowDTO getProductBy(String name, String skuNo) {
@@ -124,11 +134,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      * @Description 无规格产品信息明细
      * @Author Luo_WG
      * @Date 2022/9/22 12:19
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      **/
     @Override
     public ProductNoSpecDetailAllDTO getNoSpecDetailById(String productId) {
@@ -166,28 +176,53 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
      * @Description 多规格产品信息明细
      * @Author Luo_WG
      * @Date 2022/9/22 12:19
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>
      **/
     @Override
     public ProductManyDetailDTO getManySpecDetailById(String productId) {
+        //任务与sku 关系
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByProductId(productId);
+        //任务与配置字段 关系
+        List<TaskRefSkuConfigEntity> refSkuFiledConfigList = taskRefSkuConfigService.getDisableFieldByProductId(productId);
+
         ProductManyDetailDTO productManyDetail = new ProductManyDetailDTO();
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetailById = productDetailMapper.getManySpecDetailById(productId);
+        //基础信息 禁用字段
+        List<String> manySpecBaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
+        manySpecDetailById.setDisableFieldList(manySpecBaseDisableFields);
         //获取多级分类
         List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
         manySpecDetailById.setCategoryIdList(categoryIdList);
         productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
+
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
+        queryWrapper.orderByDesc(ProductDetailEntity::getId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
+        for (ProductDetailEntity item : list) {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, item.getId(), refSkuFiledConfigList);
+            //基础信息 禁用字段
+            List<String> manySkuDetailDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SKU_DETAIL_LIST, skuFiledConfigList);
+            item.setDisableFieldList(manySkuDetailDisableFields);
+        }
+
+
         productManyDetail.setProductManySkuDetailList(list);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
+        for (ProductCostShowDTO costShow : costShowDTOList) {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, costShow.getSkuId(), refSkuFiledConfigList);
+            //成本信息 禁用字段
+            List<String> costDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_COST_SHOW_LIST, skuFiledConfigList);
+            costShow.setDisableFieldList(costDisableFields);
+        }
+
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
@@ -197,12 +232,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 req.setCreateUserName(findUserDTO.getUserName());
             }
+
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //采购信息 禁用字段
+            List<String> purchaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PURCHASE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(purchaseDisableFields);
+
         });
 
         productManyDetail.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         productManyDetail.setRemarkEntityList(remarkEntityList);
+
         //产品销售信息查询列表
         List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
         saleShowDTOList.forEach(req -> {
@@ -212,17 +254,42 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setSaleCountryName(StringUtils.join(nameList, ","));
             }
+
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //销售信息 禁用字段
+            List<String> saleDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_SALE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(saleDisableFields);
         });
 
         productManyDetail.setProductSaleShowDTOList(saleShowDTOList);
         //产品包装信息查询列表
         List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);
+        packShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //包装 禁用字段
+            List<String> packDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PACK_SHOW, skuFiledConfigList);
+            req.setDisableFieldList(packDisableFields);
+        });
         productManyDetail.setProductPackShowDTOS(packShowDTOList);
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
+        logisticsShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //物流 禁用字段
+            List<String> logisticsDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_LOGISTICS_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(logisticsDisableFields);
+        });
+
         productManyDetail.setProductLogisticsShowDTOList(logisticsShowDTOList);
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
+        certificateShowDTOList.stream().forEach(req -> {
+            List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, req.getSkuId(), refSkuFiledConfigList);
+            //证书 禁用字段
+            List<String> certificateDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_CERTIFICATE_SHOW_LIST, skuFiledConfigList);
+            req.setDisableFieldList(certificateDisableFields);
+        });
+
         productManyDetail.setProductCertificateShowDTOList(certificateShowDTOList);
         //产品选择的变体查询
         List<ProductVariantOptionEntity> productVariantOptionEntityList = productVariantOptionService.list(productId);
@@ -230,12 +297,62 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return productManyDetail;
     }
 
+
     /**
+     * 根据skuid  以及查询对应的任务字段关系
+     *
+     * @param taskRefSkuList
+     * @param skuId
+     * @param refSkuFiledConfigList
+     * @return java.util.List<com.erp.model.plm.entity.TaskRefSkuConfigEntity>
+     * @author yl
+     * @date 2022-11-28 14:42
+     */
+    private List<TaskRefSkuConfigEntity> getSkuFiledConfigList(List<ProjectTaskRefSkuEntity> taskRefSkuList, String skuId, List<TaskRefSkuConfigEntity> refSkuFiledConfigList) {
+        List<String> taskIdList = taskRefSkuList.stream().filter(t -> t.getSkuId().equals(skuId)).map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+        List<TaskRefSkuConfigEntity> resultList = refSkuFiledConfigList.stream().filter(f -> taskIdList.contains(f.getTaskId())).collect(Collectors.toList());
+        return resultList;
+    }
+
+
+    /**
+     * 并集获取到禁用的字段
+     *
+     * @param flag
+     * @param refSkuFiledConfigList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-11-28 14:03
+     */
+    public List<String> getByFileldFlag(String flag, List<TaskRefSkuConfigEntity> refSkuFiledConfigList) {
+        List<String> resultList = new ArrayList<>(10);
+        try {
+            for (TaskRefSkuConfigEntity skuField : refSkuFiledConfigList) {
+                String fieldJson = skuField.getFieldJson();
+                if (StringUtils.isNotBlank(fieldJson)) {
+                    Map<String, Object> fieldMap = JSONObject.parseObject(fieldJson);
+                    if (fieldMap.containsKey(flag)) {
+                        List<Map<String, Object>> fieldInfoList = (List<Map<String, Object>>) fieldMap.get(flag);
+                        for (Map<String, Object> fieldInfoMap : fieldInfoList) {
+                            if (fieldInfoMap.containsKey("prop")) {
+                                resultList.add(fieldInfoMap.get("prop").toString());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("getByFileFlag ", e);
+        }
+        return resultList.stream().distinct().collect(Collectors.toList());
+    }
+
+    /**
+     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
+     * @return java.lang.String
      * @Description 保存/修改产品sku信息表数据-无规格
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productSkuBaseInfoDTO 新增产品无规格sku信息请求参数
-     * @return java.lang.String
      **/
     @Override
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
@@ -254,11 +371,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productDetailList 新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 保存/修改产品sku信息表数据-批量
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
-     * @param productDetailList 新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
@@ -279,11 +396,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 新增无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
-     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -303,7 +420,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
-        productSpuBaseInfoDTO.setGrade("");
+
+        //产品等级
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productSpuBaseInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productSpuBaseInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
+
         //1.修改产品表 主表信息
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
@@ -374,11 +500,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param productManySpecDTO:新增产品多规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 新增多规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:52
-     * @param productManySpecDTO:新增产品多规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -396,15 +522,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //检查sku是否重复
         for (int i = 0; i < productDetailList.size(); i++) {
             if (this.checkSkuNo(productDetailList.get(i).getSkuNo(), productDetailList.get(i).getId())) {
-                throw new ServiceException(ApiError.ERROR_95015.code,ApiError.ERROR_95015.msg + " 第"+ (i+1) +"行");
+                throw new ServiceException(ApiError.ERROR_95015.code, ApiError.ERROR_95015.msg + " 第" + (i + 1) + "行");
             }
         }
 
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
-        productInfoDTO.setGrade("");
-
+        //产品等级
+        if (StringUtils.isNotBlank(productInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
             productInfoService.updateSpec(productInfoDTO);
         }
@@ -462,11 +594,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @param variantAutoAddDTO:自动生成请求参数
+     * @return java.lang.Boolean
      * @Description 多规格自动生成
      * @Author Luo_WG
      * @Date 2022/9/26 14:54
-     * @param variantAutoAddDTO:自动生成请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -513,51 +645,57 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < models.size(); i++) {
                 sb.append(models.get(i).getAuthor());
-                if (i+1 < models.size()) {
+                if (i + 1 < models.size()) {
                     sb.append(",");
                 }
             }
             varianList.add(sb.toString());
         }
-
+        //过滤掉重复的变体属性
+        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
         //把变体属性放入实体类
         List<ProductDetailEntity> list = new ArrayList<>();
         for (String req : varianList) {
+            //判断是否已经存在该变体属性
+            long count = detailEntityList.stream().filter(obj -> req.equals(obj.getVariantProperty())).count();
+            if (count > 0) {
+                continue;
+            }
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
-            productDetailEntity.setSkuNo("");
+            //获取颜色
+            List<String> split = Arrays.asList(req.split(","));
+            String variantColor = Arrays.stream(VariantColorEnum.values()).filter(obj -> split.contains(obj.getName())).map(VariantColorEnum::getName).findAny().orElse(null);
+            if (StringUtils.isBlank(variantColor)) {
+                throw new ServiceException(ApiError.ERROR_95074);
+            }
+            //生成sku编码
+            String skuNo = sysCodeService.getSkuNo(id, variantColor);
+            productDetailEntity.setSkuNo(skuNo);
+            productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
+            productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
             list.add(productDetailEntity);
         }
 
-        //过滤掉重复的变体属性
-        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
-        for (ProductDetailEntity req : detailEntityList) {
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i).getVariantProperty().equals(req.getVariantProperty())) {
-                    list.remove(i);
-                }
-            }
-        }
-
         boolean bool = this.saveBatch(list);
-        if(!bool){
+        if (!bool) {
             throw new ServiceException(1, "新增sku明细失败！");
         }
         return this.queryByProductId(id);
     }
 
     /**
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 删除多规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param skuId:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean delete(String skuId){
+    public Boolean delete(String skuId) {
         //1.删除证书信息
         productCertificateService.removeCertificate(skuId);
         //2.删除包装信息
@@ -570,56 +708,71 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPurchaseService.removePurchase(skuId);
         //6.删除成本信息
         productCostService.removeCost(skuId);
-        //7.删除sku信息
+
+        //7.删除任务关联sku 信息
+        taskRefSkuConfigService.removeTaskRefSku(skuId);
+
+        //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
         return this.remove(queryWrapper);
     }
 
     /**
+     * @param id:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 根据产品id删除产品信息
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param id:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean deleteByProductId(String id){
+    public Boolean deleteByProductId(String id) {
         //删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, id);
-        this.remove(queryWrapper);
-        //删除产品主表
-        LambdaQueryWrapper<ProductInfoEntity> wrapper = new LambdaQueryWrapper();
-        wrapper.eq(ProductInfoEntity::getId, id);
-        return  productInfoService.remove(wrapper);
+        List<ProductDetailEntity> list = this.list(queryWrapper);
+        list.forEach(req -> {
+            //1.删除证书信息
+            productCertificateService.removeCertificate(req.getSkuNo());
+            //2.删除包装信息
+            productPackService.removePack(req.getSkuNo());
+            //3.删除物流信息
+            productLogisticsService.removeLogistics(req.getSkuNo());
+            //4.删除销售信息
+            productSaleService.removeSale(req.getSkuNo());
+            //5.删除采购信息
+            productPurchaseService.removePurchase(req.getSkuNo());
+            //6.删除成本信息
+            productCostService.removeCost(req.getSkuNo());
+        });
+        return this.remove(queryWrapper);
     }
 
     /**
+     * @param skuId:产品sku表主键id
+     * @return java.lang.Boolean
      * @Description 删除多规格sku信息-批量
      * @Author Luo_WG
      * @Date 2022/9/22 11:32
-     * @param skuId:产品sku表主键id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
-    public Boolean deleteBatch(List<String> skuId){
+    public Boolean deleteBatch(List<String> skuId) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getId, skuId);
         return this.remove(queryWrapper);
     }
 
     /**
+     * @param productId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      * @Description 根据产品主键id查询sku明细
      * @Author Luo_WG
      * @Date 2022/9/26 18:25
-     * @param productId:产品信息表id
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     @Override
-    public List<ProductDetailEntity> queryByProductId(String productId){
+    public List<ProductDetailEntity> queryByProductId(String productId) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         return this.list(queryWrapper);
@@ -627,26 +780,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
     /**
+     * @param skuList:sku集合
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
-     * @param skuList:sku集合
      **/
     public Boolean checkSkuNos(List<String> skuList) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductDetailEntity::getSkuNo, skuList);
         int count = this.count(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
+     * @param sku:sku
      * @Description 检查sku是否重复
      * @Author Luo_WG
      * @Date 2022/9/27 9:17
-     * @param sku:sku
      **/
     public Boolean checkSkuNo(String sku, String id) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
@@ -655,19 +808,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductDetailEntity::getId, id);
         }
         int count = this.count(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
-     * @Description 检查spu编号是否重复
-     * @Author Luo_WG
-     * @Date 2022/9/27 9:28
      * @param id:主键id
      * @param spuNo:spu编号
      * @return void
+     * @Description 检查spu编号是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
      **/
     public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
@@ -677,19 +830,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
         Integer count = productInfoMapper.selectCount(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
-     * @Description 检查产品名称是否重复
-     * @Author Luo_WG
-     * @Date 2022/9/27 9:28
      * @param name:产品名称
      * @param id:主键id
      * @return void
+     * @Description 检查产品名称是否重复
+     * @Author Luo_WG
+     * @Date 2022/9/27 9:28
      **/
     public Boolean checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
@@ -699,18 +852,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
         Integer count = productInfoMapper.selectCount(queryWrapper);
-        if(count > 0){
+        if (count > 0) {
             return true;
         }
         return false;
     }
 
     /**
+     * @param sku：sku
+     * @return com.erp.model.plm.entity.ProductDetailEntity
      * @Description 根据sku查询sku表信息
      * @Author Luo_WG
      * @Date 2022/9/28 17:04
-     * @param sku：sku
-     * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     public ProductDetailEntity getProductIdBySku(String sku) {
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
@@ -720,11 +873,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * 根据产品id 获取对应的sku
+     *
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2022-11-21 17:17
+     */
+    @Override
+    public List<ProductDetailEntity> getSkuListByProductId(String productId) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductDetailEntity::getProductId, productId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
      * @Description 导入无规格sku信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
-     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional
@@ -737,7 +905,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
-        if(StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())){
+        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
             ProductImagesDTO productImagesDTO = new ProductImagesDTO();
             productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
             productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
@@ -745,7 +913,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productImagesService.updateProductImage(productImagesDTO);
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        if(StringUtils.isBlank(productSkuBaseInfoDTO.getId())){
+        if (StringUtils.isBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
             skuId = productIdBySku.getId();
         }
@@ -819,14 +987,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 获取数据导出excel
+     *
+     * @param productSkuExcelDTO exportSkuExcelDTO
+     * @param response           response
+     * @return void
      * @Author Luo_WG
      * @Date 2022/10/10 12:09
-     * @param productSkuExcelDTO exportSkuExcelDTO
-     * @param response response
-     * @return void
      **/
     @Override
-    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO,HttpServletResponse response) {
+    public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ExportSkuExcelDTO> exportSkuExcelDTO = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         exportSkuExcelDTO.forEach(req -> {
@@ -866,4 +1035,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             e.printStackTrace();
         }
     }
+
+    @Override
+    public List<ProductDetailEntity> getByIdList(List<String> skuIdList) {
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
+    }
+
+
+    /**
+     * 获取那些sku 没有完成
+     *
+     * @param skuIdList
+     * @return java.util.List<java.util.Map < java.lang.String, java.lang.String>>
+     * @author yl
+     * @date 2022-11-28 18:29
+     */
+    @Override
+    public List<BaseIdDTO> getNotFinish(List<String> skuIdList) {
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            return baseMapper.getNotFinish(skuIdList,IsConstant.NO);
+        }
+        return new ArrayList<>();
+    }
+
+
 }

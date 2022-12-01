@@ -125,6 +125,10 @@ public class YxkOrderServiceImpl extends ServiceImpl<YxkOrderMapper, YxkOrderEnt
     @Transactional
     public void saveOrder(MabangOrderDTO dto) {
         try {
+            if(dto.getExportData()!=null && !dto.getExportData()){
+                chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH,"疑似无数据:exportData=False");
+                return;
+            }
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
             cleanExistsData(dto.getTaskId());
 

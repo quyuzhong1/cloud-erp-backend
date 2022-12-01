@@ -30,4 +30,8 @@ public interface PreTaskService extends IService<PreTaskEntity> {
     List<PreTaskEntity> getPreTaskByProductId(String productId);
 
     List<PreTaskEntity> getSysPreTask(List<String> sysTaskIds);
+
+    List<PreTaskEntity> getPreTaskListBytaskIds(List<String> taskIds);
+
+    List<PreTaskEntity> getPreTaskListByPreTaskIds(List<String> preTaskIds);
 }

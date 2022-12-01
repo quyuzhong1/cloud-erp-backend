@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -54,6 +55,12 @@ public class ProductManySpecBaseDTO {
      */
     private String propertyId;
 
+
+    /**
+     * 产品等级id
+     */
+    private String gradeId;
+
     /**
      * 产品等级
      */
@@ -100,7 +107,37 @@ public class ProductManySpecBaseDTO {
     private String materials;
 
     /**
+     * 委托开发成本
+     */
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 模具成本
+     */
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    private BigDecimal sampleFee;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    private Integer isCustomized;
+
+    /**
+     * 销售渠道
+     */
+    private String salesChannel;
+
+    /**
      * 产品分类id集合
      */
     private List<String> categoryIdList;
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 }

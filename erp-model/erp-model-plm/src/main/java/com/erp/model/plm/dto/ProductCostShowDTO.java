@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
 * @Description 产品成本明细查询列表返回值（VO）
@@ -105,6 +106,11 @@ public class ProductCostShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
 }

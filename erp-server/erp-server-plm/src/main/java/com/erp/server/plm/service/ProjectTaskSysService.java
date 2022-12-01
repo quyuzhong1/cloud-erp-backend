@@ -1,11 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysTaskDTO;
 import com.erp.model.plm.dto.SysTaskPagingDTO;
+import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
 import com.erp.model.plm.entity.ProjectTaskSysEntity;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public interface ProjectTaskSysService extends IService<ProjectTaskSysEntity> {
     Boolean saveOrUpdateSysTask(SysTaskDTO dto);
 
 
-    PagingVO<SysTaskPagingDTO> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<SysTaskPagingDTO> paging(PagingDTO<SysTaskPagingSearchDTO> dto);
 
     Boolean removeTask(String taskId);
 

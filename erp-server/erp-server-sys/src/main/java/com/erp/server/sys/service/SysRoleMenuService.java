@@ -65,5 +65,7 @@ public interface SysRoleMenuService extends IService<SysRoleMenuEntity> {
     List<SysMenuVO> findLeftMenuAll();
 
     Boolean saveRoleMenu(SysRoleMenuDTO dto);
+
+    List<SysRoleMenuEntity> getMenuRefRoleByRoleIds(List<String> roleIdList);
 }
 

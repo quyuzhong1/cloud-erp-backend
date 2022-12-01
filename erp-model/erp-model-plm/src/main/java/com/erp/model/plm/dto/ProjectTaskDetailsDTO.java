@@ -149,6 +149,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String createUserName;
 
+    /**
+     * 创建人
+     */
+    private String createUserId;
+
 
     /**
      * 前置任务
@@ -173,5 +178,27 @@ public class ProjectTaskDetailsDTO implements Serializable {
 
     private String businessProcessId;
 
+    /**
+     * 勾选字段后的json 字段
+     */
+    private String fieldJson;
+
+    /**
+     * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
+     */
+    private String fieldConfigType;
+
+
+
+    /**
+     * 关联sku 表id集合
+     */
+    private List<String> refSkuIdList;
+
+
+    /**
+     * 关联sku 表sku 名字集合
+     */
+    private List<String> refSkuNoList;
 
 }

@@ -36,4 +36,13 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @return BasicCategoryEntity
      **/
     BasicCategoryEntity getCategoryByName(String categoryName);
+    /**
+     * @description: 查询最高级
+     * @author Will
+     * @date: 2022/11/22 13:59
+     * @param id
+     * @param bestEntity
+     * @return void
+     */
+    void getBestEntity(String id,BasicCategoryEntity bestEntity);
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
@@ -11,7 +12,6 @@ import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.CountDTO;
 import com.erp.model.plm.entity.ProductArchiveEntity;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductArchiveMapper;
 import com.erp.server.plm.service.ProductArchiveService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -160,5 +160,12 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
         queryWrapper.select(ProductArchiveEntity::getProductId);
         List<String> list = this.listObjs(queryWrapper, Object::toString);
         return list;
+    }
+
+    @Override
+    public ProductArchiveEntity getArchiveByProductId(String productId) {
+        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductArchiveEntity::getProductId,productId);
+        return this.getOne(queryWrapper);
     }
 }

@@ -3,34 +3,37 @@ package com.erp.server.plm.controller;
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.annotation.DataPermission;
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
-import com.erp.server.plm.service.impl.ProductDetailServiceImpl;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 产品管理
+ *
  * @Author Luo_WG
  * @Date 2022/9/22 11:48
  **/
@@ -89,14 +92,15 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-主页列表-查询1
+     *
+     * @param pagingDTO pagingDTO
+     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductDetailShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:15
-     * @param pagingDTO pagingDTO
-     * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.plm.dto.ProductDetailShowDTO>>
      **/
     @PostMapping("/list")
     //@RequestPermissions("plm:product:detail:list")
-    //@DataPermission(operationType = "query", tableField = "create_user_id", menuCode = "plm:product:detail:list", tableAlias = "pi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -104,10 +108,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-无规格-产品详情
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:21
+     *
      * @param productId 产品信息表id
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
      **/
     @GetMapping("/getNoSpecDetailById")
     //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
@@ -118,10 +123,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-多规格-产品详情
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:22
+     *
      * @param productId 产品信息表id
      * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:22
      **/
     @GetMapping("/getManySpecDetailById")
     //@RequestPermissions("plm:product:detail:getManySpecDetailById")
@@ -130,12 +136,57 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
+
     /**
-     * 产品信息-无规格-新增/修改
+     * 产品信息-多规格-产品详情-编辑
+     *
+     * @param dto 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
      * @Author Luo_WG
      * @Date 2022/10/9 10:22
+     **/
+    @PostMapping("/getManySpecDetailByIdUpdate")
+    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:edit",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )*/
+    public ApiResult<ProductManyDetailDTO> getManySpecDetailByIdUpdate(@RequestBody ProductManySpecUpdateDTO dto) {
+        ProductManyDetailDTO list = productDetailService.getManySpecDetailById(dto.getProductId());
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-无规格-产品详情-编辑
+     *
+     * @param dto 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
+     **/
+    @PostMapping("/getNoSpecDetailByIdUpdate")
+    //@RequestPermissions("plm:product:detail:getManySpecDetailById")
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:edit",
+            serviceClass = ProductDetailService.class,
+            keyIdName = "id"
+    )*/
+    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailById(@RequestBody ProductManySpecUpdateDTO dto) {
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailById(dto.getProductId());
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-无规格-新增/修改
+     *
      * @param productNoSpecDTO 新增产品无规格sku信息请求参数
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:22
      **/
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
@@ -146,20 +197,14 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-多规格-新增/修改
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:23
+     *
      * @param productManySpecDTO 新增产品多规格sku信息请求参数
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:23
      **/
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-/*    @DataPermission(operationType = "update",
-            tableField = "create_user_id",
-            menuCode = "plm:product:detail:saveOrUpdateManySpec",
-            serviceClass = ProductInfoService.class,
-            entityName = "productInfoDTO",
-            keyIdName = "id"
-    )*/
     public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
@@ -167,10 +212,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-无规格-基础信息上传图片
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:23
+     *
      * @param productImagesDTO 产品图片信息请求参数
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:23
      **/
     @PostMapping("/insertProductImage")
     //@RequestPermissions("plm:product:detail:insertProductImage")
@@ -181,10 +227,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-多规格-自动生成
+     *
+     * @param variantAutoAddDTO 商品管理-产品信息-多规格-自动生成 请求参数
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductDetailEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:23
-     * @param variantAutoAddDTO 商品管理-产品信息-多规格-自动生成 请求参数
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductDetailEntity>>
      **/
     @PostMapping("/InsertManySpecSku")
     //@RequestPermissions("plm:product:detail:InsertManySpecAuto")
@@ -195,35 +242,41 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-多规格sku-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:42
+     *
      * @param skuId sku表id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:42
      **/
     @PostMapping("/delete")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
-    public ApiResult delete(@RequestParam(value = "skuId")  String skuId) {
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_PARAM,
+            tableField = "charge_id",
+            menuCode = "plm:product:detail:delete",
+            serviceClass = ProductDetailService.class)*/
+    public ApiResult delete(@RequestParam(value = "skuId") String skuId) {
         Boolean flag = productDetailService.delete(skuId);
         return flag == true ? this.success() : this.failure();
     }
 
     /**
      * 产品信息-取消按钮-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:42
+     *
      * @param id spu主表id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:42
      **/
     @PostMapping("/deleteByProductId")
     //@RequestPermissions("plm:product:detail:delete")
     //@DataPermission(operationType = "deleteProduct", tableField = "create_user_id", menuCode = "plm:product:detail:delete", serviceClass = ProductDetailServiceImpl.class)
-    public ApiResult deleteByProductId(@RequestParam(value = "id")  String id) {
+    public ApiResult deleteByProductId(@RequestParam(value = "id") String id) {
         Boolean flag = productDetailService.deleteByProductId(id);
         return flag == true ? this.success() : this.failure();
     }
 
-/*    *//**
+    /*    *//**
      * 产品信息-多规格sku-批量删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
@@ -239,10 +292,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 成本信息-主页列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCostShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>>
      **/
     @GetMapping("/listCost")
     public ApiResult<List<ProductCostShowDTO>> listCost(@RequestParam(value = "productId") String productId) {
@@ -252,10 +306,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 采购信息-主页列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPurchaseShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>>
      **/
     @GetMapping("/listProductPurchase")
     public ApiResult<List<ProductPurchaseShowDTO>> listPurchase(@RequestParam(value = "productId") String productId) {
@@ -265,10 +320,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 销售信息-主页列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductSaleShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>>
      **/
     @GetMapping("/listSale")
     public ApiResult<List<ProductSaleShowDTO>> listSale(@RequestParam(value = "productId") String productId) {
@@ -278,10 +334,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 物流信息-报关信息列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductLogisticsShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:24
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>>
      **/
     @GetMapping("/listLogistics")
     public ApiResult<List<ProductLogisticsShowDTO>> listLogistics(@RequestParam(value = "productId") String productId) {
@@ -291,10 +348,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 物流信息-包装信息列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductPackShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductPackShowDTO>>
      **/
     @GetMapping("/listPack")
     public ApiResult<List<ProductPackShowDTO>> listPack(@RequestParam(value = "productId") String productId) {
@@ -304,10 +362,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 证书信息-主页列表-查询
+     *
+     * @param productId 产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.dto.ProductCertificateShowDTO>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
-     * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.dto.ProductCertificateShowDTO>>
      **/
     @GetMapping("/listCertificate")
     public ApiResult<List<ProductCertificateShowDTO>> listCertificate(@RequestParam(value = "productId") String productId) {
@@ -315,7 +374,7 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }
 
-/*    *//**
+    /*    *//**
      * 证书信息-主页列表-新增|修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:25
@@ -330,24 +389,26 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 证书信息-主页列表-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:25
+     *
      * @param id 证书信息id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:25
      **/
     @GetMapping("/removeCertificate")
     //@RequestPermissions("plm:product:detail:removeCertificate")
     public ApiResult removeCertificateById(@RequestParam("id") String id) {
         Boolean flag = productCertificateService.removeById(id);
-        return  flag == true ? this.success() : this.failure();
+        return flag == true ? this.success() : this.failure();
     }
 
     /**
      * 采购信息-主页备注信息列表-查询
+     *
+     * @param productId:产品信息表id
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
-     * @param productId:产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductPurchaseRemarkEntity>>
      **/
     @GetMapping("/listPurchaseRemark")
     //@RequestPermissions("plm:product:detail:listPurchaseRemark")
@@ -358,10 +419,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 采购信息-备注信息-新增
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:26
+     *
      * @param dto 产品采购备注信息列表（VO）
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
      **/
     @PostMapping("/saveOrUpdatePurchaseRemark")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemark")
@@ -372,10 +434,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 采购信息-备注信息-新增-批量
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:26
+     *
      * @param dto 产品采购备注信息列表（VO）
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
      **/
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
@@ -384,12 +447,12 @@ public class ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-/*    *//**
+    /*    *//**
      * 产品信息-变体管理-下拉列表-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
      * @param productId 产品信息表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
      **//*
     @GetMapping("/listVariant")
     public ApiResult<List<ProductVariantEntity>> listVariant() {
@@ -399,9 +462,10 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-变体管理-下拉列表-查询
+     *
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:26
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantEntity>>
      **/
     @GetMapping("/listVariantAndProperty")
     //@RequestPermissions("plm:product:detail:listVariantAndProperty")
@@ -412,10 +476,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-变体管理-下拉列表-新增/修改
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:26
+     *
      * @param productVariantDTO 产品变体类型属性表
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:26
      **/
     @PostMapping("/saveOrUpdateVariant")
     //@RequestPermissions("plm:product:detail:saveOrUpdateVariant")
@@ -426,24 +491,25 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-变体管理-下拉列表-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:27
+     *
      * @param variantId 变体类型表主键Id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
      **/
     @PostMapping("/deleteVariant")
     //@RequestPermissions("plm:product:detail:deleteVariant")
-    public ApiResult deleteVariant(@RequestParam(value="variantId") String variantId){
+    public ApiResult deleteVariant(@RequestParam(value = "variantId") String variantId) {
         Boolean flag = productVariantService.deleteVariant(variantId);
         return flag == true ? this.success() : this.failure();
     }
 
-/*    *//**
+    /*    *//**
      * 产品信息-变体管理-变体值-查询
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
      * @param variantId 变体类型表id
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductVariantPropertyEntity>>
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductVariantPropertyEntity>>
      **//*
     @GetMapping("/listVariantProperty")
     @ApiImplicitParams({
@@ -454,7 +520,7 @@ public class ProductDetailController extends BaseController {
         return this.success(list);
     }*/
 
-/*    *//**
+    /*    *//**
      * 产品信息-变体管理-变体值-新增/修改
      * @Author Luo_WG
      * @Date 2022/10/9 10:27
@@ -469,10 +535,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-变体管理-变体值-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:27
+     *
      * @param variantPropertyId 变体值表id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:27
      **/
     @GetMapping("/deleteVariantProperty")
     public ApiResult deleteVariantProperty(@RequestParam(value = "variantPropertyId") String variantPropertyId) {
@@ -482,10 +549,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-单位管理-新增|修改
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:28
+     *
      * @param productUnitList productUnitList
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:28
      **/
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
@@ -496,9 +564,10 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-单位管理-查询
+     *
+     * @return com.erp.common.dto.base.ApiResult<java.util.List < com.erp.model.plm.entity.ProductUnitEntity>>
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
-     * @return com.erp.common.dto.base.ApiResult<java.util.List<com.erp.model.plm.entity.ProductUnitEntity>>
      **/
     @GetMapping("/listProductUnit")
     public ApiResult<List<ProductUnitEntity>> listProductUnit() {
@@ -508,10 +577,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 产品信息-单位管理-删除
-     * @Author Luo_WG
-     * @Date 2022/10/9 10:28
+     *
      * @param id 单位列表id
      * @return com.erp.common.dto.base.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:28
      **/
     @PostMapping("/deleteProductUnit")
     //@RequestPermissions("plm:product:detail:deleteProductUnit")
@@ -522,12 +592,13 @@ public class ProductDetailController extends BaseController {
 
     /**
      * excel导入产品信息
+     *
+     * @param excelFile  文件流
+     * @param importType 请求类型
+     * @param response   响应
+     * @return com.erp.common.dto.base.ApiResult
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
-     * @param excelFile 文件流
-     * @param importType 请求类型
-     * @param response 响应
-     * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
@@ -559,10 +630,11 @@ public class ProductDetailController extends BaseController {
 
     /**
      * 下载导出模板
+     *
+     * @param request  request
+     * @param response response
      * @Author Luo_WG
      * @Date 2022/9/28 11:46
-     * @param request request
-     * @param response response
      **/
     @GetMapping("/exportTemplate")
     //@RequestPermissions("plm:product:detail:exportTemplate")
@@ -590,15 +662,25 @@ public class ProductDetailController extends BaseController {
 
     /**
      * excel导出产品信息
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @param response           response
+     * @return com.erp.common.dto.base.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
-     * @param productSkuExcelDTO productSkuExcelDTO
-     * @param response response
-     * @return com.erp.common.dto.base.ApiResult
      **/
     @PostMapping(value = "/exportProduct")
     //@RequestPermissions("plm:product:detail:exportProduct")
     public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
     }
+
+
+    @PostMapping(value = "/taskRefSku")
+    public ApiResult<List<ProductDetailEntity>> getTaskRefSku(@RequestBody @Validated BaseIdDTO dto) {
+        List<ProductDetailEntity> resultList = productDetailService.getSkuListByProductId(dto.getId());
+        return success(resultList);
+    }
+
+
 }

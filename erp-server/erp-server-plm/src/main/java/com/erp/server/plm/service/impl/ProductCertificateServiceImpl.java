@@ -3,18 +3,16 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
-import com.erp.model.plm.entity.ProductCostEntity;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
-import com.erp.server.plm.interceptor.PlmInterceptor;
+
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.ProductCertificateService;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

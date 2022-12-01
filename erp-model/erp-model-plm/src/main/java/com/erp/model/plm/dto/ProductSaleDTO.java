@@ -85,5 +85,22 @@ public class ProductSaleDTO implements Serializable {
      */
     private String dataUrl;
 
+    /**
+     * 首季度目标销量
+     */
+    private BigDecimal targetSalesQty;
+
+    /**
+     * 销售平台
+     */
+    private String salesPlatform;
+
+    /**
+     * 是否可销售(0否，1是)
+     */
+    @StateEnumValue(intValues = {0, 1}, message = "是否可销售值错误")
+    private Integer isMarketable;
+
+
     private static final long serialVersionUID = 1L;
 }

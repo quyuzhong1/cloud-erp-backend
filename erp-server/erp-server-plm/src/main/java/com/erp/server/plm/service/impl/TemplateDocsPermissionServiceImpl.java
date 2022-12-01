@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.entity.DocsPermissionEntity;
-import com.erp.model.plm.entity.TemplateDeliveryDocsEntity;
 import com.erp.model.plm.entity.TemplateDocsPermissionEntity;
 import com.erp.server.plm.mapper.TemplateDocsPermissionMapper;
 import com.erp.server.plm.service.DocsPermissionService;
@@ -91,6 +90,23 @@ public class TemplateDocsPermissionServiceImpl extends ServiceImpl<TemplateDocsP
 
     }
 
+    @Override
+    public List<String> getDocsIdsByRoleIds(List<String> userRoleIds, String templateId) {
+        LambdaQueryWrapper<TemplateDocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(TemplateDocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(TemplateDocsPermissionEntity::getTemplateId, templateId);
+        queryWrapper.in(TemplateDocsPermissionEntity::getQueryRoleId, userRoleIds);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
+    @Override
+    public List<String> getAllDeliveryDocsIds(String templateId) {
+        LambdaQueryWrapper<TemplateDocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(TemplateDocsPermissionEntity::getDeliveryDocsId);
+        queryWrapper.eq(TemplateDocsPermissionEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateDocsPermissionEntity::getQueryRoleId, "");
+        return this.listObjs(queryWrapper, Object::toString);
+    }
 
     /**
      * 方法说明

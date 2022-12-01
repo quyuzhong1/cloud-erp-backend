@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -87,6 +88,14 @@ public class ProductDetailDTO implements Serializable {
      * 产品负责人姓名
      */
     private String chargeName;
+
+    /**
+     * 是否已完成任务
+     * 0 没有 1 已完成
+     */
+    private Integer isFinishTask;
+
+
 
     private static final long serialVersionUID = 1L;
 }

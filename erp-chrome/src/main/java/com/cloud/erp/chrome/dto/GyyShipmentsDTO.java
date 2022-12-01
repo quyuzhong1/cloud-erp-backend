@@ -20,6 +20,6 @@ public class GyyShipmentsDTO {
     private Integer taskId;
 
 
-    @NotBlank(message = "ossUrl 不能为空")
+//    @NotBlank(message = "ossUrl 不能为空")
     private String ossUrl;
 }

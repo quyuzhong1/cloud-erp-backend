@@ -54,6 +54,10 @@ public class OrderGyyDeliverServiceImpl extends ServiceImpl<OrderGyyDeliverMappe
     public void saveDeliverCsvByUrl(GyyShipmentsDTO dto) {
         File file = null;
         try {
+            if(dto.getOssUrl()==null||dto.getOssUrl().length()<1){
+                chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH,"疑似无数据:OssUrl为空");
+                return;
+            }
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
             cleanExistsData(dto.getTaskId());
 

@@ -1,9 +1,11 @@
 package com.erp.common.annotation;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.enums.DataAttributeEnum;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.lang.annotation.*;
+import java.util.List;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,7 +37,7 @@ public @interface DataPermission {
     /**
      * 操作类型 查询：query 修改：update 删除：delete
      */
-    String operationType() default "";
+    DataAttributeEnum operationType();
 
     /**
      * 服务类Class,一般用于DELETE
@@ -52,6 +54,12 @@ public @interface DataPermission {
      * 入参主键id的名称
      */
     String keyIdName() default "";
+
+
+
+
+
+
 
 
 }

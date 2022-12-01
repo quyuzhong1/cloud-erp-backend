@@ -17,7 +17,8 @@
         </if>
         <if test="params.searchKeyword!='' and params.searchKeyword!=null">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -41,7 +42,7 @@
             </foreach>
         </if>
         <if test="params.param!='' and params.param!=null">
-            ${params.param}
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
 
         ORDER BY p.create_time DESC
@@ -53,7 +54,7 @@
         to_char(pj.end_time,'yyyy-MM-dd') AS planEndTime, pj.project_status,pi.approval_status AS productStatus
         FROM product_info pi
         LEFT JOIN project_info pj ON pi.id=pj.product_id
-        WHERE  pi.is_finished_product_dev = 1 AND pi.id IN
+        WHERE pi.is_finished_product_dev = 1 AND pi.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
@@ -99,9 +100,9 @@
             </foreach>
         </if>
         <if test="params.param!='' and params.param!=null">
-            ${params.param}
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
-        ORDER BY pi.create_time  DESC
+        ORDER BY pi.create_time DESC
 
     </select>
 
@@ -110,6 +111,40 @@
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id
         WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1
+        AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
+        <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
+            AND pi.id NOT IN
+            <foreach collection="archiveProductIdList" item="archiveProductId" open="(" separator="," close=")">
+                #{archiveProductId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getProductInfo" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
+        p.type,p.approval_status,pi.charge_name AS projectChargeName,
+        p.create_time,
+        pi.end_time FROM product_info p LEFT JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE P.id=#{productId}
+    </select>
+
+
+    <select id="getProductInfoByIds" resultType="com.erp.model.plm.dto.ProductShowDTO">
+           SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
+        p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
+        p.type,p.approval_status,pi.charge_name AS projectChargeName,
+        p.create_time,
+        pi.end_time FROM product_info p LEFT JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE P.id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+
+        </foreach>
 
     </select>
 

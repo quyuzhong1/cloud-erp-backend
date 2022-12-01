@@ -58,6 +58,10 @@ public class MabanServiceImpl extends ServiceImpl<MabanIncomeExpensesMapper, Mab
     @Transactional
     public void importIncomeExpensesCsv(MabangOrderDTO dto) {
         try {
+            if(!dto.getExportData()){
+                chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.FINISH,"疑似无数据：exportData=Fasle");
+                return;
+            }
             chromeTaskInfoService.updateTaskState(dto.getTaskId(), TaskState.RECEIVEING);
             cleanExistsData(dto.getTaskId());
 

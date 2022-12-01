@@ -9,15 +9,15 @@ package com.erp.server.plm.enums;
 public enum TaskStateEnum {
 
     TO_BE_RELEASED(0, "待发布"),
-    NOT_START(1, "待开始"),
+    NOT_START(1, "未开始"),
     WAIT_CONFIRM(2, "待审核"),
     ING(3, "进行中"),
     FINISH(4, "已完成"),
-    CLOSE(5, "已关闭"),
-    FINISH_WAIT_CONFIRM(6, "完成待审核"),
+    CLOSE(5, "已取消"),
     APPROVAL_ING(7, "审核中"),
     APPROVAL_PASS(8, "审核通过"),
-    APPROVAL_NO_PASS(9, "审核不通过");
+    APPROVAL_NO_PASS(9, "审核不通过"),
+    PORTION_FINISH(10, "部分完成");
 
 
     private Integer code;

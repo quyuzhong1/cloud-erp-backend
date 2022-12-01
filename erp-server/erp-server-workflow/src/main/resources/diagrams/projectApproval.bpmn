@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1qfhzix" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.1.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="Process_project_approval" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="申请">
+      <bpmn:outgoing>Flow_1ubthlt</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_0zcb1mr" name="产品经理审核" camunda:assignee="${productCharge}">
+      <bpmn:incoming>Flow_1ubthlt</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vxsdo8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1ubthlt" sourceRef="StartEvent_1" targetRef="Activity_0zcb1mr" />
+    <bpmn:userTask id="Activity_1y5ejsp" name="产品总监" camunda:assignee="${productDirector}">
+      <bpmn:incoming>Flow_0vxsdo8</bpmn:incoming>
+      <bpmn:outgoing>Flow_0jyivro</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0vxsdo8" sourceRef="Activity_0zcb1mr" targetRef="Activity_1y5ejsp" />
+    <bpmn:userTask id="Activity_1tp3191" name="总经理" camunda:assignee="${generalManager}">
+      <bpmn:incoming>Flow_0jyivro</bpmn:incoming>
+      <bpmn:outgoing>Flow_1y9n05a</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0jyivro" sourceRef="Activity_1y5ejsp" targetRef="Activity_1tp3191" />
+    <bpmn:endEvent id="Event_1b2lb72" name="结束">
+      <bpmn:extensionElements>
+        <camunda:executionListener class="com.erp.server.workflow.listeners.TaskResultListener" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1y9n05a</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1y9n05a" sourceRef="Activity_1tp3191" targetRef="Event_1b2lb72" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_project_approval">
+      <bpmndi:BPMNEdge id="Flow_1ubthlt_di" bpmnElement="Flow_1ubthlt">
+        <di:waypoint x="215" y="97" />
+        <di:waypoint x="350" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vxsdo8_di" bpmnElement="Flow_0vxsdo8">
+        <di:waypoint x="450" y="97" />
+        <di:waypoint x="620" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jyivro_di" bpmnElement="Flow_0jyivro">
+        <di:waypoint x="720" y="97" />
+        <di:waypoint x="830" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1y9n05a_di" bpmnElement="Flow_1y9n05a">
+        <di:waypoint x="930" y="97" />
+        <di:waypoint x="1022" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="186" y="122" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0o67oc5_di" bpmnElement="Activity_0zcb1mr">
+        <dc:Bounds x="350" y="57" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rjhdcm_di" bpmnElement="Activity_1y5ejsp">
+        <dc:Bounds x="620" y="57" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_053klqi_di" bpmnElement="Activity_1tp3191">
+        <dc:Bounds x="830" y="57" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1b2lb72_di" bpmnElement="Event_1b2lb72">
+        <dc:Bounds x="1022" y="79" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1029" y="122" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -152,6 +152,7 @@
         pi.brand_id,
         pi.property,
         pi.property_id,
+        pi.grade_id,
         pi.grade,
         pi.category,
         pi.category_id,
@@ -164,7 +165,12 @@
         pd.plan_listing_time,
         pd.unit_id,
         unit.name AS unit_name,
-        pd.product_state
+        pd.product_state,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id
@@ -184,6 +190,7 @@
         pi.brand_id,
         pi.property,
         pi.property_id,
+        pi.grade_id,
         pi.grade,
         pi.category,
         pi.category_id,
@@ -192,7 +199,12 @@
         pi.function_desc,
         pi.usage_desc,
         pi.pirate_risk,
-        pi.materials
+        pi.materials,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel
         FROM product_info pi
         WHERE pi.delete_state = 0
             AND pi.id = #{productId}
@@ -287,6 +299,18 @@
                 #{skuId}
             </foreach>
         </if>
+
+    </select>
+
+    <select id="getNotFinish" resultType="com.erp.common.dto.base.BaseIdDTO">
+      SELECT id,sku_no  AS name FROM product_detail
+      WHERE  is_finish_task =#{finishTaskState}
+      <if test="skuIdList!=null and skuIdList.size>0 " >
+          AND id IN
+          <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+              #{skuId}
+          </foreach>
+      </if>
 
     </select>
 </mapper>

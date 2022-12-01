@@ -1,25 +1,21 @@
 package com.erp.server.plm.controller;
 
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FileUtil;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.ProductOperateRecordDTO;
+import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 

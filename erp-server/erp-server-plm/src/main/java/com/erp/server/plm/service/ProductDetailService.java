@@ -1,18 +1,17 @@
 package com.erp.server.plm.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
-public interface ProductDetailService {
+public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     /**
      * @Description 产品信息查询列表
@@ -176,6 +175,16 @@ public interface ProductDetailService {
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     ProductDetailEntity getProductIdBySku(String sku);
+    
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2022-11-21 17:13
+     * @param productId
+     * @return 
+     */
+    List<ProductDetailEntity> getSkuListByProductId(String productId);
+    
 
     /**
      * @Description 新增无规格sku信息
@@ -195,6 +204,15 @@ public interface ProductDetailService {
      * @return void
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
-    
 
+    /**
+     * 根据sku id集合
+     * @author yl
+     * @date 2022-11-24 9:20
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> getByIdList(List<String> skuIdList);
+
+    List<BaseIdDTO> getNotFinish(List<String> skuIdList);
 }

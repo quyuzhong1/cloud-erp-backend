@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import com.alibaba.fastjson2.JSONObject;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -32,6 +33,19 @@ public class OkHttpUtils {
      */
     public static String doPost(String url, Map<String, Object> params, Map<String, String> headers) {
         Call call = createPostCall(url, params, headers);
+        return execute(call);
+    }
+
+    /**
+     * 获取post 请求 以json
+     *
+     * @param
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-07-13 18:09
+     */
+    public static String doPostJson(String url, Map<String, Object> params, Map<String, String> headers) {
+        Call call = createPostJsonCall(url, params, headers);
         return execute(call);
     }
 
@@ -119,6 +133,17 @@ public class OkHttpUtils {
     public static Call createPostCall(String url, Map<String, Object> params, Map<String, String> headers) {
         Request request = new Request.Builder()
                 .post(createFormBody(params))
+                .headers(createHeaders(headers))
+                .url(url)
+                .build();
+        return client.newCall(request);
+    }
+
+    public static Call createPostJsonCall(String url, Map<String, Object> params, Map<String, String> headers) {
+        MediaType json = MediaType.parse("application/json; charset=utf-8");
+        RequestBody requestBody = RequestBody.create(json, JSONObject.toJSONString(params));
+        Request request = new Request.Builder()
+                .post(requestBody)
                 .headers(createHeaders(headers))
                 .url(url)
                 .build();

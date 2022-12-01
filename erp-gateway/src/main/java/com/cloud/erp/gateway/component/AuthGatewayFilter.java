@@ -39,6 +39,10 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
      * Feign资源前缀
      */
     private static final String FEIGN_URL = "/feign/";
+    /**
+     * 移动端
+     */
+    private static final String APP_URL = "/app/";
 
     @Autowired
     private TokenService tokenService;
@@ -60,6 +64,12 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 //文件头使用JSON格式
                 return unauthorizedResponse(exchange, ApiError.ERROR_5001.msg, ApiError.ERROR_5001.code);
             }
+            //判断是否是app 如果是 直接放行
+            if(uri.contains(APP_URL)){
+                return chain.filter(exchange);
+            }
+
+
             //判断请求路径在不在拦截名单中，在直接放行
             Boolean flag = false;
             List<String> pathList = Arrays.asList(AuthPassPath.PASS_PATH_LIST.split(";"));

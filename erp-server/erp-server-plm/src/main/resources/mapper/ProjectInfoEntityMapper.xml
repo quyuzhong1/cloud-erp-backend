@@ -45,7 +45,7 @@
         </if>
 
         <if test="params.param!='' and params.param!=null">
-            ${params.param}
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
 
         ORDER BY  pi.create_time DESC
@@ -89,8 +89,9 @@
         </if>
 
         <if test="params.param!='' and params.param!=null">
-            ${params.param}
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
         </if>
+
         ORDER BY  pi.create_time DESC
     </select>
 

@@ -32,7 +32,8 @@
         sale_country,listing_time,delisting_time,
         is_finished_img,is_finished_video,sale_state,
         pd.create_time,pd.create_user_id,pd.update_time,
-        pd.update_user_id,data_url
+        pd.update_user_id,data_url,ps.target_sales_qty,
+        ps.sales_platform,ps.is_marketable
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">

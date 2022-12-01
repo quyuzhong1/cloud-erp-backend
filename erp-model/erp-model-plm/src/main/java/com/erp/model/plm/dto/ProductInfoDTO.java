@@ -1,12 +1,13 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.math.BigDecimal;
 
 /**
  * @Description 产品基础信息请求参数
@@ -52,6 +53,11 @@ public class ProductInfoDTO {
      * 负责人id
      */
     private String chargeId;
+
+    /**
+     * 产品等级id
+     */
+    private String gradeId;
 
     /**
      * 产品等级
@@ -118,6 +124,34 @@ public class ProductInfoDTO {
     private String saleMethod;
 
     private Integer approvalStatus;
+
+    /**
+     * 委托开发成本
+     */
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 模具成本
+     */
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    private BigDecimal sampleFee;
+
+    /**
+     * 销售渠道
+     */
+    @NotBlank(message = "销售渠道不能为空")
+    private String salesChannel;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    @NotNull(message = "是否客户定制不能为空")
+    @StateEnumValue(intValues = {0, 1}, message = "是否客户定制值错误")
+    private Integer isCustomized;
 
     /**
      * 创建人id

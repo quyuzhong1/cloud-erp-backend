@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -70,6 +71,11 @@ public class ProductNoDetailDTO {
     private String propertyId;
 
     /**
+     * 产品等级id
+     */
+    private String gradeId;
+
+    /**
      * 产品等级
      */
     private String grade;
@@ -130,6 +136,31 @@ public class ProductNoDetailDTO {
      * 单位表名称
      */
     private String unitName;
+
+    /**
+     * 委托开发成本
+     */
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 模具成本
+     */
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    private BigDecimal sampleFee;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    private Integer isCustomized;
+
+    /**
+     * 销售渠道
+     */
+    private String salesChannel;
 
     /**
      * 产品分类id集合

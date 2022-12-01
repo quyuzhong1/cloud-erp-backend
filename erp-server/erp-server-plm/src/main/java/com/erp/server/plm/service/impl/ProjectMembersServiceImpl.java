@@ -3,9 +3,12 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
@@ -14,13 +17,13 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,9 +44,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
 
     @Autowired
-    private ProjectInfoService projectInfoService;
-
-    @Autowired
     private ProjectTaskService projectTaskService;
 
     @Autowired
@@ -54,6 +54,21 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private ProjectRoleService projectRoleService;
+
+    @Autowired
+    private ProjectTemplateService projectTemplateService;
+
+    @Autowired
+    private TemplateRoleService templateRoleService;
+
+    @Autowired
+    private TemplateMembersService templateMembersService;
+
+    @Autowired
+    private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private CommonService commonService;
 
 
     /**
@@ -130,30 +145,33 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
+        List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserId());
-
-        ProjectMembersEntity entity = new ProjectMembersEntity();
-        entity.setProductId(dto.getProductId());
-        FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
-        String userName = "";
-        if (userDto != null) {
-            userName = userDto.getUserName();
-        }
-        entity.setMemberName(userName);
-        entity.setMemberId(dto.getUserId());
-        entity.setId(id);
-        entity.setIsCharge(dto.getIsCharge());
-        if (loginUser != null) {
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(),dto.getProductId());
+        List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
+        for (String userId : userIdList) {
+            ProjectMembersEntity entity = new ProjectMembersEntity();
+            entity.setProductId(dto.getProductId());
+            FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+            String userName = "";
+            if (user != null) {
+                userName = user.getUserName();
+            }
+            entity.setMemberName(userName);
+            entity.setMemberId(userId);
+            entity.setId(id);
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
+            addList.add(entity);
         }
-        Boolean flag = this.saveOrUpdate(entity);
+
+        Boolean flag = this.saveOrUpdateBatch(addList);
         //保存成功就要去保存关系表
         if (flag) {
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getMemberId(), dto.getRoleId(), dto.getProductId());
+            List<String> membersTableIds = addList.stream().map(ProjectMembersEntity::getId).collect(Collectors.toList());
+            roleRefMemberService.saveRef(membersTableIds, dto.getRoleId(), dto.getProductId());
         }
         return flag;
 
@@ -186,8 +204,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                 //获取到任务处理的情况
                 List<TaskConductDTO> conductList = projectTaskService.getTaskConductList(params.getProductId());
                 for (MemberPagingShowDTO item : list) {
-                    String memberId = item.getMemberId();
-                    RoleRefMemberEntity ref = refList.stream().filter(r -> r.getMembersId().equals(memberId)).findFirst().orElse(null);
+                    String membersId = item.getId();
+                    RoleRefMemberEntity ref = refList.stream().filter(r -> r.getMembersId().equals(membersId)).findFirst().orElse(null);
                     if (ref != null) {
                         item.setRoleId(ref.getRoleId());
                         ProjectRoleEntity role = roleList.stream().filter(r -> r.getId().equals(ref.getRoleId())).findFirst().orElse(null);
@@ -347,21 +365,16 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<ProjectTaskEntity> list = projectTaskService.list();
         Integer finishState = TaskStateEnum.FINISH.getCode();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
-        Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         Integer ing = TaskStateEnum.ING.getCode();
         for (FindUserDTO item : userList) {
             List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().contains(item.getUserId())).collect(Collectors.toList());
             //完成任务数
-            int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus()) || approvalNoPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+            int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
             //进行中
             int ingTaskCount = taskList.stream().filter(t -> ing.equals(t.getStatus())).collect(Collectors.toList()).size();
             //总任务数
             int totalTaskCount = taskList.size();
-
-
             int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus()) && !approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
-
-
             //延期的任务数
             int postponeTaskCount = 0;
             postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
@@ -377,6 +390,93 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         }
 
         return resultList;
+    }
+
+    @Override
+    @Transactional
+    public void addRoleAndMembersByApproval(String productId) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
+        ProjectTemplateEntity entity = projectTemplateService.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity)) {
+            //模板角色成员关联表
+            List<TemplateRoleRefMembersEntity> oldRefList = templateRoleRefMembersService.getByTemplateId(entity.getId());
+            List<TemplateRoleEntity> newRoleList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(oldRefList)) {
+                //模板角色
+                List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
+                //模板成员
+                List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
+                List<Pair<String, String>> addRoleList = new ArrayList<>();
+                oldRefList.stream().forEach(obj -> {
+                    TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
+
+                    TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
+                    //新增角色
+                    if (CollectionUtils.isNotEmpty(addRoleList)) {
+                        //如果已经新增过则无需再次新增
+                        Pair<String, String> pair = addRoleList.stream().filter(e -> e.getKey().equals(oldRole.getId())).findAny().orElse(null);
+                        if (pair != null) {
+                            obj.setRoleId(pair.getValue());
+                        } else {
+                            //新增角色，防止重复新增先存储List中
+                            ProjectRoleEntity newRole = new ProjectRoleEntity();
+                            BeanMapperUtils.copy(oldRole, newRole);
+                            newRole.setProductId(productId);
+                            newRole.setId(null);
+                            projectRoleService.save(newRole);
+                            obj.setRoleId(newRole.getId());
+                            Pair<String, String> newPair = new Pair<>(oldRole.getId(), newRole.getId());
+                            if (!addRoleList.contains(newPair)) {
+                                addRoleList.add(newPair);
+                            }
+                        }
+                    } else {
+                        //新增角色，防止重复新增先存储List中
+                        ProjectRoleEntity newRole = new ProjectRoleEntity();
+                        BeanMapperUtils.copy(oldRole, newRole);
+                        newRole.setProductId(productId);
+                        newRole.setId(null);
+                        projectRoleService.save(newRole);
+                        obj.setRoleId(newRole.getId());
+                        Pair<String, String> pair = new Pair<>(oldRole.getId(), newRole.getId());
+                        if (!addRoleList.contains(pair)) {
+                            addRoleList.add(pair);
+                        }
+                    }
+                    //新增成员
+                    ProjectMembersEntity newMembers = new ProjectMembersEntity();
+                    BeanMapperUtils.copy(oldMembers, newMembers);
+                    newMembers.setProductId(productId);
+                    newMembers.setId(null);
+                    this.save(newMembers);
+                    obj.setMembersId(newMembers.getId());
+                });
+                List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
+                roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
+                roleRefMemberService.saveBatch(roleRefMemberList);
+            }
+        }
+
+    }
+
+
+    /**
+     * 根据成员获取 信息
+     *
+     * @return java.util.List<com.erp.model.plm.entity.ProjectMembersEntity>
+     * @author yl
+     * @date 2022-12-01 14:04
+     */
+    @Override
+    public List<ProjectMembersEntity> getByMemberIds(List<String> memberIds, String productId) {
+        if (CollectionUtils.isNotEmpty(memberIds)) {
+            LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
+            queryWrapper.in(ProjectMembersEntity::getMemberId, memberIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 

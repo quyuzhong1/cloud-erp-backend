@@ -57,6 +57,36 @@ public class DateUtil {
     }
 
     /**
+     * 获取某天天开始时间
+     *
+     * @return
+     */
+    public static Date getStartTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.setTime(date);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    /**
+     * 获取某天  结束时间
+     * @return
+     */
+    public static Date getEndTime(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.setTime(date);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
+    }
+    /**
      * 对日期的【秒】进行加/减
      *
      * @param date    日期
@@ -327,12 +357,12 @@ public class DateUtil {
     public static String conversionDate(Date date, String fmt) {
         if (date != null) {
             if (StringUtils.isBlank(fmt)) {
-                fmt = DateUtil.fmt;
+                fmt = DateUtil.fmt_day;
             }
             SimpleDateFormat sdf = new SimpleDateFormat(fmt);
             return sdf.format(date.getTime());
         }
-        return "";
+        return "-";
     }
 
 

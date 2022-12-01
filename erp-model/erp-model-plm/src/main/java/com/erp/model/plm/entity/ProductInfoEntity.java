@@ -1,16 +1,12 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Date;
-
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * <p>
@@ -85,6 +81,12 @@ public class ProductInfoEntity implements Serializable {
      */
     @TableField("approval_status")
     private Integer approvalStatus;
+
+    /**
+     * 立项日期
+     */
+    @TableField(value = "approval_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    private Date approvalTime;
 
     /**
      * 以JSON 字符串保存
@@ -217,6 +219,40 @@ public class ProductInfoEntity implements Serializable {
     @TableField(value = "is_finished_product_dev")
     private Integer isFinishedProductDev;
 
+    /**
+     * 版本
+     */
+    @TableField(value = "version")
+    private Integer version;
 
+    /**
+     * 委托开发成本
+     */
+    @TableField(value = "entrusted_develop_cost")
+    private BigDecimal entrustedDevelopCost;
+
+    /**
+     * 模具成本
+     */
+    @TableField(value = "mold_cost")
+    private BigDecimal moldCost;
+
+    /**
+     * 样品费用
+     */
+    @TableField(value = "sample_fee")
+    private BigDecimal sampleFee;
+
+    /**
+     * 是否客户定制(0否，1是)
+     */
+    @TableField(value = "is_customized")
+    private Integer isCustomized;
+
+    /**
+     * 销售渠道
+     */
+    @TableField(value = "sales_channel")
+    private String salesChannel;
 
 }

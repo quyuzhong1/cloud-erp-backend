@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TaskRefSkuConfigMapper">
+
+
+    <select id="getDisableFieldByProductId" resultType="com.erp.model.plm.entity.TaskRefSkuConfigEntity">
+        SELECT tc.id,
+        tc.task_id,
+        tc.field_config_type,
+        tc.sku_id,
+        tc.sku_no,
+        tc.product_id,
+        tc.field_json FROM task_ref_sku_config tc
+        WHERE product_id=#{productId}
+        AND  task_id=(SELECT id FROM project_task WHERE id=tc.task_id
+        AND status IN
+        <foreach collection="statusList" item="state" open="(" separator="," close=")">
+           #{state}
+        </foreach>
+        )
+    </select>
+</mapper>

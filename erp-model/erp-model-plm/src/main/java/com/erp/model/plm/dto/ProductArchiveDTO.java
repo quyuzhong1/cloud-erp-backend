@@ -56,6 +56,7 @@ public class ProductArchiveDTO implements Serializable {
     private Date archiveTime;
 
 
+
     /**
      * 总文档数
      */

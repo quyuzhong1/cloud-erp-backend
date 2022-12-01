@@ -146,9 +146,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     /**
      * 获取所有的菜单code
+     *
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
      * @Author Luo_WG
      * @Date 2022/11/1 14:23
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
      **/
     @Override
     public List<SysMenuVO> findMenuAll() {
@@ -190,9 +191,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     /**
      * 获取所有菜单code
+     *
+     * @return java.util.List<java.lang.String>
      * @Author Luo_WG
      * @Date 2022/11/1 14:30
-     * @return java.util.List<java.lang.String>
      **/
     @Override
     public List<String> findMenuCodeAll() {
@@ -309,9 +311,10 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     /**
      * 获取左侧菜单所有列表
+     *
+     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
      * @Author Luo_WG
      * @Date 2022/11/1 14:26
-     * @return java.util.List<com.erp.common.modules.sys.vo.SysMenuVO>
      **/
     @Override
     public List<SysMenuVO> findLeftMenuAll() {
@@ -344,6 +347,13 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         entity.setDataScope(dto.getDataScope());
         return this.save(entity);
 
+    }
+
+    @Override
+    public List<SysRoleMenuEntity> getMenuRefRoleByRoleIds(List<String> roleIdList) {
+        LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysRoleMenuEntity::getRoleId, roleIdList);
+        return this.list(queryWrapper);
     }
 
     /**

@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BusinessProcessDTO;
+import com.erp.model.plm.dto.BusinessProcessInfoDTO;
 import com.erp.model.plm.entity.BusinessProcessEntity;
+import com.erp.server.plm.enums.BusinessProcessEnum;
 import com.erp.server.plm.mapper.BusinessProcessMapper;
 import com.erp.server.plm.service.BusinessProcessService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,10 +32,30 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
      * @date 2022-10-18 10:51
      */
     @Override
-    public List<BusinessProcessEntity> getProcessList(String businessType) {
+    public List<BusinessProcessInfoDTO> getProcessList(String businessType) {
         LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
-        return this.list(queryWrapper);
+        List<BusinessProcessEntity> list = this.list(queryWrapper);
+        List<BusinessProcessInfoDTO> resultList = new ArrayList<>();
+        for (BusinessProcessEntity item : list) {
+            BusinessProcessInfoDTO info = new BusinessProcessInfoDTO();
+            info.setId(item.getId());
+            info.setBusinessName(item.getBusinessName());
+            String param = item.getParam();
+            String[] params = param.split(",");
+            info.setAuditorTotal(params.length);
+            info.setParam(param);
+            info.setBusinessKey(item.getBusinessKey());
+            String businessKey = item.getBusinessKey();
+            String generalTask = BusinessProcessEnum.GENERAL_TASK.getBusinessKey();
+            if (generalTask.equals(businessKey)) {
+                info.setIsMultiple(true);
+            } else {
+                info.setIsMultiple(false);
+            }
+            resultList.add(info);
+        }
+        return resultList;
     }
 
 
@@ -45,9 +68,10 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
      * @date 2022-10-18 17:10
      */
     @Override
-    public BusinessProcessEntity getProcessByBusinessType(String businessType) {
+    public BusinessProcessEntity getProcessByBusinessKey(String businessType) {
         LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
+        queryWrapper.eq(BusinessProcessEntity::getBusinessKey, businessType);
+        queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }
 

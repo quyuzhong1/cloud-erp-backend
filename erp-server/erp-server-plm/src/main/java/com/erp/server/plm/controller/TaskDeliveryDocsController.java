@@ -9,6 +9,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
+import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,12 +49,31 @@ public class TaskDeliveryDocsController extends BaseController {
         return success(pagingVO);
     }
 
-    @GetMapping("/list")
+    /**
+     * 根据任务id 获取 交付的文档列表
+     * @author yl
+     * @date 2022-11-10 17:48
+     * @param dto
+     * @return com.erp.common.dto.base.ApiResult
+     */
+    @PostMapping("/list")
     //  @RequestPermissions("plm:taskDocs:list")
-    public ApiResult list(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<List<DeliveryDocsDTO>> list(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
         return success(list);
     }
+
+
+    @PostMapping("/deliveryDocsList")
+    //  @RequestPermissions("plm:taskDocs:list")
+    public ApiResult<List<DeliveryDocsDTO>> getDeliveryDocsByTaskId(@RequestBody @Validated BaseIdDTO dto) {
+        List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
+        return success(list);
+    }
+
+
+
+
 
     /**
      * 输出物-设置权限

@@ -1,7 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.CountDTO;
+import com.erp.model.plm.dto.TaskBatchUploadFileDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
@@ -33,4 +35,9 @@ public interface TaskDocsFinishService extends IService<TaskDocsFinishEntity> {
     void removeByDocsIds(String taskId,List<String> existDocsIds);
 
     void removeByTaskId(String taskId);
+
+
+    Boolean startChangeDocsProcess(BaseIdDTO dto);
+
+    Boolean updateFile(TaskChangeFileDTO dto);
 }

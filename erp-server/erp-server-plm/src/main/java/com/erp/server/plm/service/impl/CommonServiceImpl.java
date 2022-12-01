@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -86,6 +87,24 @@ public class CommonServiceImpl implements CommonService {
     public List<FindUserDTO> getAllUser() {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         return userList;
+    }
+
+
+    /**
+     * 根据第三方平台 以及 unionid 获取用户信息
+     *
+     * @param fsPlatform
+     * @param fsUnionId
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-11-14 10:16
+     */
+    @Override
+    public String getUidByUnionId(String fsPlatform, String fsUnionId) {
+        FindUserByThirdDTO third = new FindUserByThirdDTO();
+        third.setThirdPartyType(fsPlatform);
+        third.setThirdPartyUnionId(fsUnionId);
+        return sysUserFeign.getUidByUnionId(third);
     }
 
 

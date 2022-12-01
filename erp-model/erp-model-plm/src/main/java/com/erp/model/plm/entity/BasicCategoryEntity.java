@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDateTime;
-
 import java.io.Serializable;
 import java.util.Date;
 
@@ -38,6 +36,12 @@ public class BasicCategoryEntity implements Serializable {
      */
     @TableField("name")
     private String name;
+
+    /**
+     * 分类代码
+     */
+    @TableField("code")
+    private String code;
 
     /**
      * 父 级id

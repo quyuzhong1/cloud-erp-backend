@@ -50,8 +50,6 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("charge_name")
     private String chargeName;
 
-
-
     /**
      * 计划开始时间
      */
@@ -63,7 +61,6 @@ public class TemplateTaskEntity implements Serializable {
      */
     @TableField("approval_user_id")
     private String approvalUserId;
-
 
     /**
      * j计划结束时间
@@ -86,24 +83,17 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("phase_name")
     private String phaseName;
 
-
-
     /**
-     * 是否是系统任务 1 是  0  不是
+     * 是否是固定任务 1 是  0  不是
      */
     @TableField("is_fixed")
     private Integer isFixed;
-
-
-
 
     /**
      * 任务描述
      */
     @TableField("description")
     private String description;
-
-
 
     /**
      * 创建时间
@@ -112,12 +102,34 @@ public class TemplateTaskEntity implements Serializable {
     private Date createTime;
 
     /**
+     * 创建人
+     */
+    @TableField("create_user_name")
+    private String createUserName;
+
+    /**
+     * 创建人id
+     */
+    @TableField("create_user_id")
+    private String createUserId;
+
+    /**
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    /**
+     * 更新人
+     */
+    @TableField("update_user_name")
+    private String updateUserName;
 
+    /**
+     * 更新人id
+     */
+    @TableField("update_user_id")
+    private String updateUserId;
 
     /**
      * 引用系统任务的id
@@ -141,7 +153,10 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("business_process_id")
     private String businessProcessId;
 
-
-
+    /**
+     * 设置里程碑(0否，1是)
+     */
+    @TableField("is_milepost")
+    private Integer isMilepost;
 
 }

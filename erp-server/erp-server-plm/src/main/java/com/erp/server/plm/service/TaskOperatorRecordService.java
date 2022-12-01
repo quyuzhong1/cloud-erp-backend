@@ -18,4 +18,6 @@ public interface TaskOperatorRecordService  extends IService<TaskOperatorRecordE
     List<TaskOperatorRecordEntity> getByTaskId(String taskId);
 
     void batchSaveTaskRecord(List<ProjectTaskEntity> list, Integer code, String uid, String userName, String s);
+
+    void addTaskOperator(String taskId, Integer beforeState, Integer afterState, String uid, String userName);
 }

@@ -1,11 +1,13 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description 产品采购信息表（VO）
@@ -54,8 +56,8 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 预计首批到货时间
      */
-
-    private Date planArrivalTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
+    private String planArrivalTime;
 
     /**
      * MOQ(最小起订量)
@@ -70,7 +72,8 @@ public class ProductPurchaseShowDTO implements Serializable {
     /**
      * 实际首批到货时间
      */
-    private Date actualArrivalTime;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
+    private String actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货
@@ -131,6 +134,11 @@ public class ProductPurchaseShowDTO implements Serializable {
      * 实际首批到货量
      */
     private Long actualArrivalQty;
+
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
 }

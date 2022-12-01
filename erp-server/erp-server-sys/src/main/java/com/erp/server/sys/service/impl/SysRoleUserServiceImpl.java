@@ -84,10 +84,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
         wrapper.select(SysRoleUserEntity::getRoleId);
         wrapper.eq(SysRoleUserEntity::getUserId, uid);
-        List<Object> list = sysRoleUserMapper.selectObjs(wrapper);
-        List<String> resultList = new ArrayList<>(list.size());
-        resultList = BeanMapperUtils.copyList(String.class, list);
-        return resultList;
+        return this.listObjs(wrapper,Object::toString);
     }
 
 

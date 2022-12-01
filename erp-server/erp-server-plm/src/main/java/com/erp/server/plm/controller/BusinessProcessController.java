@@ -4,6 +4,7 @@ import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BusinessProcessDTO;
+import com.erp.model.plm.dto.BusinessProcessInfoDTO;
 import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.server.plm.service.BusinessProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,14 +34,14 @@ public class BusinessProcessController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<BusinessProcessEntity>> getProcessList(String businessType) {
-        List<BusinessProcessEntity> resultList = businessProcessService.getProcessList(businessType);
+    public ApiResult<List<BusinessProcessInfoDTO>> getProcessList(String businessType) {
+        List<BusinessProcessInfoDTO> resultList = businessProcessService.getProcessList(businessType);
         return success(resultList);
     }
 
 
     /**
-     * 获取流程名及相关信息
+     * 保存流程信息
      *
      * @return
      */

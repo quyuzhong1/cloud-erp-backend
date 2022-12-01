@@ -19,5 +19,8 @@ public class MabangOrderDTO {
     @NotNull(message = "任务id 不能为空")
     private Integer taskId;
 
+    private Boolean exportData;
+
     private MultipartFile  file;
+
 }

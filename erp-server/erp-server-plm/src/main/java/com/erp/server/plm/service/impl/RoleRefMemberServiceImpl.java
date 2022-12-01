@@ -7,14 +7,22 @@ import com.common.core.utils.BeanMapper;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
+import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.server.plm.mapper.RoleRefMemberMapper;
+import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.RoleRefMemberService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.annotation.Around;
 import org.checkerframework.checker.units.qual.C;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -24,6 +32,9 @@ import java.util.List;
 public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, RoleRefMemberEntity>
         implements RoleRefMemberService {
 
+
+    @Autowired
+    private ProjectMembersService projectMembersService;
 
     /**
      * 根据角色id 获取到对应的成员
@@ -42,34 +53,34 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
     }
 
     /**
-     * 添加或者修改 关系表
+     * 添加 关系表
      *
-     * @param roleRefMemberId
-     * @param memberId
+     * @param membersTableIds 成员表id
      * @param roleId
      * @return void
      * @author yl
      * @date 2022-10-10 15:01
      */
     @Override
-    public void saveOrUpdateRef(String roleRefMemberId, String memberId, String roleId, String productId) {
-        //表示 是修改
-        if (StringUtils.isNotBlank(roleRefMemberId)) {
-            //如果修改  先查出来原来用没有
-            LambdaUpdateWrapper<RoleRefMemberEntity> queryWrapper = new LambdaUpdateWrapper<>();
-            queryWrapper.eq(RoleRefMemberEntity::getId, roleRefMemberId);
-            queryWrapper.set(RoleRefMemberEntity::getRoleId, roleId);
-            queryWrapper.set(RoleRefMemberEntity::getMembersId, memberId);
-            queryWrapper.set(RoleRefMemberEntity::getProductId, productId);
-            this.update(queryWrapper);
-        } else {
+    public void saveRef(List<String> membersTableIds, String roleId, String productId) {
+
+
+        List<RoleRefMemberEntity> addList = new ArrayList<>();
+        for (String membersTableId : membersTableIds) {
             RoleRefMemberEntity ref = new RoleRefMemberEntity();
-            ref.setMembersId(memberId);
             ref.setRoleId(roleId);
             ref.setProductId(productId);
-            this.save(ref);
+            ref.setMembersId(membersTableId);
+            addList.add(ref);
         }
+        this.saveBatch(addList);
 
+    }
+
+    private List<RoleRefMemberEntity> getExistList(String roleId) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
+        return this.list(queryWrapper);
     }
 
     /**
@@ -81,13 +92,15 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
      * @date 2022-10-11 11:02
      */
     @Override
-    public void checkRoleMember(String id, String roleId, String memberId) {
-        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(RoleRefMemberEntity::getRoleId, roleId);
-        queryWrapper.eq(RoleRefMemberEntity::getMembersId, memberId);
-        queryWrapper.ne(RoleRefMemberEntity::getId, id);
-        RoleRefMemberEntity entity = this.getOne(queryWrapper);
-        if (entity != null) {
+    public void checkRoleMember(String id, String roleId, List<String> memberIds, String productId) {
+
+        List<RoleRefMemberEntity> existList = getExistList(roleId);
+        List<String> existMemberTableIds = existList.stream().map(RoleRefMemberEntity::getMembersId).collect(Collectors.toList());
+        List<ProjectMembersEntity> projectMembersList = projectMembersService.getByMemberIds(memberIds, productId);
+        List<String> memberTableIds = projectMembersList.stream().map(ProjectMembersEntity::getId).collect(Collectors.toList());
+        List<String> intersection = existMemberTableIds.stream().filter(item -> memberTableIds.contains(item)).collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(intersection)) {
             throw new ServiceException(ApiError.ERROR_95021);
         }
     }
@@ -106,7 +119,7 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         queryWrapper.select(RoleRefMemberEntity::getRoleId);
         queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
         queryWrapper.eq(RoleRefMemberEntity::getMembersId, userId);
-        return this.listObjs(queryWrapper,Object::toString);
+        return this.listObjs(queryWrapper, Object::toString);
     }
 }
 
