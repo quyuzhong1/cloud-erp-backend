@@ -721,11 +721,31 @@ public class ProductDetailController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 申请变更
+     * @author Will
+     * @date: 2022/12/1 15:41
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/applyChange")
+    public ApiResult applyChange(@RequestParam("id") String id) {
+        Boolean result = productDetailService.applyChange(id);
+        return result == true ? success() : failure();
+    }
 
+
+    /**
+     * 审核完成监听调用
+     * @author Will
+     * @date: 2022/12/1 15:21
+     * @param processId
+     * @return ApiResult
+     */
     @PostMapping("/productDetailProcessPass")
     public ApiResult productDetailProcessPass(String processId) {
-        productDetailService.productDetailProcessPass(processId);
-        return success();
+        Boolean result = productDetailService.productDetailProcessPass(processId);
+        return result == true ? success() : failure();
     }
 
 }

@@ -244,5 +244,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param processId
 
      */
-    void productDetailProcessPass(String processId);
+    Boolean productDetailProcessPass(String processId);
+    /**
+     * @description: 申请变更
+     * @author Will
+     * @date: 2022/12/1 15:41
+     * @param id
+     * @return Boolean
+     */
+    Boolean applyChange(String id);
 }
