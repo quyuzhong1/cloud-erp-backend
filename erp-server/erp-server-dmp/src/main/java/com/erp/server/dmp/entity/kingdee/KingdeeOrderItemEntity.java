@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 @ToString
 @NoArgsConstructor
-public class OrderItemEntity {
+public class KingdeeOrderItemEntity {
     private String fBillNo;
     private String fReturnType;
     private String fRowType;
@@ -33,7 +33,7 @@ public class OrderItemEntity {
     private String f_ulz_BaseProperty;
     private String fMapId;
     private String fBaseUnitId;
-    private String fOldQty;
+    private Integer fOldQty;
     private String fTaxNetPrice;
     private String fDiscount;
     private String fPriceDiscount;

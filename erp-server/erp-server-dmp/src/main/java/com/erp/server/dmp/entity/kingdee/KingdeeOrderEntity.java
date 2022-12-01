@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -213,5 +212,5 @@ public class KingdeeOrderEntity {
     /**
      * 商品信息
      */
-    private List<OrderItemEntity> orderItemEntityList;
+    private List<KingdeeOrderItemEntity> orderItemEntityList;
 }

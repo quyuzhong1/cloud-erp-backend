@@ -1,21 +1,17 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.server.dmp.constant.MongoTableNameContant;
-import com.erp.server.dmp.constant.UrlContant;
 import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
 import com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity;
-import com.erp.server.dmp.entity.dmp.MabangAppEntity;
+import com.erp.server.dmp.entity.dmp.DmpOrderItemEntity;
 import com.erp.server.dmp.entity.dto.JobTaskDTO;
 import com.erp.server.dmp.entity.dto.OrderMongoDTO;
 import com.erp.server.dmp.entity.dto.RequestDTO;
 import com.erp.server.dmp.entity.kingdee.KingdeeOrderEntity;
-import com.erp.server.dmp.entity.kingdee.OrderItemEntity;
-import com.erp.server.dmp.entity.mabang.OrderEntity;
+import com.erp.server.dmp.entity.kingdee.KingdeeOrderItemEntity;
 import com.erp.server.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
@@ -23,14 +19,12 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
-import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -242,7 +236,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             param.setLimit(10000);
                             param.setStartRow(pageIndex);
                             param.setTopRowCount(10000);
-                            List<OrderItemEntity> orderItemEntityList = new ArrayList<>();
+                            List<KingdeeOrderItemEntity> orderItemEntityList = new ArrayList<>();
                             List<List<Object>> resultTwo = client.executeBillQuery(JSONObject.toJSONString(param));
                             if (!resultTwo.isEmpty()) {
                                 if (resultTwo.size() == 1 && resultTwo.get(0).get(0).toString().contains("IsSuccess=false")) {
@@ -252,7 +246,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
                                 for (List<Object> objectList : resultTwo) {
                                     Map<String, String> mapItem = KingdeeUtils.keySetValByLinked(fieldKeyst, objectList);
-                                    OrderItemEntity orderItemEntity = new OrderItemEntity();
+                                    KingdeeOrderItemEntity orderItemEntity = new KingdeeOrderItemEntity();
                                     orderItemEntity.setFBillNo(mapItem.get("FBillNo"));
                                     orderItemEntity.setFReturnType(mapItem.get("FReturnType"));
                                     orderItemEntity.setFRowType(mapItem.get("FRowType"));
@@ -276,7 +270,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setF_ulz_BaseProperty(mapItem.get("F_ulz_BaseProperty"));
                                     orderItemEntity.setFMapId(mapItem.get("FMapId"));
                                     orderItemEntity.setFBaseUnitId(mapItem.get("FBaseUnitId"));
-                                    orderItemEntity.setFOldQty(mapItem.get("FOldQty"));
+                                    orderItemEntity.setFOldQty(Integer.valueOf(mapItem.get("FOldQty")));
                                     orderItemEntity.setFTaxNetPrice(mapItem.get("FTaxNetPrice"));
                                     orderItemEntity.setFDiscount(mapItem.get("FDiscount"));
                                     orderItemEntity.setFPriceDiscount(mapItem.get("FPriceDiscount"));
@@ -348,8 +342,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
-        List<OrderItemEntity> orderItemEntityList = kingdeeOrderEntity.getOrderItemEntityList();
-        for (OrderItemEntity orderItemEntity : orderItemEntityList) {
+        List<KingdeeOrderItemEntity> orderItemEntityList = kingdeeOrderEntity.getOrderItemEntityList();
+        for (KingdeeOrderItemEntity orderItemEntity : orderItemEntityList) {
             totalPrice = orderItemEntity.getFPrice().multiply(orderItemEntity.getFQty());
             totalCost = orderItemEntity.getF_ulz_CGCB().multiply(orderItemEntity.getFQty());
 
@@ -460,12 +454,12 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         //补贴金额
         dmpOrderInfoEntity.setSubsidyAmount(BigDecimal.ZERO);
-//
-//        //国家英文名称
-//        dmpOrderInfoEntity.setCountryNameEn(orderEntity.getCountryNameEN());
-//
-//        //国家英文名称
-//        dmpOrderInfoEntity.setCountryNameCn(orderEntity.getCountryNameCN());
+
+        //国家英文名称
+        dmpOrderInfoEntity.setCountryNameEn("");
+
+        //国家中文名称
+        dmpOrderInfoEntity.setCountryNameCn(kingdeeOrderEntity.getFSHGJ1());
 
         //平台标识
         dmpOrderInfoEntity.setPlatformSign("金蝶云星空");
@@ -474,9 +468,93 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         //新增订单信息
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
-//        if (StringUtils.isNotBlank(orderInfoId)) {
-//            //新增订单商品信息
-//            analysisOrderItem(orderEntity.getOrderItem(), orderInfoId);
-//        }
+        if (StringUtils.isNotBlank(orderInfoId)) {
+            //新增订单商品信息
+            analysisOrderItem(kingdeeOrderEntity.getOrderItemEntityList(), orderInfoId);
+        }
+    }
+
+    /**
+     * 解析订单商品数据
+     * @Author Luo_WG
+     * @Date 2022/11/14 18:57
+     * @return void
+     **/
+    public void analysisOrderItem(List<KingdeeOrderItemEntity> orderItem, String orderId) {
+        List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
+        for (KingdeeOrderItemEntity orderItemBean : orderItem) {
+            DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
+
+            //订单表id
+            dmpOrderItemEntity.setOrderId(orderId);
+
+            //商品id
+            dmpOrderItemEntity.setItemId(orderItemBean.getFMaterialId());
+
+            //平台sku
+            dmpOrderItemEntity.setPlatformSku(orderItemBean.getFMaterialId());
+
+            //平台原始sku数量
+            dmpOrderItemEntity.setPlatformQuantity(orderItemBean.getFOldQty());
+
+            //商品名称
+            dmpOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
+
+            //商品图片
+            dmpOrderItemEntity.setPictureUrl("");
+
+//            //商品成本价
+//            dmpOrderItemEntity.setCostPrice(orderItemBean.getCostPrice());
+//
+//            //商品原始售价
+//            dmpOrderItemEntity.setSellPriceOrigin(orderItemBean.getSellPriceOrigin());
+//
+//            //商品售价
+//            dmpOrderItemEntity.setSellPrice(orderItemBean.getSellPrice());
+//
+//            //商品数量
+//            dmpOrderItemEntity.setQuantity(orderItemBean.getQuantity());
+//
+//            //商品单位
+//            dmpOrderItemEntity.setProductUnit(orderItemBean.getProductUnit());
+//
+//            //是否是赠品 1. 是 2. 否
+//            dmpOrderItemEntity.setIsGift(orderItemBean.getIsGift());
+//
+//            //缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
+//            dmpOrderItemEntity.setHasGoods(orderItemBean.getHasGoods());
+//
+//            //是否是组合商品 1.组合 2非组合
+//            dmpOrderItemEntity.setIsCombo(orderItemBean.getIsCombo());
+//
+//            //订单商品备注
+//            dmpOrderItemEntity.setItemRemark(orderItemBean.getItemRemark());
+//
+//            //商品多属性
+//            dmpOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
+//
+//            //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
+//            dmpOrderItemEntity.setStatus(orderItemBean.getStatus());
+//
+//            //商品仓位
+//            dmpOrderItemEntity.setStockGrid(orderItemBean.getStockGrid());
+//
+//            //sku
+//            dmpOrderItemEntity.setSkuNo(orderItemBean.getStockSku());
+//
+//            //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
+//            dmpOrderItemEntity.setStockStatus(orderItemBean.getStockStatus());
+//
+//            //商品仓库编号
+//            dmpOrderItemEntity.setStockWarehouseId(orderItemBean.getStockWarehouseId());
+//
+//            //erp平台商品id
+//            dmpOrderItemEntity.setErpOrderItemId(orderItemBean.getErpOrderItemId());
+
+            orderItemList.add(dmpOrderItemEntity);
+        }
+        dmpOrderItemService.checkOrderItem(orderItemList);
+//        dmpOrderItemService.batchAdd(orderItemList);
+//        return orderItemList;
     }
 }
