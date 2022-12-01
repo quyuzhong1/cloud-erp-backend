@@ -71,9 +71,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
         //配置表单属性
-        String fieldConfigType = dto.getFieldConfigType();
+        String fieldJson = dto.getFieldJson();
         //如果配置表单 一般任务 一定要走流程
-        if (StringUtils.isNotBlank(fieldConfigType)) {
+        if (StringUtils.isNotBlank(fieldJson)) {
             Integer type = dto.getType();
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程

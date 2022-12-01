@@ -399,9 +399,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             throw new ServiceException(ApiError.ERROR_9011);
         }
         //配置表单属性
-        String fieldConfigType = dto.getFieldConfigType();
+        String fieldJson = dto.getFieldJson();
         //如果配置表单 一般任务 一定要走流程
-        if (StringUtils.isNotBlank(fieldConfigType)) {
+        if (StringUtils.isNotBlank(fieldJson)) {
             Integer type = dto.getType();
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
