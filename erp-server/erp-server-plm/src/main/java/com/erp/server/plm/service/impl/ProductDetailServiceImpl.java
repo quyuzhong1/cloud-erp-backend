@@ -694,43 +694,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
-            //sku启动审核流程
-            ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
-            //验证是否设置审核人
-            if (ObjectUtils.isEmpty(approverEntity)) {
-                throw new ServiceException(ApiError.ERROR_95076);
-            }
-            String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
-            //初始状态为待审核
-            Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
-            BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
-            if (!Objects.isNull(processEntity)) {
-                StartProcessDTO startProcess = new StartProcessDTO();
-                LoginUser loginUser = commonService.getUserInfo();
-                startProcess.setBusinessKey(processEntity.getBusinessKey());
-                startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                startProcess.setUserId(loginUser.getUid());
-                //审核人1
-                List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
-                //审核人2
-                List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
-                //审核人3
-                List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
-                Map<String, Object> parameterMap = new HashMap<>();
-                parameterMap.put("firstApproveIdList",firstApproveIdList);
-                parameterMap.put("secondApproveIdList",secondApproveIdList);
-                parameterMap.put("thirdApproveIdList",thirdApproveIdList);
-                startProcess.setParameterMap(parameterMap);
-                //启动流程
-                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-                String processId = processResult.getProcessId();
-                if (StringUtils.isNotBlank(processId)) {
-                    productDetailEntity.setProcessId(processId);
-                    productDetailEntity.setBusinessProcessId(processEntity.getId());
-                    productDetailEntity.setStatus(waitConfirmCode);
-                }
-            }
-
+            //启动审核流程
+            this.productDetailStartProcess(productDetailEntity);
             list.add(productDetailEntity);
         }
 
@@ -740,6 +705,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return this.queryByProductId(id);
     }
+
 
     /**
      * @param skuId:产品sku表主键id
@@ -1255,7 +1221,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //验证sku关联任务是否完成
-        if (IsConstant.YES.equals(entity.getIsFinishTask())) {
+        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
             throw new ServiceException(ApiError.ERROR_95079);
         }
         //验证sku是否审核通过
@@ -1283,19 +1249,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95081);
         }
-        LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
-        String userName = loginUser.getUserName();
-        //调用回退方法
-        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
-        approveProcess.setProcessInstanceId(entity.getProcessId());
-        approveProcess.setUserId(userId);
-        CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
-            return workflowFeign.rejectOriginProcess(approveProcess);
-        });
-        Integer code = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
-        //更新产品信息状态
-        return this.updateProductDetailState(id, code, userId, userName);
+        //重新启动流程
+        this.productDetailStartProcess(entity);
+        //反审核后用新的流程审核人员审核
+        return this.updateById(entity);
     }
 
 
@@ -1317,4 +1274,52 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.eq(ProductDetailEntity::getId,id);
         return this.update(updateWrapper);
     }
+
+
+    /**
+     * @description: 启动审核流程
+     * @author Will
+     * @date: 2022/12/1 18:33
+     * @param productDetailEntity
+     */
+    private void productDetailStartProcess(ProductDetailEntity productDetailEntity) {
+        //sku启动审核流程
+        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+        //验证是否设置审核人
+        if (ObjectUtils.isEmpty(approverEntity)) {
+            throw new ServiceException(ApiError.ERROR_95076);
+        }
+        String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
+        //初始状态为待审核
+        Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
+        BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
+        if (!Objects.isNull(processEntity)) {
+            StartProcessDTO startProcess = new StartProcessDTO();
+            LoginUser loginUser = commonService.getUserInfo();
+            startProcess.setBusinessKey(processEntity.getBusinessKey());
+            startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+            startProcess.setUserId(loginUser.getUid());
+            //审核人1
+            List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
+            //审核人2
+            List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
+            //审核人3
+            List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
+            Map<String, Object> parameterMap = new HashMap<>();
+            parameterMap.put("firstApproveIdList",firstApproveIdList);
+            parameterMap.put("secondApproveIdList",secondApproveIdList);
+            parameterMap.put("thirdApproveIdList",thirdApproveIdList);
+            startProcess.setParameterMap(parameterMap);
+            //启动流程
+            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+            String processId = processResult.getProcessId();
+            if (StringUtils.isNotBlank(processId)) {
+                productDetailEntity.setProcessId(processId);
+                productDetailEntity.setBusinessProcessId(processEntity.getId());
+                productDetailEntity.setStatus(waitConfirmCode);
+            }
+        }
+    }
+
+
 }
