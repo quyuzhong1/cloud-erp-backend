@@ -398,14 +398,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
+        Integer type = dto.getType();
         //配置表单属性
         String fieldJson = dto.getFieldJson();
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //如果配置表单 一般任务 一定要走流程
         if (StringUtils.isNotBlank(fieldJson)) {
-            Integer type = dto.getType();
-            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalUserIds)) {
@@ -429,6 +429,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        //如果是评审任务的话就 清空
+        if(!generalTask.equals(type)){
+            entity.setApprovalUserId("");
         }
         entity.setChargeId(String.join(",", chargeId));
         entity.setChargeName(chargeNames);

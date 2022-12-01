@@ -75,9 +75,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         //配置表单属性
         String fieldJson = dto.getFieldJson();
+        Integer type = dto.getType();
         //如果配置表单 一般任务 一定要走流程
         if (StringUtils.isNotBlank(fieldJson)) {
-            Integer type = dto.getType();
+
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
@@ -86,12 +87,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 }
             }
         }
-
-
+        Boolean isReview=TaskTypeEnum.REVIEW_TASK.getCode().equals(type);
 
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        if(isReview){
+            entity.setApprovalUserId("");
         }
         String chargeNames = commonService.getNameByIds(chargeIds);
         entity.setChargeName(chargeNames);

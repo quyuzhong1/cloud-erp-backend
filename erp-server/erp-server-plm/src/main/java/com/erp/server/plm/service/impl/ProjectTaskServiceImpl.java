@@ -1128,6 +1128,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
         LoginUser loginUser = commonService.getUserInfo();
+        Integer type = dto.getType();
+        Boolean isGeneral=TaskTypeEnum.GENERAL_TASK.getCode().equals(type);
         ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
         String phaseName = "";
         if (phaseEntity != null) {
@@ -1138,11 +1140,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         } else {
             taskEntity.setProperty(TaskConstant.PROJECT_TASK);
         }
+
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }
+        //当是评审任务的时候
+        if(!isGeneral){
+            taskEntity.setApprovalUserId("");
         }
         List<String> chargeId = dto.getChargeIds();
         String chargeName = commonService.getNameByIds(chargeId);
@@ -2674,7 +2681,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //一般任务code
         Integer generalTaskCode = TaskTypeEnum.GENERAL_TASK.getCode();
         //是否确认完成
-        Boolean isConfirmFinish = dto.getIsConfirmFinish()==null?false:dto.getIsConfirmFinish();
+        Boolean isConfirmFinish = dto.getIsConfirmFinish() == null ? false : dto.getIsConfirmFinish();
         //当不是的时候
         if (!isConfirmFinish) {
             //查询是否有未完成的sku
