@@ -2711,7 +2711,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          */
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         Date nowDate = new Date();
-        this.updateTaskState(noProcessTaskIds, TaskStateEnum.FINISH.getCode(), null, nowDate);
         //任务与sku 的关联
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskIdList(noProcessTaskIds);
         List<String> skuIds = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
@@ -2724,6 +2723,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //发送部分完成任务通知
         List<ProjectTaskEntity> portionFinishList = list.stream().filter(p -> noFinishSkuTaskIdList.contains(p.getId())).collect(Collectors.toList());
         noticeMessageService.portionFinishTaskNotice(loginUser.getUserName(), portionFinishList, dto.getProductId());
+
         List<String> finishSkuTaskIdList = noProcessTaskIds.stream().filter(t -> !noFinishSkuTaskIdList.contains(t)).collect(Collectors.toList());
         this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
 
@@ -2736,6 +2736,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isNotEmpty(processList)) {
             //获取到所有流程的信息
             List<BusinessProcessEntity> businessProcessList = businessProcessService.list();
+            List<ProjectTaskEntity> waitConfirmNoticeList = new ArrayList<>(processList.size());
             //有审核流程的 要启动流程了
             for (ProjectTaskEntity processTask : processList) {
                 //获取到自定义的审核人
@@ -2766,6 +2767,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                                     processTask.setStatus(WaitConfirmCode);
                                     processTask.setRealityStartTime(nowDate);
                                     processTask.setBusinessProcessId(processEntity.getId());
+                                    waitConfirmNoticeList.add(processTask);
                                     this.updateById(processTask);
                                     TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
                                     recordEntity.setOperatorName(loginUser.getUserName());
@@ -2785,6 +2787,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskOperatorRecordService.batchSaveRecord(processTaskIds, TaskStateEnum.APPROVAL_NO_PASS.getCode(), WaitConfirmCode, loginUser.getUid(), loginUser.getUserName(), "");
                 }
             }
+
+            //发送完成待审核的消息
+            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), finishSkuTaskList, dto.getProductId());
         }
 
         return true;

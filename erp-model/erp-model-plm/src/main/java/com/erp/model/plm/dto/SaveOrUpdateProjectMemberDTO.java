@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Classname AddProjectMemberDTO
@@ -28,10 +30,10 @@ public class SaveOrUpdateProjectMemberDTO implements Serializable {
     private String roleRefMemberId;
 
     /**
-     * 用户id
+     * 用户id集合不能为空
      */
-    @NotBlank(message = "用户id不能为空")
-    private String userId;
+    @NotNull(message = "用户id不能为空")
+    private List<String> userIdList;
 
 
     /**
@@ -49,10 +51,5 @@ public class SaveOrUpdateProjectMemberDTO implements Serializable {
     private String roleId;
 
 
-    /**
-     * 是否是项目负责人
-     * 0不是 1 是
-     */
-    @StateEnumValue(intValues = {0, 1}, message = "是否是项目负责人")
-    private Integer isCharge;
+
 }

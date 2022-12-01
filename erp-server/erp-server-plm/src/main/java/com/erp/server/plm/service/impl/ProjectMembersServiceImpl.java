@@ -44,9 +44,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
 
     @Autowired
-    private ProjectInfoService projectInfoService;
-
-    @Autowired
     private ProjectTaskService projectTaskService;
 
     @Autowired
@@ -69,6 +66,9 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Autowired
     private TemplateRoleRefMembersService templateRoleRefMembersService;
+
+    @Autowired
+    private CommonService commonService;
 
 
     /**
@@ -145,30 +145,33 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Override
     @Transactional
     public Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = commonService.getUserInfo();
+        List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserId());
-
-        ProjectMembersEntity entity = new ProjectMembersEntity();
-        entity.setProductId(dto.getProductId());
-        FindUserDTO userDto = userList.stream().filter(u -> dto.getUserId().equals(u.getUserId())).findFirst().orElse(null);
-        String userName = "";
-        if (userDto != null) {
-            userName = userDto.getUserName();
-        }
-        entity.setMemberName(userName);
-        entity.setMemberId(dto.getUserId());
-        entity.setId(id);
-        entity.setIsCharge(dto.getIsCharge());
-        if (loginUser != null) {
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(),dto.getProductId());
+        List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
+        for (String userId : userIdList) {
+            ProjectMembersEntity entity = new ProjectMembersEntity();
+            entity.setProductId(dto.getProductId());
+            FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+            String userName = "";
+            if (user != null) {
+                userName = user.getUserName();
+            }
+            entity.setMemberName(userName);
+            entity.setMemberId(userId);
+            entity.setId(id);
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
+            addList.add(entity);
         }
-        Boolean flag = this.saveOrUpdate(entity);
+
+        Boolean flag = this.saveOrUpdateBatch(addList);
         //保存成功就要去保存关系表
         if (flag) {
-            roleRefMemberService.saveOrUpdateRef(dto.getRoleRefMemberId(), entity.getId(), dto.getRoleId(), dto.getProductId());
+            List<String> membersTableIds = addList.stream().map(ProjectMembersEntity::getId).collect(Collectors.toList());
+            roleRefMemberService.saveRef(membersTableIds, dto.getRoleId(), dto.getProductId());
         }
         return flag;
 
@@ -443,6 +446,25 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             }
         }
 
+    }
+
+
+    /**
+     * 根据成员获取 信息
+     *
+     * @return java.util.List<com.erp.model.plm.entity.ProjectMembersEntity>
+     * @author yl
+     * @date 2022-12-01 14:04
+     */
+    @Override
+    public List<ProjectMembersEntity> getByMemberIds(List<String> memberIds, String productId) {
+        if (CollectionUtils.isNotEmpty(memberIds)) {
+            LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
+            queryWrapper.in(ProjectMembersEntity::getMemberId, memberIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 

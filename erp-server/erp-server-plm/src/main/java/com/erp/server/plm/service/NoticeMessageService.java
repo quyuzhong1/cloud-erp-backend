@@ -86,4 +86,7 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     Boolean docChangesNotice(String userName,String productId,String taskId,String docName);
 
     void sendEarlyWarning();
+
+    //完成待审核的  只有审核人 发送通知
+    void finishWaitConfirmNotice(String userName, List<ProjectTaskEntity> finishSkuTaskList, String productId);
 }
