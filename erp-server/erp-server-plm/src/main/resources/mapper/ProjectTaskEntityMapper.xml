@@ -687,7 +687,7 @@
                 ${dto.param}
             </if>
         </where>
-        order by t.plan_listing_time asc, t.skuId desc
+        order by t.plan_listing_time asc nulls last, t.skuId desc
     </select>
 
 
