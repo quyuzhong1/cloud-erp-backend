@@ -1,5 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
+import com.alibaba.fastjson.JSONObject;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.map.LinkedMap;
 
@@ -10,18 +12,24 @@ import java.util.Set;
 
 public class ttc {
 
-    public static void main(String[] args) {
-        String fieldKeys = "FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
-                "FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus";
+    public static void main(String[] args) throws Exception {
+        //读取配置，初始化SDK
+        K3CloudApi client = new K3CloudApi();
 
-        String[] split = fieldKeys.split(",");
-        Map< String, String > map = new LinkedHashMap();
-        for (String val : split) {
-            map.put(val,"");
-        }
-        map.entrySet().stream().forEach(req -> {
-            System.out.println(req.getKey());
-        });
+        String formId = "SAL_SaleOrder";
+
+
+        String jsonData = "{\"CreateOrgId\":0,\"Number\":\"\",\"Id\":\"140805\",\"IsSortBySeq\":\"false\"}";
+//调用接口
+        String resultJson = client.view(formId,jsonData);
+
+
+
+        String s = JSONObject.toJSONString(resultJson);
+
+        System.out.println(s);
+        Object parse = JSONObject.parse(s);
+
 
     }
 }

@@ -20,7 +20,7 @@ public class KingdeeUtils {
 
         while (iterator.hasNext()) {
             Map.Entry<String, String> next = iterator.next();
-            next.setValue((String) list.get(indexSign));
+            next.setValue(String.valueOf(list.get(indexSign)));
             indexSign++;
         }
         return map;

@@ -77,7 +77,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         if (orderEntities != null && orderEntities.size() > 0) {
             for (KingdeeOrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-                orderMongoDTO.setPlatformOrderId(orderEntity.getFBillNo());
+                orderMongoDTO.setFBillNo(orderEntity.getFBillNo());
                 List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
                 if (mongoData != null && mongoData.size() > 0) {
                     for (KingdeeOrderEntity mongoDatum : mongoData) {
@@ -102,7 +102,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
                 }
                 //存储数据到中台
-                //analysisOrder(orderEntity);
+                analysisOrder(orderEntity);
             }
         }
     }
@@ -115,6 +115,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
     public List<KingdeeOrderEntity> pullDate(RequestDTO dto) {
         List<KingdeeOrderEntity> infoArrayList = new ArrayList<>();
         try {
+            List<Map<String, String>> maps = pullCurrency(dto);
+
             JobTaskDTO jobTask = dto.getJobTaskDTO();
             Integer lastTime = jobTask.getLastTime();
             Integer nextTime = jobTask.getNextTime();
@@ -137,8 +139,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                 dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
             }
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-
             //读取配置，初始化SDK
             K3CloudApi client = new K3CloudApi();
 
@@ -147,9 +147,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             queryfilters.add(String.format("FModifyDate >= '%s'", st));
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
             queryfilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
-            queryfilters.add(String.format("FModifyDate StatusEqualto '%s'", sd));
+            queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
             String filterStr = String.join(" and ",  queryfilters );
-            String fieldKeys = "FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId,";
+            String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId,";
 
             Boolean dataSign = true;
             //当前页数
@@ -171,14 +171,13 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
                 Map<String, Object> stringObjectMap = null;
                 try {
-//失败：第一个for：[{Result={ResponseStatus={ErrorCode=500, IsSuccess=false, Errors=[{FieldName=null, Message=在应使用条件的上下文(在 'AND' 附近)中指定了非布尔类型的表达式。, DIndex=0}], SuccessEntitys=[], SuccessMessages=[], MsgCode=6}}}]
 
                     List<List<Object>> result = client.executeBillQuery(s);
 
                     if (!result.isEmpty()) {
                         if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
                             dataSign = false;
-                            throw new RuntimeException(" ===== 金蝶云星空解析采购订单数据失败 ===== ");
+                            throw new RuntimeException(" ===== 金蝶云星空解析采购订单数据失败 ===== " + result);
                         }
 
 
@@ -188,7 +187,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             orderEntity.setFID(stringStringMap.get("FID"));
                             orderEntity.setFBillNo(stringStringMap.get("FBillNo"));
                             orderEntity.setFDate(stringStringMap.get("FDate"));
-                            orderEntity.setFBillTypeID(stringStringMap.get("FBillTypeID"));
+                            orderEntity.setFBillTypeID(stringStringMap.get("FBillTypeId.FName"));
                             orderEntity.setFDocumentStatus(stringStringMap.get("FDocumentStatus"));
                             orderEntity.setFCustId(stringStringMap.get("FCustId"));
                             orderEntity.setFSaleDeptId(stringStringMap.get("FSaleDeptId"));
@@ -223,13 +222,15 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             orderEntity.setF_SK_Date(stringStringMap.get("F_SK_Date"));
                             orderEntity.setFSHGJ1(stringStringMap.get("F_SHGJ1"));
                             orderEntity.setFExchangeRate(BigDecimal.valueOf(Double.valueOf(stringStringMap.get("FExchangeRate"))));
-                            orderEntity.setFSettleCurrId(stringStringMap.get("FSettleCurrId"));
+                            if (StringUtils.isNotBlank(stringStringMap.get("FSettleCurrId"))) {
+                                orderEntity.setFSettleCurrId(maps.get(Integer.valueOf(stringStringMap.get("FSettleCurrId"))-1).get("FCODE"));
+                            }
 
                             LinkedList<String> queryfilterst = new LinkedList<>();
                             queryfilterst.add(String.format("FBillNo = '%s'", objects.get(1)));
                             queryfilterst.add(String.format("FID = '%s'", objects.get(0)));
                             String filterStrt = String.join(" and ", queryfilterst);
-                            String fieldKeyst = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus,F_ulz_CGCB";
+                            String fieldKeyst = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus,F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName";
                             param.setFormId(formId);
                             param.setFieldKeys(fieldKeyst);
                             param.setFilterString(filterStrt);
@@ -270,7 +271,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setF_ulz_BaseProperty(mapItem.get("F_ulz_BaseProperty"));
                                     orderItemEntity.setFMapId(mapItem.get("FMapId"));
                                     orderItemEntity.setFBaseUnitId(mapItem.get("FBaseUnitId"));
-                                    orderItemEntity.setFOldQty(Integer.valueOf(mapItem.get("FOldQty")));
+                                    orderItemEntity.setFOldQty(Double.valueOf(mapItem.get("FOldQty")).intValue());
                                     orderItemEntity.setFTaxNetPrice(mapItem.get("FTaxNetPrice"));
                                     orderItemEntity.setFDiscount(mapItem.get("FDiscount"));
                                     orderItemEntity.setFPriceDiscount(mapItem.get("FPriceDiscount"));
@@ -280,8 +281,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setFSrcBillNo(mapItem.get("FSrcBillNo"));
                                     orderItemEntity.setFMinPlanDeliveryDate(mapItem.get("FMinPlanDeliveryDate"));
                                     orderItemEntity.setFDeliveryStatus(mapItem.get("FDeliveryStatus"));
+                                    orderItemEntity.setF_ulz_Decimal(BigDecimal.valueOf(Double.valueOf(mapItem.get("F_ulz_Decimal"))));
                                     orderItemEntity.setF_ulz_CGCB(BigDecimal.valueOf(Double.valueOf(mapItem.get("F_ulz_CGCB"))));
-                                    orderItemEntityList.add(orderItemEntity);
+                                    orderItemEntity.setFSOStockId(mapItem.get("FSOStockId.FName"));
+                                   orderItemEntityList.add(orderItemEntity);
                                 }
                             }
                             orderEntity.setOrderItemEntityList(orderItemEntityList);
@@ -299,6 +302,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                     dataSign = false;
                 }
@@ -319,8 +323,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      **/
     public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.utc_zero_millisec.toTimePattern());
-
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(kingdeeOrderEntity.getFBillNo());
 
@@ -334,10 +337,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         //买家姓名
         dmpOrderInfoEntity.setBuyerName(kingdeeOrderEntity.getFLinkMan());
 
-        //店铺编号 //TODO 暂无
+        //店铺编号
         dmpOrderInfoEntity.setShopNo("B2B");
 
-        //店铺名称 //TODO 暂无
+        //店铺名称
         dmpOrderInfoEntity.setShopName("B2B");
 
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -372,7 +375,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setIsRefund(null);
 
         //订单付款时间f_SK_Date
-        if (StringUtils.isNotBlank(kingdeeOrderEntity.getF_SK_Date())) {
+        if (StringUtils.isNotBlank(kingdeeOrderEntity.getF_SK_Date()) && !kingdeeOrderEntity.getF_SK_Date().equals("null")) {
             Date parse = sdf.parse(kingdeeOrderEntity.getF_SK_Date());
             dmpOrderInfoEntity.setPaidTime(parse);
         }
@@ -415,7 +418,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setSecondStreet("");
 
         //交易关闭时间
-        if (StringUtils.isNotBlank(kingdeeOrderEntity.getFCloseDate())) {
+        if (StringUtils.isNotBlank(kingdeeOrderEntity.getFCloseDate()) && !kingdeeOrderEntity.getFCloseDate().equals("null")) {
             Date closeDate = sdf.parse(kingdeeOrderEntity.getFCloseDate());
             dmpOrderInfoEntity.setCloseDate(closeDate);
         }
@@ -434,10 +437,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         //币种
         dmpOrderInfoEntity.setCurrencyCode(kingdeeOrderEntity.getFSettleCurrId());
 
-
         //汇率
         dmpOrderInfoEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
-
 
         //运费收入
         dmpOrderInfoEntity.setShippingFee(BigDecimal.ZERO);
@@ -450,7 +451,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         //商品原始总售价
         dmpOrderInfoEntity.setItemTotalOrigin(BigDecimal.ZERO);
-
 
         //补贴金额
         dmpOrderInfoEntity.setSubsidyAmount(BigDecimal.ZERO);
@@ -503,58 +503,149 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             //商品图片
             dmpOrderItemEntity.setPictureUrl("");
 
-//            //商品成本价
-//            dmpOrderItemEntity.setCostPrice(orderItemBean.getCostPrice());
-//
-//            //商品原始售价
-//            dmpOrderItemEntity.setSellPriceOrigin(orderItemBean.getSellPriceOrigin());
-//
-//            //商品售价
-//            dmpOrderItemEntity.setSellPrice(orderItemBean.getSellPrice());
-//
-//            //商品数量
-//            dmpOrderItemEntity.setQuantity(orderItemBean.getQuantity());
-//
-//            //商品单位
-//            dmpOrderItemEntity.setProductUnit(orderItemBean.getProductUnit());
-//
-//            //是否是赠品 1. 是 2. 否
-//            dmpOrderItemEntity.setIsGift(orderItemBean.getIsGift());
-//
-//            //缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
-//            dmpOrderItemEntity.setHasGoods(orderItemBean.getHasGoods());
-//
-//            //是否是组合商品 1.组合 2非组合
-//            dmpOrderItemEntity.setIsCombo(orderItemBean.getIsCombo());
-//
-//            //订单商品备注
-//            dmpOrderItemEntity.setItemRemark(orderItemBean.getItemRemark());
-//
-//            //商品多属性
-//            dmpOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
-//
-//            //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
-//            dmpOrderItemEntity.setStatus(orderItemBean.getStatus());
-//
-//            //商品仓位
-//            dmpOrderItemEntity.setStockGrid(orderItemBean.getStockGrid());
-//
-//            //sku
-//            dmpOrderItemEntity.setSkuNo(orderItemBean.getStockSku());
-//
-//            //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
-//            dmpOrderItemEntity.setStockStatus(orderItemBean.getStockStatus());
-//
-//            //商品仓库编号
-//            dmpOrderItemEntity.setStockWarehouseId(orderItemBean.getStockWarehouseId());
-//
-//            //erp平台商品id
-//            dmpOrderItemEntity.setErpOrderItemId(orderItemBean.getErpOrderItemId());
+            //商品成本价
+            dmpOrderItemEntity.setCostPrice(orderItemBean.getF_ulz_CGCB());
+
+            //商品原始售价
+            dmpOrderItemEntity.setSellPriceOrigin(BigDecimal.valueOf(Double.valueOf(orderItemBean.getFAmount())));
+
+            //商品售价
+            dmpOrderItemEntity.setSellPrice(BigDecimal.valueOf(Double.valueOf(orderItemBean.getFAmount())));
+
+            //商品数量
+            dmpOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFQty()+"").intValue());
+
+            //商品单位
+            dmpOrderItemEntity.setProductUnit("");
+
+            //是否是赠品 1. 是 2. 否
+            if (Boolean.valueOf(orderItemBean.getFIsFree())) {
+                dmpOrderItemEntity.setIsGift(1);
+            } else {
+                dmpOrderItemEntity.setIsGift(2);
+            }
+
+            //缺货订单 0.正在计算是否缺货 1.有货 2.缺货 3.已补货
+            dmpOrderItemEntity.setHasGoods(0);
+
+            //是否是组合商品 1.组合 2非组合
+            dmpOrderItemEntity.setIsCombo(null);
+
+            //订单商品备注
+            dmpOrderItemEntity.setItemRemark(orderItemBean.getFEntryNote());
+
+            //商品多属性
+            dmpOrderItemEntity.setSpecifics("");
+
+
+            //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
+
+            switch (orderItemBean.getFDeliveryStatus()) {
+                case "C" :
+                    dmpOrderItemEntity.setStatus(3);
+                    break;
+                case "B":
+                    dmpOrderItemEntity.setStatus(2);
+                case "A":
+                    dmpOrderItemEntity.setStatus(2);
+                    break;
+                default:
+                    dmpOrderItemEntity.setStatus(2);
+                    break;
+            }
+
+            //商品仓库编号
+            dmpOrderItemEntity.setStockWarehouseId(orderItemBean.getFSOStockId());
+
+            //商品仓位
+            dmpOrderItemEntity.setStockGrid("");
+
+            //sku
+            dmpOrderItemEntity.setSkuNo(orderItemBean.getFMaterialId());
+
+            //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
+            dmpOrderItemEntity.setStockStatus(null);
+
+            //erp平台商品id
+            dmpOrderItemEntity.setErpOrderItemId("B2B");
 
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);
-//        dmpOrderItemService.batchAdd(orderItemList);
-//        return orderItemList;
+    }
+
+
+
+    /**
+     * 请求金蝶云星空币别接口
+     * @param dto
+     * @return
+     */
+    public List<Map<String, String>> pullCurrency(RequestDTO dto) {
+        List<Map<String, String>> infoArrayList = new ArrayList<>();
+        try {
+            JobTaskDTO jobTask = dto.getJobTaskDTO();
+
+            //读取配置，初始化SDK
+            K3CloudApi client = new K3CloudApi();
+
+            String formId = "BD_Currency";
+
+            String fieldKeys = "FNumber,FName,FCODE,FPRICEDIGITS,FAMOUNTDIGITS,FPRIORITY,FIsShowCSymbol";
+
+            Boolean dataSign = true;
+            //当前页数
+            Integer pageIndex = 0;
+
+            //每次最多获取100条
+            Integer pageSize = 10000;
+            while (dataSign) {
+                //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
+                QueryParam param = new QueryParam();
+                param.setFormId(formId);
+                param.setFieldKeys(fieldKeys);
+                param.setLimit(pageSize);
+                param.setStartRow(pageIndex * pageSize);
+                String s = JSONObject.toJSONString(param);
+
+                Map<String, Object> stringObjectMap = null;
+                try {
+
+                    List<List<Object>> result = client.executeBillQuery(s);
+
+                    if (!result.isEmpty()) {
+                        if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
+                            dataSign = false;
+                            throw new RuntimeException(" ===== 金蝶云星空解析币别数据失败 ===== " + result);
+                        }
+
+                        for (List<Object> objects : result) {
+                            Map<String, String> stringStringMap = KingdeeUtils.keySetValByLinked(fieldKeys, objects);
+
+                            infoArrayList.add(stringStringMap);
+                        }
+                    } else {
+                        dataSign = false;
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                    dmpErrorLogEntity.setTaskId(jobTask.getId());
+                    dmpErrorLogEntity.setParams("");
+                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogService.add(dmpErrorLogEntity);
+                    dataSign = false;
+                }
+                pageIndex++;
+            }
+        } catch (Exception e) {
+            log.info(" ===== 获取金蝶云星空币别列表数据失败， 错误信息 = { " + e.getMessage() + " }");
+            throw new RuntimeException(" ===== 获取金蝶云星空币别列表数据失败， 错误信息 = { " + e.getMessage() + " }");
+        }
+        return infoArrayList;
     }
 }

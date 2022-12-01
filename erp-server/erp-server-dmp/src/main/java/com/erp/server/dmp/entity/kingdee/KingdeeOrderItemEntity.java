@@ -43,5 +43,7 @@ public class KingdeeOrderItemEntity {
     private String fSrcBillNo;
     private String fMinPlanDeliveryDate;
     private String fDeliveryStatus;
+    private BigDecimal f_ulz_Decimal;
     private BigDecimal f_ulz_CGCB;
+    private String FSOStockId;
 }

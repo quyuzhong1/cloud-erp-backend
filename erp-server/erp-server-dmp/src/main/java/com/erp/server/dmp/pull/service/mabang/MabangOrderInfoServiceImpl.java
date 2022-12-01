@@ -446,7 +446,5 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);
-//        dmpOrderItemService.batchAdd(orderItemList);
-//        return orderItemList;
     }
 }

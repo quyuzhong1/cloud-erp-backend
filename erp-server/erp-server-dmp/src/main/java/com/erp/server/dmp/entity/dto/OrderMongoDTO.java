@@ -22,4 +22,7 @@ public class OrderMongoDTO {
 
     @Panno(findType = PannoEnum.EQ,field = "platfromCode")
     private String platfromCode;
+
+    @Panno(findType = PannoEnum.EQ,field = "fBillNo")
+    private String fBillNo;
 }

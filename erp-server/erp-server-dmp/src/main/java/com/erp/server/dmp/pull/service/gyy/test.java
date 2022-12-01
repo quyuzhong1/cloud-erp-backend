@@ -33,6 +33,8 @@ public class test {
         //业务对象标识
         String formId = "SAL_SaleOrder";
 
+        String currency = "FNumber,FName,FCODE,FPRICEDIGITS,FAMOUNTDIGITS,FPRIORITY,FIsShowCSymbol";
+
         LinkedList<String> queryfilters = new LinkedList<>();
         queryfilters.add(String.format("FModifyDate >= '%s'", "2022-06-27 00:00:00"));
         queryfilters.add(String.format("FModifyDate <= '%s'", "2022-06-27 23:59:59"));
@@ -41,20 +43,20 @@ public class test {
 
 //FSaleOrderEntry
 //查询字段集合，即返回哪些数据，不能为空，根据不同业务单据填写不同的字段名，以下仅为示例
-
-        String fieldKeys = "FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
+        String fieldKeys = "fCancelStatus.Fname,FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
                 "FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus";
 
-        String test = "FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
+        String test = "FSettleCurrId.FName,FSOStockId,FSOStockLocalId,FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
                 "";
 
         //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
         QueryParam param = new QueryParam();
+
         param.setFormId(formId);
         param.setFieldKeys(test);
-        param.setFilterString(filterStr);
+        //param.setFilterString(filterStr);
         param.setLimit(10000);
-        param.setStartRow(10);
+        param.setStartRow(0);
         param.setTopRowCount(10000);
         String s = JSONObject.toJSONString(param);
         System.out.println(s);
@@ -62,13 +64,9 @@ public class test {
         String s2 = client.executeBillQueryJson(s);
         System.out.println(s2);
 
-        String json = client.executeBillQueryJson(s);
-        System.out.println(json);
         List<List<Object>> s1 = client.executeBillQuery(s);
         for (List<Object> objects : s1) {
             System.out.println("第一个for：" + objects);
-
-
         }
     }
 
