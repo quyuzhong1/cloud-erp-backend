@@ -151,10 +151,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
         Integer IsFixed = entity.getIsFixed();
-        //如果是固定任务则不支持删除
-        if (IsConstant.YES.equals(IsFixed)) {
-            throw new ServiceException(ApiError.ERROR_95014);
-        }
         //判断是否是子任务
         checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
