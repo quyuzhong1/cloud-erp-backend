@@ -24,7 +24,7 @@
         left join sys_project_phase spp on pts.phase_id = spp.id
         <where>
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
+                AND pts.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="params.type !=null and params.type!='' and params.type == 1">
                 AND spp.name = '立项阶段'

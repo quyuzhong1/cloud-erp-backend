@@ -148,7 +148,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
             List<String> intersectionList = (List<String>) CollectionUtils.intersection(collect1, collect2);
             //表示有交集不能再次生成
             if (CollectionUtils.isNotEmpty(intersectionList)) {
-                throw new ServiceException(ApiError.valueOf("成员："+intersectionList.toString()+"已存在,不能重复新增"));
+                throw new ServiceException(ApiError.ERROR_95061);
             }
         }
         //获取登录人信息

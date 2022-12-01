@@ -27,6 +27,11 @@ public class BasicCategoryDTO {
     private String name;
 
     /**
+     * 分类编码
+     */
+    private String code;
+
+    /**
      * 父 级id
      */
     private String pid;
