@@ -46,6 +46,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+
 /**
  * @Description: 产品明细信息服务类
  * @Author: Luo_WG
@@ -1164,15 +1165,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询审核任务下所有待办
         Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
-        /*List<TaskShowDTO> taskShowList = workflowFeign.queryMyToDoByTaskId(taskShowDTO.getTaskId());
-        if (CollectionUtils.isEmpty(taskShowList)) {
-            code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
-        } else {
-            long count = taskShowList.stream().filter(obj -> !obj.getAssignee().equals(userId)).count();
-            if (count > 0) {
-                code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
-            }
-        }*/
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
@@ -1277,6 +1269,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.set(ProductDetailEntity::getUpdateUserName,loginUser.getUserName());
         updateWrapper.eq(ProductDetailEntity::getId,id);
         return this.update(updateWrapper);
+    }
+
+
+    @Override
+    @Transactional
+    public Boolean deApprove(String id) {
+        ProductDetailEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95078);
+        }
+        //验证sku是否审核通过
+        if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95081);
+        }
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        //调用回退方法
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setProcessInstanceId(entity.getProcessId());
+        approveProcess.setUserId(userId);
+        CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
+            return workflowFeign.rejectOriginProcess(approveProcess);
+        });
+        Integer code = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
+        //更新产品信息状态
+        return this.updateProductDetailState(id, code, userId, userName);
     }
 
 

@@ -253,4 +253,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean applyChange(String id);
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2022/12/1 16:56
+     * @param id
+     * @return Boolean
+     */
+    Boolean deApprove(String id);
 }

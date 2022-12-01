@@ -722,6 +722,20 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 反审核
+     * @author Will
+     * @date: 2022/12/1 16:56
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/deApprove")
+    public ApiResult deApprove(@RequestParam("id") String id) {
+        Boolean result = productDetailService.deApprove(id);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
      * 申请变更
      * @author Will
      * @date: 2022/12/1 15:41

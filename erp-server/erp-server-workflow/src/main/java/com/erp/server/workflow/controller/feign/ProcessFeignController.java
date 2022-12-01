@@ -58,6 +58,13 @@ public class ProcessFeignController extends BaseController {
         return node;
     }
 
+    //回退至初始状态
+    @PostMapping("/rejectOriginProcess")
+    public void rejectOriginProcess(@RequestBody @Validated ApproveProcessDTO dto) {
+        workflowService.rejectOriginProcess(dto);
+    }
+
+
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")
     public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {

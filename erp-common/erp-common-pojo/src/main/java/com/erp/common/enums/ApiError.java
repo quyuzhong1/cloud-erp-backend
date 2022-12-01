@@ -168,6 +168,10 @@ public enum ApiError implements Serializable {
     ERROR_95078(95078,"产品信息不存在"),
     ERROR_95079(95079,"SKU关联任务未完成，不支持申请变更"),
     ERROR_95080(95080,"SKU未审核通过，不支持申请变更"),
+    ERROR_95081(95081,"SKU未审核通过，不支持反审核"),
+
+
+
 
     ERROR_end(1000000, "系统错误");
 
