@@ -1,6 +1,6 @@
-package com.cloud.erp.gateway.aspect;
+package com.erp.server.plm.aspect;
 
-import com.cloud.erp.gateway.interceptor.PlmInterceptor;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.enums.ApiError;

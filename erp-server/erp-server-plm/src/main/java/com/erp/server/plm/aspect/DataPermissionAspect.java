@@ -1,8 +1,7 @@
-package com.cloud.erp.gateway.aspect;
+package com.erp.server.plm.aspect;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.cloud.erp.gateway.interceptor.PlmInterceptor;
 import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.common.annotation.DataPermission;
@@ -11,6 +10,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;

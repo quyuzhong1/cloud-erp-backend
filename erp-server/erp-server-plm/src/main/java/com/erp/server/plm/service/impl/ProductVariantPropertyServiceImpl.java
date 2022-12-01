@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
-import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductVariantPropertyMapper;

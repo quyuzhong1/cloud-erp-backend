@@ -8,8 +8,6 @@ import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductCostDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductCostMapper;
 import com.erp.server.plm.service.ProductCostService;

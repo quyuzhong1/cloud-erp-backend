@@ -1,4 +1,4 @@
-package com.cloud.erp.gateway.interceptor;
+package com.erp.server.plm.interceptor;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.vo.LoginUser;
