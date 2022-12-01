@@ -138,10 +138,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         TaskDocsFinishEntity existEntity = getByDocsId(dto.getProductId(), dto.getTaskDocsId(), dto.getTaskId());
-        Boolean isUpdate = false;
         if (existEntity != null) {
             finishEntity.setId(existEntity.getId());
-            isUpdate = true;
         }
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
@@ -154,11 +152,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
         finishEntity.setUploadType(uploadType);
-        if (!isUpdate) {
-            finishEntity.setOldFileUrl(fileUrl);
-            finishEntity.setOldUploadType(dto.getUploadType());
-            finishEntity.setOldFileName(fileName);
-        }
+
+        finishEntity.setOldFileUrl(fileUrl);
+        finishEntity.setOldUploadType(dto.getUploadType());
+        finishEntity.setOldFileName(fileName);
+
         //新增产品操作日志
         ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
         productOperateRecordDTO.setProductId(dto.getProductId());

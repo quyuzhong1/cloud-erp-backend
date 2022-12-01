@@ -151,10 +151,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
         Integer IsFixed = entity.getIsFixed();
-        //如果是固定任务则不支持删除
-        if (IsConstant.YES.equals(IsFixed)) {
-            throw new ServiceException(ApiError.ERROR_95014);
-        }
         //判断是否是子任务
         checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
@@ -401,6 +397,20 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
+        }
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        //如果配置表单 一般任务 一定要走流程
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            Integer type = dto.getType();
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //如果是一般任务 必须要有审核流程
+            if (generalTask.equals(type)) {
+                String businessProcessId = dto.getBusinessProcessId();
+                if (StringUtils.isBlank(businessProcessId)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();

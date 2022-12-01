@@ -31,7 +31,6 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -639,6 +638,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean save(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         productInfoService.checkProduct(dto.getProductId());
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        //如果配置表单 一般任务 一定要走流程
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            Integer type = dto.getType();
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //如果是一般任务 必须要有审核流程
+            if (generalTask.equals(type)) {
+                String businessProcessId = dto.getBusinessProcessId();
+                if (StringUtils.isBlank(businessProcessId)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
+
+        }
+
         LoginUser loginUser = commonService.getUserInfo();
         ProjectTaskEntity taskEntity = new ProjectTaskEntity();
         BeanMapper.copy(dto, taskEntity);
@@ -2107,16 +2122,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已取消
         Integer closeState = TaskStateEnum.CLOSE.getCode();
 
-        //待审核
-        Integer waitConfirmState = TaskStateEnum.WAIT_CONFIRM.getCode();
-
         List<Integer> stateList = new ArrayList<>(5);
         stateList.add(releasedState);
         stateList.add(notStartState);
         stateList.add(closeState);
-        if (!generalTaskFlag) {
-            stateList.add(waitConfirmState);
-        }
 
         return stateList.contains(taskState);
     }
@@ -2789,7 +2798,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             //发送完成待审核的消息
-            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), finishSkuTaskList, dto.getProductId());
+            noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), waitConfirmNoticeList, dto.getProductId());
         }
 
         return true;

@@ -16,6 +16,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -69,6 +70,21 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
+        //配置表单属性
+        String fieldConfigType = dto.getFieldConfigType();
+        //如果配置表单 一般任务 一定要走流程
+        if (StringUtils.isNotBlank(fieldConfigType)) {
+            Integer type = dto.getType();
+            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+            //如果是一般任务 必须要有审核流程
+            if (generalTask.equals(type)) {
+                String businessProcessId = dto.getBusinessProcessId();
+                if (StringUtils.isBlank(businessProcessId)) {
+                    throw new ServiceException(ApiError.ERROR_95078);
+                }
+            }
+        }
+
 
         //自定义审核人
         List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
