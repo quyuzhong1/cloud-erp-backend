@@ -149,6 +149,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
      */
     private String createUserName;
 
+    /**
+     * 创建人
+     */
+    private String createUserId;
+
 
     /**
      * 前置任务

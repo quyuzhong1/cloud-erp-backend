@@ -82,7 +82,7 @@
         SELECT t.id AS taskId,t.name  AS taskName,t.type,t.priority,
         t.plan_start_time,t.plan_end_time,t.description AS taskDescription,
         t.reality_start_time,t.reality_end_time,t.status AS taskState,
-        t.create_time,t.phase_name,t.update_time,t.create_user_name,
+        t.create_time,t.phase_name,t.update_time,t.create_user_name,t.create_user_id,
         t.charge_id AS taskChargeId,t.charge_name AS taskChargeName,
         t.product_id,t.business_process_id,
         pi.charge_name AS productChargeName,pi.charge_id AS productChargeId,

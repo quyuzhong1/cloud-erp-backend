@@ -646,8 +646,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String createSku = TaskConstant.CREATE_SKU;
         //填写sku
         String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
+        //filedjson
+        String fieldJson = dto.getFieldJson();
         //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType));
+        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType)&&StringUtils.isNotBlank(fieldJson));
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
         Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && createSku.equals(fieldConfigType));
@@ -995,7 +997,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             childTasks = getRefTask(childTaskIds);
         }
         detailsDTO.setChildTasks(childTasks);
-
+        detailsDTO.setCreateUserName(commonService.getNameById(detailsDTO.getCreateUserId()));
         //获取交付文档
         List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(taskId);
         //获取到任务的属性
@@ -1004,6 +1006,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer generalApproval = TaskProcessTypeEnum.GENERAL_APPROVAL_TASK.getCode();
         Integer reviewTask = TaskProcessTypeEnum.REVIEW_TASK.getCode();
         Boolean isApprovalPass = TaskStateEnum.FINISH.getCode().equals(taskEntity.getStatus());
+
+
         for (DeliveryDocsDTO docs : docsList) {
             //当审核通过就是完成
             if (isApprovalPass) {
