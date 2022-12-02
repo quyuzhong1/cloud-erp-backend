@@ -60,7 +60,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         //产品类目
         dto.setCategory(bestEntity.getCode());
         //产品颜色
-        dto.setColorCode(VariantColorEnum.getCode(variantColorProperty));
+        dto.setColorCode(variantColorProperty);
         dto.setType(SysNoEnum.SKU_NO.getCode());
         //产品销售渠道
         if (StringUtils.isBlank(entity.getSalesChannel())) {
