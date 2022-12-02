@@ -16,6 +16,7 @@ import com.erp.server.plm.service.SysCodeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Will
@@ -44,6 +45,7 @@ public class SysCodeServiceImpl implements SysCodeService {
      * @return String
      */
     @Override
+    @Transactional
     public String getSkuNo(String productId,String variantColorProperty){
         //产品信息
         ProductInfoEntity entity = productInfoService.getById(productId);
@@ -60,7 +62,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         //产品类目
         dto.setCategory(bestEntity.getCode());
         //产品颜色
-        dto.setColorCode(VariantColorEnum.getCode(variantColorProperty));
+        dto.setColorCode(variantColorProperty);
         dto.setType(SysNoEnum.SKU_NO.getCode());
         //产品销售渠道
         if (StringUtils.isBlank(entity.getSalesChannel())) {

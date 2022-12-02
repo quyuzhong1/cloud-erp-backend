@@ -649,7 +649,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //filedjson
         String fieldJson = dto.getFieldJson();
         //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType)&&StringUtils.isNotBlank(fieldJson));
+        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
         Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && createSku.equals(fieldConfigType));
@@ -838,9 +838,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
-
             taskRefSkuConfigService.deleteByTaskId(taskId);
-
+            preTaskService.deleteByTaskId(taskId);
             //发送删除任务通知
             noticeMessageService.deleteTaskNotice(loginUser.getUserName(), entity, entity.getProductId());
         }
@@ -2067,12 +2066,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         //变更文档
-        //只有任务完成了或者审核不通过才能变更流程
+        //只有任务完成了或者审核不通过才能变更流程 表示有交付物 有交付物[文档+信息填写]时，显示上传文档
         Boolean changeDocsShow = false;
-        if (finishCode.equals(taskState)
-                || approvalNoPassCode.equals(taskState)) {
+        if (finishCode.equals(taskState)) {
             changeDocsShow = true;
         }
+        //当没有上传文档 并且没有填写的时候 不用显示
+        if (totalCount == 0 && Objects.isNull(skuConfigEntity) && !taskRefSkuFlag) {
+            changeDocsShow = false;
+        }
+
         Map<String, Object> changeDocsMap = new HashMap<>();
         changeDocsMap.put("name", "变更交付物");
         changeDocsMap.put("flag", "changeDocs");

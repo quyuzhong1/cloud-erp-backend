@@ -27,6 +27,12 @@ public class ProductVariantPropertyEntity implements Serializable {
     private String propertyValue;
 
     /**
+     * 属性值
+     */
+    @TableField(value = "property_code")
+    private String propertyCode;
+
+    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
