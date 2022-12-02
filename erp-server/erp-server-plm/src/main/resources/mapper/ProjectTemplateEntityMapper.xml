@@ -43,7 +43,7 @@
                    AND pt.name LIKE concat('%', #{params.searchKeyword} ,'%')
                 </if>
             </where>
-            ORDER BY pt.create_time DESC
+            ORDER BY pt.create_time asc
     </select>
 
 </mapper>
