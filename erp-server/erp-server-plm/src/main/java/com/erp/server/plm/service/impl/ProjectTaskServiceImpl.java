@@ -1140,8 +1140,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
-
-
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -1966,7 +1964,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     * 完成任务
+     * 完成sku
      *
      * @param dto
      * @return void
@@ -1980,6 +1978,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        LoginUser loginUser = commonService.getUserInfo();
+        Integer portionFinish = TaskStateEnum.PORTION_FINISH.getCode();
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<String> requestSkuIds = dto.getSkuIdList();
@@ -1989,9 +1989,43 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (requestSkuIds.size() == skuIdList.size() && skuIdList.containsAll(requestSkuIds)) {
                 Integer state = taskEntity.getStatus();
                 //如果是部分完成 就变成已完成
-                if (TaskStateEnum.PORTION_FINISH.getCode().equals(state)) {
-                    taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
-                    this.updateById(taskEntity);
+                if (portionFinish.equals(state)) {
+                    String approvalUserId = taskEntity.getApprovalUserId();
+                    if (StringUtils.isBlank(approvalUserId)) {
+                        throw new ServiceException(ApiError.ERROR_95045);
+                    }
+                    List<String> membersIds = Arrays.asList(approvalUserId.split(","));
+                    BusinessProcessEntity processEntity = businessProcessService.getById(taskEntity.getBusinessProcessId());
+                    if (!Objects.isNull(processEntity)) {
+                        if (CollectionUtils.isNotEmpty(membersIds)) {
+                            StartProcessDTO startProcess = new StartProcessDTO();
+                            startProcess.setBusinessKey(processEntity.getBusinessKey());
+                            startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                            startProcess.setUserId(loginUser.getUid());
+                            Map<String, Object> parameterMap = getProcessParameter(processEntity, membersIds);
+                            startProcess.setParameterMap(parameterMap);
+                            //启动流程
+                            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+                            String processId = processResult.getProcessId();
+                            //当流程id不为空的时候
+                            if (StringUtils.isNotBlank(processId)) {
+                                taskEntity.setProcessId(processId);
+                                taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
+                                taskEntity.setRealityStartTime(new Date());
+                                taskEntity.setBusinessProcessId(processEntity.getId());
+                                this.updateById(taskEntity);
+                                TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+                                recordEntity.setOperatorName(loginUser.getUserName());
+                                recordEntity.setOperatorId(loginUser.getUid());
+                                recordEntity.setBeforeState(portionFinish);
+                                recordEntity.setAfterState(TaskStateEnum.WAIT_CONFIRM.getCode());
+                                recordEntity.setTaskId(taskEntity.getId());
+                                taskOperatorRecordService.save(recordEntity);
+                            }
+                        }
+                    }
+
+
                 }
             }
 
