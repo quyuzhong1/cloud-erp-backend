@@ -1140,8 +1140,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
-
-
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -1966,7 +1964,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     * 完成任务
+     * 完成sku
      *
      * @param dto
      * @return void
@@ -1975,29 +1973,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public void taskFinishSku(TaskFinishSkuDTO dto) {
-        String taskId = dto.getTaskId();
-        ProjectTaskEntity taskEntity = this.getById(taskId);
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
-        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
-        List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
-        List<String> requestSkuIds = dto.getSkuIdList();
-        if (CollectionUtils.isNotEmpty(requestSkuIds)) {
-            requestSkuIds = requestSkuIds.stream().distinct().collect(Collectors.toList());
-            //表示全部完成
-            if (requestSkuIds.size() == skuIdList.size() && skuIdList.containsAll(requestSkuIds)) {
-                Integer state = taskEntity.getStatus();
-                //如果是部分完成 就变成已完成
-                if (TaskStateEnum.PORTION_FINISH.getCode().equals(state)) {
-                    taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
-                    this.updateById(taskEntity);
-                }
-            }
-
-        }
-
-
     }
 
     /**
