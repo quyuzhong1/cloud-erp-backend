@@ -33,7 +33,7 @@
                 AND spp.name != '立项阶段'
             </if>
         </where>
-        ORDER BY create_time DESC
+        ORDER BY create_time asc
     </select>
 
     <select id="getSysTaskDocsNames" resultType="com.erp.model.plm.dto.SysTaskPagingDTO">

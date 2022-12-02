@@ -14,7 +14,7 @@ public interface TemplateRoleRefMembersService extends IService<TemplateRoleRefM
 
     void saveRoleRefMembers(String templateId, String productId);
 
-    void copyTemplateRoleRefMembers(String flagId, String productId, String projectId, List<CopySourceDTO> copyRoleSourceList);
+    void copyTemplateRoleRefMembers(String flagId, String productId, String projectId, List<CopySourceDTO> copyRoleSourceList, List<CopySourceDTO> copyMembersSourceList);
     /**
      * @description: 根据模板id删除
      * @author Will

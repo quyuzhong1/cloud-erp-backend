@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
 import com.erp.model.plm.entity.TemplateMembersEntity;
@@ -15,7 +16,7 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
 
     void saveMember(String templateId, String productId);
 
-    void copyTemplateMembers(String id, String productId, String projectId);
+    List<CopySourceDTO> copyTemplateMembers(String id, String productId, String projectId);
     /**
      * @description: 根据模板id删除成员
      * @author Will

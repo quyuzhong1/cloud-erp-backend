@@ -24,7 +24,7 @@
                 and tt.template_id like concat('%', #{params.templateId} ,'%')
             </if>
         </where>
-        order by tt.create_time desc
+        order by tt.create_time asc
     </select>
 
 

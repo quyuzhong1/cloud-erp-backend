@@ -241,11 +241,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     throw new ServiceException(ApiError.ERROR_95051);
                 }
                 //复制模板团队成员
-                templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
+                List<CopySourceDTO> copyMembersSourceList = templateMembersService.copyTemplateMembers(template.getId(), productId, projectId);
                 //复制模板角色
                 List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
                 //复制角色关系表
-                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList);
+                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList,copyMembersSourceList);
                 //复制 项目任务阶段
                 List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
 
