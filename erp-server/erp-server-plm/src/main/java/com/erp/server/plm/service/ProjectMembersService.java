@@ -43,7 +43,7 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     Boolean ifProjectMember(String userId, String productId);
 
-    List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList);
+    List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList,List<Integer> stateList);
 
     void addRoleAndMembersByApproval(String productId);
 

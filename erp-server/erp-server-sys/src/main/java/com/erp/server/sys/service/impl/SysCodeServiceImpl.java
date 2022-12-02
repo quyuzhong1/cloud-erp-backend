@@ -53,8 +53,8 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             StringBuffer sysCode = new StringBuffer();
             sysCode.append(codeDto.getCategory())
                     .append(String.format("%03d",codeDto.getNum()))
-                    .append(codeDto.getColorCode())
                     .append(codeDto.getSalesChannel())
+                    .append(codeDto.getColorCode())
                     .append(codeDto.getVersion())
                     .append(codeDto.getCustomized());
             if (StringUtils.isBlank(sysCode)) {

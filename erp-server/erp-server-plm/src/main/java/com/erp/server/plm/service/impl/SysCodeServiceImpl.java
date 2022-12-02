@@ -56,8 +56,9 @@ public class SysCodeServiceImpl implements SysCodeService {
         //查询产品分类代码
         BasicCategoryEntity bestEntity = new BasicCategoryEntity();
         basicCategoryService.getBestEntity(entity.getCategoryId(),bestEntity);
-        if (ObjectUtils.isEmpty(bestEntity)) {
-            throw new ServiceException(ApiError.ERROR_95070);
+
+        if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+            throw new ServiceException(ApiError.ERROR_95069);
         }
         //产品类目
         dto.setCategory(bestEntity.getCode());

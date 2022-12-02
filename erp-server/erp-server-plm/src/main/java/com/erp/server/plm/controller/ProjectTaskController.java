@@ -218,7 +218,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/publishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:tasks:status",
+            menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -235,7 +235,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/cancelPublishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:tasks:status",
+            menuCode = "plm:task:project:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -252,7 +252,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/startTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -269,7 +269,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/closeTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -287,7 +287,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/finishTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -304,7 +304,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/approvalPass")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -322,7 +322,7 @@ public class ProjectTaskController extends BaseController {
     //  @RequestPermissions("plm:task:approvalReject")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
@@ -340,7 +340,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/restartTask")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:project:status",
+            menuCode = "plm:task:tasks:status",
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )

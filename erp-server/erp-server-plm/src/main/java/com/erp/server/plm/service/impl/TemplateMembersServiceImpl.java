@@ -11,6 +11,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
+import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateMembersDTO;
 import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
@@ -96,21 +97,27 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
      * @date 2022-10-28 11:13
      */
     @Override
-    public void copyTemplateMembers(String templateId, String productId, String projectId) {
+    public List<CopySourceDTO> copyTemplateMembers(String templateId, String productId, String projectId) {
         List<TemplateMembersEntity> templateMembers = getByTemplateId(templateId);
+        List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(templateMembers)) {
             List<ProjectMembersEntity> copyList = new ArrayList<>();
             for (TemplateMembersEntity item : templateMembers) {
                 ProjectMembersEntity entity = new ProjectMembersEntity();
+                CopySourceDTO sourceDTO = new CopySourceDTO();
                 BeanMapper.copy(item, entity);
                 entity.setProductId(productId);
                 entity.setProjectId(projectId);
                 entity.setId(IdWorker.getIdStr());
+                sourceDTO.setNewCreateId(entity.getId());
+                sourceDTO.setDataId(item.getId());
+                sourceList.add(sourceDTO);
                 copyList.add(entity);
             }
             projectMembersService.saveBatch(copyList);
 
         }
+        return sourceList;
     }
 
     @Override

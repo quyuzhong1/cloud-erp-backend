@@ -243,6 +243,9 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
         int parentId = 1;
         for (Map.Entry<String,List<ProductTaskInWarehouseTimeChildDTO>> entry : map.entrySet()) {
             List<ProductTaskInWarehouseTimeChildDTO> value = entry.getValue();
+            if (CollectionUtils.isEmpty(value)) {
+                continue;
+            }
             String timeInterval = value.get(0).getTimeInterval();
             ProductTaskInWarehouseTimeChildDTO parentDto = new ProductTaskInWarehouseTimeChildDTO();
             parentDto.setTimeInterval(timeInterval);

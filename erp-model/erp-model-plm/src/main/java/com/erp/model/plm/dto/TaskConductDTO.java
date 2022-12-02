@@ -50,4 +50,9 @@ public class TaskConductDTO  implements Serializable {
      */
     private Integer unfinishedTaskCount;
 
+    /**
+     * 这个是标示的任统计数 根据 自定义的状态
+     */
+    private Integer flagTaskCount;
+
 }

@@ -2010,7 +2010,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         Integer taskState = taskEntity.getStatus();
         Integer finishCode = TaskStateEnum.FINISH.getCode();
-        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
 
         List<String> taskIds = Arrays.asList(taskId);
         //编辑任务

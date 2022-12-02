@@ -56,18 +56,23 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
      * @date 2022-10-28 11:33
      */
     @Override
-    public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<CopySourceDTO> copyRoleSourceList) {
+    public void copyTemplateRoleRefMembers(String templateId, String productId, String projectId,List<CopySourceDTO> copyRoleSourceList,List<CopySourceDTO> copyMembersSourceList) {
         List<TemplateRoleRefMembersEntity> list = getByTemplateId(templateId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<RoleRefMemberEntity> copyList = new ArrayList<>();
             for (TemplateRoleRefMembersEntity item : list) {
-                CopySourceDTO source=  copyRoleSourceList.stream().filter(c->c.getDataId()
+                CopySourceDTO roleSource=  copyRoleSourceList.stream().filter(c->c.getDataId()
                         .equals(item.getRoleId())).findFirst().orElse(null);
+                CopySourceDTO membersSource = copyMembersSourceList.stream().filter(c -> c.getDataId()
+                        .equals(item.getMembersId())).findFirst().orElse(null);
                 RoleRefMemberEntity entity = new RoleRefMemberEntity();
                 BeanMapper.copy(item, entity);
                 entity.setProductId(productId);
-                if(!Objects.isNull(source)){
-                    entity.setRoleId(source.getNewCreateId());
+                if(!Objects.isNull(roleSource)){
+                    entity.setRoleId(roleSource.getNewCreateId());
+                }
+                if(!Objects.isNull(membersSource)){
+                    entity.setMembersId(membersSource.getNewCreateId());
                 }
                 entity.setId(IdWorker.getIdStr());
                 copyList.add(entity);
