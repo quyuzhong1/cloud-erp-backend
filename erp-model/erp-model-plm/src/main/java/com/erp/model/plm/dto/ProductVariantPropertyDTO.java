@@ -23,6 +23,11 @@ public class ProductVariantPropertyDTO implements Serializable {
     private String propertyValue;
 
     /**
+     * 属性值编码
+     */
+    private String propertyCode;
+
+    /**
      * 变体类型表id
      */
     private String variantId;

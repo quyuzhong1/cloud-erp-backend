@@ -106,6 +106,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProjectTaskRefSkuService projectTaskRefSkuService;
 
+    @Resource
+    private ProductVariantPropertyService productVariantPropertyService;
+
+    @Resource
+    private ProductVariantService productVariantService;
+
     /**
      * @param pagingDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
@@ -667,12 +673,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             //获取颜色
             List<String> split = Arrays.asList(req.split(","));
-            String variantColor = Arrays.stream(VariantColorEnum.values()).filter(obj -> split.contains(obj.getName())).map(VariantColorEnum::getName).findAny().orElse(null);
-            if (StringUtils.isBlank(variantColor)) {
+            //查询变体信息
+            List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
+            if (CollectionUtils.isEmpty(productVariantDTOS)) {
+                throw new ServiceException(ApiError.ERROR_95079);
+            }
+            //变体颜色信息
+            ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
+           if (ObjectUtils.isEmpty(productVariantDTO)) {
+               throw new ServiceException(ApiError.ERROR_95080);
+           }
+           //变体颜色属性值
+            List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
+            if (CollectionUtils.isEmpty(productVariantPropertyList)) {
+                throw new ServiceException(ApiError.ERROR_95081);
+            }
+            ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
                 throw new ServiceException(ApiError.ERROR_95074);
             }
             //生成sku编码
-            String skuNo = sysCodeService.getSkuNo(id, variantColor);
+            String skuNo = sysCodeService.getSkuNo(id, propertyDto.getPropertyCode());
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
