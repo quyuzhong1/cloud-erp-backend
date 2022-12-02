@@ -1139,10 +1139,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     @Transactional
     public Boolean updateTask(ProjectTaskDTO dto) {
-
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
-        ProjectTaskEntity taskEntity = new ProjectTaskEntity();
+
+
+        ProjectTaskEntity taskEntity = this.getById(dto.getId());
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        String businessProcessId = taskEntity.getBusinessProcessId();
+        String processId = taskEntity.getProcessId();
+        String approvalUserId = taskEntity.getApprovalUserId();
         BeanMapper.copy(dto, taskEntity);
+        taskEntity.setApprovalUserId(approvalUserId);
+        taskEntity.setBusinessProcessId(businessProcessId);
+        taskEntity.setProcessId(processId);
         LoginUser loginUser = commonService.getUserInfo();
         Integer type = dto.getType();
         Boolean isGeneral = TaskTypeEnum.GENERAL_TASK.getCode().equals(type);
