@@ -14,6 +14,7 @@ import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -232,10 +233,11 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     /**
      * 根据前置任务id 集合 获取对应 任务id
-     * @author yl
-     * @date 2022-11-15 16:14
+     *
      * @param preTaskIds
      * @return java.util.List<com.erp.model.plm.entity.PreTaskEntity>
+     * @author yl
+     * @date 2022-11-15 16:14
      */
     @Override
     public List<PreTaskEntity> getPreTaskListByPreTaskIds(List<String> preTaskIds) {
@@ -245,6 +247,29 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * 删除任务后 需要删除对应的前置任务
+     *
+     * @param taskId
+     * @return void
+     * @author yl
+     * @date 2022-12-02 11:04
+     */
+    @Override
+    public void deleteByTaskId(String taskId) {
+        if (StringUtils.isNotBlank(taskId)) {
+            LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(PreTaskEntity::getPreTaskId, taskId);
+            this.remove(queryWrapper);
+
+            LambdaQueryWrapper<PreTaskEntity> query = new LambdaQueryWrapper<>();
+            query.eq(PreTaskEntity::getTaskId, taskId);
+            this.remove(query);
+
+        }
+
     }
 }
 

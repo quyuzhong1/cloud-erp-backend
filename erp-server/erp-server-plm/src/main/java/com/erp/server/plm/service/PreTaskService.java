@@ -34,4 +34,10 @@ public interface PreTaskService extends IService<PreTaskEntity> {
     List<PreTaskEntity> getPreTaskListBytaskIds(List<String> taskIds);
 
     List<PreTaskEntity> getPreTaskListByPreTaskIds(List<String> preTaskIds);
+
+    /**
+     * 删除任务  后删除前置任务
+     * @param taskId
+     */
+    void deleteByTaskId(String taskId);
 }

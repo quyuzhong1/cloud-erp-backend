@@ -649,7 +649,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //filedjson
         String fieldJson = dto.getFieldJson();
         //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType)&&StringUtils.isNotBlank(fieldJson));
+        Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
         Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && createSku.equals(fieldConfigType));
@@ -838,8 +838,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (flag) {
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
-
             taskRefSkuConfigService.deleteByTaskId(taskId);
+
+            preTaskService.deleteByTaskId(taskId);
 
             //发送删除任务通知
             noticeMessageService.deleteTaskNotice(loginUser.getUserName(), entity, entity.getProductId());
