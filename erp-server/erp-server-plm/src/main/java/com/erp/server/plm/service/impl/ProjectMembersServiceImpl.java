@@ -149,7 +149,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(),dto.getProductId());
+        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(), dto.getProductId());
         List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
         for (String userId : userIdList) {
             ProjectMembersEntity entity = new ProjectMembersEntity();
@@ -359,7 +359,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     }
 
     @Override
-    public List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList) {
+    public List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList) {
         Date date = new Date();
         List<TaskConductDTO> resultList = new ArrayList<>();
         List<ProjectTaskEntity> list = projectTaskService.list();
@@ -372,9 +372,16 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
             //进行中
             int ingTaskCount = taskList.stream().filter(t -> ing.equals(t.getStatus())).collect(Collectors.toList()).size();
+
+
             //总任务数
             int totalTaskCount = taskList.size();
             int unfinishedTaskCount = taskList.stream().filter(t -> !finishState.equals(t.getStatus()) && !approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
+            int flagTaskCount = unfinishedTaskCount;
+            if (CollectionUtils.isNotEmpty(stateList)) {
+                flagTaskCount = (int) taskList.stream().filter(t -> stateList.contains(t.getStatus())).count();
+            }
+
             //延期的任务数
             int postponeTaskCount = 0;
             postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(t.getPlanEndTime()) == 1).collect(Collectors.toList()).size();
@@ -386,6 +393,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             dto.setIngTaskCount(ingTaskCount);
             dto.setPostponeTaskCount(postponeTaskCount);
             dto.setUnfinishedTaskCount(unfinishedTaskCount);
+            dto.setFlagTaskCount(flagTaskCount);
             resultList.add(dto);
         }
 

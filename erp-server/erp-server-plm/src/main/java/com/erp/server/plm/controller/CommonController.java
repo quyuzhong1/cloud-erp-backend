@@ -9,6 +9,7 @@ import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import org.springframework.web.bind.annotation.*;
@@ -63,7 +64,12 @@ public class CommonController extends BaseController {
         ApiResult result = sysUserFeign.userList(dto);
         List<TaskConductDTO> list = new ArrayList<>();
         if (result.isSuccess()) {
-            list = projectMembersService.getUserTaskConduct((List<FindUserDTO>) result.getData());
+            //任务负责人 的任务数 是查看 待发布，未开始，进行中
+            List<Integer> stateList = new ArrayList<>();
+            stateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            stateList.add(TaskStateEnum.NOT_START.getCode());
+            stateList.add(TaskStateEnum.ING.getCode());
+            list = projectMembersService.getUserTaskConduct((List<FindUserDTO>) result.getData(),stateList);
         }
 
         return success(list);
