@@ -839,9 +839,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
             taskRefSkuConfigService.deleteByTaskId(taskId);
-
             preTaskService.deleteByTaskId(taskId);
-
             //发送删除任务通知
             noticeMessageService.deleteTaskNotice(loginUser.getUserName(), entity, entity.getProductId());
         }
@@ -2068,12 +2066,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         //变更文档
-        //只有任务完成了或者审核不通过才能变更流程
+        //只有任务完成了或者审核不通过才能变更流程 表示有交付物 有交付物[文档+信息填写]时，显示上传文档
         Boolean changeDocsShow = false;
-        if (finishCode.equals(taskState)
-                || approvalNoPassCode.equals(taskState)) {
+        if (finishCode.equals(taskState)) {
             changeDocsShow = true;
         }
+        //当没有上传文档 并且没有填写的时候 不用显示
+        if (totalCount == 0 && Objects.isNull(skuConfigEntity) && !taskRefSkuFlag) {
+            changeDocsShow = false;
+        }
+
         Map<String, Object> changeDocsMap = new HashMap<>();
         changeDocsMap.put("name", "变更交付物");
         changeDocsMap.put("flag", "changeDocs");
