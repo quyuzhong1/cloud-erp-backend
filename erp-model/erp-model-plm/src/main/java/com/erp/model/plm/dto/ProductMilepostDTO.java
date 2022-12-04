@@ -24,4 +24,9 @@ public class ProductMilepostDTO implements Serializable {
      * 里程碑名称
      */
     private String name;
+
+    /**
+     * 里程碑时间
+     */
+    private ProductMilepostDateDTO productMilepostDateDTO;
 }

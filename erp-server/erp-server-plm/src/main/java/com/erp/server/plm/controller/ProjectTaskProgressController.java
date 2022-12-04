@@ -42,21 +42,6 @@ public class ProjectTaskProgressController extends BaseController {
     }
 
     /**
-     * 任务进度-查询里程碑结束时间
-     *
-     * @author Will
-     * @date: 2022/11/18 16:48
-     * @param dto
-     * @return ApiResult<ProductMilepostDateDTO>
-     */
-    @PostMapping("/getMilepostDate")
-    public ApiResult<ProductMilepostDateDTO> getMilepostDate(@RequestBody @Validated ProductMilepostParamDTO dto) {
-        ProductMilepostDateDTO dateDto = projectTaskProgressService.getMilepostDate(dto);
-        return success(dateDto);
-    }
-
-
-    /**
      * 任务进度-任务完成进度
      *
      * @author Will

@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -14,6 +15,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 public class ProductMilepostParamDTO implements Serializable {
 
     /**
@@ -31,4 +33,6 @@ public class ProductMilepostParamDTO implements Serializable {
      * 任务id
      */
     private String taskId;
+
+
 }
