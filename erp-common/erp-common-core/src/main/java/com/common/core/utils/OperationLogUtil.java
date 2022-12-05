@@ -1,15 +1,20 @@
 package com.common.core.utils;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.EnumTimePattern;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * @author Will
@@ -28,6 +33,9 @@ public class OperationLogUtil {
     public static Map<String,Pair<String,String>> getOperationLogMap(Object oldObject, Object newObject) {
         //返回结果集:Map<字段, Pair<旧值,新值>>
         Map<String, Pair<String,String>> resultMap = new LinkedHashMap<>();
+
+        Map<String, String> oldResultMap = new LinkedHashMap<>();
+        Map<String, String> newResultMap = new LinkedHashMap<>();
         //如果内容为空则返回空map
         if (ObjectUtils.isEmpty(oldObject) || ObjectUtils.isEmpty(newObject)) {
             return resultMap;
@@ -44,27 +52,31 @@ public class OperationLogUtil {
         Iterator<Map.Entry<String, Object>> oldIterator = oldMap.size() == 0 ? null : oldMap.entrySet().iterator();
         Iterator<Map.Entry<String, Object>> newIterator = newMap.size() == 0 ? null : newMap.entrySet().iterator();
 
-        //新增数据时记录
-        if (ObjectUtils.isEmpty(oldIterator)) {
-            if (ObjectUtils.isNotEmpty(newIterator)) {
-                while (newIterator .hasNext()){
-                    Map.Entry newEntry  =  (java.util.Map.Entry)newIterator.next();
-                    String key =  newEntry.getKey().toString();
-                    Object newValue = newEntry.getValue();
-
-                    doOpValue(key,newValue);
-                }
-
+        //旧数据时记录
+        if (ObjectUtils.isNotEmpty(oldIterator)) {
+            while (oldIterator .hasNext()){
+                Map.Entry oldEntry  =  (java.util.Map.Entry)oldIterator.next();
+                String key =  oldEntry.getKey().toString();
+                Object value = oldEntry.getValue();
+                doOpValue(key,value,oldResultMap);
             }
-
         }
-
+        //新数据时记录
+        if (ObjectUtils.isNotEmpty(newIterator)) {
+            while (newIterator .hasNext()){
+                Map.Entry newEntry  =  (java.util.Map.Entry)newIterator.next();
+                String key =  newEntry.getKey().toString();
+                Object value = newEntry.getValue();
+                doOpValue(key,value,newResultMap);
+            }
+        }
 
         return resultMap;
     }
 
 
-    private static void doOpValue(String key,Object value) {
+    private static void doOpValue(String key,Object value,Map<String, String> resultMap) {
+        String newKey = key;
         //如果value为空则直接返回
         if (ObjectUtils.isEmpty(value)) {
             return;
@@ -72,14 +84,40 @@ public class OperationLogUtil {
         //判断value值的类型
         int objectType = TransitionUtil.getObjectType(value);
         if (objectType == 40) {//判断是否为List
-            List<Object> list = TransitionUtil.transitionType(value, List.class);
+            List<Map> list = TransitionUtil.transitionType(value, List.class);
+            for (Map map:list) {
+                Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+                while (iterator .hasNext()){
+                    Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                    String k =  entry.getKey().toString();
+                    Object v = entry.getValue();
+                    newKey = newKey.concat(".").concat(k);
+                    doOpValue(newKey,v,resultMap);
+                }
+            }
 
-
-        } else if (objectType == 20) {
-
-        } else if (objectType == 30) {
-
+        } else if (objectType == 30) {//判断是否为Map
+            Map map = TransitionUtil.transitionType(value, Map.class);
+            Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+            while (iterator .hasNext()){
+                Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                String k =  entry.getKey().toString();
+                Object v = entry.getValue();
+                newKey = newKey.concat(".").concat(k);
+                doOpValue(k,v,resultMap);
+            }
+        } else if (objectType == 10) {//判断是否是日期
+            Date date = (Date) value;
+            String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
+            resultMap.put(newKey,newValue);
+        } else {
+            String newValue = String.valueOf(value);
+            resultMap.put(newKey,newValue);
         }
     }
+
+
+
+
 
 }

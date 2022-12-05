@@ -14,7 +14,7 @@
         inner join product_detail c on b.sku_id = c.id
         <where>
             <if test="productId != '' and productId != null">
-                and product_id = #{productId}
+                and a.product_id = #{productId}
             </if>
         </where>
     </select>
