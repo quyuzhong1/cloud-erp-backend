@@ -7,7 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
-import javafx.util.Pair;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.Date;
 import java.util.List;
