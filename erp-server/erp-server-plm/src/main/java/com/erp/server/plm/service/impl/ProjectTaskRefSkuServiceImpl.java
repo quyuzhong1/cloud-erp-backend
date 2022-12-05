@@ -162,6 +162,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
         updateWrapper.in(ProjectTaskRefSkuEntity::getSkuId, skuIdList);
+        updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 1);
         this.update(updateWrapper);
 
     }
