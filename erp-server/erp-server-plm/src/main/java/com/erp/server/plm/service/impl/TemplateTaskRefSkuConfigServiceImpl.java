@@ -65,7 +65,7 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
      * @date 2022-11-24 17:22
      */
     @Override
-    public void copyTemplateTaskSkuConfig(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
+    public Boolean copyTemplateTaskSkuConfig(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
         List<TemplateTaskRefSkuConfigEntity> list = getByTemplateId(templateId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskRefSkuConfigEntity> copyList = new ArrayList<>();
@@ -81,9 +81,11 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
                     copyList.add(entity);
                 }
             }
-
-            taskRefSkuConfigService.saveBatch(copyList);
+            if (CollectionUtils.isNotEmpty(copyList)) {
+                return taskRefSkuConfigService.saveBatch(copyList);
+            }
         }
+        return false;
 
     }
 

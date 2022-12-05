@@ -28,6 +28,7 @@ import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
+import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -339,7 +340,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional
-    public List<ProjectTaskEntity> copyTaskBySys(String saveProductId, String saveProjectId) {
+    public Pair<Boolean, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
+        Boolean refSkuConfig = false;
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
@@ -392,7 +394,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     addTaskRefSkuList.add(addEntity);
                 }
             }
-            taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
+            if(CollectionUtils.isNotEmpty(addTaskRefSkuList)){
+                refSkuConfig=true;
+                taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
+            }
 
             List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
             //以系统任务的id 分组
@@ -422,7 +427,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        return addTaskList;
+        return  new Pair<>(refSkuConfig,addTaskList) ;
     }
 
     /**
@@ -1163,6 +1168,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String processId = taskEntity.getProcessId();
         String approvalUserId = taskEntity.getApprovalUserId();
         BeanMapper.copy(dto, taskEntity);
+        Integer priority=dto.getPriority();
+        if(priority==null){
+            taskEntity.setPriority(0);
+        }
+
         taskEntity.setApprovalUserId(approvalUserId);
         taskEntity.setBusinessProcessId(businessProcessId);
         taskEntity.setProcessId(processId);

@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import javafx.util.Pair;
 
 import java.util.Date;
 import java.util.List;
@@ -34,7 +35,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void copyTaskByProject(String saveProductId, String saveProjectId,String  flagProjectId);
 
 
-    List<ProjectTaskEntity> copyTaskBySys(String productId, String projectId);
+    Pair<Boolean, List<ProjectTaskEntity>> copyTaskBySys(String productId, String projectId);
 
 
     PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);

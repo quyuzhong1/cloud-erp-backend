@@ -22,6 +22,7 @@ import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectInfoMapper;
 import com.erp.server.plm.service.*;
+import javafx.util.Pair;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -116,6 +117,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Autowired
     private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
+
+    @Autowired
+    private TaskRefSkuConfigService taskRefSkuConfigService;
 
     /**
      * 项目概述
@@ -217,10 +221,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
                 //从复制系统项目任务
-                List<ProjectTaskEntity> addProjectTaskList = projectTaskService.copyTaskBySys(productId, projectId);
+                Pair<Boolean, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
+                List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
                 //已经添加的任务id
                 List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-
+                boolean refSkuConfig=pair.getKey();
+                //当没有配置表单的时候 则要自动生成配置表单
+                if(!refSkuConfig){
+                   taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList,TaskConstant.FILL_PRODUCT_INFO,productId);
+                }
                 //将已保存的任务id 与sku 关联 在一起
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
                 //异步发送通知
@@ -243,7 +252,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //复制模板角色
                 List<CopySourceDTO> copyRoleSourceList = templateRoleService.copyTemplateRole(flagId, productId, projectId);
                 //复制角色关系表
-                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList,copyMembersSourceList);
+                templateRoleRefMembersService.copyTemplateRoleRefMembers(flagId, productId, projectId, copyRoleSourceList, copyMembersSourceList);
                 //复制 项目任务阶段
                 List<CopySourceDTO> phaseSourceList = templatePhaseService.copyTemplatePhase(flagId, productId, projectId);
 
@@ -256,7 +265,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
 
                 //这个是复制任务与 sku 配置字段关系
-                templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+               boolean copyResult= templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+               if(!copyResult){
+                   List<String> addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                   taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList,TaskConstant.FILL_PRODUCT_INFO,productId);
+
+               }
 
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
