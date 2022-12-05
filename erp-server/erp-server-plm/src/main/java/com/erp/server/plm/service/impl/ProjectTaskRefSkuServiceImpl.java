@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -144,6 +145,25 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+
+    /**
+     * 完成 任务相关的sku
+     *
+     * @param taskId
+     * @param skuIdList
+     * @return void
+     * @author yl
+     * @date 2022-12-05 11:00
+     */
+    @Override
+    public void taskFinishRefSku(String taskId, List<String> skuIdList) {
+        LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+        updateWrapper.in(ProjectTaskRefSkuEntity::getSkuId, skuIdList);
+        this.update(updateWrapper);
+
     }
 
     /**

@@ -1972,6 +1972,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public void taskFinishSku(TaskFinishSkuDTO dto) {
+        String taskId = dto.getTaskId();
+        List<String> skuIdList = dto.getSkuIdList();
+        projectTaskRefSkuService.taskFinishRefSku(taskId,skuIdList);
     }
 
     /**
@@ -3079,7 +3082,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer notFinish = IsConstant.NO;
         if (!Objects.isNull(taskEntity)) {
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
-            List<String> skuIdList = list.stream().filter(ref->notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+            List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(skuIdList)) {
                 taskEntity.setStatus(TaskStateEnum.PORTION_FINISH.getCode());
             } else {
