@@ -109,12 +109,12 @@
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id"
         WHERE pi.delete_state = 0
-            <if test="name != '' and name != null">
-                AND pi."name" = #{name}
-            </if>
-            <if test="skuNo != '' and skuNo != null">
-                AND pd.sku_no = #{skuNo}
-            </if>
+        <if test="name != '' and name != null">
+            AND pi."name" = #{name}
+        </if>
+        <if test="skuNo != '' and skuNo != null">
+            AND pd.sku_no = #{skuNo}
+        </if>
         LIMIT 1
     </select>
 
@@ -214,54 +214,54 @@
         SELECT
         pi.spu_no,
         CASE WHEN pi.spec_type = 2 THEN pd."name" ELSE pi."name" END "name",
-		pi.sale_method,
-		pi.category,
-		pi.sell_spot,
-		pi.function_desc,
-		pi.usage_desc,
+        pi.sale_method,
+        pi.category,
+        pi.sell_spot,
+        pi.function_desc,
+        pi.usage_desc,
         CASE WHEN pi.pirate_risk = 1 THEN '有侵权风险' ELSE '无侵权风险' END pirate_risk,
-		pi.materials,
-		pi.property,
-		pi.brand_name,
-		pd.variant_property,
-		pd.sku_no,
-		pd."name" sku_name,
-		pd.plan_listing_time,
+        pi.materials,
+        pi.property,
+        pi.brand_name,
+        pd.variant_property,
+        pd.sku_no,
+        pd."name" sku_name,
+        pd.plan_listing_time,
         unit.name AS unit_name,
-		pd.charge_name,
-		pd.product_state,
-		target_tax_cost,
-		target_no_tax_cost,
-		actual_tax_cost,
-		actual_no_tax_cost,
-		retail_price,
-		target_gpm,
-		actual_gpm_cny,
-		actual_gpm_usd,
-		year_sale_qty,
-		year_sale_amount,
-		month_sale_qty,
-		month_sale_amount,
+        pd.charge_name,
+        pd.product_state,
+        target_tax_cost,
+        target_no_tax_cost,
+        actual_tax_cost,
+        actual_no_tax_cost,
+        retail_price,
+        target_gpm,
+        actual_gpm_cny,
+        actual_gpm_usd,
+        year_sale_qty,
+        year_sale_amount,
+        month_sale_qty,
+        month_sale_amount,
         ps.sale_country,
-		listing_time,
-		delisting_time,
+        listing_time,
+        delisting_time,
         CASE WHEN is_finished_img = 1 THEN '是' ELSE '否' END is_finished_img,
         CASE WHEN is_finished_video = 1 THEN '是' ELSE '否' END is_finished_video,
-		sale_state,
-		product_size,
-		gross_weight,
-		net_weight,
-		box_size,
-		box_weight,
-		box_qty,
+        sale_state,
+        product_size,
+        gross_weight,
+        net_weight,
+        box_size,
+        box_weight,
+        box_qty,
         dp.value AS product_property,
-		declare_chinese_name,
-		declare_english_name,
-		declare_price,
-		customs_code,
-		declare_element,
-		english_material,
-		english_usage,
+        declare_chinese_name,
+        declare_english_name,
+        declare_price,
+        customs_code,
+        declare_element,
+        english_material,
+        english_usage,
         pp.ean,
         pp.plan_order_qty,
         pp.place_order_time,
@@ -303,14 +303,14 @@
     </select>
 
     <select id="getNotFinish" resultType="com.erp.common.dto.base.BaseIdDTO">
-      SELECT id,sku_no  AS name FROM product_detail
-      WHERE  is_finish_task =#{finishTaskState}
-      <if test="skuIdList!=null and skuIdList.size>0 " >
-          AND id IN
-          <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-              #{skuId}
-          </foreach>
-      </if>
-
+        SELECT id,sku_no AS name FROM product_detail
+        <where>
+            <if test="skuIdList!=null and skuIdList.size>0 ">
+                id IN
+                <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                    #{skuId}
+                </foreach>
+            </if>
+        </where>
     </select>
 </mapper>

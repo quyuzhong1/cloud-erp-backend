@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -2729,14 +2728,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
          */
         List<String> noProcessTaskIds = noProcessList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         Date nowDate = new Date();
+        Integer noFinish = IsConstant.NO;
         //任务与sku 的关联
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskIdList(noProcessTaskIds);
-        List<String> skuIds = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
-        List<BaseIdDTO> noFinishList = productDetailService.getNotFinish(skuIds);
-        //这个是没有完成的skuid 集合
-        List<String> noFinishSkuIdList = noFinishList.stream().map(BaseIdDTO::getId).collect(Collectors.toList());
+
         //没有完成的sku的 任务id
-        List<String> noFinishSkuTaskIdList = taskRefSkuList.stream().filter(r -> noFinishSkuIdList.contains(r.getSkuId())).map(ProjectTaskRefSkuEntity::getTaskId).distinct().collect(Collectors.toList());
+        List<String> noFinishSkuTaskIdList = taskRefSkuList.stream().filter(r -> noFinish.equals(r.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getTaskId).distinct().collect(Collectors.toList());
         this.updateTaskState(noFinishSkuTaskIdList, TaskStateEnum.PORTION_FINISH.getCode(), null, nowDate);
         //发送部分完成任务通知
         List<ProjectTaskEntity> portionFinishList = list.stream().filter(p -> noFinishSkuTaskIdList.contains(p.getId())).collect(Collectors.toList());
@@ -3079,11 +3076,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         queryWrapper.eq(ProjectTaskEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
+        Integer notFinish = IsConstant.NO;
         if (!Objects.isNull(taskEntity)) {
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
-            List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
-            List<BaseIdDTO> notFinishList = productDetailService.getNotFinish(skuIdList);
-            if (CollectionUtils.isNotEmpty(notFinishList)) {
+            List<String> skuIdList = list.stream().filter(ref->notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuIdList)) {
                 taskEntity.setStatus(TaskStateEnum.PORTION_FINISH.getCode());
             } else {
                 taskEntity.setStatus(TaskStateEnum.FINISH.getCode());

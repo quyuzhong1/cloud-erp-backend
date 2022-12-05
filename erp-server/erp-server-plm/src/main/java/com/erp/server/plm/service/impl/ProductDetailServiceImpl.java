@@ -25,7 +25,6 @@ import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.enums.ProductDetailStateEnum;
 import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
-import com.erp.server.plm.enums.VariantColorEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -1079,7 +1078,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<BaseIdDTO> getNotFinish(List<String> skuIdList) {
         if (CollectionUtils.isNotEmpty(skuIdList)) {
-            return baseMapper.getNotFinish(skuIdList,IsConstant.NO);
+            return baseMapper.getNotFinish(skuIdList);
         }
         return new ArrayList<>();
     }

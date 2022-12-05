@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -121,9 +121,9 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Override
     public List<String> checkTaskRefSkuFinish(List<String> taskIdList) {
         List<ProjectTaskRefSkuEntity> list = getByTaskIdList(taskIdList);
-        List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        Integer noFinish = IsConstant.NO;
+        List<String> skuIdList = list.stream().filter(r -> r.getIsFinishTask().equals(noFinish)).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<BaseIdDTO> notFinishList = productDetailService.getNotFinish(skuIdList);
-
         return notFinishList.stream().map(BaseIdDTO::getName).distinct().collect(Collectors.toList());
     }
 
