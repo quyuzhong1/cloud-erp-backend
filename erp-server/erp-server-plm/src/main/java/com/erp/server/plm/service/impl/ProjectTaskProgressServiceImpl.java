@@ -115,10 +115,12 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
      * @date: 2022/11/21 10:39
      */
     @Override
-    public List<ProductPhaseProgressDTO> getFinishProgressList(String productId) {
-
+    public productProgressShowDTO getFinishProgressList(String productId) {
         //结果集
-        List<ProductPhaseProgressDTO> resultList = new ArrayList<>();
+        productProgressShowDTO resultDto = new productProgressShowDTO();
+        //结果集
+        List<ProductProgressPhaseDTO> phaseList = new ArrayList<>();
+        List<ProductProgressSkuDTO> skuList = new ArrayList<>();
         //查询产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         if (ObjectUtils.isEmpty(productInfoEntity)) {
@@ -127,14 +129,15 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         //查询产品下面的任务
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
        if (CollectionUtils.isEmpty(taskList))  {
-           return resultList;
+           return resultDto;
        }
+        List<ProductDetailEntity> list = productDetailService.list();
         //查询产品下面的sku关联关系
         List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
         Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
         for (Map.Entry<String, List<ProjectTaskEntity>> entry : map.entrySet()) {
             //阶段进度对象
-            ProductPhaseProgressDTO phaseDto = new ProductPhaseProgressDTO();
+            ProductProgressPhaseDTO phaseDto = new ProductProgressPhaseDTO();
             //阶段名称
             String phaseName = entry.getKey();
             //阶段下任务集合
@@ -143,7 +146,6 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             long totalCount = value.stream().count();
             //任务完成数量
             long finishCount = value.stream().filter(obj -> TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-            List<ProductSkuProgressDTO> skuList = new ArrayList<>();
             phaseDto.setPhaseName(phaseName);
             phaseDto.setTotalQty(totalCount);
             phaseDto.setFinishQty(finishCount);
@@ -153,7 +155,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 for (Map.Entry<String, List<ProductTaskRefSkuDTO>> refEntry : refMap.entrySet()) {
                     List<ProductTaskRefSkuDTO> refValue = refEntry.getValue();
                     //sku进度对象
-                    ProductSkuProgressDTO skuDto = new ProductSkuProgressDTO();
+                    ProductProgressSkuDTO skuDto = new ProductProgressSkuDTO();
                     //任务id集合
                     List<String> taskIds = refValue.stream().distinct().map(ProductTaskRefSkuDTO::getTaskId).collect(Collectors.toList());
                     //sku名称
@@ -167,11 +169,14 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                     skuDto.setFinishQty(skuFinishCount);
                     skuList.add(skuDto);
                 }
-                phaseDto.setSkuList(skuList);
             }
-            resultList.add(phaseDto);
+            phaseList.add(phaseDto);
         }
-        return resultList;
+        //单独处理
+
+        resultDto.setPhaseList(phaseList);
+        resultDto.setSkuList(skuList);
+        return resultDto;
     }
 
     /**

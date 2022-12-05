@@ -4,22 +4,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author Will
  * @version 1.0
- * @description: 产品阶段进度
- * @date 2022/11/21 9:23
+ * @description: 产品任务进度DTO
+ * @date 2022/11/21 9:13
  */
+
 @Data
 @NoArgsConstructor
-public class ProductPhaseProgressDTO implements Serializable {
+public class ProductProgressSkuDTO implements Serializable {
 
     /**
      * 阶段名
      */
     private String phaseName;
+    /**
+     * sku名
+     */
+    private String skuName;
 
     /**
      * 任务完成数量
@@ -31,8 +35,4 @@ public class ProductPhaseProgressDTO implements Serializable {
      */
     private Long totalQty;
 
-    /**
-     * 产品sku进度集合
-     */
-    private List<ProductSkuProgressDTO> skuList;
 }

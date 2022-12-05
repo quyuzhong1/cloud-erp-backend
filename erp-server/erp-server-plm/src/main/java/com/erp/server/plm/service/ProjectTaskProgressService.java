@@ -1,9 +1,8 @@
 package com.erp.server.plm.service;
 
 import com.erp.model.plm.dto.ProductMilepostDTO;
-import com.erp.model.plm.dto.ProductMilepostDateDTO;
-import com.erp.model.plm.dto.ProductMilepostParamDTO;
-import com.erp.model.plm.dto.ProductPhaseProgressDTO;
+import com.erp.model.plm.dto.ProductProgressPhaseDTO;
+import com.erp.model.plm.dto.productProgressShowDTO;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ public interface ProjectTaskProgressService {
      * @author Will
      * @date: 2022/11/21 9:27
      * @param productId
-     * @return List<ProductPhaseProgressDTO>
+     * @return productProgressShowDTO
      */
-    List<ProductPhaseProgressDTO> getFinishProgressList(String productId);
+    productProgressShowDTO getFinishProgressList(String productId);
 }

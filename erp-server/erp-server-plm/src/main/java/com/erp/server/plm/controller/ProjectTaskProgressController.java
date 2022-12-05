@@ -3,12 +3,10 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.ProductMilepostDTO;
-import com.erp.model.plm.dto.ProductMilepostDateDTO;
-import com.erp.model.plm.dto.ProductMilepostParamDTO;
-import com.erp.model.plm.dto.ProductPhaseProgressDTO;
+import com.erp.model.plm.dto.ProductProgressPhaseDTO;
+import com.erp.model.plm.dto.productProgressShowDTO;
 import com.erp.server.plm.service.ProjectTaskProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,12 +45,12 @@ public class ProjectTaskProgressController extends BaseController {
      * @author Will
      * @date: 2022/11/21 9:25
      * @param productId
-     * @return ApiResult<List<ProductPhaseProgressDTO>>
+     * @return ApiResult<productProgressShowDTO>
      */
     @GetMapping("/getFinishProgressList")
-    public ApiResult<List<ProductPhaseProgressDTO>> getFinishProgressList(@RequestParam("productId") String productId) {
-        List<ProductPhaseProgressDTO> list = projectTaskProgressService.getFinishProgressList(productId);
-        return success(list);
+    public ApiResult<productProgressShowDTO> getFinishProgressList(@RequestParam("productId") String productId) {
+        productProgressShowDTO dto = projectTaskProgressService.getFinishProgressList(productId);
+        return success(dto);
     }
 
 }
