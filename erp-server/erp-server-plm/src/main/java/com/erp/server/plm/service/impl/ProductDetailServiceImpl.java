@@ -1096,7 +1096,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //验证是否设置审核人
         ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         if (ObjectUtils.isEmpty(approverEntity)) {
-            throw new ServiceException(ApiError.ERROR_95076);
+            throw new ServiceException(ApiError.ERROR_95082);
         }
         //只有待审核和审核中数据可以审核
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
@@ -1104,7 +1104,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //验证sku关联任务是否已完成
         if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95077);
+            throw new ServiceException(ApiError.ERROR_95083);
         }
 
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
@@ -1146,7 +1146,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //验证是否设置审核人
         ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         if (ObjectUtils.isEmpty(approverEntity)) {
-            throw new ServiceException(ApiError.ERROR_95076);
+            throw new ServiceException(ApiError.ERROR_95082);
         }
         //只有待审核和审核中数据可以审核
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
@@ -1154,7 +1154,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //验证sku关联任务是否已完成
         if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95077);
+            throw new ServiceException(ApiError.ERROR_95083);
         }
 
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
@@ -1217,16 +1217,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean applyChange(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95078);
+            throw new ServiceException(ApiError.ERROR_95084);
         }
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //验证sku关联任务是否完成
         if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95079);
+            throw new ServiceException(ApiError.ERROR_95085);
         }
         //验证sku是否审核通过
         if (!code.equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_95080);
+            throw new ServiceException(ApiError.ERROR_95086);
         }
         LoginUser loginUser = commonService.getUserInfo();
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
@@ -1243,11 +1243,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean deApprove(String id) {
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95078);
+            throw new ServiceException(ApiError.ERROR_95084);
         }
         //验证sku是否审核通过
         if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_95081);
+            throw new ServiceException(ApiError.ERROR_95087);
         }
         //重新启动流程
         this.productDetailStartProcess(entity);
@@ -1289,7 +1289,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         //验证是否设置审核人
         if (ObjectUtils.isEmpty(approverEntity)) {
-            throw new ServiceException(ApiError.ERROR_95076);
+            throw new ServiceException(ApiError.ERROR_95082);
         }
         String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
         //初始状态为待审核
