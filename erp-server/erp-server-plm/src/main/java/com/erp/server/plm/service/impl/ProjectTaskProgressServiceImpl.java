@@ -75,42 +75,47 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         startDto.setProductMilepostDateDTO(startDateDto);
         startDto.setSeq(seq.getAndSet(seq.get() + 1));
         resultList.add(startDto);
+
+        //创建立项里程碑
+        ProductMilepostDTO approvalDto = new ProductMilepostDTO();
         //判断产品是否立项
         if (ApprovalStatusEnum.APPROVAL.getState().equals(productInfoEntity.getApprovalStatus())) {
-            //创建立项里程碑
-            ProductMilepostDTO approvalDto = new ProductMilepostDTO();
-            approvalDto.setName(ProductMilepostEnum.PROJECT_APPROVAL_MILEPOST.getName());
+            approvalDto.setIsFinish(IsConstant.YES);
             ProductMilepostDateDTO approvalDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(2).setProductId(productId));
             approvalDto.setProductMilepostDateDTO(approvalDateDto);
-            approvalDto.setSeq(seq.getAndSet(seq.get() + 1));
-            resultList.add(approvalDto);
         }
-            //查询产品下面的任务
-            List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
-            if (CollectionUtils.isEmpty(taskList)) {
-                throw new ServiceException(ApiError.ERROR_95027);
-            }
-            taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost())).forEach(obj -> {
-                //创建产品任务里程碑
-                ProductMilepostDTO dto = new ProductMilepostDTO();
-                dto.setTaskId(obj.getId());
-                dto.setName(obj.getName());
-                ProductMilepostDateDTO taskDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(3).setTaskId(obj.getId()));
-                dto.setProductMilepostDateDTO(taskDateDto);
-                dto.setSeq(seq.getAndSet(seq.get() + 1));
-                resultList.add(dto);
-            });
-            //查询产品是否已经归档
-            ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
-            if (ObjectUtils.isNotEmpty(productArchiveEntity)) {
-                //创建归档里程碑
-                ProductMilepostDTO archiveDto = new ProductMilepostDTO();
-                archiveDto.setName(ProductMilepostEnum.PROJECT_ARCHIVE_MILEPOST.getName());
-                ProductMilepostDateDTO archiveDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(4).setProductId(productId));
-                archiveDto.setProductMilepostDateDTO(archiveDateDto);
-                archiveDto.setSeq(seq.getAndSet(seq.get() + 1));
-                resultList.add(archiveDto);
-            }
+        approvalDto.setName(ProductMilepostEnum.PROJECT_APPROVAL_MILEPOST.getName());
+        approvalDto.setSeq(seq.getAndSet(seq.get() + 1));
+        resultList.add(approvalDto);
+
+        //查询产品下面的任务
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+        if (CollectionUtils.isEmpty(taskList)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost())).forEach(obj -> {
+
+            //创建产品任务里程碑
+            ProductMilepostDTO dto = new ProductMilepostDTO();
+            dto.setTaskId(obj.getId());
+            dto.setName(obj.getName());
+            ProductMilepostDateDTO taskDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(3).setTaskId(obj.getId()));
+            dto.setProductMilepostDateDTO(taskDateDto);
+            dto.setSeq(seq.getAndSet(seq.get() + 1));
+            resultList.add(dto);
+        });
+        //查询产品是否已经归档
+        ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
+        //创建归档里程碑
+        ProductMilepostDTO archiveDto = new ProductMilepostDTO();
+        if (ObjectUtils.isNotEmpty(productArchiveEntity)) {
+            archiveDto.setIsFinish(IsConstant.YES);
+            ProductMilepostDateDTO archiveDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(4).setProductId(productId));
+            archiveDto.setProductMilepostDateDTO(archiveDateDto);
+        }
+        archiveDto.setName(ProductMilepostEnum.PROJECT_ARCHIVE_MILEPOST.getName());
+        archiveDto.setSeq(seq.getAndSet(seq.get() + 1));
+        resultList.add(archiveDto);
 
         showDto.setList(resultList);
         //查询项目列表，更新其状态
