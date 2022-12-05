@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname ProjectTaskDTO
@@ -173,6 +174,15 @@ public class ProjectTaskDTO  implements Serializable {
      * 勾选字段后的json 字段
      */
     private String fieldJson;
+
+
+    /**
+     * sku 完成信息
+     */
+    private List<Map<String,Object>> refSkuFinishList;
+
+
+
     
 
 }

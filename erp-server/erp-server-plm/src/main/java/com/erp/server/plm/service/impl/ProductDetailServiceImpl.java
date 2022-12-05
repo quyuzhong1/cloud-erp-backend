@@ -2,7 +2,6 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,7 +9,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -21,16 +19,13 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
-import com.erp.server.plm.enums.*;
-import com.erp.server.plm.interceptor.PlmInterceptor;
+import com.erp.server.plm.enums.ProductDetailStateEnum;
+import com.erp.server.plm.enums.PurchaseStateEnum;
+import com.erp.server.plm.enums.SaleStateEnum;
+import com.erp.server.plm.enums.VariantColorEnum;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -44,9 +39,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
 
 /**
  * @Description: 产品明细信息服务类
@@ -1101,7 +1094,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public List<BaseIdDTO> getNotFinish(List<String> skuIdList) {
         if (CollectionUtils.isNotEmpty(skuIdList)) {
-            return baseMapper.getNotFinish(skuIdList,IsConstant.NO);
+            return baseMapper.getNotFinish(skuIdList);
         }
         return new ArrayList<>();
     }

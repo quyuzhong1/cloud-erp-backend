@@ -8,8 +8,8 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
-import java.util.Map;
 
 @Mapper
 public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
@@ -68,7 +68,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      **/
     List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
-    List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList,@Param("finishTaskState") Integer finishTaskState);
+    List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList);
 }
 
 

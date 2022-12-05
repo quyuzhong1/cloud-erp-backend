@@ -75,4 +75,12 @@ public class ProjectTaskRefSkuEntity implements Serializable {
      */
     @TableField("update_user_name")
     private String updateUserName;
+
+
+    /**
+     * 是否已完成任务
+     * 0 没有 1 已完成
+     */
+    @TableField(value = "is_finish_task")
+    private Integer isFinishTask;
 }

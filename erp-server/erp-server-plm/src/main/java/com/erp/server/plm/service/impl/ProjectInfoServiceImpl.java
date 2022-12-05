@@ -29,7 +29,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -217,7 +216,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
-                projectMembersService.add(productId, projectId, dto.getMembers());
                 //从复制系统项目任务
                 List<ProjectTaskEntity> addProjectTaskList = projectTaskService.copyTaskBySys(productId, projectId);
                 //已经添加的任务id

@@ -1,10 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
+import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
@@ -15,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -121,9 +122,9 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Override
     public List<String> checkTaskRefSkuFinish(List<String> taskIdList) {
         List<ProjectTaskRefSkuEntity> list = getByTaskIdList(taskIdList);
-        List<String> skuIdList = list.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+        Integer noFinish = IsConstant.NO;
+        List<String> skuIdList = list.stream().filter(r -> r.getIsFinishTask().equals(noFinish)).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<BaseIdDTO> notFinishList = productDetailService.getNotFinish(skuIdList);
-
         return notFinishList.stream().map(BaseIdDTO::getName).distinct().collect(Collectors.toList());
     }
 
@@ -144,6 +145,37 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+
+    /**
+     * 完成 任务相关的sku
+     *
+     * @param taskId
+     * @param skuIdList
+     * @return void
+     * @author yl
+     * @date 2022-12-05 11:00
+     */
+    @Override
+    public void taskFinishRefSku(String taskId, List<String> skuIdList) {
+        setTaskNoFinishRefSku(taskId);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+            updateWrapper.in(ProjectTaskRefSkuEntity::getSkuId, skuIdList);
+            updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 1);
+            this.update(updateWrapper);
+        }
+
+    }
+
+
+    public void setTaskNoFinishRefSku(String taskId) {
+        LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+        updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 0);
+        this.update(updateWrapper);
     }
 
     /**
