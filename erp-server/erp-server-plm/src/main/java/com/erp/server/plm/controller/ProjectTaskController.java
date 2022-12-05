@@ -50,7 +50,8 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
-            menuCode = "plm:task:paging"
+            menuCode = "plm:task:paging",
+            tableAlias = "project_task"
           )
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
