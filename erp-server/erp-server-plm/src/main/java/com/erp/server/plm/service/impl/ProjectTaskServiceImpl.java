@@ -1273,13 +1273,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //任务名
         String name = dto.getName();
         if (updateMap.containsKey("planStartTime")) {
-            Date planStartTime = dto.getPlanStartTime();
-            taskEntity.setPlanStartTime(planStartTime);
+            String planStartTime = dto.getPlanStartTime();
+            taskEntity.setPlanStartTime(DateUtil.stringToDate(planStartTime));
         }
         if (updateMap.containsKey("planEndTime")) {
             //结束时间
-            Date planEndTime = dto.getPlanEndTime();
-            taskEntity.setPlanEndTime(planEndTime);
+            String planEndTime = dto.getPlanEndTime();
+            taskEntity.setPlanEndTime(DateUtil.stringToDate(planEndTime));
         }
 
 
