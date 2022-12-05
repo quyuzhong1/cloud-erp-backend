@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_123ri4j" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.5.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.18.0">
+  <bpmn:process id="Process_product_detail" name="SKU审核" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="开始">
+      <bpmn:outgoing>Flow_1l4l6h4</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1l4l6h4" sourceRef="StartEvent_1" targetRef="Activity_0irqou7" />
+    <bpmn:userTask id="Activity_0irqou7" name="第一审核人" camunda:assignee="${firstApproveId}">
+      <bpmn:incoming>Flow_1l4l6h4</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ryvlj0</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="firstApproveIdList" camunda:elementVariable="firstApproveId" />
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1ryvlj0" sourceRef="Activity_0irqou7" targetRef="Activity_0f186mw" />
+    <bpmn:userTask id="Activity_0vhwatd" name="第三审核人" camunda:assignee="${thirdApproveId}">
+      <bpmn:incoming>Flow_0c5f0i4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wlwtr4</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="thirdApproveIdList" camunda:elementVariable="thirdApproveId" />
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_1ca8q09" name="结束">
+      <bpmn:extensionElements>
+        <camunda:executionListener class="com.erp.server.workflow.listeners.ProductDetailResultListener" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0wlwtr4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0wlwtr4" sourceRef="Activity_0vhwatd" targetRef="Event_1ca8q09" />
+    <bpmn:userTask id="Activity_0f186mw" name="第二审核人" camunda:assignee="${secondApproveId}">
+      <bpmn:incoming>Flow_1ryvlj0</bpmn:incoming>
+      <bpmn:outgoing>Flow_0c5f0i4</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="secondApproveIdList" camunda:elementVariable="secondApproveId" />
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_0c5f0i4" sourceRef="Activity_0f186mw" targetRef="Activity_0vhwatd" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_product_detail">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="186" y="142" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1vet1ae_di" bpmnElement="Activity_0irqou7">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0axo8xd" bpmnElement="Activity_0f186mw">
+        <dc:Bounds x="450" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0v54a5o" bpmnElement="Activity_0vhwatd">
+        <dc:Bounds x="620" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ca8q09_di" bpmnElement="Event_1ca8q09">
+        <dc:Bounds x="792" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="799" y="142" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1l4l6h4_di" bpmnElement="Flow_1l4l6h4">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ryvlj0_di" bpmnElement="Flow_1ryvlj0">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="450" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0c5f0i4_di" bpmnElement="Flow_0c5f0i4">
+        <di:waypoint x="550" y="117" />
+        <di:waypoint x="620" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wlwtr4_di" bpmnElement="Flow_0wlwtr4">
+        <di:waypoint x="720" y="117" />
+        <di:waypoint x="792" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

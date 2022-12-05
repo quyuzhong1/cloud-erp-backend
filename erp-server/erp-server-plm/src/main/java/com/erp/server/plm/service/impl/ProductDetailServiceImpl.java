@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -19,13 +21,16 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.ApproveProcessDTO;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
-import com.erp.server.plm.enums.ProductDetailStateEnum;
-import com.erp.server.plm.enums.PurchaseStateEnum;
-import com.erp.server.plm.enums.SaleStateEnum;
-import com.erp.server.plm.enums.VariantColorEnum;
+import com.erp.server.plm.enums.*;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -39,7 +44,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
 
 /**
  * @Description: 产品明细信息服务类
@@ -105,6 +112,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+    @Resource
+    private BusinessProcessService businessProcessService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Resource
+    private ProductDetailCommentService productDetailCommentService;
+
+    @Resource
+    private ProductDetailApproverService productDetailApproverService;
 
     @Resource
     private ProductVariantPropertyService productVariantPropertyService;
@@ -697,6 +716,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
+            //启动审核流程
+            this.productDetailStartProcess(productDetailEntity);
             list.add(productDetailEntity);
         }
 
@@ -706,6 +727,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return this.queryByProductId(id);
     }
+
 
     /**
      * @param skuId:产品sku表主键id
@@ -1082,6 +1104,240 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return baseMapper.getNotFinish(skuIdList,IsConstant.NO);
         }
         return new ArrayList<>();
+    }
+
+
+    @Override
+    public Boolean approvalPass(ProductDetailOperateDTO dto) {
+        ProductDetailEntity entity = this.getById(dto.getId());
+        //验证是否设置审核人
+        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+        if (ObjectUtils.isEmpty(approverEntity)) {
+            throw new ServiceException(ApiError.ERROR_95082);
+        }
+        //只有待审核和审核中数据可以审核
+        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95038);
+        }
+        //验证sku关联任务是否已完成
+        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
+            throw new ServiceException(ApiError.ERROR_95083);
+        }
+
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+        //这是用户待审核的流程id
+        List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
+        if (!processInstanceIds.contains(entity.getProcessId())) {
+            throw new ServiceException(ApiError.ERROR_95049);
+        }
+        //同流程下一个人只有一个待办
+        TaskShowDTO taskShowDTO = myToDoList.stream().filter(obj -> obj.getProcessInstanceId().equals(entity.getProcessId())).findFirst().orElse(null);
+        //调用审核通过审核流
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(taskShowDTO.getTaskId());
+        approveProcess.setProcessInstanceId(entity.getProcessId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(dto.getComment());
+        CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
+            return workflowFeign.taskPass(approveProcess);
+        });
+
+        //查询审核任务下所有待办
+        Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
+        //更新产品信息状态
+        Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
+        if (flag) {
+            //新增操作日志
+
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean approvalReject(ProductDetailOperateDTO dto) {
+        ProductDetailEntity entity = this.getById(dto.getId());
+        //验证是否设置审核人
+        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+        if (ObjectUtils.isEmpty(approverEntity)) {
+            throw new ServiceException(ApiError.ERROR_95082);
+        }
+        //只有待审核和审核中数据可以审核
+        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95046);
+        }
+        //验证sku关联任务是否已完成
+        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
+            throw new ServiceException(ApiError.ERROR_95083);
+        }
+
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+        //这是用户待审核的流程id
+        List<String> processInstanceIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        //传过来的流程id 和 当前用户的流程id 如果当前用户的流程id 不包含 就是不能审核
+        if (!processInstanceIds.contains(entity.getProcessId())) {
+            throw new ServiceException(ApiError.ERROR_95049);
+        }
+        Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
+        //更新产品信息状态
+        Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
+        if (flag) {
+            //新增操作日志
+
+        }
+        //新增审核不通过意见
+        ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
+        commentEntity.setComment("[审核结果-审核不通过]" + dto.getComment());
+        commentEntity.setProductDetailId(dto.getId());
+        commentEntity.setCreateUserName(loginUser.getUserName());
+        commentEntity.setCreateUserId(loginUser.getUid());
+        return productDetailCommentService.save(commentEntity);
+    }
+
+
+    @Override
+    public Boolean updateApprover(ProductDetailApproveParamDTO dto) {
+        ProductDetailApproverEntity entity = new ProductDetailApproverEntity();
+        BeanMapperUtils.copy(dto,entity);
+        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
+        return  productDetailApproverService.saveOrUpdate(entity);
+    }
+
+    @Override
+    @Transactional
+    public Boolean productDetailProcessPass(String processId) {
+        LoginUser loginUser = commonService.getUserInfo();
+        LambdaQueryWrapper< ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductDetailEntity::getProcessId, processId);
+        queryWrapper.last("LIMIT 1");
+        ProductDetailEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.Default);
+        }
+        entity.setStatus(ProductDetailStatusEnum.APPROVAL_PASS.getCode());
+        entity.setUpdateUserId(loginUser.getUid());
+        entity.setUpdateUserName(loginUser.getUserName());
+        return  this.updateById(entity);
+    }
+
+    @Override
+    public Boolean applyChange(String id) {
+        ProductDetailEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        //验证sku关联任务是否完成
+        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
+            throw new ServiceException(ApiError.ERROR_95085);
+        }
+        //验证sku是否审核通过
+        if (!code.equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95086);
+        }
+        LoginUser loginUser = commonService.getUserInfo();
+        LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
+        updateWrapper.set(ProductDetailEntity::getIsChange,IsConstant.YES);
+        updateWrapper.set(ProductDetailEntity::getUpdateUserId,loginUser.getUid());
+        updateWrapper.set(ProductDetailEntity::getUpdateUserName,loginUser.getUserName());
+        updateWrapper.eq(ProductDetailEntity::getId,id);
+        return this.update(updateWrapper);
+    }
+
+
+    @Override
+    @Transactional
+    public Boolean deApprove(String id) {
+        ProductDetailEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //验证sku是否审核通过
+        if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95087);
+        }
+        //重新启动流程
+        this.productDetailStartProcess(entity);
+        //反审核后更新是否申请变更
+        entity.setIsChange(IsConstant.NO);
+        //反审核后用新的流程审核人员审核
+        return this.updateById(entity);
+    }
+
+
+    /**
+     * @description: 更新产品信息状态
+     * @author Will
+     * @date: 2022/11/28 15:40
+     * @param id
+     * @param state
+     * @param userId
+     * @param userName
+     * @return Boolean
+     */
+    private Boolean updateProductDetailState(String id,Integer state,String userId,String userName) {
+        LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(ProductDetailEntity::getStatus,state);
+        updateWrapper.set(ProductDetailEntity::getUpdateUserId,userId);
+        updateWrapper.set(ProductDetailEntity::getUpdateUserName,userName);
+        updateWrapper.eq(ProductDetailEntity::getId,id);
+        return this.update(updateWrapper);
+    }
+
+
+    /**
+     * @description: 启动审核流程
+     * @author Will
+     * @date: 2022/12/1 18:33
+     * @param productDetailEntity
+     */
+    private void productDetailStartProcess(ProductDetailEntity productDetailEntity) {
+        //sku启动审核流程
+        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+        //验证是否设置审核人
+        if (ObjectUtils.isEmpty(approverEntity)) {
+            throw new ServiceException(ApiError.ERROR_95082);
+        }
+        String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
+        //初始状态为待审核
+        Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
+        BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
+        if (!Objects.isNull(processEntity)) {
+            StartProcessDTO startProcess = new StartProcessDTO();
+            LoginUser loginUser = commonService.getUserInfo();
+            startProcess.setBusinessKey(processEntity.getBusinessKey());
+            startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+            startProcess.setUserId(loginUser.getUid());
+            //审核人1
+            List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
+            //审核人2
+            List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
+            //审核人3
+            List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
+            Map<String, Object> parameterMap = new HashMap<>();
+            parameterMap.put("firstApproveIdList",firstApproveIdList);
+            parameterMap.put("secondApproveIdList",secondApproveIdList);
+            parameterMap.put("thirdApproveIdList",thirdApproveIdList);
+            startProcess.setParameterMap(parameterMap);
+            //启动流程
+            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+            String processId = processResult.getProcessId();
+            if (StringUtils.isNotBlank(processId)) {
+                productDetailEntity.setProcessId(processId);
+                productDetailEntity.setBusinessProcessId(processEntity.getId());
+                productDetailEntity.setStatus(waitConfirmCode);
+            }
+        }
     }
 
 

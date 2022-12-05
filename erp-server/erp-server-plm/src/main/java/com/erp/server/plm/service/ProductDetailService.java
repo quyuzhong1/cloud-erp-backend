@@ -9,7 +9,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Map;
 
 public interface ProductDetailService extends IService<ProductDetailEntity> {
 
@@ -214,5 +213,54 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 
+    List<String> getNotFinish(List<String> skuIdList);
+    /**
+     * @description: 审核通过
+     * @author Will
+     * @date: 2022/11/28 14:51
+     * @param dto
+     * @return Boolean
+     */
+    Boolean approvalPass(ProductDetailOperateDTO dto);
+    /**
+     * @description: 审核不通过
+     * @author Will
+     * @date: 2022/11/28 14:51
+     * @param dto
+     * @return Boolean
+     */
+    Boolean approvalReject(ProductDetailOperateDTO dto);
+    /**
+     * @description: 设置审批人
+     * @author Will
+     * @date: 2022/11/28 16:43
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateApprover(ProductDetailApproveParamDTO dto);
+    /**
+     * @description: 审核通过
+     * @author Will
+     * @date: 2022/11/30 17:22
+     * @param processId
+
+     */
+    Boolean productDetailProcessPass(String processId);
+    /**
+     * @description: 申请变更
+     * @author Will
+     * @date: 2022/12/1 15:41
+     * @param id
+     * @return Boolean
+     */
+    Boolean applyChange(String id);
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2022/12/1 16:56
+     * @param id
+     * @return Boolean
+     */
+    Boolean deApprove(String id);
     List<BaseIdDTO> getNotFinish(List<String> skuIdList);
 }

@@ -86,4 +86,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 规格类型  1：无规格  2：多规格
      */
     private Integer specType;
+
+    /**
+     * 审核状态 0：待审核 1：审核中 2：审核通过 3：审核不通过
+     */
+    private Integer status;
 }

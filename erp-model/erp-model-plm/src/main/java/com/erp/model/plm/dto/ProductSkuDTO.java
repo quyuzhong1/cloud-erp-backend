@@ -26,6 +26,16 @@ public class ProductSkuDTO extends PermissionsDTO {
     private String productId;
 
     /**
+     * 审核状态 0：待审核 1：审核中 2：审核通过 3：审核不通过
+     */
+    private String status;
+
+    /**
+     * 是否变更（0否，1是）
+     */
+    private Integer isChange;
+
+    /**
      * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
      */
     private List<Integer> stateList;

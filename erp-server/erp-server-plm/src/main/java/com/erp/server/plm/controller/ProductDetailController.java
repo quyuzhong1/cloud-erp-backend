@@ -682,5 +682,84 @@ public class ProductDetailController extends BaseController {
         return success(resultList);
     }
 
+    /**
+     * @description: 设置审批人
+     * @author Will
+     * @date: 2022/11/28 16:43
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateApprover")
+    public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
+        Boolean result = productDetailService.updateApprover(dto);
+        return result == true ? success() : failure();
+    }
+
+   /**
+    * 产品信息-状态操作-审核通过
+    * @author Will
+    * @date: 2022/11/28 16:37
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalPass(dto);
+        return result == true ? success() : failure();
+    }
+
+   /**
+    * 产品信息-状态操作-审核不通过
+    * @author Will
+    * @date: 2022/11/28 16:37
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/approvalReject")
+    public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalReject(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 反审核
+     * @author Will
+     * @date: 2022/12/1 16:56
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/deApprove")
+    public ApiResult deApprove(@RequestParam("id") String id) {
+        Boolean result = productDetailService.deApprove(id);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 申请变更
+     * @author Will
+     * @date: 2022/12/1 15:41
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/applyChange")
+    public ApiResult applyChange(@RequestParam("id") String id) {
+        Boolean result = productDetailService.applyChange(id);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 审核完成监听调用
+     * @author Will
+     * @date: 2022/12/1 15:21
+     * @param processId
+     * @return ApiResult
+     */
+    @PostMapping("/productDetailProcessPass")
+    public ApiResult productDetailProcessPass(String processId) {
+        Boolean result = productDetailService.productDetailProcessPass(processId);
+        return result == true ? success() : failure();
+    }
 
 }

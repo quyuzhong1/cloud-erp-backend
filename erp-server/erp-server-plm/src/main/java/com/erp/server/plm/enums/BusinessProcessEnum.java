@@ -13,7 +13,8 @@ public enum BusinessProcessEnum {
     GENERAL_TASK("generalTask", "一般任务审核流程"),
     CONCEPT_DESIGN("conceptDesign", "产品概念设计申请流程"),
     ID_CONFIRM("idConfirm", "ID确认书流程"),
-    PROJECT_APPROVAL("projectApproval", "立项会议流程");
+    PROJECT_APPROVAL("projectApproval", "立项会议流程"),
+    PRODUCT_DETAIL("productDetail", "SKU审核");
 
 
     private String businessKey;
