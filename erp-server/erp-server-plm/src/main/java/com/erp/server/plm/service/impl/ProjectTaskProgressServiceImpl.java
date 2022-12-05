@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
@@ -83,6 +84,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             approvalDto.setProductMilepostDateDTO(approvalDateDto);
             approvalDto.setSeq(seq.getAndSet(seq.get() + 1));
             resultList.add(approvalDto);
+        }
             //查询产品下面的任务
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
             if (CollectionUtils.isEmpty(taskList)) {
@@ -109,7 +111,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 archiveDto.setSeq(seq.getAndSet(seq.get() + 1));
                 resultList.add(archiveDto);
             }
-        }
+
         showDto.setList(resultList);
         //查询项目列表，更新其状态
         ProjectInfoEntity project = projectInfoService.getByProductId(productId);
@@ -204,11 +206,11 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         if (CollectionUtils.isNotEmpty(allSkuList)) {
             List<ProductDetailEntity> newList;
             if (CollectionUtils.isEmpty(refList)) {
-                newList = allSkuList;
+                newList = allSkuList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSkuNo())).collect(Collectors.toList());
             } else {
                 List<String> skuIds = refList.stream().distinct().map(ProductTaskRefSkuDTO::getSkuId).collect(Collectors.toList());
                 //单独处理未关联任务的sku
-                newList = allSkuList.stream().filter(obj -> !skuIds.contains(obj.getId())).collect(Collectors.toList());
+                newList = allSkuList.stream().filter(obj -> !skuIds.contains(obj.getId()) && StringUtils.isNotBlank(obj.getSkuNo())).collect(Collectors.toList());
             }
             List<ProductProgressSkuDTO> newSkuList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(newList)) {
