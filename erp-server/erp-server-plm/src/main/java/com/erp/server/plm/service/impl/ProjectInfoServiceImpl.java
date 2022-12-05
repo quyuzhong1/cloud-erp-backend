@@ -225,10 +225,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
                 //已经添加的任务id
                 List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                boolean refSkuConfig=pair.getKey();
+                boolean refSkuConfig = pair.getKey();
                 //当没有配置表单的时候 则要自动生成配置表单
-                if(!refSkuConfig){
-                   taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList,TaskConstant.FILL_PRODUCT_INFO,productId);
+                if (!refSkuConfig) {
+                    taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
                 //将已保存的任务id 与sku 关联 在一起
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
@@ -265,12 +265,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
 
                 //这个是复制任务与 sku 配置字段关系
-               boolean copyResult= templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
-               if(!copyResult){
-                   List<String> addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
-                   taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList,TaskConstant.FILL_PRODUCT_INFO,productId);
+                boolean copyResult = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+                if (!copyResult) {
+                    List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                    taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
 
-               }
+                }
 
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
