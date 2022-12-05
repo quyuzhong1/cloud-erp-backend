@@ -213,7 +213,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 
-    List<String> getNotFinish(List<String> skuIdList);
+    List<BaseIdDTO> getNotFinish(List<String> skuIdList);
     /**
      * @description: 审核通过
      * @author Will
@@ -262,5 +262,4 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean deApprove(String id);
-    List<BaseIdDTO> getNotFinish(List<String> skuIdList);
 }
