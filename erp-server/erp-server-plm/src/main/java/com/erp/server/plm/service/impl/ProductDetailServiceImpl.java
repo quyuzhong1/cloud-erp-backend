@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -19,13 +21,16 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.ApproveProcessDTO;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
-import com.erp.server.plm.enums.ProductDetailStateEnum;
-import com.erp.server.plm.enums.PurchaseStateEnum;
-import com.erp.server.plm.enums.SaleStateEnum;
-import com.erp.server.plm.enums.VariantColorEnum;
+import com.erp.server.plm.enums.*;
+import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -39,6 +44,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -1112,10 +1118,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-        //验证sku关联任务是否已完成
-        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95083);
-        }
+
 
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
@@ -1162,10 +1165,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-        //验证sku关联任务是否已完成
-        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95083);
-        }
+
 
         LoginUser loginUser = PlmInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
@@ -1230,10 +1230,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95084);
         }
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        //验证sku关联任务是否完成
-        if (!IsConstant.YES.equals(entity.getIsFinishTask())) {
-            throw new ServiceException(ApiError.ERROR_95085);
-        }
+
         //验证sku是否审核通过
         if (!code.equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
