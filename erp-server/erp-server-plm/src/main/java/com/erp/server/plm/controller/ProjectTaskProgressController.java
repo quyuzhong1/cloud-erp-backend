@@ -3,6 +3,7 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.ProductMilepostDTO;
+import com.erp.model.plm.dto.ProductMilepostShowDTO;
 import com.erp.model.plm.dto.ProductProgressPhaseDTO;
 import com.erp.model.plm.dto.productProgressShowDTO;
 import com.erp.server.plm.service.ProjectTaskProgressService;
@@ -34,9 +35,9 @@ public class ProjectTaskProgressController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/milepostList")
-    public ApiResult<List<ProductMilepostDTO>> milepostList(@RequestParam("productId") String productId) {
-        List<ProductMilepostDTO> list = projectTaskProgressService.getMilepostTaskListByProductId(productId);
-        return success(list);
+    public ApiResult<ProductMilepostShowDTO> milepostList(@RequestParam("productId") String productId) {
+        ProductMilepostShowDTO dto = projectTaskProgressService.getMilepostTaskListByProductId(productId);
+        return success(dto);
     }
 
     /**

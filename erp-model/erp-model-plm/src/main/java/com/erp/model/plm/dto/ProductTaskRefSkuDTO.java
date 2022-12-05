@@ -19,6 +19,7 @@ public class ProductTaskRefSkuDTO implements Serializable {
      * 任务id
      */
     private String taskId;
+
     /**
      * 任务名称
      */
@@ -33,4 +34,9 @@ public class ProductTaskRefSkuDTO implements Serializable {
      * sku名称
      */
     private String skuName;
+
+    /**
+     * sku编码
+     */
+    private String skuNo;
 }

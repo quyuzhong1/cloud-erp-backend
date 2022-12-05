@@ -4,13 +4,11 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductArchiveEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.enums.ProductMilepostEnum;
+import com.erp.server.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.*;
@@ -21,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -47,16 +46,20 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
     @Autowired
     private ProductDetailService productDetailService;
 
+    @Autowired
+    private ProjectInfoService projectInfoService;
+
 
     /**
      * @param productId
-     * @return List<ProductMilepostDTO>
+     * @return ProductMilepostShowDTO
      * @description: 根据产品id获取里程碑任务
      * @author Will
      * @date: 2022/11/18 16:20
      */
     @Override
-    public List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId) {
+    public ProductMilepostShowDTO getMilepostTaskListByProductId(String productId) {
+        ProductMilepostShowDTO showDto = new ProductMilepostShowDTO();
         //返回结果
         List<ProductMilepostDTO> resultList = new ArrayList<>();
         //查询产品信息，创建初始里程碑
@@ -64,18 +67,21 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
+        AtomicReference<Integer> seq = new AtomicReference<>(0);
         ProductMilepostDTO startDto = new ProductMilepostDTO();
         startDto.setName(ProductMilepostEnum.START_MILEPOST_MILEPOST.getName());
         ProductMilepostDateDTO startDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(1).setProductId(productId));
         startDto.setProductMilepostDateDTO(startDateDto);
+        startDto.setSeq(seq.getAndSet(seq.get() + 1));
         resultList.add(startDto);
         //判断产品是否立项
-        if (ApprovalStatusEnum.APPROVAL.equals(productInfoEntity.getApprovalStatus())) {
+        if (ApprovalStatusEnum.APPROVAL.getState().equals(productInfoEntity.getApprovalStatus())) {
             //创建立项里程碑
             ProductMilepostDTO approvalDto = new ProductMilepostDTO();
             approvalDto.setName(ProductMilepostEnum.PROJECT_APPROVAL_MILEPOST.getName());
             ProductMilepostDateDTO approvalDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(2).setProductId(productId));
             approvalDto.setProductMilepostDateDTO(approvalDateDto);
+            approvalDto.setSeq(seq.getAndSet(seq.get() + 1));
             resultList.add(approvalDto);
             //查询产品下面的任务
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
@@ -89,6 +95,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 dto.setName(obj.getName());
                 ProductMilepostDateDTO taskDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(3).setTaskId(obj.getId()));
                 dto.setProductMilepostDateDTO(taskDateDto);
+                dto.setSeq(seq.getAndSet(seq.get() + 1));
                 resultList.add(dto);
             });
             //查询产品是否已经归档
@@ -97,12 +104,22 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 //创建归档里程碑
                 ProductMilepostDTO archiveDto = new ProductMilepostDTO();
                 archiveDto.setName(ProductMilepostEnum.PROJECT_ARCHIVE_MILEPOST.getName());
-                ProductMilepostDateDTO archiveDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(3).setProductId(productId));
+                ProductMilepostDateDTO archiveDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(4).setProductId(productId));
                 archiveDto.setProductMilepostDateDTO(archiveDateDto);
+                archiveDto.setSeq(seq.getAndSet(seq.get() + 1));
                 resultList.add(archiveDto);
             }
         }
-        return resultList;
+        showDto.setList(resultList);
+        //查询项目列表，更新其状态
+        ProjectInfoEntity project = projectInfoService.getByProductId(productId);
+        if (ObjectUtils.isEmpty(project)) {
+            showDto.setStatusName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
+        } else {
+            showDto.setStatusName(ProjectStateEnum.getName(project.getProjectStatus()));
+        }
+        showDto.setSeq(seq.get() - 1);
+        return showDto;
     }
 
 
@@ -131,7 +148,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
        if (CollectionUtils.isEmpty(taskList))  {
            return resultDto;
        }
-        List<ProductDetailEntity> list = productDetailService.list();
+        List<ProductDetailEntity> allSkuList = productDetailService.list();
         //查询产品下面的sku关联关系
         List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
         Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
@@ -160,11 +177,15 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                     List<String> taskIds = refValue.stream().distinct().map(ProductTaskRefSkuDTO::getTaskId).collect(Collectors.toList());
                     //sku名称
                     String skuName = refEntry.getValue().get(0).getSkuName();
+                    //sku编码
+                    String skuNo = refEntry.getValue().get(0).getSkuNo();
                     //sku下任务总数
                     long skuTotalCount = refValue.stream().count();
                     //sku下任务完成数量
                     long skuFinishCount = value.stream().filter(obj -> taskIds.contains(obj.getId()) && TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                     skuDto.setSkuName(skuName);
+                    skuDto.setPhaseName(phaseName);
+                    skuDto.setSkuNo(skuNo);
                     skuDto.setTotalQty(skuTotalCount);
                     skuDto.setFinishQty(skuFinishCount);
                     skuList.add(skuDto);
@@ -172,8 +193,30 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             }
             phaseList.add(phaseDto);
         }
-        //单独处理
-
+        //添加未关联任务的sku
+        if (CollectionUtils.isNotEmpty(allSkuList)) {
+            List<ProductDetailEntity> newList;
+            if (CollectionUtils.isEmpty(refList)) {
+                newList = allSkuList;
+            } else {
+                List<String> skuIds = refList.stream().distinct().map(ProductTaskRefSkuDTO::getSkuId).collect(Collectors.toList());
+                //单独处理未关联任务的sku
+                newList = allSkuList.stream().filter(obj -> !skuIds.contains(obj.getId())).collect(Collectors.toList());
+            }
+            List<ProductProgressSkuDTO> newSkuList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(newList)) {
+                for (ProductDetailEntity entity:newList) {
+                    ProductProgressSkuDTO dto = new ProductProgressSkuDTO();
+                    dto.setSkuName(entity.getName());
+                    dto.setSkuNo(entity.getSkuNo());
+                    dto.setFinishQty(0L);
+                    dto.setTotalQty(0L);
+                    dto.setPhaseName("");
+                    newSkuList.add(dto);
+                }
+                skuList.addAll(newSkuList);
+            }
+        }
         resultDto.setPhaseList(phaseList);
         resultDto.setSkuList(skuList);
         return resultDto;

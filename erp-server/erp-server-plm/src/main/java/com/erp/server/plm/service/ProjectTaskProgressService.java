@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.erp.model.plm.dto.ProductMilepostDTO;
+import com.erp.model.plm.dto.ProductMilepostShowDTO;
 import com.erp.model.plm.dto.ProductProgressPhaseDTO;
 import com.erp.model.plm.dto.productProgressShowDTO;
 
@@ -19,9 +20,9 @@ public interface ProjectTaskProgressService {
      * @author Will
      * @date: 2022/11/18 15:08
      * @param productId
-     * @return List<ProductMilepostDTO>
+     * @return ProductMilepostShowDTO
      */
-    List<ProductMilepostDTO> getMilepostTaskListByProductId(String productId);
+    ProductMilepostShowDTO getMilepostTaskListByProductId(String productId);
     /**
      * @description: 查询产品各个阶段任务完成进度
      * @author Will

@@ -20,10 +20,17 @@ public class ProductProgressSkuDTO implements Serializable {
      * 阶段名
      */
     private String phaseName;
+
     /**
-     * sku名
+     * sku名称
      */
     private String skuName;
+
+    /**
+     * sku编码
+     */
+    private String skuNo;
+
 
     /**
      * 任务完成数量
