@@ -48,8 +48,10 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    //  @RequestPermissions("plm:task:paging")
-    // @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:paging", tableAlias = "project_task")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:paging"
+          )
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
         return success(pagingVO);
@@ -62,7 +64,6 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/save")
-    //  @RequestPermissions("plm:task:save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
         return flag == true ? success() : failure();

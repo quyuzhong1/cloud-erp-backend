@@ -164,31 +164,30 @@ public class DataPermissionAspect {
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             List<String> list = new ArrayList<>();
             for (String s : userList) {
-                list.add("'%" + s + "%'");
+                list.add(s);
             }
             if (CollectionUtils.isNotEmpty(list)) {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE ANY (ARRAY" + list + " )");
+                    sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
                 } else {
-                    sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE ANY (ARRAY" + list + " )");
+                    sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE ANY (ARRAY" + list + " )))");
+                            sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + list + "',','))");
                         }
                     }
                 }
 
-
             } else {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
-                }else{
-                    sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                    sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                } else {
+                    sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' ))");
+                            sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
                         }
                     }
                 }
@@ -196,17 +195,16 @@ public class DataPermissionAspect {
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (tableFieldSize == 1) {
-                sqlString.append(" AND " + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
             } else {
-                sqlString.append(" AND (" + dataPermission.tableAlias() + "." + tableFieldList.get(0) + " LIKE '%" + user.getUid() + "%' ");
+                sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
                 if (tableFieldSize > 1) {
                     sqlString.append(" OR ");
                     for (int i = 1; i < tableFieldSize; i++) {
-                        sqlString.append("(" + dataPermission.tableAlias() + "." + tableFieldList.get(i) + " LIKE '%" + user.getUid() + "%' ))");
+                        sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
                     }
                 }
             }
-
         }
         ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
     }
@@ -398,5 +396,22 @@ public class DataPermissionAspect {
             }
         }
         return null;
+    }
+
+    public StringBuilder SqlSplicing(Integer tableFieldSize, DataPermission dataPermission, List<String> tableFieldList, List<String> list){
+        StringBuilder sqlString = new StringBuilder();
+
+        if (tableFieldSize == 1) {
+            sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
+        } else {
+            sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
+            if (tableFieldSize > 1) {
+                sqlString.append(" OR ");
+                for (int i = 1; i < tableFieldSize; i++) {
+                    sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + list + "',','))");
+                }
+            }
+        }
+        return sqlString;
     }
 }
