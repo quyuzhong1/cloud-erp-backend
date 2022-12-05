@@ -173,6 +173,9 @@ public class ProjectTaskDTO  implements Serializable {
      * 勾选字段后的json 字段
      */
     private String fieldJson;
+
+
+
     
 
 }

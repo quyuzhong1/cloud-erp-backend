@@ -159,12 +159,23 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
      */
     @Override
     public void taskFinishRefSku(String taskId, List<String> skuIdList) {
+        setTaskNoFinishRefSku(taskId);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+            updateWrapper.in(ProjectTaskRefSkuEntity::getSkuId, skuIdList);
+            updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 1);
+            this.update(updateWrapper);
+        }
+
+    }
+
+
+    public void setTaskNoFinishRefSku(String taskId) {
         LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
-        updateWrapper.in(ProjectTaskRefSkuEntity::getSkuId, skuIdList);
-        updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 1);
+        updateWrapper.set(ProjectTaskRefSkuEntity::getIsFinishTask, 0);
         this.update(updateWrapper);
-
     }
 
     /**

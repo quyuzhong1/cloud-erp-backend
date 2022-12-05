@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname ProjectTaskDetailsDTO
@@ -200,5 +201,11 @@ public class ProjectTaskDetailsDTO implements Serializable {
      * 关联sku 表sku 名字集合
      */
     private List<String> refSkuNoList;
+
+
+    /**
+     * sku 完成信息
+     */
+    private List<Map<String,Object>> refSkuFinishList;
 
 }

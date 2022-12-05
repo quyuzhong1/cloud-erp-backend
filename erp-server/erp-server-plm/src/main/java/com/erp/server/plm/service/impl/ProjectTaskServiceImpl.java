@@ -1033,8 +1033,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         detailsDTO.setOutputDocsList(docsList);
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+        List<Map<String, Object>> refSkuFinishList = new ArrayList<>(taskRefSkuList.size());
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
+
+        for (ProjectTaskRefSkuEntity refSkuItem : taskRefSkuList) {
+            Map<String, Object> refSkuMap = new HashMap<>();
+            String skuId = refSkuItem.getSkuId();
+            refSkuMap.put("skuId", skuId);
+            ProductDetailEntity detail = productDetailList.stream().filter(d -> skuId.equals(d.getId())).findFirst().orElse(null);
+            if (!Objects.isNull(detail)) {
+                refSkuMap.put("skuNo", detail.getSkuNo());
+            } else {
+                refSkuMap.put("skuNo", "");
+            }
+            refSkuMap.put("isFinishTask", refSkuItem.getIsFinishTask());
+            refSkuFinishList.add(refSkuMap);
+        }
+        detailsDTO.setRefSkuFinishList(refSkuFinishList);
         if (refSku != null) {
             detailsDTO.setFieldJson(refSku.getFieldJson());
             detailsDTO.setFieldConfigType(refSku.getFieldConfigType());
@@ -1324,6 +1340,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
+
+
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
         if (refSku != null) {
@@ -1974,7 +1992,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void taskFinishSku(TaskFinishSkuDTO dto) {
         String taskId = dto.getTaskId();
         List<String> skuIdList = dto.getSkuIdList();
-        projectTaskRefSkuService.taskFinishRefSku(taskId,skuIdList);
+        projectTaskRefSkuService.taskFinishRefSku(taskId, skuIdList);
     }
 
     /**
