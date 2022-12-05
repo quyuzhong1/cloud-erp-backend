@@ -222,10 +222,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (SourceType.NEW.equals(sourceType)) {
                 //从复制系统项目任务
                 Pair<Boolean, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
+                System.out.println("pair==="+pair);
                 List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
                 //已经添加的任务id
                 List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
                 boolean refSkuConfig = pair.getKey();
+                System.out.println("pair refSkuConfig==="+pair.getKey());
                 //当没有配置表单的时候 则要自动生成配置表单
                 if (!refSkuConfig) {
                     taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
