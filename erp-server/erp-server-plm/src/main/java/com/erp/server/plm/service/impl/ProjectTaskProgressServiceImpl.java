@@ -151,6 +151,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         List<ProductDetailEntity> allSkuList = productDetailService.list();
         //查询产品下面的sku关联关系
         List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
+
         Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
         for (Map.Entry<String, List<ProjectTaskEntity>> entry : map.entrySet()) {
             //阶段进度对象
@@ -166,33 +167,39 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             phaseDto.setPhaseName(phaseName);
             phaseDto.setTotalQty(totalCount);
             phaseDto.setFinishQty(finishCount);
-            //添加sku任务进度
-            if (CollectionUtils.isNotEmpty(refList)) {
-                Map<String, List<ProductTaskRefSkuDTO>> refMap = refList.stream().collect(Collectors.groupingBy(ProductTaskRefSkuDTO::getSkuId));
-                for (Map.Entry<String, List<ProductTaskRefSkuDTO>> refEntry : refMap.entrySet()) {
-                    List<ProductTaskRefSkuDTO> refValue = refEntry.getValue();
-                    //sku进度对象
-                    ProductProgressSkuDTO skuDto = new ProductProgressSkuDTO();
-                    //任务id集合
-                    List<String> taskIds = refValue.stream().distinct().map(ProductTaskRefSkuDTO::getTaskId).collect(Collectors.toList());
-                    //sku名称
-                    String skuName = refEntry.getValue().get(0).getSkuName();
-                    //sku编码
-                    String skuNo = refEntry.getValue().get(0).getSkuNo();
-                    //sku下任务总数
-                    long skuTotalCount = refValue.stream().count();
-                    //sku下任务完成数量
-                    long skuFinishCount = value.stream().filter(obj -> taskIds.contains(obj.getId()) && TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
-                    skuDto.setSkuName(skuName);
-                    skuDto.setPhaseName(phaseName);
-                    skuDto.setSkuNo(skuNo);
-                    skuDto.setTotalQty(skuTotalCount);
-                    skuDto.setFinishQty(skuFinishCount);
-                    skuList.add(skuDto);
-                }
-            }
             phaseList.add(phaseDto);
         }
+        //添加sku任务进度
+        if (CollectionUtils.isNotEmpty(refList)) {
+            Map<String, List<ProductTaskRefSkuDTO>> refMap = refList.stream().collect(Collectors.groupingBy(ProductTaskRefSkuDTO::getSkuId));
+            for (Map.Entry<String, List<ProductTaskRefSkuDTO>> refEntry : refMap.entrySet()) {
+                List<ProductTaskRefSkuDTO> refValue = refEntry.getValue();
+                //sku进度对象
+                ProductProgressSkuDTO skuDto = new ProductProgressSkuDTO();
+                //sku名称
+                String skuName = refEntry.getValue().get(0).getSkuName();
+                //sku编码
+                String skuNo = refEntry.getValue().get(0).getSkuNo();
+                skuDto.setSkuName(skuName);
+                skuDto.setSkuNo(skuNo);
+                List<ProductProgressPhaseDTO> skuProgressList = new ArrayList<>();
+
+                Map<String, List<ProductTaskRefSkuDTO>> collect = refValue.stream().collect(Collectors.groupingBy(ProductTaskRefSkuDTO::getPhaseName));
+                for (Map.Entry<String, List<ProductTaskRefSkuDTO>> entry : collect.entrySet()) {
+                    ProductProgressPhaseDTO skuProgress = new ProductProgressPhaseDTO();
+                    skuProgress.setPhaseName(entry.getKey());
+                    //sku下任务总数
+                    long skuTotalCount = entry.getValue().stream().count();
+                    skuProgress.setTotalQty(skuTotalCount);
+                    long skuFinishCount = entry.getValue().stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).count();
+                    skuProgress.setFinishQty(skuFinishCount);
+                    skuProgressList.add(skuProgress);
+                }
+                skuDto.setSkuPhaseList(skuProgressList);
+                skuList.add(skuDto);
+            }
+        }
+
         //添加未关联任务的sku
         if (CollectionUtils.isNotEmpty(allSkuList)) {
             List<ProductDetailEntity> newList;
@@ -209,9 +216,6 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                     ProductProgressSkuDTO dto = new ProductProgressSkuDTO();
                     dto.setSkuName(entity.getName());
                     dto.setSkuNo(entity.getSkuNo());
-                    dto.setFinishQty(0L);
-                    dto.setTotalQty(0L);
-                    dto.setPhaseName("");
                     newSkuList.add(dto);
                 }
                 skuList.addAll(newSkuList);

@@ -2,11 +2,14 @@ package com.common.core.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Will
@@ -69,6 +72,48 @@ public class BeanMapUtil {
         return object;
     }
 
+    /**
+     * 取Map集合的差集
+     */
+    public static <S,T> Map<S, T> getDifferenceSetByGuava(Map<S, T> leftMap, Map<S, T> rightMap) {
+        if (null != leftMap && null != rightMap) {
 
+            Set<S> leftMapKey = leftMap.keySet();
+            Set<S> rightMapKey = rightMap.keySet();
+            Set<S> differenceSet = Sets.difference(leftMapKey, rightMapKey);
+            Map<S, T> result = Maps.newHashMap();
+            for (S key : differenceSet) {
+                result.put(key, leftMap.get(key));
+            }
+            return result;
+
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 取Map集合的并集
+     */
+    public static <S,T> Map<S, T> getUnionSetByGuava(Map<S, T> leftMap, Map<S, T> rightMap) {
+        if (null != leftMap && null != rightMap) {
+
+            Set<S> leftMapKey = leftMap.keySet();
+            Set<S> rightMapKey = rightMap.keySet();
+            Set<S> differenceSet = Sets.union(leftMapKey, rightMapKey);
+            Map<S, T> result = Maps.newHashMap();
+            for (S key : differenceSet) {
+                if (leftMap.containsKey(key)) {
+                    result.put(key, leftMap.get(key));
+                } else {
+                    result.put(key, rightMap.get(key));
+                }
+            }
+            return result;
+
+        } else {
+            return null;
+        }
+    }
 
 }

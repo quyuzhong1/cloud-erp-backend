@@ -9,7 +9,8 @@
                a.name as taskName,
                c.id as skuId,
                c.name as skuName,
-               c.sku_no as skuNo
+               c.sku_no as skuNo,
+               a.phase_name as phaseName
         from project_task a
         inner join project_task_ref_sku b on a.id = b.task_id
         inner join product_detail c on b.sku_id = c.id

@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -16,10 +17,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class ProductProgressSkuDTO implements Serializable {
 
-    /**
-     * 阶段名
-     */
-    private String phaseName;
 
     /**
      * sku名称
@@ -31,15 +28,10 @@ public class ProductProgressSkuDTO implements Serializable {
      */
     private String skuNo;
 
-
     /**
-     * 任务完成数量
+     * sku进度集合
      */
-    private Long  finishQty;
+    private List<ProductProgressPhaseDTO> skuPhaseList;
 
-    /**
-     * 任务总数量
-     */
-    private Long totalQty;
 
 }

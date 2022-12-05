@@ -70,6 +70,36 @@ public class OperationLogUtil {
                 doOpValue(key,value,newResultMap);
             }
         }
+      //取两个Map中的交集
+        Map<String, String> map1 = BeanMapUtil.getUnionSetByGuava(oldResultMap, newResultMap);
+        //取就Map中的差集
+        Map<String, String> map2 = BeanMapUtil.getDifferenceSetByGuava(oldResultMap, newResultMap);
+       if (ObjectUtils.isNotEmpty(map1)) {
+           Iterator<Map.Entry<String, String>> iterator = map1.entrySet().iterator();
+           while (iterator .hasNext()){
+               Map.Entry oldEntry  =  (java.util.Map.Entry)iterator.next();
+               String key = (String) oldEntry.getKey();
+               String k = Arrays.stream(key.split(".")).reduce((first, second) -> second).orElse(null);
+               String oldValue = (String) (oldEntry.getValue() == null ? "" : oldEntry.getValue());
+               String newValue = newResultMap.get(key) == null ? "" : newResultMap.get(key);
+               if (!oldValue.equals(newValue)) {
+                   resultMap.put(k,new Pair<>(oldValue,newValue));
+               }
+           }
+       }
+        if (ObjectUtils.isNotEmpty(map2)) {
+            Iterator<Map.Entry<String, String>> iterator = map2.entrySet().iterator();
+            while (iterator .hasNext()){
+                Map.Entry oldEntry  =  (java.util.Map.Entry)iterator.next();
+                String key = (String) oldEntry.getKey();
+                String k = Arrays.stream(key.split(".")).reduce((first, second) -> second).orElse(null);
+                String oldValue = (String) (oldEntry.getValue() == null ? "" : oldEntry.getValue());
+                String newValue = newResultMap.get(key) == null ? "" : newResultMap.get(key);
+                if (!oldValue.equals(newValue)) {
+                    resultMap.put(k,new Pair<>(oldValue,newValue));
+                }
+            }
+        }
 
         return resultMap;
     }
@@ -84,15 +114,21 @@ public class OperationLogUtil {
         //判断value值的类型
         int objectType = TransitionUtil.getObjectType(value);
         if (objectType == 40) {//判断是否为List
-            List<Map> list = TransitionUtil.transitionType(value, List.class);
-            for (Map map:list) {
-                Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-                while (iterator .hasNext()){
-                    Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
-                    String k =  entry.getKey().toString();
-                    Object v = entry.getValue();
-                    newKey = newKey.concat(".").concat(k);
-                    doOpValue(newKey,v,resultMap);
+            List<Object> list = TransitionUtil.transitionType(value, List.class);
+            for (Object obj:list) {
+                int type = TransitionUtil.getObjectType(obj);
+                if (type == 30) {//当数据类型为map时
+                    Map map = (Map) obj;
+                    Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+                    while (iterator .hasNext()){
+                        Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                        String k =  entry.getKey().toString();
+                        Object v = entry.getValue();
+                        newKey = newKey.concat(".").concat(k);
+                        doOpValue(newKey,v,resultMap);
+                    }
+                } else {//不是为map则是集合
+                    resultMap.put(newKey,String.format(",",obj));
                 }
             }
 
