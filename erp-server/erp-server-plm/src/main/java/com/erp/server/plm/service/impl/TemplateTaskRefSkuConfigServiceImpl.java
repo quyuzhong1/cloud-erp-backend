@@ -65,7 +65,9 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
      * @date 2022-11-24 17:22
      */
     @Override
-    public Boolean copyTemplateTaskSkuConfig(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
+    public List<String> copyTemplateTaskSkuConfig(String templateId, String productId, List<CopySourceDTO> taskSourceList) {
+        //添加过的 sku 配置的列表
+        List<String> addTaskSkuConfigList = new ArrayList<>();
         List<TemplateTaskRefSkuConfigEntity> list = getByTemplateId(templateId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TaskRefSkuConfigEntity> copyList = new ArrayList<>();
@@ -79,13 +81,14 @@ public class TemplateTaskRefSkuConfigServiceImpl extends ServiceImpl<TemplateTas
                     entity.setTaskId(taskSource.getNewCreateId());
                     entity.setFieldJson(item.getFieldJson());
                     copyList.add(entity);
+                    addTaskSkuConfigList.add(taskSource.getNewCreateId());
                 }
             }
             if (CollectionUtils.isNotEmpty(copyList)) {
-                return taskRefSkuConfigService.saveBatch(copyList);
+                 taskRefSkuConfigService.saveBatch(copyList);
             }
         }
-        return false;
+        return addTaskSkuConfigList;
 
     }
 

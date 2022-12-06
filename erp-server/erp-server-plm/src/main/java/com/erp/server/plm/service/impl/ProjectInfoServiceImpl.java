@@ -220,17 +220,23 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
             //如果是新建 就直接 复制成员
             if (SourceType.NEW.equals(sourceType)) {
-                //从复制系统项目任务
-                Pair<Boolean, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
-                System.out.println("pair==="+pair);
+                /**
+                 * 从复制系统项目任务
+                 * 返回已经添加过的sku配置的任务id
+                 * 和任务列表
+                 */
+                Pair<List<String>, List<ProjectTaskEntity>> pair = projectTaskService.copyTaskBySys(productId, projectId);
                 List<ProjectTaskEntity> addProjectTaskList = pair.getValue();
                 //已经添加的任务id
                 List<String> addTaskIdList = addProjectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-                boolean refSkuConfig = pair.getKey();
-                System.out.println("pair refSkuConfig==="+pair.getKey());
-                //当没有配置表单的时候 则要自动生成配置表单
-                if (!refSkuConfig) {
-                    taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
+                List<String> alreadyRefSkuConfigTaskIdList = pair.getKey();
+                /**
+                 * 查找 当没有配置表单的时候 的任务id
+                 * 则要自动生成配置表单
+                 */
+                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
+                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
                 //将已保存的任务id 与sku 关联 在一起
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
@@ -266,20 +272,29 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //这个是复制前置任务关系
                 templatePreTaskService.copyTemplatePreTask(flagId, productId, taskSourceList);
 
-                //这个是复制任务与 sku 配置字段关系
-                boolean copyResult = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
-                if (!copyResult) {
-                    List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
-                    taskRefSkuConfigService.autoCreateSkuConfig(addTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
 
+                /**
+                 *  这个是复制任务与 sku 配置字段关系
+                 *  返回已经添加配置关系的 任务id 集合
+                 */
+                List<String> alreadyRefSkuConfigTaskIdList = templateTaskRefSkuConfigService.copyTemplateTaskSkuConfig(flagId, productId, taskSourceList);
+                List<String> addTaskIdList=taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
+                /**
+                 * 查找 当没有配置表单的时候 的任务id
+                 * 则要自动生成配置表单
+                 */
+                List<String> noRefSkuConfigTaskIdList=addTaskIdList.stream().filter(a->!alreadyRefSkuConfigTaskIdList.contains(a)).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(noRefSkuConfigTaskIdList)) {
+                    taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
+
+
+
 
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
                 templateDocsPermissionService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, deliveryDocsSourceList);
-
-                List<String> addTaskIdList = taskSourceList.stream().map(CopySourceDTO::getNewCreateId).collect(Collectors.toList());
                 //将已保存的任务id 与sku 关联 在一起
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
 

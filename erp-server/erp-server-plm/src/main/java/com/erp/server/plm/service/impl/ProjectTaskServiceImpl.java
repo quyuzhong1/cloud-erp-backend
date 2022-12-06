@@ -340,8 +340,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional
-    public Pair<Boolean, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
-        Boolean refSkuConfig = false;
+    public Pair<List<String>, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
+
+        //添加过的 sku 配置的列表
+        List<String> addTaskSkuConfigList = new ArrayList<>();
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
@@ -392,10 +394,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     addEntity.setTaskId(source.getNewCreateId());
                     addEntity.setProductId(saveProductId);
                     addTaskRefSkuList.add(addEntity);
+                    addTaskSkuConfigList.add(source.getNewCreateId());
                 }
             }
-            if(CollectionUtils.isNotEmpty(addTaskRefSkuList)){
-                refSkuConfig=true;
+            if (CollectionUtils.isNotEmpty(addTaskRefSkuList)) {
                 taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
             }
 
@@ -427,7 +429,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        return  new Pair<>(refSkuConfig,addTaskList) ;
+        return new Pair<>(addTaskSkuConfigList, addTaskList);
     }
 
     /**
@@ -1168,8 +1170,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String processId = taskEntity.getProcessId();
         String approvalUserId = taskEntity.getApprovalUserId();
         BeanMapper.copy(dto, taskEntity);
-        Integer priority=dto.getPriority();
-        if(priority==null){
+        Integer priority = dto.getPriority();
+        if (priority == null) {
             taskEntity.setPriority(0);
         }
 
