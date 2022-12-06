@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
+import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
@@ -130,6 +131,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductVariantService productVariantService;
 
+    @Resource
+    private SysLogService sysLogService;
+
     /**
      * @param pagingDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
@@ -142,6 +146,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
+        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(obj -> obj.setStatusName(ProductDetailStatusEnum.getName(obj.getStatus())));
+        }
         return new PagingVO(pageData);
     }
 
@@ -511,6 +518,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.修改/新增 包装信息
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
+          /*  //操作日志
+            ProductPackEntity oldEntity = productPackService.getById(productPackDTO.getId());
+            ProductPackDTO oldProductPackDTO = new ProductPackDTO();
+            BeanMapperUtils.copy(oldEntity,oldProductPackDTO);
+            sysLogService.addSysLog(oldProductPackDTO,productPackDTO,productPackDTO.getClass().toString(),productPackDTO.getId());*/
+
             productPackDTO.setSkuId(skuId);
             productPackService.saveOrUpdate(productPackDTO);
         }
@@ -518,10 +531,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //8.修改/新增 证书信息
         List<ProductCertificateDTO> productCertificateList = productNoSpecDTO.getProductCertificateList();
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
+
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
         return true;
     }
+
 
     /**
      * @param productManySpecDTO:新增产品多规格sku信息请求参数

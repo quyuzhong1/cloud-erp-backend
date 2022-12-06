@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -91,4 +92,13 @@ public class ProductDetailShowDTO implements Serializable {
      * 审核状态 0：待审核 1：审核中 2：审核通过 3：审核不通过
      */
     private Integer status;
+    /**
+     * 审核状态名称
+     */
+    private String statusName;
+
+    /**
+     * 是否可销售(0否，1是)
+     */
+    private Integer isMarketable;
 }
