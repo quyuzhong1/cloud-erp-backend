@@ -459,7 +459,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
             statusList.add(TaskStateEnum.PORTION_FINISH.getCode());
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, param);
+            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
@@ -481,7 +481,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, null, searchKeyword, statusList, param);
+            pageData = baseMapper.allPaging(query, productId, phaseId, searchKeyword, statusList, param);
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());

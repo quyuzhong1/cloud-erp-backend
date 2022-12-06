@@ -4,7 +4,6 @@ import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -45,7 +44,7 @@ public class TaskPagingDTO extends PermissionsDTO implements Serializable {
      private Integer taskFlag;
 
 
-     //赛选条件
+     //
      /**
       * 筛选条件
       */
