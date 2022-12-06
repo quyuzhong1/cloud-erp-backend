@@ -9,6 +9,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductDetailApproverEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
@@ -90,6 +91,8 @@ public class ProductDetailController extends BaseController {
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private ProductDetailApproverService productDetailApproverService;
 
     /**
      * 产品信息-主页列表-查询1
@@ -694,6 +697,18 @@ public class ProductDetailController extends BaseController {
     public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
         Boolean result = productDetailService.updateApprover(dto);
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 产品信息-设置审批人回显
+     * @author Will
+     * @date: 2022/11/28 16:43
+     * @return ApiResult
+     */
+    @GetMapping("/getProductDetailApprover")
+    public ApiResult<ProductDetailApproverEntity> getProductDetailApprover() {
+        ProductDetailApproverEntity entity = productDetailApproverService.getProductDetailApprover();
+        return success(entity);
     }
 
    /**
