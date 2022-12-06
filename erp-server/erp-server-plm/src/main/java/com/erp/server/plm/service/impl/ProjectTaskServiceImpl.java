@@ -2105,14 +2105,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (totalCount == 0 && Objects.isNull(skuConfigEntity) && !taskRefSkuFlag) {
             changeDocsShow = false;
         }
-
         Map<String, Object> changeDocsMap = new HashMap<>();
         changeDocsMap.put("name", "变更交付物");
         changeDocsMap.put("flag", "changeDocs");
         changeDocsMap.put("isShow", changeDocsShow);
         resultList.add(changeDocsMap);
-
-
         return resultList;
     }
 
@@ -2916,6 +2913,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> allTaskIds = reviewList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             //检查文档是否有上传
             finishService.checkTaskDocsUpload(allTaskIds);
+            //检查前置任务是否完成
+            preTaskService.checkPreTaskFinish(allTaskIds);
+            //检查子任务是否有完成
+            this.checkSonTaskFinish(allTaskIds, dto.getProductId());
+
+
         }
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
@@ -3129,6 +3132,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(skuIdList)) {
                 taskEntity.setStatus(TaskStateEnum.PORTION_FINISH.getCode());
+                //任务属性
+                Integer taskType = taskEntity.getType();
+                //评审任务
+                Integer reviewTask = TaskTypeEnum.REVIEW_TASK.getCode();
+                //当是评审任务的时候就 并且是部分完成的时候就要启动评审流程
+                if (reviewTask.equals(taskType)) {
+                    taskEntity = startReviewTaskProcess(taskEntity,loginUser.getUid(),BusinessProcessEnum.REVIEW_TASK.getBusinessKey());
+                }
             } else {
                 taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
             }
@@ -3140,11 +3151,45 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             recordEntity.setOperatorId(loginUser.getUid());
             recordEntity.setOperatorName(loginUser.getUserName());
             taskEntity.setRealityEndTime(new Date());
-
             this.updateById(taskEntity);
             taskOperatorRecordService.save(recordEntity);
         }
 
+    }
+
+
+    /**
+     * 启动一个评审任务流程
+     *
+     * @param taskEntity
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     * @author yl
+     * @date 2022-12-06 15:24
+     */
+    private ProjectTaskEntity startReviewTaskProcess(ProjectTaskEntity taskEntity, String userId, String businessKey) {
+        //这里需要启动一个变更流程
+        BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessKey(businessKey);
+        StartProcessDTO startProcess = new StartProcessDTO();
+        startProcess.setUserId(userId);
+        startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
+        startProcess.setBusinessKey(businessProcess.getBusinessType());
+        Map<String, Object> parameterMap = new HashMap<>();
+        //如果是 评审任务 就是任务负责人
+        String approvalUserId = taskEntity.getChargeId();
+        if (StringUtils.isEmpty(approvalUserId)) {
+            throw new ServiceException(ApiError.ERROR_95045);
+        }
+        List<String> membersIds = Arrays.asList(approvalUserId.split(","));
+        parameterMap.put("taskChargeIdList", membersIds);
+        startProcess.setParameterMap(parameterMap);
+        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+        String processId = processResult.getProcessId();
+        if (StringUtils.isNotBlank(processId)) {
+            //更改任务的状态为未待审核 以及流程id
+            taskEntity.setProcessId(processId);
+            taskEntity.setBusinessProcessId(businessProcess.getId());
+        }
+        return taskEntity;
     }
 
 
