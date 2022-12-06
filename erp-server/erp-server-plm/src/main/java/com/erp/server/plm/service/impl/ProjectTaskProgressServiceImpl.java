@@ -101,6 +101,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
             dto.setName(obj.getName());
             ProductMilepostDateDTO taskDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(3).setTaskId(obj.getId()));
             dto.setProductMilepostDateDTO(taskDateDto);
+            dto.setIsFinish(TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) ? IsConstant.YES : IsConstant.NO);
             dto.setSeq(seq.getAndSet(seq.get() + 1));
             resultList.add(dto);
         });
