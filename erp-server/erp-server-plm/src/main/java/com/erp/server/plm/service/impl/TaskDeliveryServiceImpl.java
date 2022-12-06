@@ -77,7 +77,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
             //根据任务id 获取到已存在的文档id
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
+            //存在的文档id
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+            //传过来的文档Id集合
             List<String> parameterIds = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
             //如果是一样 没有改变文档 返回
             if (existDocsIds.size() == parameterIds.size() && existDocsIds.containsAll(parameterIds) && parameterIds.containsAll(existDocsIds)) {
@@ -484,16 +486,22 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
      */
     public void removeTaskDocs(String taskId, List<String> existDocsIds, List<String> docsIds) {
         List<String> intersectionList = (List<String>) CollectionUtils.intersection(existDocsIds, docsIds);
-        LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         //表示有交集 的不能删除
         if (intersectionList.size() != 0) {
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
-                queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-                queryWrapper.in(TaskDeliveryDocsEntity::getId, intersectionList);
-                taskDocsFinishService.removeByDocsIds(taskId, intersectionList);
-                this.remove(queryWrapper);
+
+                //删除 存在的id 不包含交集的
+                List<String> deleteIdList=existDocsIds.stream().filter(e->!intersectionList.contains(e)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(deleteIdList)){
+                    LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
+                    queryWrapper.in(TaskDeliveryDocsEntity::getId, deleteIdList);
+                    taskDocsFinishService.removeByDocsIds(taskId, deleteIdList);
+                    this.remove(queryWrapper);
+                }
             }
         } else {
+            LambdaQueryWrapper<TaskDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
                 //表示没有交集 所有都要删除
                 queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
