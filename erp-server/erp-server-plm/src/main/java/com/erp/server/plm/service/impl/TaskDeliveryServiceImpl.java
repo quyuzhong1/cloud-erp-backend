@@ -72,10 +72,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public void saveDeliveryDocs(String taskId, String productId, List<DocsDTO> deliveryDocsList) {
 
-        //先删除所有的 交付文档
-        removeByTaskId(taskId);
-
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            //这个id 可能是系统的
+            List<String> docsId = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //根据任务id 获取到已存在的文档id
+            List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
+            List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+            List<String> parameterIds = deliveryDocsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //如果是一样 没有改变文档 返回
+            if (existDocsIds.size() == parameterIds.size() && existDocsIds.containsAll(parameterIds) && parameterIds.containsAll(existDocsIds)) {
+                return;
+            }
+            //先删除文档 不存在的数据
+            removeTaskDocs(taskId, existDocsIds, docsId);
+            //需要过滤一下的
+            deliveryDocsList = deliveryDocsList.stream().filter(c -> !existDocsIds.contains(c.getId())).collect(Collectors.toList());
             //保存交付文档
             List<TaskDeliveryDocsEntity> saveList = new LinkedList<>();
             for (DocsDTO item : deliveryDocsList) {
@@ -478,10 +489,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (intersectionList.size() != 0) {
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
                 queryWrapper.eq(TaskDeliveryDocsEntity::getTaskId, taskId);
-                queryWrapper.notIn(TaskDeliveryDocsEntity::getId, intersectionList);
-                //去差集
-                List<String> subtractList = (List<String>) CollectionUtils.subtract(existDocsIds, docsIds);
-                taskDocsFinishService.removeByDocsIds(taskId, subtractList);
+                queryWrapper.in(TaskDeliveryDocsEntity::getId, intersectionList);
+                taskDocsFinishService.removeByDocsIds(taskId, intersectionList);
                 this.remove(queryWrapper);
             }
         } else {
