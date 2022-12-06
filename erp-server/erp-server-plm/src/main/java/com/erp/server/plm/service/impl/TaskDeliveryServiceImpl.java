@@ -115,6 +115,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 }
                 docsPermissionService.saveBatch(docsPermissionList);
             }
+        }else{
+            //当传来空 删除所有的
+            removeByTaskId(taskId);
+            taskDocsFinishService.removeByTaskId(taskId);
         }
     }
 
