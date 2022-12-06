@@ -335,6 +335,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
+        }else{//当传来空 删除所有的
+            removeByTaskId(taskId);
+            taskDocsFinishService.removeByTaskId(taskId);
         }
 
 
