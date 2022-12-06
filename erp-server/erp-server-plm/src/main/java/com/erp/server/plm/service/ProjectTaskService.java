@@ -59,7 +59,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean updateTask(ProjectTaskDTO dto);
 
-    ProductTaskCountDTO getProductTaskCount(String productId, Date date);
+    ProductTaskCountDTO getProductTaskCount(ProductTaskCountShowDTO showDTO, Date date);
 
     Boolean updateBaseTask(UpdateTaskDTO dto);
 

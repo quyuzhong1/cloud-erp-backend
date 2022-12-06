@@ -124,23 +124,23 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     /**
      * 项目概述
      *
-     * @param productId
+     * @param productTaskCountShowDTO
      * @return java.util.List<com.erp.model.plm.dto.PhaseDistributeDTO>
      * @author yl
      * @date 2022-09-19 12:23
      */
     @Override
-    public ProjectInfoDTO projectInfo(String productId) {
-        ProductInfoEntity entity = productInfoService.getById(productId);
+    public ProjectInfoDTO projectInfo(ProductTaskCountShowDTO productTaskCountShowDTO) {
+        ProductInfoEntity entity = productInfoService.getById(productTaskCountShowDTO.getProductId());
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
         ProjectInfoDTO result = new ProjectInfoDTO();
-        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productTaskCountShowDTO.getProductId());
         //产品名
         result.setProductName(entity.getName());
         //获取产品任务情况
-        ProductTaskCountDTO taskCount = projectTaskService.getProductTaskCount(productId, new Date());
+        ProductTaskCountDTO taskCount = projectTaskService.getProductTaskCount(productTaskCountShowDTO, new Date());
         //总任务数
         Integer totalTaskCount = taskCount.getTotalTaskCount();
         //完成任务数
@@ -165,7 +165,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         result.setPostponeRatio(postponeRatio);
 
         //获取任务阶段分布
-        PhaseDistributeDTO taskPhase = phaseDistributeList(productId, taskList);
+        PhaseDistributeDTO taskPhase = phaseDistributeList(productTaskCountShowDTO.getProductId(), taskList);
         result.setPhaseDistribute(taskPhase);
         List<Map<String, Object>> finishTaskTrend = getFinishTaskTrend(30, taskList);
         result.setFinishTaskTrend(finishTaskTrend);

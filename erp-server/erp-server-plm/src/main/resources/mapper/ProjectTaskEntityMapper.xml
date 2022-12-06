@@ -690,5 +690,42 @@
         order by t.plan_listing_time asc nulls last, t.skuId desc
     </select>
 
+    <select id="getProjectTaskByProductId" resultType="com.erp.model.plm.entity.ProjectTaskEntity">
+        SELECT
+            id,
+            name,
+            type,
+            charge_id,
+            charge_name,
+            plan_start_time,
+            plan_end_time,
+            priority,
+            phase_id,
+            is_fixed,
+            description,
+            create_time,
+            update_time,
+            process_id,
+            quote_sys_task_id,
+            product_id,
+            property,
+            status,
+            phase_name,
+            project_id,
+            pid,
+            reality_start_time,
+            reality_end_time,
+            create_user_id,
+            create_user_name,
+            business_process_id,
+            approval_user_id,
+            is_milepost,
+            is_sku_change
+        FROM project_task WHERE product_id = #{showDTO.productId}
+        <if test="showDTO.param != null and showDTO.param != ''">
+            ${showDTO.param}
+        </if>
+    </select>
+
 
 </mapper>

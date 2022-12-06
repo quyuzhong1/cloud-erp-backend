@@ -20,7 +20,7 @@ import java.util.Map;
 public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
 
-    ProjectInfoDTO projectInfo(String productId);
+    ProjectInfoDTO projectInfo(ProductTaskCountShowDTO productTaskCountShowDTO);
 
 
     Boolean startProject(StartProjectDTO dto);

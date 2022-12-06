@@ -128,14 +128,14 @@ public class ProductInfoController extends BaseController {
     /**
      * 概述
      */
-    @GetMapping("/info")
-   // @RequestPermissions("plm:product:info")
-/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @PostMapping("/info")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
-            menuCode = "plm:product:info",
-            serviceClass = ProductInfoServiceImpl.class)*/
-    public ApiResult<ProjectInfoDTO> projectInfo(String productId) {
-        ProjectInfoDTO info = projectInfoService.projectInfo(productId);
+            menuCode = "plm:task:paging",
+            tableAlias = "project_task"
+    )
+    public ApiResult<ProjectInfoDTO> projectInfo(@RequestBody ProductTaskCountShowDTO productTaskCountShowDTO) {
+        ProjectInfoDTO info = projectInfoService.projectInfo(productTaskCountShowDTO);
         return success(info);
     }
 

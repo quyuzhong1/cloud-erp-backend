@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
@@ -38,8 +39,6 @@ public class ProjectTaskController extends BaseController {
 
     @Autowired
     private ProductInfoService productInfoService;
-
-
 
     /**
      * 项目任务-分页列表
@@ -183,9 +182,14 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/getProductTaskCount")
-    public ApiResult<ProductTaskCountDTO> getProductTaskCount(String productId) {
-        ProductTaskCountDTO dto = taskService.getProductTaskCount(productId, new Date());
+    @PostMapping("/getProductTaskCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:paging",
+            tableAlias = "project_task"
+    )
+    public ApiResult<ProductTaskCountDTO> getProductTaskCount(@RequestBody ProductTaskCountShowDTO showDTO) {
+        ProductTaskCountDTO dto = taskService.getProductTaskCount(showDTO, new Date());
         return success(dto);
     }
 

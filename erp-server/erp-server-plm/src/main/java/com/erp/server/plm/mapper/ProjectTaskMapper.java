@@ -109,5 +109,15 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskInWarehouseTimeChildDTO>
      */
     List<ProductTaskInWarehouseTimeChildDTO> getAllTaskInWarehouseTimeView(@Param("dto") ProductTaskViewSearchDTO dto);
+
+
+    /**
+     * 根据产品id查询项目任务
+     * @Author Luo_WG
+     * @Date 2022/12/6 9:35
+     * @param showDTO
+     * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
+     **/
+    List<ProjectTaskEntity> getProjectTaskByProductId(@Param("showDTO") ProductTaskCountShowDTO showDTO);
 }
 

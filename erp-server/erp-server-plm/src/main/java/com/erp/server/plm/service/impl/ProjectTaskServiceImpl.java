@@ -1239,14 +1239,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 根据产品id 获取任务数量信息
      *
-     * @param productId
+     * @param showDTO
      * @return com.erp.model.plm.dto.ProductTaskCountDTO
      * @author yl
      * @date 2022-10-13 16:51
      */
     @Override
-    public ProductTaskCountDTO getProductTaskCount(String productId, Date date) {
-        List<ProjectTaskEntity> taskList = this.getByProductId(productId);
+    public ProductTaskCountDTO getProductTaskCount(ProductTaskCountShowDTO showDTO, Date date) {
+        List<ProjectTaskEntity> taskList = baseMapper.getProjectTaskByProductId(showDTO);
+        //List<ProjectTaskEntity> taskList = this.getByProductId(showDTO.getProductId());
         Integer finishState = TaskStateEnum.FINISH.getCode();
         Integer approvalPassState = TaskStateEnum.APPROVAL_PASS.getCode();
         //完成任务数

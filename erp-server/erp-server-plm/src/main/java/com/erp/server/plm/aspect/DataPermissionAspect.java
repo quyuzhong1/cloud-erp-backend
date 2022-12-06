@@ -78,7 +78,7 @@ public class DataPermissionAspect {
             userInfo.setUid(userId);
             userInfo.setUserName(userName);
         }
-        //userInfo.setUid("1588420592990732289");
+        userInfo.setUid("1585078174348218369");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
@@ -396,22 +396,5 @@ public class DataPermissionAspect {
             }
         }
         return null;
-    }
-
-    public StringBuilder SqlSplicing(Integer tableFieldSize, DataPermission dataPermission, List<String> tableFieldList, List<String> list){
-        StringBuilder sqlString = new StringBuilder();
-
-        if (tableFieldSize == 1) {
-            sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
-        } else {
-            sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + list + "',',')");
-            if (tableFieldSize > 1) {
-                sqlString.append(" OR ");
-                for (int i = 1; i < tableFieldSize; i++) {
-                    sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + list + "',','))");
-                }
-            }
-        }
-        return sqlString;
     }
 }
