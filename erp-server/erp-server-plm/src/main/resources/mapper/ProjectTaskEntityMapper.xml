@@ -9,15 +9,13 @@
         <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
             AND phase_id=#{phaseId}
         </if>
-        <if test="param != null and param != ''">
-            ${param}
-        </if>
+
         <if test="searchKeyword !=null and searchKeyword!=''">
             AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
-  <!--      <if test="userId !=null and userId!=''">
+        <if test="userId !=null and userId!=''">
             AND  strpos (charge_id,#{userId})>0
-        </if>-->
+        </if>
         <if test="statusList !=null and statusList.size>0">
             AND status IN
             <foreach collection="statusList" item="state" open="(" separator="," close=")">
@@ -56,8 +54,30 @@
                 </if>
             </foreach>
         </if>
+        ORDER BY
+        create_time ASC
+    </select>
 
 
+    <select id="allPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        WHERE product_id=#{productId}
+        <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
+            AND phase_id=#{phaseId}
+        </if>
+        <if test="statusList !=null and statusList.size>0">
+            AND status IN
+            <foreach collection="statusList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="param != null and param != ''">
+            ${param}
+        </if>
+        <if test="searchKeyword !=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
         ORDER BY
         create_time ASC
     </select>

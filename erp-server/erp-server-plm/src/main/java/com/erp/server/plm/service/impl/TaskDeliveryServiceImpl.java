@@ -496,7 +496,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         //表示有交集 的不能删除
         if (intersectionList.size() != 0) {
             if (CollectionUtils.isNotEmpty(existDocsIds)) {
-
                 //删除 存在的id 不包含交集的
                 List<String> deleteIdList=existDocsIds.stream().filter(e->!intersectionList.contains(e)).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(deleteIdList)){

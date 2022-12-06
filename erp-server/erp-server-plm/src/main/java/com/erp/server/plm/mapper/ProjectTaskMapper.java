@@ -28,6 +28,15 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
                  @Param("statusList") List<Integer> statusList, @Param("param") String param
                  );
 
+
+    /**
+     *产品的全部任务列表
+     * @return
+     */
+    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId ,
+                                       @Param("searchKeyword")  String searchKeyword,
+                                       @Param("statusList") List<Integer> statusList,@Param("param") String param);
+
     List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 
     /**
@@ -109,6 +118,8 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProductTaskInWarehouseTimeChildDTO>
      */
     List<ProductTaskInWarehouseTimeChildDTO> getAllTaskInWarehouseTimeView(@Param("dto") ProductTaskViewSearchDTO dto);
+
+
 
 
     /**
