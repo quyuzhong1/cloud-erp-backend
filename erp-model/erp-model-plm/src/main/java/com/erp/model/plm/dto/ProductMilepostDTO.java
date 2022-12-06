@@ -26,11 +26,6 @@ public class ProductMilepostDTO implements Serializable {
     private String name;
 
     /**
-     * 是否完成
-     */
-    private Integer isFinish;
-
-    /**
      * 序号标识
      */
     private Integer seq;

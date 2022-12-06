@@ -683,7 +683,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * @description: 设置审批人
+     * @description: 产品信息-设置审批人
      * @author Will
      * @date: 2022/11/28 16:43
      * @param dto
@@ -722,7 +722,7 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
-     * 反审核
+     * 产品信息-反审核
      * @author Will
      * @date: 2022/12/1 16:56
      * @param id
@@ -736,7 +736,7 @@ public class ProductDetailController extends BaseController {
 
 
     /**
-     * 申请变更
+     * 产品信息-申请变更
      * @author Will
      * @date: 2022/12/1 15:41
      * @param id
@@ -750,7 +750,7 @@ public class ProductDetailController extends BaseController {
 
 
     /**
-     * 审核完成监听调用
+     * 产品信息-审核完成监听调用
      * @author Will
      * @date: 2022/12/1 15:21
      * @param processId

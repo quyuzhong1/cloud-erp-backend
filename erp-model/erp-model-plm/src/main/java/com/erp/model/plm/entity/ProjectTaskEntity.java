@@ -180,5 +180,9 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("is_sku_change")
     private Integer isSkuChange;
 
-
+    /**
+     * 辅助字段：是否完成
+     */
+    @TableField(exist=false)
+    private Integer isfinish;
 }
