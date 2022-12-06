@@ -78,7 +78,7 @@ public class DataPermissionAspect {
             userInfo.setUid(userId);
             userInfo.setUserName(userName);
         }
-        userInfo.setUid("1585078174348218369");
+        //userInfo.setUid("1585078174348218369");
         //当用户id 不为空的时候
         if (StringUtils.isNotBlank(userInfo.getUid())) {
             dataScopeFilter(joinPoint, userInfo, controllerDataScope);
