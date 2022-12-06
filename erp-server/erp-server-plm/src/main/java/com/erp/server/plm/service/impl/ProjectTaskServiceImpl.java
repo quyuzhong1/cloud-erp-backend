@@ -2935,9 +2935,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer waitConfirmCode = TaskStateEnum.WAIT_CONFIRM.getCode();
         //审核中
         Integer approvalIngCode = TaskStateEnum.APPROVAL_ING.getCode();
+
+        //部分完成
+        Integer portionFinishCode = TaskStateEnum.PORTION_FINISH.getCode();
         // 只有待审核 和 完成待审核 的状态 才可以审核通过
         if (!waitConfirmCode.equals(state) &&
-                !approvalIngCode.equals(state)) {
+                !approvalIngCode.equals(state)&&
+             !portionFinishCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
