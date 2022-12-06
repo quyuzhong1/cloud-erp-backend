@@ -15,6 +15,7 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
 
 
 
+
     /**
      * 通过主键删除数据
      *
@@ -44,4 +45,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
      * @return com.erp.model.plm.entity.TaskRefSkuConfigEntity
      */
     List<TaskRefSkuConfigEntity> getDisableFieldByProductId(String productId);
+
+    void autoCreateSkuConfig(List<String> taskIdList,String configType,String productId);
 }

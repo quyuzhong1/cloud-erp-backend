@@ -30,6 +30,7 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -339,7 +340,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     @Transactional
-    public List<ProjectTaskEntity> copyTaskBySys(String saveProductId, String saveProjectId) {
+    public Pair<List<String>, List<ProjectTaskEntity>> copyTaskBySys(String saveProductId, String saveProjectId) {
+
+        //添加过的 sku 配置的列表
+        List<String> addTaskSkuConfigList = new ArrayList<>();
         //从系统拿到 项目任务
         List<ProjectTaskSysEntity> sysTaskList = projectTaskSysService.getListByProperty(TaskConstant.PROJECT_TASK);
         List<ProjectTaskEntity> addTaskList = new ArrayList<>(sysTaskList.size());
@@ -390,9 +394,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     addEntity.setTaskId(source.getNewCreateId());
                     addEntity.setProductId(saveProductId);
                     addTaskRefSkuList.add(addEntity);
+                    addTaskSkuConfigList.add(source.getNewCreateId());
                 }
             }
-            taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
+            if (CollectionUtils.isNotEmpty(addTaskRefSkuList)) {
+                taskRefSkuConfigService.saveBatch(addTaskRefSkuList);
+            }
 
             List<PreTaskEntity> sysPreTaskList = preTaskService.getSysPreTask(sysTaskIds);
             //以系统任务的id 分组
@@ -422,7 +429,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
-        return addTaskList;
+        return new Pair<>(addTaskSkuConfigList, addTaskList);
     }
 
     /**
@@ -1163,6 +1170,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String processId = taskEntity.getProcessId();
         String approvalUserId = taskEntity.getApprovalUserId();
         BeanMapper.copy(dto, taskEntity);
+        Integer priority = dto.getPriority();
+        if (priority == null) {
+            taskEntity.setPriority(0);
+        }
+
         taskEntity.setApprovalUserId(approvalUserId);
         taskEntity.setBusinessProcessId(businessProcessId);
         taskEntity.setProcessId(processId);

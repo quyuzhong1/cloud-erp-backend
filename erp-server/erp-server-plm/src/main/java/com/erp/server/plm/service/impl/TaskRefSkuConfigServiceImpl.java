@@ -3,13 +3,10 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.TaskRefSkuConfigMapper;
-import com.erp.server.plm.service.ProjectTaskRefSkuService;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -169,6 +166,31 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
         stateList.add(TaskStateEnum.FINISH.getCode());
         List<TaskRefSkuConfigEntity> resultList = baseMapper.getDisableFieldByProductId(productId, stateList);
         return resultList;
+    }
+
+
+    /**
+     * 自动生成sku配置
+     *
+     * @param taskIdList
+     * @param configType
+     * @return void
+     * @author yl
+     * @date 2022-12-05 19:47
+     */
+    @Override
+    public void autoCreateSkuConfig(List<String> taskIdList, String configType, String productId) {
+        List<TaskRefSkuConfigEntity> addList = new ArrayList<>(taskIdList.size());
+        for (String taskId : taskIdList) {
+            TaskRefSkuConfigEntity item = new TaskRefSkuConfigEntity();
+            item.setFieldJson("");
+            item.setTaskId(taskId);
+            item.setFieldConfigType(configType);
+            item.setProductId(productId);
+            addList.add(item);
+        }
+        this.saveBatch(addList);
+
     }
 
 

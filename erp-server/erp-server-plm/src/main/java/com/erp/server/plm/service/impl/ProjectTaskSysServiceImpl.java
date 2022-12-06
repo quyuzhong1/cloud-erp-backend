@@ -2,7 +2,6 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -103,6 +102,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
         }
+        Integer priority=dto.getPriority();
+        if(priority==null){
+            entity.setPriority(0);
+        }
         if (!Objects.isNull(phaseEntity)) {
             entity.setPhaseName(phaseEntity.getName());
             //如果是立项任务
@@ -157,6 +160,13 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<SysTaskPagingDTO> list = pageData.getRecords();
         //获取所有的系统任务的 文档名
         List<SysTaskPagingDTO> docsNames = getSysTaskDocsNames();
+
+        //获取到任务id 集合
+        List<String> taskIds = list.stream().map(SysTaskPagingDTO::getId).collect(Collectors.toList());
+        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+        //前置任务
+        List<ProjectTaskSysEntity> preTaskEntityList = this.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+
         for (SysTaskPagingDTO item : list) {
             List<String> docsNameList = docsNames.stream().filter(d -> item.getId().equals(d.getId())).map(SysTaskPagingDTO::getName).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(docsNameList)) {
@@ -164,8 +174,28 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             } else {
                 item.setDocsNames("");
             }
+            List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+
+            List<String> preTaskNameList = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskSysEntity::getName).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(preTaskNameList)){
+                item.setPreTaskName(String.join(",",preTaskNameList));
+            }
+            if(CollectionUtils.isNotEmpty(preTaskIds)){
+                item.setPreTaskId(String.join(",",preTaskIds));
+            }
         }
+
+
         return new PagingVO(pageData);
+    }
+
+    private List<ProjectTaskSysEntity> getByTaskIds(List<String> taskIds) {
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectTaskSysEntity::getId, taskIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 
