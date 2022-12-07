@@ -63,7 +63,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         if (operationLogMap.size() == 0) {
             return true;
         }
-        List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getKey()).distinct().collect(Collectors.toList());
+        List<String> classPaths = operationLogMap.entrySet().stream().map(obj -> obj.getKey().getValue()).distinct().collect(Collectors.toList());
         List<SysLogFieldEntity> sysLogFieldList = sysLogFieldService.listByClassPaths(classPaths);
         if (CollectionUtils.isEmpty(sysLogFieldList)) {
             return true;

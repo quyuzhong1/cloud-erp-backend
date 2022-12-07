@@ -22,9 +22,9 @@ import java.util.List;
 public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLogFieldEntity> implements SysLogFieldService {
 
     @Override
-    public List<SysLogFieldEntity> listByClassPaths(List<String> classNames) {
+    public List<SysLogFieldEntity> listByClassPaths(List<String> classPaths) {
         LambdaQueryWrapper<SysLogFieldEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SysLogFieldEntity::getClassPath,classNames);
+        queryWrapper.in(SysLogFieldEntity::getClassPath,classPaths);
         return this.list(queryWrapper);
     }
 }

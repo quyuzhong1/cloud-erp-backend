@@ -17,8 +17,8 @@ public interface SysLogFieldService extends IService<SysLogFieldEntity> {
      * @description: 根据类路径集合查询
      * @author Will
      * @date: 2022/12/5 20:35
-     * @param classNames
+     * @param classPaths
      * @return List<SysLogFieldEntity>
      */
-    List<SysLogFieldEntity> listByClassPaths(List<String> classNames);
+    List<SysLogFieldEntity> listByClassPaths(List<String> classPaths);
 }

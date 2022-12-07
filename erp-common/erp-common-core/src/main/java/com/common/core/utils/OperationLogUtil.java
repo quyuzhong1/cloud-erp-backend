@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -158,6 +159,9 @@ public class OperationLogUtil {
             Date date = (Date) value;
             String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
             resultMap.put(newKey,new Pair<>(type,newValue));
+        }  else if (objectType == 50) {//判断是否是BigDecimal类型
+            BigDecimal bd = (BigDecimal)value;
+            resultMap.put(newKey,new Pair<>(type,bd.stripTrailingZeros().toPlainString()));
         } else {
             String newValue = String.valueOf(value);
             resultMap.put(newKey,new Pair<>(type,newValue));
