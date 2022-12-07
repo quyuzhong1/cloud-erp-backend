@@ -21,4 +21,11 @@ public interface SysLogFieldService extends IService<SysLogFieldEntity> {
      * @return List<SysLogFieldEntity>
      */
     List<SysLogFieldEntity> listByClassPaths(List<String> classPaths);
+    /**
+     * @description: 操作日志字段新增
+     * @author Will
+     * @date: 2022/12/7 15:11
+     * @return Boolean
+     */
+    Boolean saveBatchSysLogField();
 }
