@@ -157,13 +157,18 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         LoginUser loginUser = commonService.getUserInfo();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        String content = "";
-        if (StringUtils.isBlank(entity.getOldValue())) {
-            content = "字段：".concat(entity.getFieldName()).concat("由空值变更为").concat(entity.getNewValue());
-        } else {
-            content = "字段：".concat(entity.getFieldName()).concat("由").concat(entity.getOldValue()).concat("变更为").concat(entity.getNewValue());
+        String content = entity.getContent();
+        if (StringUtils.isBlank(content))  {
+            if (StringUtils.isBlank(entity.getFieldName())) {
+                throw new ServiceException(ApiError.ERROR_95089);
+            }
+            if (StringUtils.isBlank(entity.getOldValue())) {
+                content = "字段：".concat(entity.getFieldName()).concat("由空值变更为").concat(entity.getNewValue());
+            } else {
+                content = "字段：".concat(entity.getFieldName()).concat("由").concat(entity.getOldValue()).concat("变更为").concat(entity.getNewValue());
+            }
         }
-        entity.setContent(StringUtils.isBlank(entity.getContent())? content : entity.getContent())
+        entity.setContent(content)
                 .setCreateUserId(userId)
                 .setCreateUserName(userName);
         return this.save(entity);

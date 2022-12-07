@@ -265,4 +265,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean deApprove(String id);
+    /**
+     * @description: 重启审核流程
+     * @author Will
+     * @date: 2022/12/7 16:30
+     * @param dto
+     * @return Boolean
+     */
+    Boolean restartProcessPass(ProductDetailOperateDTO dto);
 }

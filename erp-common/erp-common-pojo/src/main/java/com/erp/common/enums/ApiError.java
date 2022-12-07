@@ -181,8 +181,8 @@ public enum ApiError implements Serializable {
     ERROR_95085(95085,"SKU关联任务未完成，不支持申请变更"),
     ERROR_95086(95086,"SKU未审核通过，不支持申请变更"),
     ERROR_95087(95087,"SKU未审核通过，不支持反审核"),
-
-
+    ERROR_95088(95088,"SKU非待审核状态，不支持重启审核流程"),
+    ERROR_95089(95089,"字段名称未设置不能新增操作日志"),
 
 
     ERROR_end(1000000, "系统错误");

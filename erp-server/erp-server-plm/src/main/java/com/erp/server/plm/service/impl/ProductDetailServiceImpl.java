@@ -1290,7 +1290,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setUpdateUserName(loginUser.getUserName());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId())
-                .setOperation("审核").setOldValue(statusName).setNewValue(ProductDetailStatusEnum.APPROVAL_PASS.getName()));
+                .setOperation("审核").setOldValue(statusName).setNewValue(ProductDetailStatusEnum.APPROVAL_PASS.getName()).setFieldName("审核状态"));
         return this.updateById(entity);
     }
 
@@ -1341,7 +1341,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId())
-                .setOperation("反审核").setOldValue(statusName).setNewValue(ProductDetailStatusEnum.WAIT_CONFIRM.getName()));
+                .setOperation("反审核").setOldValue(statusName).setNewValue(ProductDetailStatusEnum.WAIT_CONFIRM.getName()).setFieldName("审核状态"));
+        //反审核后用新的流程审核人员审核
+        return this.updateById(entity);
+    }
+
+    @Override
+    public Boolean restartProcessPass(ProductDetailOperateDTO dto) {
+        ProductDetailEntity entity = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95088);
+        }
+        productDetailStartProcess(entity);
+        //新增操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId())
+                .setOperation("重启审核流程").setContent("SKU重启审核流程"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }

@@ -765,7 +765,18 @@ public class ProductDetailController extends BaseController {
     }
 
 
-
+    /**
+     * 产品信息-重启审核流程
+     * @author Will
+     * @date: 2022/12/1 15:55
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/restartProcessPass")
+    public ApiResult restartProcessPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.restartProcessPass(dto);
+        return result == true ? success() : failure();
+    }
 
     /**
      * 产品信息-审核完成监听调用
