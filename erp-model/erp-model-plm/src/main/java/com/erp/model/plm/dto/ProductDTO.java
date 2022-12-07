@@ -109,6 +109,9 @@ public class ProductDTO implements Serializable {
     //产品分类id集合
     private List<String>   categoryIdList;
 
-
+    /**
+     *禁止修改的字段
+     */
+    private List<String> disableFieldList;
 
 }

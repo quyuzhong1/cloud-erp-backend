@@ -357,6 +357,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @author yl
      * @date 2022-11-28 14:03
      */
+    @Override
     public List<String> getByFileldFlag(String flag, List<TaskRefSkuConfigEntity> refSkuFiledConfigList) {
         List<String> resultList = new ArrayList<>(10);
         try {

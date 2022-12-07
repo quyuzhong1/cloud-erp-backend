@@ -6,6 +6,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -183,8 +184,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return 
      */
     List<ProductDetailEntity> getSkuListByProductId(String productId);
-    
-
+    /**
+     * 获取配置字段
+     */
+    List<String> getByFileldFlag(String flag, List<TaskRefSkuConfigEntity> refSkuFiledConfigList);
     /**
      * @Description 新增无规格sku信息
      * @Author Luo_WG

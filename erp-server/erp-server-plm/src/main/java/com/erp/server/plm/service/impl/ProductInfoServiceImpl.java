@@ -22,6 +22,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
+import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProductInfoMapper;
@@ -146,6 +147,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private TemplateTaskRefSkuConfigService templateTaskRefSkuConfigService;
+
+    @Autowired
+    private TaskRefSkuConfigService taskRefSkuConfigService;
 
     /**
      * 查询 分类id 下有多少产品
@@ -654,6 +658,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             result.setChargeNames(new ArrayList<>());
         }
         result.setCategoryIdList(categoryIdList);
+        //任务与配置字段 关系
+        List<TaskRefSkuConfigEntity> refSkuFiledConfigList = taskRefSkuConfigService.getDisableFieldByProductId(id);
+        //基础信息 禁用字段
+        List<String> manySpecBaseDisableFields =productDetailService.getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
+        result.setDisableFieldList(manySpecBaseDisableFields);
         return result;
     }
 
