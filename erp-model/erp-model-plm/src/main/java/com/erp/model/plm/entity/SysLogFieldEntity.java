@@ -43,6 +43,16 @@ public class SysLogFieldEntity {
     private String classPath;
 
     /**
+     * 字段类型 0字符串，1是或否，2枚举
+     */
+    private Integer type;
+
+    /**
+     * 枚举类
+     */
+    private String enumClass;
+
+    /**
      * 创建人id
      */
     @TableField("create_user_id")

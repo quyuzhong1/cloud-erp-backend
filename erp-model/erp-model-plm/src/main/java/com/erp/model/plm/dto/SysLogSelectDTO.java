@@ -17,20 +17,15 @@ import javax.validation.constraints.NotBlank;
 public class SysLogSelectDTO extends BaseSearchDTO {
 
     /**
-     * 表名
+     * 表名路径
      */
-    @NotBlank(message = "表名不能为空")
-    private String className;
+    @NotBlank(message = "表名路径不能为空")
+    private String classPath;
 
     /**
      * 业务id
      */
     @NotBlank(message = "业务id为空")
     private String businessId;
-
-    /**
-     * 内容
-     */
-    private String content;
 
 }

@@ -3,6 +3,7 @@ package com.erp.model.plm.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 
@@ -14,6 +15,7 @@ import java.util.Date;
  */
 @Data
 @TableName("sys_log")
+@Accessors(chain = true)
 public class SysLogEntity {
 
 
@@ -43,6 +45,11 @@ public class SysLogEntity {
     @TableField("business_id")
     private String businessId;
 
+    /**
+     * 操作
+     */
+    @TableField("operation")
+    private String operation;
 
     /**
      * 旧值

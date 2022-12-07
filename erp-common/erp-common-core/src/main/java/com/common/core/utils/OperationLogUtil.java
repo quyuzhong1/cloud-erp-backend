@@ -31,13 +31,15 @@ import java.util.*;
 public class OperationLogUtil {
 
 
-
+    /**
+     * 根据传入对象生成修改记录Map
+     */
     public static Map<Pair<String,String>,Pair<String,String>> getOperationLogMap(Object oldObject, Object newObject) {
         //返回结果集:Map<Pair<最底层class,字段名称>, Pair<旧值,新值>>
         Map<Pair<String,String>, Pair<String,String>> resultMap = new LinkedHashMap<>();
-        //返回结果集:Map<Pair<字段路径,最底层class>, 值>
-        Map<Pair<String,String>, String> oldResultMap = new LinkedHashMap<>();
-        Map<Pair<String,String>, String> newResultMap = new LinkedHashMap<>();
+        //返回结果集:Map<字段路径,Pair<,最底层class,值> >
+        Map<String,Pair<String,String>> oldResultMap = new LinkedHashMap<>();
+        Map<String,Pair<String,String>> newResultMap = new LinkedHashMap<>();
         //如果内容为空则返回空map
         if (ObjectUtils.isEmpty(oldObject) || ObjectUtils.isEmpty(newObject)) {
             return resultMap;
@@ -54,13 +56,15 @@ public class OperationLogUtil {
         Iterator<Map.Entry<String, Object>> oldIterator = oldMap.size() == 0 ? null : oldMap.entrySet().iterator();
         Iterator<Map.Entry<String, Object>> newIterator = newMap.size() == 0 ? null : newMap.entrySet().iterator();
 
+
+
         //旧数据时记录
         if (ObjectUtils.isNotEmpty(oldIterator)) {
             while (oldIterator .hasNext()){
                 Map.Entry oldEntry  =  (java.util.Map.Entry)oldIterator.next();
                 String key =  oldEntry.getKey().toString();
                 Object value = oldEntry.getValue();
-                doOpValue(key,value,oldResultMap,oldObject,null,key);
+                doOpValue(key,value,oldResultMap,oldObject,String.valueOf(oldObject.getClass()),key);
             }
         }
         //新数据时记录
@@ -69,19 +73,21 @@ public class OperationLogUtil {
                 Map.Entry newEntry  =  (java.util.Map.Entry)newIterator.next();
                 String key =  newEntry.getKey().toString();
                 Object value = newEntry.getValue();
-                doOpValue(key,value,newResultMap,oldObject,null,key);
+                doOpValue(key,value,newResultMap,newObject,String.valueOf(newObject.getClass()),key);
             }
         }
       //取两个Map中的并集
-        Map<Pair<String,String>, String> map = BeanMapUtil.getUnionSetByGuava(oldResultMap, newResultMap);
+        Map<String,Pair<String,String>> map = BeanMapUtil.getUnionSetByGuava(oldResultMap, newResultMap);
        if (ObjectUtils.isNotEmpty(map)) {
            createResultMap(map,oldResultMap,newResultMap,resultMap);
        }
         return resultMap;
     }
 
-
-    private static void doOpValue(String key,Object value,Map<Pair<String,String>, String> resultMap,Object object,String type,String oldKey) {
+    /**
+     * 迭代循环类中对象并将值返回到resultMap中
+     */
+    private static void doOpValue(String key,Object value,Map<String,Pair<String,String>> resultMap,Object object,String type,String oldKey) {
         String newKey = key;
         //如果value为空则直接返回
         if (ObjectUtils.isEmpty(value)) {
@@ -128,14 +134,14 @@ public class OperationLogUtil {
                 }
             }
             if (CollectionUtils.isNotEmpty(stringList)) {
-                resultMap.put(new Pair<>(newKey,type),String.join(",",stringList));
+                resultMap.put(newKey,new Pair<>(type,String.join(",",stringList)));
             }
         } else if (objectType == 30) {//判断是否为Map
             Map map = TransitionUtil.transitionType(value, Map.class);
             try {
                 Field declaredField = object.getClass().getDeclaredField(newKey);
                 declaredField.setAccessible(true);
-                 type = declaredField.getType().toString();
+                type = declaredField.getType().toString();
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();
             }
@@ -151,27 +157,39 @@ public class OperationLogUtil {
         } else if (objectType == 10) {//判断是否是日期
             Date date = (Date) value;
             String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
-            resultMap.put(new Pair<>(newKey,type),newValue);
+            resultMap.put(newKey,new Pair<>(type,newValue));
         } else {
             String newValue = String.valueOf(value);
-            resultMap.put(new Pair<>(newKey,type),newValue);
+            resultMap.put(newKey,new Pair<>(type,newValue));
         }
     }
 
-
-    private static void createResultMap( Map<Pair<String,String>, String> map,Map<Pair<String,String>, String> oldMap,Map<Pair<String,String>, String> newMap,Map<Pair<String,String>, Pair<String,String>> resultMap) {
-        Iterator<Map.Entry<Pair<String,String>, String>> iterator = map.entrySet().iterator();
+    /**
+     * 处理list中的下标，并生成结果集
+     */
+    private static void createResultMap( Map<String,Pair<String,String>> map,Map<String,Pair<String,String>> oldMap,Map<String,Pair<String,String>> newMap,Map<Pair<String,String>, Pair<String,String>> resultMap) {
+        Iterator<Map.Entry<String,Pair<String,String>>> iterator = map.entrySet().iterator();
         while (iterator .hasNext()){
             Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
-            Pair<String,String> pair = (Pair<String, String>) entry.getKey();
-            String key = pair.getKey();
-            key= Arrays.stream(key.split(".")).reduce((first, second) -> second).orElse("");
-            key = key.replace("^[0-9]*$", "");
-            String value = pair.getValue();
-            String oldValue = oldMap.get(key) == null ? "" : oldMap.get(key);
-            String newValue = newMap.get(key) == null ? "" : newMap.get(key);
+            String key = (String) entry.getKey();
+            String field= Arrays.stream(key.split("\\.")).reduce((first, second) -> second).orElse("");
+            field = field.replace("^[0-9]*$", "");
+
+            Pair<String, String> oldPair = oldMap.get(key);
+            Pair<String, String> newPair = newMap.get(key);
+            String oldValue = "";
+            String newValue = "";
+            String path = "";
+            if (ObjectUtils.isNotEmpty(oldPair)) {
+                oldValue = oldPair.getValue();
+                path = oldPair.getKey();
+            }
+            if (ObjectUtils.isNotEmpty(newPair)) {
+                newValue = newPair.getValue();
+                path = newPair.getKey();
+            }
             if (!oldValue.equals(newValue)) {
-                resultMap.put(new Pair<>(key,value),new Pair<>(oldValue,newValue));
+                resultMap.put(new Pair<>(field,path),new Pair<>(oldValue,newValue));
             }
         }
     }

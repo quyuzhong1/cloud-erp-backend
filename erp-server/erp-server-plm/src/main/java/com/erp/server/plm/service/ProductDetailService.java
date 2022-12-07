@@ -239,7 +239,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     Boolean updateApprover(ProductDetailApproveParamDTO dto);
     /**
-     * @description: 审核通过
+     * @description: 审核完成
      * @author Will
      * @date: 2022/11/30 17:22
      * @param processId

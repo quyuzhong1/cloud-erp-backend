@@ -1,10 +1,12 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author Will
@@ -16,39 +18,25 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SysLogShowDTO implements Serializable {
 
-    /**
-     * id
-     */
-    private String id;
 
     /**
-     * 类路径
+     * 操作
      */
-    private String classPath;
-
-    /**
-     * 字段名称
-     */
-    private String fieldName;
-
-    /**
-     * 业务id
-     */
-    private String businessId;
-
-    /**
-     * 旧值
-     */
-    private String oldValue;
-
-    /**
-     * 新值
-     */
-    private String newValue;
+    private String operation;
 
     /**
      * 内容
      */
     private String content;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 创建人
+     */
+    private String createUserName;
 
 }

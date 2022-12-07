@@ -9,6 +9,8 @@ import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -19,7 +21,7 @@ public interface SysLogService  extends IService<SysLogEntity> {
 
 
     /**
-     * @description: 保存日志
+     * @description: 修改时保存日志
      * @author Will
      * @date: 2022/12/5 20:29
      * @param oldObj 旧对象
@@ -28,7 +30,34 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @param businessId 实体对应业务id
      * @return Boolean
      */
-    Boolean addSysLog(Object oldObj,Object newObj,String classPath ,String businessId);
+    Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId);
+    /**
+     * @description: 新增时保存日志
+     * @author Will
+     * @date: 2022/12/6 14:08
+     * @param content
+     * @param classPath
+     * @param businessId
+     * @return Boolean
+     */
+    Boolean addSysLogBySave(String content,String classPath,String businessId);
+
+    /**
+     * @description: 新增时批量保存日志
+     * @author Will
+     * @date: 2022/12/6 14:08
+     * @param list
+     * @return Boolean
+     */
+    Boolean addSysLogByBatchSave(List<SysLogEntity> list);
+    /**
+     * @description: 保存日志
+     * @author Will
+     * @date: 2022/12/6 14:43
+     * @param entity
+     * @return Boolean
+     */
+    Boolean addSysLogByOther(SysLogEntity entity);
     /**
      * @description: 分页查询
      * @author Will

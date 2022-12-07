@@ -5,25 +5,23 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.SysLogShowDTO">
         select
-               sl.id,
-               sl.business_id,
-               sl.field_name,
-               sl.old_value,
-               sl.new_value,
-               sl.content
+            sl.class_path,
+            sl.business_id,
+            to_char(sl.create_time,'yyyy-MM-dd hh24:mi:ss') as create_time,
+            max(sl.create_user_name) as create_user_name,
+            array_to_string(array_agg(DISTINCT sl.operation),<![CDATA['<br>']]>) as operation,
+            array_to_string(array_agg(DISTINCT sl.content),<![CDATA['<br>']]>) as content
         from sys_log sl
         <where>
-            <if test="params.className !=null and params.className!=''">
-                AND sl.class_path LIKE concat('%',#{className},'%')
+            <if test="params.classPath !=null and params.classPath!=''">
+                AND sl.class_path LIKE concat('%',#{params.classPath},'%')
             </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}
             </if>
-            <if test="params.content !=null and params.content!=''">
-                AND sl.content LIKE concat('%',#{params.content},'%')
-            </if>
         </where>
-        order by sl.create_time desc
+        group by sl.class_path,sl.business_id,to_char(sl.create_time,'yyyy-MM-dd hh24:mi:ss')
+        order by to_char(sl.create_time,'yyyy-MM-dd hh24:mi:ss') desc
     </select>
 
 </mapper>

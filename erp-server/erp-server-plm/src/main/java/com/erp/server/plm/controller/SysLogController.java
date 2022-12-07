@@ -8,14 +8,12 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.service.SysDocsService;
 import com.erp.server.plm.service.SysLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 操作日志
@@ -39,9 +37,20 @@ public class SysLogController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<SysLogShowDTO>> paging(@RequestBody @Validated PagingDTO<SysLogSelectDTO> dto){
-        dto.getParams().getClassName();
         PagingVO<SysLogShowDTO> pagingVO=sysLogService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * @description: 获取产品信息实体类路径
+     * @author Will
+     * @date: 2022/12/7 13:26
+     * @return ApiResult
+     */
+    @GetMapping("/getProductDetailClassPath")
+    public ApiResult getProductDetailClassPath() {
+        Class<ProductDetailEntity> classPath = ProductDetailEntity.class;
+        return success(String.valueOf(classPath));
     }
 
 }
