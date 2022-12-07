@@ -741,12 +741,12 @@ public class ProductDetailController extends BaseController {
      * 产品信息-反审核
      * @author Will
      * @date: 2022/12/1 16:56
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/deApprove")
-    public ApiResult deApprove(@RequestParam("id") String id) {
-        Boolean result = productDetailService.deApprove(id);
+    public ApiResult deApprove(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.deApprove(dto.getId());
         return result == true ? success() : failure();
     }
 
@@ -755,12 +755,12 @@ public class ProductDetailController extends BaseController {
      * 产品信息-申请变更
      * @author Will
      * @date: 2022/12/1 15:41
-     * @param id
+     * @param dto
      * @return ApiResult
      */
     @PostMapping("/applyChange")
-    public ApiResult applyChange(@RequestParam("id") String id) {
-        Boolean result = productDetailService.applyChange(id);
+    public ApiResult applyChange(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.applyChange(dto.getId());
         return result == true ? success() : failure();
     }
 
