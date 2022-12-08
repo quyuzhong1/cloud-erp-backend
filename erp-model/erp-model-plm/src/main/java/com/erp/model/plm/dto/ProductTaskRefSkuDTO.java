@@ -41,6 +41,11 @@ public class ProductTaskRefSkuDTO implements Serializable {
     private String skuNo;
 
     /**
+     * 阶段Id
+     */
+    private String phaseId;
+
+    /**
      * 阶段名称
      */
     private String phaseName;

@@ -52,6 +52,8 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
     @Autowired
     private ProjectInfoService projectInfoService;
 
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
 
     /**
      * @param productId
@@ -192,6 +194,12 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
+        //查询所有阶段
+        List<TaskPhaseDTO> phaseEntityList = projectPhaseService.findList(new BasicProductIdDTO().setProductId(productId));
+        if (CollectionUtils.isEmpty(phaseEntityList)) {
+            return resultDto;
+        }
+
         //查询产品下面的任务
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
        if (CollectionUtils.isEmpty(taskList))  {
@@ -200,16 +208,20 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         List<ProductDetailEntity> allSkuList = productDetailService.getSkuListByProductId(productId);
         //查询产品下面的sku关联关系
         List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
+
         //任务下所有阶段
-        List<String> phaseNameList = taskList.stream().map(ProjectTaskEntity::getPhaseName).distinct().collect(Collectors.toList());
-        Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
-        for (Map.Entry<String, List<ProjectTaskEntity>> entry : map.entrySet()) {
+        List<String> phaseIdList = taskList.stream().map(ProjectTaskEntity::getPhaseId).distinct().collect(Collectors.toList());
+        Map<String, List<ProjectTaskEntity>> map = taskList.stream().collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseId));
+        for (TaskPhaseDTO phaseEntity : phaseEntityList) {
             //阶段进度对象
             ProductProgressPhaseDTO phaseDto = new ProductProgressPhaseDTO();
             //阶段名称
-            String phaseName = entry.getKey();
+            String phaseName = phaseEntity.getName();
             //阶段下任务集合
-            List<ProjectTaskEntity> value = entry.getValue();
+            List<ProjectTaskEntity> value = map.get(phaseEntity.getId());
+            if (CollectionUtils.isEmpty(value)) {
+                continue;
+            }
             //任务总数量
             long totalCount = value.stream().count();
             //任务完成数量
@@ -232,17 +244,18 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 skuDto.setSkuNo(skuNo);
                 List<ProductProgressPhaseDTO> skuProgressList = new ArrayList<>();
                 //各个阶段下完成数量
-                if (CollectionUtils.isNotEmpty(phaseNameList)) {
-                    for (String phaseName : phaseNameList) {
+                if (CollectionUtils.isNotEmpty(phaseIdList)) {
+                    for (String phaseId : phaseIdList) {
                         ProductProgressPhaseDTO skuProgress = new ProductProgressPhaseDTO();
+                        String phaseName = phaseEntityList.stream().filter(obj -> obj.getId().equals(phaseId)).map(TaskPhaseDTO::getName).findAny().orElse(null);
                         skuProgress.setPhaseName(phaseName);
                         //sku下任务总数
                         long skuTotalCount = 0;
                         //sku下任务完成总数
                         long skuFinishCount = 0;
                         if (CollectionUtils.isNotEmpty(refList)) {
-                            skuTotalCount = refList.stream().filter(obj -> phaseName.equals(obj.getPhaseName()) && obj.getSkuId().equals(entity.getId())).count();
-                            skuFinishCount = refList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask()) && phaseName.equals(obj.getPhaseName()) && obj.getSkuId().equals(entity.getId())).count();
+                            skuTotalCount = refList.stream().filter(obj -> phaseId.equals(obj.getPhaseId()) && obj.getSkuId().equals(entity.getId())).count();
+                            skuFinishCount = refList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask()) && phaseId.equals(obj.getPhaseId()) && obj.getSkuId().equals(entity.getId())).count();
                         }
                         skuProgress.setTotalQty(skuTotalCount);
                         skuProgress.setFinishQty(skuFinishCount);

@@ -2,6 +2,7 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotBlank;
 
@@ -13,6 +14,7 @@ import javax.validation.constraints.NotBlank;
  */
 @Data
 @NoArgsConstructor
+@Accessors(chain = true)
 public class BasicProductIdDTO {
 
     /**
