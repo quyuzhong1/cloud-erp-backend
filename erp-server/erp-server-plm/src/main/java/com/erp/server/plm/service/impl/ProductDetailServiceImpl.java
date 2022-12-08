@@ -1185,7 +1185,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
-
+        //SKU字段关联任务尚未完成，不可审核
+        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
+        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
+            long count = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95083);
+            }
+        }
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
@@ -1232,6 +1239,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95046);
         }
 
+        //SKU字段关联任务尚未完成，不可申请变更
+        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
+        if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
+            long count = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95085);
+            }
+        }
 
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userName = loginUser.getUserName();

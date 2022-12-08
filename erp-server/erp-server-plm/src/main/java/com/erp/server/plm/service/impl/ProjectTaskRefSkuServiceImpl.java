@@ -170,6 +170,13 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
 
     }
 
+    @Override
+    public List<ProjectTaskRefSkuEntity> listBySkuId(String skuId) {
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId,skuId);
+        return this.list(queryWrapper);
+    }
+
 
     public void setTaskNoFinishRefSku(String taskId) {
         LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
