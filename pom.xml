@@ -25,6 +25,7 @@
         <module>erp-server</module>
         <module>erp-sdk</module>
         <module>erp-chrome</module>
+        <module>erp-common-business</module>
     </modules>
 
     <properties>
