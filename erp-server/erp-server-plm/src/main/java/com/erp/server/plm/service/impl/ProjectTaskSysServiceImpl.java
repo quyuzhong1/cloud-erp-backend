@@ -87,10 +87,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             }
         }
         Boolean isReview=TaskTypeEnum.REVIEW_TASK.getCode().equals(type);
-
         if (CollectionUtils.isNotEmpty(approvalUserIds)) {
             List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
             entity.setApprovalUserId(String.join(",", approvalUserIdList));
+        }else{
+            entity.setApprovalUserId("");
         }
         if(isReview){
             entity.setApprovalUserId("");
