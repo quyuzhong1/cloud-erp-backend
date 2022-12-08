@@ -185,6 +185,14 @@ public enum ApiError implements Serializable {
     ERROR_95089(95089,"字段名称未设置不能新增操作日志"),
 
 
+    /**
+     * bi 错误
+     * 从97000 开始  以端口号
+     */
+    ERROR_97000(97000,"专题不能为空"),
+    ERROR_97001(97001,"仪表盘名称不能为重复"),
+
+
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

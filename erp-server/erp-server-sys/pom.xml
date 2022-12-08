@@ -8,7 +8,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cloud.erp</groupId>
+    <groupId>com.erp.server</groupId>
     <artifactId>erp-server-sys</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>erp-server-sys</name>
