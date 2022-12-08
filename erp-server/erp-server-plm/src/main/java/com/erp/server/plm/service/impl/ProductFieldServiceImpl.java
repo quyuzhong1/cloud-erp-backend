@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -49,7 +49,7 @@ public class ProductFieldServiceImpl extends ServiceImpl<ProductFieldMapper, Pro
      */
     @Override
     public Boolean saveOrUpdateSysField(SysProductFieldDTO dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String id = dto.getId();
         String name = dto.getName();
         checkFieldName(id, name);

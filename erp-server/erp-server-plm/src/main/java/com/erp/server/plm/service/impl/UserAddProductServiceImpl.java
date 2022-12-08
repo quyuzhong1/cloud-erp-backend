@@ -3,7 +3,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.entity.UserAddProductEntity;
 import com.erp.server.plm.mapper.UserAddProductEntityMapper;
@@ -31,7 +31,7 @@ public class UserAddProductServiceImpl extends ServiceImpl<UserAddProductEntityM
      */
     @Override
     public boolean userAddProduct(String productId) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (loginUser != null) {
             UserAddProductEntity entity = new UserAddProductEntity();
             entity.setProductId(productId);
@@ -51,7 +51,7 @@ public class UserAddProductServiceImpl extends ServiceImpl<UserAddProductEntityM
      */
     @Override
     public boolean userCancelProduct(String productId) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (loginUser != null) {
             LambdaQueryWrapper<UserAddProductEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(UserAddProductEntity::getProductId, productId);
@@ -63,7 +63,7 @@ public class UserAddProductServiceImpl extends ServiceImpl<UserAddProductEntityM
 
     @Override
     public List<Map<String, Object>> listByUserId() {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
 
         return baseMapper.listByUserId(loginUser.getUid());
     }

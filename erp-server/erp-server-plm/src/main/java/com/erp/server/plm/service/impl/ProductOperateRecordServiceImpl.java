@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
@@ -62,7 +62,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     public Boolean saveOrUpdate(ProductOperateRecordDTO dto) {
         ProductOperateRecordEntity recordEntity = new ProductOperateRecordEntity();
         BeanMapper.copy(dto, recordEntity);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(dto.getId())) {
                 recordEntity.setCreateUserId(loginUser.getUid());
@@ -84,7 +84,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductOperateRecordDTO> dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         List<ProductOperateRecordEntity> productOperateRecordEntities = BeanMapper.copyList(dto, ProductOperateRecordEntity.class);
         if (ObjectUtils.isNotEmpty(loginUser)) {
             for (ProductOperateRecordEntity productOperateRecordEntity : productOperateRecordEntities) {

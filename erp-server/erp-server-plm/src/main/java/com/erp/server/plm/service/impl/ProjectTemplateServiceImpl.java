@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -67,7 +67,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         ProjectTemplateEntity entity = new ProjectTemplateEntity();
         BeanMapperUtils.copy(dto,entity);
         //获取登录人信息
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
@@ -146,7 +146,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             throw new ServiceException(ApiError.ERROR_95051);
         }
         //获取登录人信息
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
@@ -170,7 +170,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     public String saveTemplate(String templateName,String productId,Integer templateType) {
         checkTemplateName(templateName);
         //获取登录人信息
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }

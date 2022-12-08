@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
@@ -124,7 +124,7 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
      */
     @Override
     public Boolean saveArchive(String productId) {
-        LoginUser user = PlmInterceptor.threadLocal.get();
+        LoginUser user = CommonInterceptor.threadLocal.get();
         String operator = "";
         if (user != null) {
             operator = user.getUid();

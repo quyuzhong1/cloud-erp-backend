@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
@@ -48,7 +48,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
     public Boolean saveOrUpdate(ProductVariantPropertyDTO dto) {
         ProductVariantPropertyEntity variantPropertyEntity = new ProductVariantPropertyEntity();
         BeanMapper.copy(dto, variantPropertyEntity);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(dto.getId())) {
                 variantPropertyEntity.setCreateUserId(loginUser.getUid());
@@ -71,7 +71,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
     @Override
     public Boolean saveOrUpdateBatch(List<ProductVariantPropertyDTO> dto) {
         List<ProductVariantPropertyEntity> variantPropertyEntityList = BeanMapper.copyList(dto, ProductVariantPropertyEntity.class);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             variantPropertyEntityList.forEach(req -> {
                 if (StringUtils.isBlank(req.getId())) {

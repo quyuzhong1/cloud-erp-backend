@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
@@ -51,7 +51,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     public Boolean saveOrUpdate(ProductCertificateDTO productCertificateDTO) {
         ProductCertificateEntity certificateEntity = new ProductCertificateEntity();
         BeanMapper.copy(productCertificateDTO, certificateEntity);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(productCertificateDTO.getId())) {
                 certificateEntity.setCreateUserId(loginUser.getUid());

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductPurchaseRemarkDTO;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
@@ -53,7 +53,7 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
         ProductPurchaseRemarkEntity remarkEntity = new ProductPurchaseRemarkEntity();
         BeanMapper.copy(dto, remarkEntity);
 
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(dto.getId())) {
                 remarkEntity.setCreateUserId(loginUser.getUid());
@@ -75,7 +75,7 @@ public class ProductPurchaseRemarkServiceImpl extends ServiceImpl<ProductPurchas
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPurchaseRemarkDTO> dto) {
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         List<ProductPurchaseRemarkEntity> productPurchaseRemarkEntities = BeanMapper.copyList(dto, ProductPurchaseRemarkEntity.class);
         if (ObjectUtils.isNotEmpty(loginUser)) {
             for (ProductPurchaseRemarkEntity productPurchaseRemarkEntity : productPurchaseRemarkEntities) {

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductCostDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
@@ -51,7 +51,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public Boolean saveOrUpdate(ProductCostDTO productCostDTO) {
         ProductCostEntity costEntity = new ProductCostEntity();
         BeanMapper.copy(productCostDTO, costEntity);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(productCostDTO.getId())) {
                 costEntity.setCreateUserId(loginUser.getUid());

@@ -2,7 +2,7 @@ package com.erp.server.plm.aspect;
 
 import com.common.core.utils.ObjectUtils;
 import com.erp.common.annotation.RequestPermissions;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
@@ -47,7 +47,7 @@ public class RequestPermissionsAspect {
         if (StringUtils.isNotBlank(permissionsCode)) {
             String userId = "";
             String userName = "";
-            LoginUser userInfo = PlmInterceptor.threadLocal.get();
+            LoginUser userInfo = CommonInterceptor.threadLocal.get();
             if (Objects.isNull(userInfo)) {
                 userInfo = new LoginUser();
                 userInfo.setUid(userId);

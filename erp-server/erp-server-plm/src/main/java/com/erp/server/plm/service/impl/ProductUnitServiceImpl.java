@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductUnitDTO;
 import com.erp.model.plm.entity.ProductUnitEntity;
@@ -34,7 +34,7 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductUnitDTO> productUnitList) {
         List<ProductUnitEntity> productUnitEntities = BeanMapper.copyList(productUnitList, ProductUnitEntity.class);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             for (ProductUnitEntity productUnitEntity : productUnitEntities) {
                 if (StringUtils.isBlank(productUnitEntity.getId())) {

@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
-public class PlmInterceptor implements HandlerInterceptor {
+public class CommonInterceptor implements HandlerInterceptor {
 
     public static ThreadLocal<LoginUser> threadLocal = new ThreadLocal<>();
 

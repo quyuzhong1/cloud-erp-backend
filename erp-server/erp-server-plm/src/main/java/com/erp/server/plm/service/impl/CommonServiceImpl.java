@@ -1,6 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
@@ -37,7 +37,7 @@ public class CommonServiceImpl implements CommonService {
     public LoginUser getUserInfo() {
         String userId = "";
         String userName = "";
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (Objects.isNull(loginUser)) {
             loginUser = new LoginUser();
             loginUser.setUid(userId);

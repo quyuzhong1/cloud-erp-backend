@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.common.business.annotation.DataPermission;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
@@ -21,7 +21,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
@@ -71,7 +70,7 @@ public class DataPermissionAspect {
         }
         String userId = "";
         String userName = "";
-        LoginUser userInfo = PlmInterceptor.threadLocal.get();
+        LoginUser userInfo = CommonInterceptor.threadLocal.get();
         if (Objects.isNull(userInfo)) {
             userInfo = new LoginUser();
             userInfo.setUid(userId);

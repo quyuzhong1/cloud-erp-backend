@@ -10,7 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -161,7 +161,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
         TemplateDeliveryDocsEntity entity = new TemplateDeliveryDocsEntity();
         BeanMapperUtils.copy(dto,entity);
         //获取登录人信息
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
@@ -211,7 +211,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
             //删除交付文档
             removeTemplateDeliveryDocs(taskId,templateId);
             //获取登录人信息
-            LoginUser loginUser = PlmInterceptor.threadLocal.get();
+            LoginUser loginUser = CommonInterceptor.threadLocal.get();
             if (ObjectUtils.isEmpty(loginUser)) {
                 throw new ServiceException(ApiError.ERROR_9011);
             }

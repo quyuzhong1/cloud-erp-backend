@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.business.interceptor.PlmInterceptor;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.ProductImagesDTO;
 import com.erp.model.plm.entity.ProductImagesEntity;
@@ -33,7 +33,7 @@ public class ProductImagesServiceImpl extends ServiceImpl<ProductImagesMapper, P
     public Boolean insertProductImage(ProductImagesDTO productImagesDTO) {
         ProductImagesEntity productImagesEntity = new ProductImagesEntity();
         BeanMapper.copy(productImagesDTO, productImagesEntity);
-        LoginUser loginUser = PlmInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             if (StringUtils.isBlank(productImagesDTO.getId())) {
                 productImagesEntity.setCreateUserId(loginUser.getUid());
