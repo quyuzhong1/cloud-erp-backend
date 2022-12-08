@@ -38,5 +38,6 @@
         FROM product_detail pd
         LEFT JOIN product_pack pp ON pp.sku_id = pd."id"
         WHERE pd.product_id = #{productId}
+        ORDER BY pd.id desc
     </select>
 </mapper>

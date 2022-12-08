@@ -42,5 +42,6 @@
         FROM product_detail pd
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id"
         WHERE pd.product_id = #{productId}
+        ORDER BY pd.id desc
     </select>
 </mapper>

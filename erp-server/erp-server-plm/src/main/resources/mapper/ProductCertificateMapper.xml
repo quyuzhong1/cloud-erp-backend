@@ -31,5 +31,6 @@
         FROM product_detail pd
         INNER JOIN product_certificate pc ON pc.sku_id = pd."id"
         WHERE pd.product_id = #{productId}
+        ORDER BY pd.id desc
     </select>
 </mapper>
