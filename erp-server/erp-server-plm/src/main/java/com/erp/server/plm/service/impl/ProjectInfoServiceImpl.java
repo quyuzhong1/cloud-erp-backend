@@ -454,16 +454,18 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 //总的任务数
                 int taskCount = approvalTaskCount + projectTaskCount;
                 item.setTaskCount(taskCount);
-                int approvalProgress = 0;
-                int projectProgress = 0;
+                double approvalProgress = 0;
+                double projectProgress = 0;
                 //立项任务完成
                 if (approvalTaskCount != 0) {
-                    approvalProgress = (approvalFinishTaskCount / approvalTaskCount) * 100;
+                    approvalProgress = ((double)approvalFinishTaskCount / approvalTaskCount) * 100;
                 }
                 //项目任务完成
                 if (projectTaskCount != 0) {
-                    projectProgress = (projectFinishTaskCount / projectTaskCount) * 100;
+                    projectProgress = ((double)projectFinishTaskCount / projectTaskCount) * 100;
                 }
+                approvalProgress = Math.round(approvalProgress * 100) / 100;
+                projectProgress = Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
