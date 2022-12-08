@@ -88,8 +88,8 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             String oldValue = valuePair.getKey();
             String newValue = valuePair.getValue();
             if (type == 1) {
-                oldValue = IsConstant.YES.equals(oldValue) ? "是" : "否";
-                newValue = IsConstant.YES.equals(newValue) ? "是" : "否";
+                oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
+                newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
             } else if (type == 2) {
                 Class<?> aClass = null;
                 try {

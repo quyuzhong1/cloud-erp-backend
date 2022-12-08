@@ -32,7 +32,7 @@ public class SysLogFieldController extends BaseController {
      * @date: 2022/12/7 13:26
      * @return ApiResult
      */
-    @GetMapping("/saveBatchSysLogField")
+    @PostMapping("/saveBatchSysLogField")
     public ApiResult saveBatchSysLogField() {
        Boolean flag = sysLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();
