@@ -1,16 +1,16 @@
-package com.erp.server.plm.aspect;
+package com.erp.common.business.aspect;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.common.annotation.DataPermission;
+import com.erp.common.business.annotation.DataPermission;
+import com.erp.common.business.interceptor.PlmInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.UserRequestPermissionsDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -31,7 +31,6 @@ import java.util.*;
  * 数据过滤处理
  */
 @Aspect
-@Component
 public class DataPermissionAspect {
     /**
      * 全部数据权限
@@ -55,7 +54,7 @@ public class DataPermissionAspect {
     private ApplicationContext applicationContext;
 
     // 配置织入点
-    @Pointcut("@annotation(com.erp.common.annotation.DataPermission)")
+    @Pointcut("@annotation(com.erp.common.business.annotation.DataPermission)")
     public void dataScopePointCut() {
     }
 

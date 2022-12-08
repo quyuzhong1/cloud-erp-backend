@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
+import com.erp.common.business.interceptor.PlmInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -19,7 +20,6 @@ import com.erp.model.plm.dto.StateDTO;
 import com.erp.model.plm.dto.SysProductFieldDTO;
 import com.erp.model.plm.entity.ProductFieldEntity;
 import com.erp.server.plm.constant.IsConstant;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.ProductFieldMapper;
 import com.erp.server.plm.service.ProductFieldService;
 import org.apache.commons.collections4.CollectionUtils;

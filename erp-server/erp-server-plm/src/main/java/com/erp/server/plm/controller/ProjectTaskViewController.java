@@ -1,6 +1,6 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.annotation.DataPermission;
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.DataAttributeEnum;

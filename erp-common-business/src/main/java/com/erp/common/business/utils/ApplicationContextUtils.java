@@ -1,4 +1,4 @@
-package com.erp.server.plm.utils;
+package com.erp.common.business.utils;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
