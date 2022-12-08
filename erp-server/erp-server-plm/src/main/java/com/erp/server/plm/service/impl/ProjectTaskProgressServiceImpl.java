@@ -90,12 +90,20 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                 obj.setIsfinish(IsConstant.NO);
             }
         });
-        //立项前的任务
+        //立项前的任务,排序：已完成，实际完成时间，创建时间
         List<ProjectTaskEntity> beforeList;
         if (ObjectUtils.isEmpty(productInfoEntity.getApprovalTime())) {
-            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost())).sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish)).collect(Collectors.toList());
+            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()))
+                    .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
+                            .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
+                            .thenComparing(ProjectTaskEntity::getCreateTime))
+                    .collect(Collectors.toList());
         } else {
-            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().before(productInfoEntity.getApprovalTime())).sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish)).collect(Collectors.toList());
+            beforeList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().before(productInfoEntity.getApprovalTime()))
+                    .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
+                            .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
+                            .thenComparing(ProjectTaskEntity::getCreateTime))
+                    .collect(Collectors.toList());
         }
         if (CollectionUtils.isNotEmpty(beforeList)) {
             beforeList.stream().forEach(obj -> {
@@ -126,7 +134,11 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         //立项后的任务
         List<ProjectTaskEntity> afterList = new ArrayList<>();
         if (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime())) {
-            afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().after(productInfoEntity.getApprovalTime())).sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish)).collect(Collectors.toList());
+            afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().after(productInfoEntity.getApprovalTime()))
+                    .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
+                            .thenComparing(ProjectTaskEntity::getRealityEndTime,Comparator.nullsFirst(Comparator.naturalOrder()))
+                            .thenComparing(ProjectTaskEntity::getCreateTime))
+                    .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(afterList)) {
                 afterList.stream().forEach(obj -> {
                     //创建产品任务里程碑
