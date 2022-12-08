@@ -1,6 +1,7 @@
 package com.erp.common.business.config;
 
 import com.erp.common.business.aspect.DataPermissionAspect;
+import com.erp.common.business.aspect.RequestPermissionsAspect;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,5 +27,8 @@ public class WebConfig implements WebMvcConfigurer {
     public DataPermissionAspect getDataPermissionAspect(){
         return new DataPermissionAspect();
     }
-
+    @Bean
+    public RequestPermissionsAspect getRequestPermissionsAspect(){
+        return new RequestPermissionsAspect();
+    }
 }

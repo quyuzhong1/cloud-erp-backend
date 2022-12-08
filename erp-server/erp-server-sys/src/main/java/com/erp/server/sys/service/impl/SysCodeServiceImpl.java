@@ -7,12 +7,12 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.web.service.RedisLock;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
-import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysCodeMapper;
 import com.erp.server.sys.service.SysCodeService;
 import org.springframework.stereotype.Service;
@@ -88,7 +88,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             return dto;
         }
         SysCodeEntity entity = new SysCodeEntity();
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isNotEmpty(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());

@@ -18,6 +18,7 @@ import com.common.core.utils.password.PassEntity;
 import com.common.core.utils.password.PassHandler;
 import com.common.message.service.MailService;
 import com.common.web.service.RedisService;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -34,7 +35,6 @@ import com.erp.model.sys.entity.*;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
-import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.service.*;
@@ -297,7 +297,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         //当不为空的时候
         if (StringUtils.isNotBlank(flagId)) {
-            LoginUser loginUser = SysInterceptor.threadLocal.get();
+            LoginUser loginUser = CommonInterceptor.threadLocal.get();
             String uid = loginUser.getUid();
             boolean ifBinding = sysUserThirdService.checkIfBinding(uid, flagId, bindingPlatform);
             if (ifBinding) {
@@ -351,7 +351,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw new ServiceException(ApiError.ERROR_1001);
         }
 
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String uid = loginUser.getUid();
         SysUserInfoEntity infoEntity = this.getById(uid);
         if (!Objects.isNull(infoEntity)) {
@@ -367,7 +367,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             this.updateById(infoEntity);
             //退出登录 清除token
             sysAuthFeign.logout(loginUser.getAccessToken());
-            SysInterceptor.threadLocal.remove();
+            CommonInterceptor.threadLocal.remove();
 
         }
 
@@ -442,7 +442,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public UserBaseDTO myCenter() {
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         UserBaseDTO vo = new UserBaseDTO();
         SysUserThirdEntity sysUserThirdEntity = sysUserThirdService.findByUserId(loginUser.getUid());
         SysUserInfoEntity entity = this.getById(loginUser.getUid());
@@ -467,7 +467,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public void updateBase(SysUserBaseDTO dto) {
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         SysUserInfoEntity entity = this.getById(loginUser.getUid());
         if (!Objects.isNull(entity)) {
             entity.setRealName(dto.getRealName());
@@ -495,7 +495,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         checkEmailIfExist(email);
         //检查 验证码是否i正确
         checkMobileCode(dto.getEmail(), dto.getVerifyCode());
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (!Objects.isNull(loginUser)) {
             SysUserInfoEntity entity = this.getById(loginUser.getUid());
             entity.setEmail(email);
@@ -556,7 +556,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
     @Override
     public void removeEmail() {
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (!Objects.isNull(loginUser)) {
             SysUserInfoEntity entity = this.getById(loginUser.getUid());
             entity.setEmail("");
@@ -576,7 +576,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public List<FindUserDTO> getUserList(BaseSearchDTO dto) {
         List<FindUserDTO> resultList = new LinkedList<>();
         //先添加自己
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         Boolean flag = !Objects.isNull(loginUser);
         if (flag) {
             FindUserDTO user = new FindUserDTO();
@@ -605,6 +605,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         return resultList;
     }
+
+    @Override
+    public List<FindUserDTO>  getAuthorityUserList(BaseSearchDTO dto) {
+        List<FindUserDTO> resultList = new LinkedList<>();
+        return resultList;
+    }
+
 
     @Override
     public List<FindUserDTO> getAllUserList() {

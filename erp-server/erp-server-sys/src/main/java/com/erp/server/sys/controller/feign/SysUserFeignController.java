@@ -76,6 +76,13 @@ public class SysUserFeignController extends BaseController {
         return success(list);
     }
 
+    @PostMapping("/findAuthorityList")
+
+    public ApiResult<List<FindUserDTO>> findAuthorityList(@RequestBody @Validated BaseSearchDTO dto) {
+        List<FindUserDTO> list = sysUserInfoService.getAuthorityUserList(dto);
+        return success(list);
+    }
+
     @GetMapping("/getUserList")
     public List<FindUserDTO> getUserList() {
         List<FindUserDTO> list = sysUserInfoService.getAllUserList();

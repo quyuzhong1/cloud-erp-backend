@@ -4,17 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.common.core.utils.BeanMapper;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.server.sys.interceptor.SysInterceptor;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -104,7 +103,7 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      */
     @Override
     public boolean removeThirdParty(String bindingThird) {
-        LoginUser loginUser = SysInterceptor.threadLocal.get();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(SysUserThirdEntity::getThirdPartyType, bindingThird);
         queryWrapper.eq(SysUserThirdEntity::getUserId, loginUser.getUid());
