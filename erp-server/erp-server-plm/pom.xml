@@ -17,10 +17,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
 
         <!-- xxl-job-core -->
         <dependency>
@@ -36,8 +32,8 @@
         </dependency>
         <!--公共服务-->
         <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-pojo</artifactId>
+            <groupId>com.erp.common</groupId>
+            <artifactId>erp-common-business</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
@@ -48,29 +44,11 @@
         </dependency>
 
         <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-common-web</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-rpc-sys</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-workflow</artifactId>

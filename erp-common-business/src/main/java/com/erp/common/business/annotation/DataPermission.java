@@ -1,11 +1,9 @@
-package com.erp.common.annotation;
+package com.erp.common.business.annotation;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.enums.DataAttributeEnum;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.lang.annotation.*;
-import java.util.List;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

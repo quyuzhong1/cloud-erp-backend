@@ -3,9 +3,9 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.business.interceptor.PlmInterceptor;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.entity.UserAddProductEntity;
-import com.erp.server.plm.interceptor.PlmInterceptor;
 import com.erp.server.plm.mapper.UserAddProductEntityMapper;
 import com.erp.server.plm.service.UserAddProductService;
 import org.springframework.stereotype.Service;
