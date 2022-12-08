@@ -20,5 +20,44 @@
         <module>erp-sdk-goodcang</module>
     </modules>
 
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <repository.id>snapshot-test</repository.id>
+                <repository.url>http://172.16.100.11:8089/repository/snapshot-test/</repository.url>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>test</id>
+            <properties>
+                <repository.id>snapshot-test</repository.id>
+                <repository.url>http://172.16.100.11:8089/repository/snapshot-test/</repository.url>
+            </properties>
+        </profile>
+        <profile>
+            <id>uat</id>
+            <properties>
+                <repository.id>snapshot-test</repository.id>
+                <repository.url>http://172.16.100.11:8089/repository/snapshot-test/</repository.url>
+            </properties>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <repository.id>snapshot-prod</repository.id>
+                <repository.url>http://172.16.100.11:8089/repository/snapshot-prod/</repository.url>
+            </properties>
+        </profile>
+    </profiles>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>${repository.id}</id>
+            <url>${repository.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
