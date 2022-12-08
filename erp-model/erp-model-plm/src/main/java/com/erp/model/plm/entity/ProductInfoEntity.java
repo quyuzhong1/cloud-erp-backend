@@ -85,7 +85,7 @@ public class ProductInfoEntity implements Serializable {
     /**
      * 立项日期
      */
-    @TableField(value = "approval_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "approval_time")
     private Date approvalTime;
 
     /**
