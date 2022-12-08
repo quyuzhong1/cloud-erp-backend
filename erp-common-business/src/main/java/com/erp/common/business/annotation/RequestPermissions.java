@@ -1,4 +1,4 @@
-package com.erp.common.annotation;
+package com.erp.common.business.annotation;
 
 import java.lang.annotation.*;
 

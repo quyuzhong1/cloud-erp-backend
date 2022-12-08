@@ -1,21 +1,16 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.model.plm.dto.TaskBatchUploadFileDTO;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.server.plm.service.TaskDocsFinishService;
-import org.apache.tools.ant.taskdefs.Apt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.erp.common.controller.BaseController;
-
-import java.util.List;
 
 /**
  *产品开发管理

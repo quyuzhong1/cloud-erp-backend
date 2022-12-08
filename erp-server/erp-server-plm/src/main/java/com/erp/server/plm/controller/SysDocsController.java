@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller;
 
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -10,7 +9,6 @@ import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.StateDTO;
 import com.erp.server.plm.service.SysDocsService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

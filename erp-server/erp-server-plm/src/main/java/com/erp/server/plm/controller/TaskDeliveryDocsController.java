@@ -1,6 +1,5 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -9,7 +8,6 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
-import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;

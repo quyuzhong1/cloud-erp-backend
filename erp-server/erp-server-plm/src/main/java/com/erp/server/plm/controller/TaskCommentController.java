@@ -1,18 +1,14 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.TaskCommentDTO;
 import com.erp.model.plm.entity.TaskCommentEntity;
 import com.erp.server.plm.service.TaskCommentService;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**

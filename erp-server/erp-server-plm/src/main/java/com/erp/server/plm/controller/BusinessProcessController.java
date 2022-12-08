@@ -1,11 +1,9 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.BusinessProcessDTO;
 import com.erp.model.plm.dto.BusinessProcessInfoDTO;
-import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.server.plm.service.BusinessProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

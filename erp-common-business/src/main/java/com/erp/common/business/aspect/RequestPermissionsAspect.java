@@ -1,7 +1,7 @@
-package com.erp.server.plm.aspect;
+package com.erp.common.business.aspect;
 
 import com.common.core.utils.ObjectUtils;
-import com.erp.common.annotation.RequestPermissions;
+import com.erp.common.business.annotation.RequestPermissions;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -35,7 +35,7 @@ public class RequestPermissionsAspect {
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @Around("@annotation(com.erp.common.annotation.RequestPermissions)")
+    @Around("@annotation(com.erp.common.business.annotation.RequestPermissions)")
     public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
         Object obj = null;
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();

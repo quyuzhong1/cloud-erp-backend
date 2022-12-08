@@ -1,10 +1,7 @@
 package com.erp.server.plm.controller;
 
 
-import com.alibaba.fastjson2.JSONObject;
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SaveBasicCategoryDTO;
 import com.erp.model.plm.dto.UpdateBasicNameDTO;

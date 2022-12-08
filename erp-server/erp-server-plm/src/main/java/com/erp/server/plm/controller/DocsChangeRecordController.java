@@ -1,13 +1,11 @@
 package com.erp.server.plm.controller;
 
-import com.erp.common.annotation.RequestPermissions;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.entity.DocsChangeRecordEntity;
 import com.erp.server.plm.service.DocsChangeRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
