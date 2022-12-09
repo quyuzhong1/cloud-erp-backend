@@ -12,7 +12,8 @@
                c.sku_no as skuNo,
                a.phase_name as phaseName,
                a.phase_id as phaseId,
-               b.is_finish_task as isFinishTask
+               b.is_finish_task as isFinishTask,
+               a.status
         from project_task a
         inner join project_task_ref_sku b on a.id = b.task_id
         inner join product_detail c on b.sku_id = c.id

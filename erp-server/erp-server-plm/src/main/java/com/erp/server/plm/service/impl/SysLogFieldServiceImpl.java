@@ -41,10 +41,9 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加
-         String  classPath = ProductCertificateDTO.class.toString();
+         String  classPath = ProductSkuBaseInfoDTO.class.toString();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("certificateImg").setFieldName("证书图片").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("certificateValidTime").setFieldName("证书有效期").setClassPath(classPath).setType(0) .setEnumClass(null)
+            new SysLogFieldEntity().setField("skuNo").setFieldName("SKU").setClassPath(classPath).setType(0) .setEnumClass(null)
                 /*new SysLogFieldEntity().setField("netWeight").setFieldName("净重").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("boxSize").setFieldName("箱规").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("boxWeight").setFieldName("单箱重量").setClassPath(classPath).setType(0) .setEnumClass(null),

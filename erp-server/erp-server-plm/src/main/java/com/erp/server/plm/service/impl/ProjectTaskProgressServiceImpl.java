@@ -259,8 +259,12 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
                         //sku下任务完成总数
                         long skuFinishCount = 0;
                         if (CollectionUtils.isNotEmpty(refList)) {
-                            skuTotalCount = refList.stream().filter(obj -> phaseEntity.getId().equals(obj.getPhaseId()) && obj.getSkuId().equals(entity.getId())).count();
-                            skuFinishCount = refList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask()) && phaseEntity.getId().equals(obj.getPhaseId()) && obj.getSkuId().equals(entity.getId())).count();
+                            skuTotalCount = refList.stream().filter(obj -> phaseEntity.getId().equals(obj.getPhaseId())
+                                    && obj.getSkuId().equals(entity.getId())).count();
+                            skuFinishCount = refList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())
+                                    && phaseEntity.getId().equals(obj.getPhaseId())
+                                    && obj.getSkuId().equals(entity.getId())
+                                    && TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                         }
                         skuProgress.setTotalQty(skuTotalCount);
                         skuProgress.setFinishQty(skuFinishCount);

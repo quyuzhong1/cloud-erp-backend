@@ -51,6 +51,11 @@ public class ProductTaskRefSkuDTO implements Serializable {
     private String phaseName;
 
     /**
+     * 任务状态
+     */
+    private String status;
+
+    /**
      * 是否完成任务
      */
     private Integer isFinishTask;
