@@ -19,6 +19,9 @@
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}
             </if>
+            <if test="params.pid !=null and params.pid!=''">
+                AND sl.pid = #{params.pid}
+            </if>
         </where>
         group by sl.class_path,sl.business_id,to_char(sl.create_time,'yyyy-MM-dd hh24:mi:ss')
         order by to_char(sl.create_time,'yyyy-MM-dd hh24:mi:ss') desc

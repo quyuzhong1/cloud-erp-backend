@@ -56,7 +56,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
     private static final  String PACKAGEPATH = "com.erp.server.plm.enums";
 
     @Override
-    public Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId) {
+    public Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid) {
 
         Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
         //判断是否为空
@@ -108,16 +108,17 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = "编辑了一个[".concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
             } else {
-                content = "编辑了一个：".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+                content = "编辑了一个[".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
             SysLogEntity entity = new SysLogEntity();
             entity.setClassPath(classPath)
                     .setBusinessId(businessId)
+                    .setPid(pid)
                     .setOldValue(oldValue)
                     .setNewValue(newValue)
                     .setFieldName(fieldName)
                     .setContent(content)
-                    .setOperation("编辑")
+                    .setOperation("编辑信息")
                     .setCreateUserId(userId)
                     .setCreateUserName(userName);
             list.add(entity);
@@ -126,15 +127,16 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
     }
 
     @Override
-    public Boolean addSysLogBySave(String content,String classPath,String businessId) {
+    public Boolean addSysLogBySave(String content,String classPath,String businessId,String pid) {
         SysLogEntity entity = new SysLogEntity();
         LoginUser loginUser = commonService.getUserInfo();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setClassPath(classPath)
               .setBusinessId(businessId)
+              .setPid(pid)
               .setContent(content)
-              .setOperation("新增")
+              .setOperation("新增信息")
               .setCreateUserId(userId)
               .setCreateUserName(userName);
         return this.save(entity);
@@ -179,7 +181,6 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysLogSelectDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
-        List<SysLogShowDTO> records = pageData.getRecords();
         return new PagingVO(pageData);
     }
 }

@@ -46,6 +46,12 @@ public class SysLogEntity {
     private String businessId;
 
     /**
+     * 父级id（用于汇总展示日志）
+     */
+    @TableField("pid")
+    private String pid;
+
+    /**
      * 操作
      */
     @TableField("operation")
@@ -106,4 +112,9 @@ public class SysLogEntity {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
+    /**
+     * 描述
+     */
+    @TableField(exist = false)
+    private String description;
 }

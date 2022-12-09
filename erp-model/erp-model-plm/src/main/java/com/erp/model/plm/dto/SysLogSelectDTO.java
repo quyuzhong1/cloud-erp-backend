@@ -25,7 +25,10 @@ public class SysLogSelectDTO extends BaseSearchDTO {
     /**
      * 业务id(对应模块id)
      */
-    @NotBlank(message = "业务id为空")
     private String businessId;
 
+    /**
+     * 父级id(用于综合数据查询)
+     */
+    private String pid;
 }
