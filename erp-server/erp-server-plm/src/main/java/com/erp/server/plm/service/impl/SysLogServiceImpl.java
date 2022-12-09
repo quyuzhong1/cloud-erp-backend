@@ -106,9 +106,9 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             }
             String content = "";
             if (StringUtils.isBlank(valuePair.getKey())) {
-                content = "编辑了一个[".concat(fieldName).concat("]").concat("由空值变更为").concat(newValue);
+                content = "编辑了一个[".concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
             } else {
-                content = "编辑了一个：".concat(fieldName).concat("]").concat("由").concat(oldValue).concat("变更为").concat(newValue);
+                content = "编辑了一个：".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
             SysLogEntity entity = new SysLogEntity();
             entity.setClassPath(classPath)
@@ -163,9 +163,9 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 throw new ServiceException(ApiError.ERROR_95089);
             }
             if (StringUtils.isBlank(entity.getOldValue())) {
-                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由空值变更为").concat(entity.getNewValue());
+                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");
             } else {
-                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由").concat(entity.getOldValue()).concat("变更为").concat(entity.getNewValue());
+                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由[").concat(entity.getOldValue()).concat("]").concat("变更为[").concat(entity.getNewValue()).concat("]");
             }
         }
         entity.setContent(content)
