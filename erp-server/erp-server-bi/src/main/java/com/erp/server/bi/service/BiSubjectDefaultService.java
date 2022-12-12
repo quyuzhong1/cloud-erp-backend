@@ -1,0 +1,18 @@
+package com.erp.server.bi.service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.entity.BiSubjectDefaultEntity;
+
+import java.util.List;
+
+/**
+ * @Classname BiSubjectDefaultService
+ * @Description TODO
+ * @Date 2022-12-09 14:19
+ * @Created by yl
+ */
+public interface BiSubjectDefaultService extends IService<BiSubjectDefaultEntity> {
+    List<BiSubjectDefaultEntity> getByUserId(String userId);
+
+    Boolean setDefault(String id);
+}

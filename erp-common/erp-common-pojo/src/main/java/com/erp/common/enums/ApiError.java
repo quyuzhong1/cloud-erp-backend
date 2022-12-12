@@ -191,6 +191,8 @@ public enum ApiError implements Serializable {
      */
     ERROR_97000(97000,"专题不能为空"),
     ERROR_97001(97001,"仪表盘名称不能为重复"),
+    ERROR_97002(97002,"不能设置非自己创建的仪表盘"),
+
 
 
     ERROR_end(1000000, "系统错误");
