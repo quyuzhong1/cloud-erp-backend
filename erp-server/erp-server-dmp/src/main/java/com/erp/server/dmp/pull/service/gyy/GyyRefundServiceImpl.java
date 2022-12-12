@@ -12,6 +12,7 @@ import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
 import com.erp.server.dmp.entity.dmp.DmpRefundInfoEntity;
 import com.erp.server.dmp.entity.dmp.DmpRefundItemEntity;
 import com.erp.server.dmp.entity.dmp.GyyAppEntity;
+import com.erp.server.dmp.entity.dto.GyyRefundDTO;
 import com.erp.server.dmp.entity.dto.JobTaskDTO;
 import com.erp.server.dmp.entity.dto.OrderMongoDTO;
 import com.erp.server.dmp.entity.dto.RequestDTO;
@@ -81,9 +82,10 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         List<GyyRefundEntity> gyyRefundEntityList = pullDate(dto);
         if (gyyRefundEntityList != null && gyyRefundEntityList.size() > 0) {
             for (GyyRefundEntity gyyRefundEntity : gyyRefundEntityList) {
-                OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-                orderMongoDTO.setPlatfromCode(gyyRefundEntity.getPlatfromCode());
-                List<GyyRefundEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+                GyyRefundDTO gyyRefundDTO = new GyyRefundDTO();
+                gyyRefundDTO.setPlatfromCode(gyyRefundEntity.getPlatfromCode());
+                gyyRefundDTO.setRefundCode(gyyRefundEntity.getRefundCode());
+                List<GyyRefundEntity> mongoData = mongoService.findMongoData(gyyRefundDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
                 if (mongoData != null && mongoData.size() > 0) {
                     for (GyyRefundEntity mongoDatum : mongoData) {
                         // 比较数据是否相同
@@ -91,7 +93,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                             // 修改数据
                             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyRefundEntity), MapUtil.class);
                             try {
-                                mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+                                mongoService.updateMongoData(gyyRefundDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
                             } catch (Exception e) {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
@@ -222,6 +224,9 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         //平台订单编号
         dmpRefundInfoEntity.setPlatformOrderId(gyyRefundEntity.getPlatfromCode());
 
+        //退货单号
+        dmpRefundInfoEntity.setRefundId(gyyRefundEntity.getRefundCode());
+
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode("CNY");
 
@@ -237,7 +242,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         //退款备注
         dmpRefundInfoEntity.setRefundRemark(gyyRefundEntity.getNote());
 
-        Integer refundStatus = 0;
+        Integer refundStatus = 4;
         if (gyyRefundEntity.getApprove()) {
             refundStatus = 3;
         } else {

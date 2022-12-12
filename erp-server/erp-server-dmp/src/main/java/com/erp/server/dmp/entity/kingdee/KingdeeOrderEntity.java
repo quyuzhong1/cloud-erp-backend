@@ -11,9 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class KingdeeOrderEntity {
-    /**
-     * 主键
-     */
     private String fID;
 
     /**
@@ -169,9 +166,15 @@ public class KingdeeOrderEntity {
     private String fModifyDate;
 
     /**
-     * 销售组织
+     * 组织id
      */
     private String fSaleOrgId;
+
+    /**
+     * 组织名称
+     */
+    private String fSaleOrgName;
+
 
     /**
      * 版本号

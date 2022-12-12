@@ -20,6 +20,9 @@ public interface MongoTableNameContant {
     //店铺数据
     String ORIGINAL_MABANG_SHOP = "original_mabang_shop";
 
+    //出库详情
+    String ORIGINAL_MABANG_DELIVERY_DETAIL = "original_mabang_delivery_detail";
+
     /**
      * 管易云数据库表名
      */
@@ -38,6 +41,9 @@ public interface MongoTableNameContant {
     //店铺数据
     String ORIGINAL_GYY_SHOP = "original_gyy_shop";
 
+    //出库详情
+    String ORIGINAL_GYY_DELIVERY_DETAIL = "original_gyy_delivery_detail";
+
     /**
      * 金蝶云星空数据库表名
      */
@@ -55,5 +61,8 @@ public interface MongoTableNameContant {
 
     //店铺数据
     String ORIGINAL_KINGDEE_SHOP = "original_kingdee_shop";
+
+    //出库详情
+    String ORIGINAL_KINGDEE_DELIVERY_DETAIL = "original_kingdee_delivery_detail";
 
 }

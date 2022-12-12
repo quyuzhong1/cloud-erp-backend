@@ -16,6 +16,7 @@ public class KingdeeOrderItemEntity {
     private String fMaterialName;
     private String fMaterialGroup;
     private String fMaterialId;
+    private String fMaterialNumber;
     private String fMaterialModel;
     private BigDecimal fQty;
     private String fPriceUnitQty;

@@ -98,10 +98,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                                 dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
                                 dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                                throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
                             }
                         }
                     }
@@ -226,17 +226,17 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getPlatformCode());
 
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
-        Integer orderState = null;
+        Integer orderState = 4;
         //0:未配货 1:部分配货 2:全部配货
         Integer assignState = gyyOrderEntity.getAssignState();
         if (assignState.equals(1) || assignState.equals(2)) {
-            orderState = 1;
+            orderState = 2;
         }
 
         //0:未发货 1:部分发货 2:全部发货
         Integer deliveryState = gyyOrderEntity.getDeliveryState();
         if (deliveryState.equals(1) || deliveryState.equals(2)) {
-            orderState = 2;
+            orderState = 3;
         }
 
         //0:未退款 1:部分退款 2:全部退款
@@ -277,8 +277,12 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
         //订单付款时间
         if (StringUtils.isNotBlank(gyyOrderEntity.getPaytime())) {
-            Date parse = sdf.parse(gyyOrderEntity.getPaytime());
-            dmpOrderInfoEntity.setPaidTime(parse);
+            dmpOrderInfoEntity.setPaidTime(sdf.parse(gyyOrderEntity.getPaytime()));
+        }
+
+        //平台订单时间
+        if (StringUtils.isNotBlank(gyyOrderEntity.getCreatetime())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(gyyOrderEntity.getCreatetime()));
         }
 
         //平台交易号
@@ -413,7 +417,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setOrderId(orderId);
 
             //商品id
-            dmpOrderItemEntity.setItemId(detailsBean.getOid() + "-" + detailsBean.getItemCode());
+            dmpOrderItemEntity.setItemId(detailsBean.getItemCode());
 
             //平台sku
             dmpOrderItemEntity.setPlatformSku(detailsBean.getSkuCode());
@@ -434,7 +438,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setSellPriceOrigin(detailsBean.getPrice());
 
             //商品售价
-            dmpOrderItemEntity.setSellPrice(detailsBean.getAmountAfter());
+            dmpOrderItemEntity.setSellPrice(detailsBean.getAmount());
 
             //商品数量
             dmpOrderItemEntity.setQuantity(detailsBean.getQty());

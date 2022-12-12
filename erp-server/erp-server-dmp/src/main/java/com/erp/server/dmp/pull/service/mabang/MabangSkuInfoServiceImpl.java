@@ -171,6 +171,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
+        dmpSkuInfoEntity.setItemCode(skuInfoEntity.getStockSku());
+
         //sku编号
         dmpSkuInfoEntity.setSkuNo(skuInfoEntity.getStockSku());
 

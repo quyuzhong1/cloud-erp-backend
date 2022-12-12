@@ -197,6 +197,9 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
         //平台订单编号
         dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getPlatformOrderId());
 
+        //退货单号
+        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getPlatformOrderId());
+
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(returnOrderEntity.getShopId());
 
@@ -258,7 +261,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
         //退款时间
         if (StringUtils.isNotBlank(returnOrderEntity.getRefundTime())) {
-            dmpReturnOrderInfoEntity.setRefundIme(sdf.parse(returnOrderEntity.getRefundTime()));
+            dmpReturnOrderInfoEntity.setRefundTime(sdf.parse(returnOrderEntity.getRefundTime()));
         }
 
         //币种

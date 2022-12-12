@@ -185,6 +185,24 @@ public class DmpRefundInfoEntity implements Serializable {
     private Date createTime;
 
     /**
+     * 企业编号
+     */
+    @TableField(value = "company_id")
+    private String companyId;
+
+    /**
+     * 企业名称
+     */
+    @TableField(value = "company_name")
+    private String companyName;
+
+    /**
+     * 退款单号
+     */
+    @TableField(value = "refund_id")
+    private String refundId;
+
+    /**
      * 平台标识
      */
     @TableField(value = "platform_sign")
@@ -222,6 +240,9 @@ public class DmpRefundInfoEntity implements Serializable {
                 ", pictureUrl='" + pictureUrl + '\'' +
                 ", platformUpdateTime=" + platformUpdateTime +
                 ", trackNumber='" + trackNumber + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", refundId='" + refundId + '\'' +
                 ", platformSign='" + platformSign + '\'' +
                 '}';
     }

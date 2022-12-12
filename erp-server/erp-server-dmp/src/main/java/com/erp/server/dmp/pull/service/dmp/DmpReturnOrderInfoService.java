@@ -20,10 +20,10 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * 根据平台订单id查询退货订单信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param platformOrderId 平台订单id
-     * @return com.erp.server.dmp.entity.dmp.DmpReturnOrderInfoEntity
+     * @param returnOrderInfoEntity
+     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
      **/
-    DmpReturnOrderInfoEntity getOrderByPlatformOrderId(String platformOrderId);
+    DmpReturnOrderInfoEntity getOrderByPlatformOrderId(DmpReturnOrderInfoEntity returnOrderInfoEntity);
 
     /**
      * 根据平台订单id修改退货订单信息

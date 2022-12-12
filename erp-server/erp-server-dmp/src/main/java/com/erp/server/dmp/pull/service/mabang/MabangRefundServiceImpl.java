@@ -203,6 +203,9 @@ public class MabangRefundServiceImpl implements IReportSaveService {
         //平台订单编号
         dmpRefundInfoEntity.setPlatformOrderId(refundOrderEntity.getPlatformOrderId());
 
+        //退款单号
+        dmpRefundInfoEntity.setRefundId(refundOrderEntity.getRefundplatformOrderId());
+
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode(refundOrderEntity.getCountryCode());
 

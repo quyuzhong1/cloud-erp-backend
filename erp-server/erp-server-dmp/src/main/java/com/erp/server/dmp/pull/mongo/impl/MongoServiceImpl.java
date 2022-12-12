@@ -24,11 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service("mongoService")
 @Slf4j
 public class MongoServiceImpl implements MongoService {
 
 	@Autowired
+	@Qualifier(value = "reportTemplate")
 	private MongoTemplate orderTemplate;
 	
 	@Override

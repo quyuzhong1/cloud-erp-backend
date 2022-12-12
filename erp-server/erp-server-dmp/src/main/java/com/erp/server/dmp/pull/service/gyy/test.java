@@ -31,30 +31,23 @@ public class test {
         //用于记录结果
         StringBuilder Info = new StringBuilder();
         //业务对象标识
-        String formId = "SAL_SaleOrder";
-
-        String currency = "FNumber,FName,FCODE,FPRICEDIGITS,FAMOUNTDIGITS,FPRIORITY,FIsShowCSymbol";
+        String formId = "SAL_RETURNSTOCK";
+        String formIdT = "SAL_OUTSTOCK";
+        String formIdS = "AR_REFUNDBILL";
+        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCustomerID,FCustomerID.FName,FSalesManID,FSalesManID.FName,FSaleDeptID.FName,FReceiverID.FName,FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus,FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName,FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FBillAmount,FExchangeRate";
+        String fieldKeyst = "FSalCostPrice,FSoorDerno,FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate,FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1";
 
         LinkedList<String> queryfilters = new LinkedList<>();
-        queryfilters.add(String.format("FModifyDate >= '%s'", "2022-06-27 00:00:00"));
-        queryfilters.add(String.format("FModifyDate <= '%s'", "2022-06-27 23:59:59"));
 
+        queryfilters.add(String.format("FBillNo = '%s'", "XSCKD1016837"));
         String filterStr = String.join(" and ",  queryfilters );
-
-//FSaleOrderEntry
-//查询字段集合，即返回哪些数据，不能为空，根据不同业务单据填写不同的字段名，以下仅为示例
-        String fieldKeys = "fCancelStatus.Fname,FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
-                "FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus";
-
-        String test = "FSettleCurrId.FName,FSOStockId,FSOStockLocalId,FExchangeRate,FSettleCurrId,FID,FBillNo,FDate,FBillTypeID,FDocumentStatus,FCustId,FSaleDeptId,FSalerId,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId,FApproveDate,FCloseStatus,FCancelStatus,FChangerId,FReceiveId,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FVersionNo,FSignStatus,FSOFrom,F_SHGJ1," +
-                "";
 
         //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
         QueryParam param = new QueryParam();
 
-        param.setFormId(formId);
-        param.setFieldKeys(test);
-        //param.setFilterString(filterStr);
+        param.setFormId(formIdT);
+        param.setFieldKeys(fieldKeyst);
+        param.setFilterString(filterStr);
         param.setLimit(10000);
         param.setStartRow(0);
         param.setTopRowCount(10000);

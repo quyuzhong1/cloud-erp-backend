@@ -29,7 +29,7 @@ public class PullKindeeJob {
     @Resource(name = "kingdee")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
-    // 拉取管易云数据任务
+    // 拉取金蝶数据任务
     //@Scheduled(initialDelay = 10*1000,fixedDelay = 60*1000)
     //@Scheduled(cron = "*/5 * * * * ?")
     public void execute() {

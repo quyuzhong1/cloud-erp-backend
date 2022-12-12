@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper">
+
+    <sql id="Base_Column_List">
+        id,bill_no,order_no,
+        logistics_no,customer_name,platform_name,
+        shop_no,shop_name,item_total_cost,
+        order_total_cost,country_name_en,country_name_cn,
+        city,province,man_street,
+        second_street,district,currency_code,
+        currency_rate,shipping_fee,subsidy_amount,
+        sale_dept_name,sales_man_id,sales_man_name,
+        status,platform_approve_time,platform_create_time,
+        platform_update_time,remark,company_id,
+        company_name,create_time
+    </sql>
+</mapper>

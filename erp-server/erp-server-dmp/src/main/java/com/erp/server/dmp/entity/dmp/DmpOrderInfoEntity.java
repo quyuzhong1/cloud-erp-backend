@@ -269,10 +269,28 @@ public class DmpOrderInfoEntity implements Serializable {
     private String platformSign;
 
     /**
+     * 企业编号
+     */
+    @TableField(value = "company_id")
+    private String companyId;
+
+    /**
+     * 企业名称
+     */
+    @TableField(value = "company_name")
+    private String companyName;
+
+    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT_UPDATE)
     private Date createTime;
+
+    /**
+     * 平台订单时间
+     */
+    @TableField(value = "platform_create_time")
+    private Date platformCreateTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -321,6 +339,9 @@ public class DmpOrderInfoEntity implements Serializable {
                 ", countryNameEn='" + countryNameEn + '\'' +
                 ", countryNameCn='" + countryNameCn + '\'' +
                 ", platformSign='" + platformSign + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", platformCreateTime=" + platformCreateTime +
                 '}';
     }
 }

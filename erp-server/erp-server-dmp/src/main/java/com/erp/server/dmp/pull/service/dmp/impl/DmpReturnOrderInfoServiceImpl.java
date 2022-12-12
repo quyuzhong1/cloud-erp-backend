@@ -30,13 +30,14 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
      * 根据平台订单id查询退货订单信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param platformOrderId 平台退货订单id
+     * @param returnOrderInfoEntity
      * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
      **/
     @Override
-    public DmpReturnOrderInfoEntity getOrderByPlatformOrderId(String platformOrderId) {
+    public DmpReturnOrderInfoEntity getOrderByPlatformOrderId(DmpReturnOrderInfoEntity returnOrderInfoEntity) {
         LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, platformOrderId);
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnOrderId, returnOrderInfoEntity.getReturnOrderId());
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -51,6 +52,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     public Boolean updateOrderByPlatformOrderId(DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity) {
         LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, dmpReturnOrderInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnOrderId, dmpReturnOrderInfoEntity.getReturnOrderId());
         return this.update(dmpReturnOrderInfoEntity, lambdaQueryWrapper);
     }
 
@@ -64,7 +66,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     @Override
     public String checkOrder(DmpReturnOrderInfoEntity returnOrderInfoEntity) {
         String returnOrderId = "";
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = this.getOrderByPlatformOrderId(returnOrderInfoEntity.getPlatformOrderId());
+        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = this.getOrderByPlatformOrderId(returnOrderInfoEntity);
         if (dmpReturnOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {

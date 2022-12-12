@@ -14,6 +14,8 @@ public enum PlatformApiEnum {
     ORDER_GET_ORDER_LIST(4,"order-get-order-list"),
     //获取退货订单数据
     ORDER_GET_RETURN_ORDER_LIST(5,"order-get-return-order-list"),
+    //商品出库详情
+    ORDER_GET_DELIVERY_LIST(16,"order-get-delivery-list"),
 
     /**
      * 管易云api
@@ -28,12 +30,22 @@ public enum PlatformApiEnum {
     GY_ERP_TRADE_REFUND_GET(9,"gy.erp.trade.refund.get"),
     //查询店铺列表
     GY_ERP_SHOP_GET(10,"gy.erp.shop.get"),
+    //销售出库详情
+    GY_ERP_TRADE_DELIVERY_GET(15,"gy.erp.trade.deliverys.get"),
 
     /**
      * 金蝶云星空API
      */
     //获取订单列表
-    SAL_SALEORDER(11,"SAL_SaleOrder");
+    SAL_SALEORDER(11,"SAL_SaleOrder"),
+    //查询商品
+    BD_MATERIAL(12,"BD_MATERIAL"),
+    //获取退货订单数据
+    SAL_RETURNSTOCK(13,"SAL_RETURNSTOCK"),
+    //获取退款数据
+    AR_REFUNDBILL(14,"AR_REFUNDBILL"),
+    //销售出库详情
+    SAL_OUTSTOCK(17,"SAL_OUTSTOCK");
 
     /** 状态码 */
     private Integer id;

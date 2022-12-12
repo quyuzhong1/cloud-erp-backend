@@ -20,10 +20,10 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * 根据平台订单id查询退款信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param platformOrderId 平台订单id
+     * @param returnOrderInfoEntity
      * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
      **/
-    DmpRefundInfoEntity getRefundByPlatformOrderId(String platformOrderId);
+    DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity);
 
     /**
      * 根据平台订单id修改退款信息

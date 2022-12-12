@@ -15,7 +15,6 @@ import java.util.Date;
  */
 @TableName(value ="dmp_return_order_info")
 @Data
-@ToString
 public class DmpReturnOrderInfoEntity implements Serializable {
     /**
      * 主键id
@@ -28,6 +27,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      */
     @TableField(value = "platform_order_id")
     private String platformOrderId;
+
+    /**
+     * 退货单号
+     */
+    @TableField(value = "return_order_id")
+    private String returnOrderId;
 
     /**
      * 店铺编号
@@ -134,8 +139,8 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     /**
      * 退款时间
      */
-    @TableField(value = "refund_ime")
-    private Date refundIme;
+    @TableField(value = "refund_time")
+    private Date refundTime;
 
     /**
      * 币种
@@ -161,6 +166,18 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "platform_sign")
     private String platformSign;
 
+    /**
+     * 企业id
+     */
+    @TableField(value = "company_id")
+    private String companyId;
+
+    /**
+     * 企业名称
+     */
+    @TableField(value = "company_name")
+    private String companyName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -168,6 +185,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     public String toString() {
         return "DmpReturnOrderInfoEntity{" +
                 "platformOrderId='" + platformOrderId + '\'' +
+                ", returnOrderId='" + returnOrderId + '\'' +
                 ", shopNo='" + shopNo + '\'' +
                 ", shopName='" + shopName + '\'' +
                 ", paidTime=" + paidTime +
@@ -185,10 +203,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", employeeName='" + employeeName + '\'' +
                 ", remark='" + remark + '\'' +
                 ", returnCreateTime=" + returnCreateTime +
-                ", refundIme=" + refundIme +
+                ", refundTime=" + refundTime +
                 ", currencyCode='" + currencyCode + '\'' +
                 ", currencyRate=" + currencyRate +
                 ", platformSign='" + platformSign + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", companyName='" + companyName + '\'' +
                 '}';
     }
 }

@@ -24,6 +24,13 @@ public class DmpSkuInfoEntity implements Serializable {
     private String id;
 
     /**
+     * 商品编码
+     */
+    @TableField(value = "item_code")
+    private String itemCode;
+
+
+    /**
      * sku编号
      */
     @TableField(value = "sku_no")
@@ -119,14 +126,26 @@ public class DmpSkuInfoEntity implements Serializable {
     @TableField(value = "platform_sign")
     private String platformSign;
 
+    /**
+     * 公司编号
+     */
+    @TableField(value = "company_id")
+    private String companyId;
+
+    /**
+     * 公司名称
+     */
+    @TableField(value = "company_name")
+    private String companyName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
-
 
     @Override
     public String toString() {
         return "DmpSkuInfoEntity{" +
-                "skuNo='" + skuNo + '\'' +
+                "itemCode='" + itemCode + '\'' +
+                ", skuNo='" + skuNo + '\'' +
                 ", nameCn='" + nameCn + '\'' +
                 ", nameEn='" + nameEn + '\'' +
                 ", defaultCost=" + defaultCost +
@@ -141,6 +160,8 @@ public class DmpSkuInfoEntity implements Serializable {
                 ", developerId='" + developerId + '\'' +
                 ", developerName='" + developerName + '\'' +
                 ", platformSign='" + platformSign + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", companyName='" + companyName + '\'' +
                 '}';
     }
 }

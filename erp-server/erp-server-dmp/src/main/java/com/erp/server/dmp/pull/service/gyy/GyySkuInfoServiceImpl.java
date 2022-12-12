@@ -227,6 +227,9 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
         if (combineItems.size() > 0) {
             for (CombineItemsBean combineItem : combineItems) {
                 DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
+                //商品编码
+                dmpSkuInfoEntity.setItemCode(combineItem.getItemCode());
+
                 //sku编号
                 dmpSkuInfoEntity.setSkuNo(combineItem.getItemCode());
 

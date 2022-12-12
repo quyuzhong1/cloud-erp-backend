@@ -31,13 +31,14 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      * 根据平台订单id查询退款信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
-     * @param platformOrderId 平台订单id
+     * @param returnOrderInfoEntity
      * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
      **/
     @Override
-    public DmpRefundInfoEntity getRefundByPlatformOrderId(String platformOrderId) {
+    public DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity) {
         LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, platformOrderId);
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getRefundId());
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -52,6 +53,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     public Boolean updateRefundByPlatformOrderId(DmpRefundInfoEntity dmpRefundInfoEntity) {
         LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, dmpRefundInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, dmpRefundInfoEntity.getRefundId());
         return this.update(dmpRefundInfoEntity, lambdaQueryWrapper);
     }
 
@@ -65,14 +67,13 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     @Override
     public String checkOrder(DmpRefundInfoEntity returnOrderInfoEntity) {
         String refundInfoId = "";
-        DmpRefundInfoEntity dmpReturnOrderInfoEntity = this.getRefundByPlatformOrderId(returnOrderInfoEntity.getPlatformOrderId());
+        DmpRefundInfoEntity dmpReturnOrderInfoEntity = this.getRefundByPlatformOrderId(returnOrderInfoEntity);
         if (dmpReturnOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {
                 this.updateRefundByPlatformOrderId(returnOrderInfoEntity);
                 refundInfoId = returnOrderInfoEntity.getId();
             }
-
         } else {
             refundInfoId = this.add(returnOrderInfoEntity);
         }

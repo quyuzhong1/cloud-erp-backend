@@ -7,7 +7,13 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderMongoDTO {
+public class  OrderMongoDTO {
+    @Panno(findType = PannoEnum.EQ,field = "fBillNo")
+    private String billNo;
+
+    @Panno(findType = PannoEnum.EQ,field = "fOrderNo")
+    private String orderNo;
+
     @Panno(findType = PannoEnum.EQ,field = "platformOrderId")
     private String platformOrderId;
 
@@ -20,9 +26,4 @@ public class OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "platformCode")
     private String platformCode;
 
-    @Panno(findType = PannoEnum.EQ,field = "platfromCode")
-    private String platfromCode;
-
-    @Panno(findType = PannoEnum.EQ,field = "fBillNo")
-    private String fBillNo;
 }

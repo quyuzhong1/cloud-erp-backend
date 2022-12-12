@@ -226,6 +226,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
         //平台订单编号
         dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
 
+        //退货单号
+        dmpReturnOrderInfoEntity.setReturnOrderId(gyyReturnOrderEntity.getCode());
+
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
 
@@ -243,7 +246,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
         dmpReturnOrderInfoEntity.setExpressTime(null);
 
         //0:未处理 1:同意退货 2:拒绝退货
-        Integer status = null;
+        Integer status = 4;
         if (gyyReturnOrderEntity.getAgreeRefuse() != null) {
             switch (gyyReturnOrderEntity.getAgreeRefuse()) {
                 case 0 :
@@ -310,7 +313,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
 
         //退款时间
         if (StringUtils.isNotBlank(gyyReturnOrderEntity.getApproveDate())) {
-            dmpReturnOrderInfoEntity.setRefundIme(sdf.parse(gyyReturnOrderEntity.getApproveDate()));
+            dmpReturnOrderInfoEntity.setRefundTime(sdf.parse(gyyReturnOrderEntity.getApproveDate()));
         }
 
         //币种

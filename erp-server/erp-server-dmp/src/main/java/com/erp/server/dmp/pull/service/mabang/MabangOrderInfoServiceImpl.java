@@ -54,7 +54,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list");
+        jobTaskDTO.setApiCode("hwc-report-settlement-data");
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -259,8 +259,12 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
         //订单付款时间
         if (StringUtils.isNotBlank(orderEntity.getPaidTime())) {
-            Date parse = sdf.parse(orderEntity.getPaidTime());
-            dmpOrderInfoEntity.setPaidTime(parse);
+            dmpOrderInfoEntity.setPaidTime(sdf.parse(orderEntity.getPaidTime()));
+        }
+
+        //平台订单时间
+        if (StringUtils.isNotBlank(orderEntity.getCreateDate())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(orderEntity.getCreateDate()));
         }
 
         //平台交易号
@@ -304,8 +308,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
         //交易关闭时间
         if (StringUtils.isNotBlank(orderEntity.getCloseDate())) {
-            Date closeDate = sdf.parse(orderEntity.getCloseDate());
-            dmpOrderInfoEntity.setCloseDate(closeDate);
+            dmpOrderInfoEntity.setCloseDate(sdf.parse(orderEntity.getCloseDate()));
         }
 
         //买家电话1
@@ -356,6 +359,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         //平台标识
         dmpOrderInfoEntity.setPlatformSign("马帮");
 
+        //企业Id
+        dmpOrderInfoEntity.setCompanyId("");
+
+        //企业名称
+        dmpOrderInfoEntity.setCompanyName("");
+
+        //创建时间
         dmpOrderInfoEntity.setCreateTime(new Date());
 
         //新增订单信息

@@ -118,8 +118,6 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
             JobTaskDTO jobTask = dto.getJobTaskDTO();
             Integer lastTime = jobTask.getLastTime();
             Integer nextTime = jobTask.getNextTime();
-            String st = "";
-            String sd = "";
             if (lastTime != 0 && nextTime != 0) {
                 dto.getJobTaskDTO().setLastTime(nextTime);
             } else {
@@ -207,7 +205,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //平台店铺编号
-        dmpShopInfoEntity.setPlarformShopNo(shopInfoEntity.getId());
+        dmpShopInfoEntity.setPlarformShopNo(shopInfoEntity.getCode());
 
         //平台店铺账户
         dmpShopInfoEntity.setAccountUserName("");
