@@ -15,7 +15,7 @@
         <if test="params.categoryId!='' and params.categoryId!=null">
             AND P.category_id=#{params.categoryId}
         </if>
-        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
             OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
             concat('%',#{params.searchKeyword},'%'))

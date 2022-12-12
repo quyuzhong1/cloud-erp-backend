@@ -536,7 +536,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
         }
         return new PagingVO(pageData);
-    }
+}
 
 
     /**

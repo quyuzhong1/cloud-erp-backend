@@ -1,7 +1,12 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.ModuleDTO;
+import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 
 /**
@@ -11,39 +16,24 @@ import com.erp.model.bi.entity.BiModuleEntity;
  * @since 2022-12-08 14:31:14
  */
 public interface BiModuleService  extends IService<BiModuleEntity> {
+    
+    
 
     /**
-     * 通过ID查询单条数据
-     *
-     * @param id 主键
-     * @return 实例对象
-     */
-    BiModuleEntity queryById(String id);
-
-    /**
-     * 分页查询
-     *
-     * @param
-     * @param
-     * @return 查询结果
-     */
-    PagingVO<BiModuleEntity> queryByPage();
-
-    /**
-     * 新增数据
+     * 新增加模块
      *
      * @param biModule 实例对象
      * @return 实例对象
      */
-    Boolean insert(BiModuleEntity biModule);
+    Boolean insert(ModuleDTO biModule);
 
     /**
      * 修改数据
      *
-     * @param biModule 实例对象
+     * @param dto 实例对象
      * @return 实例对象
      */
-    Boolean update(BiModuleEntity biModule);
+    Boolean update(ModuleDTO dto);
 
     /**
      * 通过主键删除数据
@@ -53,4 +43,22 @@ public interface BiModuleService  extends IService<BiModuleEntity> {
      */
     Boolean deleteById(String id);
 
+    
+    /**
+     * 分页查询模块分页信息
+     * @author yl
+     * @date 2022-12-12 11:36
+     * @param dto
+     * @return
+     */
+    PagingVO<ModulePagingDTO> paging(PagingDTO<BaseSearchDTO> dto);
+
+    /**
+     * 修改模板状态
+     * @author yl
+     * @date 2022-12-12 11:59
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateState(UpdateStateDTO dto);
 }

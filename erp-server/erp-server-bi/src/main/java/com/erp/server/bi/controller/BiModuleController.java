@@ -1,13 +1,17 @@
 package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.*;
+import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.dto.ModuleDTO;
+import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.server.bi.service.BiModuleService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -18,7 +22,7 @@ import javax.annotation.Resource;
  * @since 2022-12-08 14:31:14
  */
 @RestController
-@RequestMapping("biModule")
+@RequestMapping("bi/module")
 public class BiModuleController extends BaseController {
     /**
      * 服务对象
@@ -32,42 +36,34 @@ public class BiModuleController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<BiModuleEntity>> queryByPage() {
-        return success(this.biModuleService.queryByPage());
+    public ApiResult<PagingVO<ModulePagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<ModulePagingDTO> pagingVO = biModuleService.paging(dto);
+        return success(pagingVO);
     }
 
-    /**
-     * 通过主键查询单条数据
-     *
-     * @param id 主键
-     * @return 单条数据
-     */
-    @GetMapping("{id}")
-    public ApiResult<BiModuleEntity> queryById(@PathVariable("id") String id) {
-        return success(this.biModuleService.queryById(id));
-    }
+
 
     /**
-     * 新增数据
+     * 新增模块
      *
-     * @param biModule 实体
+     * @param dto 实体
      * @return 新增结果
      */
     @PostMapping("/add")
-    public ApiResult add(BiModuleEntity biModule) {
-        Boolean flag=this.biModuleService.insert(biModule);
+    public ApiResult add(@RequestBody  ModuleDTO dto) {
+        Boolean flag=this.biModuleService.insert(dto);
         return flag == true ? success() : failure();
     }
 
     /**
      * 编辑数据
      *
-     * @param biModule 实体
+     * @param dto 实体
      * @return 编辑结果
      */
     @PostMapping("/update")
-    public ApiResult edit(BiModuleEntity biModule) {
-         Boolean flag=this.biModuleService.update(biModule);
+    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
+         Boolean flag=this.biModuleService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -79,6 +75,18 @@ public class BiModuleController extends BaseController {
      @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag=this.biModuleService.deleteById(dto.getId());
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 设置模板状态
+     *
+     * @return 删除是否成功
+     */
+    @PostMapping("/updateState")
+    public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean flag=this.biModuleService.updateState(dto);
         return flag == true ? success() : failure();
     }
 
