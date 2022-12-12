@@ -64,6 +64,17 @@ public class ProcessFeignController extends BaseController {
         workflowService.rejectOriginProcess(dto);
     }
 
+    //撤销流程
+    @PostMapping("/withDraw")
+    public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
+        workflowService.withDrawProcess(dto);
+    }
+
+    //取回流程
+    @PostMapping("/fetchBack")
+    public void fetchBack(@RequestBody @Validated ApproveProcessDTO dto) {
+        workflowService.fetchBackProcess(dto);
+    }
 
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")

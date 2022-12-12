@@ -25,8 +25,8 @@ public class ProcessBaseDTO implements Serializable {
     @NotBlank(message = "流程id不能为空")
     private String processInstanceId;
 
-
-
+    //流程第一个assignee设置名称
+    private String fieldName;
 
     //评论 意见
     private String comment;

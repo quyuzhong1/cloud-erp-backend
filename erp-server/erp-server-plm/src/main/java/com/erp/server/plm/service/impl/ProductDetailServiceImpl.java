@@ -400,6 +400,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             detailEntity.setUpdateUserId(loginUser.getUid());
             detailEntity.setUpdateUserName(loginUser.getUserName());
         }
+        //状态更新为待审核
+        detailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+        //启动审核流程
+        this.productDetailStartProcess(detailEntity);
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -425,6 +429,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setUpdateUserName(loginUser.getUserName());
                 }
             }
+            //状态更新为待审核
+            req.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+            //启动审核流程
+            this.productDetailStartProcess(req);
         });
         return this.saveOrUpdateBatch(list);
     }
@@ -469,6 +477,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productSpuBaseInfoDTO.getId());
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getId())) {
+            //产品信息修改操作日志
+            addProductInfoLog(productSpuBaseInfoDTO,productInfoEntity,productSpuBaseInfoDTO.getId(),productSpuBaseInfoDTO.getId());
+        }
         //1.修改产品表 主表信息
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
@@ -496,8 +508,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (isAdd) {
             sysLogService.addSysLogBySave("生成了一个SKU：["+productSkuBaseInfoDTO.getSkuNo()+"]",SKUCLASSPATH,skuId,id);
         }
-        //产品信息修改操作日志
-        addProductInfoLog(productSpuBaseInfoDTO,productInfoEntity,id,id);
 
         //3.修改/新增 成本信息
         if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductCostDTO())) {
@@ -608,6 +618,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productInfoDTO.getId());
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
+            if (StringUtils.isNotBlank(productInfoDTO.getId())) {
+                //产品操作日志
+                addProductInfoLog(productInfoDTO,productInfoEntity,productInfoDTO.getId(),productInfoDTO.getId());
+            }
             productInfoService.updateSpec(productInfoDTO);
         }
 
@@ -618,8 +632,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailLists.forEach(obj ->{
                 //sku操作日志
                 addProductDetailLog(obj,obj.getId(),productInfoDTO.getId());
-                //产品操作日志
-                addProductInfoLog(productInfoDTO,productInfoEntity,productInfoDTO.getId(),productInfoDTO.getId());
             });
             this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
         }
@@ -780,8 +792,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
-            //启动审核流程
-            this.productDetailStartProcess(productDetailEntity);
             list.add(productDetailEntity);
         }
 
@@ -792,9 +802,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU新增操作日志
         List<SysLogEntity> logs = new LinkedList<>();
         list.forEach(obj->{
-            logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：["+productSpuBaseInfoDTO.getName()+"]"));
             logs.add(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU：["+obj.getSkuNo()+"]"));
         });
+        logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：["+productSpuBaseInfoDTO.getName()+"]"));
         sysLogService.addSysLogByBatchSave(logs);
         return this.queryByProductId(id);
     }
@@ -1233,6 +1243,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
         ProductDetailEntity entity = this.getById(dto.getId());
         //验证是否设置审核人
@@ -1264,6 +1275,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!processInstanceIds.contains(entity.getProcessId())) {
             throw new ServiceException(ApiError.ERROR_95049);
         }
+
+        //退回至初始点
+        ApproveProcessDTO approveProcessDTO = new ApproveProcessDTO();
+        approveProcessDTO.setProcessInstanceId(entity.getProcessId());
+        approveProcessDTO.setUserId(userId);
+        approveProcessDTO.setFieldName("firstApproveId");
+        workflowFeign.withDraw(approveProcessDTO);
+
         Integer code = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
@@ -1323,8 +1342,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
 
-        //验证sku是否审核通过
-        if (!code.equals(entity.getStatus())) {
+        //验证sku是否审核
+        if (ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus()) || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
         }
         LoginUser loginUser = commonService.getUserInfo();
@@ -1361,7 +1380,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
-                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU["+entity.getId()+"],操作["+ProductDetailStatusEnum.getName(entity.getStatus())+"]为["+ProductDetailStatusEnum.WAIT_CONFIRM.getName()+"]"));
+                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU["+entity.getId()+"],操作["+statusName+"]为["+ProductDetailStatusEnum.WAIT_CONFIRM.getName()+"]"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }
