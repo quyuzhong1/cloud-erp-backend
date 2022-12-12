@@ -3,12 +3,17 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.service.BiSubjectService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -34,7 +39,7 @@ public class BiSubjectController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<BiSubjectEntity>> queryByPage() {
+    public ApiResult<PagingVO<BiSubjectEntity>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto ) {
         return success(this.biSubjectService.queryByPage());
     }
 

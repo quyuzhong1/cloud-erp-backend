@@ -1,0 +1,81 @@
+package com.erp.server.bi.controller;
+
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.modules.validator.UpdateGroup;
+import com.erp.model.bi.dto.ModuleSysDTO;
+import com.erp.server.bi.constant.BiConstant;
+import com.erp.server.bi.constant.IsDeleted;
+import com.erp.server.bi.service.BiSysModuleService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Classname BiSysModuleController
+ * @Description TODO
+ * @Date 2022-12-12 16:58
+ * @Created by yl
+ */
+@RestController
+@RequestMapping("bi/sys/module")
+public class BiSysModuleController extends BaseController {
+
+
+    @Resource
+    private BiSysModuleService sysModuleService;
+
+
+    /**
+     * 新增模块
+     *
+     * @param dto 实体
+     * @return 新增结果
+     */
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated ModuleSysDTO dto) {
+        Boolean flag = this.sysModuleService.insert(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 新增模块
+     *
+     * @param dto 实体
+     * @return 新增结果
+     */
+    @PostMapping("/update")
+    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
+        Boolean flag = this.sysModuleService.updateSysModule(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 获取父级的id
+     *
+     * @param
+     * @return 新增结果
+     */
+    @GetMapping("/pidList")
+    public ApiResult pidList() {
+        List<Map<String, Object>> list = this.sysModuleService.getPid(BiConstant.PID);
+        return success(list);
+    }
+
+
+    /**
+     * 获取父级的id
+     *
+     * @param
+     * @return 新增结果
+     */
+    @GetMapping("/list")
+    public ApiResult list() {
+        List<Map<String, Object>> list = this.sysModuleService.getSysModuleList(IsDeleted.NO);
+        return success(list);
+    }
+}
