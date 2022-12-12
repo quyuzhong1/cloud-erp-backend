@@ -715,7 +715,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(2);
-        productSpuBaseInfoDTO.setGrade("");
+        //产品等级
+        if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
+            //根据id查询字典表中的产品等级
+            BasicDictEntity basicDict = basicDictService.getById(productSpuBaseInfoDTO.getGradeId());
+            if (ObjectUtils.isNotEmpty(basicDict)) {
+                productSpuBaseInfoDTO.setGrade(basicDict.getValue());
+            }
+        }
         //1.保存产品表 基础信息获取产品id
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
         List<VarianRefPropertyDTO> varianRefPropertyList = variantAutoAddDTO.getVarianRefPropertyList();
