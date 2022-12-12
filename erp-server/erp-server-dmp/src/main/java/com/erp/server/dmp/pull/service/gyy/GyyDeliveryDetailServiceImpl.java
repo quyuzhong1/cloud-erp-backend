@@ -109,7 +109,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
                 //存储数据到中台
-                //analysisDeliveryDetail(gyyDeliveryDetailEntity);
+                analysisDeliveryDetail(gyyDeliveryDetailEntity);
             }
         }
     }
