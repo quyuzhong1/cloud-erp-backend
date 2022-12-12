@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @Classname SubjectDTO
@@ -46,14 +45,21 @@ public class SubjectDTO  implements Serializable {
     private Integer isFrequently;
 
 
-   /**
-    * 布局集合
-    * @author yl
-    * @date 2022-12-09 16:40
-    * @param null
-    * @return 
-    */
-    private List<LayoutDTO> layoutList;
+    /**
+     * 分类名
+     *
+     */
+    private String categoryName;
+
+
+//   /**
+//    * 布局集合
+//    * @author yl
+//    * @date 2022-12-09 16:40
+//    * @param null
+//    * @return
+//    */
+//    private List<LayoutDTO> layoutList;
 
 
 }

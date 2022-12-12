@@ -13,11 +13,11 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
-import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.mapper.BiModuleMapper;
 import com.erp.server.bi.service.BiModulePermissionService;
 import com.erp.server.bi.service.BiModuleService;
+import com.erp.server.bi.service.BiSysModuleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -39,6 +39,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
 
     @Resource
     private BiModulePermissionService modulePermissionService;
+
+    @Resource
+    private BiSysModuleService sysModuleService;
 
 
     /**
@@ -92,18 +95,18 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public Boolean insert(ModuleDTO biModule) {
         BiModuleEntity module = new BiModuleEntity();
         String name = biModule.getName();
-        String pid = biModule.getPid();
-        if (StringUtils.isBlank(pid)) {
-            pid = BiConstant.PID;
-        }
-        checkName(null, pid, name);
+        checkName(null, name);
+        String sysModuleId = biModule.getSysModuleId();
         module.setImageUrl(biModule.getImageUrl());
         module.setName(name);
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
+        module.setCategoryId(biModule.getCategoryId());
+        module.setSysModuleId(sysModuleId);
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.save(module);
         if (flag) {
+            sysModuleService.updateAddState(sysModuleId,IsDeleted.YES);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
             }
@@ -121,14 +124,11 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
      * @author yl
      * @date 2022-12-12 10:34
      */
-    public void checkName(String id, String pid, String name) {
+    public void checkName(String id, String name) {
         LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiModuleEntity::getName, name);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(BiModuleEntity::getId, id);
-        }
-        if (StringUtils.isNotBlank(pid) && !pid.equals(BiConstant.PID)) {
-            queryWrapper.ne(BiModuleEntity::getPid, BiConstant.PID);
         }
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
@@ -147,21 +147,31 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
      */
     @Override
     public Boolean update(ModuleDTO biModule) {
-        BiModuleEntity module = new BiModuleEntity();
-        String name = biModule.getName();
-        String pid = biModule.getPid();
-        if (StringUtils.isBlank(pid)) {
-            pid = BiConstant.PID;
+        BiModuleEntity module = this.getById(biModule.getId());
+        if(Objects.isNull(module)){
+            throw new ServiceException(ApiError.ERROR_97004);
         }
-        checkName(biModule.getId(), pid, name);
-        module.setId(biModule.getId());
+        String name = biModule.getName();
+        checkName(biModule.getId(), name);
         module.setImageUrl(biModule.getImageUrl());
         module.setName(name);
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
+        String sysModuleId = biModule.getSysModuleId();
+        String dbSysModuleId=module.getSysModuleId();
+        module.setCategoryId(biModule.getCategoryId());
+        module.setSysModuleId(sysModuleId);
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.updateById(module);
         if (flag) {
+            /*
+             *当两个传来的不一样 说明更改了系统的模块
+             * 那么原来的
+             */
+            if(!sysModuleId.equals(dbSysModuleId)){
+                sysModuleService.updateAddState(sysModuleId,IsDeleted.YES);
+                sysModuleService.updateAddState(dbSysModuleId,IsDeleted.NO);
+            }
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
             }

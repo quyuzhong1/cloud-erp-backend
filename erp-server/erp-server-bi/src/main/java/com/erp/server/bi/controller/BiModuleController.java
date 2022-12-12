@@ -42,7 +42,6 @@ public class BiModuleController extends BaseController {
     }
 
 
-
     /**
      * 新增模块
      *
@@ -50,8 +49,8 @@ public class BiModuleController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody  ModuleDTO dto) {
-        Boolean flag=this.biModuleService.insert(dto);
+    public ApiResult add(@RequestBody ModuleDTO dto) {
+        Boolean flag = this.biModuleService.insert(dto);
         return flag == true ? success() : failure();
     }
 
@@ -63,7 +62,7 @@ public class BiModuleController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
-         Boolean flag=this.biModuleService.update(dto);
+        Boolean flag = this.biModuleService.update(dto);
         return flag == true ? success() : failure();
     }
 
@@ -72,9 +71,9 @@ public class BiModuleController extends BaseController {
      *
      * @return 删除是否成功
      */
-     @PostMapping("/delete")
+    @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag=this.biModuleService.deleteById(dto.getId());
+        Boolean flag = this.biModuleService.deleteById(dto.getId());
         return flag == true ? success() : failure();
     }
 
@@ -86,8 +85,20 @@ public class BiModuleController extends BaseController {
      */
     @PostMapping("/updateState")
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean flag=this.biModuleService.updateState(dto);
+        Boolean flag = this.biModuleService.updateState(dto);
         return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 设置模板状态
+     *
+     * @return 删除是否成功
+     */
+    @PostMapping("/list")
+    public ApiResult list(@RequestBody @Validated BaseSearchDTO dto) {
+
+        return success();
     }
 
 }

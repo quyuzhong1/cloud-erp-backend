@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 模块
@@ -19,7 +18,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ModuleDTO implements Serializable {
+public class ModuleSysDTO implements Serializable {
 
 
     /**
@@ -29,15 +28,10 @@ public class ModuleDTO implements Serializable {
     private String id;
 
     /**
-     *系统模块id
+     * 父级id
+     * 默认为0
      */
-    private String sysModuleId;
-
-    /**
-     * 分类id
-     * 来源于字典表
-     */
-    private String categoryId;
+    private String pid;
 
 
     /**
@@ -48,28 +42,5 @@ public class ModuleDTO implements Serializable {
     private String name;
 
 
-    /**
-     * 模块说明
-     */
-    @Size(max = 200, message = "最大200字符")
-    private String remark;
 
-
-    /**
-     * 缩略图地址
-     */
-    private String imageUrl;
-
-
-    /**
-     * 前端组件名不能为空
-     */
-    @NotBlank(message = "前端组件名不能为空")
-    private String viewCode;
-
-
-    /**
-     * 权限人员
-     */
-    private List<String> permissionUserIdList;
 }

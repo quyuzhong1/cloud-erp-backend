@@ -8,16 +8,15 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 模块表(BiModule)实体类
- *
- * @author yl
- * @since 2022-12-08 12:31:20
+ * @Classname biSysModuleEntity
+ * @Description TODO
+ * @Date 2022-12-12 16:56
+ * @Created by yl
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("bi_module")
-public class BiModuleEntity implements Serializable {
-    private static final long serialVersionUID = -87185314332831686L;
+@TableName("bi_sys_module")
+public class BiSysModuleEntity implements Serializable {
 
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
@@ -26,32 +25,15 @@ public class BiModuleEntity implements Serializable {
      */
     private String name;
     /**
-     * 系统模块id
+     * 父级id
      */
-    private String sysModuleId;
+    private String pid;
 
     /**
-     * 分类id
+     * 是否已添加 1 已添加 0 未添加
      */
-    private String categoryId;
+    private Integer isAdd;
 
-
-    /**
-     * 备注说明
-     */
-    private String remark;
-    /**
-     * 缩略图地址
-     */
-    private String imageUrl;
-    /**
-     * 开启状态1 开启 0 未开启
-     */
-    private Integer state;
-    /**
-     * 前端组件名
-     */
-    private String viewCode;
     /**
      * 创建人id
      */
@@ -74,7 +56,4 @@ public class BiModuleEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-
-
 }
-
