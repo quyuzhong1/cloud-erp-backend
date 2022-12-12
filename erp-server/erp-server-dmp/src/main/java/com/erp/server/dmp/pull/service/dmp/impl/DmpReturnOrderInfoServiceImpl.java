@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param returnOrderInfoEntity
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
     public DmpReturnOrderInfoEntity getOrderByPlatformOrderId(DmpReturnOrderInfoEntity returnOrderInfoEntity) {

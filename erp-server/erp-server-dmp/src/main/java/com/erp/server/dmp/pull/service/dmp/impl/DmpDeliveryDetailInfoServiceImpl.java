@@ -2,9 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpDeliveryDetailInfoEntity;
-import com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity;
-import com.erp.server.dmp.entity.dmp.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import org.springframework.stereotype.Service;
@@ -34,7 +32,7 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param dmpDeliveryDetailInfoEntity
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
     public DmpDeliveryDetailInfoEntity getDeliveryDetailByBillNo(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity) {

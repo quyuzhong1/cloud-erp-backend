@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 
 /**
  * 店铺信息服务类
@@ -22,7 +22,7 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @Date 2022/11/16 19:35
      * @param shopNo 店铺编号
      * @param platformSign 平台标识
-     * @return com.erp.server.dmp.entity.dmp.DmpSkuInfoEntity
+     * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
      **/
     DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign);
 

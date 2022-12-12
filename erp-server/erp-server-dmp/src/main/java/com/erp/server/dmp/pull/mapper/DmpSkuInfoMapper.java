@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.server.dmp.entity.dmp.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

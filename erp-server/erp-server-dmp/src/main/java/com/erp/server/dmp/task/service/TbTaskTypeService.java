@@ -1,8 +1,8 @@
 package com.erp.server.dmp.task.service;
 
-import com.erp.server.dmp.entity.dmp.PlatformApiEntity;
-import com.erp.server.dmp.entity.dmp.PlatformApiTaskEntity;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
+import com.erp.model.dmp.entity.PlatformApiEntity;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.task.mapper.PlatformApiMapper;
 import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
 import lombok.extern.slf4j.Slf4j;

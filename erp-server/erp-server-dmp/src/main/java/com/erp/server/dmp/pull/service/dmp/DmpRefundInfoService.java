@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 
 /**
  * 退款列表服务类
@@ -21,7 +21,7 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param returnOrderInfoEntity
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity);
 

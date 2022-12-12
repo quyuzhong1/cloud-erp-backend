@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpSkuInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
      * @Date 2022/11/14 21:28
      * @param skuNo 商品sku
      * @param platformSign 平台标识
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
     public DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String platformSign){

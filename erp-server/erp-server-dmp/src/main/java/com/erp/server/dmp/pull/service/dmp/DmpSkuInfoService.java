@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpSkuInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 
 /**
  * 商品信息服务类
@@ -22,7 +22,7 @@ public interface DmpSkuInfoService extends IService<DmpSkuInfoEntity> {
      * @Date 2022/11/14 21:28
      * @param skuNo 商品sku
      * @param platformSign 平台标识
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String platformSign);
 

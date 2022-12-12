@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service;
 
-import com.erp.server.dmp.entity.dto.RequestDTO;
+
+import com.erp.model.dmp.dto.RequestDTO;
 
 public interface ModelService {
     /*

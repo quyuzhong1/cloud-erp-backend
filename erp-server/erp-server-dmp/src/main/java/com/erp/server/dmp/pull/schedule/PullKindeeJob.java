@@ -1,15 +1,13 @@
 package com.erp.server.dmp.pull.schedule;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.erp.server.dmp.constant.TaskConstant;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
-import com.erp.server.dmp.pull.thread.PullGyyDateThread;
+import com.erp.model.dmp.constant.TaskConstant;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.thread.PullKingdeeDateThread;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;

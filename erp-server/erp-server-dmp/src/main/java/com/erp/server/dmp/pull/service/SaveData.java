@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service;
 
 
-import com.erp.server.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 
 import java.lang.annotation.*;
 

@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpRefundInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param returnOrderInfoEntity
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
     public DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity) {

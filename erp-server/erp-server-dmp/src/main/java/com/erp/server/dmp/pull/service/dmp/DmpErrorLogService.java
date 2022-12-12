@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
 
 /**
  * 错误日志服务类
