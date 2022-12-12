@@ -25,7 +25,6 @@ public class ProductInfoDTO {
     /**
      * 产品名
      */
-    @NotBlank(message = "产品名不能为空")
     @Size(max = 50,message = "产品名最大50字符")
     private String name;
 
