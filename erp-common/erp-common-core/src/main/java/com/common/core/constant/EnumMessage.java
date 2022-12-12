@@ -9,5 +9,5 @@ package com.common.core.constant;
 public interface EnumMessage {
 
     Integer getCode();
-    String getMsg();
+    String getName();
 }

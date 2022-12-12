@@ -80,4 +80,9 @@ public class UpdateProductDTO  implements Serializable {
  //   @StateEnumValue(intValues = {0,1,2,3,4}, message = "立项状态有误")
     private Integer approvalStatus;
 
+    /**
+     * 辅助字段：产品经理（用于记录操作日志）
+     */
+    private String chargeName;
+
 }

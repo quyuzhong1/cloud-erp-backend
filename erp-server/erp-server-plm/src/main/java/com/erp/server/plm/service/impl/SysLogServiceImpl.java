@@ -93,22 +93,22 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             } else if (type == 2) {
                 Class<?> aClass = null;
                 try {
-                     aClass = Class.forName(PACKAGEPATH.concat(sysLogFieldEntity.getEnumClass()));
+                     aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
                 } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
+                    throw new ServiceException(ApiError.ERROR_9028);
                 }
                 boolean anEnum = aClass.isEnum();
                 if (!anEnum) {
-                    throw new ServiceException(ApiError.Default);
+                    throw new ServiceException(ApiError.ERROR_9028);
                 }
-                oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getMsg();
-                newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getMsg();
+                oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getName();
+                newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getName();
             }
             String content = "";
             if (StringUtils.isBlank(valuePair.getKey())) {
-                content = "编辑了一个[".concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
+                content = "编辑了[".concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
             } else {
-                content = "编辑了一个[".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+                content = "编辑了[".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
             SysLogEntity entity = new SysLogEntity();
             entity.setClassPath(classPath)
@@ -165,9 +165,9 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 throw new ServiceException(ApiError.ERROR_95089);
             }
             if (StringUtils.isBlank(entity.getOldValue())) {
-                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");
+                content = "编辑了[".concat(entity.getFieldName()).concat("]").concat("由空值变更为[").concat(entity.getNewValue()).concat("]");
             } else {
-                content = "编辑了一个[".concat(entity.getFieldName()).concat("]").concat("由[").concat(entity.getOldValue()).concat("]").concat("变更为[").concat(entity.getNewValue()).concat("]");
+                content = "编辑了[".concat(entity.getFieldName()).concat("]").concat("由[").concat(entity.getOldValue()).concat("]").concat("变更为[").concat(entity.getNewValue()).concat("]");
             }
         }
         entity.setContent(content)

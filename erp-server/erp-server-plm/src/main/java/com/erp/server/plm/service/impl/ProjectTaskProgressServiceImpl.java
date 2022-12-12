@@ -115,7 +115,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         //创建立项里程碑
         ProductMilepostDTO approvalDto = new ProductMilepostDTO();
         //判断产品是否立项
-        if (ApprovalStatusEnum.APPROVAL.getState().equals(productInfoEntity.getApprovalStatus())) {
+        if (ApprovalStatusEnum.APPROVAL.getCode().equals(productInfoEntity.getApprovalStatus())) {
             approvalDto.setSeq(seq.getAndSet(seq.get() + 1));
             ProductMilepostDateDTO approvalDateDto = getMilepostDate(new ProductMilepostParamDTO().setType(2).setProductId(productId));
             approvalDto.setProductMilepostDateDTO(approvalDateDto);

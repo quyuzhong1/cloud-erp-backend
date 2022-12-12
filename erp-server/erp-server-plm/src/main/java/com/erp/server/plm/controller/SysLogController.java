@@ -9,6 +9,7 @@ import com.erp.model.plm.dto.DocsShowDTO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.service.SysDocsService;
 import com.erp.server.plm.service.SysLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class SysLogController extends BaseController {
     }
 
     /**
-     * 操作日志-类路径-产品信息
+     * 操作日志-类路径-产品信息(SKU)
      * @author Will
      * @date: 2022/12/7 13:26
      * @return ApiResult
@@ -53,4 +54,15 @@ public class SysLogController extends BaseController {
         return success(String.valueOf(classPath));
     }
 
+    /**
+     * 操作日志-类路径-产品管理(SPU)
+     * @author Will
+     * @date: 2022/12/12 13:26
+     * @return ApiResult
+     */
+    @GetMapping("/getProductInfoClassPath")
+    public ApiResult getProductInfoClassPath() {
+        Class<ProductInfoEntity> classPath = ProductInfoEntity.class;
+        return success(String.valueOf(classPath));
+    }
 }

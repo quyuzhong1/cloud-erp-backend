@@ -133,7 +133,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SysLogService sysLogService;
 
-   private static final  String CLASSPATH = String.valueOf(ProductDetailEntity.class);
+    private static final  String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
+    private static final  String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     /**
      * @param pagingDTO:查询参数
@@ -453,6 +454,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
+        //SPU产品名称
+        if (StringUtils.isBlank(productSpuBaseInfoDTO.getName())) {
+            productSpuBaseInfoDTO.setName(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getName());
+        }
 
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -489,10 +494,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
         //SKU新增操作日志
         if (isAdd) {
-            sysLogService.addSysLogBySave("生成了一个SKU["+productSkuBaseInfoDTO.getSkuNo()+"]",CLASSPATH,skuId,id);
+            sysLogService.addSysLogBySave("生成了一个SKU：["+productSkuBaseInfoDTO.getSkuNo()+"]",SKUCLASSPATH,skuId,id);
         }
         //产品信息修改操作日志
-        addProductInfoLog(productSpuBaseInfoDTO,productInfoEntity,skuId,id);
+        addProductInfoLog(productSpuBaseInfoDTO,productInfoEntity,id,id);
 
         //3.修改/新增 成本信息
         if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductCostDTO())) {
@@ -518,7 +523,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<SysLogEntity> list = new LinkedList<>();
             productPurchaseRemarkList.forEach(req -> {
                 req.setProductId(id);
-                list.add(new SysLogEntity().setContent("更新采购备注信息："+req.getRemark()).setClassPath(CLASSPATH).setBusinessId(skuId).setPid(id));
+                list.add(new SysLogEntity().setContent("更新采购备注信息："+req.getRemark()).setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id));
             });
             //SKU操作日志
             sysLogService.addSysLogByBatchSave(list);
@@ -614,7 +619,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 //sku操作日志
                 addProductDetailLog(obj,obj.getId(),productInfoDTO.getId());
                 //产品操作日志
-                addProductInfoLog(productInfoDTO,productInfoEntity,obj.getId(),productInfoDTO.getId());
+                addProductInfoLog(productInfoDTO,productInfoEntity,productInfoDTO.getId(),productInfoDTO.getId());
             });
             this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
         }
@@ -787,8 +792,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU新增操作日志
         List<SysLogEntity> logs = new LinkedList<>();
         list.forEach(obj->{
-            logs.add(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SPU["+productSpuBaseInfoDTO.getSpuNo()+"]"));
-            logs.add(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU["+obj.getSkuNo()+"]"));
+            logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：["+productSpuBaseInfoDTO.getName()+"]"));
+            logs.add(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU：["+obj.getSkuNo()+"]"));
         });
         sysLogService.addSysLogByBatchSave(logs);
         return this.queryByProductId(id);
@@ -1221,7 +1226,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
             //新增操作日志
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setPid(entity.getProductId())
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU["+entity.getId()+"],操作["+ProductDetailStatusEnum.getName(entity.getStatus())+"]为["+ProductDetailStatusEnum.APPROVAL_ING.getName()+"]"));
         }
         return true;
@@ -1263,7 +1268,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //更新产品信息状态
         Boolean flag = this.updateProductDetailState(dto.getId(), code, userId, userName);
         if (flag) {
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setPid(entity.getProductId())
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU["+entity.getId()+"]操作["+ProductDetailStatusEnum.getName(entity.getStatus())+"]为["+ProductDetailStatusEnum.APPROVAL_NO_PASS.getName()+"]，原因："+dto.getComment()));
         }
         //新增审核不通过意见
@@ -1304,7 +1309,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setUpdateUserId(loginUser.getUid());
         entity.setUpdateUserName(loginUser.getUserName());
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU["+entity.getId()+"],操作["+statusName+"]为["+ProductDetailStatusEnum.APPROVAL_ING.getName()+"]"));
         return this.updateById(entity);
     }
@@ -1331,7 +1336,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         boolean flag = this.update(updateWrapper);
         if (flag) {
             //新增操作日志
-            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                     .setOperation("申请变更").setContent("申请变更SKU["+id+"]信息"));
         }
         return flag;
@@ -1355,7 +1360,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setPid(entity.getProductId())
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU["+entity.getId()+"],操作["+ProductDetailStatusEnum.getName(entity.getStatus())+"]为["+ProductDetailStatusEnum.WAIT_CONFIRM.getName()+"]"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
@@ -1372,7 +1377,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         productDetailStartProcess(entity);
         //新增操作日志
-        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU["+entity.getId()+"]重启审核流程"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
@@ -1452,7 +1457,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid);
     }
 
     /**
@@ -1464,7 +1469,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,SKUCLASSPATH,businessId,pid);
     }
 
     /**
@@ -1476,7 +1481,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,SKUCLASSPATH,businessId,pid);
     }
 
     /**
@@ -1489,7 +1494,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,CLASSPATH,productCostDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,SKUCLASSPATH,productCostDTO.getSkuId(),pid);
         }
     }
 
@@ -1503,7 +1508,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,CLASSPATH,productPurchaseDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,SKUCLASSPATH,productPurchaseDTO.getSkuId(),pid);
         }
     }
 
@@ -1517,7 +1522,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,CLASSPATH,productSaleDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,SKUCLASSPATH,productSaleDTO.getSkuId(),pid);
         }
     }
 
@@ -1531,7 +1536,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,CLASSPATH,productLogisticsDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,SKUCLASSPATH,productLogisticsDTO.getSkuId(),pid);
         }
     }
 
@@ -1545,7 +1550,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,CLASSPATH,productPackDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,SKUCLASSPATH,productPackDTO.getSkuId(),pid);
         }
     }
 
@@ -1564,7 +1569,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (ObjectUtils.isNotEmpty(oldEntity)) {
                         BeanMapperUtils.copy(oldEntity,oldDto);
                     }
-                    sysLogService.addSysLogByUpdate(oldDto,obj,CLASSPATH,obj.getSkuId(),pid);
+                    sysLogService.addSysLogByUpdate(oldDto,obj,SKUCLASSPATH,obj.getSkuId(),pid);
                 }
             });
         }

@@ -3,25 +3,23 @@ package com.erp.server.plm.enums;
 import com.common.core.constant.EnumMessage;
 
 /**
- * @Classname  立项状态
- * @Description TODO
- * @Date 2022-09-29 14:13
- * @Created by yl
+ * @author Will
+ * @version 1.0
+ * @description: TODO
+ * @date 2022/12/12 13:15
  */
-public enum ApprovalStatusEnum implements EnumMessage {
+public enum ProductTypeEnum implements EnumMessage {
 
-    WAIT(0,"未开始"),
-    PROBE(1,"调研中"),
-    ID_DESIGN_ING(2,"ID设计中"),
-    APPROVAL(3,"已立项"),
-    TERMINATE(4,"已中止");
+    NEWPRODUCT(1,"新产品"),
+
+    ITERATIVEPRODUCT(2,"迭代产品");
 
     private Integer code;
 
     private String name;
 
 
-    ApprovalStatusEnum(Integer colourState, String name) {
+    ProductTypeEnum(Integer colourState, String name) {
         this.code = colourState;
         this.name = name;
     }
@@ -35,7 +33,7 @@ public enum ApprovalStatusEnum implements EnumMessage {
     }
 
     public static String getName(Integer code) {
-        for (ApprovalStatusEnum state : ApprovalStatusEnum.values()) {
+        for (ProductTypeEnum state : ProductTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();
             }

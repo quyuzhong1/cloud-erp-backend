@@ -41,23 +41,23 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加
-         String  classPath = ProductSkuBaseInfoDTO.class.toString();
+         String  classPath = UpdateProductDTO.class.toString();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("skuNo").setFieldName("SKU").setClassPath(classPath).setType(0) .setEnumClass(null)
-                /*new SysLogFieldEntity().setField("netWeight").setFieldName("净重").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("boxSize").setFieldName("箱规").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("boxWeight").setFieldName("单箱重量").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("boxQty").setFieldName("单箱数量").setClassPath(classPath).setType(0) .setEnumClass(null)
-                               new SysLogFieldEntity().setField("isFinishedVideo").setFieldName("视频是否完成").setClassPath(classPath).setType(1) .setEnumClass(null),
- new SysLogFieldEntity().setField("englishMaterial").setFieldName("英文材质").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("englishUsage").setFieldName("英文用途").setClassPath(classPath).setType(1) .setEnumClass(null)
+            new SysLogFieldEntity().setField("productName").setFieldName("产品名称").setClassPath(classPath).setType(0) .setEnumClass(null),
+               new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
+                new SysLogFieldEntity().setField("approvalStatus").setFieldName("产品状态").setClassPath(classPath).setType(0) .setEnumClass(null),
+                new SysLogFieldEntity().setField("chargeName").setFieldName("产品经理").setClassPath(classPath).setType(0) .setEnumClass(null)
+                 /*new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
+                new SysLogFieldEntity().setField("brandName").setFieldName("产品品牌").setClassPath(classPath).setType(1) .setEnumClass(null),
+                new SysLogFieldEntity().setField("type").setFieldName("产品类型").setClassPath(classPath).setType(0) .setEnumClass(null)
+               new SysLogFieldEntity().setField("englishUsage").setFieldName("英文用途").setClassPath(classPath).setType(1) .setEnumClass(null)
                 new SysLogFieldEntity().setField("saleState").setFieldName("销售状态").setClassPath(classPath).setType(0) .setEnumClass(null),
 
                 new SysLogFieldEntity().setField("dataUrl").setFieldName("产品上市（含培训）资料链接").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("targetSalesQty").setFieldName("首季度目标销量").setClassPath(classPath).setType(1) .setEnumClass(null),
                 new SysLogFieldEntity().setField("salesPlatform").setFieldName("销售平台").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("isMarketable").setFieldName("是否可销售").setClassPath(classPath).setType(1) .setEnumClass(null)
-                new SysLogFieldEntity().setField("saleMethod").setFieldName("销售方式").setClassPath(classPath).setType(0) .setEnumClass(null),
+                 /*new SysLogFieldEntity().setField("saleMethod").setFieldName("销售方式").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("entrustedDevelopCost").setFieldName("委托开发成本").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("moldCost").setFieldName("模具成本").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("sampleFee").setFieldName("样品费用").setClassPath(classPath).setType(0) .setEnumClass(null),

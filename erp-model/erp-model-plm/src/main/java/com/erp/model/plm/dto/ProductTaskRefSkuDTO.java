@@ -53,7 +53,7 @@ public class ProductTaskRefSkuDTO implements Serializable {
     /**
      * 任务状态
      */
-    private String status;
+    private Integer status;
 
     /**
      * 是否完成任务

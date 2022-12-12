@@ -13,8 +13,11 @@
             array_to_string(array_agg(DISTINCT sl.content),<![CDATA['<br>']]>) as content
         from sys_log sl
         <where>
-            <if test="params.classPath !=null and params.classPath!=''">
-                AND sl.class_path LIKE concat('%',#{params.classPath},'%')
+            <if test="params.classPaths !=null and params.classPaths.size()>0">
+                AND sl.class_path in
+                <foreach collection="params.classPaths" item="classPath" open="(" separator="," close=")">
+                    #{classPath}
+                </foreach>
             </if>
             <if test="params.businessId !=null and params.businessId!=''">
                 AND sl.business_id = #{params.businessId}

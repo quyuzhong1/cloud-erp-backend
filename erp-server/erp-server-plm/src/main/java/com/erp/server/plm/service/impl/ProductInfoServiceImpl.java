@@ -7,9 +7,11 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
@@ -151,6 +153,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private TaskRefSkuConfigService taskRefSkuConfigService;
 
+    @Autowired
+    private SysLogService sysLogService;
+
+    @Autowired
+    private BasicDictService basicDictService;
+
+
+    private static final  String CLASSPATH = String.valueOf(ProductInfoEntity.class);
+
     /**
      * 查询 分类id 下有多少产品
      *
@@ -222,11 +233,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
+        //根据id查询
+        ProductInfoEntity oldEntity = this.getById(dto.getId());
         ProductInfoEntity entity = new ProductInfoEntity();
         //负责人ids
         List<String> chargeIds = dto.getChargeIds();
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
+        dto.setChargeName(chargeName);
         String CategoryId = dto.getCategoryId();
         BeanMapper.copy(dto, entity);
         BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
@@ -248,7 +262,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             //查询关联产品版本
             ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
-            entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+            if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+                entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+            }
         }
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
@@ -270,6 +286,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             remarkList.add("新增了一个产品：[" + entity.getName() + "]");
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+            //操作日志
+            sysLogService.addSysLogBySave("新增了一个产品：["+entity.getName()+"]",CLASSPATH,entity.getId(),entity.getId());
             //通知新建产品
             noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
@@ -281,11 +299,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
-
+            //产品信息修改操作日志
+            addProductInfoLog(dto,oldEntity,entity.getId(),entity.getId());
         }
-
         return flag;
     }
+
+
 
     /**
      * 修改产品的分类
@@ -315,6 +335,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             remarkList.add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]");
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
+            //新增操作日志
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
         });
 
         return this.update(updateWrapper);
@@ -606,6 +630,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         remarkList.add("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]");
         productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+        //新增操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(productId).setPid(productId)
+                .setOperation("产品状态变更").setContent("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]"));
         this.update(updateWrapper);
     }
 
@@ -706,34 +733,38 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
+            ProductInfoEntity newProduct = new ProductInfoEntity();
+            BeanMapperUtils.copy(product,newProduct);
             String grade = dto.getGrade();
             String productName = dto.getProductName();
             String gradeId = dto.getGradeId();
             List<String> productChargeIdList = dto.getProductChargeIdList();
             Integer approvalStatus = dto.getApprovalStatus();
             if (StringUtils.isNotBlank(grade)) {
-                product.setGrade(grade);
+                newProduct.setGrade(grade);
             }
             if (StringUtils.isNotBlank(productName)) {
-                product.setName(productName);
+                newProduct.setName(productName);
             }
             if (StringUtils.isNotBlank(gradeId)) {
-                product.setGradeId(gradeId);
-            }
-            if (StringUtils.isNotBlank(grade)) {
-                product.setGrade(grade);
+                //根据id查询字典表中的产品等级
+                BasicDictEntity basicDict = basicDictService.getById(gradeId);
+                if (ObjectUtils.isNotEmpty(basicDict)) {
+                    newProduct.setGrade(basicDict.getValue());
+                }
+                newProduct.setGradeId(gradeId);
             }
             if (CollectionUtils.isNotEmpty(productChargeIdList)) {
                 String productChargeName = commonService.getNameByIds(productChargeIdList);
-                product.setChargeId(String.join(",", productChargeIdList));
-                product.setChargeName(productChargeName);
+                newProduct.setChargeId(String.join(",", productChargeIdList));
+                newProduct.setChargeName(productChargeName);
             }
             if (approvalStatus != null) {
-                if (!product.getApprovalStatus().equals(approvalStatus)) {
-                    product.setApprovalStatus(approvalStatus);
+                if (!newProduct.getApprovalStatus().equals(approvalStatus)) {
+                    newProduct.setApprovalStatus(approvalStatus);
                     //清空立项时间
-                    product.setApprovalTime(null);
-                    if (ApprovalStatusEnum.APPROVAL.getState().equals(approvalStatus)) {
+                    newProduct.setApprovalTime(null);
+                    if (ApprovalStatusEnum.APPROVAL.getCode().equals(approvalStatus)) {
                         yesApproval = true;
                         /**
                          * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
@@ -745,19 +776,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         projectTaskService.checkTaskFinish(taskFinish);
                         preTaskService.checkPreTaskFinish(taskIdList);
                         projectTaskService.checkSonTaskFinish(taskIdList, productId);
-                        product.setApprovalTime(new Date());
+                        newProduct.setApprovalTime(new Date());
                     }
 
                 }
             }
 
-            Boolean updateFlag = this.updateById(product);
+            Boolean updateFlag = this.updateById(newProduct);
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
-                projectInfoService.addProject(dto.getProductId(), product.getName());
+                projectInfoService.addProject(dto.getProductId(), newProduct.getName());
             }
+            UpdateProductDTO updateDto = new UpdateProductDTO();
+            BeanMapperUtils.copy(newProduct,updateDto);
+            //产品信息修改操作日志
+            addProductLog(updateDto,product,productId,productId);
         }
 
         //项目信息
@@ -1027,6 +1062,28 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         }
         return productExcelList;
+    }
+
+    /**
+     * 产品信息修改日志
+     */
+    private void addProductInfoLog(ProductDTO dto,ProductInfoEntity oldEntity,String businessId,String pid) {
+        ProductDTO oldDto = new ProductDTO();
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            BeanMapperUtils.copy(oldEntity,oldDto);
+        }
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
+    }
+
+    /**
+     * 产品信息修改日志
+     */
+    private void addProductLog(UpdateProductDTO dto,ProductInfoEntity oldEntity,String businessId,String pid) {
+        UpdateProductDTO oldDto = new UpdateProductDTO();
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            BeanMapperUtils.copy(oldEntity,oldDto);
+        }
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
     }
 
 
