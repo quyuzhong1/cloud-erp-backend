@@ -9,19 +9,18 @@ import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +53,12 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.get");
@@ -84,6 +89,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //请求api
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
         // 获取店铺信息
+        List<DmpShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
+
+        sysUserFeign.getUserDeptList()
+
 
         //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {

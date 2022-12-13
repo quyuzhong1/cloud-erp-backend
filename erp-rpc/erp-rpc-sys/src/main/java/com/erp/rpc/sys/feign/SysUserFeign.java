@@ -4,6 +4,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -72,6 +73,6 @@ public interface SysUserFeign {
     String getSysCode(@RequestBody SysCodeDTO dto);
 
     @PostMapping("sys/feign/user/getUserDeptList")
-    String getUserDeptList();
+    List<SysUserDeptDTO> getUserDeptList();
 
 }
