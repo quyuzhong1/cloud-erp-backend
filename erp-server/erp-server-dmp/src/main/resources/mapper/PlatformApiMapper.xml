@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.model.dmp.task.mapper.PlatformApiMapper">
+<mapper namespace="com.erp.server.dmp.task.mapper.PlatformApiMapper">
 
     <sql id="Base_Column_List">
         id,platform_id,

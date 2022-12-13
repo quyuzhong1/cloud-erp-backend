@@ -79,7 +79,7 @@ public class DeliveryStatusInfoBean {
     @SerializedName("wms_order")
     private int wmsOrder;
     @SerializedName("delivery_name")
-    private Object deliveryName;
+    private String deliveryName;
     @SerializedName("delivery_date")
     private String deliveryDate;
     @SerializedName("cancel_name")

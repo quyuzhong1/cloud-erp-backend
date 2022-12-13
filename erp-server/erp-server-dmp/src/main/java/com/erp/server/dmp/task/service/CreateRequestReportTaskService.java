@@ -35,6 +35,7 @@ public class CreateRequestReportTaskService {
             jobTask.setApiCode(tbTask.getApiCode());
             jobTask.setApiName(tbTask.getApiName());
             jobTask.setTaskName(tbTask.getTaskName());
+            jobTask.setPlatformName(tbTask.getPlatformName());
             redisTemplate.boundListOps(tbTask.getTaskName()).leftPush(JSONObject.toJSONString(jobTask));
         }
     }

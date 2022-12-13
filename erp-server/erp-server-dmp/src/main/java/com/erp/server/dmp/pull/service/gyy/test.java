@@ -31,22 +31,23 @@ public class test {
         //用于记录结果
         StringBuilder Info = new StringBuilder();
         //业务对象标识
-        String formId = "SAL_RETURNSTOCK";
+        String formId = "SAL_SaleOrder";
         String formIdT = "SAL_OUTSTOCK";
         String formIdS = "AR_REFUNDBILL";
+        String fieldKey = "FSalePhaseID,FID,FBillNo,FDate,FBillTypeId.FName,FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode";
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCustomerID,FCustomerID.FName,FSalesManID,FSalesManID.FName,FSaleDeptID.FName,FReceiverID.FName,FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus,FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName,FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FBillAmount,FExchangeRate";
         String fieldKeyst = "FSalCostPrice,FSoorDerno,FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate,FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1";
 
         LinkedList<String> queryfilters = new LinkedList<>();
 
-        queryfilters.add(String.format("FBillNo = '%s'", "XSCKD1016837"));
+        queryfilters.add(String.format("FBillNo = '%s'", "XSD-20221124-32859"));
         String filterStr = String.join(" and ",  queryfilters );
 
         //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
         QueryParam param = new QueryParam();
 
-        param.setFormId(formIdT);
-        param.setFieldKeys(fieldKeyst);
+        param.setFormId(formId);
+        param.setFieldKeys(fieldKey);
         param.setFilterString(filterStr);
         param.setLimit(10000);
         param.setStartRow(0);

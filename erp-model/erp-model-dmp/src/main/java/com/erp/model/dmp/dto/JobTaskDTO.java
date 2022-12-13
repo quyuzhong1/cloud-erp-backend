@@ -66,4 +66,9 @@ public class JobTaskDTO {
      * 任务名称
      */
     private String taskName;
+
+    /**
+     * 平台名称
+     */
+    private String platformName;
 }

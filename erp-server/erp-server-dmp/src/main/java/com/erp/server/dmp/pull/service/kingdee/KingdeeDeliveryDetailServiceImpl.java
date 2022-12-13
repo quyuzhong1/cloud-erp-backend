@@ -380,8 +380,10 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
             deliveryDetailInfoEntity.setPlatformUpdateTime(sdf.parse(kingdeeOutStockEntity.getFModifyDate()));
         }
 
-        //发货时间 //TODO 暂无
-        deliveryDetailInfoEntity.setDeliveryDate(null);
+        //发货时间
+        if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFDate()) && !kingdeeOutStockEntity.getFDate().equals("null")) {
+            deliveryDetailInfoEntity.setDeliveryDate(sdf.parse(kingdeeOutStockEntity.getFDate()));
+        }
 
         //备注
         deliveryDetailInfoEntity.setRemark(kingdeeOutStockEntity.getFNote());

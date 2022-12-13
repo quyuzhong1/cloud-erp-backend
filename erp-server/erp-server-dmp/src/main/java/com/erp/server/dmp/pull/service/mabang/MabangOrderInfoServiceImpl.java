@@ -55,7 +55,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("hwc-report-settlement-data");
+        jobTaskDTO.setApiCode("order-get-order-list");
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -136,7 +136,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 Calendar cl = Calendar.getInstance();
                 cl.setTime(date);
-                cl.add(Calendar.DAY_OF_MONTH, -1);
+                cl.add(Calendar.DAY_OF_MONTH, -2);
                 st = sdf.format(cl.getTime());
                 sd = sdf.format(date);
                 dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
@@ -354,7 +354,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         //国家英文名称
         dmpOrderInfoEntity.setCountryNameEn(orderEntity.getCountryNameEN());
 
-        //国家英文名称
+        //国家中文名称
         dmpOrderInfoEntity.setCountryNameCn(orderEntity.getCountryNameCN());
 
         //平台标识

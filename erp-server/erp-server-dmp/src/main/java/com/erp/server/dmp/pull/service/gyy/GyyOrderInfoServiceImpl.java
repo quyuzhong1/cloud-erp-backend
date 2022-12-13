@@ -81,7 +81,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
      */
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
+        //请求api
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
+        // 获取店铺信息
+
+        //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {
             for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -344,8 +348,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //平台备注
         dmpOrderInfoEntity.setSellerMessage(gyyOrderEntity.getBuyerMemo());
 
-        //币种
-        dmpOrderInfoEntity.setCurrencyCode(gyyOrderEntity.getCurrencyCode());
+        //币种 //TODO 大多都是空
+        //dmpOrderInfoEntity.setCurrencyCode(gyyOrderEntity.getCurrencyCode());
+        dmpOrderInfoEntity.setCurrencyCode("CNY");
 
         //汇率
         dmpOrderInfoEntity.setCurrencyRate(new BigDecimal(BigInteger.ZERO));
@@ -384,10 +389,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setSubsidyAmount(gyyOrderEntity.getDiscountFee());
 
         //国家英文名称
-        dmpOrderInfoEntity.setCountryNameEn("中国");
+        dmpOrderInfoEntity.setCountryNameEn("China");
 
-        //国家英文名称
-        dmpOrderInfoEntity.setCountryNameCn("China");
+        //国家中文名称
+        dmpOrderInfoEntity.setCountryNameCn("中国");
 
         //平台标识
         dmpOrderInfoEntity.setPlatformSign("管易云");
@@ -476,7 +481,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setStockGrid(null);
 
             //sku
-            dmpOrderItemEntity.setSkuNo(detailsBean.getSkuCode());
+            dmpOrderItemEntity.setSkuNo(detailsBean.getItemCode());
 //
             //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
             dmpOrderItemEntity.setStockStatus(null);

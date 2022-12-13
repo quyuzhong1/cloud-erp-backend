@@ -59,6 +59,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.deliverys.get");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode("gy.erp.trade.deliverys.get");
+
+
+
+
         jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
@@ -162,11 +166,12 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                 datas.put("method", method);
                 datas.put("appkey", appKey);
                 datas.put("sessionkey", sessionKey);
-                datas.put("start_modify_date", st);
-                datas.put("end_modify_date", sd);
+//                datas.put("start_delivery_date", "2022-12-06 00:00:00");
+//                datas.put("end_delivery_date", "2022-12-06 23:59:59");
+                datas.put("code", "SDO542948523151");
                 datas.put("page_no", pageIndex);
                 datas.put("page_size", pageSize);
-                datas.put("delivery", 1);
+//                datas.put("delivery", 1);
 
                 String str = JSONObject.toJSONString(datas);
                 String sign = GyyUtils.sign(str, secretKey);
@@ -185,7 +190,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                         List<GyyDeliveryDetailEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("deliverys")), GyyDeliveryDetailEntity.class);
                         totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
                         pageCount = (totalCount + pageSize - 1) / pageSize;
-                        infoArrayList.addAll(dataList);
+                        if (dataList.size() > 0) {
+                            infoArrayList.addAll(dataList);
+                        }
                     } else {
                         log.info(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
                         throw new RuntimeException(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
@@ -330,7 +337,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
             deliveryDetailInfoEntity.setPlatformUpdateTime(sdf.parse(gyyDeliveryDetailEntity.getModifyDate()));
         }
 
-        //发货时间  //TODO 暂无
+        //发货时间
         if (StringUtils.isNotBlank(gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate()) && !gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate().equals("null")) {
             deliveryDetailInfoEntity.setDeliveryDate(sdf.parse(gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate()));
         }
@@ -381,10 +388,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
             dmpReturnOrderItemEntity.setPlatformSku(itemEntity.getSkuCode());
 
             //商品sku编号
-            dmpReturnOrderItemEntity.setSkuNo(itemEntity.getSkuCode());
+            dmpReturnOrderItemEntity.setSkuNo(itemEntity.getItemCode());
 
             //商品名称
-            dmpReturnOrderItemEntity.setItemName(itemEntity.getSkuName());
+            dmpReturnOrderItemEntity.setItemName(itemEntity.getItemName());
 
             //商品成本价
             dmpReturnOrderItemEntity.setCostPrice(itemEntity.getTotalCostPrice());

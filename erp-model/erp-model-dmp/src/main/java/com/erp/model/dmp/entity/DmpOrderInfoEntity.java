@@ -255,7 +255,7 @@ public class DmpOrderInfoEntity implements Serializable {
     private String countryNameEn;
 
     /**
-     * 国家英文名称
+     * 国家中文名称
      */
     @TableField(value = "country_name_cn")
     private String countryNameCn;

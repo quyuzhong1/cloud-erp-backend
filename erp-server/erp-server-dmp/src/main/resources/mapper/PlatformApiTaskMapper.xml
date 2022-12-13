@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.model.dmp.task.mapper.PlatformApiTaskMapper">
+<mapper namespace="com.erp.server.dmp.task.mapper.PlatformApiTaskMapper">
 
     <sql id="Base_Column_List">
         id,platform_id,api_id,
@@ -23,7 +23,8 @@
         pat.create_time,
         pa.api_code,
         pa.api_name,
-        p.task_name
+        p.task_name,
+        p.name AS platform_name
         FROM platform_api_task pat
         INNER JOIN platform_api pa ON pat.api_id = pa.id
         INNER JOIN platform p ON pa.platform_id = p.id

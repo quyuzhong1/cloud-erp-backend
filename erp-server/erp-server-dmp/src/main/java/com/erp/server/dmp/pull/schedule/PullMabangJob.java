@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -28,7 +29,6 @@ public class PullMabangJob {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     // 拉取马帮数据任务
-    //@Scheduled(initialDelay = 10*1000,fixedDelay = 60*1000)
     //@Scheduled(cron = "*/5 * * * * ?")
     public void execute() {
         while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {

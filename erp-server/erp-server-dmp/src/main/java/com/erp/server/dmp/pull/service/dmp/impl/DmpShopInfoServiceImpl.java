@@ -7,6 +7,8 @@ import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * 店铺信息服务类
  */
@@ -73,6 +75,20 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         } else {
             this.add(dmpShopInfoEntity);
         }
+    }
+
+    /**
+     * 根据平台查询店铺信息
+     * @Author Luo_WG
+     * @Date 2022/12/13 16:14
+     * @param platformSign 平台
+     * @return java.util.List<com.erp.model.dmp.entity.DmpShopInfoEntity>
+     **/
+    @Override
+    public List<DmpShopInfoEntity> queryShopByPlatformList(String platformSign) {
+        LambdaQueryWrapper<DmpShopInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformSign, platformSign);
+        return this.list(lambdaQueryWrapper);
     }
 }
 
