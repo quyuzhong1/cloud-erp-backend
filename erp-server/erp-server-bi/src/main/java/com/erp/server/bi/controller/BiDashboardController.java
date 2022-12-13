@@ -4,10 +4,8 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
-import com.erp.model.bi.dto.UpdateDashboardShareDTO;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.BiSubjectService;
-import com.erp.server.bi.service.BiSubjectShareService;
 import com.erp.server.bi.service.CommonService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +22,7 @@ import javax.annotation.Resource;
 @RequestMapping("bi/dashboard")
 public class BiDashboardController extends BaseController {
 
-    @Resource
-    private BiSubjectShareService biSubjectShareService;
+
 
     @Resource
     private BiSubjectService subjectService;
@@ -40,16 +37,7 @@ public class BiDashboardController extends BaseController {
 
 
 
-    /**
-     * 设置仪表盘的分享
-     *
-     * @return 查询结果
-     */
-    @PostMapping("/setShare")
-    public ApiResult setShare(@RequestBody @Validated UpdateDashboardShareDTO dto) {
-        Boolean flag = biSubjectShareService.setShare(dto);
-        return flag == true ? success() : failure();
-    }
+
 
 
     /**
@@ -74,15 +62,6 @@ public class BiDashboardController extends BaseController {
         String userId = commonService.getUserInfo().getUid();
         MyDashboardDTO myDashboard = subjectService.myDashboard(userId,searchKeyword);
         return success(myDashboard);
-    }
-
-    /**
-     * 删除仪表盘
-     */
-    @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = this.subjectService.deleteById(dto.getId());
-        return flag == true ? success() : failure();
     }
 
 }

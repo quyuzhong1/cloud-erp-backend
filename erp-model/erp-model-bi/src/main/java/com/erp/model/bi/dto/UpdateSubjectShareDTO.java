@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class UpdateDashboardShareDTO implements Serializable {
+public class UpdateSubjectShareDTO implements Serializable {
 
 
     @NotBlank(message = "表id不能为空")

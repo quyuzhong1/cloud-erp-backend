@@ -13,4 +13,33 @@
         </where>
         ORDER BY create_time DESC
     </select>
+
+    <select id="getUserVisibleModuleIds" resultType="java.lang.String">
+         SELECT   module_id  FROM  bi_module_permission  WHERE user_id=#{userId} AND state=1
+            UNION ALL
+         SELECT id FROM bi_module bm WHERE NOT  EXISTS (
+            SELECT id FROM bi_module_permission bp WHERE bp.module_id=bm.id
+         ) AND  state=1
+    </select>
+
+    <select id="getByIds" resultType="com.erp.model.bi.dto.ModuleDTO">
+        SELECT
+        id,name,
+        image_url,
+        sys_module_id,
+        view_code,
+        category_id,
+        remark
+        FROM bi_module
+        WHERE state=1
+        <if test="moduleIdList!=null and moduleIdList.size>0">
+            AND id IN
+            <foreach collection="moduleIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="searchKeyword!=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
 </mapper>

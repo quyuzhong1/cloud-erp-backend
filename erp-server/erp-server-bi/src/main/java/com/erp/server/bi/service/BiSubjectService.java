@@ -2,9 +2,13 @@ package com.erp.server.bi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
+import com.erp.model.bi.dto.SubjectPagingDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 
 /**
@@ -22,17 +26,17 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      *
      * @return 查询结果
      */
-    PagingVO<BiSubjectEntity> queryByPage();
+    PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto);
 
 
 
     /**
      * 修改数据
      *
-     * @param biSubject 实例对象
+     * @param dto 实例对象
      * @return 实例对象
      */
-    Boolean update(BiSubjectEntity biSubject);
+    String update(SubjectDTO  dto);
 
     /**
      * 通过主键删除数据
@@ -65,5 +69,14 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @param dto
      * @return
      */
-    Boolean addSubject(SubjectDTO dto);
+    String addSubject(SubjectDTO dto);
+
+    /**
+     * 设置专题状态
+     * @author yl
+     * @date 2022-12-13 14:20
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateState(UpdateStateDTO dto);
 }

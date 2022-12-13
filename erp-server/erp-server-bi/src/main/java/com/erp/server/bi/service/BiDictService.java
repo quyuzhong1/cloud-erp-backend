@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -57,4 +58,13 @@ public interface BiDictService  extends IService<BiDictEntity> {
     boolean deleteById(String id);
 
     List<Map<String,Object>> listByType(String type);
+
+    /**
+     * 根据类型获取到id 和名字
+     * @author yl
+     * @date 2022-12-13 10:05
+     * @param type
+     * @return java.util.List<org.apache.commons.math3.util.Pair>
+     */
+    List<Pair<String,String>> getCategory(String type);
 }

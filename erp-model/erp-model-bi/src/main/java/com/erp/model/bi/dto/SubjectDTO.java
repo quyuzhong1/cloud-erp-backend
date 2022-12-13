@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.modules.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @Classname SubjectDTO
@@ -50,6 +52,21 @@ public class SubjectDTO  implements Serializable {
      *
      */
     private String categoryName;
+
+    /**
+     * 分享标示
+     * personal 私人
+     * share 共享
+     */
+    @NotBlank(message = "分享标示不能为空")
+    @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
+    private String shareFlag="personal";
+
+
+    /**
+     * 分享的用户集合
+     */
+    private List<String> shareUserIdList;
 
 
 //   /**

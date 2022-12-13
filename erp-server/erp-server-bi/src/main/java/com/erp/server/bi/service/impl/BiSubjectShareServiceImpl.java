@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.model.bi.dto.UpdateDashboardShareDTO;
+import com.erp.model.bi.dto.UpdateSubjectShareDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
 import com.erp.server.bi.constant.IsDeleted;
@@ -14,6 +14,7 @@ import com.erp.server.bi.mapper.BiSubjectShareMapper;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import com.erp.server.bi.service.CommonService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -38,7 +39,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
 
 
     /**
-     * 仪表盘设置权限
+     * 专题设置权限
      *
      * @param dto
      * @return java.lang.Boolean
@@ -46,7 +47,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      * @date 2022-12-08 17:19
      */
     @Override
-    public Boolean setShare(UpdateDashboardShareDTO dto) {
+    public Boolean setShare(UpdateSubjectShareDTO dto) {
         //主题id
         String subjectId = dto.getId();
         BiSubjectEntity subject = subjectService.getById(subjectId);
@@ -97,6 +98,34 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    
+    
+    /**
+     * 保存专题分享的信息
+     * @author yl
+     * @date 2022-12-13 11:38
+     * @param userList
+     * @param subjectId
+     * @return void
+     */
+    @Override
+    public void addSubjectShare(List<String> userList, String subjectId) {
+        //先删除分享的数据
+        deleteBySubjectId(subjectId);
+        if(CollectionUtils.isNotEmpty(userList)){
+            List<BiSubjectShareEntity> addList = new ArrayList<>();
+            for (String userId : userList) {
+                BiSubjectShareEntity share = new BiSubjectShareEntity();
+                share.setSubjectId(subjectId);
+                share.setUserId(userId);
+                addList.add(share);
+            }
+            this.saveBatch(addList);
+        }
+    }
+
+
+
     /**
      * 根据主题id  删除 对应的分享信息
      *
@@ -105,11 +134,13 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      * @author yl
      * @date 2022-12-08 17:22
      */
-    public void deleteShare(String subjectId) {
+    @Override
+    public void deleteBySubjectId(String subjectId) {
         LambdaUpdateWrapper<BiSubjectShareEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(BiSubjectShareEntity::getIsDeleted, IsDeleted.YES);
         updateWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         this.update(updateWrapper);
-
     }
+
+
 }

@@ -5,9 +5,12 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
+
+import java.util.List;
 
 /**
  * 模块表(BiModule)表服务接口
@@ -61,4 +64,6 @@ public interface BiModuleService  extends IService<BiModuleEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateState(UpdateStateDTO dto);
+
+    List<CategoryModuleDTO> categoryList(String searchKeyword);
 }
