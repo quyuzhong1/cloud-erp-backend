@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.model.dmp.pull.mapper.DmpOrderItemMapper">
+
+    <sql id="Base_Column_List">
+        id,order_id,item_id,
+        platform_sku,platform_quantity,item_name,
+        picture_url,cost_price,sell_price_origin,
+        sell_price,quantity,product_unit,
+        is_gift,has_goods,is_combo,
+        item_remark,specifics,status,
+        stock_grid,sku_no,stock_status,
+        stock_warehouse_id
+    </sql>
+</mapper>
