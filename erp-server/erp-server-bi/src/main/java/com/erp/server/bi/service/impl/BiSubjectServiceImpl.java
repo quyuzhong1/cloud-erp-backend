@@ -22,10 +22,7 @@ import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
-import com.erp.server.bi.service.BiDictService;
-import com.erp.server.bi.service.BiSubjectDefaultService;
-import com.erp.server.bi.service.BiSubjectService;
-import com.erp.server.bi.service.BiSubjectShareService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,13 +53,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Resource
     private BiDictService biDictService;
 
-    
+    @Resource
+    private CommonService commonService;
+
+
     /**
      * 分页展示对应的数据
-     * @author yl
-     * @date 2022-12-13 14:11
+     *
      * @param dto
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.dto.SubjectPagingDTO>
+     * @author yl
+     * @date 2022-12-13 14:11
      */
     @Override
     public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
@@ -84,6 +85,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String name = dto.getName();
         String subjectId = dto.getId();
         String categoryId = dto.getCategoryId();
+        String userId = commonService.getUserInfo().getUid();
         //检查名字是否重复
         checkName(subjectId, name);
         BiDictEntity dict = biDictService.getById(categoryId);
@@ -91,7 +93,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (dict != null) {
             categoryName = dict.getName();
         }
-        BiSubjectEntity subject = new BiSubjectEntity();
+        BiSubjectEntity subject = this.getById(subjectId);
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        //检查能否操作
+        checkCanHandle(subject,userId);
         String shareFlag = dto.getShareFlag();
         //专题id
         subject.setName(name);
@@ -122,6 +129,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public Boolean deleteById(String id) {
+
         boolean flag = this.removeById(id);
         if (flag) {
             //默认的专题删除
@@ -251,17 +259,20 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
     /**
      * 设置专题状态
-     * @author yl
-     * @date 2022-12-13 14:20
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-12-13 14:20
      */
     @Override
     public Boolean updateState(UpdateStateDTO dto) {
-        BiSubjectEntity subject=this.getById(dto.getId());
+        BiSubjectEntity subject = this.getById(dto.getId());
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
+        String userId = commonService.getUserInfo().getUid();
+        checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
         if (stateFlag) {
             subject.setState(IsDeleted.YES);
@@ -269,6 +280,27 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             subject.setState(IsDeleted.NO);
         }
         return this.updateById(subject);
+    }
+
+    /**
+     * 检查是否可以操作专题
+     * 只有创建人和当前登录人相同 才能操作
+     *
+     * @param subject
+     * @param userId
+     * @return void
+     * @author yl
+     * @date 2022-12-13 17:45
+     */
+    public void checkCanHandle(BiSubjectEntity subject, String userId) {
+        boolean handleFlag = false;
+        if (subject != null) {
+            String createUserId = subject.getCreateUserId();
+            handleFlag = userId.equals(createUserId);
+        }
+        if (!handleFlag) {
+            throw new ServiceException(ApiError.ERROR_97005);
+        }
     }
 
 

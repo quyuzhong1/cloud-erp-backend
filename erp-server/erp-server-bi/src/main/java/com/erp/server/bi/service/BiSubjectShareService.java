@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
+import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public interface BiSubjectShareService  extends IService<BiSubjectShareEntity> {
      * @param subjectId
      * @return void
      */
-    void addSubjectShare(List<String> userList, String subjectId);
+    Boolean addSubjectShare(List<String> userList, String subjectId);
 
     /**
      * 根据专题id 删除分享信息
@@ -55,4 +56,14 @@ public interface BiSubjectShareService  extends IService<BiSubjectShareEntity> {
      * @return void
      */
     void deleteBySubjectId(String id);
+
+    /**
+     * 检查用户是否可见该专题
+     * @author yl
+     * @date 2022-12-13 18:10
+     * @param userId
+     * @param subject
+     * @return void
+     */
+    void checkPermission(String userId, BiSubjectEntity subject);
 }

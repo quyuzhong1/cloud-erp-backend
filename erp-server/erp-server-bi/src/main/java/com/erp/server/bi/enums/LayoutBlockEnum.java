@@ -8,10 +8,10 @@ package com.erp.server.bi.enums;
  */
 public enum LayoutBlockEnum {
 
-    QUARTER("quarter", "1/4块", 4),
-    HALF("half", "1/2块",2),
-    SIXTH("sixth", "1/6块",6),
-    SINGLE("single", "1块",1);
+    QUARTER("L04", "1/4块", 4),
+    HALF("L02", "1/2块",2),
+    SIXTH("L06", "1/6块",6),
+    SINGLE("L01", "1块",1);
 
     private String blockNo;
 
@@ -36,6 +36,13 @@ public enum LayoutBlockEnum {
     }
 
 
-
+    public static Integer getCount(String blockNo) {
+        for (LayoutBlockEnum item : LayoutBlockEnum.values()) {
+            if (blockNo.equals(item.getBlockNo())) {
+                return item.getCount();
+            }
+        }
+        return 0;
+    }
 
 }

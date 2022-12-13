@@ -3,11 +3,14 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.entity.BiLayoutEntity;
+import com.erp.model.bi.dto.SubjectLayoutDTO;
+import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.server.bi.service.BiLayoutService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -18,71 +21,34 @@ import javax.annotation.Resource;
  * @since 2022-12-08 14:28:26
  */
 @RestController
-@RequestMapping("biLayout")
+@RequestMapping("bi/layout")
 public class BiLayoutController extends BaseController {
-    /**
-     * 服务对象
-     */
+
+
     @Resource
-    private BiLayoutService biLayoutService;
+    private BiLayoutService layoutService;
 
-    /**
-     * 分页查询
-     *
-     * @param
-     * @return 查询结果
-     */
-    @PostMapping("/paging")
-    public ApiResult<PagingVO<BiLayoutEntity>> queryByPage() {
-        return success(this.biLayoutService.queryByPage());
-    }
-
-    /**
-     * 通过主键查询单条数据
-     *
-     * @param id 主键
-     * @return 单条数据
-     */
-    @GetMapping("{id}")
-    public ApiResult<BiLayoutEntity> queryById(@PathVariable("id") String id) {
-        return success(this.biLayoutService.queryById(id));
-    }
-
-    /**
-     * 新增数据
-     *
-     * @param biLayout 实体
-     * @return 新增结果
-     */
-    @PostMapping("/add")
-    public ApiResult add(BiLayoutEntity biLayout) {
-        Boolean flag=this.biLayoutService.insert(biLayout);
+    @PostMapping("/addSubjectLayout")
+    public ApiResult addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
+        Boolean flag = layoutService.addSubjectLayout(dto);
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 编辑数据
-     *
-     * @param biLayout 实体
-     * @return 编辑结果
-     */
-    @PostMapping("/update")
-    public ApiResult edit(BiLayoutEntity biLayout) {
-         Boolean flag=this.biLayoutService.update(biLayout);
-        return flag == true ? success() : failure();
-    }
 
     /**
-     * 删除数据
+     * 编辑专题布局获取详情
      *
-
-     * @return 删除是否成功
+     * @param dto
+     * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2022-12-13 17:06
      */
-     @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag=this.biLayoutService.deleteById(dto.getId());
-        return flag == true ? success() : failure();
+    @PostMapping("/subjectInfo")
+    public ApiResult<SubjectLayoutDetailsDTO> subjectInfo(@RequestBody @Validated BaseIdDTO dto) {
+        SubjectLayoutDetailsDTO details = layoutService.subjectInfo(dto.getId());
+        return success(details);
     }
+
 
 }
 

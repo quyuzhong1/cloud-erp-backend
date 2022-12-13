@@ -25,7 +25,7 @@ public class UpdateSubjectShareDTO implements Serializable {
     @NotBlank(message = "表id不能为空")
     private String id;
 
-    @NotBlank(message = "仪表盘名字不能为空")
+    @NotBlank(message = "名字不能为空")
     @Size(max = 20,message = "最大20字符")
     private String name;
 
@@ -33,5 +33,5 @@ public class UpdateSubjectShareDTO implements Serializable {
     @StateEnumValue(strValues = {"personal", "share"}, message = "分享标识有误")
     private String shareFlag;
 
-    private List<String> userIdList;
+    private List<String> shareUserIdList;
 }

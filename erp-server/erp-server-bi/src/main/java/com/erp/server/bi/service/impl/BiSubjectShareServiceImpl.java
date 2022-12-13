@@ -54,8 +54,8 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        String  loginUserId = commonService.getUserInfo().getUid();
-        if(!loginUserId.equals(subject.getCreateUserId())){
+        String loginUserId = commonService.getUserInfo().getUid();
+        if (!loginUserId.equals(subject.getCreateUserId())) {
             throw new ServiceException(ApiError.ERROR_97002);
         }
         String shareFlag = dto.getShareFlag();
@@ -68,15 +68,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         subject.setShareFlag(shareFlag);
         //如果是分享
         if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
-            List<BiSubjectShareEntity> addList = new ArrayList<>();
-            List<String> userList = dto.getUserIdList();
-            for (String userId : userList) {
-                BiSubjectShareEntity share = new BiSubjectShareEntity();
-                share.setSubjectId(subjectId);
-                share.setUserId(userId);
-                addList.add(share);
-            }
-            return this.saveBatch(addList);
+            return addSubjectShare(dto.getShareUserIdList(), subjectId);
         }
         return true;
     }
@@ -98,21 +90,21 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         return this.listObjs(queryWrapper, Object::toString);
     }
 
-    
-    
+
     /**
      * 保存专题分享的信息
-     * @author yl
-     * @date 2022-12-13 11:38
+     *
      * @param userList
      * @param subjectId
      * @return void
+     * @author yl
+     * @date 2022-12-13 11:38
      */
     @Override
-    public void addSubjectShare(List<String> userList, String subjectId) {
+    public Boolean addSubjectShare(List<String> userList, String subjectId) {
         //先删除分享的数据
         deleteBySubjectId(subjectId);
-        if(CollectionUtils.isNotEmpty(userList)){
+        if (CollectionUtils.isNotEmpty(userList)) {
             List<BiSubjectShareEntity> addList = new ArrayList<>();
             for (String userId : userList) {
                 BiSubjectShareEntity share = new BiSubjectShareEntity();
@@ -120,10 +112,10 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
                 share.setUserId(userId);
                 addList.add(share);
             }
-            this.saveBatch(addList);
+            return this.saveBatch(addList);
         }
+        return true;
     }
-
 
 
     /**
@@ -140,6 +132,44 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         updateWrapper.set(BiSubjectShareEntity::getIsDeleted, IsDeleted.YES);
         updateWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         this.update(updateWrapper);
+    }
+
+
+    /**
+     * 检查用户id 是否可见 该专题
+     *
+     * @param userId
+     * @param subject
+     * @return void
+     * @author yl
+     * @date 2022-12-13 18:10
+     */
+    @Override
+    public void checkPermission(String userId, BiSubjectEntity subject) {
+        //这个是 这个人是在分享的里面
+        Boolean shareFlag = getShare(userId, subject.getId());
+        //如果在 就返回
+        if (shareFlag) {
+            return;
+        }
+        //如果不在 那么就要看这个专题 是不是没有设置权限  就是私人的
+        if (DashboardEnum.PERSONAL.getFlag().equals(subject.getShareFlag())) {
+            //当不是创建人的时候 就没有权限看咯
+            if (!userId.equals(subject.getCreateUserId())) {
+                throw new ServiceException(ApiError.ERROR_97006);
+            }
+        }
+
+
+    }
+
+    private Boolean getShare(String userId, String subjectId) {
+        LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectShareEntity::getUserId, userId);
+        queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        return count > 0 ? true : false;
     }
 
 

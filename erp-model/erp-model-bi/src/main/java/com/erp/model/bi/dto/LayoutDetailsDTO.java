@@ -5,28 +5,31 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * @Classname LayoutDTO
+ *  布局详情
+ * @Classname
  * @Description TODO
- * @Date 2022-12-09 16:19
+ * @Date 2022-12-13 17:23
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class LayoutDTO  implements Serializable {
-
-
-
+public class LayoutDetailsDTO  implements Serializable {
 
     /**
      * 高度
      */
-    @NotNull(message = "高度不能为空")
     private Integer height=0;
+
+
+    /**
+     * 列的个数
+     */
+    private Integer columnCount=0;
+
 
     /**
      * 块的编号
@@ -39,5 +42,6 @@ public class LayoutDTO  implements Serializable {
     /**
      * 模块id集合
      */
-    private List<String>  moduleIdList;
+    private List<String> moduleIdList;
+
 }

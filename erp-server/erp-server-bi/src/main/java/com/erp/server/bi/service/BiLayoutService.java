@@ -1,7 +1,8 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.SubjectLayoutDTO;
+import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.model.bi.entity.BiLayoutEntity;
 
 /**
@@ -12,45 +13,22 @@ import com.erp.model.bi.entity.BiLayoutEntity;
  */
 public interface BiLayoutService  extends IService<BiLayoutEntity> {
 
-    /**
-     * 通过ID查询单条数据
-     *
-     * @param id 主键
-     * @return 实例对象
-     */
-    BiLayoutEntity queryById(String id);
 
     /**
-     * 分页查询
-     *
-     * @param
-     * @param
-     * @return 查询结果
+     * 添加专题与模块关系
+     * @author yl
+     * @date 2022-12-13 16:13
+     * @param dto
+     * @return java.lang.Boolean
      */
-    PagingVO<BiLayoutEntity> queryByPage();
+    Boolean addSubjectLayout(SubjectLayoutDTO dto);
 
     /**
-     * 新增数据
-     *
-     * @param biLayout 实例对象
-     * @return 实例对象
+     * 根据专题id 获取专题详情信息
+     * @author yl
+     * @date 2022-12-13 17:30
+     * @param subjectId
+     * @return com.erp.model.bi.dto.SubjectLayoutDetailsDTO
      */
-    Boolean insert(BiLayoutEntity biLayout);
-
-    /**
-     * 修改数据
-     *
-     * @param biLayout 实例对象
-     * @return 实例对象
-     */
-    Boolean update(BiLayoutEntity biLayout);
-
-    /**
-     * 通过主键删除数据
-     *
-     * @param id 主键
-     * @return 是否成功
-     */
-    Boolean deleteById(String id);
-
+    SubjectLayoutDetailsDTO subjectInfo(String subjectId);
 }

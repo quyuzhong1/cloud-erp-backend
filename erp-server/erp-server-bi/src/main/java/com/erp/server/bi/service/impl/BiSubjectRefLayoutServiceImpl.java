@@ -1,13 +1,14 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.entity.BiSubjectRefLayoutEntity;
 import com.erp.server.bi.mapper.BiSubjectRefLayoutMapper;
 import com.erp.server.bi.service.BiSubjectRefLayoutService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 专题与布局关系表(BiSubjectRefLayout)表服务实现类
@@ -17,56 +18,29 @@ import javax.annotation.Resource;
  */
 @Service
 public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayoutMapper, BiSubjectRefLayoutEntity> implements BiSubjectRefLayoutService {
-    @Resource
-    private BiSubjectRefLayoutMapper biSubjectRefLayoutMapper;
-
-    /**
-     * 通过ID查询单条数据
-     *
-     * @param id 主键
-     * @return 实例对象
-     */
-    @Override
-    public BiSubjectRefLayoutEntity queryById(Integer id) {
-        return null;
-    }
-
-    @Override
-    public PagingVO<BiSubjectRefLayoutEntity> queryByPage() {
-        return null;
-    }
 
 
     /**
-     * 新增数据
+     * 保存专题与布局关系表
      *
-     * @param biSubjectRefLayout 实例对象
-     * @return 实例对象
+     * @param subjectId
+     * @param layoutIds
+     * @return void
+     * @author yl
+     * @date 2022-12-13 16:54
      */
     @Override
-    public Boolean insert(BiSubjectRefLayoutEntity biSubjectRefLayout) {
-        return true;
+    public void addSubjectRefLayout(String subjectId, List<String> layoutIds) {
+        if (CollectionUtils.isNotEmpty(layoutIds)) {
+            List<BiSubjectRefLayoutEntity> addList = new ArrayList<>(layoutIds.size());
+            for (String layoutId : layoutIds) {
+                BiSubjectRefLayoutEntity entity = new BiSubjectRefLayoutEntity();
+                entity.setLayoutId(layoutId);
+                entity.setSubjectId(subjectId);
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
+        }
     }
 
-    /**
-     * 修改数据
-     *
-     * @param biSubjectRefLayout 实例对象
-     * @return 实例对象
-     */
-    @Override
-    public Boolean update(BiSubjectRefLayoutEntity biSubjectRefLayout) {
-        return true;
-    }
-
-    /**
-     * 通过主键删除数据
-     *
-     * @param id 主键
-     * @return 是否成功
-     */
-    @Override
-    public Boolean deleteById(String id) {
-        return true;
-    }
 }

@@ -69,14 +69,4 @@ public class SubjectDTO  implements Serializable {
     private List<String> shareUserIdList;
 
 
-//   /**
-//    * 布局集合
-//    * @author yl
-//    * @date 2022-12-09 16:40
-//    * @param null
-//    * @return
-//    */
-//    private List<LayoutDTO> layoutList;
-
-
 }
