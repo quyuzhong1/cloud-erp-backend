@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.model.dmp.pull.mapper.DmpOrderInfoMapper">
+<mapper namespace="com.erp.server.bi.mapper.DmpOrderInfoMapper">
 
     <sql id="Base_Column_List">
         id,platform_order_id,order_state,
@@ -20,4 +20,12 @@
         item_total_origin,item_total_cost,subsidy_amount,
         country_name_en,country_name_cn
     </sql>
+
+    <select id="paging" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
+        select
+            *
+        from dmp_return_order_info
+    </select>
+
+
 </mapper>

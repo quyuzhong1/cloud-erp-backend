@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.model.dmp.pull.mapper.DmpReturnOrderInfoMapper">
+<mapper namespace="com.erp.server.bi.mapper.DmpReturnOrderInfoMapper">
 
     <sql id="Base_Column_List">
         id,platform_order_id,shop_no,
@@ -14,4 +14,12 @@
         return_create_time,refund_ime,currency_code,
         currency_rate
     </sql>
+
+    <select id="paging" resultType="com.erp.model.bi.dto.DmpReturnOrderInfoDTO">
+        select
+            *
+        from dmp_return_order_info
+    </select>
+
+
 </mapper>
