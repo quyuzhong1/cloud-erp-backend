@@ -31,7 +31,7 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @param pid 父级id
      * @return Boolean
      */
-    Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid);
+    Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid,String msg);
     /**
      * @description: 新增时保存日志
      * @author Will

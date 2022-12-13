@@ -1,7 +1,9 @@
 package com.erp.server.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 //销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
-public enum  SaleStateEnum {
+public enum  SaleStateEnum implements EnumMessage {
     NOT_SALE(1, "未销售"),
     SALES(2, "销售中"),
     CLEARANCE(3, "清仓中"),

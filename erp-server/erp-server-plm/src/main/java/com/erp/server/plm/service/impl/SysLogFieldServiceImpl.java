@@ -41,9 +41,9 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加
-         String  classPath = ProductSkuBaseInfoDTO.class.toString();
+         String  classPath = ProductInfoDTO.class.toString();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("productState").setFieldName("产品开发状态").setClassPath(classPath).setType(2) .setEnumClass("ProductDetailStateEnum")
+            new SysLogFieldEntity().setField("spuNo").setFieldName("SPU(型号/model)").setClassPath(classPath).setType(0) .setEnumClass(null)
                /*new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("approvalStatus").setFieldName("产品状态").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("chargeName").setFieldName("产品经理").setClassPath(classPath).setType(0) .setEnumClass(null),

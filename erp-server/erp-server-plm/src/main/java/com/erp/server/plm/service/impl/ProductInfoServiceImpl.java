@@ -1072,7 +1072,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
     }
 
     /**
@@ -1083,7 +1083,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
     }
 
 

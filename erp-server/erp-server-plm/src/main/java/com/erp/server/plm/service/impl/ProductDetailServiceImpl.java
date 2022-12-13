@@ -846,6 +846,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
+
+        ProductDetailEntity productDetailEntity = this.getById(skuId);
+
+        if (ObjectUtils.isNotEmpty(productDetailEntity)) {
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+            if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+                //添加操作日志
+                SysLogEntity sysLogEntity =  new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(productInfoEntity.getId()).setPid(productInfoEntity.getId()).setOperation("删除信息").setContent("删除了一个SKU：["+productDetailEntity.getSkuNo()+"]");
+                sysLogService.addSysLogByOther(sysLogEntity);
+            }
+        }
         return this.remove(queryWrapper);
     }
 
@@ -1483,7 +1494,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
     }
 
     /**
@@ -1495,7 +1506,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,SKUCLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",businessId));
     }
 
     /**
@@ -1507,7 +1518,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,SKUCLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",businessId));
     }
 
     /**
@@ -1520,7 +1531,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,SKUCLASSPATH,productCostDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,SKUCLASSPATH,productCostDTO.getSkuId(),pid,String.format("SKU[%s]",productCostDTO.getSkuId()));
         }
     }
 
@@ -1534,7 +1545,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,SKUCLASSPATH,productPurchaseDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,SKUCLASSPATH,productPurchaseDTO.getSkuId(),pid,String.format("SKU[%s]",productPurchaseDTO.getSkuId()));
         }
     }
 
@@ -1548,7 +1559,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,SKUCLASSPATH,productSaleDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,SKUCLASSPATH,productSaleDTO.getSkuId(),pid,String.format("SKU[%s]",productSaleDTO.getSkuId()));
         }
     }
 
@@ -1562,7 +1573,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,SKUCLASSPATH,productLogisticsDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,SKUCLASSPATH,productLogisticsDTO.getSkuId(),pid,String.format("SKU[%s]",productLogisticsDTO.getSkuId()));
         }
     }
 
@@ -1576,7 +1587,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,SKUCLASSPATH,productPackDTO.getSkuId(),pid);
+            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,SKUCLASSPATH,productPackDTO.getSkuId(),pid,String.format("SKU[%s]",productPackDTO.getSkuId()));
         }
     }
 
@@ -1595,7 +1606,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (ObjectUtils.isNotEmpty(oldEntity)) {
                         BeanMapperUtils.copy(oldEntity,oldDto);
                     }
-                    sysLogService.addSysLogByUpdate(oldDto,obj,SKUCLASSPATH,obj.getSkuId(),pid);
+                    sysLogService.addSysLogByUpdate(oldDto,obj,SKUCLASSPATH,obj.getSkuId(),pid,String.format("SKU[%s]",obj.getSkuId()));
                 }
             });
         }
