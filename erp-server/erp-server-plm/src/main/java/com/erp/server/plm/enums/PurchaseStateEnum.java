@@ -1,7 +1,9 @@
 package com.erp.server.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 //首批到货状态：1.未到货 2.已到货 3.部分到货
-public enum  PurchaseStateEnum {
+public enum  PurchaseStateEnum implements EnumMessage {
     NON_ARRIVAL(1, "未到货"),
     ARRIVED(2, "已到货"),
     PARTIAL_ARRIVAL(3, "部分到货");

@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @Date 2022/11/16 19:35
      * @param shopNo 店铺编号
      * @param platformSign 平台标识
-     * @return com.erp.server.dmp.entity.dmp.DmpSkuInfoEntity
+     * @return com.erp.model.dmp.entity.DmpSkuInfoEntity
      **/
     @Override
     public DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign){

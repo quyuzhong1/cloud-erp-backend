@@ -98,7 +98,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         String assignee = historicActivityInstanceList.get(0).getAssignee();
         Map<String, Object> taskVariable = new HashMap<>(1);
         //设置当前处理人
-        taskVariable.put("assignee", assignee);
+        taskVariable.put(StringUtils.isBlank(dto.getFieldName()) ? "assignee" : dto.getFieldName(), assignee);
         runtimeService.createProcessInstanceModification(procId)
                 //关闭相关任务
                 .cancelActivityInstance(getInstanceIdForActivity(activityInstance, task.getTaskDefinitionKey()))
@@ -234,7 +234,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         runtimeService.createProcessInstanceModification(processInstanceId)
                 .cancelAllForActivity(currentActivity.getActivityId())
                 .startBeforeActivity(lastActivity.getActivityId())
-                .setVariable("denyReason", "驳回到起点")
+                .setVariables(dto.getParameterMap())
                 .execute();
 
         //添加审批意见

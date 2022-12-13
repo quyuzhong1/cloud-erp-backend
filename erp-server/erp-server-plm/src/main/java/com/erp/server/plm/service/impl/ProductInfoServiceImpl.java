@@ -287,7 +287,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             //操作日志
-            sysLogService.addSysLogBySave("新增了一个产品：["+entity.getName()+"]",CLASSPATH,entity.getId(),entity.getId());
+            sysLogService.addSysLogBySave("生成了一个产品：["+entity.getName()+"]",CLASSPATH,entity.getId(),entity.getId());
             //通知新建产品
             noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
@@ -1072,7 +1072,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
     }
 
     /**
@@ -1083,7 +1083,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid);
+        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
     }
 
 

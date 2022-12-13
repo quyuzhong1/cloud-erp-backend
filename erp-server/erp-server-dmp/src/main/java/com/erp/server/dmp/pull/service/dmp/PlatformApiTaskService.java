@@ -1,8 +1,8 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.PlatformApiTaskEntity;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.dto.JobTaskDTO;
 
 public interface PlatformApiTaskService extends IService<PlatformApiTaskEntity> {
 

@@ -19,6 +19,7 @@
         <module>erp-model-workflow</module>
         <module>erp-model-plm</module>
         <module>erp-model-bi</module>
+        <module>erp-model-dmp</module>
     </modules>
 
     <dependencies>

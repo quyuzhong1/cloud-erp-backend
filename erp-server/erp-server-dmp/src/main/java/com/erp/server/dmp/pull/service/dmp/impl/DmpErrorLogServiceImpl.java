@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.server.dmp.pull.mapper.DmpErrorLogMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import org.springframework.stereotype.Service;

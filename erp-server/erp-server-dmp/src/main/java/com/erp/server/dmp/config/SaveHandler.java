@@ -1,8 +1,9 @@
 package com.erp.server.dmp.config;
 
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.server.dmp.bean.AbstractSparrowAnnotationBeanMap;
-import com.erp.server.dmp.entity.dto.RequestDTO;
-import com.erp.server.dmp.enums.PlatformApiEnum;
+
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.google.common.collect.Maps;

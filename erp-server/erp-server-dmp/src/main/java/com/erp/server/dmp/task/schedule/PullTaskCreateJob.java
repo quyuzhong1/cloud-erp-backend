@@ -1,10 +1,9 @@
 package com.erp.server.dmp.task.schedule;
 
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
 import com.erp.server.dmp.task.service.TbTaskTypeService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

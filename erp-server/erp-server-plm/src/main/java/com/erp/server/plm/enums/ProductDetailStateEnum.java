@@ -1,9 +1,11 @@
 package com.erp.server.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * 产品开发状态
  */
-public enum ProductDetailStateEnum {
+public enum ProductDetailStateEnum implements EnumMessage {
     NO_DEVELOP(1, "未开发"),
     DEVELOP_AFOOT(2, "开发中"),
     DEVELOP_FINISH(3, "开发完成"),

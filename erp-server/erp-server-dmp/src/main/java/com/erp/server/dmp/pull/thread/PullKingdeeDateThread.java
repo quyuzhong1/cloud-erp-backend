@@ -1,8 +1,8 @@
 package com.erp.server.dmp.pull.thread;
 
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
-import com.erp.server.dmp.entity.dto.RequestDTO;
-import com.erp.server.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.service.ModelService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import org.springframework.scheduling.annotation.Async;

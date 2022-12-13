@@ -1,6 +1,5 @@
 package com.erp.server.dmp.config;
 
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;

@@ -5,18 +5,17 @@ import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.server.dmp.constant.MongoTableNameContant;
-import com.erp.server.dmp.constant.UrlContant;
-import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
-import com.erp.server.dmp.entity.dmp.DmpReturnOrderInfoEntity;
-import com.erp.server.dmp.entity.dmp.DmpReturnOrderItemEntity;
-import com.erp.server.dmp.entity.dmp.MabangAppEntity;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
-import com.erp.server.dmp.entity.dto.OrderMongoDTO;
-import com.erp.server.dmp.entity.dto.RequestDTO;
-import com.erp.server.dmp.entity.mabang.ReturnOrderEntity;
-import com.erp.server.dmp.entity.mabang.ReturnOrderItemEntity;
-import com.erp.server.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.mabang.ReturnOrderEntity;
+import com.erp.model.dmp.mabang.ReturnOrderItemEntity;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.*;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
@@ -30,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import com.erp.model.dmp.entity.MabangAppEntity;
 
 /**
  * 马帮退货订单

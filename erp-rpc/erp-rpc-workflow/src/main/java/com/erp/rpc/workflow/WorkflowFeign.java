@@ -33,9 +33,13 @@ public interface WorkflowFeign {
     @PostMapping("workflow/feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 
-    //审核任务回退到初始状态
-    @PostMapping("workflow/feign/process/rejectOriginProcess")
-    ProcessNodeDTO rejectOriginProcess(@RequestBody ApproveProcessDTO dto);
+    //撤销流程
+    @PostMapping("workflow/feign/process/withDraw")
+    void withDraw(@RequestBody ApproveProcessDTO dto);
+
+    //取回流程
+    @PostMapping("workflow/feign/process/fetchBack")
+    void fetchBack(@RequestBody ApproveProcessDTO dto);
 
     //根据审核任务id获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDoByTaskId")

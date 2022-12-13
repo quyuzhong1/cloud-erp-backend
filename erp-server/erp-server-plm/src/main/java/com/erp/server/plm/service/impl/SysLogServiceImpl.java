@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.EnumsUtil;
@@ -13,29 +12,28 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.entity.SysLogFieldEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.SysDocsMapper;
 import com.erp.server.plm.mapper.SysLogMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.SysDocsService;
-import com.erp.server.plm.service.SysLogFieldService;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,10 +51,16 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private BasicDictService basicDictService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
     private static final  String PACKAGEPATH = "com.erp.server.plm.enums";
 
     @Override
-    public Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid) {
+    public Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid,String msg) {
 
         Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
         //判断是否为空
@@ -87,10 +91,13 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             Integer type = sysLogFieldEntity.getType();
             String oldValue = valuePair.getKey();
             String newValue = valuePair.getValue();
-            if (type == 1) {
+            if (type == 1) {//是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
-            } else if (type == 2) {
+            } else if (type == 2) {//枚举
+                if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
+                    throw new ServiceException(ApiError.ERROR_9028);
+                }
                 Class<?> aClass = null;
                 try {
                      aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
@@ -101,14 +108,39 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 if (!anEnum) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
-                oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getName();
-                newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getName();
+                if (StringUtils.isNotBlank(oldValue)) {
+                    oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getName();
+                }
+                if (StringUtils.isNotBlank(newValue)) {
+                    newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getName();
+                }
+
+            } else if (type == 3) {//字典
+                List<BasicDictEntity> oldList = basicDictService.listByIds(Arrays.asList(oldValue.split(",")));
+                if (CollectionUtils.isNotEmpty(oldList)) {
+                    oldValue = oldList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
+                }
+                List<BasicDictEntity> newList = basicDictService.listByIds(Arrays.asList(newValue.split(",")));
+                if (CollectionUtils.isNotEmpty(newList)) {
+                    newValue = newList.stream().map(BasicDictEntity::getValue).distinct().collect(Collectors.joining(","));
+                }
+            } else if (type == 4) {//人员
+                List<FindUserDTO> oldList = sysUserFeign.getUserListByUserIds(Arrays.asList(oldValue.split(",")));
+                if (CollectionUtils.isNotEmpty(oldList)) {
+                    oldValue = oldList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+                }
+                List<FindUserDTO> newList = sysUserFeign.getUserListByUserIds(Arrays.asList(newValue.split(",")));
+                if (CollectionUtils.isNotEmpty(newList)) {
+                    newValue = newList.stream().map(FindUserDTO::getUserName).distinct().collect(Collectors.joining(","));
+                }
+
             }
+
             String content = "";
             if (StringUtils.isBlank(valuePair.getKey())) {
-                content = "编辑了[".concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
+                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
             } else {
-                content = "编辑了[".concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
+                content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
             }
             SysLogEntity entity = new SysLogEntity();
             entity.setClassPath(classPath)

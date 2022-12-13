@@ -2,8 +2,8 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.PlatformApiTaskEntity;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
 import org.springframework.stereotype.Service;

@@ -45,7 +45,7 @@ public class SysLogFieldEntity {
     private String classPath;
 
     /**
-     * 字段类型 0字符串，1是或否，2枚举
+     * 字段类型 0字符串，1是或否，2枚举，3字典,4人员
      */
     private Integer type;
 

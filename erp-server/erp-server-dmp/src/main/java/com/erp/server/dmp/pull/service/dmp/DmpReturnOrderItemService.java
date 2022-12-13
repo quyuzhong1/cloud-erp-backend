@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @Author Luo_WG
      * @Date 2022/11/16 11:04
      * @param returnOrderId 退货订单表id
-     * @return com.erp.server.dmp.entity.dmp.DmpReturnOrderItemEntity
+     * @return com.erp.model.dmp.entity.DmpReturnOrderItemEntity
      **/
     DmpReturnOrderItemEntity getOrderByReturnOrderId(String returnOrderId);
 

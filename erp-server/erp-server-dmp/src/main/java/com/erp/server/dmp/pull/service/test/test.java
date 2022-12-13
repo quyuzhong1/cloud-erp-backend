@@ -1,29 +1,13 @@
 package com.erp.server.dmp.pull.service.test;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
-import com.common.core.utils.date.EnumTimePattern;
-import com.erp.server.dmp.constant.UrlContant;
-import com.erp.server.dmp.entity.dmp.DmpErrorLogEntity;
-import com.erp.server.dmp.entity.dmp.GyyAppEntity;
-import com.erp.server.dmp.entity.dto.JobTaskDTO;
-import com.erp.server.dmp.entity.dto.RequestDTO;
-import com.erp.server.dmp.entity.gyy.GyyOrderEntity;
-import com.erp.server.dmp.utils.GyyUtils;
+import com.erp.model.dmp.dto.RequestDTO;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
-import sun.misc.BASE64Decoder;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public class test {

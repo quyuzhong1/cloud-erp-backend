@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpReturnOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
      * @Author Luo_WG
      * @Date 2022/11/16 11:04
      * @param returnOrderId 退货订单表id
-     * @return com.erp.server.dmp.entity.dmp.DmpReturnOrderItemEntity
+     * @return com.erp.model.dmp.entity.DmpReturnOrderItemEntity
      **/
     public DmpReturnOrderItemEntity getOrderByReturnOrderId(String returnOrderId) {
         LambdaQueryWrapper<DmpReturnOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();

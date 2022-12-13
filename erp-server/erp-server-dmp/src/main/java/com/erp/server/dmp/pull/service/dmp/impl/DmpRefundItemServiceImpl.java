@@ -2,7 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.server.dmp.entity.dmp.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpRefundItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.server.dmp.entity.dmp.DmpDeliveryDetailInfoEntity;
-import com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
 /**
  * 出库详情
@@ -22,7 +22,7 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param dmpDeliveryDetailInfoEntity
-     * @return com.erp.server.dmp.entity.dmp.DmpOrderInfoEntity
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     DmpDeliveryDetailInfoEntity getDeliveryDetailByBillNo(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity);
 
