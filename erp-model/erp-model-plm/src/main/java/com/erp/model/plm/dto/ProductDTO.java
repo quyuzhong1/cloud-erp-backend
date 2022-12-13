@@ -105,6 +105,10 @@ public class ProductDTO implements Serializable {
      * 关联产品id
      */
     private String relevanceProductId;
+    /**
+     * 关联产品名称
+     */
+    private String relevanceProductName;
 
     //产品分类id集合
     private List<String>   categoryIdList;

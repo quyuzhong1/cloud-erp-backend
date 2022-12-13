@@ -246,6 +246,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
         if (category != null) {
             entity.setCategory(category.getName());
+            dto.setCategory(category.getName());
         } else {
             entity.setCategory("");
         }
@@ -264,6 +265,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             ProductInfoEntity productInfoEntity = this.getById(entity.getRelevanceProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 entity.setVersion(productInfoEntity.getVersion().intValue() + 1);
+                dto.setRelevanceProductName(productInfoEntity.getName());
             }
         }
         entity.setChargeId(chargeId);
@@ -1072,6 +1074,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
+        //查询关联产品版本
+        ProductInfoEntity productInfoEntity = this.getById(oldDto.getRelevanceProductId());
+        if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+            oldDto.setRelevanceProductName(productInfoEntity.getName());
+        }
+
         sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getSpuNo()));
     }
 
