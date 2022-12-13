@@ -769,4 +769,14 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
 
+    /**
+     * 获取所有用户所在的部门
+     * @Author Luo_WG
+     * @Date 2022/12/13 17:12
+     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
+     **/
+    @Override
+    public List<SysUserDeptDTO> getUserDeptList(){
+        return baseMapper.getUserDeptList();
+    }
 }

@@ -7,6 +7,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.service.SysRoleUserService;
@@ -173,5 +174,16 @@ public class SysUserFeignController extends BaseController {
     public FindUserDTO getUserByUserId(@RequestBody String userId) {
         FindUserDTO dto = sysUserInfoService.getUserByUserId(userId);
         return dto;
+    }
+
+    /**
+     * 获取所有用户所在的部门
+     * @Author Luo_WG
+     * @Date 2022/12/13 17:12
+     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
+     **/
+    @PostMapping("/getUserDeptList")
+    public List<SysUserDeptDTO> getUserDeptList() {
+        return sysUserInfoService.getUserDeptList();
     }
 }

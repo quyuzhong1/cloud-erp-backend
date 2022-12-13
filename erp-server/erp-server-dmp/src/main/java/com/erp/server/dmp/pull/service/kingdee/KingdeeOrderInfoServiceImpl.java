@@ -347,7 +347,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         for (KingdeeOrderItemEntity orderItemEntity : orderItemEntityList) {
             totalPrice = orderItemEntity.getFPrice().multiply(orderItemEntity.getFQty());
             totalCost = orderItemEntity.getF_ulz_CGCB().multiply(orderItemEntity.getFQty());
-
         }
 
         //商品总售价
@@ -437,7 +436,13 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setCurrencyCode(kingdeeOrderEntity.getFSettleCurrId());
 
         //汇率
-        dmpOrderInfoEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
+        if (kingdeeOrderEntity.getFExchangeRate() != null
+                && kingdeeOrderEntity.getFExchangeRate().compareTo(BigDecimal.ZERO) <= 0
+                && kingdeeOrderEntity.getFSettleCurrId().equalsIgnoreCase("CNY")) {
+            dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
+        } else {
+            dmpOrderInfoEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
+        }
 
         //运费收入
         dmpOrderInfoEntity.setShippingFee(BigDecimal.ZERO);

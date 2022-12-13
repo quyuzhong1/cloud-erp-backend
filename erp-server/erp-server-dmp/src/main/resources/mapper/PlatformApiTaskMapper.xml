@@ -24,7 +24,7 @@
         pa.api_code,
         pa.api_name,
         p.task_name,
-        p.name AS platform_name
+        p.name AS platformName
         FROM platform_api_task pat
         INNER JOIN platform_api pa ON pat.api_id = pa.id
         INNER JOIN platform p ON pa.platform_id = p.id

@@ -70,4 +70,8 @@ public interface SysUserFeign {
 
     @PostMapping("sys/feign/code/getSysCode")
     String getSysCode(@RequestBody SysCodeDTO dto);
+
+    @PostMapping("sys/feign/user/getUserDeptList")
+    String getUserDeptList();
+
 }

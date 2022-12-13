@@ -120,5 +120,16 @@
         GROUP BY du.department_id
     </select>
 
+    <select id="getUserDeptList" resultType="com.erp.model.sys.dto.SysUserDeptDTO">
+        SELECT
+            sui.uid,
+            sui.user_name,
+            sd."id" AS deptId,
+            sd."name" AS deptName
+        FROM sys_user_info sui
+        LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid
+        LEFT JOIN sys_department sd ON sd."id" = sdu.department_id
+    </select>
+
 
 </mapper>
