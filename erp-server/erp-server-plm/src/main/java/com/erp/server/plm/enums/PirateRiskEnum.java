@@ -10,8 +10,9 @@ import com.common.core.constant.EnumMessage;
  */
 public enum PirateRiskEnum implements EnumMessage {
 
-    NOTRISK(0,"无风险"),
-    RISK(1,"有风险");
+    RISK(1,"有风险"),
+    NOTRISK(2,"无风险");
+
 
     private Integer code;
 
