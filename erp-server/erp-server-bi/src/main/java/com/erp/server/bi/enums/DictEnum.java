@@ -8,7 +8,9 @@ package com.erp.server.bi.enums;
  */
 public enum DictEnum {
 
-    DASHBOARD("个人仪表盘","subjectCategory","dashboard");
+    DASHBOARD("个人仪表盘","subjectCategory","dashboard"),
+    MODULE("模块分类","moduleCategory","");
+
 
     private String name;
 

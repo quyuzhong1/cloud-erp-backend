@@ -94,6 +94,10 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             if (type == 1) {//是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
+                //值不变则不用新增操作日志
+                if (oldValue.equals(newValue)) {
+                    continue;
+                }
             } else if (type == 2) {//枚举
                 if (StringUtils.isBlank(sysLogFieldEntity.getEnumClass())) {
                     throw new ServiceException(ApiError.ERROR_9028);

@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 模块表(BiModule)表数据库访问层
@@ -19,5 +23,9 @@ public interface BiModuleMapper extends BaseMapper<BiModuleEntity> {
 
 
     IPage<ModulePagingDTO> paging(Page query, BaseSearchDTO params);
+
+    List<String> getUserVisibleModuleIds(@Param("userId") String userId);
+
+    List<ModuleDTO> getByIds(@Param("moduleIdList") List<String> moduleIdList,@Param("searchKeyword") String searchKeyword);
 }
 

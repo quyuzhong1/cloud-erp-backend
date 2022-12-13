@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.server.bi.service.BiModuleService;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 模块表(BiModule)表控制层
@@ -91,14 +93,15 @@ public class BiModuleController extends BaseController {
 
 
     /**
-     * 设置模板状态
+     * 布局添加模块
+     * 模块列表
      *
      * @return 删除是否成功
      */
-    @PostMapping("/list")
-    public ApiResult list(@RequestBody @Validated BaseSearchDTO dto) {
-
-        return success();
+    @PostMapping("/category/list")
+    public ApiResult<List<CategoryModuleDTO>> categoryList(@RequestBody @Validated BaseSearchDTO dto) {
+        List<CategoryModuleDTO> list=biModuleService.categoryList(dto.getSearchKeyword());
+        return success(list);
     }
 
 }

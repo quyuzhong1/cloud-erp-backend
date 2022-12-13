@@ -1,17 +1,25 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DashboardDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
+import com.erp.model.bi.dto.SubjectPagingDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.server.bi.constant.IsDeleted;
+import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.BiDictService;
@@ -20,10 +28,12 @@ import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -46,21 +56,62 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Resource
     private BiDictService biDictService;
 
+    
+    /**
+     * 分页展示对应的数据
+     * @author yl
+     * @date 2022-12-13 14:11
+     * @param dto
+     * @return com.erp.common.vo.PagingVO<com.erp.model.bi.dto.SubjectPagingDTO>
+     */
     @Override
-    public PagingVO<BiSubjectEntity> queryByPage() {
-        return null;
+    public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        BaseSearchDTO params = dto.getParams();
+        IPage pageData = baseMapper.paging(query, params);
+        return new PagingVO(pageData);
     }
 
 
     /**
-     * 修改数据
+     * 修改专题
      *
-     * @param biSubject 实例对象
+     * @param dto 实例对象
      * @return 实例对象
      */
     @Override
-    public Boolean update(BiSubjectEntity biSubject) {
-        return true;
+    public String update(SubjectDTO dto) {
+        String name = dto.getName();
+        String subjectId = dto.getId();
+        String categoryId = dto.getCategoryId();
+        //检查名字是否重复
+        checkName(subjectId, name);
+        BiDictEntity dict = biDictService.getById(categoryId);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
+        }
+        BiSubjectEntity subject = new BiSubjectEntity();
+        String shareFlag = dto.getShareFlag();
+        //专题id
+        subject.setName(name);
+        subject.setId(subjectId);
+        subject.setShareFlag(shareFlag);
+        subject.setCategoryId(categoryId);
+        subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
+        Boolean result = this.updateById(subject);
+        if (result) {
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, subjectId);
+            }
+            return subjectId;
+        }
+        return "";
+
     }
 
     /**
@@ -71,7 +122,14 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public Boolean deleteById(String id) {
-        return true;
+        boolean flag = this.removeById(id);
+        if (flag) {
+            //默认的专题删除
+            subjectDefaultService.deleteBySubjectId(id);
+            //分享的专题删除
+            subjectShareService.deleteBySubjectId(id);
+        }
+        return flag;
     }
 
     /**
@@ -91,7 +149,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             queryWrapper.ne(BiSubjectEntity::getId, subjectId);
         }
         queryWrapper.last("LIMIT 1");
-        int count = this.count();
+        int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_97001);
         }
@@ -156,20 +214,61 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      * @date 2022-12-09 16:52
      */
     @Override
-    public Boolean addSubject(SubjectDTO dto) {
+    @Transactional
+    public String addSubject(SubjectDTO dto) {
         String name = dto.getName();
+        String categoryId = dto.getCategoryId();
         //检查名字是否重复
         checkName(null, name);
-        BiDictEntity dict = biDictService.getById(dto.getCategoryId());
+        BiDictEntity dict = biDictService.getById(categoryId);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
+        }
 
         BiSubjectEntity subject = new BiSubjectEntity();
         //专题id
         String subjectId = IdWorker.getIdStr();
+        String shareFlag = dto.getShareFlag();
         subject.setName(name);
         subject.setId(subjectId);
+        subject.setShareFlag(shareFlag);
+        subject.setCategoryId(categoryId);
+        subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
+        Boolean result = this.save(subject);
+        if (result) {
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, subjectId);
+            }
+            return subjectId;
+        }
+        return "";
+    }
 
-
-        return null;
+    /**
+     * 设置专题状态
+     * @author yl
+     * @date 2022-12-13 14:20
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean updateState(UpdateStateDTO dto) {
+        BiSubjectEntity subject=this.getById(dto.getId());
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        Boolean stateFlag = dto.getState();
+        if (stateFlag) {
+            subject.setState(IsDeleted.YES);
+        } else {
+            subject.setState(IsDeleted.NO);
+        }
+        return this.updateById(subject);
     }
 
 

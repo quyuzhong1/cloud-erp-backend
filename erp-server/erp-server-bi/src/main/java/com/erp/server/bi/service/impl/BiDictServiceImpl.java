@@ -6,9 +6,11 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.mapper.BiDictMapper;
 import com.erp.server.bi.service.BiDictService;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +20,7 @@ import java.util.Map;
  * @author yl
  * @since 2022-12-08 14:24:02
  */
-@Service("biDictService")
+@Service
 public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> implements BiDictService {
     @Resource
     private BiDictMapper biDictMapper;
@@ -74,10 +76,29 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     }
 
     @Override
-    public List<Map<String,Object>> listByType(String type) {
+    public List<Map<String, Object>> listByType(String type) {
         LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiDictEntity::getId,BiDictEntity::getName);
+        queryWrapper.select(BiDictEntity::getId, BiDictEntity::getName);
         queryWrapper.eq(BiDictEntity::getType, type);
         return this.listMaps(queryWrapper);
+    }
+
+    
+    /**
+     * 根据 type 获取到对应的分类id 和分类名
+     * @author yl
+     * @date 2022-12-13 11:30
+     * @param type
+     * @return
+     */
+    @Override
+    public List<Pair<String,String>> getCategory(String type) {
+        List<Map<String, Object>> mapList = listByType(type);
+        List<Pair<String,String>> resultList = new ArrayList<>();
+        for(Map<String, Object> map:mapList){
+            Pair<String,String> pair=new Pair<>(map.get("id").toString(),map.get("name").toString());
+            resultList.add(pair);
+        }
+        return resultList;
     }
 }

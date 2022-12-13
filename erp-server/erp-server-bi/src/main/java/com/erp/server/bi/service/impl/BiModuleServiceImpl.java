@@ -10,22 +10,25 @@ import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.server.bi.constant.IsDeleted;
+import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
-import com.erp.server.bi.service.BiModulePermissionService;
-import com.erp.server.bi.service.BiModuleService;
-import com.erp.server.bi.service.BiSysModuleService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 模块表(BiModule)表服务实现类
@@ -42,6 +45,12 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
 
     @Resource
     private BiSysModuleService sysModuleService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private BiDictService dictService;
 
 
     /**
@@ -84,6 +93,37 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         return this.updateById(entity);
     }
 
+
+    /**
+     * 这个是获取到添加专题的时候分类用到的
+     *
+     * @param searchKeyword
+     * @return java.util.List<com.erp.model.bi.dto.CategoryModuleDTO>
+     * @author yl
+     * @date 2022-12-12 18:43
+     */
+    @Override
+    public List<CategoryModuleDTO> categoryList(String searchKeyword) {
+        List<CategoryModuleDTO> resultList = new ArrayList<>(10);
+        String userId = commonService.getUserInfo().getUid();
+        /**
+         * 根据用户id 查询到可见的模块id 集合
+         */
+        List<String> moduleIdList = baseMapper.getUserVisibleModuleIds(userId);
+        List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.MODULE.getType());
+        List<ModuleDTO> moduleList = baseMapper.getByIds(moduleIdList, searchKeyword);
+        for (Pair<String, String> pair : pairList) {
+            CategoryModuleDTO result = new CategoryModuleDTO();
+            String categoryId = pair.getKey();
+            result.setCategoryId(categoryId);
+            result.setCategoryName(pair.getValue());
+            List<ModuleDTO> categoryModuleList = moduleList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            result.setModuleList(categoryModuleList);
+            resultList.add(result);
+        }
+        return resultList;
+    }
+
     /**
      * 新增数据
      *
@@ -106,7 +146,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.save(module);
         if (flag) {
-            sysModuleService.updateAddState(sysModuleId,IsDeleted.YES);
+            sysModuleService.updateAddState(sysModuleId, IsDeleted.YES);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
             }
@@ -148,7 +188,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     @Override
     public Boolean update(ModuleDTO biModule) {
         BiModuleEntity module = this.getById(biModule.getId());
-        if(Objects.isNull(module)){
+        if (Objects.isNull(module)) {
             throw new ServiceException(ApiError.ERROR_97004);
         }
         String name = biModule.getName();
@@ -158,7 +198,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
         String sysModuleId = biModule.getSysModuleId();
-        String dbSysModuleId=module.getSysModuleId();
+        String dbSysModuleId = module.getSysModuleId();
         module.setCategoryId(biModule.getCategoryId());
         module.setSysModuleId(sysModuleId);
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
@@ -168,9 +208,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
              *当两个传来的不一样 说明更改了系统的模块
              * 那么原来的
              */
-            if(!sysModuleId.equals(dbSysModuleId)){
-                sysModuleService.updateAddState(sysModuleId,IsDeleted.YES);
-                sysModuleService.updateAddState(dbSysModuleId,IsDeleted.NO);
+            if (!sysModuleId.equals(dbSysModuleId)) {
+                sysModuleService.updateAddState(sysModuleId, IsDeleted.YES);
+                sysModuleService.updateAddState(dbSysModuleId, IsDeleted.NO);
             }
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);

@@ -1,9 +1,6 @@
 package com.erp.model.bi.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -21,7 +18,9 @@ import java.util.Date;
 @TableName("bi_subject")
 public class BiSubjectEntity implements Serializable {
     private static final long serialVersionUID = -99930452849287333L;
-    
+
+
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
     /**
      * 专题名
@@ -47,6 +46,14 @@ public class BiSubjectEntity implements Serializable {
      */
     private String shareFlag;
 
+
+    /**
+     * 启用状态
+     * 1 启用
+     * 0 未启用
+     */
+    private Integer state;
+
     /**
      * 创建人id
      */
@@ -55,6 +62,7 @@ public class BiSubjectEntity implements Serializable {
     /**
      * 创建人
      */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
     /**
      * 创建时间
@@ -70,16 +78,17 @@ public class BiSubjectEntity implements Serializable {
     /**
      * 更改人
      */
+    @TableField(value = "update_user_name",fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
     /**
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
+
     /**
      * 删除标示0未删除  1 被删除
      */
-
     @TableLogic
     private Integer isDeleted=0;
 

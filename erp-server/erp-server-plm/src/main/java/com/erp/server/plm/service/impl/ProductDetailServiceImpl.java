@@ -1494,7 +1494,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid,String.format("SPU[%s]",businessId));
+        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getSpuNo()));
     }
 
     /**
@@ -1506,7 +1506,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",businessId));
+        sysLogService.addSysLogByUpdate(oldDto,productSkuBaseInfoDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",oldEntity.getSkuNo()));
     }
 
     /**
@@ -1518,7 +1518,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",businessId));
+        sysLogService.addSysLogByUpdate(oldDto,productDetailDTO,SKUCLASSPATH,businessId,pid,String.format("SKU[%s]",oldEntity.getSkuNo()));
     }
 
     /**
@@ -1531,7 +1531,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,SKUCLASSPATH,productCostDTO.getSkuId(),pid,String.format("SKU[%s]",productCostDTO.getSkuId()));
+            ProductDetailEntity productDetailEntity = this.getById(productCostDTO.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto,productCostDTO,SKUCLASSPATH,productCostDTO.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
         }
     }
 
@@ -1545,7 +1549,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,SKUCLASSPATH,productPurchaseDTO.getSkuId(),pid,String.format("SKU[%s]",productPurchaseDTO.getSkuId()));
+            ProductDetailEntity productDetailEntity = this.getById(productPurchaseDTO.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto,productPurchaseDTO,SKUCLASSPATH,productPurchaseDTO.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
         }
     }
 
@@ -1559,7 +1567,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,SKUCLASSPATH,productSaleDTO.getSkuId(),pid,String.format("SKU[%s]",productSaleDTO.getSkuId()));
+            ProductDetailEntity productDetailEntity = this.getById(productSaleDTO.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto,productSaleDTO,SKUCLASSPATH,productSaleDTO.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
         }
     }
 
@@ -1573,7 +1585,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,SKUCLASSPATH,productLogisticsDTO.getSkuId(),pid,String.format("SKU[%s]",productLogisticsDTO.getSkuId()));
+            ProductDetailEntity productDetailEntity = this.getById(productLogisticsDTO.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto,productLogisticsDTO,SKUCLASSPATH,productLogisticsDTO.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
         }
     }
 
@@ -1587,7 +1603,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity,oldDto);
             }
-            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,SKUCLASSPATH,productPackDTO.getSkuId(),pid,String.format("SKU[%s]",productPackDTO.getSkuId()));
+            ProductDetailEntity productDetailEntity = this.getById(productPackDTO.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto,productPackDTO,SKUCLASSPATH,productPackDTO.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
         }
     }
 
@@ -1606,7 +1626,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (ObjectUtils.isNotEmpty(oldEntity)) {
                         BeanMapperUtils.copy(oldEntity,oldDto);
                     }
-                    sysLogService.addSysLogByUpdate(oldDto,obj,SKUCLASSPATH,obj.getSkuId(),pid,String.format("SKU[%s]",obj.getSkuId()));
+                    ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
+                    if (ObjectUtils.isEmpty(productDetailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_95084);
+                    }
+                    sysLogService.addSysLogByUpdate(oldDto,obj,SKUCLASSPATH,obj.getSkuId(),pid,String.format("SKU[%s]",productDetailEntity.getSkuNo()));
                 }
             });
         }

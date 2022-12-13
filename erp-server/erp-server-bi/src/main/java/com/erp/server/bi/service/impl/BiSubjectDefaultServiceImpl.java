@@ -55,4 +55,20 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
         defaultSubject.setUserId(userId);
         return this.save(defaultSubject);
     }
+
+
+    /**
+     * 根据专题id 删除默认信息
+     *
+     * @param subjectId
+     * @return void
+     * @author yl
+     * @date 2022-12-13 12:00
+     */
+    @Override
+    public void deleteBySubjectId(String subjectId) {
+        LambdaQueryWrapper<BiSubjectDefaultEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectDefaultEntity::getSubjectId, subjectId);
+        this.remove(queryWrapper);
+    }
 }
