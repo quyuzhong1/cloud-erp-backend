@@ -41,13 +41,13 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加
-         String  classPath = UpdateProductDTO.class.toString();
+         String  classPath = ProductSkuBaseInfoDTO.class.toString();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("productName").setFieldName("产品名称").setClassPath(classPath).setType(0) .setEnumClass(null),
-               new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
+            new SysLogFieldEntity().setField("productState").setFieldName("产品开发状态").setClassPath(classPath).setType(2) .setEnumClass("ProductDetailStateEnum")
+               /*new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("approvalStatus").setFieldName("产品状态").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("chargeName").setFieldName("产品经理").setClassPath(classPath).setType(0) .setEnumClass(null)
-                 /*new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
+                new SysLogFieldEntity().setField("chargeName").setFieldName("产品经理").setClassPath(classPath).setType(0) .setEnumClass(null),
+                 new SysLogFieldEntity().setField("grade").setFieldName("产品等级").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("brandName").setFieldName("产品品牌").setClassPath(classPath).setType(1) .setEnumClass(null),
                 new SysLogFieldEntity().setField("type").setFieldName("产品类型").setClassPath(classPath).setType(0) .setEnumClass(null)
                new SysLogFieldEntity().setField("englishUsage").setFieldName("英文用途").setClassPath(classPath).setType(1) .setEnumClass(null)
