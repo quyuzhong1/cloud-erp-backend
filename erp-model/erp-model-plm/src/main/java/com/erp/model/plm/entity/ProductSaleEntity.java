@@ -62,39 +62,39 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 上市时间
      */
-    @TableField(value = "listing_time")
+    @TableField(value = "listing_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date listingTime;
 
     /**
      * 退市时间
      */
-    @TableField(value = "delisting_time")
+    @TableField(value = "delisting_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date delistingTime;
 
     /**
      * 图片是否完成 1.是 2.否
      */
-    @TableField(value = "is_finished_img")
+    @TableField(value = "is_finished_img", fill = FieldFill.INSERT_UPDATE)
     private Integer isFinishedImg;
 
     /**
      * 视频是否完成 1.是 2.否
      */
-    @TableField(value = "is_finished_video")
+    @TableField(value = "is_finished_video", fill = FieldFill.INSERT_UPDATE)
     private Integer isFinishedVideo;
 
     /**
      * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
      */
-    @TableField(value = "sale_state")
+    @TableField(value = "sale_state", fill = FieldFill.INSERT_UPDATE)
     private Integer saleState;
 
     /**
      * 首季度目标销量
      */
-    @TableField(value = "target_sales_qty")
+    @TableField(value = "target_sales_qty", fill = FieldFill.INSERT_UPDATE)
     private BigDecimal targetSalesQty;
 
     /**
@@ -106,7 +106,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 是否可销售(0否，1是)
      */
-    @TableField(value = "is_marketable")
+    @TableField(value = "is_marketable", fill = FieldFill.INSERT_UPDATE)
     private Integer isMarketable;
 
     /**

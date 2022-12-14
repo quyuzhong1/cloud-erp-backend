@@ -10,8 +10,12 @@ import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.model.plm.dto.ProductCertificateShowDTO;
 import com.erp.model.plm.entity.ProductCertificateEntity;
 
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.ProductCertificateService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.SysLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +31,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
 
     @Resource
     private ProductCertificateMapper productCertificateMapper;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private SysLogService sysLogService;
+
+    private static final  String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     /**
      * @Description 产品证书信息查询列表
@@ -93,6 +105,20 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Boolean removeCertificateById(String id) {
+        ProductCertificateEntity productCertificateEntity = this.getById(id);
+        if (ObjectUtils.isNotEmpty(productCertificateEntity)) {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(id);
+            if (ObjectUtils.isNotEmpty(productDetailEntity)) {
+                //操作日志
+                SysLogEntity sysLogEntity =  new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(productDetailEntity.getId()).setPid(productDetailEntity.getProductId()).setOperation("删除证书信息").setContent("SKU["+productDetailEntity.getSkuNo()+"]删除了证书信息：["+productCertificateEntity.getCertificateImg()+"]");
+                sysLogService.addSysLogByOther(sysLogEntity);
+            }
+        }
+        return this.removeById(id);
     }
 }
 

@@ -95,7 +95,15 @@ public class ProductDetailDTO implements Serializable {
      */
     private Integer isFinishTask;
 
+    /**
+     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过
+     */
+    private Integer status;
 
+    /**
+     * 是否变更（0否，1是）
+     */
+    private Integer isChange;
 
     private static final long serialVersionUID = 1L;
 }

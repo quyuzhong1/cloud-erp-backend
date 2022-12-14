@@ -400,10 +400,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             detailEntity.setUpdateUserId(loginUser.getUid());
             detailEntity.setUpdateUserName(loginUser.getUserName());
         }
-        //状态更新为待审核
-        detailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
-        //启动审核流程
-        this.productDetailStartProcess(detailEntity);
+        if (ObjectUtils.isEmpty(detailEntity.getId())) {
+            //启动审核流程
+            this.productDetailStartProcess(detailEntity);
+        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -429,10 +429,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setUpdateUserName(loginUser.getUserName());
                 }
             }
-            //状态更新为待审核
-            req.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
-            //启动审核流程
-            this.productDetailStartProcess(req);
+            if ((ObjectUtils.isEmpty(req.getId()))) {
+                //启动审核流程
+                this.productDetailStartProcess(req);
+            }
         });
         return this.saveOrUpdateBatch(list);
     }
@@ -499,7 +499,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU修改操作日志
         Boolean isAdd = false;
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
-            addProductSkuBaseInfoLog(productSkuBaseInfoDTO,productSkuBaseInfoDTO.getId(),id);
+            ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
+            if (IsConstant.YES.equals(oldEntity.getIsChange())) {
+                productSkuBaseInfoDTO.setIsChange(IsConstant.NO);
+                productSkuBaseInfoDTO.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+            }
+            addProductSkuBaseInfoLog(productSkuBaseInfoDTO,oldEntity,productSkuBaseInfoDTO.getId(),id);
         } else {
             isAdd = true;
         }
@@ -630,8 +635,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (productDetailLists.size() > 0) {
             //操作日志
             productDetailLists.forEach(obj ->{
+                ProductDetailEntity oldEntity = this.getById(obj.getId());
+                if (IsConstant.YES.equals(oldEntity.getIsChange())) {
+                    obj.setIsChange(IsConstant.NO);
+                    obj.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+                }
                 //sku操作日志
-                addProductDetailLog(obj,obj.getId(),productInfoDTO.getId());
+                addProductDetailLog(obj,oldEntity,obj.getId(),productInfoDTO.getId());
             });
             this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
         }
@@ -1349,7 +1359,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setUpdateUserName(loginUser.getUserName());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
-                .setOperation("状态变更").setContent("审核SKU["+entity.getSkuNo()+"],操作["+statusName+"]为["+ProductDetailStatusEnum.APPROVAL_ING.getName()+"]"));
+                .setOperation("状态变更").setContent("审核SKU["+entity.getSkuNo()+"],操作["+statusName+"]为["+ProductDetailStatusEnum.APPROVAL_PASS.getName()+"]"));
         return this.updateById(entity);
     }
 
@@ -1363,7 +1373,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
 
         //验证sku是否审核
-        if (ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus()) || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
+        if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95086);
         }
         LoginUser loginUser = commonService.getUserInfo();
@@ -1414,7 +1424,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95088);
         }
-        productDetailStartProcess(entity);
+        this.productDetailStartProcess(entity);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU["+entity.getSkuNo()+"]重启审核流程"));
@@ -1502,8 +1512,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     /**
      * sku单属性修改日志
      */
-    private void addProductSkuBaseInfoLog(ProductSkuBaseInfoDTO productSkuBaseInfoDTO,String businessId,String pid) {
-        ProductDetailEntity oldEntity = this.getById(businessId);
+    private void addProductSkuBaseInfoLog(ProductSkuBaseInfoDTO productSkuBaseInfoDTO,ProductDetailEntity oldEntity,String businessId,String pid) {
         ProductSkuBaseInfoDTO oldDto = new ProductSkuBaseInfoDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
@@ -1514,8 +1523,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     /**
      * sku多属性修改日志
      */
-    private void addProductDetailLog(ProductDetailDTO productDetailDTO,String businessId,String pid) {
-        ProductDetailEntity oldEntity = this.getById(businessId);
+    private void addProductDetailLog(ProductDetailDTO productDetailDTO, ProductDetailEntity oldEntity,String businessId,String pid) {
         ProductDetailDTO oldDto = new ProductDetailDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);

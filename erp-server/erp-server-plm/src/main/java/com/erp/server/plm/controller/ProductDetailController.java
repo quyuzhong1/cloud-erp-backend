@@ -402,7 +402,7 @@ public class ProductDetailController extends BaseController {
     @GetMapping("/removeCertificate")
     //@RequestPermissions("plm:product:detail:removeCertificate")
     public ApiResult removeCertificateById(@RequestParam("id") String id) {
-        Boolean flag = productCertificateService.removeById(id);
+        Boolean flag = productCertificateService.removeCertificateById(id);
         return flag == true ? this.success() : this.failure();
     }
 
