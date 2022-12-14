@@ -90,8 +90,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //请求api
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
 
-        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
-
         //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {
             for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
@@ -121,7 +119,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(gyyOrderEntity, shopDTOS);
+                analysisOrder(gyyOrderEntity);
             }
         }
     }
@@ -230,7 +228,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(GyyOrderEntity gyyOrderEntity, List<ShopDTO> shopDTOS) throws Exception {
+    public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
@@ -266,25 +264,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo(gyyOrderEntity.getShopCode());
-
-        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals(gyyOrderEntity.getShopCode()) && sd.getPlatformSign().equals("管易云")).findFirst().orElse(null);
-        //部门名称
-        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
-
-        //站点
-        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
-
-        //品类
-        dmpOrderInfoEntity.setCategory(null);
-
-        //品牌
-        dmpOrderInfoEntity.setBrand(null);
-
-        //负责人
-        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
-
-        //cny-结算金额
-        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName(gyyOrderEntity.getShopName());
@@ -374,12 +353,12 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //平台备注
         dmpOrderInfoEntity.setSellerMessage(gyyOrderEntity.getBuyerMemo());
 
-        //币种 //TODO 大多都是空
+        //币种
         //dmpOrderInfoEntity.setCurrencyCode(gyyOrderEntity.getCurrencyCode());
         dmpOrderInfoEntity.setCurrencyCode("CNY");
 
         //汇率
-        dmpOrderInfoEntity.setCurrencyRate(new BigDecimal(BigInteger.ZERO));
+        dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ZERO);
 
         //商品总售价
         dmpOrderInfoEntity.setItemTotal(gyyOrderEntity.getPaymentAmount());
@@ -391,10 +370,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setShippingFee(gyyOrderEntity.getPostFee());
 
         //平台费
-        dmpOrderInfoEntity.setPlatformFee(new BigDecimal(BigInteger.ZERO));
+        dmpOrderInfoEntity.setPlatformFee(BigDecimal.ZERO);
 
         //原始运费收入
-        dmpOrderInfoEntity.setShippingTotalOrigin(new BigDecimal(BigInteger.ZERO));
+        dmpOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
 
         List<DetailsBean> details = gyyOrderEntity.getDetails();
         BigDecimal costPrice = new BigDecimal(BigInteger.ZERO);
@@ -423,6 +402,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //平台标识
         dmpOrderInfoEntity.setPlatformSign("管易云");
 
+        //创建时间
         dmpOrderInfoEntity.setCreateTime(new Date());
 
         //新增订单信息
@@ -516,7 +496,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setStockWarehouseId(warehouseCode);
 
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId(detailsBean.getOid() + "-" + detailsBean.getItemCode());
+            dmpOrderItemEntity.setErpOrderItemId(gyyOrderEntity.getPlatformCode() + "-" + detailsBean.getItemCode());
+
+            //汇率
+            dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
 
             orderItemList.add(dmpOrderItemEntity);
         }

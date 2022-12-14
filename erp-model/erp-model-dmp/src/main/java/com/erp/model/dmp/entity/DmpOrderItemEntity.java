@@ -154,6 +154,36 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "erp_order_item_id")
     private String erpOrderItemId;
 
+    /**
+     * 品类id
+     */
+    @TableField(value = "category_id")
+    private String categoryId;
+
+    /**
+     * 品类
+     */
+    @TableField(value = "category_name")
+    private String categoryName;
+
+    /**
+     * 品牌id
+     */
+    @TableField(value = "brand_id")
+    private String brandId;
+
+    /**
+     * 品牌
+     */
+    @TableField(value = "brand_name")
+    private String brandName;
+
+    /**
+     * 汇率
+     */
+    @TableField(value = "currency_rate")
+    private BigDecimal currencyRate;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

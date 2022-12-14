@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
@@ -86,8 +87,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<OrderEntity> orderEntities = pullDate(dto);
 
-        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
-
         if (orderEntities != null && orderEntities.size() > 0) {
             for (OrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -116,7 +115,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity, shopDTOS);
+                analysisOrder(orderEntity);
             }
         }
     }
@@ -145,7 +144,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 Calendar cl = Calendar.getInstance();
                 cl.setTime(date);
-                cl.add(Calendar.DAY_OF_MONTH, -2);
+                cl.add(Calendar.DAY_OF_MONTH, -1);
                 st = sdf.format(cl.getTime());
                 sd = sdf.format(date);
                 dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
@@ -224,7 +223,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(OrderEntity orderEntity, List<ShopDTO> shopDTOS) throws Exception {
+    public void analysisOrder(OrderEntity orderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
@@ -251,25 +250,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
-
-        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals(orderEntity.getShopId()) && sd.getPlatformSign().equals("马帮")).findFirst().orElse(null);
-        //部门名称
-        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
-
-        //站点
-        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
-
-        //品类
-        dmpOrderInfoEntity.setCategory(null);
-
-        //品牌
-        dmpOrderInfoEntity.setBrand(null);
-
-        //负责人
-        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
-
-        //cny-结算金额
-        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName(orderEntity.getShopName());
@@ -394,6 +374,11 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         //企业名称
         dmpOrderInfoEntity.setCompanyName("");
 
+        //发货时间
+        if (StringUtils.isNotBlank(orderEntity.getTransportTime())) {
+            dmpOrderInfoEntity.setDeliveryTime(sdf.parse(orderEntity.getTransportTime()));
+        }
+
         //创建时间
         dmpOrderInfoEntity.setCreateTime(new Date());
 
@@ -401,7 +386,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
         if (StringUtils.isNotBlank(orderInfoId)) {
             //新增订单商品信息
-            analysisOrderItem(orderEntity.getOrderItem(), orderInfoId);
+            analysisOrderItem(orderEntity, orderInfoId, orderEntity.getPlatformOrderId());
         }
     }
 
@@ -411,9 +396,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrderItem(List<OrderItemEntity> orderItem, String orderId) {
+    public void analysisOrderItem(OrderEntity orderEntity, String orderId, String platformOrderId) {
+        List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
-        for (OrderItemEntity orderItemBean : orderItem) {
+        for (OrderItemEntity orderItemBean : orderItems) {
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
 
             //订单表id
@@ -480,7 +466,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setStockWarehouseId(orderItemBean.getStockWarehouseId());
 
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId(orderItemBean.getErpOrderItemId());
+            dmpOrderItemEntity.setErpOrderItemId(platformOrderId + "_" + orderItemBean.getStockSku());
+
+            //汇率
+            dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
 
             orderItemList.add(dmpOrderItemEntity);
         }

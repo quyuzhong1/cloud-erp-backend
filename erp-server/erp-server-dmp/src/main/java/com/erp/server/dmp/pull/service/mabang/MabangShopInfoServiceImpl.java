@@ -170,7 +170,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
         dmpShopInfoEntity.setName(shopEntity.getName());
 
         //店铺站点
-        dmpShopInfoEntity.setAmazonSite(shopEntity.getAmazonsite());
+        dmpShopInfoEntity.setSite(shopEntity.getAmazonsite());
 
         //店铺状态
         dmpShopInfoEntity.setStatus(shopEntity.getStatus());

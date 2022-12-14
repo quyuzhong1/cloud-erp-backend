@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(exclude = MongoAutoConfiguration.class,scanBasePackages ={"com.erp.*"})
+@SpringBootApplication(exclude = MongoAutoConfiguration.class, scanBasePackages ={"com.erp.*"})
 @EnableFeignClients(basePackages = {"com.erp.rpc.*"})
 @EnableScheduling
 public class ErpServerDmpApplication {

@@ -41,4 +41,12 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return void
      **/
     String checkOrder(DmpOrderInfoEntity orderInfoEntity);
+
+    /**
+     * 清洗订单数据
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     * @return void
+     **/
+    void cleanOrder();
 }

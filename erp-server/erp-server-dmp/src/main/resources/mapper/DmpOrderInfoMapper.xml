@@ -5,19 +5,23 @@
 <mapper namespace="com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper">
 
     <sql id="Base_Column_List">
-        id,platform_order_id,order_state,
-        buyer_user_id,buyer_name,shop_no,
-        shop_name,order_cost,can_send,
-        is_returned,is_refund,paid_time,
-        sales_record_number,platform_order_status,order_fee,
-        source_platform,is_union,is_split,
-        is_resend,has_goods,district,
-        city,province,man_street,
-        second_street,close_date,man_phone,
-        second_phone,fba_flag,seller_message,
-        currency_code,currency_rate,item_total,
-        shipping_fee,platform_fee,shipping_total_origin,
-        item_total_origin,item_total_cost,subsidy_amount,
-        country_name_en,country_name_cn
+        id,platform_order_id,order_state,buyer_user_id,buyer_name,shop_no,shop_name,
+        order_cost,can_send,is_returned,is_refund,paid_time,sales_record_number,
+        platform_order_status,order_fee,source_platform,is_union,is_split,is_resend,
+        has_goods,district,city,province,man_street,second_street,close_date,man_phone,
+        second_phone,fba_flag,seller_message,currency_code,currency_rate,item_total,shipping_fee,
+        platform_fee,shipping_total_origin,item_total_origin,item_total_cost,subsidy_amount,
+        country_name_en,country_name_cn,platform_sign,create_time,company_id,company_name,platform_create_time,
+        dept_name,site,category,brand,charge_name,cny_settle_amount,delivery_time,clean_state,retry_count
     </sql>
+
+    <select id="cleanOrderList" resultType="com.erp.model.dmp.entity.DmpOrderInfoEntity">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM dmp_order_info
+        WHERE clean_state = 1
+        AND retry_count &lt;= 5
+        ORDER BY retry_count
+        limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
+    </select>
 </mapper>

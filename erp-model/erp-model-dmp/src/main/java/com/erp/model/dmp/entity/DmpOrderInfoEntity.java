@@ -302,26 +302,46 @@ public class DmpOrderInfoEntity implements Serializable {
     private String site;
 
     /**
-     * 品类
-     */
-    @TableField(value = "category")
-    private String category;
-    /**
-     * 品牌
-     */
-    @TableField(value = "brand")
-    private String brand;
-    /**
      * 负责人
      */
     @TableField(value = "charge_name")
     private String chargeName;
+
     /**
      * cny-结算金额
      */
     @TableField(value = "cny_settle_amount")
     private BigDecimal cnySettleAmount;
 
+    /**
+     * 发货时间
+     */
+    @TableField(value = "delivery_time")
+    private Date deliveryTime;
+
+    /**
+     * 清洗状态  1 未清洗 2 清洗完成
+     */
+    @TableField(value = "clean_state")
+    private Integer cleanState;
+
+    /**
+     * 重试次数
+     */
+    @TableField(value = "retry_count")
+    private Integer retryCount;
+
+    /**
+     * 部门id
+     */
+    @TableField(value = "dept_id")
+    private String deptId;
+
+    /**
+     * 负责人id
+     */
+    @TableField(value = "charge_id")
+    private String chargeId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

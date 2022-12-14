@@ -6,7 +6,7 @@
 
     <sql id="Base_Column_List">
         id,plarform_shop_no,account_user_name,
-        account_store_name,name,amazon_site,
+        account_store_name,name,site,
         status,platform_name,finance_code,charge_id,charge_name
     </sql>
 

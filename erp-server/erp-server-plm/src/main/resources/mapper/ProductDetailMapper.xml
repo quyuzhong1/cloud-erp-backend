@@ -326,4 +326,15 @@
             </if>
         </where>
     </select>
+
+    <select id="getProductIdBySkuClean" resultType="com.erp.model.plm.dto.CleanSkuDto">
+        SELECT
+            brand_id,
+            brand_name,
+            category_id,
+            category AS categoryName
+        FROM product_info pi
+        LEFT JOIN product_detail pd ON pd.product_id = pi.id
+        WHERE pd.sku_no = #{sku}
+    </select>
 </mapper>

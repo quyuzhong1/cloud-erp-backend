@@ -69,6 +69,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<ExportSkuExcelDTO> getExportSkuExcel(@Param("params") ProductSkuExcelDTO productSkuExcelDTO);
 
     List<BaseIdDTO> getNotFinish(@Param("skuIdList") List<String> skuIdList);
+
+    /**
+     * @Description 根据sku查询sku表信息(数据清洗)
+     * @Author Luo_WG
+     * @Date 2022/9/28 17:04
+     * @param sku：sku
+     * @return com.erp.model.plm.entity.ProductDetailEntity
+     **/
+    CleanSkuDto getProductIdBySkuClean(@Param("sku") String sku);
 }
 
 

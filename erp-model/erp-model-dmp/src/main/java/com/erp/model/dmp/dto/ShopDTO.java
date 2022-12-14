@@ -74,14 +74,14 @@ public class ShopDTO {
     private String deptName;
 
     /**
-     * 人员id
+     * 负责人id
      */
-    private String userId;
+    private String chargeId;
 
     /**
-     * 人员名称
+     * 负责人名称
      */
-    private String userName;
+    private String chargeName;
 
 
 }

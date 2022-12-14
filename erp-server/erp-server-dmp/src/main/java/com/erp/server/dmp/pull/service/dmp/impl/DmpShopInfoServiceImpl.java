@@ -2,8 +2,11 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
@@ -81,7 +84,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      **/
     @Override
     public void checkOrder(DmpShopInfoEntity dmpShopInfoEntity) {
-        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getId(), dmpShopInfoEntity.getPlatformSign());
+        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlarformShopNo(), dmpShopInfoEntity.getPlatformSign());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
@@ -96,16 +99,18 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * 根据平台查询店铺信息
      * @Author Luo_WG
      * @Date 2022/12/13 17:48
+     * @param shopNo 店铺编号
      * @param platformSign 平台
      * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      **/
     @Override
-    public List<ShopDTO> queryShopByPlatformList(String platformSign) {
-        List<ShopDTO> shopDTOS = dmpShopInfoMapper.queryShopByPlatformList(platformSign);
+    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign) {
+        DmpShopInfoEntity req = getShopByShopNo(shopNo, platformSign);
+        DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
+        BeanMapper.copy(req, dmpShopInfoDTO);
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
 
-        shopDTOS.forEach(req -> {
-            List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(req.getUserId())).collect(Collectors.toList());
+            List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(dmpShopInfoDTO.getChargeId())).collect(Collectors.toList());
             List<String> deptNameList = new ArrayList<>();
             if (collect.size() > 1) {
                 for (SysUserDeptDTO sysUserDeptDTO : collect) {
@@ -113,13 +118,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 }
             }
             if (collect.size() > 0) {
-                req.setUserId(collect.get(0).getUid());
-                req.setUserName(collect.get(0).getUserName());
-                req.setDeptName(StringUtils.join(deptNameList, ","));
+                dmpShopInfoDTO.setChargeId(collect.get(0).getUid());
+                dmpShopInfoDTO.setChargeName(collect.get(0).getUserName());
+                dmpShopInfoDTO.setDeptName(StringUtils.join(deptNameList, ","));
             }
-        });
-
-        return shopDTOS;
+        return dmpShopInfoDTO;
     }
 }
 

@@ -55,6 +55,20 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     }
 
     /**
+     * 根据订单表id查询订单商品信息
+     * @Author Luo_WG
+     * @Date 2022/12/14 16:10
+     * @param orderId 订单表id
+     * @return java.util.List<com.erp.model.dmp.entity.DmpOrderItemEntity>
+     **/
+    @Override
+    public List<DmpOrderItemEntity> getByOrderId(String orderId) {
+        LambdaQueryWrapper<DmpOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpOrderItemEntity::getOrderId, orderId);
+        return this.list(lambdaQueryWrapper);
+    }
+
+    /**
      * 根据erp平台商品id修改订单商品信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:39

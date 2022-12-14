@@ -27,7 +27,16 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
     DmpDeliveryDetailInfoEntity getDeliveryDetailByBillNo(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity);
 
     /**
-     * 根据单据编号修改发货详情信息
+     * 根据单据编号查询发货详情信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:28
+     * @param orderNo
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
+     **/
+    DmpDeliveryDetailInfoEntity getDeliveryDetailOrderNo(String orderNo);
+
+    /**
+     * 根据订单编号查询发货详情信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:39
      * @param dmpDeliveryDetailInfoEntity

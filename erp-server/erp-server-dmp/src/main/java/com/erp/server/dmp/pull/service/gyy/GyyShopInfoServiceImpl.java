@@ -212,7 +212,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
         dmpShopInfoEntity.setName(shopInfoEntity.getName());
 
         //店铺站点
-        dmpShopInfoEntity.setAmazonSite("CN");
+        dmpShopInfoEntity.setSite("CN");
 
         //店铺状态:1启用 2停用
         dmpShopInfoEntity.setStatus(1);

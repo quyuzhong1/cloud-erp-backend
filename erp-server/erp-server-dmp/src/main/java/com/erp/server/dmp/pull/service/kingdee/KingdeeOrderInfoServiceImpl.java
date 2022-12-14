@@ -80,8 +80,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<KingdeeOrderEntity> orderEntities = pullDate(dto);
 
-        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
-
         if (orderEntities != null && orderEntities.size() > 0) {
             for (KingdeeOrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -110,7 +108,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity, shopDTOS);
+                analysisOrder(orderEntity);
             }
         }
     }
@@ -324,7 +322,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity, List<ShopDTO> shopDTOS) throws Exception {
+    public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
         //平台订单id
@@ -345,25 +343,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo("B2B");
-
-        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals("B2B") && sd.getPlatformSign().equals("金蝶云星空")).findFirst().orElse(null);
-        //部门名称
-        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
-
-        //站点
-        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
-
-        //品类
-        dmpOrderInfoEntity.setCategory(null);
-
-        //品牌
-        dmpOrderInfoEntity.setBrand(null);
-
-        //负责人
-        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
-
-        //cny-结算金额
-        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName("B2B");
@@ -507,7 +486,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
         if (StringUtils.isNotBlank(orderInfoId)) {
             //新增订单商品信息
-            analysisOrderItem(kingdeeOrderEntity.getOrderItemEntityList(), orderInfoId);
+            analysisOrderItem(kingdeeOrderEntity, orderInfoId);
         }
     }
 
@@ -517,7 +496,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrderItem(List<KingdeeOrderItemEntity> orderItem, String orderId) {
+    public void analysisOrderItem(KingdeeOrderEntity kingdeeOrderEntity, String orderId) {
+        List<KingdeeOrderItemEntity> orderItem = kingdeeOrderEntity.getOrderItemEntityList();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
         for (KingdeeOrderItemEntity orderItemBean : orderItem) {
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
@@ -604,7 +584,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setStockStatus(null);
 
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId("B2B");
+            dmpOrderItemEntity.setErpOrderItemId(orderItemBean.getFBillNo() + "_" + orderItemBean.getFMaterialNumber());
+
+            //汇率
+            dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
 
             orderItemList.add(dmpOrderItemEntity);
         }

@@ -42,6 +42,22 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         return this.getOne(lambdaQueryWrapper);
     }
 
+
+    /**
+     * 根据订单编号查询发货详情信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:28
+     * @param orderNo
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
+     **/
+    @Override
+    public DmpDeliveryDetailInfoEntity getDeliveryDetailOrderNo(String orderNo) {
+        LambdaQueryWrapper<DmpDeliveryDetailInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpDeliveryDetailInfoEntity::getOrderNo, orderNo);
+        lambdaQueryWrapper.last("LIMIT 1");
+        return this.getOne(lambdaQueryWrapper);
+    }
+
     /**
      * 根据单据编号修改发货详情信息
      * @Author Luo_WG

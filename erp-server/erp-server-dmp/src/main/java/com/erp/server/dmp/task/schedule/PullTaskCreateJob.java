@@ -1,6 +1,7 @@
 package com.erp.server.dmp.task.schedule;
 
 import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
 import com.erp.server.dmp.task.service.TbTaskTypeService;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,9 @@ public class PullTaskCreateJob {
 
     @Resource
     CreateRequestReportTaskService reportTaskService;
+
+    @Resource
+    DmpOrderInfoService dmpOrderInfoService;
 
     /**
      * 定时扫描需要创建拉取任务拉取数据的任务
@@ -42,5 +46,17 @@ public class PullTaskCreateJob {
     //@Scheduled(cron = "0/10 * * * * ?")
     public void addShopTask() {
          tbTaskTypeService.addTask();
+    }
+
+
+    /**
+     * 清洗订单数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 11:28
+     * @return void
+     **/
+    //@Scheduled(cron = "0/10 * * * * ?")
+    public void cleanOrderTask() {
+        //dmpOrderInfoService.cleanOrder();
     }
 }

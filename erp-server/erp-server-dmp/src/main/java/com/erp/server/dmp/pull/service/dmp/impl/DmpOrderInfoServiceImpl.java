@@ -1,13 +1,26 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.ShopDTO;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.plm.dto.CleanSkuDto;
+import com.erp.model.sys.entity.SysDepartmentUserEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
+import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -16,6 +29,22 @@ import java.util.List;
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
     implements DmpOrderInfoService {
+
+    private final Integer pageSize = 100;
+
+    private static Integer pageIndex = 1;
+
+    @Resource
+    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
+
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     /**
      * 添加订单信息
@@ -80,6 +109,58 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return orderInfoId;
     }
 
+    /**
+     * 清洗订单数据
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:25
+     * @return void
+     **/
+    @Override
+    public void cleanOrder() {
+        List<DmpOrderInfoEntity> dmpOrderInfoEntities = baseMapper.cleanOrderList(pageSize, pageIndex);
+        if (dmpOrderInfoEntities == null || dmpOrderInfoEntities.isEmpty()) {
+            pageIndex = 1;
+            return;
+        }
+
+        for (DmpOrderInfoEntity dmpOrderInfoEntity : dmpOrderInfoEntities) {
+            //查询发货详情获取发货时间，同步到订单信息
+            DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getPlatformOrderId());
+            LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
+            if (deliveryDetailOrderNo != null) {
+                updateWrapper.set(DmpOrderInfoEntity::getDeliveryTime, deliveryDetailOrderNo.getDeliveryDate());
+                updateWrapper.set(DmpOrderInfoEntity::getCleanState, 2);
+            }
+
+            //查询店铺信息获取'负责人','站点信息'同步到订单
+            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(deliveryDetailOrderNo.getShopNo(), deliveryDetailOrderNo.getPlatformSign());
+            if (shopByShopNo != null) {
+                updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
+                updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
+                updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
+            }
+
+            //根据负责人获取部门信息，同步到订单
+            DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(deliveryDetailOrderNo.getShopNo(), deliveryDetailOrderNo.getPlatformSign());
+            if (dmpShopInfoDTO != null) {
+                updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
+                updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
+            }
+
+            //查询订单商品明细，根据sku查询plm系统sku信息，获取'类别'、'品牌' 同步到商品信息
+            List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
+            for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
+                CleanSkuDto productIdBySku = plmTaskFeign.getProductIdBySku(dmpOrderItemEntity.getSkuNo());
+                dmpOrderItemEntity.setCategoryId(productIdBySku.getCategoryId());
+                dmpOrderItemEntity.setCategoryName(productIdBySku.getCategoryName());
+                dmpOrderItemEntity.setBrandId(productIdBySku.getBrandId());
+                dmpOrderItemEntity.setBrandName(productIdBySku.getBrandName());
+                dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
+            }
+            updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
+            updateWrapper.eq(DmpOrderInfoEntity::getId, dmpOrderInfoEntity.getId());
+        }
+    }
 
 }
 
