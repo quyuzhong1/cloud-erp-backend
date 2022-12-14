@@ -17,9 +17,14 @@ import java.util.Date;
 public class DmpRefundInfoSearchDTO extends BaseSearchDTO {
 
     /**
-     * 订单号
+     * 退款单号
      */
-    private String refundOrder;
+    private String refundId;
+
+    /**
+     * 原订单号
+     */
+    private String platformOrderId;
 
     /**
      * 店铺名称
@@ -30,6 +35,11 @@ public class DmpRefundInfoSearchDTO extends BaseSearchDTO {
      * 平台名称
      */
     private String platformName;
+
+    /**
+     * 退款状态
+     */
+    private Integer refundStatus;
 
     /**
      * 退货时间-从

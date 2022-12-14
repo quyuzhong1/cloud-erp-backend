@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @author Cloud
@@ -22,7 +23,7 @@ public interface DmpReturnOrderInfoMapper extends BaseMapper<DmpReturnOrderInfoE
      * @param params
      * @return IPage<DmpReturnOrderInfoDTO>
      */
-    IPage<DmpReturnOrderInfoDTO> paging(Page query, DmpReturnOrderInfoSearchDTO params);
+    IPage<DmpReturnOrderInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
 }
 
 

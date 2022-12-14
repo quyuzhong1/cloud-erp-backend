@@ -1,9 +1,5 @@
 package com.erp.model.bi.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,9 +22,9 @@ public class DmpReturnOrderInfoDTO {
     private String id;
 
     /**
-     * 退款单号
+     * 退货单号
      */
-    private String refundId;
+    private String returnOrderId;
 
     /**
      * 平台订单编号
@@ -46,9 +42,9 @@ public class DmpReturnOrderInfoDTO {
     private String shopName;
 
     /**
-     * SKUNO
+     * SKU
      */
-    private String shopNo;
+    private String SKU;
 
     /**
      * 退货金额

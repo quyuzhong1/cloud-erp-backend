@@ -10,21 +10,11 @@ import java.util.Date;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2022/12/13 15:45
+ * @date 2022/12/14 14:54
  */
 @Data
 @NoArgsConstructor
-public class DmpReturnOrderInfoSearchDTO extends BaseSearchDTO {
-
-    /**
-     * 退货订单号
-     */
-    private String returnOrderId;
-
-    /**
-     * 原订单号
-     */
-    private String platformOrderId;
+public class DmpShopInfoSearchDTO extends BaseSearchDTO {
 
     /**
      * 店铺名称
@@ -37,18 +27,12 @@ public class DmpReturnOrderInfoSearchDTO extends BaseSearchDTO {
     private String platformName;
 
     /**
-     * 状态
+     * 创建时间-从
      */
-    private Integer status;
+    private Date createTime_begin;
 
     /**
-     * 退货时间-从
+     * 创建时间-到
      */
-    private Date refundTime_begin;
-
-    /**
-     * 退或时间-到
-     */
-    private Date refundTime_end;
-
+    private Date createTime_end;
 }

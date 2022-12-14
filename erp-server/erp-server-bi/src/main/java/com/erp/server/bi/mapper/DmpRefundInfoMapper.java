@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.DmpRefundInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @Entity com.erp.model.plm.entity.DmpRefundInfo
@@ -21,7 +22,7 @@ public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
      * @param params
      * @return IPage<DmpRefundInfoDTO>
      */
-    IPage<DmpRefundInfoDTO> paging(Page query, DmpReturnOrderInfoSearchDTO params);
+    IPage<DmpRefundInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
 }
 
 
