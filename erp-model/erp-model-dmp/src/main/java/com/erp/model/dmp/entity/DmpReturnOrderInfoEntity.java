@@ -176,6 +176,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "company_name")
     private String companyName;
 
+    /**
+     * 订单时间
+     */
+    @TableField(value = "order_time")
+    private Date orderTime;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
