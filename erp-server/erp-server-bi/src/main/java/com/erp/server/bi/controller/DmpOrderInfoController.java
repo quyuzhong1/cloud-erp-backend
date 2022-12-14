@@ -5,7 +5,6 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.springframework.validation.annotation.Validated;
@@ -24,7 +23,7 @@ import javax.annotation.Resource;
  * @date 2022/12/13 15:15
  */
 @RestController
-@RequestMapping("bi/dmpRefundInfo")
+@RequestMapping("bi/dmpOrderInfo")
 public class DmpOrderInfoController extends BaseController {
 
     @Resource

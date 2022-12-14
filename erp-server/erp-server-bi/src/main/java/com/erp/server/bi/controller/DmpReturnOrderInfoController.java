@@ -23,7 +23,7 @@ import javax.annotation.Resource;
  * @date 2022/12/13 15:15
  */
 @RestController
-@RequestMapping("bi/dmpRefundInfo")
+@RequestMapping("bi/dmpReturnOrderInfo")
 public class DmpReturnOrderInfoController extends BaseController {
 
     @Resource
