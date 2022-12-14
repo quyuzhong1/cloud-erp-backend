@@ -85,7 +85,7 @@ public class TargetSaleDTO implements Serializable {
     private List<Long> userId;
 
     public static Boolean validOriginalCurrency(TargetSaleDTO dto){
-        return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShop());
+        return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopNo());
     }
 
     private List<String> shopList;

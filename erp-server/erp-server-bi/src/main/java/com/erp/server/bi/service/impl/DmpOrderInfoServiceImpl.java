@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -33,6 +34,16 @@ import java.util.stream.Collectors;
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
     implements DmpOrderInfoService {
+
+    @Resource
+    private CommonService commonService;
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
+    @Resource
+    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -236,9 +247,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
 
         // 国内销售占比
-
-
-        return null;
+        BigDecimal ratio = domesticAmount.divide(salesAmount, 4, BigDecimal.ROUND_DOWN);
+        return new TargetSaleSumVO(ratio);
     }
 }
 

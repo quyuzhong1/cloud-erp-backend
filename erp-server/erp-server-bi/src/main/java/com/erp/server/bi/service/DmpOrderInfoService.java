@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
+import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
@@ -16,12 +17,6 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
 
     /**
-     * 统计销售金额
-     * @param dto
-     * @return
-     */
-    TargetSaleSumVO sumSales(TargetSaleDTO dto);
-    /**
      * @description: 分页查询
      * @author Will
      * @date: 2022/12/13 15:49
@@ -29,6 +24,13 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return PagingVO<DmpRefundInfoDTO>
      */
     PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto);
+
+    /**
+     * 统计销售金额
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO sumSales(TargetSaleDTO dto);
 
     /**
      * 统计销量
