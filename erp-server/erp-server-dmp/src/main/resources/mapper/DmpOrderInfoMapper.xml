@@ -12,7 +12,7 @@
         second_phone,fba_flag,seller_message,currency_code,currency_rate,item_total,shipping_fee,
         platform_fee,shipping_total_origin,item_total_origin,item_total_cost,subsidy_amount,
         country_name_en,country_name_cn,platform_sign,create_time,company_id,company_name,platform_create_time,
-        dept_name,site,category,brand,charge_name,cny_settle_amount,delivery_time,clean_state,retry_count
+        dept_name,site,charge_name,cny_settle_amount,delivery_time,clean_state,retry_count
     </sql>
 
     <select id="cleanOrderList" resultType="com.erp.model.dmp.entity.DmpOrderInfoEntity">

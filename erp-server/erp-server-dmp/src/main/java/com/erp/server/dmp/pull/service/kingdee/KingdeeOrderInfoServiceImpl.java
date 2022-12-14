@@ -587,8 +587,13 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setErpOrderItemId(orderItemBean.getFBillNo() + "_" + orderItemBean.getFMaterialNumber());
 
             //汇率
-            dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
-
+            if (kingdeeOrderEntity.getFExchangeRate() != null
+                    && kingdeeOrderEntity.getFExchangeRate().compareTo(BigDecimal.ZERO) <= 0
+                    && kingdeeOrderEntity.getFSettleCurrId().equalsIgnoreCase("CNY")) {
+                dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+            } else {
+                dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
+            }
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

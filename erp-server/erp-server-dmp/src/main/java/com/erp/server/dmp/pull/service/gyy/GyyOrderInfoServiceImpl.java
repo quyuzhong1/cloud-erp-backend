@@ -358,7 +358,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setCurrencyCode("CNY");
 
         //汇率
-        dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ZERO);
+        dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
 
         //商品总售价
         dmpOrderInfoEntity.setItemTotal(gyyOrderEntity.getPaymentAmount());

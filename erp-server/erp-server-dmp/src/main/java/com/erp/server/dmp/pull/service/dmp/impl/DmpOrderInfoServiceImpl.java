@@ -18,6 +18,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -133,7 +134,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
 
             //查询店铺信息获取'负责人','站点信息'同步到订单
-            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(deliveryDetailOrderNo.getShopNo(), deliveryDetailOrderNo.getPlatformSign());
+            DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
             if (shopByShopNo != null) {
                 updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                 updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
@@ -141,7 +142,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
 
             //根据负责人获取部门信息，同步到订单
-            DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(deliveryDetailOrderNo.getShopNo(), deliveryDetailOrderNo.getPlatformSign());
+            DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
             if (dmpShopInfoDTO != null) {
                 updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
                 updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
@@ -150,15 +151,21 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             //查询订单商品明细，根据sku查询plm系统sku信息，获取'类别'、'品牌' 同步到商品信息
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
-                CleanSkuDto productIdBySku = plmTaskFeign.getProductIdBySku(dmpOrderItemEntity.getSkuNo());
-                dmpOrderItemEntity.setCategoryId(productIdBySku.getCategoryId());
-                dmpOrderItemEntity.setCategoryName(productIdBySku.getCategoryName());
-                dmpOrderItemEntity.setBrandId(productIdBySku.getBrandId());
-                dmpOrderItemEntity.setBrandName(productIdBySku.getBrandName());
-                dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
+                if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
+                    CleanSkuDto productIdBySku = plmTaskFeign.getProductIdBySku(dmpOrderItemEntity.getSkuNo());
+                    if (productIdBySku != null) {
+                        dmpOrderItemEntity.setCategoryId(productIdBySku.getCategoryId());
+                        dmpOrderItemEntity.setCategoryName(productIdBySku.getCategoryName());
+                        dmpOrderItemEntity.setBrandId(productIdBySku.getBrandId());
+                        dmpOrderItemEntity.setBrandName(productIdBySku.getBrandName());
+                        dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
+                    }
+                }
+
             }
             updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
             updateWrapper.eq(DmpOrderInfoEntity::getId, dmpOrderInfoEntity.getId());
+            this.update(updateWrapper);
         }
     }
 

@@ -336,7 +336,14 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setCurrencyCode(orderEntity.getCurrencyId());
 
         //汇率
-        dmpOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+        if (orderEntity.getCurrencyRate() != null
+                && orderEntity.getCurrencyRate().compareTo(BigDecimal.ZERO) <= 0
+                && orderEntity.getCurrencyId().equalsIgnoreCase("CNY")) {
+            dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
+        } else {
+            dmpOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+        }
+
 
         //商品总售价
         dmpOrderInfoEntity.setItemTotal(orderEntity.getItemTotal());
@@ -469,7 +476,13 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setErpOrderItemId(platformOrderId + "_" + orderItemBean.getStockSku());
 
             //汇率
-            dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+            if (orderEntity.getCurrencyRate() != null
+                    && orderEntity.getCurrencyRate().compareTo(BigDecimal.ZERO) <= 0
+                    && orderEntity.getCurrencyId().equalsIgnoreCase("CNY")) {
+                dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+            } else {
+                dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
+            }
 
             orderItemList.add(dmpOrderItemEntity);
         }

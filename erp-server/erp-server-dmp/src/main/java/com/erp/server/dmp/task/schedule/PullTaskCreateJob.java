@@ -55,8 +55,8 @@ public class PullTaskCreateJob {
      * @Date 2022/12/14 11:28
      * @return void
      **/
-    //@Scheduled(cron = "0/10 * * * * ?")
+    @Scheduled(cron = "0/10 * * * * ?")
     public void cleanOrderTask() {
-        //dmpOrderInfoService.cleanOrder();
+        dmpOrderInfoService.cleanOrder();
     }
 }
