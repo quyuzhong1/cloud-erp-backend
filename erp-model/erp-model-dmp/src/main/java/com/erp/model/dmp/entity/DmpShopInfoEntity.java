@@ -91,6 +91,13 @@ public class DmpShopInfoEntity implements Serializable {
     @TableField(value = "charge_name")
     private String chargeName;
 
+    /**
+     * 店铺标识
+     */
+    @TableField(value = "store_identifier")
+    private String storeIdentifier;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
