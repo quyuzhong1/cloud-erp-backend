@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.model.bi.dto.DashboardDTO;
+import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.model.bi.dto.SubjectPagingDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -27,5 +28,9 @@ public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
     List<DashboardDTO> getMyCreateDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("userId") String userId,@Param("searchKeyword") String searchKeyword);
 
     IPage<SubjectPagingDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+
+    List<String> getUserVisibleSubjectId(@Param("userId") String userId);
+
+    List<SubjectDTO> getByIds(@Param("subjectIdList") List<String> subjectIdList, @Param("searchKeyword") String searchKeyword);
 }
 

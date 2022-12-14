@@ -4,40 +4,60 @@
 
 
     <select id="getDashboardFrequentlyList" resultType="com.erp.model.bi.dto.DashboardDTO">
-        SELECT id,name FROM  bi_subject
-        WHERE category_id=(SELECT id FROM bi_dict WHERE  value=#{dashboardFlag}  AND type=#{type}  LIMIT 1)
+        SELECT id,name FROM bi_subject
+        WHERE category_id=(SELECT id FROM bi_dict WHERE value=#{dashboardFlag} AND type=#{type} LIMIT 1)
         AND is_deleted=0 AND is_frequently=1
         <if test="searchKeyword =null adn searchKeyword!=''">
-            AND name LIKE  concat('%',#{searchKeyword},'%')
+            AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
         <if test="findIdList!=null and findIdList.size>0">
-          AND id  IN
-           <foreach collection="findIdList" item="id" open="(" separator="," close=")">
-              #{id}
-           </foreach>
+            AND id IN
+            <foreach collection="findIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
         </if>
     </select>
 
     <select id="getMyCreateDashboardList" resultType="com.erp.model.bi.dto.DashboardDTO">
-        SELECT id,name FROM  bi_subject
-        WHERE category_id=(SELECT id FROM bi_dict WHERE  value=#{dashboardFlag}  AND type=#{type}  LIMIT 1)
+        SELECT id,name FROM bi_subject
+        WHERE category_id=(SELECT id FROM bi_dict WHERE value=#{dashboardFlag} AND type=#{type} LIMIT 1)
         AND create_user_id=#{userId}
         AND is_deleted=0 AND is_frequently=1
         <if test="searchKeyword !=null adn searchKeyword!=''">
-            AND name LIKE  concat('%',#{searchKeyword},'%')
+            AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
     </select>
 
     <select id="paging" resultType="com.erp.model.bi.dto.SubjectPagingDTO">
-         SELECT id,name,category_name,category_id,create_user_id,
-         create_user_name,create_time,update_user_id,update_user_name,
-         update_time,share_flag,is_frequently,state
-         FROM bi_subject WHERE is_deleted=0
-         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-             AND name LIKE  concat('%',#{searchKeyword},'%')
-         </if>
+        SELECT id,name,category_name,category_id,create_user_id,
+        create_user_name,create_time,update_user_id,update_user_name,
+        update_time,share_flag,is_frequently,state
+        FROM bi_subject WHERE is_deleted=0
+        <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
 
         ORDER BY create_time DESC
+    </select>
+
+    <select id="getUserVisibleSubjectId" resultType="java.lang.String">
+       SELECT id FROM bi_subject_share WHERE user_id=#{userId} AND is_deleted=0
+           UNION ALL
+       SELECT id FROM bi_subject WHERE create_user_id=#{userId} AND state=1 AND is_deleted=0
+    </select>
+
+    <select id="getByIds" resultType="com.erp.model.bi.dto.SubjectDTO">
+        SELECT id,category_id,name,is_frequently,category_name,share_flag
+        FROM bi_subject WHERE state=1 AND is_deleted=0
+        <if test="subjectIdList!=null  and subjectIdList.size>0">
+          AND id IN
+          <foreach collection="subjectIdList" item="id" open="(" separator="," close=")">
+              #{id}
+          </foreach>
+        </if>
+        <if test="searchKeyword!=null and searchKeyword!=''">
+            AND name LIKE concat('%',#{searchKeyword},'%')
+        </if>
 
     </select>
 </mapper>

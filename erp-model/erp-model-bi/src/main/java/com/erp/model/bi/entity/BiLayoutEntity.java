@@ -50,7 +50,7 @@ public class BiLayoutEntity implements Serializable {
      * 更新人id
      */
     @TableField(value = "update_user_id",fill = FieldFill.INSERT_UPDATE)
-    private String upadteUserId;
+    private String updateUserId;
     /**
      * 跟新时间
      */

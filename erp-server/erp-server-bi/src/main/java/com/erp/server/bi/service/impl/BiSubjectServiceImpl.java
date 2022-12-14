@@ -11,10 +11,7 @@ import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DashboardDTO;
-import com.erp.model.bi.dto.MyDashboardDTO;
-import com.erp.model.bi.dto.SubjectDTO;
-import com.erp.model.bi.dto.SubjectPagingDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
@@ -24,6 +21,7 @@ import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +53,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
     @Resource
     private CommonService commonService;
+
+
+    @Resource
+    private BiDictService dictService;
 
 
     /**
@@ -98,7 +100,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             throw new ServiceException(ApiError.ERROR_97000);
         }
         //检查能否操作
-        checkCanHandle(subject,userId);
+        checkCanHandle(subject, userId);
         String shareFlag = dto.getShareFlag();
         //专题id
         subject.setName(name);
@@ -302,6 +304,35 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (!handleFlag) {
             throw new ServiceException(ApiError.ERROR_97005);
         }
+    }
+
+
+    /**
+     * 专题首页
+     *
+     * @param
+     * @return java.util.List<com.erp.model.bi.dto.CategorySubjectDTO>
+     * @author yl
+     * @date 2022-12-14 16:14
+     */
+    @Override
+    public List<CategorySubjectDTO> homePage(String searchKeyword) {
+        List<CategorySubjectDTO> resultList = new ArrayList<>(10);
+        String userId = commonService.getUserInfo().getUid();
+        List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
+        //查询到用户可见的专题
+        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+        for (Pair<String, String> pair : pairList) {
+            CategorySubjectDTO result = new CategorySubjectDTO();
+            String categoryId = pair.getKey();
+            result.setCategoryId(categoryId);
+            result.setCategoryName(pair.getValue());
+            List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            result.setSubjectList(subjectResultList);
+            resultList.add(result);
+        }
+        return resultList;
     }
 
 

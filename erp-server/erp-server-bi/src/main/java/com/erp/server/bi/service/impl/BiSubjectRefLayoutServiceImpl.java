@@ -60,4 +60,20 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
         this.remove(queryWrapper);
     }
 
+    /**
+     * 删除专题与布局关系
+     *
+     * @param subjectId
+     * @return void
+     * @author yl
+     * @date 2022-12-14 14:57
+     */
+    @Override
+    public Boolean delete(String subjectId, String layoutId) {
+        LambdaQueryWrapper<BiSubjectRefLayoutEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectRefLayoutEntity::getSubjectId, subjectId);
+        queryWrapper.eq(BiSubjectRefLayoutEntity::getLayoutId, layoutId);
+        return this.remove(queryWrapper);
+    }
+
 }

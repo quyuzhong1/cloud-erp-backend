@@ -26,4 +26,6 @@ public interface BiSubjectRefLayoutService  extends IService<BiSubjectRefLayoutE
     void addSubjectRefLayout(String subjectId, List<String> layoutIds);
 
     void deleteBySubjectId(String subjectId);
+
+    Boolean delete(String subjectId, String layoutId);
 }

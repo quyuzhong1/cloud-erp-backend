@@ -36,11 +36,12 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
         if (CollectionUtils.isNotEmpty(moduleIdList)) {
             int size = moduleIdList.size();
             List<BiLayoutRefModuleEntity> addList = new ArrayList<>(size);
-            for (int i = 1; i <= size; i++) {
+            for (int i = 0; i < size; i++) {
                 BiLayoutRefModuleEntity refModule = new BiLayoutRefModuleEntity();
                 refModule.setBlockNo(blockNo);
+                refModule.setSubjectId(subjectId);
                 refModule.setLayoutId(layoutId);
-                refModule.setSerialNo(i);
+                refModule.setSerialNo(i + 1);
                 refModule.setModuleId(moduleIdList.get(i));
                 addList.add(refModule);
             }
@@ -60,9 +61,12 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
      */
     @Override
     public List<BiLayoutRefModuleEntity> getByLayoutIds(List<String> layoutIdList) {
-        LambdaQueryWrapper<BiLayoutRefModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(BiLayoutRefModuleEntity::getLayoutId, layoutIdList);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isNotEmpty(layoutIdList)) {
+            LambdaQueryWrapper<BiLayoutRefModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(BiLayoutRefModuleEntity::getLayoutId, layoutIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
 
@@ -81,14 +85,15 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
         this.remove(queryWrapper);
     }
 
-    
+
     /**
      * 删除
-     * @author yl
-     * @date 2022-12-14 15:28
+     *
      * @param layoutId
      * @param moduleId
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-12-14 15:28
      */
     @Override
     public Boolean deleteLayoutModuleId(String layoutId, String moduleId) {

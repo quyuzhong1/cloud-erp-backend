@@ -6,10 +6,13 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.CategorySubjectDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.model.bi.dto.SubjectPagingDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
+
+import java.util.List;
 
 /**
  * 专题表(BiSubject)表服务接口
@@ -89,4 +92,14 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return 
      */
     void checkCanHandle(BiSubjectEntity entity,String userId);
+
+    
+    /**
+     * 专题首页
+     * @author yl
+     * @date 2022-12-14 16:13
+     * @param
+     * @return java.util.List<com.erp.model.bi.dto.CategorySubjectDTO>
+     */
+    List<CategorySubjectDTO> homePage(String searchKeyword);
 }

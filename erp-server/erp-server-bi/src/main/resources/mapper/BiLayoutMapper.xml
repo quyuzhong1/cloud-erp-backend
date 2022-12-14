@@ -6,7 +6,7 @@
     <select id="getLayoutBySubjectId" resultType="com.erp.model.bi.dto.LayoutDetailsDTO">
            SELECT l.id,l.height,l.column_count,l.block_no
            FROM bi_layout l INNER JOIN bi_subject_ref_layout ref
-           ON ref.layout_id = bi.Id
+           ON ref.layout_id = l.Id
            WHERE ref.subject_id=#{subjectId} AND ref.is_deleted=0
 
     </select>

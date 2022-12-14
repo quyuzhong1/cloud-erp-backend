@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @author yl
  * @since 2022-12-08 14:31:14
  */
-@Service("biModuleService")
+@Service
 public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEntity> implements BiModuleService {
 
 

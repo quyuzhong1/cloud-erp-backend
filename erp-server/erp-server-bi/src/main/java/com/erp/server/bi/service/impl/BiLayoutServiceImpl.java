@@ -57,6 +57,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      * @date 2022-12-13 16:14
      */
     @Override
+    @Transactional
     public Boolean addSubjectLayout(SubjectLayoutDTO dto) {
         String subjectId = dto.getSubjectId();
         List<LayoutDTO> layoutList = dto.getLayoutList();
@@ -65,6 +66,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             BiLayoutEntity entity = new BiLayoutEntity();
             String layoutId = IdWorker.getIdStr();
             String blockNo = layout.getBlockNo();
+            entity.setId(layoutId);
             entity.setBlockNo(blockNo);
             entity.setHeight(layout.getHeight());
             Integer columnCount = LayoutBlockEnum.getCount(blockNo);
@@ -78,7 +80,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         //保存专题与布局关系表
         subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
-        return null;
+        return true;
     }
 
     /**
@@ -127,7 +129,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //检查是否是自己创建的专题
         subjectService.checkCanHandle(subject, userId);
 
-        subject.setName(name);
         boolean flag = true;
         //如果更改了名字就要更改实体
         if (!subject.getName().equals(name)) {
@@ -195,12 +196,12 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     @Override
     public Boolean deleteLayout(DeleteLayoutModuleDTO dto) {
-        String moduleId = dto.getModuleId();
+        Boolean result = subjectRefLayoutService.delete(dto.getSubjectId(), dto.getLayoutId());
+        this.removeById(dto.getLayoutId());
         //删除布局模块
-        Boolean result = layoutRefModuleService.deleteLayout(dto.getLayoutId());
+        layoutRefModuleService.deleteLayout(dto.getLayoutId());
         return result;
     }
-
 
 
     /**
