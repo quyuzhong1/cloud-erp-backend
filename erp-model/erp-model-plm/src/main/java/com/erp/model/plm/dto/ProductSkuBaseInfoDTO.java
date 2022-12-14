@@ -77,9 +77,4 @@ public class ProductSkuBaseInfoDTO {
      * 任务状态 0待审核，1审核中，2审核通过，3审核不通过
      */
     private Integer status;
-
-    /**
-     * 是否变更（0否，1是）
-     */
-    private Integer isChange;
 }

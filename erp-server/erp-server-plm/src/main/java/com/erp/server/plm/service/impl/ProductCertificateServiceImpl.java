@@ -111,7 +111,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     public Boolean removeCertificateById(String id) {
         ProductCertificateEntity productCertificateEntity = this.getById(id);
         if (ObjectUtils.isNotEmpty(productCertificateEntity)) {
-            ProductDetailEntity productDetailEntity = productDetailService.getById(id);
+            ProductDetailEntity productDetailEntity = productDetailService.getById(productCertificateEntity.getSkuId());
             if (ObjectUtils.isNotEmpty(productDetailEntity)) {
                 //操作日志
                 SysLogEntity sysLogEntity =  new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(productDetailEntity.getId()).setPid(productDetailEntity.getProductId()).setOperation("删除证书信息").setContent("SKU["+productDetailEntity.getSkuNo()+"]删除了证书信息：["+productCertificateEntity.getCertificateImg()+"]");

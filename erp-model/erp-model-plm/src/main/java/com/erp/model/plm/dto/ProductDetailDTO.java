@@ -100,10 +100,5 @@ public class ProductDetailDTO implements Serializable {
      */
     private Integer status;
 
-    /**
-     * 是否变更（0否，1是）
-     */
-    private Integer isChange;
-
     private static final long serialVersionUID = 1L;
 }

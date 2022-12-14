@@ -400,6 +400,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             detailEntity.setUpdateUserId(loginUser.getUid());
             detailEntity.setUpdateUserName(loginUser.getUserName());
         }
+        detailEntity.setIsChange(IsConstant.NO);
         if (ObjectUtils.isEmpty(detailEntity.getId())) {
             //启动审核流程
             this.productDetailStartProcess(detailEntity);
@@ -429,6 +430,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setUpdateUserName(loginUser.getUserName());
                 }
             }
+            req.setIsChange(IsConstant.NO);
             if ((ObjectUtils.isEmpty(req.getId()))) {
                 //启动审核流程
                 this.productDetailStartProcess(req);
@@ -500,8 +502,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Boolean isAdd = false;
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
-            if (IsConstant.YES.equals(oldEntity.getIsChange())) {
-                productSkuBaseInfoDTO.setIsChange(IsConstant.NO);
+            if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
                 productSkuBaseInfoDTO.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
             }
             addProductSkuBaseInfoLog(productSkuBaseInfoDTO,oldEntity,productSkuBaseInfoDTO.getId(),id);
@@ -636,8 +637,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //操作日志
             productDetailLists.forEach(obj ->{
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
-                if (IsConstant.YES.equals(oldEntity.getIsChange())) {
-                    obj.setIsChange(IsConstant.NO);
+                if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
                     obj.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
                 }
                 //sku操作日志
