@@ -1,8 +1,10 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -10,4 +12,11 @@ import java.util.List;
  */
 public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEntity> {
 
+    /**
+     * 退货金额统计
+     * @param returnOrderIds
+     * @param sku
+     * @return
+     */
+    BigDecimal sumReturnAmountBySKu(List<String> returnOrderIds, TargetSaleDTO sku);
 }

@@ -3,8 +3,6 @@ package com.erp.model.bi.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 /**
  * 销售指标数据统计数量返回模型
  *
@@ -13,7 +11,11 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
-public class IndicatorSaleCountVO {
+public class TargetSaleCountVO {
 
-    private Long count;
+    private Integer value;
+
+    public TargetSaleCountVO(Integer count) {
+        this.value = count;
+    }
 }

@@ -13,7 +13,11 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
-public class IndicatorSaleSumVO {
+public class TargetSaleSumVO {
 
-    private BigDecimal amount;
+    private BigDecimal value;
+
+    public TargetSaleSumVO(BigDecimal value) {
+        this.value = value;
+    }
 }

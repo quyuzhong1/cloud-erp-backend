@@ -5,7 +5,11 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 退货订单服务类
@@ -19,4 +23,12 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @return PagingVO<DmpReturnOrderInfoDTO>
      */
     PagingVO<DmpReturnOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto);
+
+    /**
+     * 汇总退货金额 根据sku和订单号
+     * @param orderIds
+     * @param sku
+     * @return
+     */
+    BigDecimal sumRefundAmount(List<String> orderIds, TargetSaleDTO sku);
 }

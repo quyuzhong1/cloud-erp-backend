@@ -12,5 +12,5 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("bi/indicator/financial")
-public class BiIndicatorFinancialController extends BaseController {
+public class BiTargetFinancialController extends BaseController {
 }

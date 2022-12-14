@@ -2,13 +2,12 @@ package com.erp.model.bi.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -17,7 +16,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class IndicatorSaleDTO implements Serializable {
+public class TargetSaleDTO implements Serializable {
 
 
     /**
@@ -30,19 +29,19 @@ public class IndicatorSaleDTO implements Serializable {
      * 开始日期
      */
     @NotNull(message = "开始时间不能为空")
-    private Date startTime;
+    private LocalDateTime startTime;
 
     /**
      * 结束日期
      */
     @NotNull(message = "结束时间不能为空")
-    private Date endTime;
+    private LocalDateTime endTime;
 
     /**
-     * 币种code
+     * 0 CNY实时  1 CNY结算  2原币种
      */
-    @NotBlank(message = "币种不能为空")
-    private String currency;
+    @NotBlank(message = "结算方式不能为空")
+    private Integer settleMethod;
 
     /**
      * 事业部
@@ -60,9 +59,10 @@ public class IndicatorSaleDTO implements Serializable {
     private List<String> site;
 
     /**
-     * 店铺
+     * 店铺编号
      */
-    private List<String> shop;
+    private List<String> shopNo;
+
 
     /**
      * 品类
@@ -83,6 +83,12 @@ public class IndicatorSaleDTO implements Serializable {
      * 用户id
      */
     private List<Long> userId;
+
+    public static Boolean validOriginalCurrency(TargetSaleDTO dto){
+        return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShop());
+    }
+
+    private List<String> shopList;
 
 
 }

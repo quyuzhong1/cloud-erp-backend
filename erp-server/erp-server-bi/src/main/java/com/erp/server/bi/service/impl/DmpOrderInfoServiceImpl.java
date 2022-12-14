@@ -7,14 +7,24 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
 import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.IndicatorSaleDTO;
-import com.erp.model.bi.vo.IndicatorSaleSumVO;
+import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.vo.TargetSaleCountVO;
+import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.server.bi.enums.IndicatorTimeTypeEnum;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.server.bi.enums.TargetSettleMethodEnum;
+import com.erp.server.bi.enums.TargetTimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 订单服务类
@@ -33,27 +43,203 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public IndicatorSaleSumVO countSales(IndicatorSaleDTO dto) {
-        Integer count = lambdaQuery()
-                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
-                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
+    public TargetSaleSumVO sumSales(TargetSaleDTO dto) {
+        String userId = commonService.getUserInfo().getUid();
+        // 没有sku情况
+        BigDecimal amount = BigDecimal.ZERO;
+        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        if(CollectionUtils.isEmpty(dto.getSku())){
+            if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+                query.select("sum(item_total) as item_total");
+            }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+                query.select("sum(item_total*settle_rate) as item_total");
+            }else if (TargetSaleDTO.validOriginalCurrency(dto)){
+                query.select("sum(item_total*currency_rate) as item_total");
+            }
+
+            DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
+            amount = dmpOrderInfoEntity.getItemTotal();
+        }else {
+            // 条件存在sku的情况
+            // 先查询订单号
+            query.select("id");
+            List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+            if(CollectionUtils.isEmpty(list)){
+                return new TargetSaleSumVO(amount);
+            }
+            List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+            // 根据订单号获取订单详情，筛选sku
+            amount = dmpOrderItemService.sumSales(orderIds, dto);
+        }
+        return new TargetSaleSumVO(amount);
+    }
+
+    private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(TargetSaleDTO dto) {
+        QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
+        query.ge(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
+                .le(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
                 // TODO 订单时间字段待确认
-//                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.ORDER_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
-//                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.ORDER_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
+//                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::get, dto.getStartTime())
+//                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
                 // TODO  高级筛选字段待完善 事业部 站点 品类 品牌 人员
+                //事业部
+                .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_name", dto.getDepartment())
+                //站点
+                .in(CollectionUtils.isNotEmpty(dto.getSite()), "site", dto.getSite())
+                //品类
+                .in(CollectionUtils.isNotEmpty(dto.getCategory()), "category", dto.getCategory())
+                // 品牌
+                .in(CollectionUtils.isNotEmpty(dto.getBrand()), "brand", dto.getBrand())
+                // 人员
+                .in(CollectionUtils.isNotEmpty(dto.getUserId()), "charge_name_id", dto.getUserId())
                 // 平台
-                .in(CollectionUtils.isNotEmpty(dto.getPlatform()), DmpOrderInfoEntity::getPlatformSign, dto.getPlatform())
+                .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "platform_sign", dto.getPlatform())
                 // 店铺
-                .in(CollectionUtils.isNotEmpty(dto.getShop()), DmpOrderInfoEntity::getShopName, dto.getShop())
-                //  TODO SKu
-//                .in(CollectionUtils.isNotEmpty(dto.getSku()), DmpOrderInfoEntity::)
-                .count();
+                .in(CollectionUtils.isNotEmpty(dto.getShopNo()), "shop_no", dto.getShopNo())
+
+        ;
+        return query;
+    }
+
+    @Override
+    public TargetSaleCountVO countSalesVolume(TargetSaleDTO dto) {
+        Integer count = 0;
+        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        // 先查询订单号
+        query.select("id");
+        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+        if(CollectionUtils.isEmpty(list)){
+            return new TargetSaleCountVO(count);
+        }
+        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        // 根据订单号获取订单详情，筛选sku
+        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
+        return new TargetSaleCountVO(count);
+    }
+
+    @Override
+    public TargetSaleCountVO countOrderQuantity(TargetSaleDTO dto) {
+        // 没有sku情况
+        Integer count = 0;
+        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        // 无sku条件 只查询订单表
+        if(CollectionUtils.isEmpty(dto.getSku())){
+            count = baseMapper.selectCount(query);
+        }else {
+            // 条件存在sku的情况 查询订单详情表
+            // 先查询订单号
+            query.select("id");
+            List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+            if(CollectionUtils.isEmpty(list)){
+                return new TargetSaleCountVO(count);
+            }
+            List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+            // 根据订单号获取订单详情，筛选sku
+            count = dmpOrderItemService.countOrderQuantityBySku(orderIds, dto.getSku());
+        }
+        return new TargetSaleCountVO(count);
+    }
+
+    @Override
+    public TargetSaleSumVO countRefundRate(TargetSaleDTO dto) {
+        // 获取总订单数量
+        TargetSaleCountVO totalOrderQuantity = countOrderQuantity(dto);
+        if (null == totalOrderQuantity || totalOrderQuantity.getValue() <= 0){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        TargetSaleCountVO refundOrderCount = countRefundOrderNum(dto);
+        BigDecimal refundRate = new BigDecimal(refundOrderCount.getValue()).divide(new BigDecimal(totalOrderQuantity.getValue()), 2, BigDecimal.ROUND_DOWN);
+        return new TargetSaleSumVO(refundRate);
+    }
+
+    @Override
+    public TargetSaleSumVO countRefundAmount(TargetSaleDTO dto) {
+        // 获取退款金额
+        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        // 无sku条件 只查询订单表
+        query.eq("is_returned", 1);
+        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+        if(CollectionUtils.isEmpty(list)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        BigDecimal amount =dmpReturnOrderInfoService.sumRefundAmount(orderIds, dto);
+        return new TargetSaleSumVO(amount);
+    }
+
+    @Override
+    public TargetSaleCountVO countRefundOrderNum(TargetSaleDTO dto) {
+        // 获取退款订单数量
+        // 没有sku情况
+        Integer count;
+        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
+        // 无sku条件 只查询订单表
+        if(CollectionUtils.isEmpty(dto.getSku())){
+            query.eq("is_refund", 1);
+            count = baseMapper.selectCount(query);
+        }else {
+            // 条件存在sku的情况 查询订单详情表
+            // 先查询订单号
+            query.select("id");
+            List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
+            if(CollectionUtils.isEmpty(list)){
+                return new TargetSaleCountVO(0);
+            }
+            List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+            // 根据订单号获取订单详情，筛选sku
+            count = dmpOrderItemService.countOrderQuantityBySku(orderIds, dto.getSku());
+        }
+        return new TargetSaleCountVO(count);
+    }
+
+    @Override
+    public TargetSaleSumVO statisticsCustomerPrice(TargetSaleDTO dto) {
+       // 销售额
+        TargetSaleSumVO targetSaleSumVO = sumSales(dto);
+        BigDecimal salesAmount = targetSaleSumVO.getValue();
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 订单数量
+        TargetSaleCountVO targetSaleCountVO = countOrderQuantity(dto);
+        Integer orderNum = targetSaleCountVO.getValue();
+        if (0 >= orderNum){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 客单价 = 销售额 / 订单量
+        BigDecimal customerPrice = salesAmount.divide(new BigDecimal(orderNum), 4, BigDecimal.ROUND_DOWN);
+        return new TargetSaleSumVO(customerPrice);
+    }
+
+    @Override
+    public TargetSaleSumVO statisticsDomesticSalesRatio(TargetSaleDTO dto) {
+        // 销售总额
+        TargetSaleSumVO targetSaleSumVO = sumSales(dto);
+        BigDecimal salesAmount = targetSaleSumVO.getValue();
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 查询国内店铺no
+        List<DmpShopInfoEntity> shopList = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .eq(DmpShopInfoEntity::getStoreSign, "cn")
+                .list();
+        if (CollectionUtils.isEmpty(shopList)) {
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 国内销售额
+        dto.setShopNo(shopList.stream().map(DmpShopInfoEntity::getPlarformShopNo).collect(Collectors.toList()));
+        TargetSaleSumVO saleSumVO = sumSales(dto);
+        BigDecimal domesticAmount = saleSumVO.getValue();
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+
+        // 国内销售占比
 
 
         return null;
     }
-
-
 }
 
 

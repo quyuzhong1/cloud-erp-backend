@@ -4,9 +4,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.IndicatorSaleDTO;
-import com.erp.model.bi.vo.IndicatorSaleSumVO;
+import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.vo.TargetSaleCountVO;
+import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
 /**
@@ -19,7 +20,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    IndicatorSaleSumVO countSales(IndicatorSaleDTO dto);
+    TargetSaleSumVO sumSales(TargetSaleDTO dto);
     /**
      * @description: 分页查询
      * @author Will
@@ -28,4 +29,53 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return PagingVO<DmpRefundInfoDTO>
      */
     PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto);
+
+    /**
+     * 统计销量
+     * @param dto
+     * @return
+     */
+    TargetSaleCountVO countSalesVolume(TargetSaleDTO dto);
+
+    /**
+     * 统计订单销量
+     * @param dto
+     * @return
+     */
+    TargetSaleCountVO countOrderQuantity(TargetSaleDTO dto);
+
+    /**
+     * 统计订单销量
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO countRefundRate(TargetSaleDTO dto);
+
+    /**
+     * 统计退款金额
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO countRefundAmount(TargetSaleDTO dto);
+
+    /**
+     * 统计退款订单数量
+     * @param dto
+     * @return
+     */
+    TargetSaleCountVO countRefundOrderNum(TargetSaleDTO dto);
+
+    /**
+     * 客单价统计
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsCustomerPrice(TargetSaleDTO dto);
+
+    /**
+     * 国内销售占比统计
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsDomesticSalesRatio(TargetSaleDTO dto);
 }
