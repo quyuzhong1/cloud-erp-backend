@@ -79,4 +79,14 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateState(UpdateStateDTO dto);
+    
+    
+    /**
+     * 检查是否是自己新建的 专题
+     * @author yl
+     * @date 2022-12-14 11:59
+     * @param entity
+     * @return 
+     */
+    void checkCanHandle(BiSubjectEntity entity,String userId);
 }

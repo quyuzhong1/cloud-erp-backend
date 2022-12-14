@@ -176,7 +176,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             new ServiceException(ApiError.ERROR_97003);
         }
 
-
     }
 
     /**

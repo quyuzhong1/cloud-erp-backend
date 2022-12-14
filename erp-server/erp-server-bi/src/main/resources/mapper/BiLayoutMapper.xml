@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiLayoutMapper">
+
+
+    <select id="getLayoutBySubjectId" resultType="com.erp.model.bi.dto.LayoutDetailsDTO">
+           SELECT l.id,l.height,l.column_count,l.block_no
+           FROM bi_layout l INNER JOIN bi_subject_ref_layout ref
+           ON ref.layout_id = bi.Id
+           WHERE ref.subject_id=#{subjectId} AND ref.is_deleted=0
+
+    </select>
+</mapper>

@@ -1,6 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.model.bi.entity.BiLayoutEntity;
@@ -31,4 +32,25 @@ public interface BiLayoutService  extends IService<BiLayoutEntity> {
      * @return com.erp.model.bi.dto.SubjectLayoutDetailsDTO
      */
     SubjectLayoutDetailsDTO subjectInfo(String subjectId);
+
+    
+    /**
+     * 修改专题布局
+     * @author yl
+     * @date 2022-12-14 11:47
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateSubjectLayout(SubjectLayoutDetailsDTO dto);
+
+    /**
+     *
+     * @author yl
+     * @date 2022-12-14 12:23
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean deleteLayoutModule(DeleteLayoutModuleDTO dto);
+
+    Boolean deleteLayout(DeleteLayoutModuleDTO dto);
 }

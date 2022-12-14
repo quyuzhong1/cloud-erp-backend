@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.entity.BiSubjectRefLayoutEntity;
 import com.erp.server.bi.mapper.BiSubjectRefLayoutMapper;
@@ -41,6 +42,22 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
             }
             this.saveBatch(addList);
         }
+    }
+
+
+    /**
+     * 删除专题与布局关系
+     *
+     * @param subjectId
+     * @return void
+     * @author yl
+     * @date 2022-12-14 14:57
+     */
+    @Override
+    public void deleteBySubjectId(String subjectId) {
+        LambdaQueryWrapper<BiSubjectRefLayoutEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectRefLayoutEntity::getSubjectId, subjectId);
+        this.remove(queryWrapper);
     }
 
 }

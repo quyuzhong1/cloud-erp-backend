@@ -19,6 +19,12 @@ import java.util.List;
 @NoArgsConstructor
 public class LayoutDetailsDTO  implements Serializable {
 
+
+    /**
+     * 布局id
+     */
+    private String id;
+
     /**
      * 高度
      */

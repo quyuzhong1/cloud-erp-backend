@@ -292,6 +292,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      * @author yl
      * @date 2022-12-13 17:45
      */
+    @Override
     public void checkCanHandle(BiSubjectEntity subject, String userId) {
         boolean handleFlag = false;
         if (subject != null) {

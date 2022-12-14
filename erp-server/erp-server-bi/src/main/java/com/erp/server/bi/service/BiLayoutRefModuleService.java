@@ -24,5 +24,29 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
      * @param moduleIdList
      * @return void
      */
-    void addLayoutRefModule(String layoutId, String blockNo, List<String> moduleIdList);
+    void addLayoutRefModule(String  subjectId,String layoutId, String blockNo, List<String> moduleIdList);
+
+    
+    /**
+     * 根据布局id 查出 布局与模块关系
+     * @author yl
+     * @date 2022-12-14 9:24
+     * @param layoutIdList
+     * @return java.util.List<com.erp.model.bi.entity.BiLayoutRefModuleEntity>
+     */
+    List<BiLayoutRefModuleEntity> getByLayoutIds(List<String> layoutIdList);
+
+    
+    /**
+     * 根据专题id 删除模块布局关系
+     * @author yl
+     * @date 2022-12-14 15:04
+     * @param subjectId
+     * @return void
+     */
+    void deleteBySubjectId(String subjectId);
+
+    Boolean deleteLayoutModuleId(String layoutId, String moduleId);
+
+    Boolean deleteLayout(String layoutId);
 }

@@ -3,6 +3,9 @@ package com.erp.model.bi.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -19,17 +22,21 @@ import java.util.List;
 public class SubjectLayoutDetailsDTO implements Serializable {
 
     /**
-     * id
+     * 专题id
      */
-    private String id;
+    @NotBlank(message = "专题id不能为空")
+    private String subjectId;
 
 
     /**
      * 专题名
      */
+    @NotBlank(message = "专题名不能为空")
+    @Size(max = 20,message = "最大20个字符")
     private String name;
 
 
+    @Valid
     private List<LayoutDetailsDTO> layoutDetailsList;
 
 }
