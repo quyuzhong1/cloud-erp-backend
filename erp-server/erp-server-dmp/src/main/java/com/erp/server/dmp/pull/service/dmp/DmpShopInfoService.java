@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 
 import java.util.List;
@@ -48,9 +49,9 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
     /**
      * 根据平台查询店铺信息
      * @Author Luo_WG
-     * @Date 2022/12/13 16:14
+     * @Date 2022/12/13 17:48
      * @param platformSign 平台
-     * @return java.util.List<com.erp.model.dmp.entity.DmpShopInfoEntity>
+     * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      **/
-    List<DmpShopInfoEntity> queryShopByPlatformList(String platformSign);
+    List<ShopDTO> queryShopByPlatformList(String platformSign);
 }

@@ -7,6 +7,12 @@
     <sql id="Base_Column_List">
         id,plarform_shop_no,account_user_name,
         account_store_name,name,amazon_site,
-        status,platform_name,finance_code
+        status,platform_name,finance_code,charge_id,charge_name
     </sql>
+
+    <select id="queryShopByPlatformList" resultType="com.erp.model.dmp.dto.ShopDTO">
+        SELECT
+        <include refid="Base_Column_List"></include>
+        FROM dmp_shop_info
+    </select>
 </mapper>

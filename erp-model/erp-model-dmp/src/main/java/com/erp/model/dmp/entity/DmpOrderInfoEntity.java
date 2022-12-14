@@ -8,10 +8,9 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * 
  * @TableName dmp_order_info
  */
-@TableName(value ="dmp_order_info")
+@TableName(value = "dmp_order_info")
 @Data
 public class DmpOrderInfoEntity implements Serializable {
     /**
@@ -289,6 +288,40 @@ public class DmpOrderInfoEntity implements Serializable {
      */
     @TableField(value = "platform_create_time")
     private Date platformCreateTime;
+
+    /**
+     * 部门名称
+     */
+    @TableField(value = "dept_name")
+    private String deptName;
+
+    /**
+     * 站点
+     */
+    @TableField(value = "site")
+    private String site;
+
+    /**
+     * 品类
+     */
+    @TableField(value = "category")
+    private String category;
+    /**
+     * 品牌
+     */
+    @TableField(value = "brand")
+    private String brand;
+    /**
+     * 负责人
+     */
+    @TableField(value = "charge_name")
+    private String chargeName;
+    /**
+     * cny-结算金额
+     */
+    @TableField(value = "cny_settle_amount")
+    private BigDecimal cnySettleAmount;
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

@@ -9,10 +9,12 @@ import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
@@ -32,6 +34,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 管易云订单
@@ -56,8 +59,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     @Resource
     private DmpShopInfoService dmpShopInfoService;
 
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
@@ -88,11 +89,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     public void pullDataSave(RequestDTO dto) throws Exception {
         //请求api
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
-        // 获取店铺信息
-        List<DmpShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
 
-        sysUserFeign.getUserDeptList()
-
+        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
 
         //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {
@@ -123,7 +121,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(gyyOrderEntity);
+                analysisOrder(gyyOrderEntity, shopDTOS);
             }
         }
     }
@@ -232,7 +230,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
+    public void analysisOrder(GyyOrderEntity gyyOrderEntity, List<ShopDTO> shopDTOS) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
@@ -268,6 +266,25 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo(gyyOrderEntity.getShopCode());
+
+        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals(gyyOrderEntity.getShopCode()) && sd.getPlatformSign().equals("管易云")).findFirst().orElse(null);
+        //部门名称
+        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
+
+        //站点
+        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
+
+        //品类
+        dmpOrderInfoEntity.setCategory(null);
+
+        //品牌
+        dmpOrderInfoEntity.setBrand(null);
+
+        //负责人
+        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
+
+        //cny-结算金额
+        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName(gyyOrderEntity.getShopName());

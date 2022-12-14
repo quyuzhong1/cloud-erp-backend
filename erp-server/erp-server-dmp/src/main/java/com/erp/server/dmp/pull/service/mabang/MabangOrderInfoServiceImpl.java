@@ -7,6 +7,7 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -23,11 +24,13 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -50,6 +53,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
@@ -79,6 +85,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<OrderEntity> orderEntities = pullDate(dto);
+
+        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
+
         if (orderEntities != null && orderEntities.size() > 0) {
             for (OrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -107,7 +116,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity);
+                analysisOrder(orderEntity, shopDTOS);
             }
         }
     }
@@ -215,7 +224,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(OrderEntity orderEntity) throws Exception {
+    public void analysisOrder(OrderEntity orderEntity, List<ShopDTO> shopDTOS) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
@@ -242,6 +251,25 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
+
+        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals(orderEntity.getShopId()) && sd.getPlatformSign().equals("马帮")).findFirst().orElse(null);
+        //部门名称
+        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
+
+        //站点
+        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
+
+        //品类
+        dmpOrderInfoEntity.setCategory(null);
+
+        //品牌
+        dmpOrderInfoEntity.setBrand(null);
+
+        //负责人
+        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
+
+        //cny-结算金额
+        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName(orderEntity.getShopName());

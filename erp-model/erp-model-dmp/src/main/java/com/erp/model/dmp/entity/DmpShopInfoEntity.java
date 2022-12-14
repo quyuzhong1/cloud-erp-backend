@@ -79,6 +79,18 @@ public class DmpShopInfoEntity implements Serializable {
     @TableField(value = "platform_sign")
     private String platformSign;
 
+    /**
+     * 负责人id
+     */
+    @TableField(value = "charge_id")
+    private String chargeId;
+
+    /**
+     * 负责人名称
+     */
+    @TableField(value = "charge_name")
+    private String chargeName;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

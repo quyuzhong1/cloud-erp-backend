@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -19,6 +20,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
@@ -51,6 +53,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
     public static void main(String[] args) {
         KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
@@ -74,6 +79,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<KingdeeOrderEntity> orderEntities = pullDate(dto);
+
+        List<ShopDTO> shopDTOS = dmpShopInfoService.queryShopByPlatformList(dto.getJobTaskDTO().getPlatformName());
+
         if (orderEntities != null && orderEntities.size() > 0) {
             for (KingdeeOrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -102,7 +110,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity);
+                analysisOrder(orderEntity, shopDTOS);
             }
         }
     }
@@ -316,7 +324,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
+    public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity, List<ShopDTO> shopDTOS) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
         //平台订单id
@@ -337,6 +345,25 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         //店铺编号
         dmpOrderInfoEntity.setShopNo("B2B");
+
+        ShopDTO shopDTO = shopDTOS.stream().filter(sd -> sd.getPlarformShopNo().equals("B2B") && sd.getPlatformSign().equals("金蝶云星空")).findFirst().orElse(null);
+        //部门名称
+        dmpOrderInfoEntity.setDeptName(shopDTO.getDeptName());
+
+        //站点
+        dmpOrderInfoEntity.setSite(shopDTO.getAmazonSite());
+
+        //品类
+        dmpOrderInfoEntity.setCategory(null);
+
+        //品牌
+        dmpOrderInfoEntity.setBrand(null);
+
+        //负责人
+        dmpOrderInfoEntity.setChargeName(shopDTO.getUserName());
+
+        //cny-结算金额
+        dmpOrderInfoEntity.setCnySettleAmount(BigDecimal.ZERO);
 
         //店铺名称
         dmpOrderInfoEntity.setShopName("B2B");
