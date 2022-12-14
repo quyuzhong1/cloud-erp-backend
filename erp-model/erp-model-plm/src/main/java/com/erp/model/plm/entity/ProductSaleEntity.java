@@ -1,9 +1,6 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.io.Serializable;
@@ -35,7 +32,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 年目标销售量
      */
-    @TableField(value = "year_sale_qty")
+    @TableField(value = "year_sale_qty", fill = FieldFill.INSERT_UPDATE)
     private Long yearSaleQty;
 
     /**
@@ -47,7 +44,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 月目标销售量
      */
-    @TableField(value = "month_sale_qty")
+    @TableField(value = "month_sale_qty", fill = FieldFill.INSERT_UPDATE)
     private Long monthSaleQty;
 
     /**
