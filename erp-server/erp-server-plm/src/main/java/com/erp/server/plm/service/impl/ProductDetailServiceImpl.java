@@ -1535,7 +1535,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(oldEntity)) {
             BeanMapperUtils.copy(oldEntity,oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getSpuNo()));
+        sysLogService.addSysLogByUpdate(oldDto,productInfoDTO,SPUCLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getName()));
     }
 
     /**
