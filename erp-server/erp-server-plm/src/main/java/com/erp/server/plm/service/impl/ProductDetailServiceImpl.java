@@ -133,6 +133,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SysLogService sysLogService;
 
+    @Resource
+    private ProjectTaskService projectTaskService;
+
+
     private static final  String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final  String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
@@ -1233,9 +1237,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU字段关联任务尚未完成，不可审核
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            long count = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95083);
+            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(taskIds)) {
+                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
+                if (CollectionUtils.isNotEmpty(taskList)) {
+                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                    if (count > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
+                    }
+                }
+
             }
         }
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
@@ -1289,9 +1300,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU字段关联任务尚未完成，不可申请变更
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
-            long count = projectTaskRefSkuList.stream().filter(obj -> !IsConstant.YES.equals(obj.getIsFinishTask())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_95085);
+            List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(taskIds)) {
+                List<ProjectTaskEntity> taskList = projectTaskService.listByIds(taskIds);
+                if (CollectionUtils.isNotEmpty(taskList)) {
+                    long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                    if (count > 0) {
+                        throw new ServiceException(ApiError.ERROR_95085);
+                    }
+                }
+
             }
         }
 
