@@ -130,10 +130,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 updateWrapper.set(DmpOrderInfoEntity::getCleanState, 2);
             }
 
-            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getOrderByOrderId(dmpOrderInfoEntity.getPlatformOrderId());
+/*            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getOrderByOrderId(dmpOrderInfoEntity.getPlatformOrderId());
             if (dmpReturnOrderInfoEntity != null) {
                 dmpReturnOrderInfoService.upda
-            }
+            }*/
 
             //getOrderByPlatformOrderId
             //updateOrderByPlatformOrderId
