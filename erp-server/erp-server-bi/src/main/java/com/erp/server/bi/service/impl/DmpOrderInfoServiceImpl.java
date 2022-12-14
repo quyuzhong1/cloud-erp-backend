@@ -6,8 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.bi.dto.IndicatorSaleDTO;
 import com.erp.model.bi.vo.IndicatorSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -26,9 +25,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     implements DmpOrderInfoService {
 
     @Override
-    public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
+    public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        DmpReturnOrderInfoSearchDTO params = dto.getParams();
+        DmpOrderInfoSearchDTO params = dto.getParams();
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }

@@ -5,10 +5,8 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpRefundInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
 import com.erp.server.bi.service.DmpRefundInfoService;
-import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,7 +35,7 @@ public class DmpRefundInfoController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
+    public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpRefundInfoSearchDTO> dto) {
         PagingVO<DmpRefundInfoDTO> pagingVO = dmpRefundInfoService.paging(dto);
         return success(pagingVO);
     }

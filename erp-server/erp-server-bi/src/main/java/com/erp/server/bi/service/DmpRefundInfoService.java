@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpRefundInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 
 /**
@@ -18,5 +18,5 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @param dto
      * @return PagingVO<DmpRefundInfoDTO>
      */
-    PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto);
+    PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpRefundInfoSearchDTO> dto);
 }

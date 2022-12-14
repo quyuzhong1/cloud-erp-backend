@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,7 +22,7 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @param params
      * @return IPage
      */
-    IPage<DmpOrderInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
+    IPage<DmpOrderInfoDTO> paging(Page query,@Param("params") DmpOrderInfoSearchDTO params);
 }
 
 
