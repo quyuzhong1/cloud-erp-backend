@@ -1,9 +1,5 @@
 package com.erp.model.bi.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -48,12 +44,12 @@ public class DmpOrderInfoDTO {
     /**
      * 订单销售额[RMB-实时]
      */
-    private String saleTotal;
+    private BigDecimal cnyRealTimeAmount;
 
     /**
      * 订单销售额[RMB-实时]
      */
-    private String saleSettlementTotal;
+    private BigDecimal cnySettleAmount;
 
     /**
      * 买家姓名（下单人）
@@ -98,10 +94,10 @@ public class DmpOrderInfoDTO {
     /**
      * 订单发货时间
      */
-    private Date deliveryDate;
+    private Date deliveryTime;
 
     /**
      * 销售员
      */
-    private String salesManName;
+    private String chargeName;
 }

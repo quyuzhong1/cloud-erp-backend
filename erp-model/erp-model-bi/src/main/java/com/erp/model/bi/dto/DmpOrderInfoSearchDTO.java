@@ -19,7 +19,7 @@ public class DmpOrderInfoSearchDTO extends BaseSearchDTO {
     /**
      * 订单号
      */
-    private String refundOrder;
+    private String platformOrderId;
 
     /**
      * 店铺名称
@@ -30,6 +30,11 @@ public class DmpOrderInfoSearchDTO extends BaseSearchDTO {
      * 平台名称
      */
     private String platformName;
+
+    /**
+     * 订单状态
+     */
+    private Integer orderState;
 
     /**
      * 订单时间-从
@@ -44,10 +49,10 @@ public class DmpOrderInfoSearchDTO extends BaseSearchDTO {
     /**
      * 发货时间-从
      */
-    private Date deliveryDate_begin;
+    private Date deliveryTime_begin;
 
     /**
      * 发货时间-到
      */
-    private Date deliveryDate_end;
+    private Date deliveryTime_end;
 }

@@ -42,14 +42,25 @@ public class DmpRefundInfoDTO {
     private String shopName;
 
     /**
-     * SKUNO
+     * SKU
      */
-    private String shopNo;
+    private String skuNo;
 
     /**
      * 退货金额
      */
     private BigDecimal refundAmount;
+
+
+    /**
+     * 退款金额[RMB-实时]
+     */
+    private BigDecimal cnyRealTimeAmount;
+
+    /**
+     * 退款金额[RMB-实时]
+     */
+    private BigDecimal cnySettleAmount;
 
     /**
      * 退款数量

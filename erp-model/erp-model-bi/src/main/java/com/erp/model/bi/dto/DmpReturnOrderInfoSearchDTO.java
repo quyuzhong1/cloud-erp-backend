@@ -44,11 +44,21 @@ public class DmpReturnOrderInfoSearchDTO extends BaseSearchDTO {
     /**
      * 退货时间-从
      */
-    private Date refundTime_begin;
+    private Date returnCreateTime_begin;
 
     /**
-     * 退或时间-到
+     * 退货时间-到
      */
-    private Date refundTime_end;
+    private Date returnCreateTime_end;
+
+    /**
+     * 订单时间-从
+     */
+    private Date orderTime_begin;
+
+    /**
+     * 订单时间-到
+     */
+    private Date orderTime_end;
 
 }

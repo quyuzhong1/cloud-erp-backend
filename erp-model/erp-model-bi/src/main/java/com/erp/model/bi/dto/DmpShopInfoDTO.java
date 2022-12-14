@@ -45,9 +45,9 @@ public class DmpShopInfoDTO {
     private Integer status;
 
     /**
-     * 平台店铺标识
+     * 店铺标识
      */
-    private String accountStoreName;
+    private String storeSign;
 
     /**
      * 创建时间

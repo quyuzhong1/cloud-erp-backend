@@ -32,6 +32,12 @@ public class DmpOrderInfoEntity implements Serializable {
     private Integer orderState;
 
     /**
+     * 修正状态
+     */
+    @TableField(value = "correction_status")
+    private Integer correctionStatus;
+
+    /**
      * 买家账号
      */
     @TableField(value = "buyer_user_id")

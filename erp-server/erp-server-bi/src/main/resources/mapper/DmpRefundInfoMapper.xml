@@ -18,7 +18,48 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.DmpRefundInfoDTO">
         select
-            *
-        from dmp_refund_info
+            dri.refund_id,
+            dri.platform_order_id,
+            dri.platform_name,
+            dri.shop_name,
+            drid.sku_no,
+            drid.refund_num,
+            dri.refund_amount,
+            round(dri.refund_amount * dri.currency_rate,2) as cnyRealTimeAmount,
+            dri.cny_settle_amount,
+            dri.refund_status,
+            dri.refund_time
+        from dmp_refund_info dri
+        inner join dmp_refund_item drid on dri.id = drid.refund_id
+        <where>
+            <if test="params.refundId != null and params.refundId != ''">
+                and dri.refund_id like concat('%',#{params.refundId},'%')
+            </if>
+            <if test="params.platformOrderId != null and params.platformOrderId != ''">
+                and dri.platform_order_id like concat('%',#{params.platformOrderId},'%')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and dri.shop_name like concat('%',#{params.shopName},'%')
+            </if>
+            <if test="params.platformName != null and params.platformName != ''">
+                and dri.platform_name like concat('%',#{params.platformName},'%')
+            </if>
+            <if test="params.refundStatus != null and params.refundStatus != ''">
+                and dri.refund_status = #{params.refundStatus}
+            </if>
+            <if test="params.refundTime_begin != null and params.refundTime_begin != ''">
+                and to_char(dri.refund_time,'yyyy-MM-dd') &gt;= to_char(#{params.refundTime_begin},'yyyy-MM-dd')
+            </if>
+            <if test="params.refundTime_end != null and params.refundTime_end != ''">
+                and to_char(dri.refund_time,'yyyy-MM-dd') &lt;= to_char(#{params.refundTime_end},'yyyy-MM-dd')
+            </if>
+            <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
+                and to_char(dri.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+            </if>
+            <if test="params.orderTime_end != null and params.orderTime_end != ''">
+                and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+            </if>
+        </where>
+
     </select>
 </mapper>

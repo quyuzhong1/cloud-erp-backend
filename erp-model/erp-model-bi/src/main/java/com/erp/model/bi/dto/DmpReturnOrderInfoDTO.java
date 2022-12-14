@@ -44,27 +44,27 @@ public class DmpReturnOrderInfoDTO {
     /**
      * SKU
      */
-    private String SKU;
+    private String skuNo;
 
     /**
      * 退货金额
      */
-    private BigDecimal refundAmount;
+    private BigDecimal orderFee;
 
     /**
-     * 退款数量
+     * 退货数量
      */
     private BigDecimal refundNum;
 
     /**
-     * 退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
+     * 状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
-    private Integer refundStatus;
+    private Integer status;
 
     /**
-     * 退款时间
+     * 退货时间
      */
-    private Date refundTime;
+    private Date returnCreateTime;
 
     /**
      * 订单状态

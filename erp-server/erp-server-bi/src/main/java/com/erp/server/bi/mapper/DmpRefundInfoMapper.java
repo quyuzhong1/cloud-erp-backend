@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.DmpRefundInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,7 +22,7 @@ public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
      * @param params
      * @return IPage<DmpRefundInfoDTO>
      */
-    IPage<DmpRefundInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
+    IPage<DmpRefundInfoDTO> paging(Page query,@Param("params") DmpRefundInfoSearchDTO params);
 }
 
 
