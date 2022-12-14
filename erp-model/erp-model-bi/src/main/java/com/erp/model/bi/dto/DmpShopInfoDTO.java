@@ -32,7 +32,7 @@ public class DmpShopInfoDTO {
     /**
      * 店铺站点
      */
-    private String amazonSite;
+    private String site;
 
     /**
      * 负责人名称

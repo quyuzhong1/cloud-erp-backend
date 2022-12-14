@@ -27,6 +27,11 @@ public class DmpShopInfoSearchDTO extends BaseSearchDTO {
     private String platformName;
 
     /**
+     * 店铺站点
+     */
+    private String site;
+
+    /**
      * 创建时间-从
      */
     private Date createTime_begin;
