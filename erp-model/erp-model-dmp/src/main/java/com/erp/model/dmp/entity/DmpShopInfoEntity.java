@@ -94,8 +94,8 @@ public class DmpShopInfoEntity implements Serializable {
     /**
      * 店铺标识
      */
-    @TableField(value = "store_identifier")
-    private String storeIdentifier;
+    @TableField(value = "store_sign")
+    private String storeSign;
 
 
     @TableField(exist = false)
