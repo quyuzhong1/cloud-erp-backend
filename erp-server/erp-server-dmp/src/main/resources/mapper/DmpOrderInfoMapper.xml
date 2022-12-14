@@ -17,7 +17,7 @@
 
     <select id="cleanOrderList" resultType="com.erp.model.dmp.entity.DmpOrderInfoEntity">
         SELECT
-        <include refid="Base_Column_List"></include>
+        <include refid="Base_Column_List"/>
         FROM dmp_order_info
         WHERE clean_state = 1
         AND retry_count &lt;= 5

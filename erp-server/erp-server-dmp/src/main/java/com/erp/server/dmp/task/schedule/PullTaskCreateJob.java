@@ -29,7 +29,7 @@ public class PullTaskCreateJob {
      * @Author Luo_WG
      * @Date 2022/11/9 14:50
      **/
-    //@Scheduled(cron = "0/20 * * * * ?")
+    @Scheduled(cron = "0/20 * * * * ?")
     public void createOrderJob() {
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
         if(list != null){
@@ -43,7 +43,7 @@ public class PullTaskCreateJob {
      * @Date 2022/11/9 14:50
      * @return void
      **/
-    //@Scheduled(cron = "0/10 * * * * ?")
+    @Scheduled(cron = "0/10 * * * * ?")
     public void addShopTask() {
          tbTaskTypeService.addTask();
     }
@@ -57,6 +57,17 @@ public class PullTaskCreateJob {
      **/
     @Scheduled(cron = "0/10 * * * * ?")
     public void cleanOrderTask() {
+        dmpOrderInfoService.cleanOrder();
+    }
+
+    /**
+     * 清洗退货数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 11:28
+     * @return void
+     **/
+    @Scheduled(cron = "0/10 * * * * ?")
+    public void cleanReturnOrderTask() {
         dmpOrderInfoService.cleanOrder();
     }
 }

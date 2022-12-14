@@ -6,18 +6,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.ShopDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
-import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import com.erp.server.dmp.pull.service.dmp.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +40,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Resource
     private DmpOrderItemService dmpOrderItemService;
+
+    @Resource
+    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
 
     /**
      * 添加订单信息
@@ -132,6 +129,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 updateWrapper.set(DmpOrderInfoEntity::getDeliveryTime, deliveryDetailOrderNo.getDeliveryDate());
                 updateWrapper.set(DmpOrderInfoEntity::getCleanState, 2);
             }
+
+            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getOrderByOrderId(dmpOrderInfoEntity.getPlatformOrderId());
+            if (dmpReturnOrderInfoEntity != null) {
+                dmpReturnOrderInfoService.upda
+            }
+
+            //getOrderByPlatformOrderId
+            //updateOrderByPlatformOrderId
+
+            //dmp_refund_info
 
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());

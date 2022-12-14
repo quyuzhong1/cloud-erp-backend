@@ -26,6 +26,15 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
     DmpReturnOrderInfoEntity getOrderByPlatformOrderId(DmpReturnOrderInfoEntity returnOrderInfoEntity);
 
     /**
+     * 根据订单id查询退货订单信息
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:10
+     * @param platformOrderId
+     * @return com.erp.model.dmp.entity.DmpReturnOrderInfoEntity
+     **/
+    DmpReturnOrderInfoEntity getOrderByOrderId(String platformOrderId);
+
+    /**
      * 根据平台订单id修改退货订单信息
      * @Author Luo_WG
      * @Date 2022/11/14 21:39
@@ -42,4 +51,11 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @return java.lang.String
      **/
     String checkOrder(DmpReturnOrderInfoEntity returnOrderInfoEntity);
+
+    /**
+     * 清洗退货订单数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:15
+     **/
+    void cleanReturnOrderTask();
 }

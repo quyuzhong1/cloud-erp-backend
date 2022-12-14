@@ -314,9 +314,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         dmpRefundInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
 
         //订单时间
-        if (StringUtils.isNotBlank(gyyRefundEntity.getCreateDate())) {
-            dmpRefundInfoEntity.setOrderTime(sdf.parse(gyyRefundEntity.getCreateDate()));
-        }
+        dmpRefundInfoEntity.setOrderTime(null);
 
         //发货时间
         dmpRefundInfoEntity.setExpressTime(null);

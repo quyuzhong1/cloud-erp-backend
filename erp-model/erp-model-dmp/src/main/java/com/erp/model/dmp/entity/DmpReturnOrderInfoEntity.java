@@ -182,6 +182,18 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "order_time")
     private Date orderTime;
 
+    /**
+     * 清洗状态  1 未清洗 2 清洗完成
+     */
+    @TableField(value = "clean_state")
+    private Integer cleanState;
+
+    /**
+     * 重试次数
+     */
+    @TableField(value = "retry_count")
+    private Integer retryCount;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

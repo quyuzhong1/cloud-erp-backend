@@ -13,6 +13,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInfoMapper, DmpReturnOrderInfoEntity>
     implements DmpReturnOrderInfoService {
+
+    private final Integer pageSize = 100;
+
+    private static Integer pageIndex = 1;
+
     /**
      * 添加退货订单信息
      * @Author Luo_WG
@@ -38,6 +43,20 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
         lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnOrderId, returnOrderInfoEntity.getReturnOrderId());
+        return this.getOne(lambdaQueryWrapper);
+    }
+
+    /**
+     * 根据订单id查询退货订单信息
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:10
+     * @param platformOrderId
+     * @return com.erp.model.dmp.entity.DmpReturnOrderInfoEntity
+     **/
+    @Override
+    public DmpReturnOrderInfoEntity getOrderByOrderId(String platformOrderId) {
+        LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, platformOrderId);
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -78,6 +97,16 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             returnOrderId = this.add(returnOrderInfoEntity);
         }
         return returnOrderId;
+    }
+
+    /**
+     * 清洗退货订单数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:15
+     **/
+    @Override
+    public void cleanReturnOrderTask(){
+
     }
 }
 

@@ -12,6 +12,19 @@
         country_name_cn,buyer_user_id,buyer_name,
         employee_id,employee_name,remark,
         return_create_time,refund_ime,currency_code,
-        currency_rate
+        currency_rate,create_time,platform_sign,company_id,
+        company_name,return_order_id,cny_settle_amount,order_time,
+        clean_state,retry_count
+
     </sql>
+
+    <select id="cleanReturnOrderList" resultType="com.erp.model.dmp.entity.DmpReturnOrderInfoEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM dmp_return_order_info
+        WHERE clean_state = 1
+        AND retry_count &lt;= 5
+        ORDER BY retry_count
+        limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
+    </select>
 </mapper>
