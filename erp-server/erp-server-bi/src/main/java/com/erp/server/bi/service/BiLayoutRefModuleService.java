@@ -1,6 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.LayoutRefModuleDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
      * @param moduleIdList
      * @return void
      */
-    void addLayoutRefModule(String  subjectId,String layoutId, String blockNo, List<String> moduleIdList);
+    void addLayoutRefModule(String  subjectId,String layoutId, String blockNo, List<LayoutRefModuleDTO> moduleIdList);
 
     
     /**
@@ -49,4 +50,6 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
     Boolean deleteLayoutModuleId(String layoutId, String moduleId);
 
     Boolean deleteLayout(String layoutId);
+
+    void copyLayoutRefModule(String newSubjectId, String newLayoutId, String copyLayoutId);
 }

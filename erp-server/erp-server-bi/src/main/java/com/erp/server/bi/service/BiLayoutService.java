@@ -53,4 +53,6 @@ public interface BiLayoutService  extends IService<BiLayoutEntity> {
     Boolean deleteLayoutModule(DeleteLayoutModuleDTO dto);
 
     Boolean deleteLayout(DeleteLayoutModuleDTO dto);
+
+    void copySubjectLayout(String newSubjectId, String subjectId);
 }
