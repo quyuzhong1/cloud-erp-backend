@@ -117,6 +117,7 @@
         <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
             and to_char(droi.delivery_time,'yyyy-MM-dd') &lt;= to_char(#{params.deliveryTime_end},'yyyy-MM-dd')
         </if>
+        </where>
     </select>
 
 
