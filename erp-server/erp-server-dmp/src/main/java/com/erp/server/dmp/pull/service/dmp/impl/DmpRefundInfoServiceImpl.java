@@ -101,7 +101,6 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      **/
     @Override
     public void cleanRefundTask(){
-        LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         List<DmpRefundInfoEntity> dmpRefundInfoEntities = baseMapper.cleanRefundList(pageSize, pageIndex);
         if (dmpRefundInfoEntities == null || dmpRefundInfoEntities.isEmpty()) {
             pageIndex = 1;
@@ -109,6 +108,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         }
 
         for (DmpRefundInfoEntity dmpRefundInfoEntity : dmpRefundInfoEntities) {
+            LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
             DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpRefundInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());

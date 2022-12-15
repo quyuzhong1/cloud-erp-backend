@@ -115,7 +115,6 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
      **/
     @Override
     public void cleanReturnOrderTask(){
-        LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         List<DmpReturnOrderInfoEntity> dmpReturnOrderInfoEntities = baseMapper.cleanReturnOrderList(pageSize, pageIndex);
         if (dmpReturnOrderInfoEntities == null || dmpReturnOrderInfoEntities.isEmpty()) {
             pageIndex = 1;
@@ -123,6 +122,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         }
 
         for (DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity : dmpReturnOrderInfoEntities) {
+            LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
             DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpReturnOrderInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());

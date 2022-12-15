@@ -325,7 +325,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      **/
     public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(kingdeeOrderEntity.getFBillNo());
 

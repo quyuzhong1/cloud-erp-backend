@@ -11,7 +11,7 @@
         order_weight,platform_name,country_name_en,
         country_name_cn,buyer_user_id,buyer_name,
         employee_id,employee_name,remark,
-        return_create_time,refund_ime,currency_code,
+        return_create_time,refund_time,currency_code,
         currency_rate
     </sql>
 

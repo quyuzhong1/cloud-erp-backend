@@ -216,13 +216,13 @@ public class DmpRefundInfoEntity implements Serializable {
      * 清洗状态  1 未清洗 2 清洗完成
      */
     @TableField(value = "clean_state")
-    private String cleanState;
+    private Integer cleanState;
 
     /**
      * 重试次数
      */
-    @TableField(value = "retryCount")
-    private String retryCount;
+    @TableField(value = "retry_count")
+    private Integer retryCount;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
