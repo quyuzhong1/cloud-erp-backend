@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -314,10 +315,10 @@ public class DmpOrderInfoEntity implements Serializable {
     private String chargeName;
 
     /**
-     * cny-结算金额
+     * cny-结算汇率
      */
-    @TableField(value = "cny_settle_amount")
-    private BigDecimal cnySettleAmount;
+    @TableField(value = "cny_settle_rate")
+    private BigDecimal cnySettleRate;
 
     /**
      * 发货时间

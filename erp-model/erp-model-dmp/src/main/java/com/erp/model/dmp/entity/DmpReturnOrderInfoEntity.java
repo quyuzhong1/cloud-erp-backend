@@ -223,8 +223,6 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", currencyCode='" + currencyCode + '\'' +
                 ", currencyRate=" + currencyRate +
                 ", platformSign='" + platformSign + '\'' +
-                ", companyId='" + companyId + '\'' +
-                ", companyName='" + companyName + '\'' +
                 '}';
     }
 }

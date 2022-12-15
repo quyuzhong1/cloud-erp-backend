@@ -3,9 +3,10 @@ package com.erp.model.bi.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * bi系统字典表(BiDict)实体类
@@ -16,6 +17,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("bi_dict")
+@Accessors(chain = true)
 public class BiDictEntity implements Serializable {
     private static final long serialVersionUID = -91581713878172579L;
     /**
@@ -52,13 +54,13 @@ public class BiDictEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDate createTime;
 
     /**
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDate updateTime;
 
 
 

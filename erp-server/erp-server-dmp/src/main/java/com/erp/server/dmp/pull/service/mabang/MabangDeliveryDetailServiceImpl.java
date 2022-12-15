@@ -123,7 +123,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
             }
             MabangAppEntity mabangAppEntity = new MabangAppEntity();
             String url = UrlContant.MABANG_HOST;
-            String method = jobTask.getApiCode();
+            String method = "order-get-order-list";
             String appKey = mabangAppEntity.getAppKey();
             String appSecret = mabangAppEntity.getSecretKey();
 

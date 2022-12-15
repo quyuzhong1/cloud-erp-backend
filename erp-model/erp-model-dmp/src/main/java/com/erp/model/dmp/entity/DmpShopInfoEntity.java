@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 店铺表
@@ -18,6 +18,42 @@ public class DmpShopInfoEntity implements Serializable {
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     /**
      * 平台店铺编号
@@ -67,11 +103,6 @@ public class DmpShopInfoEntity implements Serializable {
     @TableField(value = "finance_code")
     private String financeCode;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT_UPDATE)
-    private Date createTime;
 
     /**
      * 平台标识
@@ -96,6 +127,8 @@ public class DmpShopInfoEntity implements Serializable {
      */
     @TableField(value = "store_sign")
     private String storeSign;
+
+
 
 
     @TableField(exist = false)

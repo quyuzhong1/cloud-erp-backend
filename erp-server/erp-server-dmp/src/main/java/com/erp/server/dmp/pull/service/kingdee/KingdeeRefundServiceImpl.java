@@ -30,7 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 金蝶退货退款列表
+ * 金蝶退款列表
  */
 @Slf4j
 @Component

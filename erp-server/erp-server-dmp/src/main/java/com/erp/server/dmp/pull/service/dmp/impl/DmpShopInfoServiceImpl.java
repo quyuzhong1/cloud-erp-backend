@@ -88,7 +88,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
-                this.updateShopByShopNo(dmpOrderInfoEntity);
+                this.updateShopByShopNo(dmpShopInfoEntity);
             }
         } else {
             this.add(dmpShopInfoEntity);

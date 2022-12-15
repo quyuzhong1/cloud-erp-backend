@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * 主题分享表(BiSubjectShare)实体类
@@ -44,7 +44,7 @@ public class BiSubjectShareEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDate createTime;
     /**
      * 更改人id
      */
@@ -55,7 +55,7 @@ public class BiSubjectShareEntity implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDate updateTime;
     /**
      * 删除标示0未删除  1 被删除
      */

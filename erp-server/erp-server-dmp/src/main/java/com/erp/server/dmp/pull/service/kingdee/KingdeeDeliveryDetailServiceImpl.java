@@ -129,6 +129,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
             queryfilters.add(String.format("FModifyDate >= '%s'", st));
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
             queryfilters.add(String.format("FBillTypeID = '%s'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
+            queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
             String filterStr = String.join(" and ", queryfilters);
             String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName,FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName,FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus,FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName,FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"
                     + "FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate,FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote";

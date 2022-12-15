@@ -31,7 +31,7 @@ public class PullMabangJob {
     // 拉取马帮数据任务
     //@Scheduled(cron = "*/5 * * * * ?")
     //上午7:00~19:00更新时间
-    //@Scheduled(cron = "*/10 * 0,1,2,3,4,5,6,20,21,22,23 * * ?")
+    @Scheduled(cron = "*/10 * 0,1,2,3,4,5,6,20,21,22,23 * * ?")
     public void execute() {
         while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {
             // 获取请求任务

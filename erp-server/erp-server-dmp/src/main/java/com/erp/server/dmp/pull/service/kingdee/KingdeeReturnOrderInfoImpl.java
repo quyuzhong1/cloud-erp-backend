@@ -131,6 +131,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
             queryfilters.add(String.format("FBillTypeID = '%s'", "73383412199a402bb58439509e089077"));
             queryfilters.add(String.format("FOrderNo <> '%s'", ""));
+            queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
             String filterStr = String.join(" and ", queryfilters);
             String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId,FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate,FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,"
                     + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId,FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU";
@@ -265,16 +266,16 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
         //平台订单编号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFBillNo());
+        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFOrderNo());
 
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFOrderNo());
+        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFBillNo());
 
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo("B2B");
 
         //店铺名称
-        dmpReturnOrderInfoEntity.setShopNo("B2B");
+        dmpReturnOrderInfoEntity.setShopName("B2B");
 
         //付款时间
         dmpReturnOrderInfoEntity.setPaidTime(null);

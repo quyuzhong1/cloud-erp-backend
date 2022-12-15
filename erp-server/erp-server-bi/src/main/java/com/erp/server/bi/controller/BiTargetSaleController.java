@@ -27,7 +27,7 @@ public class BiTargetSaleController extends BaseController {
     private DmpOrderInfoService dmpOrderInfoService;
 
     /**
-     * 销售额
+     * 销售额  区分新老品
      */
     @PostMapping("/sales")
     public ApiResult countSales(@RequestBody TargetSaleDTO dto){
@@ -89,9 +89,6 @@ public class BiTargetSaleController extends BaseController {
         return success(vo);
     }
 
-    /**
-     * 新品销售额
-     */
 
     /**
      * B2B 新客户营业额

@@ -168,6 +168,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                 datas.put("end_modify_date", sd);
                 datas.put("page_no", pageIndex);
                 datas.put("page_size", pageSize);
+                datas.put("cancel", 0);
 
                 String str = JSONObject.toJSONString(datas);
                 String sign = GyyUtils.sign(str, secretKey);

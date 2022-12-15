@@ -3,6 +3,8 @@ package com.erp.model.bi.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @author Will
  * @version 1.0
@@ -11,7 +13,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class DmpShopInfoDTO {
+public class DmpShopInfoShowDTO {
     /**
      * 主键id
      */
@@ -33,9 +35,9 @@ public class DmpShopInfoDTO {
     private String site;
 
     /**
-     * 负责人名称id
+     * 负责人名称
      */
-    private String chargeId;
+    private String chargeName;
 
     /**
      * 店铺状态
@@ -47,4 +49,23 @@ public class DmpShopInfoDTO {
      */
     private String storeSign;
 
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
+
+    /**
+     * 创建人
+     */
+    private String createUserName;
+
+    /**
+     * 更新人
+     */
+    private String updateUserName;
 }

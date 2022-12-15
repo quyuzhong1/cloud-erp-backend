@@ -3,8 +3,11 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpShopInfoDTO;
+import com.erp.model.bi.dto.DmpShopInfoChangeDTO;
+import com.erp.model.bi.dto.DmpShopInfoDeptChangeDTO;
+import com.erp.model.bi.dto.DmpShopInfoShowDTO;
 import com.erp.model.bi.dto.DmpShopInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 
 /**
@@ -21,5 +24,37 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @param dto
      * @return PagingVO<DmpShopInfoDTO>
      */
-    PagingVO<DmpShopInfoDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto);
+    PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto);
+    /**
+     * @description: 新增
+     * @author Will
+     * @date: 2022/12/15 13:58
+     * @param dto
+     * @return Boolean
+     */
+    Boolean addDmpShopInfo(DmpShopInfoDTO dto);
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2022/12/15 13:58
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateDmpShopInfo(DmpShopInfoDTO dto);
+    /**
+     * @description: 变更负责人
+     * @author Will
+     * @date: 2022/12/15 13:59
+     * @param dto
+     * @return Boolean
+     */
+    Boolean changeChargeName(DmpShopInfoChangeDTO dto);
+    /**
+     * @description: 变更部门
+     * @author Will
+     * @date: 2022/12/15 13:59
+     * @param dto
+     * @return Boolean
+     */
+    Boolean changeDept(DmpShopInfoDeptChangeDTO dto);
 }

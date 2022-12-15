@@ -3,7 +3,7 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.bi.dto.DmpShopInfoDTO;
+import com.erp.model.bi.dto.DmpShopInfoShowDTO;
 import com.erp.model.bi.dto.DmpShopInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -25,5 +25,5 @@ public interface DmpShopInfoMapper extends BaseMapper<DmpShopInfoEntity> {
      * @param params
      * @return IPage<DmpShopInfoDTO>
      */
-    IPage<DmpShopInfoDTO> paging(Page query,@Param("params") DmpShopInfoSearchDTO params);
+    IPage<DmpShopInfoShowDTO> paging(Page query, @Param("params") DmpShopInfoSearchDTO params);
 }

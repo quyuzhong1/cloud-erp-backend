@@ -29,7 +29,7 @@ public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
      * @description: 导出
      * @author Will
      * @date: 2022/12/15 10:38
-     * @param dto
+     * @param params
      * @return List<DmpRefundInfoDTO>
      */
     List<DmpRefundInfoDTO> getAllRefundInfo(@Param("params") DmpRefundInfoSearchDTO params);

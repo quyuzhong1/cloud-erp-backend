@@ -86,6 +86,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
             for (GyyReturnOrderEntity gyyReturnOrderEntity : gyyReturnOrderEntityList) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyReturnOrderEntity.getPlatformCode());
+                orderMongoDTO.setCode(gyyReturnOrderEntity.getCode());
                 List<GyyReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
                 if (mongoData != null && mongoData.size() > 0) {
                     for (GyyReturnOrderEntity mongoDatum : mongoData) {
@@ -171,6 +172,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
                 datas.put("modify_end_date", sd);
                 datas.put("page_no", pageIndex);
                 datas.put("page_size", pageSize);
+                datas.put("receive", 1);
 
                 String str = JSONObject.toJSONString(datas);
                 String sign = GyyUtils.sign(str, secretKey);
@@ -235,7 +237,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
 
         //店铺名称
-        dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopName());
+        dmpReturnOrderInfoEntity.setShopName(gyyReturnOrderEntity.getShopName());
         List<ReturnOrderPayments> payments = gyyReturnOrderEntity.getPayments();
         if (payments.size() > 0) {
             //付款时间
