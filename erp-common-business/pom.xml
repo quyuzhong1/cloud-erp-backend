@@ -14,6 +14,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>erp-common-business</name>
     <description>公共业务模块</description>
+    <packaging>pom</packaging>
 
     <properties>
         <java.version>1.8</java.version>
