@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -77,4 +76,14 @@ public class ProductSkuBaseInfoDTO {
      * 任务状态 0待审核，1审核中，2审核通过，3审核不通过
      */
     private Integer status;
+
+    /**
+     * 流程id
+     */
+    private String processId;
+
+    /**
+     * 流程表id
+     */
+    private String businessProcessId;
 }

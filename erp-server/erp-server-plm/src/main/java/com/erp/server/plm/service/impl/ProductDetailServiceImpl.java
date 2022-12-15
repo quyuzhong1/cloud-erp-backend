@@ -507,7 +507,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
             if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                productSkuBaseInfoDTO.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+                //重启审核流程
+                productDetailStartProcess(oldEntity);
+                productSkuBaseInfoDTO.setStatus(oldEntity.getStatus());
+                productSkuBaseInfoDTO.setProcessId(oldEntity.getProcessId());
+                productSkuBaseInfoDTO.setBusinessProcessId(oldEntity.getBusinessProcessId());
             }
             addProductSkuBaseInfoLog(productSkuBaseInfoDTO,oldEntity,productSkuBaseInfoDTO.getId(),id);
         } else {
@@ -642,7 +646,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailLists.forEach(obj ->{
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
                 if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                    obj.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+                    //重启审核流程
+                    productDetailStartProcess(oldEntity);
+                    obj.setStatus(oldEntity.getStatus());
+                    obj.setProcessId(oldEntity.getProcessId());
+                    obj.setBusinessProcessId(oldEntity.getBusinessProcessId());
                 }
                 //sku操作日志
                 addProductDetailLog(obj,oldEntity,obj.getId(),productInfoDTO.getId());
