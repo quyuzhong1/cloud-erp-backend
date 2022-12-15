@@ -9,6 +9,8 @@ import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Entity com.erp.model.plm.entity.DmpRefundInfo
  */
@@ -23,6 +25,14 @@ public interface DmpRefundInfoMapper extends BaseMapper<DmpRefundInfoEntity> {
      * @return IPage<DmpRefundInfoDTO>
      */
     IPage<DmpRefundInfoDTO> paging(Page query,@Param("params") DmpRefundInfoSearchDTO params);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2022/12/15 10:38
+     * @param dto
+     * @return List<DmpRefundInfoDTO>
+     */
+    List<DmpRefundInfoDTO> getAllRefundInfo(@Param("params") DmpRefundInfoSearchDTO params);
 }
 
 

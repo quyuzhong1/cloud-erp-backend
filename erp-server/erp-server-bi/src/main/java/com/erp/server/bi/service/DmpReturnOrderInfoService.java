@@ -8,6 +8,7 @@ import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -31,4 +32,13 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @return
      */
     BigDecimal sumRefundAmount(List<String> orderIds, TargetSaleDTO sku);
+
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2022/12/15 10:48
+     * @param dto
+     * @param response
+     */
+    void exportExcel(DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response);
 }

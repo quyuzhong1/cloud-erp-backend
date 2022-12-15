@@ -16,7 +16,6 @@ import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -41,7 +40,9 @@ import java.util.List;
  **/
 @RestController
 @RequestMapping("plm/product/detail")
-public class ProductDetailController extends BaseController {
+public class
+
+ProductDetailController extends BaseController {
 
     @Resource
     private ProductInfoService productInfoService;

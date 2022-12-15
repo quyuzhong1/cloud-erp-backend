@@ -2,14 +2,18 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -17,14 +21,16 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.enums.TargetSettleMethodEnum;
 import com.erp.server.bi.enums.TargetTimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
-import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -45,12 +51,39 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpShopInfoService dmpShopInfoService;
 
 
+    @Resource
+    private RedisService redisService;
+
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean updateState(DmpOrderStateDTO dto) {
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
+            throw new ServiceException(ApiError.Default);
+        }
+        dmpOrderInfoEntity.setOrderState(dto.getState());
+        return this.updateById(dmpOrderInfoEntity);
+    }
+
+    @Override
+    public void exportExcel(DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
+        //查询所有数据
+        List<DmpOrderInfoDTO> list = baseMapper.getAllDmpOrderInfo(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //导出销售数据
+        List<DmpOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpOrderInfoExcelDTO.class, list);
+        String fileName = getFileName("销售数据导出");
+        ExcelUtil.export(fileName, "销售数据导出", excelList, DmpOrderInfoExcelDTO.class, response);
+        return;
     }
 
     @Override
@@ -250,6 +283,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         BigDecimal ratio = domesticAmount.divide(salesAmount, 4, BigDecimal.ROUND_DOWN);
         return new TargetSaleSumVO(ratio);
     }
+
+    /**
+     * @description: 导出文件名称
+     * @author Will
+     * @date: 2022/12/15 10:35
+     * @param fileName
+     * @return String
+     */
+    @Override
+    public String getFileName(String fileName) {
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(fileName);
+        sb.append(date);
+        String redisKey = "file:name:" + date;
+        Integer last = redisService.getCacheObject(redisKey);
+        Integer lastNo = 1;
+        if (last != null) {
+            lastNo = last + 1;
+        }
+        redisService.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
+        return sb.append(lastNo).toString();
+    }
+
 }
 
 

@@ -5,11 +5,13 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
 import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.bi.dto.DmpOrderStateDTO;
 import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 订单服务类
@@ -80,4 +82,30 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     TargetSaleSumVO statisticsDomesticSalesRatio(TargetSaleDTO dto);
+
+    /**
+     * @description: 修改状态
+     * @author Will
+     * @date: 2022/12/15 10:10
+     * @param dto
+     * @return Boolean
+     */
+    Boolean updateState(DmpOrderStateDTO dto);
+
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2022/12/15 10:17
+     * @param dto
+     * @param response
+     */
+    void exportExcel(DmpOrderInfoSearchDTO dto, HttpServletResponse response);
+    /**
+     * @description: 设置导出文件名称
+     * @author Will
+     * @date: 2022/12/15 10:42
+     * @param fileName
+     * @return String
+     */
+    String getFileName(String fileName);
 }

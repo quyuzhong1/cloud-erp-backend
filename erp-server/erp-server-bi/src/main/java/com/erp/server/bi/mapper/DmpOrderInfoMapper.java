@@ -9,6 +9,8 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Entity com.erp.model.plm.entity.DmpOrderInfo
  */
@@ -23,6 +25,14 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return IPage
      */
     IPage<DmpOrderInfoDTO> paging(Page query,@Param("params") DmpOrderInfoSearchDTO params);
+    /**
+     * @description: 查询所有的订单数据
+     * @author Will
+     * @date: 2022/12/15 10:33
+     * @param params
+     * @return List<DmpOrderInfoDTO>
+     */
+    List<DmpOrderInfoDTO> getAllDmpOrderInfo(@Param("params") DmpOrderInfoSearchDTO params);
 }
 
 
