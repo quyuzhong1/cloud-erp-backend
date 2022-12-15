@@ -69,6 +69,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public DmpOrderInfoEntity getOrderByPlatformOrderId(String platformOrderId) {
         LambdaQueryWrapper<DmpOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId, platformOrderId);
+        lambdaQueryWrapper.last("LIMIT 1");
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -83,6 +84,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public Boolean updateOrderByPlatformOrderId(DmpOrderInfoEntity dmpOrderInfoEntity) {
         LambdaQueryWrapper<DmpOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId, dmpOrderInfoEntity.getPlatformOrderId());
+        lambdaQueryWrapper.eq(DmpOrderInfoEntity::getPlatformSign, dmpOrderInfoEntity.getPlatformSign());
         return this.update(dmpOrderInfoEntity, lambdaQueryWrapper);
     }
 
@@ -98,7 +100,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
-                this.updateOrderByPlatformOrderId(dmpOrderInfoEntity);
+                this.updateOrderByPlatformOrderId(orderInfoEntity);
                 orderInfoId = dmpOrderInfoEntity.getId();
             }
 

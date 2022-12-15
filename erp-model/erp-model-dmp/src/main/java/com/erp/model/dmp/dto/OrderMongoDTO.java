@@ -28,4 +28,10 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "platformCode")
     private String platformCode;
 
+    @Panno(findType = PannoEnum.EQ,field = "code")
+    private String code;
+
+    @Panno(findType = PannoEnum.EQ,field = "salesRecordNumber")
+    private String salesRecordNumber;
+
 }

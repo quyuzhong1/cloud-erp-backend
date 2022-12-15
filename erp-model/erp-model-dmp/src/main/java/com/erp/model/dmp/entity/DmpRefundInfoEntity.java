@@ -251,7 +251,6 @@ public class DmpRefundInfoEntity implements Serializable {
                 ", buyerName='" + buyerName + '\'' +
                 ", itemTotalOrigin=" + itemTotalOrigin +
                 ", shippingTotalOrigin=" + shippingTotalOrigin +
-                ", orderTime=" + orderTime +
                 ", expressTime=" + expressTime +
                 ", pictureUrl='" + pictureUrl + '\'' +
                 ", platformUpdateTime=" + platformUpdateTime +

@@ -56,10 +56,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
-    @Resource
-    private DmpShopInfoService dmpShopInfoService;
-
-
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.get");
@@ -95,6 +91,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyOrderEntity.getPlatformCode());
+                orderMongoDTO.setCode(gyyOrderEntity.getCode());
                 List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
                 if (mongoData != null && mongoData.size() > 0) {
                     for (GyyOrderEntity mongoDatum : mongoData) {
@@ -298,7 +295,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         }
 
         //平台交易号
-        dmpOrderInfoEntity.setSalesRecordNumber(gyyOrderEntity.getPlatformCode());
+        dmpOrderInfoEntity.setSalesRecordNumber(gyyOrderEntity.getCode());
 
         //平台的订单状态
         dmpOrderInfoEntity.setPlatformOrderStatus(gyyOrderEntity.getPlatformTradingState());

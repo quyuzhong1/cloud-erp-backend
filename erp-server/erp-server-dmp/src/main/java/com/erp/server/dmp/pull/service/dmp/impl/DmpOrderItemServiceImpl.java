@@ -94,7 +94,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             if (dmpOrderItemEntity != null) {
                 //如果数据有变动需要更新数据库订单商品信息
                 if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
-                    this.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
+                    this.updateOrderItemByErpOrderItemId(orderItemBean);
                 }
             } else {
                 this.save(orderItemBean);

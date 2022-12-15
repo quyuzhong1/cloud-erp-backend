@@ -91,6 +91,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             for (OrderEntity orderEntity : orderEntities) {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformOrderId(orderEntity.getPlatformOrderId());
+                orderMongoDTO.setSalesRecordNumber(orderEntity.getSalesRecordNumber());
                 List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
                 if (mongoData != null && mongoData.size() > 0) {
                     for (OrderEntity mongoDatum : mongoData) {
