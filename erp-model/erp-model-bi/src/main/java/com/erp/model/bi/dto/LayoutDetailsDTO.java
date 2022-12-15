@@ -46,8 +46,8 @@ public class LayoutDetailsDTO  implements Serializable {
 
 
     /**
-     * 模块id集合
+     * 模块 集合
      */
-    private List<String> moduleIdList;
+    private List<LayoutRefModuleDTO> moduleIdList;
 
 }
