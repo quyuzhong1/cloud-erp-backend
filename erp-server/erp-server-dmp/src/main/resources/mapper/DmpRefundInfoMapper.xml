@@ -13,6 +13,18 @@
         country_cn,country_en,sales_record_number,
         buyer_user_id,buyer_name,item_total_origin,
         shipping_total_origin,order_time,express_time,
-        picture_url,platform_update_time,track_number
+        picture_url,platform_update_time,track_number,refund_id
+        cny_settle_amount,clean_state,retry_count
+
     </sql>
+
+    <select id="cleanRefundList" resultType="com.erp.model.dmp.entity.DmpRefundInfoEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM dmp_refund_info
+        WHERE clean_state = 1
+        AND retry_count &lt;= 5
+        ORDER BY retry_count
+        limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
+    </select>
 </mapper>

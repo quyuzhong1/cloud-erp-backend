@@ -106,6 +106,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -134,7 +135,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (10L*60L)) * 1000L);
+                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 st = sdf.format(date);
                 sd = sdf.format(new Date(nextTime * 1000L));
@@ -155,8 +156,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             String appKey = mabangAppEntity.getAppKey();
             String appSecret = mabangAppEntity.getSecretKey();
 
-            //每次最多获取100条
-            Integer pageSize = 100;
+            //每次最多获取1000条
+            Integer pageSize = 1000;
             //当前页数
             Integer pageIndex = 1;
             //总页数
@@ -206,11 +207,14 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
+                    throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====详情请看错误表");
                 }
                 pageIndex++;
             }
         } catch (Exception e) {
+
             log.info(" ===== 获取马帮订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
             throw new RuntimeException(" ===== 获取马帮订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
         }

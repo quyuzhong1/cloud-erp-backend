@@ -95,6 +95,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                             }
@@ -123,7 +124,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (10L*60L)) * 1000L);
+                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 st = sdf.format(date);
                 sd = sdf.format(new Date(nextTime * 1000L));
@@ -194,6 +195,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setTaskId(jobTask.getId());
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogService.add(dmpErrorLogEntity);
                     break;
@@ -206,6 +208,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
             dmpErrorLogEntity.setParams("");
             dmpErrorLogEntity.setErrorMsg(e.getMessage());
             dmpErrorLogEntity.setReturnMsg("");
+            dmpErrorLogEntity.setCreateTime(new Date());
             dmpErrorLogService.add(dmpErrorLogEntity);
             log.info(" ===== 获取管易云商品列表数据失败， 错误信息 = { " + e.getMessage() + " }");
             throw new RuntimeException(" ===== 获取管易云商品列表数据失败， 错误信息 = { " + e.getMessage() + " }");

@@ -206,6 +206,24 @@ public class DmpRefundInfoEntity implements Serializable {
     @TableField(value = "platform_sign")
     private String platformSign;
 
+    /**
+     * cny-结算金额
+     */
+    @TableField(value = "cny_settle_amount")
+    private String cnySettleAmount;
+
+    /**
+     * 清洗状态  1 未清洗 2 清洗完成
+     */
+    @TableField(value = "clean_state")
+    private String cleanState;
+
+    /**
+     * 重试次数
+     */
+    @TableField(value = "retryCount")
+    private String retryCount;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

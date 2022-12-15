@@ -65,6 +65,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb店铺数据失败，[ 店铺名称 = " + shopEntity.getName() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb店铺数据失败，[ 店铺名称 = " + shopEntity.getName() + "], 错误信息 = " + e.getMessage());
                             }
@@ -138,6 +139,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
                 dmpErrorLogEntity.setParams(jsonData);
                 dmpErrorLogEntity.setErrorMsg(e.getMessage());
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                dmpErrorLogEntity.setCreateTime(new Date());
                 dmpErrorLogService.add(dmpErrorLogEntity);
             }
         } catch (Exception e) {

@@ -71,6 +71,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb退款数据失败，[ 单号 = " + refundOrderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 金蝶云星空修改mongodb退款数据失败，[ 单号 = " + refundOrderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                             }
@@ -99,7 +100,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (10L*60L)) * 1000L);
+                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 st = sdf.format(date);
                 sd = sdf.format(new Date(nextTime * 1000L));

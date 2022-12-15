@@ -88,6 +88,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb店铺数据失败，[ 店铺编号 = " + gyyShopInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb店铺数据失败，[ 店铺编号 = " + gyyShopInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                             }
@@ -171,6 +172,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                     break;
                 }
@@ -182,6 +184,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
             dmpErrorLogEntity.setParams("");
             dmpErrorLogEntity.setErrorMsg(e.getMessage());
             dmpErrorLogEntity.setReturnMsg("");
+            dmpErrorLogEntity.setCreateTime(new Date());
             dmpErrorLogService.add(dmpErrorLogEntity);
             log.info(" ===== 获取管易云店铺列表数据失败， 错误信息 = { " + e.getMessage() + " }");
             throw new RuntimeException(" ===== 获取管易云店铺列表数据失败， 错误信息 = { " + e.getMessage() + " }");

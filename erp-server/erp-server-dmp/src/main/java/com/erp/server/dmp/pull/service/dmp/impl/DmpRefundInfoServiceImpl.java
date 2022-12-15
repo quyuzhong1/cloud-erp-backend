@@ -1,11 +1,18 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpRefundInfoMapper;
+import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 退款列表服务类
@@ -13,6 +20,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, DmpRefundInfoEntity>
     implements DmpRefundInfoService {
+
+    private final Integer pageSize = 100;
+
+    private static Integer pageIndex = 1;
+
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
 
     /**
      * 添加退款列表信息
@@ -78,6 +92,32 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             refundInfoId = this.add(returnOrderInfoEntity);
         }
         return refundInfoId;
+    }
+
+    /**
+     * 清洗退款数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:15
+     **/
+    @Override
+    public void cleanRefundTask(){
+        LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        List<DmpRefundInfoEntity> dmpRefundInfoEntities = baseMapper.cleanRefundList(pageSize, pageIndex);
+        if (dmpRefundInfoEntities == null || dmpRefundInfoEntities.isEmpty()) {
+            pageIndex = 1;
+            return;
+        }
+
+        for (DmpRefundInfoEntity dmpRefundInfoEntity : dmpRefundInfoEntities) {
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpRefundInfoEntity.getPlatformOrderId());
+            if (dmpOrderInfoEntity != null) {
+                updateWrapper.set(DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
+                updateWrapper.set(DmpRefundInfoEntity::getCleanState, 2);
+            }
+            updateWrapper.set(DmpRefundInfoEntity::getRetryCount, dmpRefundInfoEntity.getRetryCount() + 1);
+            updateWrapper.eq(DmpRefundInfoEntity::getId, dmpRefundInfoEntity.getId());
+            this.update(updateWrapper);
+        }
     }
 }
 

@@ -77,6 +77,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb出库数据失败，[ 单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb出库数据失败，[ 单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -105,7 +106,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (10L*60L)) * 1000L);
+                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 st = sdf.format(date);
                 sd = sdf.format(new Date(nextTime * 1000L));
@@ -127,7 +128,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
             String appSecret = mabangAppEntity.getSecretKey();
 
             //每次最多获取100条
-            Integer pageSize = 100;
+            Integer pageSize = 1000;
             //当前页数
             Integer pageIndex = 1;
             //总页数
@@ -177,6 +178,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 pageIndex++;

@@ -2,6 +2,8 @@ package com.erp.server.dmp.task.schedule;
 
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
 import com.erp.server.dmp.task.service.TbTaskTypeService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +26,18 @@ public class PullTaskCreateJob {
     @Resource
     DmpOrderInfoService dmpOrderInfoService;
 
+    @Resource
+    DmpReturnOrderInfoService dmpReturnOrderInfoService;
+
+    @Resource
+    DmpRefundInfoService dmpRefundInfoService;
+
     /**
      * 定时扫描需要创建拉取任务拉取数据的任务
      * @Author Luo_WG
      * @Date 2022/11/9 14:50
      **/
-    @Scheduled(cron = "0/20 * * * * ?")
+    //@Scheduled(cron = "0/20 * * * * ?")
     public void createOrderJob() {
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
         if(list != null){
@@ -43,7 +51,7 @@ public class PullTaskCreateJob {
      * @Date 2022/11/9 14:50
      * @return void
      **/
-    @Scheduled(cron = "0/10 * * * * ?")
+    //@Scheduled(cron = "0/10 * * * * ?")
     public void addShopTask() {
          tbTaskTypeService.addTask();
     }
@@ -55,7 +63,7 @@ public class PullTaskCreateJob {
      * @Date 2022/12/14 11:28
      * @return void
      **/
-    @Scheduled(cron = "0/10 * * * * ?")
+    //@Scheduled(cron = "0/10 * * * * ?")
     public void cleanOrderTask() {
         dmpOrderInfoService.cleanOrder();
     }
@@ -66,8 +74,20 @@ public class PullTaskCreateJob {
      * @Date 2022/12/14 11:28
      * @return void
      **/
-    @Scheduled(cron = "0/10 * * * * ?")
+    //@Scheduled(cron = "0/10 * * * * ?")
     public void cleanReturnOrderTask() {
-        dmpOrderInfoService.cleanOrder();
+        dmpReturnOrderInfoService.cleanReturnOrderTask();
+    }
+
+
+    /**
+     * 清洗退款数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 11:28
+     * @return void
+     **/
+    //@Scheduled(cron = "0/10 * * * * ?")
+    public void cleanRefundTask() {
+        dmpRefundInfoService.cleanRefundTask();
     }
 }

@@ -42,4 +42,11 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @return java.lang.String
      **/
     String checkOrder(DmpRefundInfoEntity returnOrderInfoEntity);
+
+    /**
+     * 清洗退款数据
+     * @Author Luo_WG
+     * @Date 2022/12/14 19:15
+     **/
+    void cleanRefundTask();
 }

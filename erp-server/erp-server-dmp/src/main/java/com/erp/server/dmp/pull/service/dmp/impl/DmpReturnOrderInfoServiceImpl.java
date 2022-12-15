@@ -1,11 +1,17 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpReturnOrderInfoMapper;
+import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 退货订单服务
@@ -17,6 +23,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     private final Integer pageSize = 100;
 
     private static Integer pageIndex = 1;
+
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
 
     /**
      * 添加退货订单信息
@@ -106,7 +115,23 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
      **/
     @Override
     public void cleanReturnOrderTask(){
+        LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        List<DmpReturnOrderInfoEntity> dmpReturnOrderInfoEntities = baseMapper.cleanReturnOrderList(pageSize, pageIndex);
+        if (dmpReturnOrderInfoEntities == null || dmpReturnOrderInfoEntities.isEmpty()) {
+            pageIndex = 1;
+            return;
+        }
 
+        for (DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity : dmpReturnOrderInfoEntities) {
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpReturnOrderInfoEntity.getPlatformOrderId());
+            if (dmpOrderInfoEntity != null) {
+                updateWrapper.set(DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
+                updateWrapper.set(DmpReturnOrderInfoEntity::getCleanState, 2);
+            }
+            updateWrapper.set(DmpReturnOrderInfoEntity::getRetryCount, dmpReturnOrderInfoEntity.getRetryCount() + 1);
+            updateWrapper.eq(DmpReturnOrderInfoEntity::getId, dmpReturnOrderInfoEntity.getId());
+            this.update(updateWrapper);
+        }
     }
 }
 

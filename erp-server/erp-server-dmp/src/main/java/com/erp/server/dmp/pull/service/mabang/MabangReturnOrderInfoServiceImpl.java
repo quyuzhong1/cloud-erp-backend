@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.ReturnOrderEntity;
 import com.erp.model.dmp.mabang.ReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
@@ -49,7 +50,26 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
-
+//{"data":{"createDateStart":"2022-10-28 00:20:00","page":1,"createDateEnd":"2022-10-28 01:00:00","rowsPerPage":100},"appkey":"200780","api":"order-get-return-order-list","version":1,"timestamp":"1671048860"}
+    public static void main(String[] args) {
+        MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode("order-get-order-list");
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(0);
+        jobTaskDTO.setNextTime(0);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        List<OrderEntity> orderEntities = getOrderInfoService.pullDate(requestDTO);
+        System.out.println(orderEntities);
+    }
     /**
      * 拉取退货订单数据
      * @param dto 任务信息
@@ -77,6 +97,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb退货数据失败，[ 订单号 = " + returnOrderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb退货数据失败，[ 订单号 = " + returnOrderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -105,7 +126,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (10L*60L)) * 1000L);
+                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
                 SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
                 st = sdf.format(date);
                 sd = sdf.format(new Date(nextTime * 1000L));
@@ -121,8 +142,8 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
             String appKey = mabangAppEntity.getAppKey();
             String appSecret = mabangAppEntity.getSecretKey();
 
-            //每次最多获取100条
-            Integer pageSize = 100;
+            //每次最多获取1000条
+            Integer pageSize = 1000;
             //当前页数
             Integer pageIndex = 1;
             //总页数
@@ -130,8 +151,8 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
             HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
             while (pageIndex <= pageCount) {
                 Map<String, Object> paramsMap = new HashMap();
-                paramsMap.put("createDateStart", st);
-                paramsMap.put("createDateEnd", sd);
+                paramsMap.put("updateDateStart", st);
+                paramsMap.put("updateDateEnd", sd);
                 paramsMap.put("page", pageIndex);
                 paramsMap.put("rowsPerPage", pageSize);
 
@@ -172,6 +193,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 pageIndex++;
