@@ -2,14 +2,14 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.ShopDTO;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.*;
@@ -17,8 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -175,6 +173,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         Date platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
                         if (null !=  listingTime && null != platformCreateTime) {
                             dmpOrderItemEntity.setNewSign(LocalDateUtil.date2LocalDate(listingTime).getYear() == LocalDateUtil.date2LocalDateTime(platformCreateTime).getYear() ? 1 : 0);
+
                         }
                         dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
                     }
