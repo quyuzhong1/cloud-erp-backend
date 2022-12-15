@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -35,9 +36,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             query.select("SUM(sell_price*quantity) as sell_price");
         }
 
-        query
-                .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
-                .in(CollectionUtils.isNotEmpty(dto.getSku()), "sku_no", dto.getSku());
+        query.in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
+            .in(CollectionUtils.isNotEmpty(dto.getSku()), "sku_no", dto.getSku())
+            .eq(ObjectUtils.isNotEmpty(dto.getHasNewSign()), "new_sign", dto.getHasNewSign() ? 1 : 0);
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
         return dmpOrderItemEntity.getSellPrice();
     }

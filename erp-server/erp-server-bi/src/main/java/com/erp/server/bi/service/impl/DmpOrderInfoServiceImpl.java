@@ -92,7 +92,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 没有sku情况
         BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        if(CollectionUtils.isEmpty(dto.getSku())){
+        if(CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())){
             if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total) as item_total");
             }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){

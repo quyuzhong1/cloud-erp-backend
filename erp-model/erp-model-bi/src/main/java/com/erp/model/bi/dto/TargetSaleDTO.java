@@ -88,7 +88,7 @@ public class TargetSaleDTO implements Serializable {
         return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopNo());
     }
 
-    private List<String> shopList;
+    private Boolean hasNewSign;
 
 
 }

@@ -172,7 +172,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         LocalDate listingTime = productIdBySku.getListingTime();
                         Date platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
                         if (null !=  listingTime && null != platformCreateTime) {
-                            dmpOrderItemEntity.setNewSign(listingTime.getYear() == LocalDateUtil.date2LocalDate(platformCreateTime).getYear() ? 1 : 0);
+                            dmpOrderItemEntity.setNewSign(listingTime.getYear() == LocalDateUtil.date2LocalDateTime(platformCreateTime).getYear() ? 1 : 0);
                         }
                         dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
                     }
