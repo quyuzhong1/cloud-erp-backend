@@ -468,11 +468,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
-        //SPU产品名称
-        if (StringUtils.isBlank(productSpuBaseInfoDTO.getName())) {
-            productSpuBaseInfoDTO.setName(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getName());
-        }
-
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
             //根据id查询字典表中的产品等级
