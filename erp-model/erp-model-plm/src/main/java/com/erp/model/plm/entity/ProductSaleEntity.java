@@ -65,7 +65,7 @@ public class ProductSaleEntity implements Serializable {
      */
     @TableField(value = "listing_time", fill = FieldFill.INSERT_UPDATE)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDate listingTime;
+    private Date listingTime;
 
     /**
      * 退市时间

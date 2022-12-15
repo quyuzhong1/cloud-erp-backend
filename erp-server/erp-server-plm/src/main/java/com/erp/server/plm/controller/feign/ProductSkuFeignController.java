@@ -1,6 +1,5 @@
 package com.erp.server.plm.controller.feign;
 
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;

@@ -106,6 +106,7 @@
         <if test="params.orderTime_end != null and params.orderTime_end != ''">
             and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
         </if>
+        </where>
     </select>
 
 </mapper>
