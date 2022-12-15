@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Entity com.erp.model.plm.entity.DmpOrderInfo
@@ -33,6 +34,8 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
      * @return List<DmpOrderInfoDTO>
      */
     List<DmpOrderInfoDTO> getAllDmpOrderInfo(@Param("params") DmpOrderInfoSearchDTO params);
+
+    List<Map<String, Object>> getMonthSales();
 }
 
 

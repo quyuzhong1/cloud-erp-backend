@@ -14,32 +14,34 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.TargetSaleCountVO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.enums.TargetSettleMethodEnum;
 import com.erp.server.bi.enums.TargetTimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * 订单服务类
+ *
  * @author Cloud
  */
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
-    implements DmpOrderInfoService {
+        implements DmpOrderInfoService {
 
     @Resource
     private CommonService commonService;
@@ -92,23 +94,23 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 没有sku情况
         BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        if(CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())){
+        if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
             if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total) as item_total");
-            }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+            } else if (TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
-            }else if (TargetSaleDTO.validOriginalCurrency(dto)){
+            } else if (TargetSaleDTO.validOriginalCurrency(dto)) {
                 query.select("sum(item_total*currency_rate) as item_total");
             }
 
             DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
             amount = dmpOrderInfoEntity.getItemTotal();
-        }else {
+        } else {
             // 条件存在sku的情况
             // 先查询订单号
             query.select("id");
             List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-            if(CollectionUtils.isEmpty(list)){
+            if (CollectionUtils.isEmpty(list)) {
                 return new TargetSaleSumVO(amount);
             }
             List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
@@ -152,7 +154,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 先查询订单号
         query.select("id");
         List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-        if(CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return new TargetSaleCountVO(count);
         }
         List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
@@ -167,14 +169,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Integer count = 0;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 无sku条件 只查询订单表
-        if(CollectionUtils.isEmpty(dto.getSku())){
+        if (CollectionUtils.isEmpty(dto.getSku())) {
             count = baseMapper.selectCount(query);
-        }else {
+        } else {
             // 条件存在sku的情况 查询订单详情表
             // 先查询订单号
             query.select("id");
             List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-            if(CollectionUtils.isEmpty(list)){
+            if (CollectionUtils.isEmpty(list)) {
                 return new TargetSaleCountVO(count);
             }
             List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
@@ -188,7 +190,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public TargetSaleSumVO countRefundRate(TargetSaleDTO dto) {
         // 获取总订单数量
         TargetSaleCountVO totalOrderQuantity = countOrderQuantity(dto);
-        if (null == totalOrderQuantity || totalOrderQuantity.getValue() <= 0){
+        if (null == totalOrderQuantity || totalOrderQuantity.getValue() <= 0) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         TargetSaleCountVO refundOrderCount = countRefundOrderNum(dto);
@@ -203,11 +205,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 无sku条件 只查询订单表
         query.eq("is_returned", 1);
         List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-        if(CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        BigDecimal amount =dmpReturnOrderInfoService.sumRefundAmount(orderIds, dto);
+        BigDecimal amount = dmpReturnOrderInfoService.sumRefundAmount(orderIds, dto);
         return new TargetSaleSumVO(amount);
     }
 
@@ -218,15 +220,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Integer count;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 无sku条件 只查询订单表
-        if(CollectionUtils.isEmpty(dto.getSku())){
+        if (CollectionUtils.isEmpty(dto.getSku())) {
             query.eq("is_refund", 1);
             count = baseMapper.selectCount(query);
-        }else {
+        } else {
             // 条件存在sku的情况 查询订单详情表
             // 先查询订单号
             query.select("id");
             List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-            if(CollectionUtils.isEmpty(list)){
+            if (CollectionUtils.isEmpty(list)) {
                 return new TargetSaleCountVO(0);
             }
             List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
@@ -238,16 +240,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Override
     public TargetSaleSumVO statisticsCustomerPrice(TargetSaleDTO dto) {
-       // 销售额
+        // 销售额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
         BigDecimal salesAmount = targetSaleSumVO.getValue();
-        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         // 订单数量
         TargetSaleCountVO targetSaleCountVO = countOrderQuantity(dto);
         Integer orderNum = targetSaleCountVO.getValue();
-        if (0 >= orderNum){
+        if (0 >= orderNum) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         // 客单价 = 销售额 / 订单量
@@ -260,7 +262,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 销售总额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
         BigDecimal salesAmount = targetSaleSumVO.getValue();
-        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         // 查询国内店铺no
@@ -275,7 +277,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         dto.setShopNo(shopList.stream().map(DmpShopInfoEntity::getPlarformShopNo).collect(Collectors.toList()));
         TargetSaleSumVO saleSumVO = sumSales(dto);
         BigDecimal domesticAmount = saleSumVO.getValue();
-        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0){
+        if (BigDecimal.ZERO.compareTo(salesAmount) >= 0) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
 
@@ -285,11 +287,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     /**
+     * @param fileName
+     * @return String
      * @description: 导出文件名称
      * @author Will
      * @date: 2022/12/15 10:35
-     * @param fileName
-     * @return String
      */
     @Override
     public String getFileName(String fileName) {
@@ -305,6 +307,41 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         redisService.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
         return sb.append(lastNo).toString();
+    }
+
+
+    /**
+     * 获取销售相关 一级模块 月销售额趋势
+     *
+     * @param
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-15 17:02
+     */
+    @Override
+    public StatisticalDataVO getMonthSales() {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setChartType("bar");
+        statistical.setName("月销售额趋势");
+        ChartVO chart = new ChartVO();
+        List<Map<String, Object>> resultList = baseMapper.getMonthSales();
+        int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
+        List<Object> xAxisList = new ArrayList<>(initSize);
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        //只有一个柱子
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Object> dataList = new ArrayList<>(initSize);
+        for (Map<String, Object> map : resultList) {
+            dataList.add(map.get("orderSales"));
+            xAxisList.add(map.get("month"));
+        }
+        series.setData(dataList);
+        seriesList.add(series);
+        chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
+        statistical.setData(chart);
+        return statistical;
     }
 
 }
