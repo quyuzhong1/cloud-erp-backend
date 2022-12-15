@@ -174,6 +174,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                 datas.put("appkey", appKey);
                 datas.put("sessionkey", sessionKey);
                 datas.put("date_type", 3);
+                datas.put("order_state", 2);
                 datas.put("start_date", st);
                 datas.put("end_date", sd);
                 datas.put("page_no", pageIndex);
@@ -235,7 +236,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getPlatformCode());
 
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
-        Integer orderState = 4;
+        Integer orderState = 0;
         //0:未配货 1:部分配货 2:全部配货
         Integer assignState = gyyOrderEntity.getAssignState();
         if (assignState.equals(1) || assignState.equals(2)) {
