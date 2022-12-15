@@ -39,5 +39,5 @@ public class LayoutDTO  implements Serializable {
     /**
      * 模块id集合
      */
-    private List<String>  moduleIdList;
+    private List<LayoutRefModuleDTO>  moduleIdList;
 }

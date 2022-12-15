@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -165,6 +166,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         dmpOrderItemEntity.setCategoryName(productIdBySku.getCategoryName());
                         dmpOrderItemEntity.setBrandId(productIdBySku.getBrandId());
                         dmpOrderItemEntity.setBrandName(productIdBySku.getBrandName());
+                        LocalDate listingTime = productIdBySku.getListingTime();
+                        if (null !=  listingTime) {
+                            dmpOrderItemEntity.setNewSign(listingTime.getYear() == LocalDate.now().getYear() ? 1 : 0);
+                        }
                         dmpOrderItemService.updateOrderItemByErpOrderItemId(dmpOrderItemEntity);
                     }
                 }

@@ -102,4 +102,11 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return java.util.List<com.erp.model.bi.dto.CategorySubjectDTO>
      */
     List<CategorySubjectDTO> homePage(String searchKeyword);
+
+    /**
+     * 复制专题id
+     * @param subjectId
+     * @return
+     */
+    Boolean copy(String subjectId);
 }

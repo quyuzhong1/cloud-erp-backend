@@ -4,16 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
+import com.erp.model.bi.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.server.bi.enums.TargetSettleMethodEnum;
 import com.erp.server.bi.mapper.DmpReturnOrderInfoMapper;
+import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderItemService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +26,10 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 退货订单服务
@@ -33,6 +42,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
+
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
 
     @Override
     public PagingVO<DmpReturnOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
@@ -71,6 +83,20 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             amount = dmpReturnOrderItemService.sumReturnAmountBySKu(returnOrderIds, dto);
         }
         return amount;
+    }
+
+    @Override
+    public void exportExcel(DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
+        //查询所有数据
+        List<DmpReturnOrderInfoDTO> list = baseMapper.getAllDmpReturnOrderInfo(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //导出销售数据
+        List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
+        String fileName = dmpOrderInfoService.getFileName("退货数据导出");
+        ExcelUtil.export(fileName, "退货数据导出", excelList, DmpReturnOrderInfoExcelDTO.class, response);
+        return;
     }
 }
 

@@ -184,6 +184,12 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "currency_rate")
     private BigDecimal currencyRate;
 
+    /**
+     * 新品标识 1为新品 0 为非新品
+     */
+    @TableField(value = "new_sign")
+    private Integer newSign;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

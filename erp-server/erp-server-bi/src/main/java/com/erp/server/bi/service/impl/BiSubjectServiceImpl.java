@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -49,14 +51,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
 
     @Resource
-    private BiDictService biDictService;
+    private BiDictService dictService;
+
+
+    @Resource
+    private BiLayoutService  layoutService;
 
     @Resource
     private CommonService commonService;
 
 
-    @Resource
-    private BiDictService dictService;
+
 
 
     /**
@@ -90,7 +95,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String userId = commonService.getUserInfo().getUid();
         //检查名字是否重复
         checkName(subjectId, name);
-        BiDictEntity dict = biDictService.getById(categoryId);
+        BiDictEntity dict = dictService.getById(categoryId);
         String categoryName = "";
         if (dict != null) {
             categoryName = dict.getName();
@@ -230,7 +235,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String categoryId = dto.getCategoryId();
         //检查名字是否重复
         checkName(null, name);
-        BiDictEntity dict = biDictService.getById(categoryId);
+        BiDictEntity dict = dictService.getById(categoryId);
         String categoryName = "";
         if (dict != null) {
             categoryName = dict.getName();
@@ -333,6 +338,42 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             resultList.add(result);
         }
         return resultList;
+    }
+
+
+    /**
+     * 复制专题
+     *
+     * @param subjectId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-12-15 9:27
+     */
+    @Override
+    public Boolean copy(String subjectId) {
+        String userId = commonService.getUserInfo().getUid();
+        String userName = commonService.getUserInfo().getUserName();
+        Date nowDate = new Date();
+        BiSubjectEntity subject = this.getById(subjectId);
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        BiSubjectEntity copySubject = new BiSubjectEntity();
+        BeanMapper.copy(subject, copySubject);
+        String newSubjectId = IdWorker.getIdStr();
+        copySubject.setId(newSubjectId);
+        copySubject.setCreateUserId(userId);
+        copySubject.setCreateTime(nowDate);
+        copySubject.setCreateUserName(userName);
+        copySubject.setUpdateUserId(userId);
+        copySubject.setUpdateTime(nowDate);
+        copySubject.setUpdateUserName(userName);
+        boolean flag = this.save(copySubject);
+        //当复制成功的时候
+        if(flag){
+            layoutService.copySubjectLayout(newSubjectId,subjectId);
+        }
+        return null;
     }
 
 

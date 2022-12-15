@@ -205,6 +205,43 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
 
 
     /**
+     * 复制专题 布局
+     *
+     * @param newSubjectId 新专题
+     * @param subjectId
+     * @return void
+     * @author yl
+     * @date 2022-12-15 10:00
+     */
+    @Override
+    public void copySubjectLayout(String newSubjectId, String subjectId) {
+        List<LayoutDetailsDTO> list = baseMapper.getLayoutBySubjectId(subjectId);
+        List<String> layoutIdList = new ArrayList<>(list.size());
+        for (LayoutDetailsDTO item : list) {
+            BiLayoutEntity layout = new BiLayoutEntity();
+            //需要复制的布局id
+            String copyLayoutId = item.getId();
+            String newLayoutId = IdWorker.getIdStr();
+            layout.setId(newLayoutId);
+            layout.setColumnCount(item.getColumnCount());
+            layout.setHeight(item.getHeight());
+            layout.setBlockNo(item.getBlockNo());
+            Boolean flag = this.save(layout);
+            //保存成功 就去看布局与模块关系
+            if (flag) {
+                layoutIdList.add(newLayoutId);
+                //复制布局与模块 关系
+                layoutRefModuleService.copyLayoutRefModule(newSubjectId, newLayoutId, copyLayoutId);
+            }
+        }
+        //保存专题与布局关系表
+        subjectRefLayoutService.addSubjectRefLayout(newSubjectId, layoutIdList);
+
+
+    }
+
+
+    /**
      * 根据专题id 获取 专题与 布局的关系
      *
      * @param subjectId
@@ -221,11 +258,18 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();
-            List<String> moduleIds = layoutRefModuleList.stream().
+            List<BiLayoutRefModuleEntity> moduleIds = layoutRefModuleList.stream().
                     filter(l -> l.getLayoutId().equals(layoutId)).
-                    map(BiLayoutRefModuleEntity::getModuleId).
                     collect(Collectors.toList());
-            item.setModuleIdList(moduleIds);
+            List<LayoutRefModuleDTO> layoutRefList = new ArrayList<>();
+            for (BiLayoutRefModuleEntity ref : moduleIds) {
+                LayoutRefModuleDTO refModule = new LayoutRefModuleDTO();
+                refModule.setId(ref.getId());
+                refModule.setType(ref.getType());
+                layoutRefList.add(refModule);
+            }
+
+            item.setModuleIdList(layoutRefList);
 
         }
         return list;

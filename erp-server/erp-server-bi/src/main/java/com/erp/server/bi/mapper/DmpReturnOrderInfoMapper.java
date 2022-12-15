@@ -9,6 +9,8 @@ import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @author Cloud
  * @Entity com.erp.model.plm.entity.DmpReturnOrderInfo
@@ -24,6 +26,14 @@ public interface DmpReturnOrderInfoMapper extends BaseMapper<DmpReturnOrderInfoE
      * @return IPage<DmpReturnOrderInfoDTO>
      */
     IPage<DmpReturnOrderInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
+    /**
+     * @description: 查询退货数据
+     * @author Will
+     * @date: 2022/12/15 10:49
+     * @param params
+     * @return List<DmpReturnOrderInfoDTO>
+     */
+    List<DmpReturnOrderInfoDTO> getAllDmpReturnOrderInfo(@Param("params") DmpReturnOrderInfoSearchDTO params);
 }
 
 

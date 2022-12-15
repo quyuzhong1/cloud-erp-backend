@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 public class CleanSkuDto {
@@ -25,6 +27,11 @@ public class CleanSkuDto {
      * 品类名称
      */
     private String categoryName;
+
+    /**
+     * 产品上市时间
+     */
+    private LocalDate listingTime;
 
 
 }

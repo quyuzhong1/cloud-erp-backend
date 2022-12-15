@@ -1,14 +1,20 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.bi.dto.LayoutRefModuleDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.server.bi.mapper.BiLayoutRefModuleMapper;
 import com.erp.server.bi.service.BiLayoutRefModuleService;
+import com.erp.server.bi.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -21,6 +27,9 @@ import java.util.List;
 public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleMapper, BiLayoutRefModuleEntity> implements BiLayoutRefModuleService {
 
 
+    @Resource
+    private CommonService commonService;
+
     /**
      * 保存模块
      *
@@ -32,7 +41,7 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
      * @date 2022-12-13 16:37
      */
     @Override
-    public void addLayoutRefModule(String subjectId, String layoutId, String blockNo, List<String> moduleIdList) {
+    public void addLayoutRefModule(String subjectId, String layoutId, String blockNo, List<LayoutRefModuleDTO> moduleIdList) {
         if (CollectionUtils.isNotEmpty(moduleIdList)) {
             int size = moduleIdList.size();
             List<BiLayoutRefModuleEntity> addList = new ArrayList<>(size);
@@ -42,7 +51,9 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
                 refModule.setSubjectId(subjectId);
                 refModule.setLayoutId(layoutId);
                 refModule.setSerialNo(i + 1);
-                refModule.setModuleId(moduleIdList.get(i));
+                LayoutRefModuleDTO ref = moduleIdList.get(i);
+                refModule.setModuleId(ref.getId());
+                refModule.setType(ref.getType());
                 addList.add(refModule);
             }
             this.saveBatch(addList);
@@ -108,5 +119,52 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
         LambdaQueryWrapper<BiLayoutRefModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiLayoutRefModuleEntity::getLayoutId, layoutId);
         return this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 复制布局与模块指标关系
+     *
+     * @param newSubjectId
+     * @param newLayoutId
+     * @param copyLayoutId
+     * @return void
+     * @author yl
+     * @date 2022-12-15 10:18
+     */
+    @Override
+    public void copyLayoutRefModule(String newSubjectId, String newLayoutId, String copyLayoutId) {
+        String userId = commonService.getUserInfo().getUid();
+        Date date = new Date();
+        List<BiLayoutRefModuleEntity> list = getByLayoutIdList(copyLayoutId);
+        List<BiLayoutRefModuleEntity> saveList = new ArrayList<>(list.size());
+        for (BiLayoutRefModuleEntity item : list) {
+            BiLayoutRefModuleEntity entity = new BiLayoutRefModuleEntity();
+            BeanMapper.copy(item, entity);
+            entity.setId(IdWorker.getIdStr());
+            entity.setSubjectId(newSubjectId);
+            entity.setLayoutId(newLayoutId);
+            entity.setCreateTime(date);
+            entity.setCreateUserId(userId);
+            entity.setUpdateUserId(userId);
+            entity.setUpdateTime(date);
+            saveList.add(entity);
+        }
+        this.saveBatch(saveList);
+    }
+
+
+    /**
+     * 复制布局与模块关系表
+     *
+     * @param
+     * @return java.util.List<com.erp.model.bi.entity.BiLayoutRefModuleEntity>
+     * @author yl
+     * @date 2022-12-15 10:19
+     */
+    public List<BiLayoutRefModuleEntity> getByLayoutIdList(String layoutId) {
+        LambdaQueryWrapper<BiLayoutRefModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiLayoutRefModuleEntity::getLayoutId, layoutId);
+        return this.list(queryWrapper);
     }
 }

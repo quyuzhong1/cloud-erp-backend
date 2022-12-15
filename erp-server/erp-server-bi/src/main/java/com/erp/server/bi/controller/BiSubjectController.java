@@ -127,5 +127,15 @@ public class BiSubjectController extends BaseController {
     }
 
 
+    /**
+     * 复制专题
+     */
+    @PostMapping("/copy")
+    public ApiResult copy(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean copyResult = biSubjectService.copy(dto.getId());
+        return copyResult==true?success():failure();
+    }
+
+
 }
 
