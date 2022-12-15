@@ -10,6 +10,8 @@ import com.erp.model.bi.dto.DmpShopInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * @author Will
  * @version 1.0
@@ -25,6 +27,15 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return PagingVO<DmpShopInfoDTO>
      */
     PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto);
+
+    /**
+     * @description: 根据id查询店铺数据
+     * @author Will
+     * @date: 2022/12/15 16:34
+     * @param id
+     * @return DmpShopInfoDTO
+     */
+    DmpShopInfoDTO getDmpShopInfoById(String id);
     /**
      * @description: 新增
      * @author Will
@@ -57,4 +68,14 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return Boolean
      */
     Boolean changeDept(DmpShopInfoDeptChangeDTO dto);
+
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2022/12/15 16:55
+     * @param dto
+     * @param response
+
+     */
+    void exportExcel(DmpShopInfoSearchDTO dto, HttpServletResponse response);
 }

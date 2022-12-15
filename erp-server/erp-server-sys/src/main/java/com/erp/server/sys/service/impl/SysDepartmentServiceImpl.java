@@ -2,7 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
@@ -20,7 +20,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -139,6 +138,16 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             }
         }
         return resultList.stream().distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    public SysDepartmentDTO getDepartmentById(String deptId) {
+        SysDepartmentEntity sysDepartmentEntity = this.getById(deptId);
+        SysDepartmentDTO  dto = new SysDepartmentDTO();
+        if (ObjectUtils.isNotEmpty(sysDepartmentEntity)) {
+            BeanMapperUtils.copy(sysDepartmentEntity,dto);
+        }
+        return dto;
     }
 
     /**

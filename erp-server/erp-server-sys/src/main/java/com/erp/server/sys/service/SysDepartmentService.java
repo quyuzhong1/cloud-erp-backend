@@ -39,5 +39,9 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     void saveBatchDepartment(List<SysDepartmentDTO> sysDepartmentTree);
 
     List<String> getDepartmentIds(String flagId);
+    /**
+     * 根据部门id查询
+     */
+    SysDepartmentDTO getDepartmentById(String deptId);
 }
 
