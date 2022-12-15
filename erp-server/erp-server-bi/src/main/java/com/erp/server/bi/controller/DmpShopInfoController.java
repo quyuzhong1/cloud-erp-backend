@@ -4,8 +4,11 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpShopInfoDTO;
+import com.erp.model.bi.dto.DmpShopInfoChangeDTO;
+import com.erp.model.bi.dto.DmpShopInfoDeptChangeDTO;
 import com.erp.model.bi.dto.DmpShopInfoSearchDTO;
+import com.erp.model.bi.dto.DmpShopInfoShowDTO;
+import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
+ * 数据源管理
  * @author Will
  * @version 1.0
  * @description: TODO
@@ -28,14 +32,70 @@ public class DmpShopInfoController extends BaseController {
     @Resource
     private DmpShopInfoService dmpShopInfoService;
 
-    /**
-     * 分页查询
-     *
-     * @return 查询结果
-     */
+   /**
+    * 店铺数据-分页查询
+    * @author Will
+    * @date: 2022/12/15 12:55
+    * @param dto
+    * @return ApiResult<PagingVO<DmpShopInfoShowDTO>>
+    */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<DmpShopInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpShopInfoSearchDTO> dto) {
-        PagingVO<DmpShopInfoDTO> pagingVO = dmpShopInfoService.paging(dto);
+    public ApiResult<PagingVO<DmpShopInfoShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpShopInfoSearchDTO> dto) {
+        PagingVO<DmpShopInfoShowDTO> pagingVO = dmpShopInfoService.paging(dto);
         return success(pagingVO);
+    }
+
+   /**
+    * 店铺数据-新增
+    * @author Will
+    * @date: 2022/12/15 12:55
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/add")
+    public ApiResult addDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
+        Boolean flag = this.dmpShopInfoService.addDmpShopInfo(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 店铺数据-编辑
+     * @author Will
+     * @date: 2022/12/15 12:58
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/update")
+    public ApiResult updateDmpShopInfo(@RequestBody DmpShopInfoDTO dto) {
+        Boolean flag = this.dmpShopInfoService.updateDmpShopInfo(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 店铺数据-负责人变更
+     * @author Will
+     * @date: 2022/12/15 12:56
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/changeChargeName")
+    public ApiResult changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
+        Boolean flag = this.dmpShopInfoService.changeChargeName(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 店铺数据-部门变更
+     * @author Will
+     * @date: 2022/12/15 13:55
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/changeDept")
+    public ApiResult changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
+        Boolean flag = this.dmpShopInfoService.changeDept(dto);
+        return flag == true ? success() : failure();
     }
 }

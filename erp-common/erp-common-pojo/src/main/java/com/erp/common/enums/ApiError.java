@@ -198,7 +198,7 @@ public enum ApiError implements Serializable {
     ERROR_97004(97004,"模块不能为空"),
     ERROR_97005(97005,"您不能修改不是您创建的专题"),
     ERROR_97006(97006,"您没有权限查看"),
-
+    ERROR_97007(97007,"店铺名称已存在"),
 
 
     ERROR_end(1000000, "系统错误");

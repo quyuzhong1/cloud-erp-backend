@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -186,7 +187,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
         //平台标识
         dmpShopInfoEntity.setPlatformSign("马帮");
 
-        dmpShopInfoEntity.setCreateTime(new Date());
+        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
 
         dmpShopInfoService.checkOrder(dmpShopInfoEntity);
     }
