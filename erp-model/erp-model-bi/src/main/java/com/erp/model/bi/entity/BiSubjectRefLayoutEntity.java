@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * 专题与布局关系表(BiSubjectRefLayout)实体类
@@ -39,7 +39,7 @@ public class BiSubjectRefLayoutEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDate createTime;
 
     /**
      * 更新人id
@@ -50,7 +50,7 @@ public class BiSubjectRefLayoutEntity implements Serializable {
      * 更新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDate updateTime;
     /**
      * 删除标示0未删除  1 被删除
      */

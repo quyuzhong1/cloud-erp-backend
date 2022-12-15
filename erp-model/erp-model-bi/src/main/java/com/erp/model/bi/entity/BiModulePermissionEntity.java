@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * 模块权限表(BiModulePermission)实体类
@@ -32,10 +32,10 @@ public class BiModulePermissionEntity implements Serializable {
     private String userId;
 
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDate createTime;
 
     @TableField(value = "update_time",fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDate updateTime;
 
 
 

@@ -27,8 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -353,7 +353,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public Boolean copy(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        Date nowDate = new Date();
+        LocalDate nowDate = LocalDate.now();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
