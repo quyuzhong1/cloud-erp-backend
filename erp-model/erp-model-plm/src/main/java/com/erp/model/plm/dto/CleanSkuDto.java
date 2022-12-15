@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -31,7 +32,7 @@ public class CleanSkuDto {
     /**
      * 产品上市时间
      */
-    private LocalDate listingTime;
+    private Date listingTime;
 
 
 }
