@@ -93,6 +93,14 @@
                 #{chargeId}
             </foreach>
         </if>
+
+        <if test="params.processIds != null and params.processIds.size() > 0 ">
+            AND pd.process_id in
+            <foreach collection="params.processIds" item="processId" open="(" separator="," close=")">
+                #{processId}
+            </foreach>
+        </if>
+
         <if test="params.param != '' and params.param != null">
             ${params.param}
         </if>

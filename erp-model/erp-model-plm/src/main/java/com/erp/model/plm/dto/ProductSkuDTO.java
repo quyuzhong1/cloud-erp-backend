@@ -49,4 +49,9 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 负责人id
      */
     private List<String> chargeIds;
+
+    /**
+     * 流程id
+     */
+    private List<String> processIds;
 }
