@@ -73,7 +73,7 @@ public class BiModuleController extends BaseController {
      * @return 编辑结果
      */
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
+    public ApiResult edit(@ModelAttribute @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
         Boolean flag = this.biModuleService.update(dto);
         return flag == true ? success() : failure();
     }
