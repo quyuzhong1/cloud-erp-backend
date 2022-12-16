@@ -54,6 +54,19 @@ public class BiModuleController extends BaseController {
     }
 
     /**
+     * 新增模块
+     *
+     * @param dto 实体
+     * @return 新增结果
+     */
+    @PostMapping("/details")
+    public ApiResult<ModuleDTO> add(@RequestBody @Validated BaseIdDTO dto) {
+        ModuleDTO result = this.biModuleService.details(dto.getId());
+        return success(result);
+    }
+
+
+    /**
      * 编辑数据
      *
      * @param dto 实体
@@ -97,7 +110,7 @@ public class BiModuleController extends BaseController {
      */
     @PostMapping("/category/list")
     public ApiResult<List<CategoryModuleDTO>> categoryList(@RequestBody @Validated BaseSearchDTO dto) {
-        List<CategoryModuleDTO> list=biModuleService.categoryList(dto.getSearchKeyword());
+        List<CategoryModuleDTO> list = biModuleService.categoryList(dto.getSearchKeyword());
         return success(list);
     }
 

@@ -7,6 +7,8 @@ import com.erp.model.bi.dto.BiDataSourceCustomDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.dmp.entity.BiDataSourceCustomEntity;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * @author Will
  * @version 1.0
@@ -23,4 +25,14 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @return PagingVO<BiDataSourceCustomDTO>
      */
     PagingVO<BiDataSourceCustomDTO> paging(PagingDTO<BiDataSourceCustomSearchDTO> dto);
+
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2022/12/16 15:58
+     * @param dto
+     * @param response
+
+     */
+    void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response);
 }

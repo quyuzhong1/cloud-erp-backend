@@ -3,11 +3,13 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
 
 /**
  * @author Will
@@ -22,9 +24,9 @@ public interface BiDataSourceCostService
      * @author Will
      * @date: 2022/12/14 16:43
      * @param dto
-     * @return PagingVO<BiDataSourceCostDTO>
+     * @return PagingVO<LinkedHashMap<String,Object>>
      */
-    PagingVO<BiDataSourceCostDTO> paging(PagingDTO<BiDataSourceCostSearchDTO> dto);
+    PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCostSearchDTO> dto);
 
     /**
      * 统计销售毛利润
@@ -53,4 +55,9 @@ public interface BiDataSourceCostService
      * @return
      */
     TargetSaleSumVO sumSalesCost(BiFilterDTO dto);
+
+    /**
+     * 导出
+     */
+    void exportExcel(BiDataSourceCostSearchDTO dto, HttpServletResponse response);
 }

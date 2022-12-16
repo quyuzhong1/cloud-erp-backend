@@ -105,4 +105,21 @@ public class BiDataSourceCostEntity implements Serializable {
     @TableField("site")
     private String site;
 
+    /**
+     * 负责人id
+     */
+    @TableField(value = "charge_id")
+    private String chargeId;
+
+    /**
+     * 负责人名称
+     */
+    @TableField(value = "charge_name")
+    private String chargeName;
+
+    /**
+     * 组合
+     */
+    @TableField(value = "combination")
+    private String combination;
 }

@@ -61,6 +61,11 @@ public class ModuleDTO implements Serializable {
      */
     private MultipartFile imageFile;
 
+    /**
+     * 图片地址
+     */
+    private String imageUrl;
+
 
     /**
      * 前端组件名不能为空

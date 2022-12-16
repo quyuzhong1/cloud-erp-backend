@@ -26,11 +26,6 @@ public class BiDataSourceCostDTO {
     private String deptName;
 
     /**
-     * 店铺名称
-     */
-    private String shopName;
-
-    /**
      * 平台名称
      */
     private String platformName;
@@ -39,5 +34,20 @@ public class BiDataSourceCostDTO {
      * 站点
      */
     private String site;
+
+    /**
+     * 店铺名称
+     */
+    private String shopName;
+
+    /**
+     * 负责人
+     */
+    private String chargeName;
+
+    /**
+     * 组合
+     */
+    private String combination;
 
 }

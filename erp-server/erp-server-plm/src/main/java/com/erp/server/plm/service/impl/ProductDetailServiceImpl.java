@@ -149,6 +149,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO) {
+        //待审核查询分配给自己的数据
+        if (IsConstant.NO.equals(pagingDTO.getParams().getStatus())) {
+            LoginUser loginUser = CommonInterceptor.threadLocal.get();
+            List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(loginUser.getUid());
+            if (CollectionUtils.isNotEmpty(workflowList)) {
+                List<String> processIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+                pagingDTO.getParams().setProcessIds(processIds);
+            }
+        }
         pagingDTO.getParams().setParam(pagingDTO.getParam());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
@@ -1311,7 +1320,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95046);
         }
 
-        //SKU字段关联任务尚未完成，不可申请变更
+        //SKU字段关联任务尚未完成
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
             List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
@@ -1320,7 +1329,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (CollectionUtils.isNotEmpty(taskList)) {
                     long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                     if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95085);
+                        throw new ServiceException(ApiError.ERROR_95083);
                     }
                 }
 

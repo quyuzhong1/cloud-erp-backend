@@ -86,7 +86,6 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         return this.listMaps(queryWrapper);
     }
 
-    
     /**
      * 根据 type 获取到对应的分类id 和分类名
      * @author yl
@@ -103,6 +102,13 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
             resultList.add(pair);
         }
         return resultList;
+    }
+
+    @Override
+    public List<BiDictEntity> listEntityByType(String type) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDictEntity::getType,type);
+        return  this.list(queryWrapper);
     }
 
     @Override

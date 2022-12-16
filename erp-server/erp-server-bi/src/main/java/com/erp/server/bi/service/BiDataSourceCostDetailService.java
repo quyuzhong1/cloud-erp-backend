@@ -23,4 +23,12 @@ public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCos
      * @return
      */
     HashMap<String, Map<String, BigDecimal>> convertListByCostIds(List<String> costIds, List<String> dictValues);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2022/12/16 15:14
+     * @param costIds
+     * @return List<BiDataSourceCostDetailEntity>
+     */
+    List<BiDataSourceCostDetailEntity> listByCostIds(List<String> costIds);
 }

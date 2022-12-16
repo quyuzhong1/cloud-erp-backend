@@ -33,7 +33,7 @@ public class SalesVO implements Serializable {
     /**
      * 销量
      */
-    private Integer salesVolume;
+    private Integer salesQuantity;
 
 
     /**
@@ -45,12 +45,12 @@ public class SalesVO implements Serializable {
     /**
      * 近七日销量
      */
-    private Integer lastSevenDaysSalesVolume;
+    private Integer lastSevenDaysSalesQuantity;
 
     /**
      * 近三十天日销量
      */
-    private Integer lastThirtyDaysSalesVolume;
+    private Integer lastThirtyDaysSalesQuantity;
 
 
     /**
