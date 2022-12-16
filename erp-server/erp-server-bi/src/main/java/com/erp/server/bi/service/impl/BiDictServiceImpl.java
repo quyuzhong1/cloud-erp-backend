@@ -6,13 +6,16 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.mapper.BiDictMapper;
 import com.erp.server.bi.service.BiDictService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * bi系统字典表(BiDict)表服务实现类
@@ -83,7 +86,6 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
         return this.listMaps(queryWrapper);
     }
 
-    
     /**
      * 根据 type 获取到对应的分类id 和分类名
      * @author yl
@@ -100,5 +102,25 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
             resultList.add(pair);
         }
         return resultList;
+    }
+
+    @Override
+    public List<BiDictEntity> listEntityByType(String type) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDictEntity::getType,type);
+        return  this.list(queryWrapper);
+    }
+
+    @Override
+    public Map<String, BiDictEntity> listByValues(List<String> dictValues) {
+        if (CollectionUtils.isEmpty(dictValues)){
+            return new HashMap<>(0);
+        }
+        List<BiDictEntity> list = lambdaQuery().in(BiDictEntity::getValue, dictValues)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new HashMap<>(0);
+        }
+        return list.stream().collect(Collectors.toMap(BiDictEntity::getValue, e -> e));
     }
 }

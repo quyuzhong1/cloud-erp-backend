@@ -2,45 +2,65 @@ package com.erp.server.bi.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.erp.model.bi.dto.DmpOrderInfoExcelDTO;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.EnumTimePattern;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.model.bi.dto.DmpOrderInfoImportExcelDTO;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInfoExcelDTO> {
+public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInfoImportExcelDTO> {
     private Integer importType;
 
 
     private DmpOrderInfoService dmpOrderInfoService;
 
+    private DmpShopInfoService dmpShopInfoService;
+
     private SysUserFeign sysUserFeign;
 
-    private List<DmpOrderInfoExcelDTO> list;
+    private List<DmpOrderInfoImportExcelDTO> list;
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
-    public DmpOrderInfoExcelListener(Integer importType, DmpOrderInfoService dmpOrderInfoService, SysUserFeign sysUserFeign) {
+    public DmpOrderInfoExcelListener(Integer importType, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
+        this.dmpShopInfoService = dmpShopInfoService;
         this.sysUserFeign = sysUserFeign;
         this.list = new ArrayList<>();
     }
 
-    /**
-     * @Description  每解析一行数据回调一遍
-     * @Author Luo_WG
-     * @Date 2022/9/27 14:49
-     * @param1 productDetailExcelDTO: 导入信息
-     * @param2 analysisContext: 解析器上下文
-     **/
+   /**
+    * @description: 每解析一行数据回调一遍
+    * @author Will
+    * @date: 2022/12/16 10:26
+    * @param dto
+    * @param analysisContext
+
+    */
     @Override
-    public void invoke(DmpOrderInfoExcelDTO dto, AnalysisContext analysisContext) {
+    public void invoke(DmpOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        
+        DmpOrderInfoEntity entity = new DmpOrderInfoEntity();
         if (StringUtils.isBlank(dto.getPlatformOrderId())) {
             errorMsgList.add("订单号不能为空");
         }
@@ -50,79 +70,63 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isBlank(dto.getSourcePlatform())) {
             errorMsgList.add("平台名称不能为空");
         }
+        if (StringUtils.isBlank(dto.getSite())) {
+            errorMsgList.add("站点不能为空");
+        }
         if (StringUtils.isBlank(dto.getShopName())) {
             errorMsgList.add("店铺名称不能为空");
         }
-     /*   if (!StrUtils.isLetterDigit(dto.getSkuNo())) {
-            errorMsgList.add("sku只能包含数字和字母");
-        }
-        if (StringUtils.isBlank(dto.getChargeName())) {
-            errorMsgList.add("产品负责人不能为空");
-        }
-        ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
-        //根据产品名称查询产品信息
-        ProductDetailShowDTO productDetailShow = productDetailService.getProductBy(dto.getName(), "");
-        ProductInfoDTO productInfoDTO = new ProductInfoDTO();
-        //sku信息
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
-
-        // 判断是修改还是新增 1：新增 2：修改
-        if (importType == 2) {
-            productSkuBaseInfoDTO.setId(productBy.getSkuId());
-            if (ObjectUtils.isEmpty(productBy)) {
-                errorMsgList.add("sku不存在，请选择导入新增");
-                
-            }
-            productInfoDTO.setId(productBy.getId());
-            if (!ObjectUtils.isEmpty(productDetailShow)) {
-                if (!productDetailShow.getSkuNo().equals(dto.getSkuNo())) {
-                    errorMsgList.add(ApiError.ERROR_95007.msg);
-                }
-            }
-        } else {
-            //sku重复
-            if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
-                errorMsgList.add(ApiError.ERROR_95015.msg);
-            }
-            if (productDetailService.checkName(dto.getName(), "")) {
-                errorMsgList.add(ApiError.ERROR_95007.msg);
+        if (StringUtils.isNotBlank(dto.getShopName())) {
+            Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
+            if (count == 0) {
+                errorMsgList.add("店铺在系统中未找到");
             }
         }
 
-        //销售方式不正确
-        if(StringUtils.isNotBlank(dto.getSaleMethod())) {
-            String[] saleMethodList = dto.getSaleMethod().split(",");
-            for (String saleMethod : saleMethodList) {
-                if (SaleMethodEnum.getCodeByName(saleMethod) == null) {
-                    errorMsgList.add("销售方式不正确");
-                }
+       if (!StrUtils.isDigit(dto.getItemTotal())) {
+            errorMsgList.add("订单销售额[原币种]只能包含数字");
+        }
+        if (!StrUtils.isDigit(dto.getCurrencyRate())) {
+            errorMsgList.add("汇率只能包含数字");
+        }
+        if (!StrUtils.isDigit(dto.getCnySettleRate())) {
+            errorMsgList.add("结算汇率只能包含数字");
+        }
+        if (StringUtils.isBlank(dto.getBuyerName())) {
+            errorMsgList.add("下单人不能为空");
+        }
+        if (StringUtils.isBlank(dto.getOrderState())) {
+            errorMsgList.add("订单状态不能为空");
+        }
+        DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
+
+        if(ObjectUtils.isNotEmpty(dmpOrderInfoEntity)) {
+            errorMsgList.add("订单号已存在，不能重复添加");
+        }
+
+        if (StringUtils.isNotBlank(dto.getManPhone())) {
+            if (ValidatorUtil.isMobile(dto.getManPhone())) {
+                errorMsgList.add("下单电话1不正确");
             }
         }
-        String saleCountryStr = "";
-        if(StringUtils.isNotBlank(dto.getSaleCountry())){
-            String[] saleCountryList = dto.getSaleCountry().split(",");
-            for (String saleCountry : saleCountryList) {
-                BasicDictEntity productCountry = basicDictService.checkBasicDict(BasicDictTypeEnum.COUNTRY.getCode(), saleCountry);
-                if (ObjectUtils.isEmpty(productCountry)) {
-                    errorMsgList.add("销售国家在系统中未找到");
-                    break;
-                }
-                saleCountryStr = saleCountryStr + productCountry.getId() + ",";
+        if (StringUtils.isNotBlank(dto.getSecondPhone())) {
+            if (ValidatorUtil.isMobile(dto.getManPhone())) {
+                errorMsgList.add("下单电话2不正确");
             }
         }
 
-        //存在侵权风险
-        String pirateRisk = dto.getPirateRisk();
-        if(StringUtils.isNotBlank(pirateRisk)){
-            if(!pirateRisk.equals("有") && !pirateRisk.equals("无")){
-                errorMsgList.add("存在侵权风险：有 或者 无");
-            }
-            if(pirateRisk.equals("有")){
-                productInfoDTO.setPirateRisk(1);
-            } else {
-                productInfoDTO.setPirateRisk(2);
+        if (StringUtils.isNotBlank(dto.getPlatformCreateTime())) {
+            if (!DateUtil.isValid(dto.getPlatformCreateTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
+                errorMsgList.add("订单下单时间格式不正确");
             }
         }
+
+        if (StringUtils.isNotBlank(dto.getDeliveryTime())) {
+            if (!DateUtil.isValid(dto.getDeliveryTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
+                errorMsgList.add("订单发货时间格式不正确");
+            }
+        }
+
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
             BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
@@ -130,77 +134,15 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
             chargeNameList = listApiResult.getData();
             if (CollectionUtils.isEmpty(chargeNameList)) {
-                errorMsgList.add("产品经理在系统中未找到");
-            }
-        }
-
-        List<FindUserDTO> purchaseUserList = new ArrayList<>();
-        if (StringUtils.isNotBlank(dto.getPurchaseUser())) {
-            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-            baseSearchDTO.setSearchKeyword(dto.getPurchaseUser());
-            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-            purchaseUserList =  listApiResult.getData();
-            if (CollectionUtils.isEmpty(purchaseUserList)) {
-                errorMsgList.add("采购员在系统中未找到");
-            }
-        }
-
-        BasicDictEntity productBrand = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), dto.getBrandName());
-        if (ObjectUtils.isEmpty(productBrand)) {
-            errorMsgList.add("产品品牌在系统中未找到");
-        }
-
-        BasicDictEntity productProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), dto.getProperty());
-        if (ObjectUtils.isEmpty(productProperty)) {
-            errorMsgList.add("产品属性在系统中未找到");
-        }
-
-        ProductUnitEntity productUnitEntity = new ProductUnitEntity();
-        if (StringUtils.isNotBlank(dto.getUnitName())) {
-            productUnitEntity = productUnitService.checkUnitName(dto.getUnitName());
-            if (ObjectUtils.isEmpty(productUnitEntity)) {
-                errorMsgList.add("单位名称在系统中不存在");
+                errorMsgList.add("销售员在系统中未找到");
             }
         }
 
         Integer saleState = null;
-        if (StringUtils.isNotBlank(dto.getSaleState())) {
-            saleState = SaleStateEnum.getCodeByName(dto.getSaleState());
+        if (StringUtils.isNotBlank(dto.getOrderState())) {
+            saleState = OrderStateEnum.getCodeByName(dto.getOrderState());
             if (saleState == null || saleState == 0) {
-                errorMsgList.add("销售状态不正确：销售状态：未销售，销售中，清仓中，已下架");
-            }
-        }
-
-        Integer purchaseState = null;
-        if (StringUtils.isNotBlank(dto.getArrivalState())) {
-            purchaseState = PurchaseStateEnum.getCodeByName(dto.getArrivalState());
-            if (purchaseState == null || purchaseState == 0) {
-                errorMsgList.add("首批到货状态不正确：首批到货状态：1.未到货 2.已到货 3.部分到货");
-            }
-        }
-
-        BasicDictEntity declareProperty = new BasicDictEntity();
-        if (StringUtils.isNotBlank(dto.getProductProperty())) {
-            declareProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.DECLARE_PROPERTY.getCode(), dto.getProductProperty());
-            if (ObjectUtils.isEmpty(declareProperty)) {
-                errorMsgList.add("报关产品属性在系统中未找到");
-            }
-        }
-
-        //图片是否完成
-        String isFinishedImg = dto.getIsFinishedImg();
-        if(StringUtils.isNotBlank(isFinishedImg)){
-            if(!isFinishedImg.equals("是") && !isFinishedImg.equals("否")){
-                errorMsgList.add("图片是否完成：是 或者 否");
-
-            }
-        }
-
-        //视频是否完成
-        String isFinishedVideo = dto.getIsFinishedVideo();
-        if(StringUtils.isNotBlank(isFinishedVideo)) {
-            if(!isFinishedVideo.equals("是") && !isFinishedVideo.equals("否")){
-                errorMsgList.add("视频是否完成：是 或者 否");
+                errorMsgList.add("订单状态不正确：订单状态：配货中，已发货，已完成，已作废，退货，退款");
             }
         }
 
@@ -214,121 +156,27 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             list.add(dto);
             return;
         }
-
-        ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
-        //spu信息
-        productInfoDTO.setName(dto.getName());
-
-        productInfoDTO.setBrandId(productBrand.getId());
-        productInfoDTO.setBrandName(productBrand.getValue());
-        productInfoDTO.setApprovalStatus(0);
-        productInfoDTO.setSpecType(1);
-        productInfoDTO.setGrade("");
-        if (!CollectionUtils.isEmpty(chargeNameList)) {
-            productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
-            productInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
-            productSkuBaseInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
-            productSkuBaseInfoDTO.setChargeId(chargeNameList.get(0).getUserId());
-        }
-        productInfoDTO.setMaterials(dto.getMaterials());
-        productInfoDTO.setFunctionDesc(dto.getFunctionDesc());
-        productInfoDTO.setSellSpot(dto.getSellSpot());
-        productInfoDTO.setSaleMethod(dto.getSaleMethod());
-        productInfoDTO.setUsageDesc(dto.getUsageDesc());
-        productInfoDTO.setProperty(productProperty.getValue());
-        productInfoDTO.setPropertyId(productProperty.getId());
-
-        //sku信息
-        BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        productSkuBaseInfoDTO.setPlanListingTime(dto.getPlanListingTime());
-        productSkuBaseInfoDTO.setProductState(2);
-        productSkuBaseInfoDTO.setProductId("");
-        productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
-        productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
-
-        //spu/sku基础信息
-        ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
-        productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
-        productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
-        productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
-
-        //产品成本信息表
-        ProductCostDTO productCostDTO = new ProductCostDTO();
-        BeanMapper.copy(dto, productCostDTO);
-        productNoSpecDTO.setProductCostDTO(productCostDTO);
-
-        //采购信息信息
-        ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
-        productPurchaseDTO.setEan(dto.getEan());
-        productPurchaseDTO.setPlanOrderQty(dto.getPlanOrderQty());
-        productPurchaseDTO.setPlaceOrderTime(dto.getPlaceOrderTime());
-        productPurchaseDTO.setPlanArrivalTime(dto.getPlanArrivalTime());
-        productPurchaseDTO.setMoq(dto.getMoq());
-        productPurchaseDTO.setDeliveryCycle(dto.getDeliveryCycle());
-        productPurchaseDTO.setActualArrivalTime(dto.getActualArrivalTime());
-        productPurchaseDTO.setArrivalState(purchaseState);
-        if (purchaseUserList.size() > 0) {
-            productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
-        }
-        productPurchaseDTO.setMainSupplier(dto.getMainSupplier());
-        productPurchaseDTO.setSecondSupplier(dto.getSecondSupplier());
-        productPurchaseDTO.setActualArrivalQty(dto.getActualArrivalQty());
-        productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
-
-        //产品销售信息
-        ProductSaleDTO productSaleDTO = new ProductSaleDTO();
-        productSaleDTO.setYearSaleQty(dto.getYearSaleQty());
-        productSaleDTO.setYearSaleAmount(dto.getYearSaleAmount());
-        productSaleDTO.setMonthSaleQty(dto.getMonthSaleQty());
-        productSaleDTO.setMonthSaleAmount(dto.getMonthSaleAmount());
-        if (StringUtils.isNotBlank(saleCountryStr)) {
-            productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
-        }
-
-        productSaleDTO.setListingTime(null);
-        productSaleDTO.setDelistingTime(null);
-        productSaleDTO.setSaleState(saleState);
-        if (StringUtils.isNotBlank(isFinishedImg)) {
-            if (isFinishedImg.equals("是")) {
-                productSaleDTO.setIsFinishedImg(1);
-            } else {
-                productSaleDTO.setIsFinishedImg(2);
-            }
-        }
-        if (StringUtils.isNotBlank(isFinishedVideo)) {
-            if (isFinishedVideo.equals("是")) {
-                productSaleDTO.setIsFinishedVideo(1);
-            } else {
-                productSaleDTO.setIsFinishedVideo(2);
-            }
-        }
-        productNoSpecDTO.setProductSaleDTO(productSaleDTO);
-
-        //产品物流信息
-        ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
-        BeanMapper.copy(dto, productLogisticsDTO);
-        productLogisticsDTO.setProductProperty(declareProperty.getValue());
-        productLogisticsDTO.setProductPropertyId(declareProperty.getId());
-        productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
-
-        //产品包装信息
-        ProductPackDTO productPackDTO = new ProductPackDTO();
-        BeanMapper.copy(dto, productPackDTO);
-        productNoSpecDTO.setProductPackDTO(productPackDTO);
-
-        productDetailService.inportExcel(productNoSpecDTO);*/
+        BeanMapperUtils.copy(dto,entity);
+        entity.setPlatformCreateTime(EnumTimePattern.parseDate(dto.getPlatformCreateTime()));
+        entity.setDeliveryTime(EnumTimePattern.parseDate(dto.getDeliveryTime()));
+        entity.setOrderState(OrderStateEnum.getCodeByName(dto.getOrderState()));
+        entity.setItemTotal(new BigDecimal(dto.getItemTotal()));
+        entity.setCurrencyRate(new BigDecimal(dto.getCurrencyRate()));
+        entity.setCnySettleRate(new BigDecimal(dto.getCnySettleRate()));
+        dmpOrderInfoService.save(entity);
     }
 
-    public List<DmpOrderInfoExcelDTO> getDateList(){
+    public List<DmpOrderInfoImportExcelDTO> getDateList(){
         return list;
     }
 
     /**
-     * @Description 全部解析完回调此方法
-     * @Author Luo_WG
-     * @Date 2022/9/27 14:49
-     * @param analysisContext: 解析器上下文
-     **/
+     * @description: 全部解析完回调此方法
+     * @author Will
+     * @date: 2022/12/16 10:26
+     * @param analysisContext
+
+     */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
 

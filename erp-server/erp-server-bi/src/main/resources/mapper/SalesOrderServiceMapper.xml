@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.erp.server.bi.mapper.SalesOrderServiceMapper">
+
+    <select id="getMonthSales" resultType="map">
+         SELECT
+         to_char( platform_create_time, 'yyyy-mm' ) AS MONTH,
+	     round( SUM ( order_fee * currency_rate ) / 10000, 4 ) AS "orderSales"
+	     FROM dmp_order_info WHERE order_state = 4
+	     GROUP BY MONTH ORDER BY  MONTH ASC
+    </select>
+
+    <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">
+
+    </select>
+</mapper>

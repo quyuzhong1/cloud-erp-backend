@@ -121,13 +121,7 @@
     </select>
 
 
-    <select id="getMonthSales" resultType="map">
-         SELECT
-         to_char( platform_create_time, 'yyyy-mm' ) AS MONTH,
-	     round( SUM ( order_fee * currency_rate ) / 10000, 4 ) AS "orderSales"
-	     FROM dmp_order_info WHERE order_state = 4
-	     GROUP BY MONTH ORDER BY  MONTH ASC
-    </select>
+
 
 
 </mapper>

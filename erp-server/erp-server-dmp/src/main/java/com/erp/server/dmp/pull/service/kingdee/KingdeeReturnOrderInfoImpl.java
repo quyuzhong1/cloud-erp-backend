@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.collections.list.AbstractLinkedList;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +55,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
 
     @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -99,157 +104,157 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
      */
     public List<KingdeeReturnOrderEntity> pullDate(RequestDTO dto) {
         List<KingdeeReturnOrderEntity> infoArrayList = new ArrayList<>();
-        try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
-            String st = "";
-            String sd = "";
-            if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(date);
-                sd = sdf.format(new Date(nextTime * 1000L));
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                Date date = new Date();
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                Calendar cl = Calendar.getInstance();
-                cl.setTime(date);
-                cl.add(Calendar.DAY_OF_MONTH, -30);
-                st = sdf.format(cl.getTime());
-                sd = sdf.format(date);
-                dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+        Integer lastTime = dto.getJobTaskDTO().getLastTime();
+        Integer nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (lastTime != 0 && nextTime != 0) {
+            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(date);
+            sd = sdf.format(new Date(nextTime * 1000L));
+            dto.getJobTaskDTO().setLastTime(nextTime);
+        } else {
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            Calendar cl = Calendar.getInstance();
+            cl.setTime(date);
+            cl.add(Calendar.DAY_OF_MONTH, -30);
+            st = sdf.format(cl.getTime());
+            sd = sdf.format(date);
+            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+        }
+
+        //读取配置，初始化SDK
+        K3CloudApi client = new K3CloudApi();
+
+        String formId = dto.getJobTaskDTO().getApiCode();
+        LinkedList<String> queryfilters = new LinkedList<>();
+        queryfilters.add(String.format("FModifyDate >= '%s'", st));
+        queryfilters.add(String.format("FModifyDate <= '%s'", sd));
+        queryfilters.add(String.format("FBillTypeID = '%s'", "73383412199a402bb58439509e089077"));
+        queryfilters.add(String.format("FOrderNo <> '%s'", ""));
+        queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
+        String filterStr = String.join(" and ", queryfilters);
+        String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId,FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate,FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,"
+                + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId,FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU";
+
+        Boolean dataSign = true;
+        //当前页数
+        Integer pageIndex = 0;
+
+        //每次最多获取100条
+        Integer pageSize = 10000;
+        while (dataSign) {
+            //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
+            QueryParam param = new QueryParam();
+            param.setFormId(formId);
+            param.setFieldKeys(fieldKeys);
+            if (StringUtils.isNotBlank(st)) {
+                param.setFilterString(filterStr);
             }
+            param.setLimit(pageSize);
+            //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
 
-            //读取配置，初始化SDK
-            K3CloudApi client = new K3CloudApi();
+            param.setStartRow(pageIndex * pageSize);
+            String s = JSONObject.toJSONString(param);
 
-            String formId = jobTask.getApiCode();
-            LinkedList<String> queryfilters = new LinkedList<>();
-            queryfilters.add(String.format("FModifyDate >= '%s'", st));
-            queryfilters.add(String.format("FModifyDate <= '%s'", sd));
-            queryfilters.add(String.format("FBillTypeID = '%s'", "73383412199a402bb58439509e089077"));
-            queryfilters.add(String.format("FOrderNo <> '%s'", ""));
-            queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
-            String filterStr = String.join(" and ", queryfilters);
-            String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId,FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate,FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,"
-                    + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId,FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU";
-
-            Boolean dataSign = true;
-            //当前页数
-            Integer pageIndex = 0;
-
-            //每次最多获取100条
-            Integer pageSize = 10000;
-            while (dataSign) {
-                //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
-                QueryParam param = new QueryParam();
-                param.setFormId(formId);
-                param.setFieldKeys(fieldKeys);
-                if (StringUtils.isNotBlank(st)) {
-                    param.setFilterString(filterStr);
-                }
-                param.setLimit(pageSize);
-                //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-
-                param.setStartRow(pageIndex * pageSize);
-                String s = JSONObject.toJSONString(param);
-
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    List<List<Object>> result = client.executeBillQuery(s);
-                    if (!result.isEmpty()) {
-                        if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
-                            dataSign = false;
-                            throw new RuntimeException(" ===== 金蝶云星空解析销售出库销售出库信息数据失败 ===== " + result);
-                        }
-
-                        for (List<Object> objects : result) {
-                            Map<String, String> valMap = KingdeeUtils.keySetValByLinked(fieldKeys, objects);
-                            KingdeeReturnOrderEntity kingdeeReturnOrderEntity = new KingdeeReturnOrderEntity();
-                            kingdeeReturnOrderEntity.setFBillTypeID(valMap.get("FBillTypeID"));
-                            kingdeeReturnOrderEntity.setFBillTypeName(valMap.get("FBillTypeID.FName"));
-                            kingdeeReturnOrderEntity.setFBillNo(valMap.get("FBillNo"));
-                            kingdeeReturnOrderEntity.setFOrderNo(valMap.get("FOrderNo"));
-                            kingdeeReturnOrderEntity.setFDate(valMap.get("FDate"));
-                            kingdeeReturnOrderEntity.setFDocumentStatus(valMap.get("FDocumentStatus"));
-                            kingdeeReturnOrderEntity.setFSaleOrgId(valMap.get("FSaleOrgId"));
-                            kingdeeReturnOrderEntity.setFSaleOrgName(valMap.get("FSaleOrgId"));
-                            kingdeeReturnOrderEntity.setFRetcustId(valMap.get("FName"));
-                            kingdeeReturnOrderEntity.setFRetcustName(valMap.get("FRetcustId.FName"));
-                            kingdeeReturnOrderEntity.setFSalesManId(valMap.get("FSalesManId"));
-                            kingdeeReturnOrderEntity.setFSalesManName(valMap.get("FSalesManId.FName"));
-                            kingdeeReturnOrderEntity.setFCreateDate(valMap.get("FCreateDate"));
-                            kingdeeReturnOrderEntity.setFModifyDate(valMap.get("FModifyDate"));
-                            kingdeeReturnOrderEntity.setFCancelStatus(valMap.get("FCancelStatus"));
-                            kingdeeReturnOrderEntity.setFReceiverCountry(valMap.get("FReceiverCountry"));
-                            kingdeeReturnOrderEntity.setFLinkMan(valMap.get("FLinkMan"));
-                            kingdeeReturnOrderEntity.setFExchangeRate(valMap.get("FExchangeRate"));
-                            kingdeeReturnOrderEntity.setFApproveDate(valMap.get("FApproveDate"));
-                            kingdeeReturnOrderEntity.setFBussinessType(valMap.get("FBussinessType"));
-                            kingdeeReturnOrderEntity.setFOwnerTypeIdHead(valMap.get("FOwnerTypeIdHead"));
-                            kingdeeReturnOrderEntity.setFSettleCurrCode(valMap.get("FSettleCurrId.FCode"));
-                            kingdeeReturnOrderEntity.setFDelTime(valMap.get("FDelTime"));
-                            kingdeeReturnOrderEntity.setFHeadNote(valMap.get("FHeadNote"));
-
-                            //商品信息
-                            KingdeeReturnOrderItemEntity orderItemEntity = new KingdeeReturnOrderItemEntity();
-                            orderItemEntity.setFBillNo(valMap.get("FBillNo"));
-                            orderItemEntity.setFAmount(valMap.get("FAmount"));
-                            orderItemEntity.setFMustqty(valMap.get("FMustqty"));
-                            orderItemEntity.setFUnitName(valMap.get("FUnitID.FName"));
-                            orderItemEntity.setFMaterialId(valMap.get("FMaterialId"));
-                            orderItemEntity.setFMaterialNumber(valMap.get("FMaterialId.FNumber"));
-                            orderItemEntity.setFMaterialName(valMap.get("FMaterialName"));
-                            orderItemEntity.setFAuxpropId(valMap.get("FAuxpropId"));
-                            orderItemEntity.setFMaterialType(valMap.get("FMaterialType"));
-                            orderItemEntity.setFPrice(valMap.get("FPrice"));
-                            orderItemEntity.setFStockId(valMap.get("FStockId"));
-                            orderItemEntity.setFStocklocId(valMap.get("FStocklocId"));
-                            orderItemEntity.setFStockstatusId(valMap.get("FStockstatusId"));
-                            orderItemEntity.setFNote(valMap.get("FNote"));
-                            orderItemEntity.setFSrcBillNo(valMap.get("FSrcBillNo"));
-                            orderItemEntity.setFSrcBillTypeID(valMap.get("FSrcBillTypeID"));
-                            orderItemEntity.setFIsFree(valMap.get("FIsFree"));
-                            orderItemEntity.setFMaterialModel(valMap.get("FMaterialModel"));
-                            orderItemEntity.setFRealQty(valMap.get("FRealQty"));
-                            orderItemEntity.setFSOBILLTYPEID(valMap.get("FSOBILLTYPEID"));
-                            orderItemEntity.setFSalUnitQty(valMap.get("FSalUnitQty"));
-                            orderItemEntity.setFProjectNo(valMap.get("FProjectNo"));
-                            orderItemEntity.setF_ulz_KHSKU(valMap.get("F_ulz_KHSKU"));
-
-                            KingdeeReturnOrderEntity entity = infoArrayList.stream().filter(a -> a.getFBillNo().equals(valMap.get("FBillNo")) && a.getFOrderNo().equals(valMap.get("FOrderNo"))).findFirst().orElse(null);
-                            if (entity != null) {
-                                entity.getItemEntityList().add(orderItemEntity);
-                            } else {
-                                List<KingdeeReturnOrderItemEntity> orderItemEntityList = new ArrayList();
-                                orderItemEntityList.add(orderItemEntity);
-                                kingdeeReturnOrderEntity.setItemEntityList(orderItemEntityList);
-                                infoArrayList.add(kingdeeReturnOrderEntity);
-                            }
-                        }
-                    } else {
+            Map<String, Object> stringObjectMap = null;
+            try {
+                List<List<Object>> result = client.executeBillQuery(s);
+                if (!result.isEmpty()) {
+                    if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
                         dataSign = false;
+                        throw new RuntimeException(" ===== 金蝶云星空解析销售出库销售出库信息数据失败 ===== " + result);
                     }
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                    for (List<Object> objects : result) {
+                        Map<String, String> valMap = KingdeeUtils.keySetValByLinked(fieldKeys, objects);
+                        KingdeeReturnOrderEntity kingdeeReturnOrderEntity = new KingdeeReturnOrderEntity();
+                        kingdeeReturnOrderEntity.setFBillTypeID(valMap.get("FBillTypeID"));
+                        kingdeeReturnOrderEntity.setFBillTypeName(valMap.get("FBillTypeID.FName"));
+                        kingdeeReturnOrderEntity.setFBillNo(valMap.get("FBillNo"));
+                        kingdeeReturnOrderEntity.setFOrderNo(valMap.get("FOrderNo"));
+                        kingdeeReturnOrderEntity.setFDate(valMap.get("FDate"));
+                        kingdeeReturnOrderEntity.setFDocumentStatus(valMap.get("FDocumentStatus"));
+                        kingdeeReturnOrderEntity.setFSaleOrgId(valMap.get("FSaleOrgId"));
+                        kingdeeReturnOrderEntity.setFSaleOrgName(valMap.get("FSaleOrgId"));
+                        kingdeeReturnOrderEntity.setFRetcustId(valMap.get("FName"));
+                        kingdeeReturnOrderEntity.setFRetcustName(valMap.get("FRetcustId.FName"));
+                        kingdeeReturnOrderEntity.setFSalesManId(valMap.get("FSalesManId"));
+                        kingdeeReturnOrderEntity.setFSalesManName(valMap.get("FSalesManId.FName"));
+                        kingdeeReturnOrderEntity.setFCreateDate(valMap.get("FCreateDate"));
+                        kingdeeReturnOrderEntity.setFModifyDate(valMap.get("FModifyDate"));
+                        kingdeeReturnOrderEntity.setFCancelStatus(valMap.get("FCancelStatus"));
+                        kingdeeReturnOrderEntity.setFReceiverCountry(valMap.get("FReceiverCountry"));
+                        kingdeeReturnOrderEntity.setFLinkMan(valMap.get("FLinkMan"));
+                        kingdeeReturnOrderEntity.setFExchangeRate(valMap.get("FExchangeRate"));
+                        kingdeeReturnOrderEntity.setFApproveDate(valMap.get("FApproveDate"));
+                        kingdeeReturnOrderEntity.setFBussinessType(valMap.get("FBussinessType"));
+                        kingdeeReturnOrderEntity.setFOwnerTypeIdHead(valMap.get("FOwnerTypeIdHead"));
+                        kingdeeReturnOrderEntity.setFSettleCurrCode(valMap.get("FSettleCurrId.FCode"));
+                        kingdeeReturnOrderEntity.setFDelTime(valMap.get("FDelTime"));
+                        kingdeeReturnOrderEntity.setFHeadNote(valMap.get("FHeadNote"));
+
+                        //商品信息
+                        KingdeeReturnOrderItemEntity orderItemEntity = new KingdeeReturnOrderItemEntity();
+                        orderItemEntity.setFBillNo(valMap.get("FBillNo"));
+                        orderItemEntity.setFAmount(valMap.get("FAmount"));
+                        orderItemEntity.setFMustqty(valMap.get("FMustqty"));
+                        orderItemEntity.setFUnitName(valMap.get("FUnitID.FName"));
+                        orderItemEntity.setFMaterialId(valMap.get("FMaterialId"));
+                        orderItemEntity.setFMaterialNumber(valMap.get("FMaterialId.FNumber"));
+                        orderItemEntity.setFMaterialName(valMap.get("FMaterialName"));
+                        orderItemEntity.setFAuxpropId(valMap.get("FAuxpropId"));
+                        orderItemEntity.setFMaterialType(valMap.get("FMaterialType"));
+                        orderItemEntity.setFPrice(valMap.get("FPrice"));
+                        orderItemEntity.setFStockId(valMap.get("FStockId"));
+                        orderItemEntity.setFStocklocId(valMap.get("FStocklocId"));
+                        orderItemEntity.setFStockstatusId(valMap.get("FStockstatusId"));
+                        orderItemEntity.setFNote(valMap.get("FNote"));
+                        orderItemEntity.setFSrcBillNo(valMap.get("FSrcBillNo"));
+                        orderItemEntity.setFSrcBillTypeID(valMap.get("FSrcBillTypeID"));
+                        orderItemEntity.setFIsFree(valMap.get("FIsFree"));
+                        orderItemEntity.setFMaterialModel(valMap.get("FMaterialModel"));
+                        orderItemEntity.setFRealQty(valMap.get("FRealQty"));
+                        orderItemEntity.setFSOBILLTYPEID(valMap.get("FSOBILLTYPEID"));
+                        orderItemEntity.setFSalUnitQty(valMap.get("FSalUnitQty"));
+                        orderItemEntity.setFProjectNo(valMap.get("FProjectNo"));
+                        orderItemEntity.setF_ulz_KHSKU(valMap.get("F_ulz_KHSKU"));
+
+                        KingdeeReturnOrderEntity entity = infoArrayList.stream().filter(a -> a.getFBillNo().equals(valMap.get("FBillNo")) && a.getFOrderNo().equals(valMap.get("FOrderNo"))).findFirst().orElse(null);
+                        if (entity != null) {
+                            entity.getItemEntityList().add(orderItemEntity);
+                        } else {
+                            List<KingdeeReturnOrderItemEntity> orderItemEntityList = new ArrayList();
+                            orderItemEntityList.add(orderItemEntity);
+                            kingdeeReturnOrderEntity.setItemEntityList(orderItemEntityList);
+                            infoArrayList.add(kingdeeReturnOrderEntity);
+                        }
+                    }
+                } else {
+                    dataSign = false;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                if (errorCount < 3) {
+                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                } else {
                     DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
+                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
-                    dataSign = false;
                 }
-                pageIndex++;
+                dataSign = false;
             }
-        } catch (Exception e) {
-            log.info(" ===== 获取金蝶云星空销售出库数据失败， 错误信息 = { " + e.getMessage() + " }");
-            throw new RuntimeException(" ===== 获取金蝶云星空销售出库数据失败， 错误信息 = { " + e.getMessage() + " }");
+            pageIndex++;
         }
         return infoArrayList;
     }

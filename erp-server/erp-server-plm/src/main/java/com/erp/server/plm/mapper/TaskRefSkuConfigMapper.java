@@ -14,7 +14,7 @@ import java.util.List;
  * @since 2022-11-21 14:01:00
  */
 @Mapper
-public interface TaskRefSkuConfigMapper extends BaseMapper<TaskRefSkuConfigEntity> {
+public interface  TaskRefSkuConfigMapper extends BaseMapper<TaskRefSkuConfigEntity> {
 
 
     List<TaskRefSkuConfigEntity> getDisableFieldByProductId(@Param("productId") String productId, @Param("statusList")List<Integer> statusList);

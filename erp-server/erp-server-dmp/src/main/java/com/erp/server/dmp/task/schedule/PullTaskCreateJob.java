@@ -6,6 +6,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
 import com.erp.server.dmp.task.service.TbTaskTypeService;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,7 @@ public class PullTaskCreateJob {
      * @Date 2022/11/9 14:50
      **/
     //@Scheduled(cron = "0/20 * * * * ?")
+    @XxlJob("createOrderJob")
     public void createOrderJob() {
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
         if(list != null){
@@ -52,6 +54,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
+    @XxlJob("addShopTask")
     public void addShopTask() {
          tbTaskTypeService.addTask();
     }
@@ -64,6 +67,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
+    @XxlJob("cleanOrderTask")
     public void cleanOrderTask() {
         dmpOrderInfoService.cleanOrder();
     }
@@ -75,6 +79,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
+    @XxlJob("cleanReturnOrderTask")
     public void cleanReturnOrderTask() {
         dmpReturnOrderInfoService.cleanReturnOrderTask();
     }
@@ -87,6 +92,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
+    @XxlJob("cleanRefundTask")
     public void cleanRefundTask() {
         dmpRefundInfoService.cleanRefundTask();
     }

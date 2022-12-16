@@ -7,13 +7,11 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpOrderInfoExcelDTO;
-import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.DmpOrderStateDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -45,9 +43,13 @@ public class DmpOrderInfoController extends BaseController {
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
     private SysUserFeign sysUserFeign;
+
     /**
-     * @description: 销售数据-分页查询
+     * 销售数据-分页查询
      * @author Will
      * @date: 2022/12/15 10:48
      * @param dto
@@ -86,29 +88,28 @@ public class DmpOrderInfoController extends BaseController {
     }
 
 
-
-    @PostMapping("/importProductFile")
-    //@RequestPermissions("plm:product:detail:importProductFile")
-    public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType, dmpOrderInfoService, sysUserFeign);
+    /**
+     * 销售数据-导入
+     * @author Will
+     * @date: 2022/12/16 11:10
+     * @param excelFile
+     * @param importType
+     * @param response
+     */
+    @PostMapping("/importOrderFile")
+    public void importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType, dmpOrderInfoService, dmpShopInfoService, sysUserFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<DmpOrderInfoExcelDTO> list = excelListenerUtil.getDateList();
+            EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
                 StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productNoSpecDetail.xlsx";
-                String name = "productNoSpecDetail";
+                String excelPath = "excel/dmpOrderInfo.xlsx";
+                String name = "dmpOrderInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-
-                /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
-                response.setCharacterEncoding("utf-8");
-                String fileName = URLEncoder.encode("测试", "UTF-8");
-                String s = new String("测试".getBytes("UTF-8"), "ISO-8859-1");
-                response.setHeader("Content-disposition", "attachment;filename=" + s + ".xlsx");
-                EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);*/
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,7 +118,7 @@ public class DmpOrderInfoController extends BaseController {
 
 
     /**
-     * @description: 下载模板
+     * 销售数据-下载模板
      * @author Will
      * @date: 2022/12/15 18:42
      * @param request

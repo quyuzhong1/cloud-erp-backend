@@ -67,4 +67,17 @@ public interface BiDictService  extends IService<BiDictEntity> {
      * @return java.util.List<org.apache.commons.math3.util.Pair>
      */
     List<Pair<String,String>> getCategory(String type);
+
+    /**
+     * 根据value值查询数据字段
+     * @param dictValues
+     * @return
+     */
+    Map<String, BiDictEntity> listByValues(List<String> dictValues);
+
+    /**
+     * 根据类型查询
+     */
+    List<BiDictEntity> listEntityByType(String type);
+
 }

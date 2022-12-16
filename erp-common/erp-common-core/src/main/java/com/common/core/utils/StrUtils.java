@@ -16,6 +16,13 @@ public class StrUtils {
         String regex = "^[a-z0-9A-Z]+$";
         return str.matches(regex);
     }
+    /**
+     * 判断是否为数字
+     */
+    public static boolean isDigit(String str) {
+        String regex = "^([0-9]*|d*.d{1}?d*)$";
+        return str.matches(regex);
+    }
 
     /**
      * @author Luo_WG

@@ -78,4 +78,14 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
 
      */
     void exportExcel(DmpShopInfoSearchDTO dto, HttpServletResponse response);
+    /**
+     * @description: 根据平台、站点、店铺名称查询店铺是否存在
+     * @author Will
+     * @date: 2022/12/16 10:35
+     * @param platform 平台
+     * @param site 站点
+     * @param shopName 店铺名称
+     * @return Integer
+     */
+    Integer getDmpShopInfoByParam(String platform, String site, String shopName);
 }

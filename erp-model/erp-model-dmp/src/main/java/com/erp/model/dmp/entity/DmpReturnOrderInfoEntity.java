@@ -183,6 +183,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     private Date orderTime;
 
     /**
+     * cny-结算汇率
+     */
+    @TableField(value = "cny_settle_rate")
+    private BigDecimal cnySettleRate;
+
+    /**
      * 清洗状态  1 未清洗 2 清洗完成
      */
     @TableField(value = "clean_state")

@@ -9,10 +9,7 @@ import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.server.bi.service.BiModuleService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -51,10 +48,23 @@ public class BiModuleController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody ModuleDTO dto) {
+    public ApiResult add(@ModelAttribute @Validated ModuleDTO dto) {
         Boolean flag = this.biModuleService.insert(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 新增模块
+     *
+     * @param dto 实体
+     * @return 新增结果
+     */
+    @PostMapping("/details")
+    public ApiResult<ModuleDTO> add(@RequestBody @Validated BaseIdDTO dto) {
+        ModuleDTO result = this.biModuleService.details(dto.getId());
+        return success(result);
+    }
+
 
     /**
      * 编辑数据
@@ -63,7 +73,7 @@ public class BiModuleController extends BaseController {
      * @return 编辑结果
      */
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
+    public ApiResult edit(@ModelAttribute @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
         Boolean flag = this.biModuleService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -100,7 +110,7 @@ public class BiModuleController extends BaseController {
      */
     @PostMapping("/category/list")
     public ApiResult<List<CategoryModuleDTO>> categoryList(@RequestBody @Validated BaseSearchDTO dto) {
-        List<CategoryModuleDTO> list=biModuleService.categoryList(dto.getSearchKeyword());
+        List<CategoryModuleDTO> list = biModuleService.categoryList(dto.getSearchKeyword());
         return success(list);
     }
 
