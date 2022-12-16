@@ -80,14 +80,14 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 
     private List<String> getCostIds(BiFilterDTO dto, List<String> dictValues) {
         // 查询对应最新月份数据
-        if(null == dto.getMonth()){
-            dto.setMonth(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()));
-        }
+//        if(null == dto.getMonth()){
+//            dto.setMonth(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()));
+//        }
         List<BiDataSourceCostEntity> dataSourceCostList = lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(dto.getSite()), BiDataSourceCostEntity::getSite, dto.getSite())
                 .eq(CollectionUtils.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .eq(CollectionUtils.isNotEmpty(dto.getDepartment()), BiDataSourceCostEntity::getDeptName, dto.getDepartment())
-                .eq(BiDataSourceCostEntity::getMonth, dto.getMonth())
+                .eq(BiDataSourceCostEntity::getMonth, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()))
                 .list();
         if (CollectionUtils.isEmpty(dataSourceCostList)) {
             return new ArrayList<>();
