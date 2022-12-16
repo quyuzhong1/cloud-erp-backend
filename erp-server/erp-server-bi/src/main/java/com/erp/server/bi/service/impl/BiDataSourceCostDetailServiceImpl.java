@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostDetailMapper;
@@ -46,5 +47,12 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
 
 
         return entityMap;
+    }
+
+    @Override
+    public List<BiDataSourceCostDetailEntity> listByCostIds(List<String> costIds) {
+        LambdaQueryWrapper<BiDataSourceCostDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BiDataSourceCostDetailEntity::getCostId,costIds);
+        return this.list(queryWrapper);
     }
 }

@@ -49,7 +49,7 @@ public class DmpOrderInfoController extends BaseController {
     private SysUserFeign sysUserFeign;
 
     /**
-     * @description: 销售数据-分页查询
+     * 销售数据-分页查询
      * @author Will
      * @date: 2022/12/15 10:48
      * @param dto

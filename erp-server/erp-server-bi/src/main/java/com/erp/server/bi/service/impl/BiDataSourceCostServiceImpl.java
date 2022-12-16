@@ -4,20 +4,28 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.DmpReturnOrderInfoExcelDTO;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiDataSourceCostMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
+import com.erp.server.bi.service.BiDictService;
+import com.erp.server.bi.service.DmpOrderInfoService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,11 +43,19 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     @Resource
     private BiDataSourceCostDetailService biDataSourceCostDetailService;
 
+    @Resource
+    private BiDictService biDictService;
+
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
+
     @Override
-    public PagingVO<BiDataSourceCostDTO> paging(PagingDTO<BiDataSourceCostSearchDTO> dto) {
+    public PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCostSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BiDataSourceCostSearchDTO params = dto.getParams();
-        IPage<BiDataSourceCostDTO> pageData = baseMapper.paging(query, params);
+        IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
+        List<LinkedHashMap<String, Object>> linkedHashMaps = renewBiDataSourceCost(pageData.getRecords());
+        pageData.setRecords(linkedHashMaps);
         return new PagingVO(pageData);
     }
 
@@ -181,4 +197,45 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return new TargetSaleSumVO(resultAmount);
     }
 
+    @Override
+    public void exportExcel(BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
+        //查询所有数据
+        List<LinkedHashMap<String,Object>>  list = baseMapper.getAllBiDataSourceCost(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //导出销售数据
+        List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
+        String fileName = dmpOrderInfoService.getFileName("退货数据导出");
+        ExcelUtil.export(fileName, "退货数据导出", excelList, DmpReturnOrderInfoExcelDTO.class, response);
+        return;
+    }
+
+
+    /**
+     * 返回字段处理
+     */
+    private List<LinkedHashMap<String,Object>> renewBiDataSourceCost(List<LinkedHashMap<String,Object>> list) {
+        if (CollectionUtils.isEmpty(list))  {
+            return list;
+        }
+        //查询成本字典数据
+        List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
+        if (CollectionUtils.isEmpty(dictList))  {
+            return list;
+        }
+        List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
+        List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList= biDataSourceCostDetailService.listByCostIds(costIds);
+        if (CollectionUtils.isEmpty(biDataSourceCostDetailList)) {
+            return list;
+        }
+        for (LinkedHashMap<String,Object> map: list) {
+            for (BiDictEntity dcit : dictList) {
+                BigDecimal value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
+                        .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
+                map.put(dcit.getName(),value);
+            }
+        }
+        return list;
+    }
 }

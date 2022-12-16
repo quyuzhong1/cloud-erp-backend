@@ -3,11 +3,13 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -25,5 +27,13 @@ public interface BiDataSourceCostMapper extends BaseMapper<BiDataSourceCostEntit
      * @param params
      * @return IPage<BiDataSourceCostDTO>
      */
-    IPage<BiDataSourceCostDTO> paging(Page query,@Param("params") BiDataSourceCostSearchDTO params);
+    IPage<LinkedHashMap<String,Object>> paging(Page query, @Param("params") BiDataSourceCostSearchDTO params);
+    /**
+     * @description: 查询所有成本
+     * @author Will
+     * @date: 2022/12/16 15:54
+     * @param params
+     * @return List<LinkedHashMap<Object>>
+     */
+    List<LinkedHashMap<String,Object>> getAllBiDataSourceCost(@Param("params") BiDataSourceCostSearchDTO params);
 }

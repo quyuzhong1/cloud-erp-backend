@@ -74,4 +74,10 @@ public interface BiDictService  extends IService<BiDictEntity> {
      * @return
      */
     Map<String, BiDictEntity> listByValues(List<String> dictValues);
+
+    /**
+     * 根据类型查询
+     */
+    List<BiDictEntity> listEntityByType(String type);
+
 }
