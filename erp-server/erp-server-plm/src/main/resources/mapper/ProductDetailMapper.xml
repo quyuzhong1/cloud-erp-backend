@@ -65,7 +65,7 @@
             AND pd.product_id = #{params.productId}
         </if>
 
-        <if test="params.status != '' and params.status != null">
+        <if test="params.status != null">
             AND pd.status = #{params.status}
         </if>
 
