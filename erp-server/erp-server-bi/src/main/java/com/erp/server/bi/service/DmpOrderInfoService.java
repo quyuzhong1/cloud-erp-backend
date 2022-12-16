@@ -3,11 +3,10 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
 import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.bi.dto.DmpOrderStateDTO;
-import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -110,13 +109,5 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      */
     String getFileName(String fileName);
 
-    
-    /**
-     *
-     * @author yl
-     * @date 2022-12-15 17:00
-     * @param
-     * @return com.erp.model.bi.vo.StatisticalDataVO
-     */
-    StatisticalDataVO getMonthSales();
+
 }

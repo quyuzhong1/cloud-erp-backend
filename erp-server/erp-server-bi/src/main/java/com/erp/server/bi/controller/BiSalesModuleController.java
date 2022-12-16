@@ -5,8 +5,9 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.vo.StatisticalDataVO;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,7 +27,7 @@ public class BiSalesModuleController extends BaseController {
 
 
     @Resource
-    private DmpOrderInfoService orderInfoService;
+    private SalesOrderService salesOrderService;
 
 
     /**
@@ -40,7 +41,23 @@ public class BiSalesModuleController extends BaseController {
             tableAlias = "dmp_order_info"
     )
     public ApiResult<StatisticalDataVO> getMonth() {
-        StatisticalDataVO statistical = orderInfoService.getMonthSales();
+        StatisticalDataVO statistical = salesOrderService.getMonthSales();
+        return success(statistical);
+    }
+
+
+    /**
+     * 销售额- 一级模块-SKU销售额
+     * @return
+     */
+    @PostMapping("/bySku")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:sales:bySku",
+            tableAlias = "dmp_order_info"
+    )
+    public ApiResult<StatisticalDataVO> getBySku() {
+        StatisticalDataVO statistical = salesOrderService.getMonthSales();
         return success(statistical);
     }
 

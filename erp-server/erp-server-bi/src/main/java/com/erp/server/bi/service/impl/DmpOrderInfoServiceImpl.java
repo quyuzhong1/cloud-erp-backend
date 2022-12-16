@@ -310,39 +310,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
 
-    /**
-     * 获取销售相关 一级模块 月销售额趋势
-     *
-     * @param
-     * @return com.erp.model.bi.vo.StatisticalDataVO
-     * @author yl
-     * @date 2022-12-15 17:02
-     */
-    @Override
-    public StatisticalDataVO getMonthSales() {
-        StatisticalDataVO statistical = new StatisticalDataVO();
-        statistical.setChartType("bar");
-        statistical.setName("月销售额趋势");
-        ChartVO chart = new ChartVO();
-        List<Map<String, Object>> resultList = baseMapper.getMonthSales();
-        int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
-        List<Object> xAxisList = new ArrayList<>(initSize);
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
-        //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO();
-        series.setName("销售额");
-        List<Object> dataList = new ArrayList<>(initSize);
-        for (Map<String, Object> map : resultList) {
-            dataList.add(map.get("orderSales"));
-            xAxisList.add(map.get("month"));
-        }
-        series.setData(dataList);
-        seriesList.add(series);
-        chart.setXAxis(xAxisList);
-        chart.setSeries(seriesList);
-        statistical.setData(chart);
-        return statistical;
-    }
 
 }
 
