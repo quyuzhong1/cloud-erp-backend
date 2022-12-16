@@ -23,13 +23,8 @@ public enum DashboardEnum {
         this.name = name;
     }
 
-    public String getFlag() {
-        return flag;
-    }
 
-    public String getName() {
-        return name;
-    }
+
 
 
 }

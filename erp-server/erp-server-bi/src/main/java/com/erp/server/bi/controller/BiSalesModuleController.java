@@ -1,7 +1,9 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +28,13 @@ public class BiSalesModuleController extends BaseController {
     @Resource
     private DmpOrderInfoService orderInfoService;
 
+
     @GetMapping("/byMonth")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:sales:byMonth",
+            tableAlias = "dmp_order_info"
+    )
     public ApiResult<StatisticalDataVO> getMonth() {
         StatisticalDataVO statistical = orderInfoService.getMonthSales();
         return success(statistical);
