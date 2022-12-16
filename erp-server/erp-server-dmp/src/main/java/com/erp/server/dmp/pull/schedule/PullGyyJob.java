@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.thread.PullGyyDateThread;
+import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,6 +30,7 @@ public class PullGyyJob {
 
     // 拉取管易云数据任务
     //@Scheduled(cron = "*/5 * * * * ?")
+    @XxlJob("gyyExecute")
     public void execute() {
         while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {
             // 获取请求任务
