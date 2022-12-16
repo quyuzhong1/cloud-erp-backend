@@ -1,45 +1,98 @@
 package com.erp.model.bi.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.apache.commons.collections.CollectionUtils;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * BI 筛选条件
- * @Classname
- * @Description TODO
- * @Date 2022-12-16 9:27
- * @Created by yl
+ * @author Cloud
  */
 @Data
+@EqualsAndHashCode
+@ToString
+@NoArgsConstructor
 public class BiFilterDTO implements Serializable {
 
 
     /**
-     * 日期标示
-     * today 今天
-     * yesterday 昨天
-     * lastSevenDays 最近7天
-     * lastFifteenDays 最近15 天
-     * lastThirtyDays 最近30 天
+     * 0 -订单时间 1-发货时间
      */
-    private String dateFlag;
+    @NotNull(message = "时间类型不能为空")
+    private Integer timeType;
+
+    /**
+     * 开始日期
+     */
+    @NotNull(message = "开始时间不能为空")
+    private LocalDateTime startTime;
+
+    /**
+     * 结束日期
+     */
+    @NotNull(message = "结束时间不能为空")
+    private LocalDateTime endTime;
+
+    /**
+     * 0 CNY实时  1 CNY结算  2原币种
+     */
+    @NotBlank(message = "结算方式不能为空")
+    private Integer settleMethod;
+
+    /**
+     * 事业部
+     */
+    private List<String> department;
+
+    /**
+     * 平台
+     */
+    private List<String> platform;
+
+    /**
+     * 站点
+     */
+    private List<String> site;
+
+    /**
+     * 店铺编号
+     */
+    private List<String> shopName;
 
 
     /**
-     * 开始时间
+     * 品类
      */
-    private LocalDate startTime;
+    private List<String> category;
 
     /**
-     * 结束时间
+     * 品牌
      */
-    private LocalDate endTime;
+    private List<String> brand;
 
     /**
-     * 高级搜索的内容
+     * sku
      */
-    private List<AdvanceSearchDTO> searchList;
+    private List<String> sku;
+
+    /**
+     * 用户id
+     */
+    private List<Long> userId;
+
+    public static Boolean validOriginalCurrency(BiFilterDTO dto){
+        return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
+    }
+
+    private Boolean hasNewSign;
+
+
 }

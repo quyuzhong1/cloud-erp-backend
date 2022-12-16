@@ -63,6 +63,5 @@ public class BiDictEntity implements Serializable {
     private LocalDate updateTime;
 
 
-
 }
 

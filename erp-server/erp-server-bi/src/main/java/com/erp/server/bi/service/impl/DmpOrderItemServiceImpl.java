@@ -3,7 +3,7 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.server.bi.enums.TargetSettleMethodEnum;
 import com.erp.server.bi.mapper.DmpOrderItemMapper;
@@ -24,7 +24,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
 
     @Override
-    public BigDecimal sumSales(List<String> orderIds, TargetSaleDTO dto) {
+    public BigDecimal sumSales(List<String> orderIds, BiFilterDTO dto) {
         QueryWrapper query = new QueryWrapper();
         // TODO 添加汇率
 
@@ -32,7 +32,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
             query.select("SUM(sell_price*quantity) as sell_price");
         }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
             query.select("SUM(sell_price*quantity) as sell_price");
-        }else if (TargetSaleDTO.validOriginalCurrency(dto)){
+        }else if (BiFilterDTO.validOriginalCurrency(dto)){
             query.select("SUM(sell_price*quantity) as sell_price");
         }
 

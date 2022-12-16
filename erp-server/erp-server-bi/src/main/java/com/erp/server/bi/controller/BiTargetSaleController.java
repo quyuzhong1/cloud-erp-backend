@@ -3,7 +3,7 @@ package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -30,7 +30,7 @@ public class BiTargetSaleController extends BaseController {
      * 销售额  区分新老品
      */
     @PostMapping("/sales")
-    public ApiResult countSales(@RequestBody TargetSaleDTO dto){
+    public ApiResult countSales(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.sumSales(dto);
         return success(vo);
     }
@@ -39,7 +39,7 @@ public class BiTargetSaleController extends BaseController {
      * 销量
      */
     @PostMapping("/sales/volume")
-    public ApiResult countSalesVolume(@RequestBody TargetSaleDTO dto){
+    public ApiResult countSalesVolume(@RequestBody BiFilterDTO dto){
         TargetSaleCountVO vo = dmpOrderInfoService.countSalesVolume(dto);
         return success(vo);
     }
@@ -48,7 +48,7 @@ public class BiTargetSaleController extends BaseController {
      * 订单量
      */
     @PostMapping("/order/quantity")
-    public ApiResult countOrderQuantity(@RequestBody TargetSaleDTO dto){
+    public ApiResult countOrderQuantity(@RequestBody BiFilterDTO dto){
         TargetSaleCountVO vo = dmpOrderInfoService.countOrderQuantity(dto);
         return success(vo);
     }
@@ -57,7 +57,7 @@ public class BiTargetSaleController extends BaseController {
      * 退款率
      */
     @PostMapping("/refund/rate")
-    public ApiResult countRefundRate(@RequestBody TargetSaleDTO dto){
+    public ApiResult countRefundRate(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.countRefundRate(dto);
         return success(vo);
     }
@@ -66,7 +66,7 @@ public class BiTargetSaleController extends BaseController {
      * 退款金额
      */
     @PostMapping("/refund/amount")
-    public ApiResult countRefundAmount(@RequestBody TargetSaleDTO dto){
+    public ApiResult countRefundAmount(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.countRefundAmount(dto);
         return success(vo);
     }
@@ -75,7 +75,7 @@ public class BiTargetSaleController extends BaseController {
      * 退款订单数
      */
     @PostMapping("/refund/order/number")
-    public ApiResult countRefundOrderNumber(@RequestBody TargetSaleDTO dto){
+    public ApiResult countRefundOrderNumber(@RequestBody BiFilterDTO dto){
         TargetSaleCountVO vo = dmpOrderInfoService.countRefundOrderNum(dto);
         return success(vo);
     }
@@ -84,7 +84,7 @@ public class BiTargetSaleController extends BaseController {
      * 客单价
      */
     @PostMapping("/customer/price")
-    public ApiResult calculateCustomerPrice(@RequestBody TargetSaleDTO dto){
+    public ApiResult calculateCustomerPrice(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.statisticsCustomerPrice(dto);
         return success(vo);
     }
@@ -98,7 +98,7 @@ public class BiTargetSaleController extends BaseController {
      * 国内销售占比
      */
     @PostMapping("/domestic/sales/ratio")
-    public ApiResult domesticSalesRatio(@RequestBody TargetSaleDTO dto){
+    public ApiResult domesticSalesRatio(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = dmpOrderInfoService.statisticsDomesticSalesRatio(dto);
         return success(vo);
     }

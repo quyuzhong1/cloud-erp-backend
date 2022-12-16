@@ -89,7 +89,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleSumVO sumSales(TargetSaleDTO dto) {
+    public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         String userId = commonService.getUserInfo().getUid();
         // 没有sku情况
         BigDecimal amount = BigDecimal.ZERO;
@@ -99,7 +99,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 query.select("sum(item_total) as item_total");
             } else if (TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
-            } else if (TargetSaleDTO.validOriginalCurrency(dto)) {
+            } else if (BiFilterDTO.validOriginalCurrency(dto)) {
                 query.select("sum(item_total*currency_rate) as item_total");
             }
 
@@ -120,7 +120,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return new TargetSaleSumVO(amount);
     }
 
-    private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(TargetSaleDTO dto) {
+    private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
         query.ge(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
                 .le(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
@@ -148,7 +148,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleCountVO countSalesVolume(TargetSaleDTO dto) {
+    public TargetSaleCountVO countSalesVolume(BiFilterDTO dto) {
         Integer count = 0;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 先查询订单号
@@ -164,7 +164,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleCountVO countOrderQuantity(TargetSaleDTO dto) {
+    public TargetSaleCountVO countOrderQuantity(BiFilterDTO dto) {
         // 没有sku情况
         Integer count = 0;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
@@ -187,7 +187,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleSumVO countRefundRate(TargetSaleDTO dto) {
+    public TargetSaleSumVO countRefundRate(BiFilterDTO dto) {
         // 获取总订单数量
         TargetSaleCountVO totalOrderQuantity = countOrderQuantity(dto);
         if (null == totalOrderQuantity || totalOrderQuantity.getValue() <= 0) {
@@ -199,7 +199,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleSumVO countRefundAmount(TargetSaleDTO dto) {
+    public TargetSaleSumVO countRefundAmount(BiFilterDTO dto) {
         // 获取退款金额
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 无sku条件 只查询订单表
@@ -214,7 +214,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleCountVO countRefundOrderNum(TargetSaleDTO dto) {
+    public TargetSaleCountVO countRefundOrderNum(BiFilterDTO dto) {
         // 获取退款订单数量
         // 没有sku情况
         Integer count;
@@ -239,7 +239,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleSumVO statisticsCustomerPrice(TargetSaleDTO dto) {
+    public TargetSaleSumVO statisticsCustomerPrice(BiFilterDTO dto) {
         // 销售额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
         BigDecimal salesAmount = targetSaleSumVO.getValue();
@@ -258,7 +258,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public TargetSaleSumVO statisticsDomesticSalesRatio(TargetSaleDTO dto) {
+    public TargetSaleSumVO statisticsDomesticSalesRatio(BiFilterDTO dto) {
         // 销售总额
         TargetSaleSumVO targetSaleSumVO = sumSales(dto);
         BigDecimal salesAmount = targetSaleSumVO.getValue();

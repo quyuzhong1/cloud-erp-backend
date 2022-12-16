@@ -1,7 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 
 import java.math.BigDecimal;
@@ -19,7 +19,7 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @param dto
      * @return
      */
-    BigDecimal sumSales(List<String> orderIds, TargetSaleDTO dto);
+    BigDecimal sumSales(List<String> orderIds, BiFilterDTO dto);
 
     /**
      * 根据sku和订单号统计销售量
