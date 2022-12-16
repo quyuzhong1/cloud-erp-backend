@@ -66,4 +66,12 @@ public interface BiModuleService  extends IService<BiModuleEntity> {
     Boolean updateState(UpdateStateDTO dto);
 
     List<CategoryModuleDTO> categoryList(String searchKeyword);
+
+
+    /**
+     * 模块详情
+     * @param id
+     * @return
+     */
+    ModuleDTO details(String id);
 }

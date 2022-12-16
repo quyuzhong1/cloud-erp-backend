@@ -5,7 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.model.bi.dto.TargetSaleDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +31,7 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @param sku
      * @return
      */
-    BigDecimal sumRefundAmount(List<String> orderIds, TargetSaleDTO sku);
+    BigDecimal sumRefundAmount(List<String> orderIds, BiFilterDTO sku);
 
     /**
      * @description: 导出
@@ -41,4 +41,12 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @param response
      */
     void exportExcel(DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response);
+    /**
+     * @description: 根据退货单号查询
+     * @author Will
+     * @date: 2022/12/16 12:39
+     * @param returnOrderId
+     * @return DmpReturnOrderInfoEntity
+     */
+    DmpReturnOrderInfoEntity getByReturnOrderId(String returnOrderId);
 }

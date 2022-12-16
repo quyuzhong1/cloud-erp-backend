@@ -31,14 +31,12 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param skuNo 商品sku
-     * @param platformSign 平台标识
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     @Override
-    public DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String platformSign){
+    public DmpSkuInfoEntity getSkuBySkuNo(String skuNo){
         LambdaQueryWrapper<DmpSkuInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpSkuInfoEntity::getSkuNo, skuNo);
-        lambdaQueryWrapper.eq(DmpSkuInfoEntity::getPlatformSign, platformSign);
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -53,7 +51,6 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
     public Boolean updateSkuBySkuNo(DmpSkuInfoEntity dmpSkuInfoEntity){
         LambdaQueryWrapper<DmpSkuInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpSkuInfoEntity::getSkuNo, dmpSkuInfoEntity.getSkuNo());
-        lambdaQueryWrapper.eq(DmpSkuInfoEntity::getPlatformSign, dmpSkuInfoEntity.getPlatformSign());
         return this.update(dmpSkuInfoEntity, lambdaQueryWrapper);
     }
 
@@ -65,7 +62,7 @@ public class DmpSkuInfoServiceImpl extends ServiceImpl<DmpSkuInfoMapper, DmpSkuI
      **/
     @Override
     public void checkOrder(DmpSkuInfoEntity dmpSkuInfoEntity) {
-        DmpSkuInfoEntity dmpOrderInfoEntity = this.getSkuBySkuNo(dmpSkuInfoEntity.getSkuNo(), dmpSkuInfoEntity.getPlatformSign());
+        DmpSkuInfoEntity dmpOrderInfoEntity = this.getSkuBySkuNo(dmpSkuInfoEntity.getSkuNo());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpSkuInfoEntity.toString())) {

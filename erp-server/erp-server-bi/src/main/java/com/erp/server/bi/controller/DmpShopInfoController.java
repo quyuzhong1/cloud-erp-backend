@@ -72,7 +72,7 @@ public class DmpShopInfoController extends BaseController {
     }
 
     /**
-     * 查询单条店铺
+     * 店铺数据-查询单个店铺
      * @author Will
      * @date: 2022/12/15 16:36
      * @param id

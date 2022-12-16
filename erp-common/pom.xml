@@ -19,6 +19,16 @@
         <module>erp-common-web</module>
     </modules>
 
+<!--    <properties>-->
+<!--        <hutool.version>5.8.10</hutool.version>-->
+<!--    <properties/>-->
+
+<!--    <dependency>-->
+<!--        <groupId>cn.hutool</groupId>-->
+<!--        <artifactId>hutool-all</artifactId>-->
+<!--        <version>${hutool.version}</version>-->
+<!--    </dependency>-->
+
 <!--    <distributionManagement>
         <repository>
             <id>nexus</id>

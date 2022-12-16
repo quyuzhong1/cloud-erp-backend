@@ -6,7 +6,7 @@ package com.erp.server.bi.enums;
  * @description: TODO
  * @date 2022/12/15 17:48
  */
-public enum ReturnOrderEnum {
+public enum ReturnOrderStatusEnum {
 
     PENDING(2, "待处理"),
     REFUNDED(3,"已退款"),
@@ -17,7 +17,7 @@ public enum ReturnOrderEnum {
         private Integer code;
         private String name;
 
-        ReturnOrderEnum(Integer code, String name) {
+        ReturnOrderStatusEnum(Integer code, String name) {
             this.code = code;
             this.name = name;
         }
@@ -30,11 +30,21 @@ public enum ReturnOrderEnum {
         }
 
         public static String getName(Integer code) {
-            for (ReturnOrderEnum state : ReturnOrderEnum.values()) {
+            for (ReturnOrderStatusEnum state : ReturnOrderStatusEnum.values()) {
                 if (code.equals(state.getCode())) {
                     return state.getName();
                 }
             }
             return "";
         }
+
+    public static Integer getCodeByName(String name) {
+        ReturnOrderStatusEnum[] returnOrderStatusEnums = values();
+        for (ReturnOrderStatusEnum returnOrderStatusEnum : returnOrderStatusEnums) {
+            if (returnOrderStatusEnum.getName().equals(name)) {
+                return returnOrderStatusEnum.getCode();
+            }
+        }
+        return null;
+    }
 }

@@ -3,10 +3,47 @@
 <mapper namespace="com.erp.server.bi.mapper.BiDataSourceCostMapper">
 
 
-    <select id="paging" resultType="com.erp.model.bi.dto.BiDataSourceCostDTO">
+    <select id="paging" resultType="java.util.LinkedHashMap">
         select
-            *
-        from bi_data_source_cost
+            bdsc.id,
+            bdsc.month,
+            bdsc.dept_name,
+            bdsc.platform_name,
+            bdsc.site,
+            bdsc.shop_name,
+            bdsc.charge_name,
+            bdsc.combination
+        from bi_data_source_cost bdsc
+        <where>
+            <if test="params.month != null and params.month != ''">
+                and to_char(bdsc.month,'yyyy-MM') = to_char(#{params.month},'yyyy-MM')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and bdsc.shop_name like concat('%',#{params.shopName},'%')
+            </if>
+        </where>
+
+    </select>
+
+    <select id="getAllBiDataSourceCost" resultType="java.util.LinkedHashMap">
+        select
+        bdsc.id,
+        bdsc.month,
+        bdsc.dept_name,
+        bdsc.platform_name,
+        bdsc.site,
+        bdsc.shop_name,
+        bdsc.charge_name,
+        bdsc.combination
+        from bi_data_source_cost bdsc
+        <where>
+            <if test="params.month != null and params.month != ''">
+                and to_char(bdsc.month,'yyyy-MM') = to_char(#{params.month},'yyyy-MM')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and bdsc.shop_name like concat('%',#{params.shopName},'%')
+            </if>
+        </where>
     </select>
 
 </mapper>

@@ -1,17 +1,17 @@
 package com.common.core.utils.date;
 
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-//import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
-
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Calendar;
+import java.util.Date;
 //import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -396,5 +396,16 @@ public class DateUtil {
         return "";
     }
 
+    /**
+     * 验证是否是日期格式
+     */
+    public static boolean isValid(String dateStr,DateTimeFormatter dateFormatter) {
+        try {
+            LocalDateTime.parse(dateStr, dateFormatter);
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+        return true;
+    }
 
 }

@@ -6,20 +6,18 @@ package com.erp.server.bi.enums;
  * @Author Cloud
  * @Date 2022/12/13 14:36
  **/
-public enum TargetSettleMethodEnum {
-    // CNY实时
-    CNY_CURRENT(0,"CNY实时"),
-    // CNY结算
-    CNY_SETTLE( 1, "CNY结算"),
-    // 原币种
-    ORIGINAL_CURRENCY( 2, "原币种");
+public enum TimeTypeEnum {
+    // 订单时间类型
+    ORDER_TIME(0,"订单时间"),
+    // 发货时间类型
+    DELIVERY_TIME( 1, "发货时间");
 
     private int code;
 
     private String value;
 
 
-    TargetSettleMethodEnum(int code, String value) {
+    TimeTypeEnum(int code, String value) {
         this.code = code;
         this.value= value;
     }

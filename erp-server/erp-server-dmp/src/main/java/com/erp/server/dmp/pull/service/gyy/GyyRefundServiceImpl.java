@@ -28,6 +28,8 @@ import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
@@ -53,6 +55,9 @@ public class GyyRefundServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpRefundItemService dmpRefundItemService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
@@ -121,9 +126,8 @@ public class GyyRefundServiceImpl implements IReportSaveService {
     public List<GyyRefundEntity> pullDate(RequestDTO dto) {
         List<GyyRefundEntity> infoArrayList = new ArrayList<>();
         try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
+            Integer lastTime = dto.getJobTaskDTO().getLastTime();
+            Integer nextTime = dto.getJobTaskDTO().getNextTime();
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
@@ -143,11 +147,6 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                 dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
             }
             GyyAppEntity gyyAppEntity = new GyyAppEntity();
-            String url = UrlContant.GYY_HOST;
-            String method = jobTask.getApiCode();
-            String appKey = gyyAppEntity.getAppKey();
-            String sessionKey = gyyAppEntity.getSessionKey();
-            String secretKey = gyyAppEntity.getSecretKey();
 
             //每次最多获取100条
             Integer pageSize = 100;
@@ -161,9 +160,9 @@ public class GyyRefundServiceImpl implements IReportSaveService {
             while (pageIndex <= pageCount) {
                 // 封装传参数据
                 Map<String, Object> datas = new HashMap();
-                datas.put("method", method);
-                datas.put("appkey", appKey);
-                datas.put("sessionkey", sessionKey);
+                datas.put("method", dto.getJobTaskDTO().getApiCode());
+                datas.put("appkey", gyyAppEntity.getAppKey());
+                datas.put("sessionkey", gyyAppEntity.getSessionKey());
                 datas.put("start_modify_date", st);
                 datas.put("end_modify_date", sd);
                 datas.put("page_no", pageIndex);
@@ -171,7 +170,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                 datas.put("cancel", 0);
 
                 String str = JSONObject.toJSONString(datas);
-                String sign = GyyUtils.sign(str, secretKey);
+                String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
                 datas.put("sign", sign);
                 // 将传参转为Json格式
                 String jsonData = JSONObject.toJSONString(datas);
@@ -182,7 +181,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
 
                 Map<String, Object> stringObjectMap = null;
                 try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(url, jsonData, null, headerMap, RequestMethod.POST);
+                    stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
                     if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
                         List<GyyRefundEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("tradeRefunds")), GyyRefundEntity.class);
                         totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
@@ -195,13 +194,19 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                 } catch (Exception e) {
                     e.printStackTrace();
                     log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
+                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                    if (errorCount < 3) {
+                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                    } else {
+                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                        dmpErrorLogEntity.setParams(jsonData);
+                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                        dmpErrorLogEntity.setCreateTime(new Date());
+                        dmpErrorLogService.add(dmpErrorLogEntity);
+                    }
                     break;
                 }
                 pageIndex++;

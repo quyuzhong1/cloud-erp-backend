@@ -3,10 +3,10 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
 import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.bi.dto.DmpOrderStateDTO;
-import com.erp.model.bi.dto.TargetSaleDTO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
@@ -33,56 +33,56 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    TargetSaleSumVO sumSales(TargetSaleDTO dto);
+    TargetSaleSumVO sumSales(BiFilterDTO dto);
 
     /**
      * 统计销量
      * @param dto
      * @return
      */
-    TargetSaleCountVO countSalesVolume(TargetSaleDTO dto);
+    TargetSaleCountVO countSalesVolume(BiFilterDTO dto);
 
     /**
      * 统计订单销量
      * @param dto
      * @return
      */
-    TargetSaleCountVO countOrderQuantity(TargetSaleDTO dto);
+    TargetSaleCountVO countOrderQuantity(BiFilterDTO dto);
 
     /**
      * 统计订单销量
      * @param dto
      * @return
      */
-    TargetSaleSumVO countRefundRate(TargetSaleDTO dto);
+    TargetSaleSumVO countRefundRate(BiFilterDTO dto);
 
     /**
      * 统计退款金额
      * @param dto
      * @return
      */
-    TargetSaleSumVO countRefundAmount(TargetSaleDTO dto);
+    TargetSaleSumVO countRefundAmount(BiFilterDTO dto);
 
     /**
      * 统计退款订单数量
      * @param dto
      * @return
      */
-    TargetSaleCountVO countRefundOrderNum(TargetSaleDTO dto);
+    TargetSaleCountVO countRefundOrderNum(BiFilterDTO dto);
 
     /**
      * 客单价统计
      * @param dto
      * @return
      */
-    TargetSaleSumVO statisticsCustomerPrice(TargetSaleDTO dto);
+    TargetSaleSumVO statisticsCustomerPrice(BiFilterDTO dto);
 
     /**
      * 国内销售占比统计
      * @param dto
      * @return
      */
-    TargetSaleSumVO statisticsDomesticSalesRatio(TargetSaleDTO dto);
+    TargetSaleSumVO statisticsDomesticSalesRatio(BiFilterDTO dto);
 
     /**
      * @description: 修改状态
@@ -109,14 +109,13 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return String
      */
     String getFileName(String fileName);
-
-    
     /**
-     *
-     * @author yl
-     * @date 2022-12-15 17:00
-     * @param
-     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @description: 根据订单号查询
+     * @author Will
+     * @date: 2022/12/16 10:22
+     * @param platformOrderId
+     * @return DmpOrderInfoEntity
      */
-    StatisticalDataVO getMonthSales();
+    DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId);
+
 }

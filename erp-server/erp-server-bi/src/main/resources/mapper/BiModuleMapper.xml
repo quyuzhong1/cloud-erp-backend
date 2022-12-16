@@ -4,7 +4,7 @@
 
 
     <select id="paging" resultType="com.erp.model.bi.dto.ModulePagingDTO">
-        SELECT id,name,remark,pid,image_url,state,view_code
+        SELECT id,name,remark,image_url,state,view_code
         FROM bi_module
         <where>
             <if test="params.searchKeyword!=null and params.searchKeyword!=''">
