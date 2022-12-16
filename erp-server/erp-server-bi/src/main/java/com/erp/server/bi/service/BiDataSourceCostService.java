@@ -46,4 +46,11 @@ public interface BiDataSourceCostService
      * @return
      */
     TargetSaleSumVO sumMainRevenue(BiFilterDTO dto);
+
+    /**
+     * 销售成本统计
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO sumSalesCost(BiFilterDTO dto);
 }

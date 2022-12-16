@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,11 +15,12 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.vo.TargetSaleCountVO;
+import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.server.bi.enums.TargetSettleMethodEnum;
-import com.erp.server.bi.enums.TargetTimeTypeEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
+import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,10 +29,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,8 +51,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
     @Resource
     private DmpShopInfoService dmpShopInfoService;
-
-
     @Resource
     private RedisService redisService;
 
@@ -95,9 +93,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
-            if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total) as item_total");
-            } else if (TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
+            } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
             } else if (BiFilterDTO.validOriginalCurrency(dto)) {
                 query.select("sum(item_total*currency_rate) as item_total");
@@ -122,12 +120,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
-        query.ge(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
-                .le(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
-                // TODO 订单时间字段待确认
-//                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::get, dto.getStartTime())
-//                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
-                // TODO  高级筛选字段待完善 事业部 站点 品类 品牌 人员
+        query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
+                .le(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
+                // 订单时间字段
+                .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getStartTime())
+                .le(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
+                // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
                 .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_name", dto.getDepartment())
                 //站点
@@ -141,9 +139,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 平台
                 .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "platform_sign", dto.getPlatform())
                 // 店铺
-                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName())
-
-        ;
+                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName());
         return query;
     }
 
@@ -310,39 +306,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
 
-    /**
-     * 获取销售相关 一级模块 月销售额趋势
-     *
-     * @param
-     * @return com.erp.model.bi.vo.StatisticalDataVO
-     * @author yl
-     * @date 2022-12-15 17:02
-     */
+
     @Override
-    public StatisticalDataVO getMonthSales() {
-        StatisticalDataVO statistical = new StatisticalDataVO();
-        statistical.setChartType("bar");
-        statistical.setName("月销售额趋势");
-        ChartVO chart = new ChartVO();
-        List<Map<String, Object>> resultList = baseMapper.getMonthSales();
-        int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
-        List<Object> xAxisList = new ArrayList<>(initSize);
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
-        //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO();
-        series.setName("销售额");
-        List<Object> dataList = new ArrayList<>(initSize);
-        for (Map<String, Object> map : resultList) {
-            dataList.add(map.get("orderSales"));
-            xAxisList.add(map.get("month"));
-        }
-        series.setData(dataList);
-        seriesList.add(series);
-        chart.setXAxis(xAxisList);
-        chart.setSeries(seriesList);
-        statistical.setData(chart);
-        return statistical;
+    public DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId) {
+        LambdaQueryWrapper<DmpOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId,platformOrderId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
+
 
 }
 

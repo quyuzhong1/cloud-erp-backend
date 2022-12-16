@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import ch.qos.logback.classic.sift.ContextBasedDiscriminator;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,21 +9,16 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
-import com.erp.server.bi.service.BiDictService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,7 +48,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
         // 获取成本详情ids
-        List<String> costIds = getCostIds(dto, dictValues);
+        List<String> costIds = getCostIds(dto);
         if (CollectionUtils.isEmpty(costIds)) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
@@ -78,16 +73,19 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return new TargetSaleSumVO(resultAmount);
     }
 
-    private List<String> getCostIds(BiFilterDTO dto, List<String> dictValues) {
-        // 查询对应最新月份数据
-//        if(null == dto.getMonth()){
-//            dto.setMonth(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()));
-//        }
+    private List<String> getCostIds(BiFilterDTO dto) {
+        // 查询最新月份数据
+        QueryWrapper<BiDataSourceCostEntity> queryWrapper = new QueryWrapper();
+        queryWrapper.select("max(month) as month");
+        BiDataSourceCostEntity maxMonthEntity = baseMapper.selectOne(queryWrapper);
+        if (Objects.isNull(maxMonthEntity)) {
+            return new ArrayList<>();
+        }
         List<BiDataSourceCostEntity> dataSourceCostList = lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(dto.getSite()), BiDataSourceCostEntity::getSite, dto.getSite())
                 .eq(CollectionUtils.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .eq(CollectionUtils.isNotEmpty(dto.getDepartment()), BiDataSourceCostEntity::getDeptName, dto.getDepartment())
-                .eq(BiDataSourceCostEntity::getMonth, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()))
+                .eq(BiDataSourceCostEntity::getMonth, maxMonthEntity.getMonth())
                 .list();
         if (CollectionUtils.isEmpty(dataSourceCostList)) {
             return new ArrayList<>();
@@ -98,7 +96,33 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 
     @Override
     public TargetSaleSumVO sumSalesRatio(BiFilterDTO dto) {
-        return null;
+        // 数据字典获取主营收入  成本合计  销售费用小计 的value
+        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
+        // 获取成本详情ids
+        List<String> costIds = getCostIds(dto);
+        if (CollectionUtils.isEmpty(costIds)) {
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 获取详情数据并转为 map 计算
+        HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        // 计算单条记录毛利率
+        Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
+            Map<String, BigDecimal> tempMap = e.getValue();
+            BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+            // 如果主营收入小于0 数据异常 按照0 计算结果
+            if (costMainBusinessIncome.compareTo(BigDecimal.ZERO) <= 0){
+                return BigDecimal.ZERO;
+            }
+            return costMainBusinessIncome
+                    .subtract(tempMap.getOrDefault("cost_totalCost", BigDecimal.ZERO))
+                    .subtract(tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO))
+                    .divide(costMainBusinessIncome, 2, BigDecimal.ROUND_HALF_UP);
+        }));
+        // 对每条数据计算结果进行累加
+        BigDecimal resultAmount = detailListMap.entrySet().stream()
+                .map(Map.Entry::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new TargetSaleSumVO(resultAmount);
     }
 
     @Override
@@ -106,7 +130,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
         // 获取成本详情ids
-        List<String> costIds = getCostIds(dto, dictValues);
+        List<String> costIds = getCostIds(dto);
         if (CollectionUtils.isEmpty(costIds)) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
@@ -128,4 +152,33 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new TargetSaleSumVO(resultAmount);
     }
+
+    @Override
+    public TargetSaleSumVO sumSalesCost(BiFilterDTO dto) {
+        // 数据字典获取主营收入  成本合计  销售费用小计 的value
+        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_saleExpenses"));
+        // 获取成本详情ids
+        List<String> costIds = getCostIds(dto);
+        if (CollectionUtils.isEmpty(costIds)) {
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        // 获取详情数据并转为 map 计算
+        HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        // 计算单条记录毛利率
+        Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
+            Map<String, BigDecimal> tempMap = e.getValue();
+            BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
+            // 如果主营收入小于0 数据异常 按照0 计算结果
+            if (costMainBusinessIncome.compareTo(BigDecimal.ZERO) <= 0){
+                return BigDecimal.ZERO;
+            }
+            return costMainBusinessIncome;
+        }));
+        // 对每条数据计算结果进行累加
+        BigDecimal resultAmount = detailListMap.entrySet().stream()
+                .map(Map.Entry::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new TargetSaleSumVO(resultAmount);
+    }
+
 }

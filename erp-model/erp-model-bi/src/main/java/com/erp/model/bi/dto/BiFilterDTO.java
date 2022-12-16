@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import org.apache.commons.collections.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,11 +20,12 @@ import java.util.List;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-public class BiFilterDTO implements Serializable {
+public class BiFilterDTO extends PermissionsDTO {
 
 
     /**
      * 0 -订单时间 1-发货时间
+     * 对应枚举 TimeTypeEnum
      */
     @NotNull(message = "时间类型不能为空")
     private Integer timeType;
@@ -43,6 +44,7 @@ public class BiFilterDTO implements Serializable {
 
     /**
      * 0 CNY实时  1 CNY结算  2原币种
+     * 对应枚举 SettleMethodEnum
      */
     @NotBlank(message = "结算方式不能为空")
     private Integer settleMethod;

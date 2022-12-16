@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.server.bi.enums.TargetSettleMethodEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.DmpOrderItemMapper;
 import com.erp.server.bi.service.DmpOrderItemService;
 import org.apache.commons.collections.CollectionUtils;
@@ -28,9 +28,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         QueryWrapper query = new QueryWrapper();
         // TODO 添加汇率
 
-        if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+        if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
             query.select("SUM(sell_price*quantity) as sell_price");
-        }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+        }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
             query.select("SUM(sell_price*quantity) as sell_price");
         }else if (BiFilterDTO.validOriginalCurrency(dto)){
             query.select("SUM(sell_price*quantity) as sell_price");

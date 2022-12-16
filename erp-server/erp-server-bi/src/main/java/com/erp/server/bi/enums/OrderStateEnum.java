@@ -38,4 +38,13 @@ public enum OrderStateEnum {
             }
             return "";
         }
+    public static Integer getCodeByName(String name) {
+        OrderStateEnum[] orderStateEnums = values();
+        for (OrderStateEnum orderStateEnum : orderStateEnums) {
+            if (orderStateEnum.getName().equals(name)) {
+                return orderStateEnum.getCode();
+            }
+        }
+        return null;
+    }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
@@ -142,6 +143,21 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         String fileName = dmpOrderInfoService.getFileName("店铺数据导出");
         ExcelUtil.export(fileName, "店铺数据导出", excelList, DmpShopInfoExcelDTO.class, response);
         return;
+    }
+
+    @Override
+    public Integer getDmpShopInfoByParam(String platform, String site, String shopName) {
+        LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(platform)) {
+            queryWrapper.eq(DmpShopInfoEntity::getPlatformName,platform);
+        }
+        if (StringUtils.isNotBlank(site)) {
+            queryWrapper.eq(DmpShopInfoEntity::getSite,site);
+        }
+        if (StringUtils.isNotBlank(shopName)) {
+            queryWrapper.eq(DmpShopInfoEntity::getName,shopName);
+        }
+        return this.count(queryWrapper);
     }
 
 
