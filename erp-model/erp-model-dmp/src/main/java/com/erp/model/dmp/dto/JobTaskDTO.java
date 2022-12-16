@@ -71,4 +71,9 @@ public class JobTaskDTO {
      * 平台名称
      */
     private String platformName;
+
+    /**
+     * 错误次数
+     */
+    private Integer errorCount;
 }

@@ -26,13 +26,17 @@ import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
+
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
 import com.erp.model.dmp.entity.MabangAppEntity;
 
 /**
@@ -54,6 +58,9 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -94,107 +101,105 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
 
     /**
      * 请求马帮出库接口
+     *
      * @param dto
      * @return
      */
     public List<OrderEntity> pullDate(RequestDTO dto) {
         List<OrderEntity> infoArrayList = new ArrayList<>();
-        try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
-            String st = "";
-            String sd = "";
-            if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(date);
-                sd = sdf.format(new Date(nextTime * 1000L));
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                Date date = new Date();
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                Calendar cl = Calendar.getInstance();
-                cl.setTime(date);
-                cl.add(Calendar.DAY_OF_MONTH, -1);
-                st = sdf.format(cl.getTime());
-                sd = sdf.format(date);
-                dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
-            }
-            MabangAppEntity mabangAppEntity = new MabangAppEntity();
-            String url = UrlContant.MABANG_HOST;
-            String method = "order-get-order-list";
-            String appKey = mabangAppEntity.getAppKey();
-            String appSecret = mabangAppEntity.getSecretKey();
+        Integer lastTime = dto.getJobTaskDTO().getLastTime();
+        Integer nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (lastTime != 0 && nextTime != 0) {
+            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(date);
+            sd = sdf.format(new Date(nextTime * 1000L));
+            dto.getJobTaskDTO().setLastTime(nextTime);
+        } else {
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            Calendar cl = Calendar.getInstance();
+            cl.setTime(date);
+            cl.add(Calendar.DAY_OF_MONTH, -1);
+            st = sdf.format(cl.getTime());
+            sd = sdf.format(date);
+            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+        }
+        MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
-            //每次最多获取100条
-            Integer pageSize = 1000;
-            //当前页数
-            Integer pageIndex = 1;
-            //总页数
-            Integer pageCount = 1;
-            HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-            while (pageIndex <= pageCount) {
-                Map<String, Object> paramsMap = new HashMap();
-                paramsMap.put("updateTimeStart", st);
-                paramsMap.put("updateTimeEnd", sd);
-                paramsMap.put("page", pageIndex);
-                paramsMap.put("pageSize", pageSize);
+        //每次最多获取100条
+        Integer pageSize = 1000;
+        //当前页数
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
+        while (pageIndex <= pageCount) {
+            Map<String, Object> paramsMap = new HashMap();
+            paramsMap.put("updateTimeStart", st);
+            paramsMap.put("updateTimeEnd", sd);
+            paramsMap.put("page", pageIndex);
+            paramsMap.put("pageSize", pageSize);
 
-                // 封装传参数据
-                Map<String, Object> datas = new HashMap();
-                datas.put("api", method);
-                datas.put("appkey", appKey);
-                datas.put("version", 1);
-                datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
-                datas.put("data", paramsMap);
+            // 封装传参数据
+            Map<String, Object> datas = new HashMap();
+            datas.put("api", "order-get-order-list");
+            datas.put("appkey", mabangAppEntity.getAppKey());
+            datas.put("version", 1);
+            datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+            datas.put("data", paramsMap);
 
-                // 将传参转为Json格式
-                String jsonData = JSONObject.toJSONString(datas);
-                String authorization = HmacSHA256Utils.hmacSHA256(jsonData, appSecret);
+            // 将传参转为Json格式
+            String jsonData = JSONObject.toJSONString(datas);
+            String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
 
-                //设置请求头
-                Map<String,String> headerMap = new HashMap<>();
-                headerMap.put("Content-Type", "application/json");
-                headerMap.put("Authorization", authorization);
+            //设置请求头
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("Content-Type", "application/json");
+            headerMap.put("Authorization", authorization);
 
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(url, jsonData, null, headerMap, RequestMethod.POST);
-                    if (stringObjectMap.get("code").equals(200)) {
-                        JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
-                        List<OrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), OrderEntity.class);
-                        pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
-                        infoArrayList.addAll(dataList);
-                    } else {
-                        log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
-                        throw new RuntimeException(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
+            Map<String, Object> stringObjectMap = null;
+            try {
+                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
+                if (stringObjectMap.get("code").equals(200)) {
+                    JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
+                    List<OrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), OrderEntity.class);
+                    pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
+                    infoArrayList.addAll(dataList);
+                } else {
+                    log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
+                    throw new RuntimeException(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                if (errorCount < 3) {
+                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                } else {
                     DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
+                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
-                pageIndex++;
             }
-        } catch (Exception e) {
-            log.info(" ===== 获取马帮出库列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-            throw new RuntimeException(" ===== 获取马帮出库列表数据失败， 错误信息 = { " + e.getMessage() + " }");
+            pageIndex++;
         }
         return infoArrayList;
     }
 
     /**
      * 解析出库数据
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
-     * @return void
      **/
     @Transactional
     public void analysisDeliveryDetail(OrderEntity orderEntity) throws Exception {
@@ -327,9 +332,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
 
     /**
      * 解析出库详情商品数据
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
-     * @return void
      **/
     @Transactional
     public void analysisReturnOrderItem(List<OrderItemEntity> orderItem, String deliveryDetailId) {
@@ -393,9 +399,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
 
     /**
      * 校验出库详情商品信息在中台是否存在，存在就修改不存在则新增
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 21:25
-     * @return void
      **/
     public void checkOrderItem(List<DmpDeliveryDetailItemEntity> orderItem, String deliveryDetailId) {
         dmpDeliveryDetailItemService.deleteDeliveryDetailItemByDetailId(deliveryDetailId);

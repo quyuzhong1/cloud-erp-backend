@@ -21,10 +21,9 @@ public interface DmpSkuInfoService extends IService<DmpSkuInfoEntity> {
      * @Author Luo_WG
      * @Date 2022/11/14 21:28
      * @param skuNo 商品sku
-     * @param platformSign 平台标识
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
-    DmpSkuInfoEntity getSkuBySkuNo(String skuNo, String platformSign);
+    DmpSkuInfoEntity getSkuBySkuNo(String skuNo);
 
     /**
      * 根据平台订单id修改订单信息

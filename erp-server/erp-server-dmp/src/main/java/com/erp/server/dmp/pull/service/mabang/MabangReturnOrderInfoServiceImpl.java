@@ -24,6 +24,8 @@ import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -50,7 +52,10 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
-//{"data":{"createDateStart":"2022-10-28 00:20:00","page":1,"createDateEnd":"2022-10-28 01:00:00","rowsPerPage":100},"appkey":"200780","api":"order-get-return-order-list","version":1,"timestamp":"1671048860"}
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
@@ -120,9 +125,8 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
     public List<ReturnOrderEntity> pullDate(RequestDTO dto) {
         List<ReturnOrderEntity> infoArrayList = new ArrayList<>();
         try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
+            Integer lastTime = dto.getJobTaskDTO().getLastTime();
+            Integer nextTime = dto.getJobTaskDTO().getNextTime();
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
@@ -137,10 +141,6 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
                 dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
             }
             MabangAppEntity mabangAppEntity = new MabangAppEntity();
-            String url = UrlContant.MABANG_HOST;
-            String method = jobTask.getApiCode();
-            String appKey = mabangAppEntity.getAppKey();
-            String appSecret = mabangAppEntity.getSecretKey();
 
             //每次最多获取1000条
             Integer pageSize = 1000;
@@ -158,15 +158,15 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
                 // 封装传参数据
                 Map<String, Object> datas = new HashMap();
-                datas.put("api", method);
-                datas.put("appkey", appKey);
+                datas.put("api", dto.getJobTaskDTO().getApiCode());
+                datas.put("appkey", mabangAppEntity.getAppKey());
                 datas.put("version", 1);
                 datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
                 datas.put("data", paramsMap);
 
                 // 将传参转为Json格式
                 String jsonData = JSONObject.toJSONString(datas);
-                String authorization = HmacSHA256Utils.hmacSHA256(jsonData, appSecret);
+                String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
 
                 //设置请求头
                 Map<String,String> headerMap = new HashMap<>();
@@ -175,7 +175,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
                 Map<String, Object> stringObjectMap = null;
                 try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(url, jsonData, null, headerMap, RequestMethod.POST);
+                    stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
                     if (stringObjectMap.get("code").equals(200)) {
                         JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
                         List<ReturnOrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), ReturnOrderEntity.class);
@@ -188,13 +188,19 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
                 } catch (Exception e) {
                     e.printStackTrace();
                     log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
+                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                    if (errorCount < 3) {
+                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                    } else {
+                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                        dmpErrorLogEntity.setParams(jsonData);
+                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                        dmpErrorLogEntity.setCreateTime(new Date());
+                        dmpErrorLogService.add(dmpErrorLogEntity);
+                    }
                 }
                 pageIndex++;
             }

@@ -26,6 +26,8 @@ import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -56,6 +58,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.get");
@@ -78,6 +83,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
     /**
      * 拉取订单数据
+     *
      * @param dto 任务信息
      * @return
      */
@@ -89,6 +95,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {
             for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
+                if (!gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
+                    continue;
+                }
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyOrderEntity.getPlatformCode());
                 orderMongoDTO.setCode(gyyOrderEntity.getCode());
@@ -124,108 +133,107 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
     /**
      * 请求管易云订单接口
+     *
      * @param dto
      * @return
      */
     public List<GyyOrderEntity> pullDate(RequestDTO dto) {
         List<GyyOrderEntity> infoArrayList = new ArrayList<>();
-        try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
-            String st = "";
-            String sd = "";
-            if (lastTime != 0 && nextTime != 0) {
-                Date date = new Date(Long.valueOf(lastTime - (3L*60L)) * 1000L);
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(date);
-                sd = sdf.format(new Date(nextTime * 1000L));
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                Date date = new Date();
-                SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-                Calendar cl = Calendar.getInstance();
-                cl.setTime(date);
-                cl.add(Calendar.DAY_OF_MONTH, -1);
-                st = sdf.format(cl.getTime());
-                sd = sdf.format(date);
-                dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
-            }
-            GyyAppEntity gyyAppEntity = new GyyAppEntity();
-            String url = UrlContant.GYY_HOST;
-            String method = jobTask.getApiCode();
-            String appKey = gyyAppEntity.getAppKey();
-            String sessionKey = gyyAppEntity.getSessionKey();
-            String secretKey = gyyAppEntity.getSecretKey();
+        Integer lastTime = dto.getJobTaskDTO().getLastTime();
+        Integer nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (lastTime != 0 && nextTime != 0) {
+            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(date);
+            sd = sdf.format(new Date(nextTime * 1000L));
+            dto.getJobTaskDTO().setLastTime(nextTime);
+        } else {
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+            Calendar cl = Calendar.getInstance();
+            cl.setTime(date);
+            cl.add(Calendar.DAY_OF_MONTH, -1);
+            st = sdf.format(cl.getTime());
+            sd = sdf.format(date);
+            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+        }
+        GyyAppEntity gyyAppEntity = new GyyAppEntity();
 
-            //每次最多获取100条
-            Integer pageSize = 100;
-            //当前页数
-            Integer pageIndex = 1;
-            //总页数
-            Integer pageCount = 1;
-            //总条数
-            Integer totalCount = 0;
-            HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-            while (pageIndex <= pageCount) {
-                // 封装传参数据
-                Map<String, Object> datas = new HashMap();
-                datas.put("method", method);
-                datas.put("appkey", appKey);
-                datas.put("sessionkey", sessionKey);
-                datas.put("date_type", 3);
-                datas.put("start_date", st);
-                datas.put("end_date", sd);
-                datas.put("page_no", pageIndex);
-                datas.put("page_size", pageSize);
+        //每次最多获取100条
+        Integer pageSize = 100;
+        //当前页数
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        //总条数
+        Integer totalCount = 0;
+        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
+        while (pageIndex <= pageCount) {
+            // 封装传参数据
+            Map<String, Object> datas = new HashMap();
+            datas.put("method", dto.getJobTaskDTO().getApiCode());
+            datas.put("appkey", gyyAppEntity.getAppKey());
+            datas.put("sessionkey", gyyAppEntity.getSessionKey());
+            datas.put("date_type", 3);
+            datas.put("start_date", st);
+            datas.put("end_date", sd);
+            datas.put("page_no", pageIndex);
+            datas.put("page_size", pageSize);
 
-                String str = JSONObject.toJSONString(datas);
-                String sign = GyyUtils.sign(str, secretKey);
-                datas.put("sign", sign);
-                // 将传参转为Json格式
-                String jsonData = JSONObject.toJSONString(datas);
+            String str = JSONObject.toJSONString(datas);
+            String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
+            datas.put("sign", sign);
+            // 将传参转为Json格式
+            String jsonData = JSONObject.toJSONString(datas);
 
-                //设置请求头
-                Map<String,String> headerMap = new HashMap<>();
-                headerMap.put("Content-Type", "text/json");
+            //设置请求头
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("Content-Type", "text/json");
 
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(url, jsonData, null, headerMap, RequestMethod.POST);
-                    if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
-                        List<GyyOrderEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("orders")), GyyOrderEntity.class);
-                        totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
-                        pageCount = (totalCount + pageSize - 1) / pageSize;
-                        infoArrayList.addAll(dataList);
-                    } else {
-                        log.info(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
-                        throw new RuntimeException(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
+            Map<String, Object> stringObjectMap = null;
+            try {
+                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
+                if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
+                    List<GyyOrderEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("orders")), GyyOrderEntity.class);
+                    totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
+                    pageCount = (totalCount + pageSize - 1) / pageSize;
+                    infoArrayList.addAll(dataList);
+                } else {
+
+                    log.info(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
+                    throw new RuntimeException(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                if (errorCount < 3) {
+                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                } else {
                     DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
+                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
-                    break;
                 }
-                pageIndex++;
+                break;
             }
-        } catch (Exception e) {
-            log.info(" ===== 获取管易云订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
+            pageIndex++;
         }
         return infoArrayList;
     }
 
     /**
      * 解析订单数据
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
-     * @return void
      **/
     public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
@@ -414,9 +422,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
     /**
      * 解析订单商品数据
+     *
+     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
-     * @return void
      **/
     public void analysisOrderItem(GyyOrderEntity gyyOrderEntity, String orderId) {
         List<DetailsBean> orderItem = gyyOrderEntity.getDetails();

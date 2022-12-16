@@ -26,6 +26,8 @@ import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -55,6 +57,9 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpShopInfoService dmpShopInfoService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
         KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
@@ -122,9 +127,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
     public List<KingdeeOrderEntity> pullDate(RequestDTO dto) {
         List<KingdeeOrderEntity> infoArrayList = new ArrayList<>();
         try {
-            JobTaskDTO jobTask = dto.getJobTaskDTO();
-            Integer lastTime = jobTask.getLastTime();
-            Integer nextTime = jobTask.getNextTime();
+            Integer lastTime = dto.getJobTaskDTO().getLastTime();
+            Integer nextTime = dto.getJobTaskDTO().getNextTime();
             String st = "";
             String sd = "";
             if (lastTime != 0 && nextTime != 0) {
@@ -147,7 +151,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             //读取配置，初始化SDK
             K3CloudApi client = new K3CloudApi();
 
-            String formId = jobTask.getApiCode();
+            String formId = dto.getJobTaskDTO().getApiCode();
             LinkedList<String> queryfilters = new LinkedList<>();
             queryfilters.add(String.format("FModifyDate >= '%s'", st));
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
@@ -299,13 +303,19 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                 } catch (Exception e) {
                     e.printStackTrace();
                     log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(jobTask.getId());
-                    dmpErrorLogEntity.setParams("");
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
+                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
+                    if (errorCount < 3) {
+                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
+                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
+                    } else {
+                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                        dmpErrorLogEntity.setParams("");
+                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                        dmpErrorLogEntity.setCreateTime(new Date());
+                        dmpErrorLogService.add(dmpErrorLogEntity);
+                    }
                     dataSign = false;
                 }
                 pageIndex++;
