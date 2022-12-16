@@ -9,10 +9,7 @@ import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.server.bi.service.BiModuleService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -51,7 +48,7 @@ public class BiModuleController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody ModuleDTO dto) {
+    public ApiResult add(@ModelAttribute @Validated ModuleDTO dto) {
         Boolean flag = this.biModuleService.insert(dto);
         return flag == true ? success() : failure();
     }

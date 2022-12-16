@@ -29,6 +29,10 @@ public class BiSalesModuleController extends BaseController {
     private DmpOrderInfoService orderInfoService;
 
 
+    /**
+     * 销售额- 一级模块-月销售额趋势
+     * @return
+     */
     @GetMapping("/byMonth")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",

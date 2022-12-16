@@ -3,6 +3,7 @@ package com.erp.model.bi.dto;
 import com.erp.common.modules.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -56,9 +57,9 @@ public class ModuleDTO implements Serializable {
 
 
     /**
-     * 缩略图地址
+     * 图片地址
      */
-    private String imageUrl;
+    private MultipartFile imageFile;
 
 
     /**

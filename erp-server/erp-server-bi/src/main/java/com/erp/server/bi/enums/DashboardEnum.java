@@ -24,7 +24,13 @@ public enum DashboardEnum {
     }
 
 
+    public String getFlag() {
+        return flag;
+    }
 
+    public String getName() {
+        return name;
+    }
 
 
 }

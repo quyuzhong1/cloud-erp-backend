@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -23,8 +25,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -137,7 +141,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String name = biModule.getName();
         checkName(null, name);
         String sysModuleId = biModule.getSysModuleId();
-        module.setImageUrl(biModule.getImageUrl());
+        MultipartFile imageFile = biModule.getImageFile();
+        File file = FileUtil.multiToFile(imageFile);
+        String fileName = imageFile.getOriginalFilename().toLowerCase();
+        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+        if (StringUtils.isBlank(fileUrl)) {
+            throw new ServiceException(ApiError.ERROR_95018);
+        }
+        module.setImageUrl(fileUrl);
         module.setName(name);
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
@@ -173,7 +184,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            new ServiceException(ApiError.ERROR_97003);
+           throw  new ServiceException(ApiError.ERROR_97003);
         }
 
     }
@@ -192,7 +203,17 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         String name = biModule.getName();
         checkName(biModule.getId(), name);
-        module.setImageUrl(biModule.getImageUrl());
+
+        MultipartFile imageFile = biModule.getImageFile();
+        if(imageFile!=null){
+            File file = FileUtil.multiToFile(imageFile);
+            String fileName = imageFile.getOriginalFilename().toLowerCase();
+            String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
+            module.setImageUrl(fileUrl);
+        }
         module.setName(name);
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
