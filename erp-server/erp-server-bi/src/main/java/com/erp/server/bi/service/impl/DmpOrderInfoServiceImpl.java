@@ -51,8 +51,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
     @Resource
     private DmpShopInfoService dmpShopInfoService;
-
-
     @Resource
     private RedisService redisService;
 
@@ -124,10 +122,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
         query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
                 .le(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
-                // TODO 订单时间字段待确认
-//                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::get, dto.getStartTime())
-//                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
-                // TODO  高级筛选字段待完善 事业部 站点 品类 品牌 人员
+                // 订单时间字段
+                .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getStartTime())
+                .le(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
+                // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
                 .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_name", dto.getDepartment())
                 //站点
@@ -141,9 +139,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 平台
                 .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "platform_sign", dto.getPlatform())
                 // 店铺
-                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName())
-
-        ;
+                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName());
         return query;
     }
 

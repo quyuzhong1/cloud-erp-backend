@@ -54,7 +54,7 @@ public class BiTargetFinancialController extends BaseController {
      */
     @PostMapping("/sales/cost")
     public ApiResult countSalesCost(@RequestBody BiFilterDTO dto){
-        TargetSaleSumVO vo = biDataSourceCostService.sumMainRevenue(dto);
+        TargetSaleSumVO vo = biDataSourceCostService.sumSalesCost(dto);
         return success(vo);
     }
 
