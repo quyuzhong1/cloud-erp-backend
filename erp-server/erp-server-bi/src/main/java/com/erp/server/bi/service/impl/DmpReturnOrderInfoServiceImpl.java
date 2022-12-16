@@ -13,7 +13,7 @@ import com.erp.model.bi.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
-import com.erp.server.bi.enums.TargetSettleMethodEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderInfoService;
@@ -58,9 +58,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         QueryWrapper<DmpReturnOrderInfoEntity> query = new QueryWrapper<>();
 
         if(CollectionUtils.isEmpty(dto.getSku())){
-            if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 query.select("sum(order_fee*currency_rate) as order_fee");
-            }else if(TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+            }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
                 query.select("sum(order_fee*currency_rate) as order_fee");
             }else if (BiFilterDTO.validOriginalCurrency(dto)){
                 query.select("sum(order_fee*currency_rate) as order_fee");

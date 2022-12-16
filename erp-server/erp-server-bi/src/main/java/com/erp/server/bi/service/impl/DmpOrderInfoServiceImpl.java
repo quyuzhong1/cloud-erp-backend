@@ -17,8 +17,8 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.server.bi.enums.TargetSettleMethodEnum;
-import com.erp.server.bi.enums.TargetTimeTypeEnum;
+import com.erp.server.bi.enums.SettleMethodEnum;
+import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -95,9 +95,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
-            if (TargetSettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total) as item_total");
-            } else if (TargetSettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
+            } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
             } else if (BiFilterDTO.validOriginalCurrency(dto)) {
                 query.select("sum(item_total*currency_rate) as item_total");
@@ -122,8 +122,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
-        query.ge(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
-                .le(dto.getTimeType().equals(TargetTimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
+        query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
+                .le(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
                 // TODO 订单时间字段待确认
 //                .ge(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::get, dto.getStartTime())
 //                .le(dto.getTimeType().equals(IndicatorTimeTypeEnum.DELIVERY_TIME.getType()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())

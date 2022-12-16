@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import ch.qos.logback.classic.sift.ContextBasedDiscriminator;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,14 +9,11 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
-import com.erp.server.bi.service.BiDictService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -79,15 +76,18 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     private List<String> getCostIds(BiFilterDTO dto, List<String> dictValues) {
-        // 查询对应最新月份数据
-//        if(null == dto.getMonth()){
-//            dto.setMonth(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()));
-//        }
+        // 查询最新月份数据
+        QueryWrapper<BiDataSourceCostEntity> queryWrapper = new QueryWrapper();
+        queryWrapper.select("max(month) as month");
+        BiDataSourceCostEntity maxMonthEntity = baseMapper.selectOne(queryWrapper);
+        if (Objects.isNull(maxMonthEntity)) {
+            return new ArrayList<>();
+        }
         List<BiDataSourceCostEntity> dataSourceCostList = lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(dto.getSite()), BiDataSourceCostEntity::getSite, dto.getSite())
                 .eq(CollectionUtils.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .eq(CollectionUtils.isNotEmpty(dto.getDepartment()), BiDataSourceCostEntity::getDeptName, dto.getDepartment())
-                .eq(BiDataSourceCostEntity::getMonth, LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()))
+                .eq(BiDataSourceCostEntity::getMonth, maxMonthEntity.getMonth())
                 .list();
         if (CollectionUtils.isEmpty(dataSourceCostList)) {
             return new ArrayList<>();

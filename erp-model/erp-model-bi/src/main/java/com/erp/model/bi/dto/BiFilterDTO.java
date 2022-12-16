@@ -25,6 +25,7 @@ public class BiFilterDTO implements Serializable {
 
     /**
      * 0 -订单时间 1-发货时间
+     * 对应枚举 TimeTypeEnum
      */
     @NotNull(message = "时间类型不能为空")
     private Integer timeType;
@@ -43,6 +44,7 @@ public class BiFilterDTO implements Serializable {
 
     /**
      * 0 CNY实时  1 CNY结算  2原币种
+     * 对应枚举 SettleMethodEnum
      */
     @NotBlank(message = "结算方式不能为空")
     private Integer settleMethod;
