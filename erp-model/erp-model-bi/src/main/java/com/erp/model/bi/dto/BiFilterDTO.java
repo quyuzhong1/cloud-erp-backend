@@ -1,6 +1,7 @@
 package com.erp.model.bi.dto;
 
 import com.erp.common.dto.base.PermissionsDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -34,12 +35,14 @@ public class BiFilterDTO extends PermissionsDTO {
      * 开始日期
      */
     @NotNull(message = "开始时间不能为空")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
     /**
      * 结束日期
      */
     @NotNull(message = "结束时间不能为空")
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     /**
@@ -99,6 +102,9 @@ public class BiFilterDTO extends PermissionsDTO {
         return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
     }
 
+    /**
+     * 是否为新品 bool
+     */
     private Boolean hasNewSign;
 
 

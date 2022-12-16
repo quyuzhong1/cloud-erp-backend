@@ -26,19 +26,22 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     public BigDecimal sumSales(List<String> orderIds, BiFilterDTO dto) {
         QueryWrapper query = new QueryWrapper();
-        // TODO 添加汇率
 
         if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-            query.select("SUM(sell_price*quantity) as sell_price");
+            if (BiFilterDTO.validOriginalCurrency(dto)){
+                query.select("SUM(sell_price*quantity) as sell_price");
+            }else {
+                return BigDecimal.ZERO;
+            }
         }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
-            query.select("SUM(sell_price*quantity) as sell_price");
-        }else if (BiFilterDTO.validOriginalCurrency(dto)){
-            query.select("SUM(sell_price*quantity) as sell_price");
+            query.select("SUM(sell_price*quantity*cny_settle_rate) as sell_price");
+        }else {
+            query.select("SUM(sell_price*quantity*currency_rate) as sell_price");
         }
 
         query.in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
             .in(CollectionUtils.isNotEmpty(dto.getSku()), "sku_no", dto.getSku())
-            .eq(ObjectUtils.isNotEmpty(dto.getHasNewSign()), "new_sign", dto.getHasNewSign() ? 1 : 0);
+            .eq(null != dto.getHasNewSign(), "new_sign", dto.getHasNewSign());
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
         return dmpOrderItemEntity.getSellPrice();
     }
