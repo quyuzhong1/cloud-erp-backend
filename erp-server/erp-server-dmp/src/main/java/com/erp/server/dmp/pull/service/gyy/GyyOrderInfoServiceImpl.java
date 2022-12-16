@@ -98,6 +98,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                 if (!gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
                     continue;
                 }
+                if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
+                    continue;
+                }
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyOrderEntity.getPlatformCode());
                 orderMongoDTO.setCode(gyyOrderEntity.getCode());
