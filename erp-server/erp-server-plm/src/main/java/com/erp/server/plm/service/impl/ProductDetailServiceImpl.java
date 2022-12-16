@@ -1311,7 +1311,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95046);
         }
 
-        //SKU字段关联任务尚未完成，不可申请变更
+        //SKU字段关联任务尚未完成
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = projectTaskRefSkuService.listBySkuId(dto.getId());
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
             List<String> taskIds = projectTaskRefSkuList.stream().filter(obj -> IsConstant.YES.equals(obj.getIsFinishTask())).distinct().map(ProjectTaskRefSkuEntity::getTaskId).collect(Collectors.toList());
@@ -1320,7 +1320,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (CollectionUtils.isNotEmpty(taskList)) {
                     long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                     if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_95085);
+                        throw new ServiceException(ApiError.ERROR_95083);
                     }
                 }
 
