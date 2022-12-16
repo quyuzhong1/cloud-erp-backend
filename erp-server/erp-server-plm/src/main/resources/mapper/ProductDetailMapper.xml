@@ -158,6 +158,7 @@
         pd.sku_no,
         pd.product_state,
         pd.name,
+        pi.name as spuName,
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,

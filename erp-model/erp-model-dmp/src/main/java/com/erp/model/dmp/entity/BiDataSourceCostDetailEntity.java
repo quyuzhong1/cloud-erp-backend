@@ -7,7 +7,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -27,6 +27,7 @@ public class BiDataSourceCostDetailEntity implements Serializable {
      */
     @TableField("id")
     private String id;
+
     /**
      * 创建人id
      */
@@ -43,7 +44,7 @@ public class BiDataSourceCostDetailEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 修改人名称
@@ -61,7 +62,7 @@ public class BiDataSourceCostDetailEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 成本类型

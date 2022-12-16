@@ -128,7 +128,11 @@ public class DmpShopInfoEntity implements Serializable {
     @TableField(value = "store_sign")
     private String storeSign;
 
-
+    /**
+     * 启用日期
+     */
+    @TableField(value = "enable_time" , fill = FieldFill.INSERT)
+    private LocalDateTime enableTime;
 
 
     @TableField(exist = false)

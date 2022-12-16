@@ -36,10 +36,13 @@ public class ProductNoDetailDTO {
     private String productState;
 
     /**
-     * 产品名称
+     * SKU名称
      */
     private String name;
-
+    /**
+     * SPU名称
+     */
+    private String spuName;
     /**
      * 产品经理
      */

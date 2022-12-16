@@ -1,10 +1,12 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -26,52 +28,76 @@ public class BiDataSourceCostEntity implements Serializable {
     private String id;
 
     /**
-     * 创建时间
+     * 创建人id
      */
-    @TableField("create_time")
-    private String createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField("update_time")
-    private String updateTime;
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    private String createUserId;
 
     /**
      * 创建人名称
      */
-    @TableField("create_user_name")
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
 
     /**
-     * 创建人id
+     * 创建时间
      */
-    @TableField("create_user_id")
-    private String createUserId;
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
 
     /**
      * 修改人名称
      */
-    @TableField("update_user_name")
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
 
     /**
      * 修改人id
      */
-    @TableField("update_user_id")
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
 
     /**
      * 月份
      */
     @TableField("month")
-    private String month;
+    private LocalDateTime month;
+
+    /**
+     * 部门id
+     */
+    @TableField(value = "dept_id")
+    private String deptId;
+
+    /**
+     * 部门名称
+     */
+    @TableField(value = "dept_name")
+    private String deptName;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shop_id;
 
     /**
      * 店铺名称
      */
     @TableField("shop_name")
     private String shopName;
+
+    /**
+     * 平台名称
+     */
+    @TableField("platform_name")
+    private String platformName;
 
     /**
      * 站点

@@ -29,7 +29,7 @@ public class PullKindeeJob {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     // 拉取金蝶数据任务
-    @Scheduled(cron = "*/5 * * * * ?")
+    //@Scheduled(cron = "*/5 * * * * ?")
     public void execute() {
         while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {
             // 获取请求任务

@@ -25,6 +25,7 @@ public class StatisticalDataVO implements Serializable {
      *  bar代表柱状图，line代表线状图，pie代表圆形图
      */
     private String chartType;
+
     private ChartVO data;         //存放表头和表值
     /**
      * //总数量

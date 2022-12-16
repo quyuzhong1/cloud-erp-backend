@@ -17,6 +17,8 @@ import java.util.List;
 public class ChartVO<T> implements Serializable {
 
     private List<String> xAxis;     //表头
+
+    //有多少个
     private List<SeriesVO<T>> series; //数据
 
 }

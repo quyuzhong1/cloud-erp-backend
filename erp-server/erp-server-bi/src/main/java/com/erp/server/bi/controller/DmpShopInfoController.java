@@ -4,19 +4,16 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpShopInfoChangeDTO;
-import com.erp.model.bi.dto.DmpShopInfoDeptChangeDTO;
-import com.erp.model.bi.dto.DmpShopInfoSearchDTO;
-import com.erp.model.bi.dto.DmpShopInfoShowDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.server.bi.service.DmpShopChangeLogService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 数据源管理
@@ -31,6 +28,9 @@ public class DmpShopInfoController extends BaseController {
 
     @Resource
     private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private DmpShopChangeLogService dmpShopChangeLogService;
 
    /**
     * 店铺数据-分页查询
@@ -71,6 +71,19 @@ public class DmpShopInfoController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 查询单条店铺
+     * @author Will
+     * @date: 2022/12/15 16:36
+     * @param id
+     * @return ApiResult<DmpShopInfoDTO>
+     */
+    @RequestMapping("/getDmpShopInfoById")
+    public ApiResult<DmpShopInfoDTO>  getDmpShopInfoById(@RequestParam("id") String id) {
+        DmpShopInfoDTO dto = dmpShopInfoService.getDmpShopInfoById(id);
+        return success(dto);
+    }
+    
 
     /**
      * 店铺数据-负责人变更
@@ -98,4 +111,30 @@ public class DmpShopInfoController extends BaseController {
         Boolean flag = this.dmpShopInfoService.changeDept(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 店铺数据-店铺变更记录
+     * @author Will
+     * @date: 2022/12/15 16:37
+     * @param shopId
+     * @return ApiResult<DmpShopChangeLogDTO>
+     */
+    @RequestMapping("/listDmpShopChangeLog")
+    public ApiResult<List<DmpShopChangeLogDTO>>  listByShopId(@RequestParam("shopId") String shopId) {
+        List<DmpShopChangeLogDTO> dto = dmpShopChangeLogService.listByShopId(shopId);
+        return success(dto);
+    }
+
+    /**
+     *  店铺数据-导出
+     * @author Will
+     * @date: 2022/12/15 16:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/exportExcel")
+    public void exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
+        dmpShopInfoService.exportExcel(dto, response);
+    }
+    
 }

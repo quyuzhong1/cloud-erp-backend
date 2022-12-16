@@ -3,9 +3,12 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.vo.StatisticalDataVO;
-import org.springframework.web.bind.annotation.PostMapping;
+import com.erp.server.bi.service.DmpOrderInfoService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 销售额模块Api 接口
@@ -20,9 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class BiSalesModuleController extends BaseController {
 
 
-    @PostMapping("/getMonth")
+    @Resource
+    private DmpOrderInfoService orderInfoService;
+
+    @GetMapping("/byMonth")
     public ApiResult<StatisticalDataVO> getMonth() {
-       return success();
+        StatisticalDataVO statistical = orderInfoService.getMonthSales();
+        return success(statistical);
     }
 
 

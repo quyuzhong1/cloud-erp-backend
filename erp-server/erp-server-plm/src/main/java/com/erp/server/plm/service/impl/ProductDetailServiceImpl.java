@@ -468,11 +468,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
-        //SPU产品名称
-        if (StringUtils.isBlank(productSpuBaseInfoDTO.getName())) {
-            productSpuBaseInfoDTO.setName(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getName());
-        }
-
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
             //根据id查询字典表中的产品等级
@@ -507,7 +502,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
             if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                productSkuBaseInfoDTO.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+                //重启审核流程
+                productDetailStartProcess(oldEntity);
+                productSkuBaseInfoDTO.setStatus(oldEntity.getStatus());
+                productSkuBaseInfoDTO.setProcessId(oldEntity.getProcessId());
+                productSkuBaseInfoDTO.setBusinessProcessId(oldEntity.getBusinessProcessId());
             }
             addProductSkuBaseInfoLog(productSkuBaseInfoDTO,oldEntity,productSkuBaseInfoDTO.getId(),id);
         } else {
@@ -642,7 +641,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailLists.forEach(obj ->{
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
                 if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                    obj.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+                    //重启审核流程
+                    productDetailStartProcess(oldEntity);
+                    obj.setStatus(oldEntity.getStatus());
+                    obj.setProcessId(oldEntity.getProcessId());
+                    obj.setBusinessProcessId(oldEntity.getBusinessProcessId());
                 }
                 //sku操作日志
                 addProductDetailLog(obj,oldEntity,obj.getId(),productInfoDTO.getId());

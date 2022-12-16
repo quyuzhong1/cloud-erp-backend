@@ -7,9 +7,11 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
+import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysRoleUserService;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
@@ -38,6 +40,10 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysUserThirdService sysUserThirdService;
+
+    @Autowired
+    private SysDepartmentService sysDepartmentService;
+
 
     @PostMapping("/accountLogin")
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
@@ -185,5 +191,17 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getUserDeptList")
     public List<SysUserDeptDTO> getUserDeptList() {
         return sysUserInfoService.getUserDeptList();
+    }
+
+    /**
+     * @description: 根据部门id查询部门
+     * @author Will
+     * @date: 2022/12/15 16:22
+     * @param deptId
+     * @return SysDepartmentDTO
+     */
+    @PostMapping("/getUserDeptById")
+    public SysDepartmentDTO getUserDeptById(@RequestBody String deptId) {
+        return sysDepartmentService.getDepartmentById(deptId);
     }
 }
