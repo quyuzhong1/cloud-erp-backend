@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import org.apache.commons.collections.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 @EqualsAndHashCode
 @ToString
 @NoArgsConstructor
-public class BiFilterDTO implements Serializable {
+public class BiFilterDTO extends PermissionsDTO {
 
 
     /**

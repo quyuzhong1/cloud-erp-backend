@@ -12,4 +12,8 @@
 	     FROM dmp_order_info WHERE order_state = 4
 	     GROUP BY MONTH ORDER BY  MONTH ASC
     </select>
+
+    <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">
+
+    </select>
 </mapper>

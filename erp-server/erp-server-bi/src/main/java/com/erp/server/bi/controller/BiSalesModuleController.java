@@ -4,14 +4,15 @@ import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.DataAttributeEnum;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.SalesOrderService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 销售额模块Api 接口
@@ -32,6 +33,7 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 销售额- 一级模块-月销售额趋势
+     *
      * @return
      */
     @GetMapping("/byMonth")
@@ -48,6 +50,7 @@ public class BiSalesModuleController extends BaseController {
 
     /**
      * 销售额- 一级模块-SKU销售额
+     *
      * @return
      */
     @PostMapping("/bySku")
@@ -56,9 +59,9 @@ public class BiSalesModuleController extends BaseController {
             menuCode = "bi:sales:bySku",
             tableAlias = "dmp_order_info"
     )
-    public ApiResult<StatisticalDataVO> getBySku() {
-        StatisticalDataVO statistical = salesOrderService.getMonthSales();
-        return success(statistical);
+    public ApiResult<List<SalesVO>> getBySku(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesVO> resultList = salesOrderService.getBySku(dto);
+        return success(resultList);
     }
 
 

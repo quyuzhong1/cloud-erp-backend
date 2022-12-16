@@ -1,7 +1,9 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.ChartVO;
+import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.bi.vo.SeriesVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -15,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *  销售维度 模块服务
+ * 销售维度 模块服务
+ *
  * @Classname
  * @Description TODO
  * @Date 2022-12-16 11:09
@@ -23,7 +26,7 @@ import java.util.Map;
  */
 @Service
 public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, DmpOrderInfoEntity>
- implements SalesOrderService {
+        implements SalesOrderService {
     @Override
     public StatisticalDataVO getMonthSales() {
 
@@ -49,5 +52,19 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         chart.setSeries(seriesList);
         statistical.setData(chart);
         return statistical;
+    }
+
+
+    /**
+     * 一级模块 sku 销售额
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesVO> getBySku(BiFilterDTO dto) {
+
+        List<SalesVO> resultList = baseMapper.getBySku(dto);
+        return null;
     }
 }
