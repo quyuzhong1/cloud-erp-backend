@@ -94,13 +94,17 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
             if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-                query.select("sum(item_total) as item_total");
+                if (BiFilterDTO.validOriginalCurrency(dto)){
+                    query.select("sum(item_total) as item_total");
+                }else {
+                    return new TargetSaleSumVO(amount);
+                }
+
             } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
-            } else if (BiFilterDTO.validOriginalCurrency(dto)) {
+            } else  {
                 query.select("sum(item_total*currency_rate) as item_total");
             }
-
             DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
             amount = dmpOrderInfoEntity.getItemTotal();
         } else {
@@ -115,7 +119,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             // 根据订单号获取订单详情，筛选sku
             amount = dmpOrderItemService.sumSales(orderIds, dto);
         }
-        return new TargetSaleSumVO(amount);
+        return new TargetSaleSumVO(amount.setScale(4, BigDecimal.ROUND_DOWN));
     }
 
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
