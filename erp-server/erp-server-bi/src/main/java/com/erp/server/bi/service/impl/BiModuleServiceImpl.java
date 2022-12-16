@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
@@ -128,6 +129,19 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         return resultList;
     }
 
+    @Override
+    public ModuleDTO details(String moduleId) {
+        BiModuleEntity module = this.getById(moduleId);
+        if (Objects.isNull(module)) {
+            throw new ServiceException(ApiError.ERROR_97004);
+        }
+        ModuleDTO result = new ModuleDTO();
+        BeanMapper.copy(module, result);
+        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
+        result.setPermissionUserIdList(permissionUserIdList);
+        return result;
+    }
+
     /**
      * 新增数据
      *
@@ -184,7 +198,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-           throw  new ServiceException(ApiError.ERROR_97003);
+            throw new ServiceException(ApiError.ERROR_97003);
         }
 
     }
@@ -205,7 +219,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         checkName(biModule.getId(), name);
 
         MultipartFile imageFile = biModule.getImageFile();
-        if(imageFile!=null){
+        if (imageFile != null) {
             File file = FileUtil.multiToFile(imageFile);
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
