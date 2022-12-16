@@ -8,7 +8,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
-import com.erp.model.bi.dto.TargetFinancialDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
@@ -49,7 +49,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
-    public TargetSaleSumVO sumSalesProfit(TargetFinancialDTO dto) {
+    public TargetSaleSumVO sumSalesProfit(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
         // 获取成本详情ids
@@ -78,7 +78,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         return new TargetSaleSumVO(resultAmount);
     }
 
-    private List<String> getCostIds(TargetFinancialDTO dto, List<String> dictValues) {
+    private List<String> getCostIds(BiFilterDTO dto, List<String> dictValues) {
         // 查询对应最新月份数据
         if(null == dto.getMonth()){
             dto.setMonth(LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()));
@@ -97,12 +97,12 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
-    public TargetSaleSumVO sumSalesRatio(TargetFinancialDTO dto) {
+    public TargetSaleSumVO sumSalesRatio(BiFilterDTO dto) {
         return null;
     }
 
     @Override
-    public TargetSaleSumVO sumMainRevenue(TargetFinancialDTO dto) {
+    public TargetSaleSumVO sumMainRevenue(BiFilterDTO dto) {
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
         // 获取成本详情ids

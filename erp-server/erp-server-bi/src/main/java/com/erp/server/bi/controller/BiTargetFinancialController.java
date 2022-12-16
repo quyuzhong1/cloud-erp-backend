@@ -3,7 +3,7 @@ package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.model.bi.dto.TargetFinancialDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.server.bi.service.BiDataSourceCostService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +32,7 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/profit")
-    public ApiResult countSales(@RequestBody TargetFinancialDTO dto){
+    public ApiResult countSales(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesProfit(dto);
         return success(vo);
     }
@@ -43,7 +43,7 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/main/revenue")
-    public ApiResult countMainRevenue(@RequestBody TargetFinancialDTO dto){
+    public ApiResult countMainRevenue(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumMainRevenue(dto);
         return success(vo);
     }
@@ -53,7 +53,7 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/cost")
-    public ApiResult countSalesCost(@RequestBody TargetFinancialDTO dto){
+    public ApiResult countSalesCost(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumMainRevenue(dto);
         return success(vo);
     }
@@ -64,7 +64,7 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/ratio")
-    public ApiResult count(@RequestBody TargetFinancialDTO dto){
+    public ApiResult count(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesRatio(dto);
         return success(vo);
     }

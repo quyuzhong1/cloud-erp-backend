@@ -88,6 +88,11 @@ public class BiFilterDTO implements Serializable {
      */
     private List<Long> userId;
 
+    /**
+     *是否可以支持源币种
+     * @param dto
+     * @return
+     */
     public static Boolean validOriginalCurrency(BiFilterDTO dto){
         return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
     }

@@ -141,7 +141,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 平台
                 .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "platform_sign", dto.getPlatform())
                 // 店铺
-                .in(CollectionUtils.isNotEmpty(dto.getShopNo()), "shop_no", dto.getShopNo())
+                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName())
 
         ;
         return query;
@@ -274,7 +274,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         // 国内销售额
-        dto.setShopNo(shopList.stream().map(DmpShopInfoEntity::getPlarformShopNo).collect(Collectors.toList()));
+        dto.setShopName(shopList.stream().map(DmpShopInfoEntity::getName).collect(Collectors.toList()));
         TargetSaleSumVO saleSumVO = sumSales(dto);
         BigDecimal domesticAmount = saleSumVO.getValue();
         if (BigDecimal.ZERO.compareTo(salesAmount) >= 0) {

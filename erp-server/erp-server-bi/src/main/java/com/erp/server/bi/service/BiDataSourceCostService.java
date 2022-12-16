@@ -5,7 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
-import com.erp.model.bi.dto.TargetFinancialDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
 
@@ -31,19 +31,19 @@ public interface BiDataSourceCostService
      * @param dto
      * @return
      */
-    TargetSaleSumVO sumSalesProfit(TargetFinancialDTO dto);
+    TargetSaleSumVO sumSalesProfit(BiFilterDTO dto);
 
     /**
      * 统计毛利率
      * @param dto
      * @return
      */
-    TargetSaleSumVO sumSalesRatio(TargetFinancialDTO dto);
+    TargetSaleSumVO sumSalesRatio(BiFilterDTO dto);
 
     /**
      * 统计主营收入
      * @param dto
      * @return
      */
-    TargetSaleSumVO sumMainRevenue(TargetFinancialDTO dto);
+    TargetSaleSumVO sumMainRevenue(BiFilterDTO dto);
 }
