@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @Classname TaskExcelDTO
@@ -61,7 +60,11 @@ public class TaskExcelDTO implements Serializable {
     private String expectedDay;
 
     @ColumnWidth(10)
-    @ExcelProperty(value = "任务状态", index = 9)
+    @ExcelProperty(value = "实际工期", index = 9)
+    private String realityDay;
+
+    @ColumnWidth(10)
+    @ExcelProperty(value = "任务状态", index = 10)
     private String taskState;
 
 
