@@ -27,7 +27,15 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @date: 2022/12/15 10:37
      * @param dto
      * @param response
-
      */
     void exportExcel(DmpRefundInfoSearchDTO dto, HttpServletResponse response);
+
+    /**
+     * @description: 根据退款单号查询
+     * @author Will
+     * @date: 2022/12/16 11:35
+     * @param refundId
+     * @return DmpRefundInfoEntity
+     */
+    DmpRefundInfoEntity getByRefundId(String refundId);
 }

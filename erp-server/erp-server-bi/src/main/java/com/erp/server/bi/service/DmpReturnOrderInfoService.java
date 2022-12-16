@@ -41,4 +41,12 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @param response
      */
     void exportExcel(DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response);
+    /**
+     * @description: 根据退货单号查询
+     * @author Will
+     * @date: 2022/12/16 12:39
+     * @param returnOrderId
+     * @return DmpReturnOrderInfoEntity
+     */
+    DmpReturnOrderInfoEntity getByReturnOrderId(String returnOrderId);
 }

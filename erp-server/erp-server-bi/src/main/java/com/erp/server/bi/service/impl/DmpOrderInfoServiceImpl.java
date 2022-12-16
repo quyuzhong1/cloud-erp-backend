@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,7 +15,8 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.vo.TargetSaleCountVO;
+import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.enums.SettleMethodEnum;
@@ -27,10 +29,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -309,6 +309,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return sb.append(lastNo).toString();
     }
 
+
+
+    @Override
+    public DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId) {
+        LambdaQueryWrapper<DmpOrderInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId,platformOrderId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 
 
 }

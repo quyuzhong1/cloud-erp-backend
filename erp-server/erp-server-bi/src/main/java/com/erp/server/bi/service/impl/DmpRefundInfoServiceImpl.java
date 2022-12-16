@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -51,6 +52,14 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         String fileName = dmpOrderInfoService.getFileName("退款数据导出");
         ExcelUtil.export(fileName, "退款数据导出", excelList, DmpRefundInfoExcelDTO.class, response);
         return;
+    }
+
+    @Override
+    public DmpRefundInfoEntity getByRefundId(String refundId) {
+        LambdaQueryWrapper<DmpRefundInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpRefundInfoEntity::getRefundId,refundId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 
 

@@ -47,7 +47,7 @@ public class DmpOrderInfoDTO {
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 订单销售额[RMB-实时]
+     * 订单销售额[RMB-结算]
      */
     private BigDecimal cnySettleAmount;
 
