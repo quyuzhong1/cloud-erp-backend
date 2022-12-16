@@ -825,6 +825,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
+            //添加审核流程
+            this.productDetailStartProcess(productDetailEntity);
             list.add(productDetailEntity);
         }
 
