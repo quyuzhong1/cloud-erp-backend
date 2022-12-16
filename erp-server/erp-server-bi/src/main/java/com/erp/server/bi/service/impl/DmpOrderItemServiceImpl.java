@@ -38,12 +38,15 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         }else {
             query.select("SUM(sell_price*quantity*currency_rate) as sell_price");
         }
-
+        Integer flag = null;
+        if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
+            flag = 1;
+        }
         query.in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
             .in(CollectionUtils.isNotEmpty(dto.getSku()), "sku_no", dto.getSku())
-            .eq(null != dto.getHasNewSign(), "new_sign", dto.getHasNewSign());
+            .eq(null != flag, "new_sign", flag);
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
-        return dmpOrderItemEntity.getSellPrice();
+        return dmpOrderItemEntity == null ? BigDecimal.ZERO : dmpOrderItemEntity.getSellPrice();
     }
 
     @Override
@@ -53,7 +56,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
-        return dmpOrderItemEntity.getQuantity();
+        return dmpOrderItemEntity == null ? 0 :dmpOrderItemEntity.getQuantity();
     }
 
     @Override
