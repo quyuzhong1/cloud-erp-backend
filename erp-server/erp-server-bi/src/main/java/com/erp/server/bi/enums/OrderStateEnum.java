@@ -32,7 +32,7 @@ public enum OrderStateEnum {
 
         public static String getName(Integer code) {
             for (OrderStateEnum state : OrderStateEnum.values()) {
-                if (code.equals(state.getCode())) {
+                if (state.getCode().equals(code)) {
                     return state.getName();
                 }
             }
