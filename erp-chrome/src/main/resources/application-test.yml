@@ -6,6 +6,42 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: admin@viji
+    # 使用druid数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 10
+      min-idle: 10
+      maxActive: 200
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+      connectionErrorRetryAttempts: 3
+      breakAfterAcquireFailure: true
+      timeBetweenConnectErrorMillis: 300000
+      asyncInit: true
+      remove-abandoned: true
+      remove-abandoned-timeout: 1800
+      transaction-query-timeout: 6000
+      filters: stat,wall,log4j2
+      connectionProperties: druid.stat.mergeSql\=true;druid.stat.slowSqlMillis\=5000
+      web-stat-filter:
+        enabled: true
+        url-pattern: "/*"
+        exclusions: "*.js,*.gif,*.jpg,*.bmp,*.png,*.css,*.ico,/druid/*"
+      stat-view-servlet:
+        url-pattern: "/druid/*"
+        allow:
+        deny:
+        enabled: true
+        reset-enable: false
+        login-username: admin
+        login-password: admin
   servlet:
     multipart:
       enabled: true

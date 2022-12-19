@@ -65,12 +65,11 @@ public class BiDataSourceCostController extends BaseController {
      * @author Will
      * @date: 2022/12/16 11:10
      * @param excelFile
-     * @param importType
      * @param response
      */
     @PostMapping("/importBiDataSourceCostFile")
-    public void importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-
+    public void importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        biDataSourceCostService.importExcel(excelFile, response);
     }
 
 

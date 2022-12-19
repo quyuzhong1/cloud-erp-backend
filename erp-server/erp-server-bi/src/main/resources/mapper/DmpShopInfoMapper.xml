@@ -7,6 +7,7 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.DmpShopInfoShowDTO">
         select
+           dsi.id,
            dsi.name,
            dsi.platform_name,
            dsi.site,

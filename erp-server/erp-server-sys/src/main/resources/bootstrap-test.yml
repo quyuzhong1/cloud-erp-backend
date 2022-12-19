@@ -7,7 +7,7 @@ spring:
       config:
         server-addr: 172.16.100.12
         namespace: test
-        shared-configs: common.yml,db-sys.yml
+        shared-configs: common.yml,db-sys.yml,druid-common.yml
 
 
 
