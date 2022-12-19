@@ -108,6 +108,7 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     public List<BiDictEntity> listEntityByType(String type) {
         LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDictEntity::getType,type);
+        queryWrapper.orderByAsc(BiDictEntity::getId);
         return  this.list(queryWrapper);
     }
 

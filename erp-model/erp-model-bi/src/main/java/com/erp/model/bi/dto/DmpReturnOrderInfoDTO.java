@@ -64,7 +64,7 @@ public class DmpReturnOrderInfoDTO {
     /**
      * 退货数量
      */
-    private BigDecimal refundNum;
+    private BigDecimal returnNum;
 
     /**
      * 状态：1待处理 2已退款 3已重发 4已完成 5已作废
@@ -72,13 +72,18 @@ public class DmpReturnOrderInfoDTO {
     private Integer status;
 
     /**
+     * 状态名称
+     */
+    private String statusName;
+
+    /**
      * 退货时间
      */
     private Date returnCreateTime;
 
     /**
-     * 订单状态
+     * 原订单时间
      */
-    private Integer platformOrderStatus;
+    private Date orderTime;
 
 }

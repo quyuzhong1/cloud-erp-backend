@@ -21,6 +21,7 @@ import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
@@ -72,7 +73,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
             throw new ServiceException(ApiError.Default);
         }
-        dmpOrderInfoEntity.setOrderState(dto.getState());
+        dmpOrderInfoEntity.setCorrectionStatus(dto.getState());
         return this.updateById(dmpOrderInfoEntity);
     }
 
@@ -339,6 +340,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 itemResultList.stream().forEach(e -> e.setSellAmount(MathUtil.multiply(e.getSellPrice(),e.getQuantity())));
                 obj.setChildren(itemResultList);
             }
+            obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState()));
+            obj.setCorrectionStatusName(OrderStateEnum.getName(obj.getCorrectionStatus()));
         });
     }
 }

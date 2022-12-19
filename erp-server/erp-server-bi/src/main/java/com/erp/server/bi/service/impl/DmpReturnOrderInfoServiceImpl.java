@@ -14,6 +14,7 @@ import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.server.bi.enums.ReturnOrderStatusEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -48,6 +49,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpReturnOrderInfoSearchDTO params = dto.getParams();
         IPage<DmpReturnOrderInfoDTO> pageData = baseMapper.paging(query, params);
+        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(obj -> obj.setStatusName(ReturnOrderStatusEnum.getName(obj.getStatus())));
+        }
         return new PagingVO(pageData);
     }
 

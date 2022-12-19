@@ -4,17 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiDataSourceCostMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
@@ -204,13 +203,23 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> resultList = renewBiDataSourceCost(list);
+        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list);
+        if (CollectionUtils.isEmpty(costList)) {
+            return;
+        }
         List<String> heads = new ArrayList<>();		//表头信息
-
-        //导出销售数据
-        List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
-        String fileName = dmpOrderInfoService.getFileName("退货数据导出");
-        ExcelUtil.export(fileName, "退货数据导出", excelList, DmpReturnOrderInfoExcelDTO.class, response);
+        String head = "成本数据表";
+        String fileName = dmpOrderInfoService.getFileName("退货数据导出")+ ".xlsx";
+        BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
+        List<String> enumList = Arrays.stream(values).map(BiDataSourceCostEnum::getName).collect(Collectors.toList());
+        heads.addAll(enumList);
+        //查询成本字典数据
+        List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
+            heads.addAll(nameList);
+        }
+        ExcelUtil.easyUtil(heads,head,list,fileName);
         return;
     }
 
@@ -233,6 +242,10 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             return list;
         }
         for (LinkedHashMap<String,Object> map: list) {
+            BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
+            for (BiDataSourceCostEnum value:values) {
+                map.put(value.getName(),map.get(value.getCode()));
+            }
             for (BiDictEntity dcit : dictList) {
                 BigDecimal value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
                         .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);

@@ -12,6 +12,7 @@ import com.erp.model.bi.dto.DmpRefundInfoDTO;
 import com.erp.model.bi.dto.DmpRefundInfoExcelDTO;
 import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.server.bi.enums.RefundStatusEnum;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpRefundInfoService;
@@ -37,6 +38,9 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpRefundInfoSearchDTO params = dto.getParams();
         IPage<DmpRefundInfoDTO> pageData = baseMapper.paging(query, params);
+        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(obj -> obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));
+        }
         return new PagingVO(pageData);
     }
 

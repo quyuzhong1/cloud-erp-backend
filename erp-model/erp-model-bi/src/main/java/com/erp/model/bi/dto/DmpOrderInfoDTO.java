@@ -88,6 +88,21 @@ public class DmpOrderInfoDTO {
     private Integer orderState;
 
     /**
+     * 订单状态名称
+     */
+    private String orderStateName;
+
+    /**
+     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废
+     */
+    private Integer correctionStatus;
+
+    /**
+     * 订单修正状态名称
+     */
+    private String correctionStatusName;
+
+    /**
      * 订单下单时间
      */
     private Date createTime;
