@@ -10,7 +10,7 @@ public enum StoreSignEnum {
 
     CN("cn","国内"),
     ABROAD("abroad","国外"),
-    OTHER("other","国外");
+    OTHER("other","其他");
 
     private String code;
 

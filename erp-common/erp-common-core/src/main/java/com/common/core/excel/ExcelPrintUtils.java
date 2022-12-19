@@ -1,18 +1,21 @@
 package com.common.core.excel;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.context.WriteContext;
 import com.alibaba.excel.support.ExcelTypeEnum;
+import com.alibaba.excel.util.IoUtils;
 import com.alibaba.excel.write.builder.ExcelWriterBuilder;
 import com.alibaba.excel.write.merge.OnceAbsoluteMergeStrategy;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.common.core.listener.EasyExcelListener;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.R;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -31,6 +34,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,7 +42,6 @@ import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.UUID;
 import java.util.*;
 
 /**
@@ -699,4 +702,61 @@ public class ExcelPrintUtils {
 		return response.getOutputStream();
 	}
 
+	/**
+	 * 动态获取全部列和数据体
+	 */
+	public static List<Map<String,String>> parseExcelToData(byte[] stream, Integer parseRowNumber) {
+		EasyExcelListener readListener = new EasyExcelListener();
+		EasyExcelFactory.read(new ByteArrayInputStream(stream)).registerReadListener(readListener).headRowNumber(parseRowNumber).sheet(0).doRead();
+		List<Map<Integer, String>> headList = readListener.getHeadList();
+		if(CollectionUtils.isEmpty(headList)){
+			throw new RuntimeException("Excel表头不能为空");
+		}
+		List<Map<Integer, String>> dataList = readListener.getDataList();
+		if(CollectionUtils.isEmpty(dataList)){
+			throw new RuntimeException("Excel数据内容不能为空");
+		}
+		//获取头部,取最后一次解析的列头数据
+		Map<Integer, String> excelHeadIdxNameMap = headList.get(headList.size() -1);
+		//封装数据体
+		List<Map<String,String>> excelDataList = Lists.newArrayList();
+		for (Map<Integer, String> dataRow : dataList) {
+			Map<String,String> rowData = new LinkedHashMap<>();
+			excelHeadIdxNameMap.entrySet().forEach(columnHead -> {
+				rowData.put(columnHead.getValue(), dataRow.get(columnHead.getKey()));
+			});
+			excelDataList.add(rowData);
+		}
+		return excelDataList;
+	}
+
+	/**
+	 * 返回导入的所有数据
+	 */
+	public static List<Map<String,String>> makeData(MultipartFile file){
+		InputStream inputStream = null;//转换成输入流
+		try {
+			inputStream = file.getInputStream();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		byte[] stream = new byte[0];
+		try {
+			stream = IoUtils.toByteArray(inputStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(stream == null || stream.length == 0){
+			return null;
+		}
+		List<Map<String,String>> dataList = parseExcelToData(stream, 1);//从动态获取全部列和数据体，默认从第一行开始解析数据
+		try {
+			if(inputStream != null){
+				inputStream.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return dataList;
+	}
 }

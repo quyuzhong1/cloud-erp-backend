@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
@@ -60,4 +61,9 @@ public interface BiDataSourceCostService
      * 导出
      */
     void exportExcel(BiDataSourceCostSearchDTO dto, HttpServletResponse response);
+
+    /**
+     * 导入
+     */
+    void importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

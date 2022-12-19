@@ -2,12 +2,14 @@ package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
 import com.erp.model.bi.vo.SalesSiteEnumVO;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.dmp.enums.SalesSiteEnum;
+import com.erp.server.bi.enums.BiStateEnum;
+import com.erp.server.bi.enums.OrderStateEnum;
+import com.erp.server.bi.enums.StoreSignEnum;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,4 +49,35 @@ public class BiDropDownListController extends BaseController {
         List<SalesSiteEnumVO> result = Arrays.stream(SalesSiteEnum.values()).map(x -> new SalesSiteEnumVO(x.getCode(),x.getName(),x.getDesc())).collect(Collectors.toList());
         return success(result);
     }
+
+    /**
+     * 启用禁用下拉框
+     * @return
+     */
+    @GetMapping("/state/list")
+    public ApiResult<List<SelectShowVO>> listStateDropDown() {
+        List<SelectShowVO> result = Arrays.stream(BiStateEnum.values()).map(x -> new SelectShowVO().setCode(x.getCode()).setName(x.getName())).collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 店铺标识下拉框
+     * @return
+     */
+    @GetMapping("/storeSign/list")
+    public ApiResult<List<SelectShowVO>> listStoreSignDropDown() {
+        List<SelectShowVO> result = Arrays.stream(StoreSignEnum.values()).map(x -> new SelectShowVO().setName(x.getCode()).setDesc(x.getName())).collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 订单状态下拉框
+     * @return
+     */
+    @GetMapping("/orderStatus/list")
+    public ApiResult<List<SelectShowVO>> listOrderStatusDropDown() {
+        List<SelectShowVO> result = Arrays.stream(OrderStateEnum.values()).map(x -> new SelectShowVO().setCode(x.getCode()).setName(x.getName())).collect(Collectors.toList());
+        return success(result);
+    }
+
 }
