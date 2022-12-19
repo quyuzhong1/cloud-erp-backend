@@ -3,6 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
@@ -28,6 +29,21 @@ public class BiLayoutController extends BaseController {
 
     @Resource
     private BiLayoutService layoutService;
+
+
+
+
+    /**
+     * 添加专题
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addSubject")
+    public ApiResult addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
+        Boolean flag = layoutService.addSubject(dto);
+        return flag == true ? success() : failure();
+    }
+
 
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
@@ -55,4 +56,6 @@ public interface BiLayoutService  extends IService<BiLayoutEntity> {
     Boolean deleteLayout(DeleteLayoutModuleDTO dto);
 
     void copySubjectLayout(String newSubjectId, String subjectId);
+
+    Boolean addSubject(AddTotalSubjectDTO dto);
 }

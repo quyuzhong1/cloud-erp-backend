@@ -1,31 +1,24 @@
 package com.erp.model.bi.dto;
 
 import com.erp.common.annotation.StateEnumValue;
-import com.erp.common.modules.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * @Classname SubjectDTO
+ * @Classname AddTotalSubjectDTO
  * @Description TODO
- * @Date 2022-12-09 15:44
+ * @Date 2022-12-19 17:36
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class SubjectDTO  implements Serializable {
-
-    /**
-     * 表id
-     */
-    @NotBlank(message = "id不能为空" ,groups = UpdateGroup.class )
-    private String id;
-
+public class AddTotalSubjectDTO implements Serializable {
 
     /**
      * 分类id
@@ -63,21 +56,19 @@ public class SubjectDTO  implements Serializable {
     private String shareFlag="personal";
 
     /**
-     * 创建人id
-     */
-    private String createUserId;
-
-
-    /**
-     * 创建人
-     */
-    private String createUserName;
-
-
-    /**
      * 分享的用户集合
      */
     private List<String> shareUserIdList;
 
 
+
+    /**
+     * 布局集合
+     * @author yl
+     * @date 2022-12-09 16:40
+     * @param null
+     * @return
+     */
+    @Valid
+    private List<LayoutDTO> layoutList;
 }

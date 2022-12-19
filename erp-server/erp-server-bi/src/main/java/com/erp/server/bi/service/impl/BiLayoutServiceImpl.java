@@ -1,7 +1,6 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -12,6 +11,7 @@ import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
 import com.erp.server.bi.service.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +46,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
 
     @Resource
     private BiSubjectShareService subjectShareService;
+
+    @Resource
+    private BiDictService dictService;
 
 
     /**
@@ -238,6 +241,52 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         subjectRefLayoutService.addSubjectRefLayout(newSubjectId, layoutIdList);
 
 
+    }
+
+
+    /**
+     * 添加整个专题
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-12-19 17:38
+     */
+    @Override
+    public Boolean addSubject(AddTotalSubjectDTO dto) {
+        SubjectDTO subject = new SubjectDTO();
+        subject.setName(dto.getName());
+        subject.setCategoryId(dto.getCategoryId());
+        subject.setIsFrequently(dto.getIsFrequently());
+        subject.setShareFlag(dto.getShareFlag());
+        subject.setShareUserIdList(dto.getShareUserIdList());
+        //专题id
+        String subjectId = subjectService.addSubject(subject);
+        if (StringUtils.isBlank(subjectId)) {
+            return false;
+        }
+
+        List<LayoutDTO> layoutList = dto.getLayoutList();
+        List<String> LayoutIds = new ArrayList<>();
+        for (LayoutDTO layout : layoutList) {
+            BiLayoutEntity entity = new BiLayoutEntity();
+            String layoutId = IdWorker.getIdStr();
+            String blockNo = layout.getBlockNo();
+            entity.setId(layoutId);
+            entity.setBlockNo(blockNo);
+            entity.setHeight(layout.getHeight());
+            Integer columnCount = LayoutBlockEnum.getCount(blockNo);
+            entity.setColumnCount(columnCount);
+            Boolean flag = this.save(entity);
+            if (flag) {
+                LayoutIds.add(layoutId);
+                //保存布局与 模块关系
+                layoutRefModuleService.addLayoutRefModule(subjectId, layoutId, blockNo, layout.getModuleIdList());
+            }
+        }
+        //保存专题与布局关系表
+        subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
+        return true;
     }
 
 
