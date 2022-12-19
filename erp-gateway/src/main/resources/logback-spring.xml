@@ -2,7 +2,7 @@
 <!-- 此处的debug指是否打印logback内部日志信息 -->
 <configuration debug="false" scan="true" scanPeriod="60 seconds">
 	<!-- 应用名称 -->
-	<property name="APP_NAME" value="erp-workflow"/>
+	<property name="APP_NAME" value="erp-gateway"/>
 	<!--日志文件的保存路径 -->
 	<property name="LOG_HOME" value="./logs/${APP_NAME}"/>
 	<!-- 日志输出格式 -->
