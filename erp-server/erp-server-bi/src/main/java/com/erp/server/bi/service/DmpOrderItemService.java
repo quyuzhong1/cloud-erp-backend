@@ -37,5 +37,12 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      */
     Integer countOrderQuantityBySku(List<String> orderIds, List<String> sku);
 
-
+    /**
+     * @description: 根据订单表ids查询
+     * @author Will
+     * @date: 2022/12/19 11:44
+     * @param orderInfoIds
+     * @return List<DmpOrderItemEntity>
+     */
+    List<DmpOrderItemEntity> listByOrderInfoIds(List<String> orderInfoIds);
 }

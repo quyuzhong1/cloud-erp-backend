@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Will
@@ -100,4 +101,9 @@ public class DmpOrderInfoDTO {
      * 销售员
      */
     private String chargeName;
+
+    /**
+     * 子集
+     */
+    private List<DmpOrderItemDTO> children;
 }

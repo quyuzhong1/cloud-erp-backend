@@ -204,6 +204,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<LinkedHashMap<String, Object>> resultList = renewBiDataSourceCost(list);
+        List<String> heads = new ArrayList<>();		//表头信息
+
         //导出销售数据
         List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
         String fileName = dmpOrderInfoService.getFileName("退货数据导出");

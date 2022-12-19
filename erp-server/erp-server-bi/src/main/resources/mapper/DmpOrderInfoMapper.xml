@@ -23,12 +23,13 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
         select
+            droi.id,
             droi.platform_order_id,
             droi.source_platform,
             droi.shop_name,
             droi.item_total,
             round(droi.item_total * droi.currency_rate,2) as cnyRealTimeAmount,
-            droi.cny_settle_amount,
+            round(droi.item_total * droi.cny_settle_rate,2) as cny_settle_amount,
             droi.buyer_name,
             droi.man_phone,
             droi.second_phone,
@@ -41,7 +42,7 @@
             droi.platform_order_id,
             droi.delivery_time,
             droi.charge_name
-        from dmp_return_order_info droi
+        from dmp_order_info droi
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')

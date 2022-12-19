@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.util.List;
+import java.util.*;
 
 /**
  * @Classname ExcelUtil
@@ -107,6 +107,29 @@ public class ExcelUtil {
         // 设置内容水平居中
         writeCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
         return new HorizontalCellStyleStrategy(headWriteCellStyle, writeCellStyle);
+    }
+
+    /**
+     * 导出
+     */
+    public static void easyUtil(List<String> heads,String head,List<Map<String, Object>> list,String fileName){
+        List<Object> objects = new ArrayList<>();
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(head,s));
+        }
+        Collection<Object> values;
+        List<List<Object>> list2 = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i++) {
+
+            values = list.get(i).values();
+            for (Object value : values) {
+                objects.add(value.toString());
+            }
+            list2.add(objects);
+        }
+        EasyExcel.write(fileName).head(hs).sheet(fileName).doWrite(list2);
     }
 
 }
