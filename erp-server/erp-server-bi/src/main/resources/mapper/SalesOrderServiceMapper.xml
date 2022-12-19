@@ -109,7 +109,7 @@
     <!--获取近三十天 销售数据-->
     <select id="getLastThirtyDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT round( SUM ( i.sell_price * i.quantity * i.currency_rate ), 2 ) sales,
-        i.sku_no,COUNT ( i.order_id ) orderCount,SUM ( i.quantity ) AS salesQuantity,
+        i.sku_no AS flagNo,COUNT ( i.order_id ) orderCount,SUM ( i.quantity ) AS salesQuantity,
         o.paid_time  AS flagDate
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>

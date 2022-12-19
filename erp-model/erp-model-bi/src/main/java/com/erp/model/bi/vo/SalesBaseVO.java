@@ -17,6 +17,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class SalesBaseVO {
 
+
+    /**
+     * sku no 或者spu no
+     */
+    private String flagNo;
+
     /**
      * 销售额
      */
