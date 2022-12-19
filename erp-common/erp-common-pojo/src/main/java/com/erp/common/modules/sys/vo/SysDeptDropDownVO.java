@@ -24,4 +24,5 @@ public class SysDeptDropDownVO {
      * 部门名称
      */
     private String deptName;
+
 }
