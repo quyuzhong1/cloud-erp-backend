@@ -96,7 +96,7 @@ public class DmpRefundInfoController extends BaseController {
             List<DmpRefundInfoImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
                 StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/dmpRefundInfo.xlsx";
+                String excelPath = "excel/dmpRefundInfoTemplate.xlsx";
                 String name = "dmpRefundInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);

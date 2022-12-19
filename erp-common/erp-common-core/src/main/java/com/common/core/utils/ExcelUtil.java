@@ -112,7 +112,7 @@ public class ExcelUtil {
     /**
      * 导出
      */
-    public static void easyUtil(List<String> heads,String head,List<Map<String, Object>> list,String fileName){
+    public static void easyUtil(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName){
         List<Object> objects = new ArrayList<>();
         List<List<String>> hs = new ArrayList<>();
         for (String s : heads) {

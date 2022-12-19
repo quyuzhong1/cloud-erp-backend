@@ -13,7 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,7 +135,7 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
     @Override
     public void copyLayoutRefModule(String newSubjectId, String newLayoutId, String copyLayoutId) {
         String userId = commonService.getUserInfo().getUid();
-        LocalDate date = LocalDate.now();
+        LocalDateTime date = LocalDateTime.now();
         List<BiLayoutRefModuleEntity> list = getByLayoutIdList(copyLayoutId);
         List<BiLayoutRefModuleEntity> saveList = new ArrayList<>(list.size());
         for (BiLayoutRefModuleEntity item : list) {

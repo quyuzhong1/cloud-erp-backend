@@ -94,12 +94,18 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         //过滤数据
         if (gyyOrderEntityList != null && gyyOrderEntityList.size() > 0) {
             for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
-                if (!gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
-                    continue;
+                if (StringUtils.isNotBlank(gyyOrderEntity.getOrderTypeName())) {
+                    if (!gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
+                        continue;
+                    }
                 }
-                if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
-                    continue;
+
+                if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
+                    if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
+                        continue;
+                    }
                 }
+
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyOrderEntity.getPlatformCode());
                 orderMongoDTO.setCode(gyyOrderEntity.getCode());

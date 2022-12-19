@@ -6,9 +6,12 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpShopInfoService;
@@ -25,6 +28,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -126,7 +131,7 @@ public class DmpOrderInfoController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/dmpOrderInfo.xlsx";
+        String path = "classpath:excel/dmpOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -142,6 +147,7 @@ public class DmpOrderInfoController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
 
     }

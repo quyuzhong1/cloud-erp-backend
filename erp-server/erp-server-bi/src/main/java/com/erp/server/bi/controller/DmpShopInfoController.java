@@ -136,5 +136,4 @@ public class DmpShopInfoController extends BaseController {
     public void exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
         dmpShopInfoService.exportExcel(dto, response);
     }
-    
 }

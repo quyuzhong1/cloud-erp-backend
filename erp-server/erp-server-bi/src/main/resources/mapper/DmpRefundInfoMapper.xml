@@ -26,7 +26,7 @@
             drid.refund_num,
             dri.refund_amount,
             round(dri.refund_amount * dri.currency_rate,2) as cnyRealTimeAmount,
-            dri.cny_settle_amount,
+            round(dri.refund_amount * dri.cny_settle_rate,2)  as cny_settle_amount,
             dri.refund_status,
             dri.refund_time
         from dmp_refund_info dri

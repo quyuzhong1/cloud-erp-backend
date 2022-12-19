@@ -73,6 +73,11 @@ public class DmpRefundInfoDTO {
     private Integer refundStatus;
 
     /**
+     * 退款状态名称
+     */
+    private String refundStatusName;
+
+    /**
      * 退款时间
      */
     private Date refundTime;

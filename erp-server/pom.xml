@@ -10,6 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>erp-server</artifactId>
     <packaging>pom</packaging>
+
+    <properties>
+        <alibaba.druid.verison>1.2.15</alibaba.druid.verison>
+    </properties>
     <modules>
         <module>erp-server-auth</module>
         <module>erp-server-admin</module>
@@ -19,4 +23,5 @@
         <module>erp-server-dmp</module>
         <module>erp-server-bi</module>
     </modules>
+
 </project>

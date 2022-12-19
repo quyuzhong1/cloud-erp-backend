@@ -19,6 +19,6 @@ public class DmpOrderStateDTO {
     @NotBlank(message = "订单id不能为空")
     private String id;
 
-    @NotNull(message = "订单状态不能为空")
+    @NotNull(message = "订单修正状态不能为空")
     private Integer state;
 }
