@@ -6,6 +6,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceDTO;
+import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.server.bi.service.BiDataSourceService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 数据源管理
@@ -42,4 +44,10 @@ public class BiDataSourceController extends BaseController {
         return success(pagingVO);
     }
 
+
+    @PostMapping("/batchAdd")
+    public ApiResult batchAddBiDataSource(@RequestBody @Validated List<BiDataSourceDTO> list) {
+        Boolean flag = this.biDataSourceService.batchAddBiDataSource(list);
+        return flag == true ? success() : failure();
+    }
 }

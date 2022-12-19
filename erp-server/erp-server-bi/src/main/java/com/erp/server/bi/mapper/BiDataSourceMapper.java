@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceDTO;
 import com.erp.model.dmp.entity.BiDataSourceEntity;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -14,6 +15,7 @@ import org.apache.ibatis.annotations.Param;
  * @description: TODO
  * @date 2022/12/19 9:30
  */
+@Mapper
 public interface BiDataSourceMapper extends BaseMapper<BiDataSourceEntity> {
     /**
      * @description: 分页查询

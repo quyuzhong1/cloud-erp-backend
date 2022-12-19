@@ -7,6 +7,8 @@ import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceDTO;
 import com.erp.model.dmp.entity.BiDataSourceEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -22,4 +24,12 @@ public interface BiDataSourceService extends IService<BiDataSourceEntity> {
      * @return PagingVO<BiDataSourceDTO>
      */
     PagingVO<BiDataSourceDTO> paging(PagingDTO<AdvanceSearchDTO> dto);
+    /**
+     * @description: 数据源新增
+     * @author Will
+     * @date: 2022/12/19 10:50
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchAddBiDataSource(List<BiDataSourceDTO> list);
 }
