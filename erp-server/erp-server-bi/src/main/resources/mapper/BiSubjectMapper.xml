@@ -7,7 +7,7 @@
         SELECT id,name FROM bi_subject
         WHERE category_id=(SELECT id FROM bi_dict WHERE value=#{dashboardFlag} AND type=#{type} LIMIT 1)
         AND is_deleted=0 AND is_frequently=1
-        <if test="searchKeyword =null adn searchKeyword!=''">
+        <if test="searchKeyword =null and searchKeyword!=''">
             AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
         <if test="findIdList!=null and findIdList.size>0">
@@ -23,7 +23,7 @@
         WHERE category_id=(SELECT id FROM bi_dict WHERE value=#{dashboardFlag} AND type=#{type} LIMIT 1)
         AND create_user_id=#{userId}
         AND is_deleted=0 AND is_frequently=1
-        <if test="searchKeyword !=null adn searchKeyword!=''">
+        <if test="searchKeyword !=null and searchKeyword!=''">
             AND name LIKE concat('%',#{searchKeyword},'%')
         </if>
     </select>
