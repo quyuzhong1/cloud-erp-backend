@@ -115,7 +115,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/dmpReturnOrderInfo.xlsx";
+        String path = "classpath:excel/dmpReturnOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
