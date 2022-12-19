@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
@@ -45,9 +46,6 @@ import java.util.stream.Collectors;
 @Service
 public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, DmpOrderInfoEntity>
         implements DmpOrderInfoService {
-
-    @Resource
-    private CommonService commonService;
     @Resource
     private DmpOrderItemService dmpOrderItemService;
     @Resource
@@ -93,7 +91,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Override
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
-        String userId = commonService.getUserInfo().getUid();
         // 没有sku情况
         BigDecimal amount = BigDecimal.ZERO;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
@@ -135,7 +132,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .le(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
                 // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
-                .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_name", dto.getDepartment())
+                .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_id", dto.getDepartment())
                 //站点
                 .in(CollectionUtils.isNotEmpty(dto.getSite()), "site", dto.getSite())
                 //品类
@@ -145,9 +142,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 人员
                 .in(CollectionUtils.isNotEmpty(dto.getUserId()), "charge_name_id", dto.getUserId())
                 // 平台
-                .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "platform_sign", dto.getPlatform())
+                .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "source_platform", dto.getPlatform())
                 // 店铺
-                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName());
+                .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName())
+                // 权限
+                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
         return query;
     }
 
@@ -156,7 +155,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Integer count = 0;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 先查询订单号
-        query.select("id");
+        query.select("id")
+                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
         List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
         if (CollectionUtils.isEmpty(list)) {
             return new TargetSaleCountVO(count);
@@ -274,6 +274,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<DmpShopInfoEntity> shopList = dmpShopInfoService.lambdaQuery()
                 .eq(DmpShopInfoEntity::getStatus, 1)
                 .eq(DmpShopInfoEntity::getStoreSign, "cn")
+                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam())
                 .list();
         if (CollectionUtils.isEmpty(shopList)) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
