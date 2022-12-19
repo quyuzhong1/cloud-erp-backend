@@ -217,9 +217,10 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         String name = biModule.getName();
         checkName(biModule.getId(), name);
-
+        Boolean uploadFlag = biModule.getUploadFlag();
         MultipartFile imageFile = biModule.getImageFile();
-        if (imageFile != null) {
+        //当上传了文件 且文件不为空的时候
+        if (imageFile != null &&uploadFlag) {
             File file = FileUtil.multiToFile(imageFile);
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);

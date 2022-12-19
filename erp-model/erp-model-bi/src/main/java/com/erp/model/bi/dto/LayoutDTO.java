@@ -4,6 +4,7 @@ import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -39,5 +40,6 @@ public class LayoutDTO  implements Serializable {
     /**
      * 模块id集合
      */
+    @Valid
     private List<LayoutRefModuleDTO>  moduleIdList;
 }

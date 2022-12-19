@@ -20,8 +20,9 @@ public class SalesVO implements Serializable {
 
     /**
      * 品名
+     *
      */
-    private String skuName;
+    private String productName;
 
 
     /**
@@ -34,6 +35,9 @@ public class SalesVO implements Serializable {
      * 销量
      */
     private Integer salesQuantity;
+
+
+
 
 
     /**
