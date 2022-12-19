@@ -97,7 +97,7 @@ public class SysDepartmentController extends BaseController {
      * 部门下拉列表
      * @return
      */
-    @PostMapping("/drop/down")
+    @GetMapping("/drop/down")
     ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(){
         List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
         List<SysDeptDropDownVO> resultList = entities.stream()
