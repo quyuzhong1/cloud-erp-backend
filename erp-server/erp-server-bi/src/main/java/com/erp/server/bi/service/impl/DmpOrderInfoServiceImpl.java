@@ -104,7 +104,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 }else {
                     return new TargetSaleSumVO(amount);
                 }
-
             } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
                 query.select("sum(item_total*settle_rate) as item_total");
             } else  {
@@ -199,7 +198,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleSumVO(BigDecimal.ZERO);
         }
         TargetSaleCountVO refundOrderCount = countRefundOrderNum(dto);
-        BigDecimal refundRate = new BigDecimal(refundOrderCount.getValue()).divide(new BigDecimal(totalOrderQuantity.getValue()), 2, BigDecimal.ROUND_DOWN);
+        BigDecimal refundRate = new BigDecimal(refundOrderCount.getValue())
+                .divide(new BigDecimal(totalOrderQuantity.getValue()), 2, BigDecimal.ROUND_DOWN);
         return new TargetSaleSumVO(refundRate);
     }
 
@@ -225,8 +225,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Integer count;
         QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
         // 无sku条件 只查询订单表
+        query.eq("is_refund", 1);
         if (CollectionUtils.isEmpty(dto.getSku())) {
-            query.eq("is_refund", 1);
             count = baseMapper.selectCount(query);
         } else {
             // 条件存在sku的情况 查询订单详情表

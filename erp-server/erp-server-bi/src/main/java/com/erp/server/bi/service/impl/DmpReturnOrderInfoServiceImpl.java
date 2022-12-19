@@ -63,25 +63,21 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
         if(CollectionUtils.isEmpty(dto.getSku())){
             if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-                query.select("sum(order_fee*currency_rate) as order_fee");
+                if (BiFilterDTO.validOriginalCurrency(dto)){
+                    query.select("sum(order_fee) as order_fee");
+                }else {
+                    return BigDecimal.ZERO;
+                }
             }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
-                query.select("sum(order_fee*currency_rate) as order_fee");
-            }else if (BiFilterDTO.validOriginalCurrency(dto)){
+                query.select("sum(order_fee*cny_settle_rate) as order_fee");
+            }else{
                 query.select("sum(order_fee*currency_rate) as order_fee");
             }
             DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = baseMapper.selectOne(query);
             amount = dmpReturnOrderInfoEntity.getOrderFee();
         }else {
-            // 条件存在sku的情况
-            // 先查询订单号
-            query.select("id");
-            List<DmpReturnOrderInfoEntity> list = baseMapper.selectList(query);
-            if(CollectionUtils.isEmpty(list)){
-                return amount;
-            }
-            List<String> returnOrderIds = list.stream().map(DmpReturnOrderInfoEntity::getId).collect(Collectors.toList());
             // 根据订单号获取订单详情，筛选sku
-            amount = dmpReturnOrderItemService.sumReturnAmountBySKu(returnOrderIds, dto);
+            amount = dmpReturnOrderItemService.sumReturnAmountBySKu(dto);
         }
         return amount;
     }
