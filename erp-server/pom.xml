@@ -24,11 +24,4 @@
         <module>erp-server-bi</module>
     </modules>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>${alibaba.druid.verison}</version>
-        </dependency>
-    </dependencies>
 </project>
