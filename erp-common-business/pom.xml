@@ -14,7 +14,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>erp-common-business</name>
     <description>公共业务模块</description>
-    <packaging>pom</packaging>
+<!--    <packaging>pom</packaging>-->
 
     <properties>
         <java.version>1.8</java.version>
@@ -70,12 +70,6 @@
     </dependencies>
     <build>
         <finalName>${project.name}</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 
 </project>
