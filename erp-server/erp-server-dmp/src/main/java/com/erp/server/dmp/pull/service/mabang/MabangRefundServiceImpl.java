@@ -7,17 +7,18 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.MabangAppEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.mabang.*;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.mabang.RefundOrderEntity;
+import com.erp.model.dmp.mabang.RefundOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.*;
+import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -300,7 +302,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
         //平台标识
         dmpRefundInfoEntity.setPlatformSign("马帮");
 
-        dmpRefundInfoEntity.setCreateTime(new Date());
+        dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String refundInfoId = dmpRefundInfoService.checkOrder(dmpRefundInfoEntity);

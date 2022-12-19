@@ -9,20 +9,19 @@ import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.dto.ShopDTO;
-import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
-import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +34,8 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 管易云订单
@@ -414,7 +413,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setPlatformSign("管易云");
 
         //创建时间
-        dmpOrderInfoEntity.setCreateTime(new Date());
+        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);

@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -156,7 +157,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT_UPDATE)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 平台标识

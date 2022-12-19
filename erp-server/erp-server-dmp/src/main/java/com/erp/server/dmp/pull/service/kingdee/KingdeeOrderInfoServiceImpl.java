@@ -4,16 +4,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.ShopDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.KingdeeOrderItemEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -33,6 +32,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -491,7 +491,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         //企业名称
         dmpOrderInfoEntity.setCompanyName(kingdeeOrderEntity.getFSaleOrgName());
 
-        dmpOrderInfoEntity.setCreateTime(new Date());
+        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);

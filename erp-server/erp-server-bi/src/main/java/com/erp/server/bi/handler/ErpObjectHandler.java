@@ -6,7 +6,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @Classname ErpObjectHandler
@@ -25,7 +25,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        LocalDate nowDate = LocalDate.now();
+        LocalDateTime nowDate = LocalDateTime.now();
         this.setFieldValByName("createTime", nowDate, metaObject);
         this.setFieldValByName("updateTime", nowDate, metaObject);
         this.setFieldValByName("createUserId", userId, metaObject);
@@ -37,7 +37,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //更新时的 填充数据
     @Override
     public void updateFill(MetaObject metaObject) {
-        LocalDate nowDate = LocalDate.now();
+        LocalDateTime nowDate = LocalDateTime.now();
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateTime", nowDate, metaObject);
