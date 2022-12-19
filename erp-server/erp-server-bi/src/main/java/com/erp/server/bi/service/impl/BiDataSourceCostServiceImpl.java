@@ -2,8 +2,11 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
@@ -22,6 +25,7 @@ import com.erp.server.bi.service.BiDictService;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -221,6 +225,32 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         ExcelUtil.easyUtil(heads,head,list,fileName);
         return;
+    }
+
+    @Override
+    public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        List<Map<String,String>> list = ExcelPrintUtils.makeData(excelFile);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Map<String,String> map:list) {
+            //遍历map下的数据
+            Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+            //旧数据时记录
+            if (ObjectUtils.isNotEmpty(iterator)) {
+                while (iterator .hasNext()){
+                    Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                    String key =  entry.getKey().toString();
+                    String value = entry.getValue().toString();
+                    String name = BiDataSourceCostEnum.getCodeByName(key);
+                    if (StringUtils.isBlank(name))  {
+
+                    }
+                }
+            }
+        }
+
+
     }
 
 
