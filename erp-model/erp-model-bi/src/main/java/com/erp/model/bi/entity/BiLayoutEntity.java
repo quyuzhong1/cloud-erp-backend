@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 布局表(BiLayout)实体类
@@ -44,7 +44,7 @@ public class BiLayoutEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDate createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新人id
@@ -55,7 +55,7 @@ public class BiLayoutEntity implements Serializable {
      * 跟新时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDate updateTime;
+    private LocalDateTime updateTime;
 
 
 

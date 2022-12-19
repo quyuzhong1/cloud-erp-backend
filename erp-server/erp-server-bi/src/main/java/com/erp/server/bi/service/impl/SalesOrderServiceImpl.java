@@ -67,8 +67,24 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
+        //查询进三十天信息
         List<SalesBaseVO> baseList = baseMapper.getLastThirtyDays(dto);
+        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
+        for(SalesVO item:resultList){
+           Integer lastSevenDaysSalesQuantity=  baseList.stream().
+                    filter(b->beforeSevenDays.isAfter(b.getFlagDate())
+                            &&nowTime.isBefore(b.getFlagDate())
+                            &&b.getFlagNo().equals(item.getName())
+                    ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
-        return null;
+           Integer lastThirtyDaysSalesQuantity=baseList.stream().
+                   filter(b->b.getFlagNo().equals(item.getName())).
+                   mapToInt(SalesBaseVO::getSalesQuantity).sum();
+            item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
+
+        }
+
+        return resultList;
     }
 }
