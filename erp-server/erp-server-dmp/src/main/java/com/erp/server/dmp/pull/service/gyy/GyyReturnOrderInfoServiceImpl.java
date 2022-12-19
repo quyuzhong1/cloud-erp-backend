@@ -36,6 +36,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -333,7 +334,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
         //平台标识
         dmpReturnOrderInfoEntity.setPlatformSign("管易云");
 
-        dmpReturnOrderInfoEntity.setCreateTime(new Date());
+        dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);

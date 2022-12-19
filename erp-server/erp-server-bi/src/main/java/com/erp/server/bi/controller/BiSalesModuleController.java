@@ -57,7 +57,7 @@ public class BiSalesModuleController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "bi:sales:bySku",
-            tableAlias = "dmp_order_info"
+            tableAlias = "o"
     )
     public ApiResult<List<SalesVO>> getBySku(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesVO> resultList = salesOrderService.getBySku(dto);

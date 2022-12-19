@@ -65,25 +65,25 @@
 		<root level="DEBUG">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="INFO_FILE" />
-			<appender-ref ref="ERROR_FILE" />
+<!--			<appender-ref ref="ERROR_FILE" />-->
 		</root>
 	</springProfile>
 	<springProfile name="test">
 		<root level="INFO">
 			<appender-ref ref="INFO_FILE" />
-			<appender-ref ref="ERROR_FILE" />
+<!--			<appender-ref ref="ERROR_FILE" />-->
 		</root>
 	</springProfile>
-	<springProfile name="pre">
+	<springProfile name="uat">
 		<root level="INFO">
 			<appender-ref ref="INFO_FILE" />
-			<appender-ref ref="ERROR_FILE" />
+<!--			<appender-ref ref="ERROR_FILE" />-->
 		</root>
 	</springProfile>
 	<springProfile name="prod">
 		<root level="INFO">
 			<appender-ref ref="INFO_FILE" />
-			<appender-ref ref="ERROR_FILE" />
+<!--			<appender-ref ref="ERROR_FILE" />-->
 		</root>
 	</springProfile>
 </configuration>

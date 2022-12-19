@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -18,6 +19,7 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
@@ -59,6 +61,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
+        List<DmpOrderInfoDTO> records = pageData.getRecords();
+        dmpOrderInfoHand(records);
         return new PagingVO(pageData);
     }
 
@@ -319,7 +323,24 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return this.getOne(queryWrapper);
     }
 
-
+    /**
+     * 列表界面数据处理
+     */
+    private void dmpOrderInfoHand( List<DmpOrderInfoDTO> records) {
+       if (CollectionUtils.isEmpty(records)) {
+           return;
+       }
+        List<String> ids = records.stream().map(DmpOrderInfoDTO::getId).collect(Collectors.toList());
+        List<DmpOrderItemEntity> dmpOrderItemList = dmpOrderItemService.listByOrderInfoIds(ids);
+        records.forEach(obj -> {
+            List<DmpOrderItemEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(itemList)) {
+                List<DmpOrderItemDTO> itemResultList = BeanMapperUtils.copyList(DmpOrderItemDTO.class, itemList);
+                itemResultList.stream().forEach(e -> e.setSellAmount(MathUtil.multiply(e.getSellPrice(),e.getQuantity())));
+                obj.setChildren(itemResultList);
+            }
+        });
+    }
 }
 
 

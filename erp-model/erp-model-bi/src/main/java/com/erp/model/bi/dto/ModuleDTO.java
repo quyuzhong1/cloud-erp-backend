@@ -68,6 +68,15 @@ public class ModuleDTO implements Serializable {
 
 
     /**
+     * 编辑的上传表示
+     * 如果为true 表示
+     * 改变了  如果为false 就是没有
+     */
+    @NotBlank(message = "上传标识不能为空",  groups = {UpdateGroup.class} )
+    private Boolean uploadFlag=false;
+
+
+    /**
      * 前端组件名不能为空
      */
     @NotBlank(message = "前端组件名不能为空")

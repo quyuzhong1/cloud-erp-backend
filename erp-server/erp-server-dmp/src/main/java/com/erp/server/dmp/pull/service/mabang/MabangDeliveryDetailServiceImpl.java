@@ -169,7 +169,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
                     pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
+                    log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
                     throw new RuntimeException(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {

@@ -23,4 +23,14 @@ public class VariantAutoAddDTO {
      * 变体属性
      */
     private List<VarianRefPropertyDTO> varianRefPropertyList;
+
+    /**
+     * 是否是配置表单生成（0否，1是）
+     */
+    private Integer flag;
+
+    /**
+     * 任务id
+     */
+    private String taskId;
 }

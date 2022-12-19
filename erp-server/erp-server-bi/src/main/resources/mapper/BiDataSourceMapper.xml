@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiDataSourceMapper">
+
+
+    <select id="paging" resultType="com.erp.model.bi.dto.BiDataSourceDTO">
+        select
+           bds.type,
+           bds.update_time,
+           bds.update_user_name,
+           bds.create_user_name,
+           bds.create_time
+        from bi_data_source bds
+        <where>
+            <if test="params.searchContent != null and params.searchContent != ''">
+                and bds.type like concat('%',#{params.searchContent},'%')
+            </if>
+        </where>
+    </select>
+
+</mapper>

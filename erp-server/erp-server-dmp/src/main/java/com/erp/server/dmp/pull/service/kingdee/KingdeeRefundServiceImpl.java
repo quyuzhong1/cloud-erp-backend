@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -317,7 +317,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
         //平台标识
         dmpRefundInfoEntity.setPlatformSign("金蝶云星空");
 
-        dmpRefundInfoEntity.setCreateTime(new Date());
+        dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String refundInfoId = dmpRefundInfoService.checkOrder(dmpRefundInfoEntity);

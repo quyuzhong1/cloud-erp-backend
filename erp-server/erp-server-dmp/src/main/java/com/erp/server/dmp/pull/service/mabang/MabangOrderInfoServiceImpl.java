@@ -1,24 +1,22 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.ShopDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.MabangAppEntity;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.OrderItemEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -36,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -199,7 +198,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====");
+                    log.info(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
                     throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
@@ -397,7 +396,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         }
 
         //创建时间
-        dmpOrderInfoEntity.setCreateTime(new Date());
+        dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);

@@ -2,6 +2,7 @@ package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.SalesBaseVO;
 import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,4 +22,8 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<Map<String, Object>> getMonthSales();
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto);
+
+    List<SalesBaseVO> getLastThirtyDays(@Param("params") BiFilterDTO dto);
+
+
 }

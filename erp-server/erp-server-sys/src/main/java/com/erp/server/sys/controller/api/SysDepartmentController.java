@@ -4,18 +4,17 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.modules.sys.vo.SysDeptDropDownVO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.service.SysDepartmentService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -92,6 +91,21 @@ public class SysDepartmentController extends BaseController {
     public ApiResult delete(@RequestBody List<String> ids) {
         sysDepartmentService.removeByIdList(ids);
         return success();
+    }
+
+    /**
+     * 部门下拉列表
+     * @return
+     */
+    @GetMapping("/drop/down")
+    ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(){
+        List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
+        List<SysDeptDropDownVO> resultList = entities.stream()
+                .map(x ->
+                        new SysDeptDropDownVO(x.getId(), x.getName())
+                )
+                .collect(Collectors.toList());
+        return success(resultList);
     }
 
 }

@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -12,6 +12,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,6 +72,16 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         }
         long count = list.stream().map(DmpOrderItemEntity::getOrderId).distinct().count();
         return new Long(count).intValue();
+    }
+
+    @Override
+    public List<DmpOrderItemEntity> listByOrderInfoIds(List<String> orderInfoIds) {
+        if (CollectionUtils.isEmpty(orderInfoIds)) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<DmpOrderItemEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DmpOrderItemEntity::getOrderId,orderInfoIds);
+        return this.list(queryWrapper);
     }
 
 }

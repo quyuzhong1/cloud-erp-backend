@@ -137,6 +137,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProjectTaskService projectTaskService;
 
 
+
     private static final  String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final  String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
@@ -836,12 +837,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //SKU新增操作日志
         List<SysLogEntity> logs = new LinkedList<>();
+        //SKU新增任务关联数据
+        List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = new ArrayList<>();
         list.forEach(obj->{
+            ProjectTaskRefSkuEntity entity = new ProjectTaskRefSkuEntity();
+            entity.setProductId(id);
+            entity.setSkuId(obj.getId());
+            entity.setTaskId(variantAutoAddDTO.getTaskId());
+            entity.setIsFinishTask(IsConstant.YES);
+            projectTaskRefSkuList.add(entity);
             logs.add(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU：["+obj.getSkuNo()+"]"));
         });
+
         if (StringUtils.isBlank(productSpuBaseInfoDTO.getId())) {
             logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：["+productSpuBaseInfoDTO.getName()+"]"));
         }
+        //配置表单生成SKU需要建立关联关系
+        if (IsConstant.YES.equals(variantAutoAddDTO.getFlag())) {
+            projectTaskRefSkuService.saveBatch(projectTaskRefSkuList);
+        }
+        //新增日志
         sysLogService.addSysLogByBatchSave(logs);
         return this.queryByProductId(id);
     }

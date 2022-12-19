@@ -64,10 +64,6 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.deliverys.get");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode("gy.erp.trade.deliverys.get");
-
-
-
-
         jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);

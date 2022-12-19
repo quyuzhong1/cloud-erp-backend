@@ -2,16 +2,15 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.ChartVO;
-import com.erp.model.bi.vo.SalesVO;
-import com.erp.model.bi.vo.SeriesVO;
-import com.erp.model.bi.vo.StatisticalDataVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.SalesOrderService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +62,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesVO> getBySku(BiFilterDTO dto) {
-
         List<SalesVO> resultList = baseMapper.getBySku(dto);
+        LocalDateTime nowTime = LocalDateTime.now();
+        LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
+        dto.setStartTime(beforeThirtyDays);
+        dto.setEndTime(nowTime);
+        List<SalesBaseVO> baseList = baseMapper.getLastThirtyDays(dto);
+
         return null;
     }
 }

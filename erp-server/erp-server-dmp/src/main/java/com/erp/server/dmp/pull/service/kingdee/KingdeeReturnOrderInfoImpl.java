@@ -2,17 +2,16 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.kingdee.*;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
+import com.erp.model.dmp.kingdee.KingdeeReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -23,8 +22,6 @@ import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.ListUtils;
-import org.apache.commons.collections.list.AbstractLinkedList;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,8 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 金蝶退货销售出库
@@ -369,7 +366,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
         //企业名称
         dmpReturnOrderInfoEntity.setCompanyName(returnOrderEntity.getFSaleOrgName());
 
-        dmpReturnOrderInfoEntity.setCreateTime(new Date());
+        dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);

@@ -5,20 +5,18 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.dto.GyyRefundDTO;
+import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.GyyAppEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.model.dmp.gyy.bean.RefundDetailsBean;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -32,9 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
+
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -341,7 +341,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         //平台标识
         dmpRefundInfoEntity.setPlatformSign("管易云");
 
-        dmpRefundInfoEntity.setCreateTime(new Date());
+        dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String refundInfoId = dmpRefundInfoService.checkOrder(dmpRefundInfoEntity);
