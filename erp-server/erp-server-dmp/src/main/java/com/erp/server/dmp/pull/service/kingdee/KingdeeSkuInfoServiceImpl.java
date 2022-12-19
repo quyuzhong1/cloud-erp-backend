@@ -107,7 +107,6 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
             sd = sdf.format(new Date(nextTime * 1000L));
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-
             st = "";
             sd = "";
             dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));

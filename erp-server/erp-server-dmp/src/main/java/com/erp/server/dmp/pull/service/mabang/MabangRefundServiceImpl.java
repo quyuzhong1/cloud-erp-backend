@@ -172,7 +172,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                     pageCount = (totalCount + pageSize - 1) / pageSize;
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ====");
+                    log.info(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
                     throw new RuntimeException(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {

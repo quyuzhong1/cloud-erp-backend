@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -44,7 +45,16 @@ public class PullMabangJob {
             if (orderJobTask == null) {
                 break;
             }
-            pullMabangDateThread.pullOrder(orderJobTask);
+            if(ObjectUtils.isEmpty(template.opsForValue().get(orderJobTask.getApiCode()+""))) {
+                pullMabangDateThread.pullOrder(orderJobTask);
+
+                //redis调用时间限制
+                template.opsForValue().set(orderJobTask.getApiCode()+"","text",10, TimeUnit.SECONDS);
+            }else {
+                template.opsForList().leftPush(TaskConstant.MABANG_PULL_DATA_TASK, JSONObject.toJSONString(orderJobTask));
+            }
+
+
         }
     }
 }
