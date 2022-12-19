@@ -8,6 +8,6 @@ spring:
         server-addr: 172.16.100.12
         namespace: test
         file-extension: yml
-        shared-configs: common.yml,db-workflow.yml
+        shared-configs: common.yml,db-workflow.yml,druid-common.yml
 
 

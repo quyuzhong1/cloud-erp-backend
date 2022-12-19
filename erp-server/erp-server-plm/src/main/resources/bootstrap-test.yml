@@ -7,7 +7,7 @@ spring:
       config:
         server-addr: 172.16.100.12
         namespace: test
-        shared-configs: common.yml,db-plm.yml,erp-third-party.yml
+        shared-configs: common.yml,db-plm.yml,erp-third-party.yml,druid-common.yml
 
   #显示日期的
   jackson:
