@@ -55,13 +55,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
 
     @Resource
-    private BiLayoutService  layoutService;
+    private BiLayoutService layoutService;
 
     @Resource
     private CommonService commonService;
-
-
-
 
 
     /**
@@ -325,6 +322,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<CategorySubjectDTO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
+
+        //分享给我的
+        List<String> shareToMeIds = subjectShareService.getShareToMeDashboardIds(userId);
+
         //查询到用户可见的专题
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
@@ -337,6 +338,19 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             result.setSubjectList(subjectResultList);
             resultList.add(result);
         }
+        //我创建的
+        CategorySubjectDTO myCreate = new CategorySubjectDTO();
+        myCreate.setCategoryName("我创建的专题");
+        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
+        myCreate.setSubjectList(myCreateList);
+        resultList.add(myCreate);
+
+        //分享给我的
+        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
+        shareToMeDTO.setCategoryName("共享专题");
+        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s ->shareToMeIds.contains(s.getId()) ).collect(Collectors.toList());
+        shareToMeDTO.setSubjectList(shareToMeList);
+        resultList.add(shareToMeDTO);
         return resultList;
     }
 
@@ -370,8 +384,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         copySubject.setUpdateUserName(userName);
         boolean flag = this.save(copySubject);
         //当复制成功的时候
-        if(flag){
-            layoutService.copySubjectLayout(newSubjectId,subjectId);
+        if (flag) {
+            layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
         return null;
     }

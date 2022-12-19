@@ -1,10 +1,6 @@
 package com.common.core.utils.date;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Date;
 
 /**
@@ -58,6 +54,25 @@ public class LocalDateUtil {
         ZonedDateTime zdt = localDateTime.atZone(zoneId);
         Date date = Date.from(zdt.toInstant());
        return date;
+    }
+
+
+    /**
+     * 获取当天开始时间
+     * @param localDate
+     */
+    public static LocalDateTime  startLocalDateTime( LocalDate localDate){
+        LocalDateTime startTime = LocalDateTime.of(localDate, LocalTime.MIN);
+        return startTime;
+    }
+
+    /**
+     * 获取当天开始时间
+     * @param localDate
+     */
+    public static LocalDateTime  endLocalDateTime( LocalDate localDate){
+        LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.MAX);
+        return endTime;
     }
     
 }

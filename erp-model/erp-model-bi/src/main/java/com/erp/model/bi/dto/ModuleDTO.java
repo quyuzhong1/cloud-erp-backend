@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
@@ -72,6 +73,7 @@ public class ModuleDTO implements Serializable {
      * 如果为true 表示
      * 改变了  如果为false 就是没有
      */
+    @NotNull(message = "上传标识不能为空",  groups = {UpdateGroup.class} )
     private Boolean uploadFlag=false;
 
 

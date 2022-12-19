@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,7 +48,7 @@ public class BiFilterDTO extends PermissionsDTO {
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */
-    @NotBlank(message = "结算方式不能为空")
+    @NotNull(message = "结算方式不能为空")
     private Integer settleMethod;
 
     /**

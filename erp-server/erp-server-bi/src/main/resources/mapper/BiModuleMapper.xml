@@ -15,7 +15,7 @@
     </select>
 
     <select id="getUserVisibleModuleIds" resultType="java.lang.String">
-         SELECT   module_id  FROM  bi_module_permission  WHERE user_id=#{userId} AND state=1
+         SELECT   module_id  FROM  bi_module_permission  WHERE user_id=#{userId}
             UNION ALL
          SELECT id FROM bi_module bm WHERE NOT  EXISTS (
             SELECT id FROM bi_module_permission bp WHERE bp.module_id=bm.id

@@ -26,4 +26,5 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesBaseVO> getLastThirtyDays(@Param("params") BiFilterDTO dto);
 
 
+    List<SalesVO> getBySpu(BiFilterDTO dto);
 }
