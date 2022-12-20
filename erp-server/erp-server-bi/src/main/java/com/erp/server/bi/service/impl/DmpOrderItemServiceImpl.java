@@ -53,7 +53,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     public Integer countSalesVolume(List<String> orderIds, List<String> sku) {
         QueryWrapper query = new QueryWrapper();
-        query.select("SUM(NULLIF(quantity, 0)) as quantity")
+        query.select("SUM(COALESCE(quantity, 0)) as quantity")
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
