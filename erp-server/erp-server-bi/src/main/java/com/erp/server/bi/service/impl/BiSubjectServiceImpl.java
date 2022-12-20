@@ -110,7 +110,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
-        subject.setIsFrequently(dto.getIsFrequently());
         Boolean result = this.updateById(subject);
         if (result) {
             //如果是分享
@@ -247,7 +246,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
-        subject.setIsFrequently(dto.getIsFrequently());
         Boolean result = this.save(subject);
         if (result) {
             //如果是分享

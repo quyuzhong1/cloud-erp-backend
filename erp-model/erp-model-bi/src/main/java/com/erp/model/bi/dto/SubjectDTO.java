@@ -30,7 +30,7 @@ public class SubjectDTO  implements Serializable {
     /**
      * 分类id
      */
-    @NotBlank(message = "分类id 不能为空")
+   // @NotBlank(message = "分类id 不能为空")
     private String categoryId;
 
     /**
@@ -40,11 +40,7 @@ public class SubjectDTO  implements Serializable {
     @Size(max = 20,message = "最大20个字符")
     private String name;
 
-    /**
-     * 是否常用
-     * 0 不是 1 是
-     */
-    private Integer isFrequently;
+
 
 
     /**

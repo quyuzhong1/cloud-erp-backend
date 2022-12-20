@@ -23,14 +23,26 @@ public class SubjectLayoutDTO implements Serializable {
     private String subjectId;
 
 
+   // @NotBlank(message = "分类id不能为空")
+    private String categoryId;
+
+
+    @NotBlank(message = "专题名不能为空")
+    private String name;
 
     /**
-    * 布局集合
-    * @author yl
-    * @date 2022-12-09 16:40
-    * @param null
-    * @return
-    */
+     * 分享的用户id
+     */
+    private List<String> shareUserIdList;
+
+    /**
+     * 布局集合
+     *
+     * @author yl
+     * @date 2022-12-09 16:40
+     * @param null
+     * @return
+     */
     @Valid
     private List<LayoutDTO> layoutList;
 }

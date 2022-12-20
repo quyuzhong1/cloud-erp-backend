@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiLayoutEntity;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
 import com.erp.server.bi.service.*;
@@ -62,7 +64,37 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Override
     @Transactional
     public Boolean addSubjectLayout(SubjectLayoutDTO dto) {
+        String userId = commonService.getUserInfo().getUid();
+
         String subjectId = dto.getSubjectId();
+        String name = dto.getName();
+        //检查名字是否重复
+        subjectService.checkName(subjectId, name);
+        String categoryId = dto.getCategoryId();
+        BiDictEntity dict = dictService.getById(categoryId);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
+        }
+        BiSubjectEntity subject = subjectService.getById(subjectId);
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        //检查能否操作
+        subjectService.checkCanHandle(subject, userId);
+        subject.setName(name);
+        subject.setCategoryId(categoryId);
+        subject.setCategoryName(categoryName);
+        Boolean result = subjectService.updateById(subject);
+        String shareFlag = subject.getShareFlag();
+        if(result){
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, subjectId);
+            }
+        }
         List<LayoutDTO> layoutList = dto.getLayoutList();
         List<String> LayoutIds = new ArrayList<>();
         for (LayoutDTO layout : layoutList) {
@@ -257,7 +289,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         SubjectDTO subject = new SubjectDTO();
         subject.setName(dto.getName());
         subject.setCategoryId(dto.getCategoryId());
-        subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareFlag(dto.getShareFlag());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id

@@ -55,8 +55,11 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
     @Override
     public List<Map<String, Object>> getSysModuleList(Integer isAdd) {
         LambdaQueryWrapper<BiSysModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiSysModuleEntity::getId, BiSysModuleEntity::getName);
-        queryWrapper.eq(BiSysModuleEntity::getIsAdd, isAdd);
+        queryWrapper.select(BiSysModuleEntity::getId,
+                BiSysModuleEntity::getName,
+                BiSysModuleEntity::getIsAdd);
+       // queryWrapper.eq(BiSysModuleEntity::getIsAdd, isAdd);
+
         return this.listMaps(queryWrapper);
     }
 

@@ -33,11 +33,7 @@ public class AddTotalSubjectDTO implements Serializable {
     @Size(max = 20,message = "最大20个字符")
     private String name;
 
-    /**
-     * 是否常用
-     * 0 不是 1 是
-     */
-    private Integer isFrequently;
+
 
 
     /**
