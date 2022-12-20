@@ -1,6 +1,5 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -36,6 +35,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -225,7 +227,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         List<String> heads = new ArrayList<>();		//表头信息
         String head = "成本数据表";
-        String fileName = dmpOrderInfoService.getFileName("退货数据导出")+ ".xlsx";
+        String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
         BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
         List<String> enumList = Arrays.stream(values).map(BiDataSourceCostEnum::getName).collect(Collectors.toList());
         heads.addAll(enumList);
@@ -261,15 +263,19 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             if (ObjectUtils.isNotEmpty(iterator)) {
                 while (iterator .hasNext()){
                     Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+                    if (ObjectUtils.isEmpty(entry.getKey())) {
+                        continue;
+                    }
                     String key =  entry.getKey().toString();
-                    String value = entry.getValue().toString();
+                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString() ;
                     BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
                     if (StringUtils.isNotBlank(key))  {
-                        if (BiDataSourceCostEnum.MONTH.getName().equals(key)) {//2020/11/1
+                        if (BiDataSourceCostEnum.MONTH.getName().equals(key)) {
+                            DateFormat format= new SimpleDateFormat("yyyy年M月");
                             try {
-                                Date date1 = DateUtils.parseDate(value, DateUtils.DATE_FORMAT_19_FORWARD_SLASH);
-                                entity.setMonth(LocalDateUtil.date2LocalDateTime(date1));
-                            } catch (Exception e) {
+                                Date parse = format.parse(value);
+                                entity.setMonth(LocalDateUtil.date2LocalDateTime(parse));
+                            } catch (ParseException e) {
                                 errorMsgList.add("月份格式错误");
                             }
                             continue;
@@ -332,7 +338,10 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                if (ObjectUtils.isEmpty(dmpShopInfoEntity)) {
                    errorMsgList.add("所属平台及站点的店铺系统中不存在");
                }
-                entity.setShop_id(dmpShopInfoEntity.getId());
+               if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                   continue;
+               }
+                entity.setShopId(dmpShopInfoEntity.getId());
                 //新增成本主表数据
                 this.save(entity);
                 if (CollectionUtils.isNotEmpty(detailList)) {

@@ -83,20 +83,25 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
-        String path;
+        String path = "";
         switch (importType) {
             case 1:
                 path = "classpath:excel/biDataSourceCustomYear.xlsx";
+                break;
             case 2:
                 path = "classpath:excel/biDataSourceCustomQuarter.xlsx";
+                break;
             case 3:
                 path = "classpath:excel/biDataSourceCustomMonth.xlsx";
+                break;
             case 4:
                 path = "classpath:excel/biDataSourceCustomWeek.xlsx";
+                break;
             case 5:
                 path = "classpath:excel/biDataSourceCustomDay.xlsx";
+                break;
             default:
-                path = "";
+                break;
         }
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();

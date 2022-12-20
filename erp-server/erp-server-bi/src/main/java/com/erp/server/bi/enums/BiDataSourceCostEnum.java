@@ -10,7 +10,7 @@ public enum BiDataSourceCostEnum {
 
     MONTH("month", "月份"),
     DEPTNAME("deptName","销售事业部"),
-    PLATFORMNAME("platformName", "平台"),
+    PLATFORMNAME("platformName", "平台名称"),
     SITE("site", "站点"),
     SHOPNAME("shopName", "店铺名称"),
     CHARGENAME("chargeName", "负责人"),

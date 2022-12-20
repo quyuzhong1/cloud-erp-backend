@@ -1,10 +1,10 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -20,5 +20,12 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @param list
      * @return Boolean
      */
-    Boolean batchAddSettlementExchangeRate(List<BiSettlementExchangeRateDTO> list);
+    Boolean batchAddSettlementExchangeRate(List<Map<String, String>> list);
+    /**
+     * @description: 界面回显
+     * @author Will
+     * @date: 2022/12/20 18:49
+     * @return List<Map<String>>
+     */
+    List<Map<String, String>> listSettlementExchangeRate();
 }

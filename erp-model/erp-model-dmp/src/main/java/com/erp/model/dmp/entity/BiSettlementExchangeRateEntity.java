@@ -77,12 +77,12 @@ public class BiSettlementExchangeRateEntity implements Serializable {
      * 源币种
      */
     @TableField(value = "source_currency_code")
-    private BigDecimal sourceCurrencyCode;
+    private String sourceCurrencyCode;
 
     /**
      * 目标币种
      */
     @TableField(value = "target_currency_code")
-    private BigDecimal targetCurrencyCode;
+    private String targetCurrencyCode;
 
 }

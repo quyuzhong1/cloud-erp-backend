@@ -1,9 +1,11 @@
 package com.erp.server.bi.service.impl;
 
+import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
@@ -13,7 +15,11 @@ import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -27,22 +33,58 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
 
     @Override
-    public Boolean batchAddSettlementExchangeRate(List<BiSettlementExchangeRateDTO> list) {
+    public Boolean batchAddSettlementExchangeRate(List<Map<String, String>> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
         }
-        for (BiSettlementExchangeRateDTO dto:list) {
-            //验证同币别、日期是否已存在汇率
-            checkExchangeRate(dto);
+        List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
+        for (Map<String, String> map:list) {
+            Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
             BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
-            BeanMapperUtils.copy(dto,entity);
-            boolean flag = this.save(entity);
-            if (flag) {
-                //同步订单、退款、退货中的结算汇率
+            String settlementDate = map.get("settlementDate");
+            LocalDateTime localDateTime = LocalDateTime.now();
+            try {
+                Date date = DateUtils.parseDate(settlementDate, DateUtils.DATE_FORMAT_19);
+                localDateTime = LocalDateUtil.date2LocalDateTime(date);
+            } catch (ParseException e) {
+                throw new ServiceException(ApiError.Default);
+            }
+            if (ObjectUtils.isNotEmpty(iterator)) {
+                while (iterator.hasNext()) {
+                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
+                    String key = entry.getKey().toString();
+                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                    if ("settlementDate".equals(key)) {
+                        continue;
+                    }
+                    entity.setRate(MathUtil.valueOf(value));
+                    entity.setSourceCurrencyCode(key);
+                    entity.setTargetCurrencyCode("CNY");
+                    entity.setSettlementDate(localDateTime);
+                    entityList.add(entity);
+                }
             }
         }
-        return true;
+        return  this.saveBatch(entityList);
     }
+
+    @Override
+    public List<Map<String, String>> listSettlementExchangeRate() {
+        List<Map<String, String>> mapList = new ArrayList<>();
+        List<BiSettlementExchangeRateEntity> list = this.list();
+        if (CollectionUtils.isNotEmpty(list)) {
+            Map<LocalDate, List<BiSettlementExchangeRateEntity>> collect = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDate().toLocalDate()));
+
+            for (BiSettlementExchangeRateEntity entity : list) {
+
+
+            }
+        }
+
+
+        return null;
+    }
+
 
     /**
      * 新增验证是否重复

@@ -85,7 +85,7 @@ public class BiDataSourceCostEntity implements Serializable {
      * 店铺id
      */
     @TableField("shop_id")
-    private String shop_id;
+    private String shopId;
 
     /**
      * 店铺名称
