@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -86,6 +87,16 @@ public class DmpShopInfoDTO implements Serializable {
      * 部门名称
      */
     private String deptName;
+
+    /**
+     * 店铺标识
+     */
+    private String storeSign;
+
+    /**
+     * 启用时间
+     */
+    private LocalDateTime enableTime;
 
 
     @TableField(exist = false)

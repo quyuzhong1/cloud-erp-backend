@@ -26,6 +26,7 @@ import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpShopChangeLogService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,7 +67,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         DmpShopInfoEntity dmpShopInfoEntity = this.getById(id);
         DmpShopInfoDTO dto = new DmpShopInfoDTO();
         if (ObjectUtils.isNotEmpty(dto)) {
-            BeanMapperUtils.copy(dmpShopInfoEntity,dto);
+            BeanUtils.copyProperties(dmpShopInfoEntity,dto);
         }
         return dto;
     }
@@ -75,9 +76,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public Boolean addDmpShopInfo(DmpShopInfoDTO dto) {
         //验证店铺名称是否重复
         checkShopName(dto);
+        FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
+        dto.setChargeName(user.getUserName());
         //新增
         DmpShopInfoEntity entity = new DmpShopInfoEntity();
-        BeanMapperUtils.copy(dto,entity);
+        BeanUtils.copyProperties(dto,entity);
         return this.save(entity);
     }
 
@@ -85,9 +88,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public Boolean updateDmpShopInfo(DmpShopInfoDTO dto) {
         //验证店铺名称是否重复
         checkShopName(dto);
+        FindUserDTO user = sysUserFeign.getUserByUserId(dto.getChargeId());
+        dto.setChargeName(user.getUserName());
         //编辑
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
-        BeanMapperUtils.copy(dto,dmpShopInfoEntity);
+        BeanUtils.copyProperties(dto,dmpShopInfoEntity);
         dmpShopInfoEntity.setId(dto.getId());
         return this.updateById(dmpShopInfoEntity);
     }
