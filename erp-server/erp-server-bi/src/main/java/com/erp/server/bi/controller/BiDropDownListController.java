@@ -88,7 +88,10 @@ public class BiDropDownListController extends BaseController {
         return success(result);
     }
 
-
+    /**
+     * 时间类型下拉列表
+     * @return
+     */
     @GetMapping("/time/type/list")
     public ApiResult<List<SelectShowVO>> listTimeTypeDropDown() {
         List<SelectShowVO> result = Arrays.stream(TimeTypeEnum.values())
@@ -97,6 +100,10 @@ public class BiDropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 结算类型下拉列表
+     * @return
+     */
     @GetMapping("/settle/method/list")
     public ApiResult<List<SelectShowVO>> listSettleMethodDropDown() {
         List<SelectShowVO> result = Arrays.stream(SettleMethodEnum.values())
