@@ -29,7 +29,8 @@
         sys_module_id,
         view_code,
         category_id,
-        remark
+        remark,
+        code
         FROM bi_module
         WHERE state=1
         <if test="moduleIdList!=null and moduleIdList.size>0">

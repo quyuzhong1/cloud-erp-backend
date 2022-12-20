@@ -173,6 +173,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         module.setViewCode(biModule.getViewCode());
         module.setCategoryId(biModule.getCategoryId());
         module.setSysModuleId(sysModuleId);
+        module.setCode(biModule.getCode());
+        checkCode(null, biModule.getCode());
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.save(module);
         if (flag) {
@@ -204,6 +206,21 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_97003);
+        }
+
+    }
+
+
+    public void checkCode(String id, String code) {
+        LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiModuleEntity::getCode, code);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(BiModuleEntity::getId, id);
+        }
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_97009);
         }
 
     }

@@ -82,6 +82,8 @@ public class ModuleDTO implements Serializable {
     @NotBlank(message = "前端组件名不能为空")
     private String viewCode;
 
+    @NotBlank(message = "编码不能为空")
+    private String code;
 
     /**
      * 权限人员

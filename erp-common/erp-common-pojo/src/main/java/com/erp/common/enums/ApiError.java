@@ -201,6 +201,7 @@ public enum ApiError implements Serializable {
     ERROR_97007(97007,"店铺名称已存在"),
     ERROR_97008(97008,"成本只能是数值或百分比"),
 
+    ERROR_97009(97009,"code编码不能重复"),
     ERROR_end(1000000, "系统错误");
 
     public Integer code;
