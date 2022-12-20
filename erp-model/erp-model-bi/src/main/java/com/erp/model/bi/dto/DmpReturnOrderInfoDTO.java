@@ -52,12 +52,12 @@ public class DmpReturnOrderInfoDTO {
     private BigDecimal orderFee;
 
     /**
-     * 退款金额[RMB-实时]
+     * 退货金额[RMB-实时]
      */
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 退款金额[RMB-实时]
+     * 退货金额[RMB-结算]
      */
     private BigDecimal cnySettleAmount;
 

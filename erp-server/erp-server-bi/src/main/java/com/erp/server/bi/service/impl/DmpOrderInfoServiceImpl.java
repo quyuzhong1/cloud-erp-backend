@@ -82,6 +82,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        list.forEach(obj ->obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState())));
         //导出销售数据
         List<DmpOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpOrderInfoExcelDTO.class, list);
         String fileName = getFileName("销售数据导出");

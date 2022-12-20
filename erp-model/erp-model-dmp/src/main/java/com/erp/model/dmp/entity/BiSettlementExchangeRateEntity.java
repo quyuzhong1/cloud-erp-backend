@@ -2,8 +2,8 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+ * @description: 结算汇率表
  * @date 2022/12/19 9:44
  */
 @Data
-@NoArgsConstructor
+@TableName(value ="bi_settlement_exchange_rate")
 public class BiSettlementExchangeRateEntity implements Serializable {
 
     /**

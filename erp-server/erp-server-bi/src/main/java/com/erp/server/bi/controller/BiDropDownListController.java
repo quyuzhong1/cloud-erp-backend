@@ -2,16 +2,19 @@ package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
 import com.erp.model.bi.vo.SalesSiteEnumVO;
 import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.dmp.enums.SalesSiteEnum;
 import com.erp.server.bi.enums.*;
+import com.erp.server.bi.service.BiDictService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +29,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("bi/drop/down")
 public class BiDropDownListController extends BaseController {
+
+    @Resource
+    private BiDictService biDictService;
 
     /**
      * 平台下拉列表
@@ -108,6 +114,19 @@ public class BiDropDownListController extends BaseController {
     public ApiResult<List<SelectShowVO>> listSettleMethodDropDown() {
         List<SelectShowVO> result = Arrays.stream(SettleMethodEnum.values())
                 .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 币种下拉列表
+     * @return
+     */
+    @GetMapping("/currency/list")
+    public ApiResult<List<SelectShowVO>> listCurrencyDropDown() {
+        List<BiDictEntity> biDictList = biDictService.listEntityByType(DictEnum.CURRENCY.getType());
+        List<SelectShowVO> result = biDictList.stream()
+                .map(x -> new SelectShowVO().setName(x.getValue()).setDesc(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

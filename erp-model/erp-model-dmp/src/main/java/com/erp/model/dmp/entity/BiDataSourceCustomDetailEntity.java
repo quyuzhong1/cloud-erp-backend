@@ -70,10 +70,16 @@ public class BiDataSourceCustomDetailEntity implements Serializable {
     private Integer date;
 
     /**
-     * 周
+     * 周日期开始
      */
-    @TableField("week")
-    private Integer week;
+    @TableField("week_begin")
+    private String weekBegin;
+
+    /**
+     * 周日期结束
+     */
+    @TableField("week_end")
+    private String weekEnd;
 
     /**
      * 月
@@ -92,6 +98,12 @@ public class BiDataSourceCustomDetailEntity implements Serializable {
      */
     @TableField("year")
     private Integer year;
+
+    /**
+     * 年
+     */
+    @TableField("value")
+    private String value;
 
     /**
      * 自助数据主表id

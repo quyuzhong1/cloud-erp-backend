@@ -108,14 +108,14 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "订单状态", index = 12)
-    private Integer orderState;
+    private String orderStateName;
 
     /**
      * 订单下单时间
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "订单下单时间", index = 13)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String createTime;
 
     /**
@@ -123,7 +123,7 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "订单发货时间", index = 14)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String deliveryTime;
 
     /**

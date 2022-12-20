@@ -71,9 +71,27 @@ public class BiDataSourceCustomEntity implements Serializable {
     private Integer type;
 
     /**
+     * 年份
+     */
+    @TableField("year")
+    private Integer year;
+
+    /**
+     * 指标分类
+     */
+    @TableField("target_type")
+    private String targetType;
+
+    /**
      * 指标名称
      */
     @TableField("target_name")
     private String targetName;
+
+    /**
+     * 目标值
+     */
+    @TableField("target_value")
+    private String targetValue;
 
 }

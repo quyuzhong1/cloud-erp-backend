@@ -70,17 +70,17 @@ public class DmpReturnOrderInfoExcelDTO implements Serializable {
 
 
     /**
-     * 退款金额[RMB-实时]
+     * 退货金额[RMB-实时]
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "退款金额[RMB-实时]", index = 7)
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 退款金额[RMB-实时]
+     * 退货金额[RMB-结算]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退款金额[RMB-实时]", index = 8)
+    @ExcelProperty(value = "退货金额[RMB-结算]", index = 8)
     private BigDecimal cnySettleAmount;
 
 

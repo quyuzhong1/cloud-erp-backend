@@ -3,11 +3,12 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.BiDataSourceCustomDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.dmp.entity.BiDataSourceCustomEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
 
 /**
  * @author Will
@@ -22,9 +23,9 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @author Will
      * @date: 2022/12/14 16:43
      * @param dto
-     * @return PagingVO<BiDataSourceCustomDTO>
+     * @return PagingVO<LinkedHashMap<String,Object>>
      */
-    PagingVO<BiDataSourceCustomDTO> paging(PagingDTO<BiDataSourceCustomSearchDTO> dto);
+    PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCustomSearchDTO> dto);
 
     /**
      * @description: 导出
@@ -32,7 +33,17 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @date: 2022/12/16 15:58
      * @param dto
      * @param response
-
+     * @param importType
      */
-    void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response);
+    void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response, Integer importType);
+
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2022/12/20 9:36
+     * @param excelFile
+     * @param response
+     * @param importType
+     */
+    void importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType);
 }

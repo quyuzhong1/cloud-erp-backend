@@ -4,7 +4,6 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.BiDataSourceCustomDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -19,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedHashMap;
 
 /**
  * 数据源管理
@@ -39,11 +39,11 @@ public class BiDataSourceCustomController extends BaseController {
     * @author Will
     * @date: 2022/12/16 13:18
     * @param dto
-    * @return ApiResult<PagingVO<BiDataSourceCustomDTO>>
+    * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
     */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<BiDataSourceCustomDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
-        PagingVO<BiDataSourceCustomDTO> pagingVO = biDataSourceCustomService.paging(dto);
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
     }
 
@@ -55,8 +55,8 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
-        biDataSourceCustomService.exportExcel(dto, response);
+    public void exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response, @RequestParam(value = "importType") Integer importType) {
+        biDataSourceCustomService.exportExcel(dto, response,importType);
     }
 
 
@@ -70,7 +70,7 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @PostMapping("/importBiDataSourceCustomFile")
     public void importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-
+        biDataSourceCustomService.importExcel(excelFile, response,importType);
     }
 
 
@@ -82,8 +82,22 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/biDataSourceCustom.xlsx";
+    public void exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
+        String path;
+        switch (importType) {
+            case 1:
+                path = "classpath:excel/biDataSourceCustomYear.xlsx";
+            case 2:
+                path = "classpath:excel/biDataSourceCustomQuarter.xlsx";
+            case 3:
+                path = "classpath:excel/biDataSourceCustomMonth.xlsx";
+            case 4:
+                path = "classpath:excel/biDataSourceCustomWeek.xlsx";
+            case 5:
+                path = "classpath:excel/biDataSourceCustomDay.xlsx";
+            default:
+                path = "";
+        }
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

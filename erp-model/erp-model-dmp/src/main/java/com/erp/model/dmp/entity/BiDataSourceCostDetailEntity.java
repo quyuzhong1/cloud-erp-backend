@@ -82,6 +82,10 @@ public class BiDataSourceCostDetailEntity implements Serializable {
     @TableField("cost_id")
     private String costId;
 
-
+    /**
+     * 值类型（0数值，1百分比）
+     */
+    @TableField("value_type")
+    private Integer valueType;
 
 }

@@ -58,7 +58,7 @@ public class DmpRefundInfoDTO {
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 退款金额[RMB-实时]
+     * 退款金额[RMB-结算]
      */
     private BigDecimal cnySettleAmount;
 
