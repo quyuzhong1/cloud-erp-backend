@@ -6,14 +6,14 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.gyy.GyyShopInfoEntity;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -225,7 +224,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
         //平台标识
         dmpShopInfoEntity.setPlatformSign("管易云");
 
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
+        dmpShopInfoEntity.setCreateTime(new Date());
 
         dmpShopInfoService.checkOrder(dmpShopInfoEntity);
     }
