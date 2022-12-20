@@ -51,6 +51,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        list.forEach(obj ->obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));
         //导出销售数据
         List<DmpRefundInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpRefundInfoExcelDTO.class, list);
         String fileName = dmpOrderInfoService.getFileName("退款数据导出");

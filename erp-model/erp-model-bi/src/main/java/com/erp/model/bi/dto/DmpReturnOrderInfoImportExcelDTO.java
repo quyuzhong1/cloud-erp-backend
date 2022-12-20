@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author Will
@@ -50,45 +52,45 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
      * 退货数量
      */
     @ExcelProperty(value = "退货数量", index = 5)
-    private String refundNum;
+    private Integer refundNum;
 
     /**
      * 退货金额
      */
     @ExcelProperty(value = "退货金额", index = 6)
-    private String orderFee;
+    private BigDecimal orderFee;
 
 
     /**
      * 汇率
      */
     @ExcelProperty(value = "汇率", index = 7)
-    private String currencyRate;
+    private BigDecimal currencyRate;
 
     /**
      * cny-结算汇率
      */
     @ExcelProperty(value = "结算汇率", index = 8)
-    private String cnySettleRate;
+    private BigDecimal cnySettleRate;
 
 
     /**
      * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
     @ExcelProperty(value = "退货状态", index = 9)
-    private String status;
+    private String statusName;
 
     /**
      * 退货时间
      */
     @ExcelProperty(value = "退货时间", index = 10)
-    private String returnCreateTime;
+    private Date returnCreateTime;
 
     /**
      * 原订单时间
      */
     @ExcelProperty(value = "原订单时间", index = 11)
-    private String orderTime;
+    private Date orderTime;
 
     /**
      * 错误信息

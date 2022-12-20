@@ -72,14 +72,14 @@
         0 as refundNum,
         droi.order_fee,
         round(droi.order_fee * droi.currency_rate,2) as cnyRealTimeAmount,
-        droi.cny_settle_amount,
+        round(droi.order_fee * droi.cny_settle_rate,2) as cny_settle_amount,
         droi.status,
         droi.return_create_time
         from dmp_return_order_info droi
         inner join dmp_return_order_item droid on droi.id = droid.return_order_id
         <where>
-            <if test="params.refundId != null and params.refundId != ''">
-                and droi.refund_id like concat('%',#{params.refundId},'%')
+            <if test="params.returnOrderId != null and params.returnOrderId != ''">
+                and droi.return_order_id like concat('%',#{params.returnOrderId},'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')
@@ -90,8 +90,8 @@
             <if test="params.platformName != null and params.platformName != ''">
                 and droi.platform_name like concat('%',#{params.platformName},'%')
             </if>
-            <if test="params.refundStatus != null and params.refundStatus != ''">
-                and droi.refund_status = #{params.refundStatus}
+            <if test="params.status != null and params.status != ''">
+                and droi.status = #{params.status}
             </if>
             <if test="params.returnCreateTime_begin != null and params.returnCreateTime_begin != ''">
                 and to_char(droi.return_create_time,'yyyy-MM-dd') &gt;= to_char(#{params.returnCreateTime_begin},'yyyy-MM-dd')

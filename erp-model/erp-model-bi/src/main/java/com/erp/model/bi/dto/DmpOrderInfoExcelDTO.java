@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author Will
@@ -116,7 +117,7 @@ public class DmpOrderInfoExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "订单下单时间", index = 13)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String createTime;
+    private Date createTime;
 
     /**
      * 订单发货时间
@@ -124,7 +125,7 @@ public class DmpOrderInfoExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "订单发货时间", index = 14)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String deliveryTime;
+    private Date deliveryTime;
 
     /**
      * 销售员

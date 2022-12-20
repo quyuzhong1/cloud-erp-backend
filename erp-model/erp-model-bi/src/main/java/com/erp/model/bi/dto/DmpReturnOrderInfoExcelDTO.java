@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author Will
@@ -88,21 +89,22 @@ public class DmpReturnOrderInfoExcelDTO implements Serializable {
      * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货状态", index = 8)
-    private String status;
+    @ExcelProperty(value = "退货状态", index = 9)
+    private String statusName;
 
     /**
      * 退货时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货时间", index = 8)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private String returnCreateTime;
+    @ExcelProperty(value = "退货时间", index = 10)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date returnCreateTime;
 
     /**
      * 原订单时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "原订单时间", index = 9)
-    private String orderTime;
+    @ExcelProperty(value = "原订单时间", index = 11)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date orderTime;
 }

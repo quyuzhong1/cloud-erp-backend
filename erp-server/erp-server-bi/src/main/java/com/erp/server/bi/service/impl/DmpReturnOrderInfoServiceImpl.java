@@ -27,7 +27,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 退货订单服务
@@ -89,6 +88,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        list.forEach(obj ->obj.setStatusName(ReturnOrderStatusEnum.getName(obj.getStatus())));
         //导出销售数据
         List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
         String fileName = dmpOrderInfoService.getFileName("退货数据导出");

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * @author Will
@@ -88,21 +89,21 @@ public class DmpRefundInfoExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "退款状态", index = 9)
-    private String refundStatus;
+    private String refundStatusName;
 
     /**
      * 退款时间
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "退款时间", index = 10)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private String refundTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date refundTime;
 
     /**
      * 原订单时间
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "原订单时间", index = 11)
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private String orderTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date orderTime;
 }

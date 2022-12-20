@@ -4,9 +4,6 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.bi.dto.DmpReturnOrderInfoImportExcelDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
@@ -18,8 +15,6 @@ import com.erp.server.bi.service.DmpReturnOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 
-import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +49,6 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     * @date: 2022/12/16 10:26
     * @param dto
     * @param analysisContext
-
     */
     @Override
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
@@ -88,16 +82,6 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
                 errorMsgList.add("店铺在系统中未找到");
             }
         }
-
-       if (!StrUtils.isDigit(dto.getRefundNum())) {
-            errorMsgList.add("退货数量只能包含数字");
-        }
-        if (!StrUtils.isDigit(dto.getOrderFee())) {
-            errorMsgList.add("退货金额只能包含数字");
-        }
-        if (!StrUtils.isDigit(dto.getCnySettleRate())) {
-            errorMsgList.add("结算汇率只能包含数字");
-        }
         //查询退货
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnOrderId());
         if(ObjectUtils.isNotEmpty(dmpReturnOrderInfoEntity)) {
@@ -110,22 +94,10 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         }
 
         Integer saleState = null;
-        if (StringUtils.isNotBlank(dto.getStatus())) {
-            saleState = ReturnOrderStatusEnum.getCodeByName(dto.getStatus());
+        if (StringUtils.isNotBlank(dto.getStatusName())) {
+            saleState = ReturnOrderStatusEnum.getCodeByName(dto.getStatusName());
             if (saleState == null || saleState == 0) {
                 errorMsgList.add("退货单状态不正确：退货单状态：待处理，已退款，已重发，已完成，已作废");
-            }
-        }
-
-        if (StringUtils.isNotBlank(dto.getOrderTime())) {
-            if (!DateUtil.isValid(dto.getOrderTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
-                errorMsgList.add("原订单时间格式不正确");
-            }
-        }
-
-        if (StringUtils.isNotBlank(dto.getReturnCreateTime())) {
-            if (!DateUtil.isValid(dto.getReturnCreateTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
-                errorMsgList.add("退货时间格式不正确");
             }
         }
 
@@ -140,17 +112,12 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             return;
         }
         BeanMapperUtils.copy(dto,entity);
-        entity.setOrderTime(EnumTimePattern.parseDate(dto.getOrderTime()));
-        entity.setRefundTime(EnumTimePattern.parseDate(dto.getReturnCreateTime()));
-        entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatus()));
-        entity.setOrderFee(new BigDecimal(dto.getOrderFee()));
-        entity.setCurrencyRate(new BigDecimal(dto.getCurrencyRate()));
-        entity.setCnySettleRate(new BigDecimal(dto.getCnySettleRate()));
+        entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
         boolean flag = dmpReturnOrderInfoService.save(entity);
         //新增sku明细
         if (flag) {
             itemEntity.setReturnOrderId(entity.getId());
-            itemEntity.setQuantity(Integer.valueOf(dto.getRefundNum()));
+            itemEntity.setQuantity(dto.getRefundNum());
             itemEntity.setSkuNo(dto.getSkuNo());
             dmpReturnOrderItemService.save(itemEntity);
         }
