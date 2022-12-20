@@ -155,13 +155,18 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String name = biModule.getName();
         checkName(null, name);
         String sysModuleId = biModule.getSysModuleId();
-        MultipartFile imageFile = biModule.getImageFile();
-        File file = FileUtil.multiToFile(imageFile);
-        String fileName = imageFile.getOriginalFilename().toLowerCase();
-        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-        if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+        Object imageObject = biModule.getImageFile();
+        String fileUrl = "";
+        if (imageObject != null && !imageObject.equals("null")) {
+            MultipartFile imageFile = (MultipartFile) imageObject;
+            File file = FileUtil.multiToFile(imageFile);
+            String fileName = imageFile.getOriginalFilename().toLowerCase();
+            fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
         }
+
         module.setImageUrl(fileUrl);
         module.setName(name);
         module.setRemark(biModule.getRemark());
@@ -218,9 +223,10 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String name = biModule.getName();
         checkName(biModule.getId(), name);
         Boolean uploadFlag = biModule.getUploadFlag();
-        MultipartFile imageFile = biModule.getImageFile();
+        Object imageObject = biModule.getImageFile();
         //当上传了文件 且文件不为空的时候
-        if (imageFile != null &&uploadFlag) {
+        if (imageObject != null && !imageObject.equals("null") && uploadFlag) {
+            MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);

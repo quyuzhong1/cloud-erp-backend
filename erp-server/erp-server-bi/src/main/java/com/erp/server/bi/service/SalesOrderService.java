@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.SalesByCountryVO;
 import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -36,4 +37,6 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     List<SalesVO> getBySpu(BiFilterDTO dto);
+
+    List<SalesByCountryVO> getByCountry(BiFilterDTO dto);
 }

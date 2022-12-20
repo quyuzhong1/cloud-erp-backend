@@ -158,4 +158,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         return resultList;
     }
+
+
+    /**
+     * 根据国家查询销售额
+     * @author yl
+     * @date 2022-12-20 9:15
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesByCountryVO>
+     */
+    @Override
+    public List<SalesByCountryVO> getByCountry(BiFilterDTO dto) {
+        return baseMapper.getByCountry(dto);
+    }
 }

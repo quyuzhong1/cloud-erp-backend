@@ -3,6 +3,7 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.SalesBaseVO;
+import com.erp.model.bi.vo.SalesByCountryVO;
 import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -27,4 +28,11 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
 
     List<SalesVO> getBySpu(BiFilterDTO dto);
+
+    /**
+     * 根据国家查询销售额
+     * @param dto
+     * @return
+     */
+    List<SalesByCountryVO> getByCountry(@Param("params") BiFilterDTO dto);
 }

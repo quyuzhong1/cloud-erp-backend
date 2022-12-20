@@ -5,6 +5,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.SalesByCountryVO;
 import com.erp.model.bi.vo.SalesVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.server.bi.service.SalesOrderService;
@@ -80,6 +81,29 @@ public class BiSalesModuleController extends BaseController {
         List<SalesVO> resultList = salesOrderService.getBySpu(dto);
         return success(resultList);
     }
+
+
+    /**
+     * 销售相关-一级模块-SKU国家销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byCountry")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesByCountryVO>> getByCountry(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesByCountryVO> resultList = salesOrderService.getByCountry(dto);
+        return success(resultList);
+    }
+
+
+
+
+
+
 
 
 }

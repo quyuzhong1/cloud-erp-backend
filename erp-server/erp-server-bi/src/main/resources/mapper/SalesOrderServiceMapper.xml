@@ -283,4 +283,8 @@
         ORDER BY sales ASC
     </select>
 
+    <select id="getByCountry" resultType="com.erp.model.bi.vo.SalesByCountryVO">
+
+    </select>
+
 </mapper>
