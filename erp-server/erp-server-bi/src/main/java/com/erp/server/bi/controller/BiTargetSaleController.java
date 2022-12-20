@@ -145,4 +145,32 @@ public class BiTargetSaleController extends BaseController {
         TargetSaleSumVO vo = dmpOrderInfoService.statisticsDomesticSalesRatio(dto);
         return success(vo);
     }
+
+    /**
+     * 指标-销售额环比
+     */
+    @PostMapping("/ring/ratio")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:indicator:ring:ratio",
+//            tableAlias = "dmp_order_info"
+//    )
+    public ApiResult countRingRatio(@RequestBody @Validated BiFilterDTO dto){
+        TargetSaleSumVO vo = dmpOrderInfoService.statisticsRingRatio(dto);
+        return success(vo);
+    }
+
+    /**
+     * 指标-销售额同比
+     */
+    @PostMapping("/yoy/ratio")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:indicator:yoy:ratio",
+//            tableAlias = "dmp_order_info"
+//    )
+    public ApiResult countYoyRatio(@RequestBody @Validated BiFilterDTO dto){
+        TargetSaleSumVO vo = dmpOrderInfoService.statisticsYoyRatio(dto);
+        return success(vo);
+    }
 }

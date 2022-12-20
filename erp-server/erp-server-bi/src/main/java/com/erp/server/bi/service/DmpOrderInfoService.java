@@ -118,4 +118,17 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      */
     DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId);
 
+    /**
+     * 统计环比增长率
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsRingRatio(BiFilterDTO dto);
+
+    /**
+     * 统计同比增长率
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto);
 }

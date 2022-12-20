@@ -33,6 +33,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -324,6 +327,48 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         queryWrapper.eq(DmpOrderInfoEntity::getPlatformOrderId,platformOrderId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public TargetSaleSumVO statisticsRingRatio(BiFilterDTO dto) {
+        return getTargetSaleSumVO(dto, 0);
+    }
+
+    private TargetSaleSumVO getTargetSaleSumVO(BiFilterDTO dto,Integer type) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime().plusMinutes(1));
+        TargetSaleSumVO currentVo = sumSales(dto);
+        BigDecimal currentAmount = currentVo.getValue();
+        if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        if (0 == type){
+            // 查询上一个周期销售额
+            Duration duration = Duration.between(startTime,endTime);
+            LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+            dto.setStartTime(preStartTime);
+            dto.setEndTime(startTime);
+       }else {
+            // 查询去年同周期
+            dto.setStartTime(startTime.minusYears(1));
+            dto.setEndTime(endTime.minusYears(1));
+       }
+        TargetSaleSumVO previousOneVo = sumSales(dto);
+        BigDecimal rate;
+        BigDecimal preAmount = previousOneVo.getValue();
+        if (BigDecimal.ZERO.compareTo(preAmount)  == 0){
+            rate = BigDecimal.ONE;
+        }else {
+            rate = currentAmount.subtract(preAmount).divide(preAmount, 4, BigDecimal.ROUND_HALF_UP);
+        }
+        return new TargetSaleSumVO(rate.multiply(new BigDecimal(100)));
+    }
+
+    @Override
+    public TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto) {
+        return getTargetSaleSumVO(dto,1);
     }
 
     /**
