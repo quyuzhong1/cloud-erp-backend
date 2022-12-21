@@ -56,16 +56,16 @@
             <if test="params.orderState != null and params.orderState != ''">
                 and doi.order_state = #{params.orderState}
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
+            <if test="params.createTime_begin != null ">
                 and doi.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
+            <if test="params.createTime_end != null ">
                 and doi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
-            <if test="params.deliveryTime_begin != null and params.deliveryTime_begin != ''">
+            <if test="params.deliveryTime_begin != null ">
                 and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
             </if>
-            <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
+            <if test="params.deliveryTime_end != null ">
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
         </where>

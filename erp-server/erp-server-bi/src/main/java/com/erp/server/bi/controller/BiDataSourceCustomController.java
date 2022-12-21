@@ -75,7 +75,7 @@ public class BiDataSourceCustomController extends BaseController {
 
 
     /**
-     * 成本数据-下载模板
+     * 自助数据-下载模板
      * @author Will
      * @date: 2022/12/15 18:42
      * @param request
