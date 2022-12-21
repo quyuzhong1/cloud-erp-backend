@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiTargetManagementMapper">
+
+
+    <select id="paging" resultType="com.erp.model.bi.dto.BiTargetManagementShowDTO">
+        select
+            btm.platform_name,
+            btm.category,
+            btm.sale_type,
+            btm.product_type,
+            btm.product_position,
+            btm.product_no,
+            btm.product_name,
+            btm.per_customer_transaction,
+            btm.january,
+            btm.february,
+            btm.march,
+            btm.april,
+            btm.may,
+            btm.june,
+            btm.july,
+            btm.august,
+            btm.september,
+            btm.october,
+            btm.november,
+            btm.december
+        from bi_target_management btm
+        <where>
+            <if test="params.searchContent != null and params.searchContent != ''">
+                and btm.product_no like concat('%',#{params.searchContent},'%')
+            </if>
+        </where>
+    </select>
+
+</mapper>
