@@ -71,8 +71,12 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BiDataSourceCostSearchDTO params = dto.getParams();
         IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
-        List<LinkedHashMap<String, Object>> linkedHashMaps = renewBiDataSourceCost(pageData.getRecords());
-        pageData.setRecords(linkedHashMaps);
+        LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
+        renewBiDataSourceCost(pageData.getRecords(),headMap);
+        resultMap.put("head",headMap);
+        resultMap.put("data",pageData.getRecords());
+        pageData.setRecords(Arrays.asList(resultMap));
         return new PagingVO(pageData);
     }
 
@@ -221,7 +225,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list);
+        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list,null);
         if (CollectionUtils.isEmpty(costList)) {
             return;
         }
@@ -358,32 +362,57 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     /**
      * 返回字段处理
      */
-    private List<LinkedHashMap<String,Object>> renewBiDataSourceCost(List<LinkedHashMap<String,Object>> list) {
-        if (CollectionUtils.isEmpty(list))  {
-            return list;
-        }
+    private List<LinkedHashMap<String,Object>> renewBiDataSourceCost(List<LinkedHashMap<String,Object>> list,LinkedHashMap<String,Object> head) {
+
+        //返回中文类型的数据
+        List<LinkedHashMap<String,Object>> cnResultMap = new ArrayList<>();
+
         //查询成本字典数据
         List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
-        if (CollectionUtils.isEmpty(dictList))  {
-            return list;
+
+        List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            //查询明细数据
+            List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
+            biDataSourceCostDetailList= biDataSourceCostDetailService.listByCostIds(costIds);
         }
-        List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
-        List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList= biDataSourceCostDetailService.listByCostIds(costIds);
-        if (CollectionUtils.isEmpty(biDataSourceCostDetailList)) {
-            return list;
-        }
-        for (LinkedHashMap<String,Object> map: list) {
-            BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
-            for (BiDataSourceCostEnum value:values) {
-                map.put(value.getName(),map.remove(value.getCode()));
+        BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
+        //新增固定表头
+        for (BiDataSourceCostEnum value:values) {
+            if (ObjectUtils.isEmpty(head.get(value.getCode()))) {
+                head.put(value.getCode(),value.getName());
             }
+        }
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            //新增变动表头
             for (BiDictEntity dcit : dictList) {
-                BigDecimal value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
-                        .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
-                map.put(dcit.getName(),value);
+                if (ObjectUtils.isEmpty(head.get(dcit.getValue()))) {
+                    head.put(dcit.getValue(),dcit.getName());
+                }
+            }
+        }
+        //数据处理
+        for (LinkedHashMap<String,Object> map: list) {
+            LinkedHashMap<String,Object> cnMap = new LinkedHashMap<>();
+
+            for (BiDataSourceCostEnum value:values) {
+                cnMap.put(value.getName(),map.get(value.getCode()));
+            }
+            if (CollectionUtils.isNotEmpty(dictList)) {
+                for (BiDictEntity dcit : dictList) {
+                    BigDecimal value = BigDecimal.ZERO;
+                    if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
+                         value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
+                                .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
+                    }
+                    map.put(dcit.getValue(),value);
+                    cnMap.put(dcit.getName(),value);
+                }
             }
             map.remove("id");
+            cnMap.remove("id");
+            cnResultMap.add(map);
         }
-        return list;
+        return cnResultMap;
     }
 }

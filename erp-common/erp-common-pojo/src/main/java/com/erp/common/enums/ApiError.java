@@ -200,8 +200,9 @@ public enum ApiError implements Serializable {
     ERROR_97006(97006,"您没有权限查看"),
     ERROR_97007(97007,"店铺名称已存在"),
     ERROR_97008(97008,"成本只能是数值或百分比"),
-
     ERROR_97009(97009,"code编码不能重复"),
+    ERROR_97010(97010,"存在相同月份结算汇率"),
+
     ERROR_end(1000000, "系统错误");
 
     public Integer code;

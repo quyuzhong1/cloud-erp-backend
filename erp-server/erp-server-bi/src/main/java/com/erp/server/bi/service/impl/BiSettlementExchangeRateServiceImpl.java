@@ -1,6 +1,5 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.util.DateUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,7 +14,9 @@ import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,11 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
         }
+        List<String> count = list.stream().map((Map m) -> (String) m.get("settlementDate")).distinct().collect(Collectors.toList());
+        if (count.size() > 1) {
+            throw  new ServiceException(ApiError.ERROR_97010);
+        }
+
         List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
         for (Map<String, String> map:list) {
             Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
@@ -45,8 +51,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             String settlementDate = map.get("settlementDate");
             LocalDateTime localDateTime = LocalDateTime.now();
             try {
-                Date date = DateUtils.parseDate(settlementDate, DateUtils.DATE_FORMAT_19);
-                localDateTime = LocalDateUtil.date2LocalDateTime(date);
+                DateFormat format= new SimpleDateFormat("yyyy-MM");
+                Date parse = format.parse(settlementDate);
+                localDateTime = LocalDateUtil.date2LocalDateTime(parse);
             } catch (ParseException e) {
                 throw new ServiceException(ApiError.Default);
             }
@@ -58,6 +65,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
                     if ("settlementDate".equals(key)) {
                         continue;
                     }
+
                     entity.setRate(MathUtil.valueOf(value));
                     entity.setSourceCurrencyCode(key);
                     entity.setTargetCurrencyCode("CNY");
@@ -92,10 +100,15 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
     @Override
     public Boolean batchUpdateSettlementExchangeRate(List<Map<String, String>> list) {
-        LambdaQueryWrapper<BiSettlementExchangeRateEntity> queryWrapper = new LambdaQueryWrapper<>();
-        boolean remove = this.remove(queryWrapper);
-        if (remove) {
-            this.batchAddSettlementExchangeRate(list);
+
+        List<BiSettlementExchangeRateEntity> list1 = this.list();
+        if (CollectionUtils.isNotEmpty(list1)) {
+            List<String> ids = list1.stream().map(BiSettlementExchangeRateEntity::getId).collect(Collectors.toList());
+            boolean remove = this.removeByIds(ids);
+            if (remove) {
+                //重新新增数据
+                this.batchAddSettlementExchangeRate(list);
+            }
         }
         return true;
     }

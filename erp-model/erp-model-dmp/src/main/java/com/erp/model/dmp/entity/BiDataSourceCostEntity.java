@@ -1,8 +1,6 @@
 package com.erp.model.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -24,7 +22,7 @@ public class BiDataSourceCostEntity implements Serializable {
     /**
      * 主键id
      */
-    @TableField("id")
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
     /**
