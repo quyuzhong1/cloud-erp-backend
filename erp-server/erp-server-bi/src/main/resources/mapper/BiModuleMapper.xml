@@ -5,12 +5,11 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.ModulePagingDTO">
         SELECT id,name,remark,image_url,state,view_code
-        FROM bi_module
-        <where>
+        FROM bi_module AS bm1
+        WHERE NOT EXISTS(SELECT 1 FROM bi_module AS bm2 WHERE code LIKE 'bi:indicator:%' AND bm1."id" = bm2."id")
             <if test="params.searchKeyword!=null and params.searchKeyword!=''">
-                name LIKE concat('%',#{params.searchKeyword},'%')
+               AND name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
-        </where>
         ORDER BY create_time DESC
     </select>
 

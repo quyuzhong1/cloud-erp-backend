@@ -17,10 +17,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.QuarterMonthSalesVO;
-import com.erp.model.bi.vo.TargetAnalysisVO;
-import com.erp.model.bi.vo.TargetSaleCountVO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -381,37 +378,171 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
         // 查询目标销售额
-        Map<Integer, BigDecimal> quarterTargetMap = new HashMap<>();
+        Map<Integer, BigDecimal> quarterTargetMap = new HashMap<>(4);
+        // TODO 统计目标销售额
+
 
         // 查询销售额
+        List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, "SUM(COALESCE(item_total*currency_rate,0)) as item_total", start, end);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return getQuarterResultList(quarterTargetMap,new HashMap<>(4),start.getYear());
+        }
+        Map<Integer, BigDecimal> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
+                    // 按照季度分组
+                    LocalDateUtil.date2LocalDate(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType() ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
+                    // 对销售额进行求和
+                    Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getItemTotal, BigDecimal::add)
+            ));
+
+        // 计算完成率
+        return getQuarterResultList(quarterTargetMap,quarterMap,dto.getStartTime().getYear());
+    }
+
+    private List<DmpOrderInfoEntity> getOrderInfoEntities(BiFilterDTO dto, String x, LocalDateTime start, LocalDateTime end) {
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         if (TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType()){
-            qw.select("SUM(COALESCE(item_total*currency_rate,0)) as item_total", "platform_create_time");
+            qw.select(x, "platform_create_time");
         }else {
-            qw.select("SUM(COALESCE(item_total*currency_rate,0)) as item_total", "delivery_time");
+            qw.select(x, "delivery_time");
         }
         qw
             .ge(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(), "platform_create_time", start)
             .le(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(), "platform_create_time", end)
             .ge(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(), "delivery_time", start)
             .le(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(), "delivery_time", end)
-            .groupBy(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(),"platform_create_time")
-            .groupBy(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(),"delivery_time")
-            .last(StringUtils.isNotBlank(dto.getParam()),dto.getParam());
-        List<DmpOrderInfoEntity> entityList = baseMapper.selectList(qw);
-        if (CollectionUtils.isEmpty(entityList)) {
-            return getQuarterResultList(quarterTargetMap,new HashMap<>(),dto.getStartTime().getYear());
+            .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
+        if (!x.equals("id")) {
+            qw.groupBy(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(),"platform_create_time")
+                    .groupBy(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(),"delivery_time");
         }
-        Map<Integer, BigDecimal> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
-                // 按照季度分组
-                LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue() - 1) / 3 + 1,
+        List<DmpOrderInfoEntity> entityList = baseMapper.selectList(qw);
+        return entityList;
+    }
+
+    @Override
+    public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumQuarterSalesVolume(BiFilterDTO dto) {
+        // 获取年度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        // 查询目标销量
+        Map<Integer, Integer> quarterTargetMap = new HashMap<>(4);
+
+        // TODO 统计目标销量
+
+        // 查询销售额
+        List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, "id", start, end);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return getQuarterVolumeResultList(quarterTargetMap,new HashMap<>(4), start.getYear());
+        }
+        List<String> orderIds = entityList.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        if (CollectionUtils.isEmpty(entityItemList)) {
+            return getQuarterVolumeResultList(quarterTargetMap,new HashMap<>(4), start.getYear());
+        }
+        // 根据订单号的分组计算销量
+        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
+                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        // 对订单号进行季度分组
+        Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
+                        // 按照季度分组
+                        LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue() - 1) / 3 + 1,
+                Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0)))
+        );
+        // 计算完成率
+        return getQuarterVolumeResultList(quarterTargetMap,quarterMap,dto.getStartTime().getYear());
+    }
+
+    @Override
+    public TargetAnalysisVO<QuarterMonthSalesVO> sumMonthSales(BiFilterDTO dto) {
+        // 获取年度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
+        // 查询目标销售额
+        Map<Integer, BigDecimal> monthTargetMap = new HashMap<>(4);
+        // TODO 统计目标销售额
+
+
+        // 查询销售额
+        List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, "SUM(COALESCE(item_total*currency_rate, 0)) as item_total", start, end);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());
+        }
+        Map<Integer, BigDecimal> monthMap = entityList.stream().collect(Collectors.groupingBy(x ->
+                        // 按照季度分组
+                        LocalDateUtil.date2LocalDate(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType() ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
                 // 对销售额进行求和
                 Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getItemTotal, BigDecimal::add)
         ));
+
         // 计算完成率
-        return getQuarterResultList(quarterTargetMap,quarterMap,dto.getStartTime().getYear());
+        return getMonthResultList(monthTargetMap,monthMap,start.getYear());
     }
 
+    @Override
+    public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto) {
+        // 获取年度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        // 查询目标销量
+        Map<Integer, Integer> quarterTargetMap = new HashMap<>(4);
+
+        // TODO 统计目标销量
+
+        // 查询销售额
+        List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, "id", start, end);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return getMonthVolumeResultList(quarterTargetMap,new HashMap<>(4), start.getYear());
+        }
+        List<String> orderIds = entityList.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
+        if (CollectionUtils.isEmpty(entityItemList)) {
+            return getMonthVolumeResultList(quarterTargetMap,new HashMap<>(4), start.getYear());
+        }
+        // 根据订单号的分组计算销量
+        Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
+                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        // 对订单号进行季度分组
+        Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x ->
+                        // 按照季度分组
+                        LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
+                Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0)))
+        );
+        // 计算完成率
+        return getMonthVolumeResultList(quarterTargetMap,quarterMap,dto.getStartTime().getYear());
+    }
+
+    /**
+     * 季度销量结构构建
+     * @param quarterTargetMap
+     * @param quarterMap
+     * @param year
+     * @return
+     */
+    private TargetAnalysisVO<QuarterMonthSalesVolumeVO> getQuarterVolumeResultList(Map<Integer, Integer> quarterTargetMap, Map<Integer, Integer> quarterMap, int year) {
+        ArrayList<QuarterMonthSalesVolumeVO> resultList = new ArrayList<>();
+        // 年度销售额
+        QuarterMonthSalesVolumeVO yearSales = new QuarterMonthSalesVolumeVO(quarterTargetMap, quarterMap, year);
+        resultList.add(yearSales);
+        for (int i = 1; i < 5; i++) {
+            resultList.add(new QuarterMonthSalesVolumeVO(quarterTargetMap.get(i), quarterMap.get(i), year, i));
+        }
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = new TargetAnalysisVO<>();
+        vo.setList(resultList);
+        HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
+        yearMap.put(yearSales.getDimension(), new BigDecimal(yearSales.getRealNum()).setScale(0));
+        yearMap.put("目标销售额", new BigDecimal(yearSales.getTargetNum()).setScale(0));
+        yearMap.put("完成率", yearSales.getCompletionRate());
+        vo.setYearSalesTarget(yearMap);
+        return vo;
+    }
+
+    /**
+     * 季度销售额结构构建
+     * @param quarterTargetMap
+     * @param quarterMap
+     * @param year
+     * @return
+     */
     private TargetAnalysisVO<QuarterMonthSalesVO> getQuarterResultList(Map<Integer, BigDecimal> quarterTargetMap, Map<Integer, BigDecimal> quarterMap, Integer year) {
         ArrayList<QuarterMonthSalesVO> resultList = new ArrayList<>();
         // 年度销售额
@@ -422,6 +553,54 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         TargetAnalysisVO<QuarterMonthSalesVO> vo = new TargetAnalysisVO<>();
         vo.setList(resultList);
+        HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
+        yearMap.put(yearSales.getDimension(), yearSales.getRealAmount());
+        yearMap.put("目标销售额", yearSales.getTargetAmount());
+        yearMap.put("完成率", yearSales.getCompletionRate());
+        vo.setYearSalesTarget(yearMap);
+        return vo;
+    }
+
+    /**
+     * 月度销量结果构建
+     * @param quarterTargetMap
+     * @param quarterMap
+     * @param year
+     * @return
+     */
+    private TargetAnalysisVO<QuarterMonthSalesVolumeVO> getMonthVolumeResultList(Map<Integer, Integer> quarterTargetMap, Map<Integer, Integer> quarterMap, int year) {
+        LinkedList<QuarterMonthSalesVolumeVO> resultList = new LinkedList<>();
+        quarterMap.entrySet().stream().forEach(x -> {
+            resultList.add(new QuarterMonthSalesVolumeVO(quarterTargetMap.get(x.getKey()), quarterMap.get(x.getKey()), null, x.getKey()));
+        });
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = new TargetAnalysisVO<>();
+        vo.setList(resultList);
+        // 年度销售额
+        QuarterMonthSalesVolumeVO yearSales = new QuarterMonthSalesVolumeVO(quarterTargetMap, quarterMap, year);
+        HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
+        yearMap.put(yearSales.getDimension(), new BigDecimal(yearSales.getRealNum()).setScale(0));
+        yearMap.put("目标销售额", new BigDecimal(yearSales.getTargetNum()).setScale(0));
+        yearMap.put("完成率", yearSales.getCompletionRate());
+        vo.setYearSalesTarget(yearMap);
+        return vo;
+    }
+
+    /**
+     * 月度销售额结构构建
+     * @param quarterTargetMap
+     * @param quarterMap
+     * @param year
+     * @return
+     */
+    private TargetAnalysisVO<QuarterMonthSalesVO> getMonthResultList(Map<Integer, BigDecimal> quarterTargetMap, Map<Integer, BigDecimal> quarterMap, Integer year) {
+        LinkedList<QuarterMonthSalesVO> resultList = new LinkedList<>();
+        quarterMap.entrySet().stream().forEach(x -> {
+            resultList.add(new QuarterMonthSalesVO(quarterTargetMap.get(x.getKey()), quarterMap.get(x.getKey()), null, x.getKey()));
+        });
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = new TargetAnalysisVO<>();
+        vo.setList(resultList);
+        // 年度销售额
+        QuarterMonthSalesVO yearSales = new QuarterMonthSalesVO(quarterTargetMap, quarterMap, year);
         HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
         yearMap.put(yearSales.getDimension(), yearSales.getRealAmount());
         yearMap.put("目标销售额", yearSales.getTargetAmount());

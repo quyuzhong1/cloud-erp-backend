@@ -7,10 +7,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DmpOrderInfoDTO;
 import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.bi.dto.DmpOrderStateDTO;
-import com.erp.model.bi.vo.QuarterMonthSalesVO;
-import com.erp.model.bi.vo.TargetAnalysisVO;
-import com.erp.model.bi.vo.TargetSaleCountVO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -135,9 +132,30 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto);
 
     /**
-     * 季度销售额统计
+     * 季度销售额指标分析
      * @param dto
      * @return
      */
     TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto);
+
+    /**
+     * 季度销量指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumQuarterSalesVolume(BiFilterDTO dto);
+
+    /**
+     * 月度销售额指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVO> sumMonthSales(BiFilterDTO dto);
+
+    /**
+     * 月度销量指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto);
 }

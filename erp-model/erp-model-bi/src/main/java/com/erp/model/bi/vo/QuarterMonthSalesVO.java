@@ -46,7 +46,11 @@ public class QuarterMonthSalesVO {
     }
 
     public QuarterMonthSalesVO(BigDecimal targetAmount, BigDecimal realAmount, Integer year, Integer quarter) {
-        this.dimension = String.format("%sQ%s销售额", year, quarter);
+        if(null != year){
+            this.dimension = String.format("%sQ%s销售额", year, quarter);
+        }else {
+            this.dimension = String.format("%s月销售额", quarter);
+        }
         this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount.setScale(4, BigDecimal.ROUND_DOWN);
         this.realAmount = null == realAmount ? BigDecimal.ZERO : realAmount.setScale(4, BigDecimal.ROUND_DOWN);
         this.completionRate =BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ?BigDecimal.ZERO : this.realAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));

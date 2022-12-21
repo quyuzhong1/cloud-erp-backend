@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.QuarterMonthSalesVO;
+import com.erp.model.bi.vo.QuarterMonthSalesVolumeVO;
 import com.erp.model.bi.vo.TargetAnalysisVO;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.springframework.validation.annotation.Validated;
@@ -40,10 +41,29 @@ public class BiTargetModuleController extends BaseController {
     /**
      * 季度销量完成情况
      */
+    @PostMapping("/quarter/sales/volume")
+    public ApiResult quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumQuarterSalesVolume(dto);
+        return success(vo);
+    }
 
     /**
      * 月度销售额完成情况
      */
+    @PostMapping("/month/sales")
+    public ApiResult monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumMonthSales(dto);
+        return success(vo);
+    }
+
+    /**
+     * 月度销售额完成情况
+     */
+    @PostMapping("/month/sales/volume")
+    public ApiResult monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumMonthSalesVolume(dto);
+        return success(vo);
+    }
 
     /**
      * 平台销售额/销量完成情况
