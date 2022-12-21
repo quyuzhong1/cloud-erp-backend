@@ -1,7 +1,6 @@
 package com.erp.model.bi.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -36,10 +35,12 @@ public class DmpShopChangeLogDTO {
     /**
      * 店铺负责开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime enableTimeBegin;
 
     /**
      * 店铺负责结束时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime enableTimeEnd;
 }

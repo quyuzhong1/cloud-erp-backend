@@ -117,7 +117,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpShopChangeLogService.save(logEntity);
         //更新销售记录中的启用日期后的店铺业务负责人
         updateCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
-        return this.save(dmpShopInfoEntity);
+        return this.updateById(dmpShopInfoEntity);
     }
 
     @Override

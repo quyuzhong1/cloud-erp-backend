@@ -1,14 +1,10 @@
 package com.erp.model.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -19,6 +15,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
+@TableName(value ="dmp_shop_change_log")
 public class DmpShopChangeLogEntity implements Serializable {
 
     @TableField(exist = false)
@@ -46,7 +43,7 @@ public class DmpShopChangeLogEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDate createTime;
+    private LocalDateTime createTime;
 
     /**
      * 修改人名称
@@ -64,7 +61,7 @@ public class DmpShopChangeLogEntity implements Serializable {
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDate updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 负责人id

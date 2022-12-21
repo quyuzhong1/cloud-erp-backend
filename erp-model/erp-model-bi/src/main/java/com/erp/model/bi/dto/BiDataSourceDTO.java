@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,6 +24,7 @@ public class BiDataSourceDTO {
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /**
@@ -33,6 +35,7 @@ public class BiDataSourceDTO {
     /**
      * 修改时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**

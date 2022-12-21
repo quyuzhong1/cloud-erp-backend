@@ -1,10 +1,11 @@
 package com.erp.model.bi.dto;
 
 import com.erp.common.dto.base.BaseSearchDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -44,21 +45,25 @@ public class DmpReturnOrderInfoSearchDTO extends BaseSearchDTO {
     /**
      * 退货时间-从
      */
-    private Date returnCreateTime_begin;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime returnCreateTime_begin;
 
     /**
      * 退货时间-到
      */
-    private Date returnCreateTime_end;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime returnCreateTime_end;
 
     /**
      * 订单时间-从
      */
-    private Date orderTime_begin;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime orderTime_begin;
 
     /**
      * 订单时间-到
      */
-    private Date orderTime_end;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime orderTime_end;
 
 }

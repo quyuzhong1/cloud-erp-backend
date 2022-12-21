@@ -1,11 +1,11 @@
 package com.erp.model.dmp.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 店铺表
@@ -61,7 +61,8 @@ public class DmpShopInfoDTO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createTime;
 
     /**
      * 平台标识
@@ -96,6 +97,7 @@ public class DmpShopInfoDTO implements Serializable {
     /**
      * 启用时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime enableTime;
 
 

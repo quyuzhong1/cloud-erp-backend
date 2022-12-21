@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,5 +31,6 @@ public class DmpShopInfoChangeDTO {
      * 启用时间
      */
     @NotNull(message = "启用时间不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime enableTime;
 }

@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,6 +27,7 @@ public class BiSettlementExchangeRateDTO {
      * 结算日期
      */
     @NotNull(message = "结算日期不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime settlementDate;
 
     /**

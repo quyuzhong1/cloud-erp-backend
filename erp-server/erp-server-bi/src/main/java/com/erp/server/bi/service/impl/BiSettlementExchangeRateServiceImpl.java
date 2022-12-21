@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.MathUtil;
@@ -14,12 +15,12 @@ import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
         for (Map<String, String> map:list) {
             Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-            BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
             String settlementDate = map.get("settlementDate");
             LocalDateTime localDateTime = LocalDateTime.now();
             try {
@@ -59,13 +59,15 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             }
             if (ObjectUtils.isNotEmpty(iterator)) {
                 while (iterator.hasNext()) {
+                    BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
                     Map.Entry entry = (java.util.Map.Entry) iterator.next();
                     String key = entry.getKey().toString();
                     String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
                     if ("settlementDate".equals(key)) {
                         continue;
                     }
-
+                    String id= IdWorker.getIdStr();
+                    entity.setId(id);
                     entity.setRate(MathUtil.valueOf(value));
                     entity.setSourceCurrencyCode(key);
                     entity.setTargetCurrencyCode("CNY");
@@ -86,10 +88,11 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
            for (Map.Entry<LocalDate, List<BiSettlementExchangeRateEntity>> entry:newMap.entrySet()) {
                LocalDate key = entry.getKey();
                List<BiSettlementExchangeRateEntity> value = entry.getValue();
-               Map<String,String> map = new HashMap<>();
-               map.put("settlementDate",key.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+               LinkedHashMap<String,String> map = new LinkedHashMap<>();
+               map.put("settlementDate",key.getYear()+"-"+key.getMonth().getValue());
                for (BiSettlementExchangeRateEntity entity : value) {
-                   map.put(entity.getSourceCurrencyCode(),entity.getRate().toString());
+                   String rate = MathUtil.compareTo(entity.getRate(), BigDecimal.ZERO) == 0 ? BigDecimal.ZERO.toString() : entity.getRate().toString();
+                   map.put(entity.getSourceCurrencyCode(), rate);
                }
                mapList.add(map);
            }
