@@ -40,11 +40,13 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
         }
-        List<String> count = list.stream().map((Map m) -> (String) m.get("settlementDate")).distinct().collect(Collectors.toList());
-        if (count.size() > 1) {
-            throw  new ServiceException(ApiError.ERROR_97010);
+        list.stream().map((Map m) -> (String) m.get("settlementDate")).distinct().collect(Collectors.toList());
+        Map<String, List<Map<String, String>>> valueMap = list.stream().collect(Collectors.groupingBy((Map m) -> (String) m.get("settlementDate")));
+        for (Map.Entry<String, List<Map<String, String>>> entry: valueMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                throw  new ServiceException(ApiError.ERROR_97010);
+            }
         }
-
         List<BiSettlementExchangeRateEntity> entityList = new ArrayList<>();
         for (Map<String, String> map:list) {
             Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
@@ -103,17 +105,16 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
     @Override
     public Boolean batchUpdateSettlementExchangeRate(List<Map<String, String>> list) {
-
         List<BiSettlementExchangeRateEntity> list1 = this.list();
         if (CollectionUtils.isNotEmpty(list1)) {
             List<String> ids = list1.stream().map(BiSettlementExchangeRateEntity::getId).collect(Collectors.toList());
-            boolean remove = this.removeByIds(ids);
-            if (remove) {
-                //重新新增数据
-                this.batchAddSettlementExchangeRate(list);
-            }
+             this.removeByIds(ids);
         }
-        return true;
+        if (CollectionUtils.isEmpty(list)) {
+            return true;
+        }
+        //重新新增数据
+        return this.batchAddSettlementExchangeRate(list);
     }
 
 
