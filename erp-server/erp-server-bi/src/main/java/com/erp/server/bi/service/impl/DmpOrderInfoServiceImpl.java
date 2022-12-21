@@ -4,19 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.vo.QuarterMonthSalesVO;
+import com.erp.model.bi.vo.TargetAnalysisVO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -28,16 +30,18 @@ import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -369,6 +373,61 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto) {
         return getTargetSaleSumVO(dto,1);
+    }
+
+    @Override
+    public TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto) {
+        // 获取年度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        // 查询目标销售额
+        Map<Integer, BigDecimal> quarterTargetMap = new HashMap<>();
+
+        // 查询销售额
+        QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
+        if (TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType()){
+            qw.select("SUM(COALESCE(item_total*currency_rate,0)) as item_total", "platform_create_time");
+        }else {
+            qw.select("SUM(COALESCE(item_total*currency_rate,0)) as item_total", "delivery_time");
+        }
+        qw
+            .ge(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(), "platform_create_time", start)
+            .le(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(), "platform_create_time", end)
+            .ge(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(), "delivery_time", start)
+            .le(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(), "delivery_time", end)
+            .groupBy(TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType(),"platform_create_time")
+            .groupBy(TimeTypeEnum.DELIVERY_TIME.getCode() == dto.getTimeType(),"delivery_time")
+            .last(StringUtils.isNotBlank(dto.getParam()),dto.getParam());
+        List<DmpOrderInfoEntity> entityList = baseMapper.selectList(qw);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return getQuarterResultList(quarterTargetMap,new HashMap<>(),dto.getStartTime().getYear());
+        }
+        Map<Integer, BigDecimal> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
+                // 按照季度分组
+                LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue() - 1) / 3 + 1,
+                // 对销售额进行求和
+                Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getItemTotal, BigDecimal::add)
+        ));
+        // 计算完成率
+        return getQuarterResultList(quarterTargetMap,quarterMap,dto.getStartTime().getYear());
+    }
+
+    private TargetAnalysisVO<QuarterMonthSalesVO> getQuarterResultList(Map<Integer, BigDecimal> quarterTargetMap, Map<Integer, BigDecimal> quarterMap, Integer year) {
+        ArrayList<QuarterMonthSalesVO> resultList = new ArrayList<>();
+        // 年度销售额
+        QuarterMonthSalesVO yearSales = new QuarterMonthSalesVO(quarterTargetMap, quarterMap, year);
+        resultList.add(yearSales);
+        for (int i = 1; i < 5; i++) {
+            resultList.add(new QuarterMonthSalesVO(quarterTargetMap.get(i), quarterMap.get(i), year, i));
+        }
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = new TargetAnalysisVO<>();
+        vo.setList(resultList);
+        HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
+        yearMap.put(yearSales.getDimension(), yearSales.getRealAmount());
+        yearMap.put("目标销售额", yearSales.getTargetAmount());
+        yearMap.put("完成率", yearSales.getCompletionRate());
+        vo.setYearSalesTarget(yearMap);
+        return vo;
     }
 
     /**

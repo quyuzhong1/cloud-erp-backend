@@ -1,8 +1,19 @@
 package com.erp.server.bi.controller;
 
 import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.QuarterMonthSalesVO;
+import com.erp.model.bi.vo.TargetAnalysisVO;
+import com.erp.server.bi.service.DmpOrderInfoService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * BI目标一级模块
@@ -14,5 +25,51 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("bi/target/")
 public class BiTargetModuleController extends BaseController {
 
+    @Resource
+    private DmpOrderInfoService dmpOrderInfoService;
+    /**
+     * 季度销售额完成情况
+     */
+    @PostMapping("/quarter/sales")
+    public ApiResult quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumQuarterSales(dto);
+        return success(vo);
+    }
+
+
+    /**
+     * 季度销量完成情况
+     */
+
+    /**
+     * 月度销售额完成情况
+     */
+
+    /**
+     * 平台销售额/销量完成情况
+     */
+
+
+    /**
+     * 品类销售额/销量完成情况
+     */
+
+    /**
+     * 新品销售额/销量完成情况
+     */
+
+    /**
+     * 老品销售额/销量完成情况
+     */
+
+
+    /**
+     * 产品定位销售额/销量完成情况
+     */
+
+
+    /**
+     * SKU销售额/销量完成情况
+     */
 
 }

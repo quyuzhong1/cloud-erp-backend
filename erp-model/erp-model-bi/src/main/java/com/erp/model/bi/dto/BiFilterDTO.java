@@ -28,12 +28,14 @@ public class BiFilterDTO extends PermissionsDTO {
      * 对应枚举 TimeTypeEnum
      */
     @NotNull(message = "时间类型不能为空")
+    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class )
     private Integer timeType;
 
     /**
      * 开始日期
      */
     @NotNull(message = "开始时间不能为空")
+    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class )
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
@@ -41,6 +43,7 @@ public class BiFilterDTO extends PermissionsDTO {
      * 结束日期
      */
     @NotNull(message = "结束时间不能为空")
+    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class )
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
@@ -106,5 +109,7 @@ public class BiFilterDTO extends PermissionsDTO {
      */
     private Boolean hasNewSign;
 
+
+    public interface SelectTargetModule{}
 
 }
