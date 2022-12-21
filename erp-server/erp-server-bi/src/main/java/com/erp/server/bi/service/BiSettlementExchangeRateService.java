@@ -28,4 +28,12 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return List<Map<String>>
      */
     List<Map<String, String>> listSettlementExchangeRate();
+    /**
+     * @description: 编辑
+     * @author Will
+     * @date: 2022/12/20 22:42
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchUpdateSettlementExchangeRate(List<Map<String, String>> list);
 }

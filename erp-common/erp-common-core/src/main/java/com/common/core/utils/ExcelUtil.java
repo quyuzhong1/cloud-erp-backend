@@ -7,6 +7,8 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -112,7 +114,7 @@ public class ExcelUtil {
     /**
      * 导出
      */
-    public static void easyUtil(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName){
+    public static void easyUtil(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName,HttpServletResponse response){
         List<Object> objects = new ArrayList<>();
         List<List<String>> hs = new ArrayList<>();
         for (String s : heads) {
@@ -129,7 +131,23 @@ public class ExcelUtil {
             }
             list2.add(objects);
         }
-        EasyExcel.write(fileName).head(hs).sheet(fileName).doWrite(list2);
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            // 这里需要设置不关闭流
+            EasyExcel.write(response.getOutputStream())
+                    .head(hs)
+                    .registerWriteHandler(getStyleStrategy())
+                    // 设置 sheet
+                    .autoCloseStream(Boolean.FALSE).sheet("成本导出")
+                    .sheetName(fileName)
+                    //自定义注解
+                    .doWrite(list2);
+        } catch (Exception e) {
+          throw new ServiceException(ApiError.Default);
+        }
     }
 
 }

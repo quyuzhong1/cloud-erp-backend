@@ -92,7 +92,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                 heads.addAll(nameList);
             }
         }
-        ExcelUtil.easyUtil(heads,head,list,fileName);
+        ExcelUtil.easyUtil(heads,head,list,fileName,response);
     }
 
     @Override
@@ -266,6 +266,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                     }
                 }
             }
+            map.remove("id");
         }
         return list;
     }

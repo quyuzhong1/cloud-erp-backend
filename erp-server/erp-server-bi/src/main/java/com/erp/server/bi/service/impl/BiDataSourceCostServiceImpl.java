@@ -237,7 +237,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
             heads.addAll(nameList);
         }
-        ExcelUtil.easyUtil(heads,head,list,fileName);
+        ExcelUtil.easyUtil(heads,head,list,fileName, response);
         return;
     }
 
@@ -375,13 +375,14 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         for (LinkedHashMap<String,Object> map: list) {
             BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
             for (BiDataSourceCostEnum value:values) {
-                map.put(value.getName(),map.get(value.getCode()));
+                map.put(value.getName(),map.remove(value.getCode()));
             }
             for (BiDictEntity dcit : dictList) {
                 BigDecimal value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
                         .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
                 map.put(dcit.getName(),value);
             }
+            map.remove("id");
         }
         return list;
     }

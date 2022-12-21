@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -73,16 +74,30 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         List<Map<String, String>> mapList = new ArrayList<>();
         List<BiSettlementExchangeRateEntity> list = this.list();
         if (CollectionUtils.isNotEmpty(list)) {
-            Map<LocalDate, List<BiSettlementExchangeRateEntity>> collect = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDate().toLocalDate()));
+            Map<LocalDate, List<BiSettlementExchangeRateEntity>> newMap = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDate().toLocalDate()));
+           for (Map.Entry<LocalDate, List<BiSettlementExchangeRateEntity>> entry:newMap.entrySet()) {
+               LocalDate key = entry.getKey();
+               List<BiSettlementExchangeRateEntity> value = entry.getValue();
+               Map<String,String> map = new HashMap<>();
+               map.put("settlementDate",key.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+               for (BiSettlementExchangeRateEntity entity : value) {
+                   map.put(entity.getSourceCurrencyCode(),entity.getRate().toString());
+               }
+               mapList.add(map);
+           }
 
-            for (BiSettlementExchangeRateEntity entity : list) {
-
-
-            }
         }
+        return mapList;
+    }
 
-
-        return null;
+    @Override
+    public Boolean batchUpdateSettlementExchangeRate(List<Map<String, String>> list) {
+        LambdaQueryWrapper<BiSettlementExchangeRateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        boolean remove = this.remove(queryWrapper);
+        if (remove) {
+            this.batchAddSettlementExchangeRate(list);
+        }
+        return true;
     }
 
 

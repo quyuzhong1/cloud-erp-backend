@@ -40,6 +40,20 @@ public class BiSettlementExchangeRateController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 数据源管理-结算汇率编辑
+     * @author Will
+     * @date: 2022/12/19 10:45
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping("/batchUpdate")
+    public ApiResult batchUpdate(@RequestBody  List<Map<String, String>> list) {
+        Boolean flag = this.biSettlementExchangeRateService.batchUpdateSettlementExchangeRate(list);
+        return flag == true ? success() : failure();
+    }
+
     /**
      * 数据源管理-结算汇率显示
      * @author Will
