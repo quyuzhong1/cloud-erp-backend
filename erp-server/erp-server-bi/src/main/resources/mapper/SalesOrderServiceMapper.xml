@@ -99,8 +99,8 @@
                 #{params.param}
             </if>
         </where>
-            GROUP BY sku_no
-            ORDER BY sales ASC
+        GROUP BY sku_no
+        ORDER BY sales ASC
 
     </select>
 
@@ -108,7 +108,7 @@
     <select id="getLastThirtyDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT round( SUM ( i.sell_price * i.quantity * i.currency_rate ), 2 ) sales,
         i.sku_no AS flagNo,COUNT ( i.order_id ) orderCount,SUM ( i.quantity ) AS salesQuantity,
-        o.paid_time  AS flagDate
+        o.paid_time AS flagDate
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -285,6 +285,220 @@
 
     <select id="getByCountry" resultType="com.erp.model.bi.vo.SalesByCountryVO">
 
+    </select>
+    <select id="getPlatformSales" resultType="java.util.Map">
+        SELECT source_platform AS platform,
+        round (SUM ( order_fee )/10000,4) AS Sales
+        FROM dmp_order_info
+        <where>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        GROUP BY source_platform
+    </select>
+
+    <select id="getByShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
+        SELECT a.shop_no,a.Sales,a.salesQuantity,s.name AS shopName,s.platform_name
+        FROM (
+        SELECT o.shop_no,round( SUM ( o.order_fee ) / 10000, 4 ) AS Sales,
+        COUNT ( o.id ) AS salesQuantity
+        FROM dmp_order_info o
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.paid_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.paid_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        GROUP BY O.shop_no
+        ) a LEFT JOIN dmp_shop_info s ON A.shop_no = s.plarform_shop_no
+
+    </select>
+    <select id="getShopLastThirtyDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
+        SELECT o.shop_no AS flagNo, round( SUM ( o.order_fee ) / 10000, 4 ) AS Sales,
+        COUNT ( o.id ) AS salesQuantity,
+        <if test="params.timeType!=null and params.timeType==1">
+            o.delivery_time AS flagDate
+        </if>
+        <if test="params.timeType!=null and params.timeType==0">
+            o.paid_time AS flagDate
+        </if>
+        FROM dmp_order_info o
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.paid_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.paid_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+            GROUP BY O.shop_no,
+            <if test="params.timeType!=null and params.timeType==1">
+                o.delivery_time
+            </if>
+            <if test="params.timeType!=null and params.timeType==0">
+                o.paid_time
+            </if>
+        </where>
+
+
+
+    </select>
+    <select id="byTopShop" resultType="java.util.Map">
+        SELECT a.shop_no,a.sales,a.salesQuantity,s.name AS "shopName"
+        FROM (
+            SELECT  o.shop_no,round( SUM ( o.order_fee ) / 10000,
+            4 ) AS sales , COUNT( o.id ) AS salesQuantity
+            FROM  dmp_order_info o
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.paid_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.paid_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        GROUP BY  o.shop_no  ORDER BY  sales desc limit 20
+        ) a LEFT JOIN   dmp_shop_info s
+        ON a.shop_no = s.plarform_shop_no    ORDER BY  sales desc limit 20
     </select>
 
 </mapper>
