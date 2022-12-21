@@ -55,8 +55,8 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response, @RequestParam(value = "importType") Integer importType) {
-        biDataSourceCustomService.exportExcel(dto, response,importType);
+    public void exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
     }
 
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
@@ -24,6 +25,7 @@ public class BiDataSourceCustomSearchDTO {
     /**
      * 类型(1年，2季度，3月，4周，5日)
      */
+    @NotNull(message = "类型不能为空")
     private Integer type;
 
     /**

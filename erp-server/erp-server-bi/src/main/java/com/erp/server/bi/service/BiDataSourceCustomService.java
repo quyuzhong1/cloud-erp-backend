@@ -33,9 +33,8 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @date: 2022/12/16 15:58
      * @param dto
      * @param response
-     * @param importType
      */
-    void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response, Integer importType);
+    void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response);
 
     /**
      * @description: 导入

@@ -225,23 +225,20 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list,null);
+        //表头信息
+        LinkedHashMap<String, Object> heads = new LinkedHashMap<>();
+        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list,heads);
         if (CollectionUtils.isEmpty(costList)) {
             return;
         }
-        List<String> heads = new ArrayList<>();		//表头信息
+        List<String> headList = new ArrayList<>();
+        for (Map.Entry<String,Object> map:heads.entrySet()) {
+            String value = map.getValue().toString();
+            headList.add(value);
+        }
         String head = "成本数据表";
         String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
-        BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
-        List<String> enumList = Arrays.stream(values).map(BiDataSourceCostEnum::getName).collect(Collectors.toList());
-        heads.addAll(enumList);
-        //查询成本字典数据
-        List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
-        if (CollectionUtils.isNotEmpty(dictList)) {
-            List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
-            heads.addAll(nameList);
-        }
-        ExcelUtil.easyUtil(heads,head,list,fileName, response);
+        ExcelUtil.easyUtil(headList,head,list,fileName, response);
         return;
     }
 

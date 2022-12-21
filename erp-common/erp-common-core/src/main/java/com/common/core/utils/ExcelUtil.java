@@ -115,7 +115,7 @@ public class ExcelUtil {
      * 导出
      */
     public static void easyUtil(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName,HttpServletResponse response){
-        List<Object> objects = new ArrayList<>();
+
         List<List<String>> hs = new ArrayList<>();
         for (String s : heads) {
             hs.add(Arrays.asList(head,s));
@@ -124,7 +124,7 @@ public class ExcelUtil {
         List<List<Object>> list2 = new ArrayList<>();
 
         for (int i = 0; i < list.size(); i++) {
-
+            List<Object> objects = new ArrayList<>();
             values = list.get(i).values();
             for (Object value : values) {
                 objects.add(value.toString());

@@ -21,6 +21,7 @@ import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -65,39 +66,28 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     }
 
     @Override
-    public void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response,Integer type) {
+    public void exportExcel(BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+
+        Integer type = dto.getType();
         //查询所有数据
         List<LinkedHashMap<String,Object>>  list = baseMapper.getAllBiDataSourceCustom(dto);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> customList = renewBiDataSourceCustom(list,null,type);
+        //表头
+        LinkedHashMap<String,Object> heads = new LinkedHashMap<>();
+        List<LinkedHashMap<String, Object>> customList = renewBiDataSourceCustom(list,heads,type);
         if (CollectionUtils.isEmpty(customList)) {
             return;
         }
-        List<String> heads = new ArrayList<>();		//表头信息
+        List<String> headList = new ArrayList<>();
+        for (Map.Entry<String,Object> map:heads.entrySet()) {
+            String value = map.getValue().toString();
+            headList.add(value);
+        }
         String head = "自助数据表";
         String fileName = dmpOrderInfoService.getFileName("自助数据表")+ ".xlsx";
-        BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
-        List<String> enumList = Arrays.stream(values).map(BiDataSourceCustomEnum::getName).collect(Collectors.toList());
-        heads.addAll(enumList);
-        if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(type)) {
-            //查询成本字典数据
-            List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMQUARTER.getType());
-            if (CollectionUtils.isNotEmpty(dictList)) {
-                List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
-                heads.addAll(nameList);
-            }
-        }
-        if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(type)) {
-            //查询成本字典数据
-            List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMQUARTER.getType());
-            if (CollectionUtils.isNotEmpty(dictList)) {
-                List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
-                heads.addAll(nameList);
-            }
-        }
-        ExcelUtil.easyUtil(heads,head,list,fileName,response);
+        ExcelUtil.easyUtil(headList,head,list,fileName,response);
     }
 
     @Override
@@ -114,7 +104,11 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         for (Map<String,String> map:list) {
             //遍历map下的数据
             Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+            //主表数据
             BiDataSourceCustomEntity entity = new BiDataSourceCustomEntity();
+            entity.setType(importType);
+            //年导入时的主表数据
+            List<BiDataSourceCustomEntity> mainList = new ArrayList<>();
             List<BiDataSourceCustomDetailEntity> detailList = new ArrayList<>();
             Integer yearDate = 0;
             //旧数据时记录
@@ -126,6 +120,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                     }
                     String key = entry.getKey().toString();
                     String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                    //明细数据
                     BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
                     if (BiDataSourceCustomEnum.YEAR.getName().equals(key)) {
                         String year = value.replace("年", "");
@@ -151,6 +146,11 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                         detailEntity.setYear(Integer.valueOf(year));
                         detailEntity.setValue(value);
                         detailList.add(detailEntity);
+                        //年导入时主表数据与明细数据一一对应
+                        BiDataSourceCustomEntity main = new BiDataSourceCustomEntity();
+                        BeanUtils.copyProperties(entity,main);
+                        main.setYear(Integer.valueOf(year));
+                        mainList.add(main);
                     }
                     //季度导入
                     if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(importType)) {
@@ -193,15 +193,25 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
                 }
             }
-            //新增自助主表数据
-            this.save(entity);
-            if (CollectionUtils.isNotEmpty(detailList)) {
-                detailList.forEach(obj -> obj.setCustomId(entity.getId()));
-                biDataSourceCustomDetailService.saveBatch(detailList);
+            if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
+                //年导入
+                this.saveBatch(mainList);
+                if (CollectionUtils.isNotEmpty(detailList)) {
+                    detailList.forEach(obj -> {
+                        String id = mainList.stream().filter(e -> e.getYear().equals(obj.getYear())).map(BiDataSourceCustomEntity::getId).findFirst().orElse("");
+                        obj.setCustomId(id);
+                    });
+                    biDataSourceCustomDetailService.saveBatch(detailList);
+                }
+            } else {
+                //非年导入
+                this.save(entity);
+                if (CollectionUtils.isNotEmpty(detailList)) {
+                    detailList.forEach(obj -> obj.setCustomId(entity.getId()));
+                    biDataSourceCustomDetailService.saveBatch(detailList);
+                }
             }
         }
-
-
     }
 
 
@@ -236,7 +246,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         //新增固定表头
         for (BiDataSourceCustomEnum value:values) {
             if (ObjectUtils.isEmpty(head.get(value.getCode()))) {
-                head.put(value.getName(),value.getName());
+                head.put(value.getCode(),value.getName());
             }
         }
         if (CollectionUtils.isNotEmpty(dictList)) {
@@ -258,21 +268,21 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) || BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) || BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
                 for (BiDataSourceCustomDetailEntity entity: biDataSourceCustomDetailList) {
                     if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type)) {
-                        map.put(entity.getYear().toString().concat("年"),map.get(entity.getValue()));
+                        map.put(entity.getYear().toString().concat("年"),entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
+                        cnMap.put(entity.getYear().toString().concat("年"),entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
                         head.put(entity.getYear().toString().concat("年"),entity.getYear().toString().concat("年"));
-                        cnMap.put(entity.getYear().toString().concat("年"),map.get(entity.getValue()));
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type)) {
-                        map.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),map.get(entity.getValue()));
+                        map.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),entity.getValue());
+                        cnMap.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),entity.getValue());
                         head.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()));
-                        cnMap.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),map.get(entity.getValue()));
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
-                        map.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),map.get(entity.getValue()));
+                        map.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),entity.getValue());
+                        cnMap.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),entity.getValue());
                         head.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"));
-                        cnMap.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),map.get(entity.getValue()));
                         continue;
                     }
                 }
