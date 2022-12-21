@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 数据源管理
@@ -116,13 +115,13 @@ public class DmpShopInfoController extends BaseController {
      * 店铺数据-店铺变更记录
      * @author Will
      * @date: 2022/12/15 16:37
-     * @param shopId
+     * @param dto
      * @return ApiResult<DmpShopChangeLogDTO>
      */
-    @RequestMapping("/listDmpShopChangeLog")
-    public ApiResult<List<DmpShopChangeLogDTO>>  listByShopId(@RequestParam("shopId") String shopId) {
-        List<DmpShopChangeLogDTO> dto = dmpShopChangeLogService.listByShopId(shopId);
-        return success(dto);
+    @PostMapping("/listDmpShopChangeLog")
+    public ApiResult<PagingVO<DmpShopChangeLogDTO>> listByShopId(@RequestBody PagingDTO<AdvanceSearchDTO> dto) {
+        PagingVO<DmpShopChangeLogDTO> pagingVO = dmpShopChangeLogService.paging(dto);
+        return success(pagingVO);
     }
 
     /**

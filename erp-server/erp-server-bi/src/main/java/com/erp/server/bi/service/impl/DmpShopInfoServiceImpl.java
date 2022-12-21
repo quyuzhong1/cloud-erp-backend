@@ -117,7 +117,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpShopChangeLogService.save(logEntity);
         //更新销售记录中的启用日期后的店铺业务负责人
         updateCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
-        return this.save(dmpShopInfoEntity);
+        return this.updateById(dmpShopInfoEntity);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         updateWrapper.set(DmpOrderInfoEntity::getDeptName,sysDepartmentDTO.getName());
         updateWrapper.eq(DmpOrderInfoEntity::getChargeId,dto.getChargeId());
         updateWrapper.eq(DmpOrderInfoEntity::getDeptId,dto.getDeptId());
-        updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime,dto.getEnableTime());
+        updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime());
         return dmpOrderInfoService.update(updateWrapper);
     }
 
@@ -205,7 +205,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         queryWrapper.last("limit 1");
         DmpShopInfoEntity dmpShopInfoEntity = this.getOne(queryWrapper);
         if ((ObjectUtils.isEmpty(dto.getId()) && ObjectUtils.isNotEmpty(dmpShopInfoEntity))
-                || (ObjectUtils.isNotEmpty(dto.getId()) && ObjectUtils.isNotEmpty(dmpShopInfoEntity) && dmpShopInfoEntity.getId().equals(dto.getId()) )  ) {
+                || (ObjectUtils.isNotEmpty(dto.getId()) && ObjectUtils.isNotEmpty(dmpShopInfoEntity) && !dmpShopInfoEntity.getId().equals(dto.getId()))) {
             throw new ServiceException(ApiError.ERROR_97007);
         }
     }
