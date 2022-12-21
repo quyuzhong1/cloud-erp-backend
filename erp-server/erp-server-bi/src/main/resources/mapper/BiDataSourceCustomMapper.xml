@@ -15,11 +15,11 @@
             <if test="params.targetName != null and params.targetName != ''">
                 and bdsc.target_name like concat('%',#{params.targetName},'%')
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(bdsc.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+            <if test="params.createTime_begin != null ">
+                and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(bdsc.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+            <if test="params.createTime_end != null ">
+                and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
         </where>
     </select>
@@ -37,11 +37,11 @@
             <if test="params.targetName != null and params.targetName != ''">
                 and bdsc.target_name like concat('%',#{params.targetName},'%')
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(bdsc.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+            <if test="params.createTime_begin != null ">
+                and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(bdsc.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+            <if test="params.createTime_end != null ">
+                and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
         </where>
     </select>

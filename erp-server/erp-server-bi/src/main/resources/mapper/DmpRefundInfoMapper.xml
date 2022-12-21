@@ -47,17 +47,17 @@
             <if test="params.refundStatus != null and params.refundStatus != ''">
                 and dri.refund_status = #{params.refundStatus}
             </if>
-            <if test="params.refundTime_begin != null and params.refundTime_begin != ''">
-                and to_char(dri.refund_time,'yyyy-MM-dd') &gt;= to_char(#{params.refundTime_begin},'yyyy-MM-dd')
+            <if test="params.refundTime_begin != null ">
+                and dri.refund_time &gt;= #{params.refundTime_begin}::timestamp
             </if>
-            <if test="params.refundTime_end != null and params.refundTime_end != ''">
-                and to_char(dri.refund_time,'yyyy-MM-dd') &lt;= to_char(#{params.refundTime_end},'yyyy-MM-dd')
+            <if test="params.refundTime_end != null ">
+                and dri.refund_time &lt;= #{params.refundTime_end}::timestamp
             </if>
-            <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-                and to_char(dri.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+            <if test="params.orderTime_begin != null ">
+                and dri.order_time &gt;= #{params.orderTime_begin}::timestamp
             </if>
-            <if test="params.orderTime_end != null and params.orderTime_end != ''">
-                and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+            <if test="params.orderTime_end != null ">
+                and dri.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
         </where>
 
@@ -94,17 +94,17 @@
         <if test="params.refundStatus != null and params.refundStatus != ''">
             and dri.refund_status = #{params.refundStatus}
         </if>
-        <if test="params.refundTime_begin != null and params.refundTime_begin != ''">
-            and to_char(dri.refund_time,'yyyy-MM-dd') &gt;= to_char(#{params.refundTime_begin},'yyyy-MM-dd')
+        <if test="params.refundTime_begin != null ">
+            and dri.refund_time &gt;= #{params.refundTime_begin}::timestamp
         </if>
-        <if test="params.refundTime_end != null and params.refundTime_end != ''">
-            and to_char(dri.refund_time,'yyyy-MM-dd') &lt;= to_char(#{params.refundTime_end},'yyyy-MM-dd')
+        <if test="params.refundTime_end != null ">
+            and dri.refund_time &lt;= #{params.refundTime_end}::timestamp
         </if>
-        <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-            and to_char(dri.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+        <if test="params.orderTime_begin != null ">
+            and dri.order_time &gt;= #{params.orderTime_begin}::timestamp
         </if>
-        <if test="params.orderTime_end != null and params.orderTime_end != ''">
-            and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+        <if test="params.orderTime_end != null ">
+            and dri.order_time &lt;= #{params.orderTime_end}::timestamp
         </if>
         </where>
     </select>

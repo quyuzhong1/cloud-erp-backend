@@ -57,16 +57,16 @@
                 and doi.order_state = #{params.orderState}
             </if>
             <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(doi.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+                and doi.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
             <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(doi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+                and doi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
             <if test="params.deliveryTime_begin != null and params.deliveryTime_begin != ''">
-                and to_char(doi.delivery_time,'yyyy-MM-dd') &gt;= to_char(#{params.deliveryTime_begin},'yyyy-MM-dd')
+                and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
             </if>
             <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
-                and to_char(doi.delivery_time,'yyyy-MM-dd') &lt;= to_char(#{params.deliveryTime_end},'yyyy-MM-dd')
+                and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
         </where>
 
@@ -106,17 +106,17 @@
         <if test="params.orderState != null and params.orderState != ''">
             and doi.order_state = #{params.orderState}
         </if>
-        <if test="params.createTime_begin != null and params.createTime_begin != ''">
-            and to_char(doi.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+        <if test="params.createTime_begin != null ">
+            and doi.create_time &gt;= #{params.createTime_begin}::timestamp
         </if>
-        <if test="params.createTime_end != null and params.createTime_end != ''">
-            and to_char(doi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+        <if test="params.createTime_end != null ">
+            and doi.create_time &lt;= #{params.createTime_end}::timestamp
         </if>
-        <if test="params.deliveryTime_begin != null and params.deliveryTime_begin != ''">
-            and to_char(doi.delivery_time,'yyyy-MM-dd') &gt;= to_char(#{params.deliveryTime_begin},'yyyy-MM-dd')
+        <if test="params.deliveryTime_begin != null ">
+            and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
         </if>
-        <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
-            and to_char(doi.delivery_time,'yyyy-MM-dd') &lt;= to_char(#{params.deliveryTime_end},'yyyy-MM-dd')
+        <if test="params.deliveryTime_end != null ">
+            and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
         </if>
         </where>
     </select>

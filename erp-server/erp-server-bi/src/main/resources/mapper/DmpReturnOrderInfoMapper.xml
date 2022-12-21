@@ -47,17 +47,17 @@
             <if test="params.status != null and params.status != ''">
                 and droi.status = #{params.status}
             </if>
-            <if test="params.returnCreateTime_begin != null and params.returnCreateTime_begin != ''">
-                and to_char(droi.return_create_time,'yyyy-MM-dd') &gt;= to_char(#{params.returnCreateTime_begin},'yyyy-MM-dd')
+            <if test="params.returnCreateTime_begin != null ">
+                and droi.return_create_time &gt;= #{params.returnCreateTime_begin}::timestamp
             </if>
-            <if test="params.returnCreateTime_end != null and params.returnCreateTime_end != ''">
-                and to_char(droi.return_create_time,'yyyy-MM-dd') &lt;= to_char(#{params.returnCreateTime_end},'yyyy-MM-dd')
+            <if test="params.returnCreateTime_end != null ">
+                and droi.return_create_time &lt;= #{params.returnCreateTime_end}::timestamp
             </if>
-            <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-                and to_char(droi.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+            <if test="params.orderTime_begin != null ">
+                and droi.order_time &gt;= #{params.orderTime_begin}::timestamp
             </if>
-            <if test="params.orderTime_end != null and params.orderTime_end != ''">
-                and to_char(droi.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+            <if test="params.orderTime_end != null ">
+                and droi.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
         </where>
     </select>
@@ -93,17 +93,17 @@
             <if test="params.status != null and params.status != ''">
                 and droi.status = #{params.status}
             </if>
-            <if test="params.returnCreateTime_begin != null and params.returnCreateTime_begin != ''">
-                and to_char(droi.return_create_time,'yyyy-MM-dd') &gt;= to_char(#{params.returnCreateTime_begin},'yyyy-MM-dd')
+            <if test="params.returnCreateTime_begin != null ">
+                and droi.return_create_time &gt;= #{params.returnCreateTime_begin}::timestamp
             </if>
-            <if test="params.returnCreateTime_end != null and params.returnCreateTime_end != ''">
-                and to_char(droi.return_create_time,'yyyy-MM-dd') &lt;= to_char(#{params.returnCreateTime_end},'yyyy-MM-dd')
+            <if test="params.returnCreateTime_end != null ">
+                and droi.return_create_time &lt;= #{params.returnCreateTime_end}::timestamp
             </if>
-            <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-                and to_char(droi.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+            <if test="params.orderTime_begin != null ">
+                and droi.order_time &gt;= #{params.orderTime_begin}::timestamp
             </if>
-            <if test="params.orderTime_end != null and params.orderTime_end != ''">
-                and to_char(droi.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+            <if test="params.orderTime_end != null ">
+                and droi.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
         </where>
     </select>

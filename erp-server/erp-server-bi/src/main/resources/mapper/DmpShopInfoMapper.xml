@@ -29,11 +29,11 @@
             <if test="params.site != null and params.site != ''">
                 and dsi.site like concat('%',#{params.site},'%')
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(dsi.create_time,'yyyy-MM-dd') &gt;= to_char(#{createTime_begin},'yyyy-MM-dd')
+            <if test="params.createTime_begin != null ">
+                and dsi.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(dsi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+            <if test="params.createTime_end != null ">
+                and dsi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
         </where>
     </select>
@@ -61,11 +61,11 @@
             <if test="params.site != null and params.site != ''">
                 and dsi.site like concat('%',#{params.site},'%')
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(dsi.create_time,'yyyy-MM-dd') &gt;= to_char(#{createTime_begin},'yyyy-MM-dd')
+            <if test="params.createTime_begin != null ">
+                and dsi.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(dsi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+            <if test="params.createTime_end != null ">
+                and dsi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
         </where>
     </select>
