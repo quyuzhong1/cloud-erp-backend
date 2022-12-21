@@ -5,6 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.QuarterMonthSalesVO;
 import com.erp.model.bi.vo.QuarterMonthSalesVolumeVO;
+import com.erp.model.bi.vo.SalesCompletionInfoVO;
 import com.erp.model.bi.vo.TargetAnalysisVO;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import org.springframework.validation.annotation.Validated;
@@ -66,13 +67,37 @@ public class BiTargetModuleController extends BaseController {
     }
 
     /**
+     *
+     * 事业部销售额/销量完成情况
+     */
+
+
+    /**
      * 平台销售额/销量完成情况
      */
+    @PostMapping("/platform/sales")
+    public ApiResult platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumPlatformSalesCompletion(dto);
+        return success(vo);
+    }
+    /**
+     * 站点销售额/销量完成情况
+     */
+
+    /**
+     * 店铺销售额/销量完成情况
+     */
+
 
 
     /**
      * 品类销售额/销量完成情况
      */
+    @PostMapping("/category/sales")
+    public ApiResult categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumCategorySalesCompletion(dto);
+        return success(vo);
+    }
 
     /**
      * 新品销售额/销量完成情况
@@ -90,6 +115,10 @@ public class BiTargetModuleController extends BaseController {
 
     /**
      * SKU销售额/销量完成情况
+     */
+
+    /**
+     * 人员达成
      */
 
 }
