@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -66,4 +67,11 @@ public interface BiDataSourceCostService
      * 导入
      */
     void importExcel(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 编辑
+     * @author Will
+     * @date: 2022/12/21 17:02
+     * @param list
+     */
+    void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list);
 }

@@ -355,6 +355,28 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 
     }
 
+    @Override
+    public void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<BiDataSourceCostDetailEntity> updateList= new ArrayList<>();
+        for (LinkedHashMap<String, Object> map: list) {
+            String id = map.get("id").toString();
+            List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList = biDataSourceCostDetailService.listByCostIds(Arrays.asList(id));
+            if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
+                for (BiDataSourceCostDetailEntity entity :biDataSourceCostDetailList) {
+                    if (ObjectUtils.isNotEmpty(map.get(entity.getCostType()))) {
+                        BigDecimal value = MathUtil.valueOf(map.get(entity.getCostType())) ;
+                        entity.setCostValue(value);
+                        updateList.add(entity);
+                    }
+                }
+            }
+        }
+        biDataSourceCostDetailService.updateBatchById(updateList);
+    }
+
 
     /**
      * 返回字段处理
