@@ -57,7 +57,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
         LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
         LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
-        renewBiDataSourceCustom(pageData.getRecords(),dto.getParams().getType());
+        renewBiDataSourceCustom(pageData.getRecords(),headMap,dto.getParams().getType());
         resultMap.put("head",headMap);
         resultMap.put("data",pageData.getRecords());
         pageData.setRecords(Arrays.asList(resultMap));
@@ -71,7 +71,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> customList = renewBiDataSourceCustom(list,type);
+        List<LinkedHashMap<String, Object>> customList = renewBiDataSourceCustom(list,null,type);
         if (CollectionUtils.isEmpty(customList)) {
             return;
         }
@@ -208,10 +208,10 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     /**
      * 返回字段处理
      */
-    private List<LinkedHashMap<String,Object>> renewBiDataSourceCustom(List<LinkedHashMap<String,Object>> list,Integer type) {
-        if (CollectionUtils.isEmpty(list))  {
-            return list;
-        }
+    private List<LinkedHashMap<String,Object>> renewBiDataSourceCustom(List<LinkedHashMap<String,Object>> list,LinkedHashMap<String, Object> head,Integer type) {
+        //返回中文类型的数据
+        List<LinkedHashMap<String,Object>> cnResultMap = new ArrayList<>();
+
         List<BiDictEntity> dictList = new ArrayList<>();
         switch (type) {
             case 2:
@@ -226,31 +226,53 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                 break;
         }
 
-        if (CollectionUtils.isEmpty(dictList))  {
-            return list;
+        List<BiDataSourceCustomDetailEntity> biDataSourceCustomDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            //查询明细数据
+            List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
+             biDataSourceCustomDetailList= biDataSourceCustomDetailService.listByCustomIds(costIds);
         }
-        List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
-        List<BiDataSourceCustomDetailEntity> biDataSourceCustomDetailList= biDataSourceCustomDetailService.listByCustomIds(costIds);
-        if (CollectionUtils.isEmpty(biDataSourceCustomDetailList)) {
-            return list;
+        BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
+        //新增固定表头
+        for (BiDataSourceCustomEnum value:values) {
+            if (ObjectUtils.isEmpty(head.get(value.getCode()))) {
+                head.put(value.getName(),value.getName());
+            }
         }
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            //新增变动表头
+            for (BiDictEntity dcit : dictList) {
+                if (ObjectUtils.isEmpty(head.get(dcit.getValue()))) {
+                    head.put(dcit.getName(),dcit.getName());
+                }
+            }
+        }
+
         for (LinkedHashMap<String,Object> map: list) {
-            BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
+            //中文数据（用于导出）
+            LinkedHashMap<String,Object> cnMap = new LinkedHashMap<>();
+
             for (BiDataSourceCustomEnum value:values) {
-                map.put(value.getName(),map.get(value.getCode()));
+                cnMap.put(value.getName(),map.get(value.getCode()));
             }
             if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) || BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) || BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
                 for (BiDataSourceCustomDetailEntity entity: biDataSourceCustomDetailList) {
                     if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type)) {
                         map.put(entity.getYear().toString().concat("年"),map.get(entity.getValue()));
+                        head.put(entity.getYear().toString().concat("年"),entity.getYear().toString().concat("年"));
+                        cnMap.put(entity.getYear().toString().concat("年"),map.get(entity.getValue()));
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type)) {
                         map.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),map.get(entity.getValue()));
+                        head.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()));
+                        cnMap.put(entity.getWeekBegin().concat("-").concat(entity.getWeekEnd()),map.get(entity.getValue()));
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
                         map.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),map.get(entity.getValue()));
+                        head.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"));
+                        cnMap.put(entity.getMonth().toString().concat("月").concat(entity.getDate().toString()).concat("日"),map.get(entity.getValue()));
                         continue;
                     }
                 }
@@ -261,17 +283,20 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                         String value = biDataSourceCustomDetailList.stream().filter(obj -> obj.getCustomId().equals(map.get("id")) && obj.getMonth().equals(dcit.getValue()))
                                 .map(BiDataSourceCustomDetailEntity::getValue).findFirst().orElse(null);
                         map.put(dcit.getName(), value);
+                        cnMap.put(dcit.getName(), value);
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(type)) {
                         String value = biDataSourceCustomDetailList.stream().filter(obj -> obj.getCustomId().equals(map.get("id")) && obj.getQuarter().equals(dcit.getValue()))
                                 .map(BiDataSourceCustomDetailEntity::getValue).findFirst().orElse(null);
                         map.put(dcit.getName(), value);
+                        cnMap.put(dcit.getName(), value);
                         continue;
                     }
                 }
             }
             map.remove("id");
+            cnResultMap.add(cnMap);
         }
         return list;
     }

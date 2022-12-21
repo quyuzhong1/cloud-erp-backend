@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -97,8 +98,8 @@ public class DmpShopInfoDTO implements Serializable {
     /**
      * 启用时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime enableTime;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate enableTime;
 
 
     @TableField(exist = false)

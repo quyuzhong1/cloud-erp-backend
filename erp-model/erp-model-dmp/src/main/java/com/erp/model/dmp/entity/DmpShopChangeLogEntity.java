@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -85,11 +86,11 @@ public class DmpShopChangeLogEntity implements Serializable {
      * 店铺负责开始时间
      */
     @TableField(value = "enable_time_begin")
-    private LocalDateTime enableTimeBegin;
+    private LocalDate enableTimeBegin;
 
     /**
      * 店铺负责结束时间
      */
     @TableField(value = "enable_time_end")
-    private LocalDateTime enableTimeEnd;
+    private LocalDate enableTimeEnd;
 }

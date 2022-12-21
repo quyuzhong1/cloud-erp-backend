@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -66,7 +66,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public DmpShopInfoDTO getDmpShopInfoById(String id) {
         DmpShopInfoEntity dmpShopInfoEntity = this.getById(id);
         DmpShopInfoDTO dto = new DmpShopInfoDTO();
-        if (ObjectUtils.isNotEmpty(dto)) {
+        if (ObjectUtils.isNotEmpty(dmpShopInfoEntity)) {
             BeanUtils.copyProperties(dmpShopInfoEntity,dto);
         }
         return dto;
@@ -117,7 +117,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpShopChangeLogService.save(logEntity);
         //更新销售记录中的启用日期后的店铺业务负责人
         updateCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
-        return this.updateById(dmpShopInfoEntity);
+        return this.save(dmpShopInfoEntity);
     }
 
     @Override
@@ -178,7 +178,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @param userName
 
      */
-    private void updateCharge(String platformName, String site, String shopName, LocalDateTime enableTime, String userId, String userName) {
+    private void updateCharge(String platformName, String site, String shopName, LocalDate enableTime, String userId, String userName) {
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(DmpOrderInfoEntity::getChargeId,userId);
         updateWrapper.set(DmpOrderInfoEntity::getChargeName,userName);

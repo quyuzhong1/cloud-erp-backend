@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -35,12 +34,12 @@ public class DmpShopChangeLogDTO {
     /**
      * 店铺负责开始时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime enableTimeBegin;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate enableTimeBegin;
 
     /**
      * 店铺负责结束时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime enableTimeEnd;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate enableTimeEnd;
 }
