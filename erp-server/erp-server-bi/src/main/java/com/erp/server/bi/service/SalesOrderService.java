@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.SalesByCountryVO;
 import com.erp.model.bi.vo.SalesVO;
+import com.erp.model.bi.vo.ShopSalesVO;
 import com.erp.model.bi.vo.StatisticalDataVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -39,4 +40,30 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<SalesVO> getBySpu(BiFilterDTO dto);
 
     List<SalesByCountryVO> getByCountry(BiFilterDTO dto);
+
+    /**
+     * 一级销售模块更具平台分
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO getByPlatform(BiFilterDTO dto);
+
+    /**
+     * 一级销售模块 店铺销售额
+     * @author yl
+     * @date 2022-12-21 10:33
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.ShopSalesVO>
+     */
+    List<ShopSalesVO> getByShop(BiFilterDTO dto);
+
+
+    /**
+     * 一级销售模块 销售额TOP20店铺
+     * @author yl
+     * @date 2022-12-21 10:33
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.ShopSalesVO>
+     */
+    StatisticalDataVO byTopShop(BiFilterDTO dto);
 }

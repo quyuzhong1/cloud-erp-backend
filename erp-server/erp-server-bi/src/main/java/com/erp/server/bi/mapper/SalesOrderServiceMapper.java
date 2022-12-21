@@ -5,6 +5,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.SalesBaseVO;
 import com.erp.model.bi.vo.SalesByCountryVO;
 import com.erp.model.bi.vo.SalesVO;
+import com.erp.model.bi.vo.ShopSalesVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -35,4 +36,22 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @return
      */
     List<SalesByCountryVO> getByCountry(@Param("params") BiFilterDTO dto);
+
+    /**
+     * 根据平台查询销售额
+     * @param dto
+     * @return
+     */
+    List<Map<String, Object>> getPlatformSales(@Param("params") BiFilterDTO dto);
+
+    /**
+     * 根据店铺查询销售额
+     * @param dto
+     * @return
+     */
+    List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto);
+
+    List<SalesBaseVO> getShopLastThirtyDays(@Param("params") BiFilterDTO dto);
+
+    List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto);
 }
