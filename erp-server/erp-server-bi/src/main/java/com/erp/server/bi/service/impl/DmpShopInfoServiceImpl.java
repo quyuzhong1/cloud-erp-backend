@@ -21,6 +21,7 @@ import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.enums.BiStateEnum;
 import com.erp.server.bi.mapper.DmpShopInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpShopChangeLogService;
@@ -59,6 +60,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpShopInfoSearchDTO params = dto.getParams();
         IPage<DmpShopInfoShowDTO> pageData = baseMapper.paging(query, params);
+        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
+            pageData.getRecords().forEach(obj -> obj.setStatusName(BiStateEnum.getName(obj.getStatus())));
+        }
         return new PagingVO(pageData);
     }
 

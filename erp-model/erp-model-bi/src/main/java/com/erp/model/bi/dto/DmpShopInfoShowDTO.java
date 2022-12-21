@@ -46,6 +46,11 @@ public class DmpShopInfoShowDTO {
     private Integer status;
 
     /**
+     * 店铺状态名称
+     */
+    private String statusName;
+
+    /**
      * 店铺标识
      */
     private String storeSign;
