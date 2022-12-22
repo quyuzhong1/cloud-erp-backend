@@ -25,6 +25,11 @@ public class SalesCompletionInfoVO {
      * 维度
      */
     private String dimension;
+
+    /**
+     * 品名
+     */
+    private String productName;
     /**
      * 销量
      */
@@ -53,14 +58,14 @@ public class SalesCompletionInfoVO {
     private BigDecimal salesAmountCompletionRate;
 
 
-    public SalesCompletionInfoVO(String key, BigDecimal targetAmount, Integer targetVolume, BigDecimal realAmount, Integer realVolume) {
+    public SalesCompletionInfoVO(String key, BigDecimal targetAmount, Integer targetVolume, BigDecimal realAmount, Integer realVolume, String skuName) {
         this.dimension = key;
-        this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount;
+        this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
         this.targetVolume = null == targetVolume ? 0 : targetVolume;
-        this.salesAmount = realAmount;
+        this.salesAmount = realAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
         this.salesVolume = realVolume;
-        this.salesVolumeCompletionRate = this.targetVolume == 0 ? BigDecimal.ZERO : new BigDecimal(this.salesVolume).divide(new BigDecimal(this.targetVolume), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-        this.salesAmountCompletionRate = BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ? BigDecimal.ZERO : this.salesAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
-
+        this.salesVolumeCompletionRate = this.targetVolume == 0 ? BigDecimal.ZERO : new BigDecimal(this.salesVolume).divide(new BigDecimal(this.targetVolume), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
+        this.salesAmountCompletionRate = BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ? BigDecimal.ZERO : this.salesAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
+        this.productName = skuName;
     }
 }

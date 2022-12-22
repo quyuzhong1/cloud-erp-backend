@@ -536,7 +536,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询实际销售额
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         List<DmpOrderInfoEntity> orderInfoEntities = getOrderInfoEntities(dto, qw, start, end, null);
-        if (!CollectionUtils.isEmpty(orderInfoEntities)) {
+        if (CollectionUtils.isEmpty(orderInfoEntities)) {
             return new ArrayList<>();
         }
         Map<String, BigDecimal> saleAmountMap = orderInfoEntities.stream()
@@ -558,7 +558,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .stream()
                 .map(x ->
                         new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
-                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()))
+                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()),"")
                 ).collect(Collectors.toList());
         AtomicInteger rankIndex = new AtomicInteger(1);
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
@@ -587,7 +587,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询实际销售额
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         List<DmpOrderInfoEntity> orderInfoEntities = getOrderInfoEntities(dto, qw, start, end, null);
-        if (!CollectionUtils.isEmpty(orderInfoEntities)) {
+        if (CollectionUtils.isEmpty(orderInfoEntities)) {
             return new ArrayList<>();
         }
 
@@ -604,7 +604,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
         Map<String, BigDecimal> saleAmountMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getCategoryName,
                 Collectors.reducing(BigDecimal.ZERO,
-                        x -> new BigDecimal(x.getQuantity()).multiply(x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                        x -> new BigDecimal(x.getQuantity()).multiply(null != x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)
         ));
 
@@ -612,7 +612,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .stream()
                 .map(x ->
                         new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
-                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()))
+                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()), "")
                 ).collect(Collectors.toList());
         AtomicInteger rankIndex = new AtomicInteger(1);
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
@@ -621,6 +621,67 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
                 .collect(Collectors.toList());
         return rankResult;
+    }
+
+    @Override
+    public List<SalesCompletionInfoVO> sumNewProductSalesCompletion(BiFilterDTO dto, Integer newSign) {
+        // 获取月度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        // 查询目标销售额
+
+
+        // TODO
+        HashMap<String, BigDecimal> targetSalesMap = new HashMap<>();
+        // 查询目标销量
+
+
+        // TODO
+        HashMap<String, Integer> targetSalesVolumeMap = new HashMap<>();
+
+        // 查询实际销售额
+        QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
+        List<DmpOrderInfoEntity> orderInfoEntities = getOrderInfoEntities(dto, qw, start, end, null);
+        if (CollectionUtils.isEmpty(orderInfoEntities)) {
+            return new ArrayList<>();
+        }
+
+        // 查询实际销量
+        List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, newSign);
+        if (CollectionUtils.isEmpty(entityItemList)) {
+            return new ArrayList<>();
+        }
+        // 根据sku的分组计算销量
+        Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        // 汇率map
+        Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
+        // 根据sku的分组计算销售额
+        Map<String, BigDecimal> saleAmountMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                Collectors.reducing(BigDecimal.ZERO,
+                        x -> new BigDecimal(x.getQuantity()).multiply(null != x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                        BigDecimal::add)
+        ));
+
+        //  sku 品名Map
+        Map<String, String> skuMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                Collectors.collectingAndThen(Collectors.toList(), v -> v.get(0).getItemName())));
+
+        List<SalesCompletionInfoVO> resultList = saleAmountMap.entrySet()
+                .stream().map(x ->
+                        new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
+                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()),skuMap.getOrDefault(x.getKey(), ""))
+                ).collect(Collectors.toList());
+        AtomicInteger rankIndex = new AtomicInteger(1);
+        List<SalesCompletionInfoVO> rankResult = resultList.stream()
+                .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
+                        .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
+                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .collect(Collectors.toList());
+        return rankResult;
+
+
     }
 
     /**

@@ -172,4 +172,13 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     List<SalesCompletionInfoVO> sumCategorySalesCompletion(BiFilterDTO dto);
+
+    /**
+     * 新品销售完成情况
+     *
+     * @param dto
+     * @param newSign
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumNewProductSalesCompletion(BiFilterDTO dto, Integer newSign);
 }

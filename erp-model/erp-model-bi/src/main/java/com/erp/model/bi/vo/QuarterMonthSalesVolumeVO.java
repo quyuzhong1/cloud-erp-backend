@@ -40,7 +40,10 @@ public class QuarterMonthSalesVolumeVO {
         this.dimension = year.toString()+"年销量";
         this.targetNum = quarterTargetMap.entrySet().stream().map(Map.Entry::getValue).reduce(0, Integer::sum);
         this.realNum = quarterMap.entrySet().stream().map(Map.Entry::getValue).reduce(0, Integer::sum);
-        this.completionRate = 0 == this.targetNum ?BigDecimal.ZERO : new BigDecimal(this.realNum).divide(new BigDecimal(this.targetNum), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        this.completionRate = 0 == this.targetNum ?BigDecimal.ZERO : new BigDecimal(this.realNum)
+                .divide(new BigDecimal(this.targetNum), 4, BigDecimal.ROUND_HALF_UP)
+                .multiply(new BigDecimal(100))
+                .stripTrailingZeros();
     }
 
     public QuarterMonthSalesVolumeVO(Integer targetAmount, Integer realAmount, Integer year, Integer quarter) {
@@ -51,7 +54,10 @@ public class QuarterMonthSalesVolumeVO {
         }
         this.targetNum = null == targetAmount ? 0 : targetAmount;
         this.realNum = null == realAmount ? 0 : realAmount;
-        this.completionRate = 0 == this.targetNum ?BigDecimal.ZERO : new BigDecimal(this.realNum).divide(new BigDecimal(this.targetNum), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        this.completionRate = 0 == this.targetNum ?BigDecimal.ZERO : new BigDecimal(this.realNum)
+                .divide(new BigDecimal(this.targetNum), 4, BigDecimal.ROUND_HALF_UP)
+                .multiply(new BigDecimal(100))
+                .stripTrailingZeros();
     }
 
 }

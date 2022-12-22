@@ -40,9 +40,9 @@ public class QuarterMonthSalesVO {
 
     public QuarterMonthSalesVO(Map<Integer, BigDecimal> quarterTargetMap, Map<Integer, BigDecimal> quarterMap, Integer year) {
         this.dimension = year.toString()+"年销售额";
-        this.targetAmount = quarterTargetMap.entrySet().stream().map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(4, BigDecimal.ROUND_DOWN);
-        this.realAmount = quarterMap.entrySet().stream().map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(4, BigDecimal.ROUND_DOWN);
-        this.completionRate =BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ?BigDecimal.ZERO : this.realAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        this.targetAmount = quarterTargetMap.entrySet().stream().map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
+        this.realAmount = quarterMap.entrySet().stream().map(Map.Entry::getValue).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
+        this.completionRate =BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ?BigDecimal.ZERO : this.realAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
     }
 
     public QuarterMonthSalesVO(BigDecimal targetAmount, BigDecimal realAmount, Integer year, Integer quarter) {
@@ -51,8 +51,8 @@ public class QuarterMonthSalesVO {
         }else {
             this.dimension = String.format("%s月销售额", quarter);
         }
-        this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount.setScale(4, BigDecimal.ROUND_DOWN);
-        this.realAmount = null == realAmount ? BigDecimal.ZERO : realAmount.setScale(4, BigDecimal.ROUND_DOWN);
-        this.completionRate =BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ?BigDecimal.ZERO : this.realAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+        this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
+        this.realAmount = null == realAmount ? BigDecimal.ZERO : realAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
+        this.completionRate =BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ?BigDecimal.ZERO : this.realAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
     }
 }
