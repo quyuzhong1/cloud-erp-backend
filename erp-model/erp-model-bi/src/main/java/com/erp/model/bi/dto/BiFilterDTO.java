@@ -109,6 +109,11 @@ public class BiFilterDTO extends PermissionsDTO {
      */
     private Boolean hasNewSign;
 
+    /**
+     * 排行数量
+     */
+    private Integer rankNum = 5;
+
 
     public interface SelectTargetModule{}
 

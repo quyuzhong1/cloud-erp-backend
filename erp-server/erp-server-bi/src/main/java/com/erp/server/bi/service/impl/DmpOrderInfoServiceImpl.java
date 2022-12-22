@@ -565,6 +565,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
                         .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
                 .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .filter(x ->x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
         return rankResult;
     }
@@ -604,7 +605,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
         Map<String, BigDecimal> saleAmountMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getCategoryName,
                 Collectors.reducing(BigDecimal.ZERO,
-                        x -> new BigDecimal(x.getQuantity()).multiply(null != x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                        x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)
         ));
 
@@ -619,6 +620,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
                         .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
                 .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .filter(x ->x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
         return rankResult;
     }
@@ -660,7 +662,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 根据sku的分组计算销售额
         Map<String, BigDecimal> saleAmountMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.reducing(BigDecimal.ZERO,
-                        x -> new BigDecimal(x.getQuantity()).multiply(null != x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                        x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)
         ));
 
@@ -678,6 +680,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
                         .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
                 .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .filter(x ->x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
         return rankResult;
 
