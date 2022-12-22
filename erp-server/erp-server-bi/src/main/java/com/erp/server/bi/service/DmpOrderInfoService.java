@@ -160,25 +160,39 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto);
 
     /**
-     * 平台销售完成情况
+     * 平台销售完成排行
      * @param dto
      * @return
      */
     List<SalesCompletionInfoVO> sumPlatformSalesCompletion(BiFilterDTO dto);
 
     /**
-     * 品类销售完成情况
+     * 品类销售完成排行
      * @param dto
      * @return
      */
     List<SalesCompletionInfoVO> sumCategorySalesCompletion(BiFilterDTO dto);
 
     /**
-     * 新品销售完成情况
+     * 新品销售完成排行
      *
      * @param dto
      * @param newSign
      * @return
      */
     List<SalesCompletionInfoVO> sumNewProductSalesCompletion(BiFilterDTO dto, Integer newSign);
+
+    /**
+     * 产品定位销售排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumProductPositionSalesCompletion(BiFilterDTO dto);
+
+    /**
+     * 新老品销售情况排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumProductTypeCompletion(BiFilterDTO dto);
 }

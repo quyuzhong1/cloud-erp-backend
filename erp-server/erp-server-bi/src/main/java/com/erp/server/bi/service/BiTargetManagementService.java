@@ -7,6 +7,9 @@ import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiTargetManagementShowDTO;
 import com.erp.model.dmp.entity.BiTargetManagementEntity;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -22,4 +25,13 @@ public interface BiTargetManagementService extends IService<BiTargetManagementEn
      * @return PagingVO<BiTargetManagementShowDTO>
      */
     PagingVO<BiTargetManagementShowDTO> paging(PagingDTO<AdvanceSearchDTO> dto);
+
+    /**
+     * 获取销售目标列表
+     * @param start
+     * @param end
+     * @param param
+     * @return
+     */
+    List<BiTargetManagementEntity> getSales(LocalDateTime start, LocalDateTime end, String param);
 }

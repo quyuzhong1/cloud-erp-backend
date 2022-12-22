@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -7,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -18,6 +20,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.*;
+import com.erp.model.dmp.entity.BiTargetManagementEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -59,6 +62,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpShopInfoService dmpShopInfoService;
     @Resource
     private RedisService redisService;
+    @Resource
+    private BiTargetManagementService biTargetManagementService;
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -485,8 +490,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标销量
         Map<Integer, Integer> quarterTargetMap = new HashMap<>(4);
 
@@ -521,8 +526,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public List<SalesCompletionInfoVO> sumPlatformSalesCompletion(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标销售额
 
 
@@ -554,27 +559,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 对订单号进行平台分组
         Map<String, Integer> salesVolumeMap = orderInfoEntities.stream().collect(Collectors.groupingBy(x -> x.getSourcePlatform(),
                 Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0))));
-        List<SalesCompletionInfoVO> resultList = saleAmountMap.entrySet()
-                .stream()
-                .map(x ->
-                        new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
-                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()),"")
-                ).collect(Collectors.toList());
-        AtomicInteger rankIndex = new AtomicInteger(1);
-        List<SalesCompletionInfoVO> rankResult = resultList.stream()
-                .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
-                        .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
-                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
-                .filter(x ->x.getRanking() <= dto.getRankNum())
-                .collect(Collectors.toList());
+
+        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
     }
 
     @Override
     public List<SalesCompletionInfoVO> sumCategorySalesCompletion(BiFilterDTO dto) {
         // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标销售额
 
 
@@ -609,27 +603,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         BigDecimal::add)
         ));
 
-        List<SalesCompletionInfoVO> resultList = saleAmountMap.entrySet()
-                .stream()
-                .map(x ->
-                        new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
-                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()), "")
-                ).collect(Collectors.toList());
-        AtomicInteger rankIndex = new AtomicInteger(1);
-        List<SalesCompletionInfoVO> rankResult = resultList.stream()
-                .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
-                        .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
-                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
-                .filter(x ->x.getRanking() <= dto.getRankNum())
-                .collect(Collectors.toList());
+
+        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
     }
 
     @Override
     public List<SalesCompletionInfoVO> sumNewProductSalesCompletion(BiFilterDTO dto, Integer newSign) {
         // 获取月度开始时间和结束时间
-        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标销售额
 
 
@@ -650,7 +633,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, newSign);
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, newSign, new ArrayList<>());
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
         }
@@ -670,11 +653,153 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<String, String> skuMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.collectingAndThen(Collectors.toList(), v -> v.get(0).getItemName())));
 
-        List<SalesCompletionInfoVO> resultList = saleAmountMap.entrySet()
+        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, skuMap, salesVolumeMap, saleAmountMap);
+        return rankResult;
+    }
+
+    @Override
+    public List<SalesCompletionInfoVO> sumProductPositionSalesCompletion(BiFilterDTO dto) {
+        // 获取月度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getParam());
+        if(CollectionUtil.isEmpty(targetList)){
+            return new ArrayList<>();
+        }
+        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getSaleType));
+        // 查询目标销售额
+        List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
+        Map<String, BigDecimal> targetSalesMap = new HashMap<>();
+        if(CollectionUtil.isNotEmpty(salesList)){
+            targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
+                    BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+        }
+
+        // 查询目标销量
+        List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
+        Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
+        if(CollectionUtil.isNotEmpty(salesVolumeList)){
+            targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
+                    Collectors.summingInt(x -> x.getJanuary().intValue())));
+        }
+        // 查询实际销售额
+        QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
+        List<DmpOrderInfoEntity> orderInfoEntities = getOrderInfoEntities(dto, qw, start, end, null);
+        if (CollectionUtils.isEmpty(orderInfoEntities)) {
+            return new ArrayList<>();
+        }
+
+        // 查询实际销量
+        List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getProductNo).collect(Collectors.toList());
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
+        if (CollectionUtils.isEmpty(entityItemList)) {
+            return new ArrayList<>();
+        }
+        // 根据sku的分组计算销量
+        Map<String, Integer> skuSalesVolumeMap = entityItemList.stream()
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        // 产品定位销量map
+        Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
+                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getProductNo()))));
+        
+        // 汇率map
+        Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
+                .collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
+
+        // 根据sku的分组计算销售额
+        Map<String, BigDecimal> skuSaleAmountMap = entityItemList.stream()
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                Collectors.reducing(BigDecimal.ZERO,
+                        x -> new BigDecimal(x.getQuantity())
+                                .multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice())
+                                .multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                        BigDecimal::add)
+        ));
+        // 产品定位销售额map
+        Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getProductNo()))));
+
+        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
+        return rankResult;
+    }
+
+    @Override
+    public List<SalesCompletionInfoVO> sumProductTypeCompletion(BiFilterDTO dto) {
+        // 获取月度开始时间和结束时间
+        LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getParam());
+        if(CollectionUtil.isEmpty(targetList)){
+            return new ArrayList<>();
+        }
+        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getSaleType));
+        // 查询目标销售额
+        List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
+        Map<String, BigDecimal> targetSalesMap = salesList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+                BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
+        // 查询目标销量
+        List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
+        Map<String, Integer> targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+                Collectors.summingInt(x -> x.getJanuary().intValue())));
+
+        // 查询实际销售额
+        QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
+        List<DmpOrderInfoEntity> orderInfoEntities = getOrderInfoEntities(dto, qw, start, end, null);
+        if (CollectionUtils.isEmpty(orderInfoEntities)) {
+            return new ArrayList<>();
+        }
+
+        // 查询实际销量
+        List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
+        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getProductNo).collect(Collectors.toList());
+        List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
+        if (CollectionUtils.isEmpty(entityItemList)) {
+            return new ArrayList<>();
+        }
+
+        // 根据sku的分组计算销量
+        Map<String, Integer> skuSalesVolumeMap = entityItemList.stream()
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                        Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
+        // 产品定位销量map
+        Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getProductNo()))));
+
+        // 汇率map
+        Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
+                .collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
+
+        // 根据sku的分组计算销售额
+        Map<String, BigDecimal> skuSaleAmountMap = entityItemList.stream()
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+                        Collectors.reducing(BigDecimal.ZERO,
+                                x -> new BigDecimal(x.getQuantity())
+                                        .multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice())
+                                        .multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
+                                BigDecimal::add)
+                ));
+        // 产品类型销售额map
+        Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getProductNo()))));
+
+        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
+        return rankResult;
+    }
+
+    private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,
+                                                              Map<String, String> skuMap, Map<String, Integer> salesVolumeMap, Map<String, BigDecimal> saleAmountMap) {
+        // 组合数据计算目标达成率
+        Set<String> keys = new HashSet<>();
+        keys.addAll(targetSalesMap.keySet());
+        keys.addAll(targetSalesVolumeMap.keySet());
+        List<SalesCompletionInfoVO> resultList = keys
                 .stream().map(x ->
-                        new SalesCompletionInfoVO(x.getKey(), targetSalesMap.get(x.getKey()), targetSalesVolumeMap.get(x.getKey()),
-                                saleAmountMap.get(x.getKey()), salesVolumeMap.get(x.getKey()),skuMap.getOrDefault(x.getKey(), ""))
+                        new SalesCompletionInfoVO(x, targetSalesMap.get(x), targetSalesVolumeMap.get(x),
+                                saleAmountMap.get(x), salesVolumeMap.get(x),  null != skuMap ? skuMap.getOrDefault(x, "") : "")
                 ).collect(Collectors.toList());
+
         AtomicInteger rankIndex = new AtomicInteger(1);
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
@@ -683,8 +808,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .filter(x ->x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
         return rankResult;
-
-
     }
 
     /**

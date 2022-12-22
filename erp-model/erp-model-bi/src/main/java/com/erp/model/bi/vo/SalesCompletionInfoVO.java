@@ -42,7 +42,7 @@ public class SalesCompletionInfoVO {
     /**
      * 销量完成率
      */
-    private BigDecimal salesVolumeCompletionRate;
+    private String salesVolumeCompletionRate;
 
     /**
      * 销售额
@@ -55,17 +55,31 @@ public class SalesCompletionInfoVO {
     /**
      * 销售额完成率
      */
-    private BigDecimal salesAmountCompletionRate;
+    private String salesAmountCompletionRate;
 
 
     public SalesCompletionInfoVO(String key, BigDecimal targetAmount, Integer targetVolume, BigDecimal realAmount, Integer realVolume, String skuName) {
-        this.dimension = key;
+        this.dimension = getDimensionKey(key);
         this.targetAmount = null == targetAmount ? BigDecimal.ZERO : targetAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
         this.targetVolume = null == targetVolume ? 0 : targetVolume;
         this.salesAmount = realAmount.setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros();
         this.salesVolume = realVolume;
-        this.salesVolumeCompletionRate = this.targetVolume == 0 ? BigDecimal.ZERO : new BigDecimal(this.salesVolume).divide(new BigDecimal(this.targetVolume), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
-        this.salesAmountCompletionRate = BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ? BigDecimal.ZERO : this.salesAmount.divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).stripTrailingZeros();
+        this.salesVolumeCompletionRate = this.targetVolume == 0 ? BigDecimal.ZERO.toPlainString() : new BigDecimal(this.salesVolume)
+                .divide(new BigDecimal(this.targetVolume), 4, BigDecimal.ROUND_HALF_UP)
+                .multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString();
+        this.salesAmountCompletionRate = BigDecimal.ZERO.compareTo(this.targetAmount) == 0 ? BigDecimal.ZERO.toPlainString() : this.salesAmount
+                .divide(this.targetAmount, 4, BigDecimal.ROUND_HALF_UP)
+                .multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString();
         this.productName = skuName;
+    }
+
+    private String getDimensionKey(String key){
+        if("0".equals(key)){
+            return "新品";
+        }else if ("1".equals(key)) {
+            return "老品";
+        }else {
+            return key;
+        }
     }
 }

@@ -120,7 +120,23 @@ public class BiTargetModuleController extends BaseController {
     /**
      * 产品定位销售额/销量完成情况
      */
+    @PostMapping("/product/position/sales")
+    public ApiResult positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductPositionSalesCompletion(dto);
+        return success(vo);
+    }
 
+
+    /**
+     * 新老品排行
+     * @param dto
+     * @return
+     */
+    @PostMapping("/product/type/sales")
+    public ApiResult productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+        List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductTypeCompletion(dto);
+        return success(vo);
+    }
 
     /**
      * SKU销售额/销量完成情况

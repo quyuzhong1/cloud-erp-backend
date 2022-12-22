@@ -81,12 +81,13 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     }
 
     @Override
-    public List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign) {
+    public List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku) {
         if (CollectionUtils.isEmpty(orderIds)) {
             return new ArrayList<>();
         }
         List<DmpOrderItemEntity> list = lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(orderIds), DmpOrderItemEntity::getOrderId, orderIds)
+                .in(CollectionUtils.isNotEmpty(sku), DmpOrderItemEntity::getSkuNo, sku)
                 .eq(null != newSign, DmpOrderItemEntity::getNewSign, newSign)
                 .list();
         return list;

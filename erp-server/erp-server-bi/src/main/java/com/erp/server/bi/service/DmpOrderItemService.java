@@ -52,5 +52,5 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @param orderIds
      * @return
      */
-    List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign);
+    List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku);
 }
