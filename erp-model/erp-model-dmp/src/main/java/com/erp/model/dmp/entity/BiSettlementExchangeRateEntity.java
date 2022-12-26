@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -60,16 +61,22 @@ public class BiSettlementExchangeRateEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 结算日期
+     * 生效日期
      */
-    @TableField(value = "settlement_date")
-    private LocalDateTime settlementDate;
+    @TableField(value = "settlement_date_begin")
+    private LocalDate settlementDateBegin;
+
+    /**
+     * 失效日期
+     */
+    @TableField(value = "settlement_date_end")
+    private LocalDate settlementDateEnd;
 
     /**
      * 汇率
      */
-    @TableField(value = "rate")
-    private BigDecimal rate;
+    @TableField(value = "exchange_rate")
+    private BigDecimal exchangeRate;
 
     /**
      * 源币种

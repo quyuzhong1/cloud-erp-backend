@@ -35,7 +35,7 @@ public class BiSettlementExchangeRateController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchAdd")
-    public ApiResult batchAddSettlementExchangeRate(@RequestBody  List<Map<String, String>> list) {
+    public ApiResult batchAddSettlementExchangeRate(@RequestBody  List<Map<String, Object>> list) {
         Boolean flag = this.biSettlementExchangeRateService.batchAddSettlementExchangeRate(list);
         return flag == true ? success() : failure();
     }
@@ -49,7 +49,7 @@ public class BiSettlementExchangeRateController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdate")
-    public ApiResult batchUpdate(@RequestBody  List<Map<String, String>> list) {
+    public ApiResult batchUpdate(@RequestBody  List<Map<String, Object>> list) {
         Boolean flag = this.biSettlementExchangeRateService.batchUpdateSettlementExchangeRate(list);
         return flag == true ? success() : failure();
     }
@@ -61,8 +61,8 @@ public class BiSettlementExchangeRateController extends BaseController {
      * @return ApiResult
      */
     @RequestMapping("/list")
-    public ApiResult<List<Map<String, String>>> listSettlementExchangeRate() {
-        List<Map<String, String>> list=  biSettlementExchangeRateService.listSettlementExchangeRate();
+    public ApiResult<List<Map<String, Object>>> listSettlementExchangeRate() {
+        List<Map<String, Object>> list=  biSettlementExchangeRateService.listSettlementExchangeRate();
         return  success(list);
     }
 

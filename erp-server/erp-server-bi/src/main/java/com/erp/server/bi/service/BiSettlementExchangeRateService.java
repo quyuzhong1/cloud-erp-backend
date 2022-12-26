@@ -20,14 +20,14 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @param list
      * @return Boolean
      */
-    Boolean batchAddSettlementExchangeRate(List<Map<String, String>> list);
+    Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list);
     /**
      * @description: 界面回显
      * @author Will
      * @date: 2022/12/20 18:49
      * @return List<Map<String>>
      */
-    List<Map<String, String>> listSettlementExchangeRate();
+    List<Map<String, Object>> listSettlementExchangeRate();
     /**
      * @description: 编辑
      * @author Will
@@ -35,5 +35,5 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @param list
      * @return Boolean
      */
-    Boolean batchUpdateSettlementExchangeRate(List<Map<String, String>> list);
+    Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list);
 }

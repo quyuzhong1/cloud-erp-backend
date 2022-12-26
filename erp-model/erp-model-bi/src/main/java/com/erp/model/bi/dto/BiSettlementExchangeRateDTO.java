@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * @author Will
@@ -24,17 +24,24 @@ public class BiSettlementExchangeRateDTO {
     private String id;
 
     /**
-     * 结算日期
+     * 生效日期
      */
-    @NotNull(message = "结算日期不能为空")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime settlementDate;
+    @NotNull(message = "生效日期不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate settlementDateBegin;
+
+    /**
+     * 失效日期
+     */
+    @NotNull(message = "失效日期不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate settlementDateEnd;
 
     /**
      * 汇率
      */
     @NotNull(message = "汇率不能为空")
-    private BigDecimal rate;
+    private BigDecimal exchangeRate;
 
     /**
      * 源币种
