@@ -1,4 +1,4 @@
-package com.erp.model.dmp.entity;
+package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;

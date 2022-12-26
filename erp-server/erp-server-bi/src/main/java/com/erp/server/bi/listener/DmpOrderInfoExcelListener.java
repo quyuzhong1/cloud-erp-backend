@@ -9,7 +9,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.model.bi.dto.DmpOrderInfoImportExcelDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;

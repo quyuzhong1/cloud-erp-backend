@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
-import com.erp.model.bi.dto.DmpShopChangeLogDTO;
+import com.erp.model.dmp.dto.DmpShopChangeLogDTO;
 import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import com.erp.server.bi.mapper.DmpShopChangeLogMapper;
 import com.erp.server.bi.service.DmpShopChangeLogService;

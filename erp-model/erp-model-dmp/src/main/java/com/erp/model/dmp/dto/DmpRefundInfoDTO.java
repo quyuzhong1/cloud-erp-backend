@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class DmpReturnOrderInfoDTO {
+public class DmpRefundInfoDTO {
 
     /**
      * 主键id
@@ -22,9 +22,9 @@ public class DmpReturnOrderInfoDTO {
     private String id;
 
     /**
-     * 退货单号
+     * 退款单号
      */
-    private String returnOrderId;
+    private String refundId;
 
     /**
      * 平台订单编号
@@ -49,41 +49,42 @@ public class DmpReturnOrderInfoDTO {
     /**
      * 退货金额
      */
-    private BigDecimal orderFee;
+    private BigDecimal refundAmount;
+
 
     /**
-     * 退货金额[RMB-实时]
+     * 退款金额[RMB-实时]
      */
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 退货金额[RMB-结算]
+     * 退款金额[RMB-结算]
      */
     private BigDecimal cnySettleAmount;
 
     /**
-     * 退货数量
+     * 退款数量
      */
-    private BigDecimal returnNum;
+    private BigDecimal refundNum;
 
     /**
-     * 状态：1待处理 2已退款 3已重发 4已完成 5已作废
+     * 退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
      */
-    private Integer status;
+    private Integer refundStatus;
 
     /**
-     * 状态名称
+     * 退款状态名称
      */
-    private String statusName;
+    private String refundStatusName;
 
     /**
-     * 退货时间
+     * 退款时间
      */
-    private Date returnCreateTime;
+    private Date refundTime;
 
     /**
-     * 原订单时间
+     * 订单状态
      */
-    private Date orderTime;
+    private Integer platformOrderStatus;
 
 }

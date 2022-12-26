@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import com.erp.common.dto.base.BaseSearchDTO;
 import lombok.Data;

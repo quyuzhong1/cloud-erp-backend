@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;

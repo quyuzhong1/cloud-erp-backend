@@ -1,4 +1,4 @@
-package com.erp.model.dmp.entity;
+package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2022/12/14 15:21
+ * @date 2022/12/14 15:20
  */
-@TableName(value ="bi_data_source_custom_detail")
+@TableName(value ="bi_data_source_cost")
 @Data
-public class BiDataSourceCustomDetailEntity implements Serializable {
+public class BiDataSourceCostEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -62,50 +62,62 @@ public class BiDataSourceCustomDetailEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 日期
-     */
-    @TableField("date")
-    private Integer date;
-
-    /**
-     * 周日期开始
-     */
-    @TableField("week_begin")
-    private String weekBegin;
-
-    /**
-     * 周日期结束
-     */
-    @TableField("week_end")
-    private String weekEnd;
-
-    /**
-     * 月
+     * 月份
      */
     @TableField("month")
-    private Integer month;
+    private LocalDateTime month;
 
     /**
-     * 季度
+     * 部门id
      */
-    @TableField("quarter")
-    private Integer quarter;
+    @TableField(value = "dept_id")
+    private String deptId;
 
     /**
-     * 年
+     * 部门名称
      */
-    @TableField("year")
-    private Integer year;
+    @TableField(value = "dept_name")
+    private String deptName;
 
     /**
-     * 年
+     * 店铺id
      */
-    @TableField("value")
-    private String value;
+    @TableField("shop_id")
+    private String shopId;
 
     /**
-     * 自助数据主表id
+     * 店铺名称
      */
-    @TableField("custom_id")
-    private String customId;
+    @TableField("shop_name")
+    private String shopName;
+
+    /**
+     * 平台名称
+     */
+    @TableField("platform_name")
+    private String platformName;
+
+    /**
+     * 站点
+     */
+    @TableField("site")
+    private String site;
+
+    /**
+     * 负责人id
+     */
+    @TableField(value = "charge_id")
+    private String chargeId;
+
+    /**
+     * 负责人名称
+     */
+    @TableField(value = "charge_name")
+    private String chargeName;
+
+    /**
+     * 组合
+     */
+    @TableField(value = "combination")
+    private String combination;
 }

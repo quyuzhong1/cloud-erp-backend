@@ -5,7 +5,7 @@
 <mapper namespace="com.erp.server.bi.mapper.DmpShopInfoMapper">
 
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpShopInfoShowDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpShopInfoShowDTO">
         select
            dsi.id,
            dsi.name,
@@ -38,7 +38,7 @@
         </where>
     </select>
 
-    <select id="getAllDmpShopInfo" resultType="com.erp.model.bi.dto.DmpShopInfoExcelDTO">
+    <select id="getAllDmpShopInfo" resultType="com.erp.model.dmp.dto.DmpShopInfoExcelDTO">
         select
         dsi.name,
         dsi.platform_name,

@@ -1,7 +1,7 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

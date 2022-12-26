@@ -1,4 +1,4 @@
-package com.erp.model.dmp.entity;
+package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
@@ -10,15 +10,11 @@ import java.time.LocalDateTime;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2022/12/14 15:21
+ * @date 2022/12/16 19:16
  */
-@TableName(value ="bi_data_source_custom")
+@TableName(value ="bi_data_source")
 @Data
-public class BiDataSourceCustomEntity implements Serializable {
-
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+public class BiDataSourceEntity implements Serializable {
 
     /**
      * 主键id
@@ -63,33 +59,8 @@ public class BiDataSourceCustomEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 类型(日，周，月，季）
+     * 数据源类型
      */
     @TableField("type")
-    private Integer type;
-
-    /**
-     * 年份
-     */
-    @TableField("year")
-    private Integer year;
-
-    /**
-     * 指标分类
-     */
-    @TableField("target_type")
-    private String targetType;
-
-    /**
-     * 指标名称
-     */
-    @TableField("target_name")
-    private String targetName;
-
-    /**
-     * 目标值
-     */
-    @TableField("target_value")
-    private String targetValue;
-
+    private String type;
 }

@@ -4,7 +4,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.model.bi.dto.BiTargetManagementImportExcelDTO;
-import com.erp.model.dmp.entity.BiTargetManagementEntity;
+import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;

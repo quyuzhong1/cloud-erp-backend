@@ -5,7 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.server.bi.service.DmpShopChangeLogService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.springframework.validation.annotation.Validated;

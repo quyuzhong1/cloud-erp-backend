@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
@@ -18,20 +18,20 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class DmpReturnOrderInfoExcelDTO implements Serializable {
+public class DmpRefundInfoExcelDTO implements Serializable {
 
     /**
-     * 退货单号
+     * 退款单号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货单号", index = 0)
-    private String returnOrderId;
+    @ExcelProperty(value = "退款单号", index = 0)
+    private String refundId;
 
     /**
-     * 原订单号
+     * 平台订单编号
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "原订单号", index = 1)
+    @ExcelProperty(value = "平台订单编号", index = 1)
     private String platformOrderId;
 
     /**
@@ -56,49 +56,48 @@ public class DmpReturnOrderInfoExcelDTO implements Serializable {
     private String skuNo;
 
     /**
-     * 退货数量
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "退货数量", index = 5)
-    private BigDecimal refundNum;
-
-    /**
      * 退货金额
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货金额", index = 6)
-    private BigDecimal orderFee;
+    @ExcelProperty(value = "退货金额", index = 5)
+    private BigDecimal refundAmount;
 
 
     /**
-     * 退货金额[RMB-实时]
+     * 退款金额[RMB-实时]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退款金额[RMB-实时]", index = 7)
+    @ExcelProperty(value = "退款金额[RMB-实时]", index = 6)
     private BigDecimal cnyRealTimeAmount;
 
     /**
-     * 退货金额[RMB-结算]
+     * 退款金额[RMB-结算]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货金额[RMB-结算]", index = 8)
+    @ExcelProperty(value = "退款金额[RMB-结算]", index = 7)
     private BigDecimal cnySettleAmount;
 
-
     /**
-     * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
+     * 退款数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货状态", index = 9)
-    private String statusName;
+    @ExcelProperty(value = "退款数量", index = 8)
+    private BigDecimal refundNum;
 
     /**
-     * 退货时间
+     * 退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "退货时间", index = 10)
+    @ExcelProperty(value = "退款状态", index = 9)
+    private String refundStatusName;
+
+    /**
+     * 退款时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "退款时间", index = 10)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date returnCreateTime;
+    private Date refundTime;
 
     /**
      * 原订单时间

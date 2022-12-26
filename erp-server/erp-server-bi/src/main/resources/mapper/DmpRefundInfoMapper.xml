@@ -16,7 +16,7 @@
         picture_url,platform_update_time,track_number
     </sql>
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpRefundInfoDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
             dri.refund_id,
             dri.platform_order_id,
@@ -63,7 +63,7 @@
 
     </select>
 
-    <select id="getAllRefundInfo" resultType="com.erp.model.bi.dto.DmpRefundInfoDTO">
+    <select id="getAllRefundInfo" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
         dri.refund_id,
         dri.platform_order_id,

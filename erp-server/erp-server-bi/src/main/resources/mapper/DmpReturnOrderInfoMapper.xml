@@ -15,7 +15,7 @@
         currency_rate
     </sql>
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpReturnOrderInfoDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
         select
             droi.return_order_id,
             droi.platform_order_id,
@@ -62,7 +62,7 @@
         </where>
     </select>
 
-    <select id="getAllDmpReturnOrderInfo" resultType="com.erp.model.bi.dto.DmpReturnOrderInfoDTO">
+    <select id="getAllDmpReturnOrderInfo" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
         select
         droi.return_order_id,
         droi.platform_order_id,

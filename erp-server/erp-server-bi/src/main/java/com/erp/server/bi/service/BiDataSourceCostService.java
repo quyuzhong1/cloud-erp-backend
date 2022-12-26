@@ -6,7 +6,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;

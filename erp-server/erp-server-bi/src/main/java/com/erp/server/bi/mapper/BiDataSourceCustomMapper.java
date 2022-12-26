@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
-import com.erp.model.dmp.entity.BiDataSourceCustomEntity;
+import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

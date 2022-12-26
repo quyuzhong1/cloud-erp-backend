@@ -2,7 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
+import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostDetailMapper;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import org.apache.commons.collections.CollectionUtils;

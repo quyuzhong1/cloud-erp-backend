@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.DmpOrderStateDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpOrderStateDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 

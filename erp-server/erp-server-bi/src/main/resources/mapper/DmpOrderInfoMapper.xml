@@ -21,7 +21,7 @@
         country_name_en,country_name_cn
     </sql>
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
         select
             doi.id,
             doi.platform_order_id,
@@ -72,7 +72,7 @@
 
     </select>
 
-    <select id="getAllDmpOrderInfo" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
+    <select id="getAllDmpOrderInfo" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
         select
         doi.platform_order_id,
         doi.source_platform,

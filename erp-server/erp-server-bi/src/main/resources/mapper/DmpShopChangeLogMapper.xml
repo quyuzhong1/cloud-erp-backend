@@ -5,7 +5,7 @@
 <mapper namespace="com.erp.server.bi.mapper.DmpShopChangeLogMapper">
 
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpShopChangeLogDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpShopChangeLogDTO">
         select
             dscl.update_user_name,
             dscl.update_time,

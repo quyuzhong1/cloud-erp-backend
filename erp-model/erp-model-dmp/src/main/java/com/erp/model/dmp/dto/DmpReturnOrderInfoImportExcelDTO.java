@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
@@ -16,18 +16,18 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class DmpRefundInfoImportExcelDTO implements Serializable {
+public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
 
     /**
-     * 退款单号
+     * 退货单号
      */
-    @ExcelProperty(value = "退款单号", index = 0)
-    private String refundId;
+    @ExcelProperty(value = "退货单号", index = 0)
+    private String returnOrderId;
 
     /**
-     * 平台订单编号
+     * 原订单号
      */
-    @ExcelProperty(value = "平台订单编号", index = 1)
+    @ExcelProperty(value = "原订单号", index = 1)
     private String platformOrderId;
 
     /**
@@ -49,40 +49,42 @@ public class DmpRefundInfoImportExcelDTO implements Serializable {
     private String skuNo;
 
     /**
-     * 退款金额
+     * 退货数量
      */
-    @ExcelProperty(value = "退款金额", index = 5)
-    private BigDecimal refundAmount;
+    @ExcelProperty(value = "退货数量", index = 5)
+    private Integer refundNum;
+
+    /**
+     * 退货金额
+     */
+    @ExcelProperty(value = "退货金额", index = 6)
+    private BigDecimal orderFee;
+
 
     /**
      * 汇率
      */
-    @ExcelProperty(value = "汇率", index = 6)
+    @ExcelProperty(value = "汇率", index = 7)
     private BigDecimal currencyRate;
 
     /**
      * cny-结算汇率
      */
-    @ExcelProperty(value = "结算汇率", index = 7)
+    @ExcelProperty(value = "结算汇率", index = 8)
     private BigDecimal cnySettleRate;
 
-    /**
-     * 退款数量
-     */
-    @ExcelProperty(value = "退款数量", index = 8)
-    private Integer refundNum;
 
     /**
-     * 退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
+     * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
-    @ExcelProperty(value = "退款状态", index = 9)
-    private String refundStatusName;
+    @ExcelProperty(value = "退货状态", index = 9)
+    private String statusName;
 
     /**
-     * 退款时间
+     * 退货时间
      */
-    @ExcelProperty(value = "退款时间", index = 10)
-    private Date refundTime;
+    @ExcelProperty(value = "退货时间", index = 10)
+    private Date returnCreateTime;
 
     /**
      * 原订单时间

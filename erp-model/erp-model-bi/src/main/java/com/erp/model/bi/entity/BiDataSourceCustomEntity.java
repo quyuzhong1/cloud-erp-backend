@@ -1,4 +1,4 @@
-package com.erp.model.dmp.entity;
+package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
@@ -10,11 +10,12 @@ import java.time.LocalDateTime;
  * @author Will
  * @version 1.0
  * @description: TODO
- * @date 2022/12/14 15:20
+ * @date 2022/12/14 15:21
  */
-@TableName(value ="bi_data_source_cost")
+@TableName(value ="bi_data_source_custom")
 @Data
-public class BiDataSourceCostEntity implements Serializable {
+public class BiDataSourceCustomEntity implements Serializable {
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -62,62 +63,33 @@ public class BiDataSourceCostEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 月份
+     * 类型(日，周，月，季）
      */
-    @TableField("month")
-    private LocalDateTime month;
+    @TableField("type")
+    private Integer type;
 
     /**
-     * 部门id
+     * 年份
      */
-    @TableField(value = "dept_id")
-    private String deptId;
+    @TableField("year")
+    private Integer year;
 
     /**
-     * 部门名称
+     * 指标分类
      */
-    @TableField(value = "dept_name")
-    private String deptName;
+    @TableField("target_type")
+    private String targetType;
 
     /**
-     * 店铺id
+     * 指标名称
      */
-    @TableField("shop_id")
-    private String shopId;
+    @TableField("target_name")
+    private String targetName;
 
     /**
-     * 店铺名称
+     * 目标值
      */
-    @TableField("shop_name")
-    private String shopName;
+    @TableField("target_value")
+    private String targetValue;
 
-    /**
-     * 平台名称
-     */
-    @TableField("platform_name")
-    private String platformName;
-
-    /**
-     * 站点
-     */
-    @TableField("site")
-    private String site;
-
-    /**
-     * 负责人id
-     */
-    @TableField(value = "charge_id")
-    private String chargeId;
-
-    /**
-     * 负责人名称
-     */
-    @TableField(value = "charge_name")
-    private String chargeName;
-
-    /**
-     * 组合
-     */
-    @TableField(value = "combination")
-    private String combination;
 }

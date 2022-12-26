@@ -8,7 +8,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceDTO;
-import com.erp.model.dmp.entity.BiDataSourceEntity;
+import com.erp.model.bi.entity.BiDataSourceEntity;
 import com.erp.server.bi.mapper.BiDataSourceMapper;
 import com.erp.server.bi.service.BiDataSourceService;
 import org.springframework.stereotype.Service;

@@ -3,8 +3,8 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoDTO;
-import com.erp.model.bi.dto.DmpReturnOrderInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
+import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 

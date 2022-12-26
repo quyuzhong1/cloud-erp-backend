@@ -20,8 +20,8 @@ import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
-import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
@@ -328,7 +328,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                                 } else {
                                     detailEntity.setValueType(MathUtil.ONE);
                                     String costValue = value.replace("%", "");
-                                    detailEntity.setCostValue(MathUtil.multiply(MathUtil.valueOf(costValue),100));
+                                    detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
                                     detailList.add(detailEntity);
                                 }
                             }
@@ -361,20 +361,54 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             return;
         }
         List<BiDataSourceCostDetailEntity> updateList= new ArrayList<>();
+        List<BiDataSourceCostDetailEntity> saveList= new ArrayList<>();
         for (LinkedHashMap<String, Object> map: list) {
             String id = map.get("id").toString();
             List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList = biDataSourceCostDetailService.listByCostIds(Arrays.asList(id));
-            if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
-                for (BiDataSourceCostDetailEntity entity :biDataSourceCostDetailList) {
-                    if (ObjectUtils.isNotEmpty(map.get(entity.getCostType()))) {
-                        BigDecimal value = MathUtil.valueOf(map.get(entity.getCostType())) ;
-                        entity.setCostValue(value);
-                        updateList.add(entity);
+            Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
+            if (ObjectUtils.isNotEmpty(iterator)) {
+                while (iterator.hasNext()) {
+                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
+                    if (ObjectUtils.isEmpty(entry.getKey()) || "id".equals(entry.getKey())) {
+                        continue;
+                    }
+                    BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
+                    String key = entry.getKey().toString();
+                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                    detailEntity.setCostType(key);
+                    detailEntity.setCostId(id);
+                    if (StrUtils.isDigit(value)) {
+                        BigDecimal costValue = MathUtil.valueOf(value);
+                        detailEntity.setCostValue(costValue);
+                        detailEntity.setValueType(MathUtil.ZERO);
+                    }
+                    if (StrUtils.isPercentage(value)) {
+                        String costValue = value.replace("%", "");
+                        detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue), new BigDecimal(100), 4));
+                        detailEntity.setValueType(MathUtil.ONE);
+                    }
+                    if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
+                        BiDataSourceCostDetailEntity detail = biDataSourceCostDetailList.stream().filter(e -> e.getCostType().equals(key)).findFirst().orElse(null);
+                        if (ObjectUtils.isNotEmpty(detail)) {
+                            detailEntity.setId(detail.getId());
+                            updateList.add(detailEntity);
+                        } else {
+                            saveList.add(detailEntity);
+                        }
+                    } else {
+                        saveList.add(detailEntity);
                     }
                 }
             }
         }
-        biDataSourceCostDetailService.updateBatchById(updateList);
+        //更新明细数据
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            biDataSourceCostDetailService.updateBatchById(updateList);
+        }
+        //明细不存在时新增明细数据
+       if (CollectionUtils.isNotEmpty(saveList)) {
+           biDataSourceCostDetailService.saveBatch(saveList);
+       }
     }
 
 

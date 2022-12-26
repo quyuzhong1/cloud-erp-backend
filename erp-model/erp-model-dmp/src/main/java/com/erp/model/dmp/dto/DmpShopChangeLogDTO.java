@@ -1,4 +1,4 @@
-package com.erp.model.bi.dto;
+package com.erp.model.dmp.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

@@ -12,7 +12,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiTargetManagementShowDTO;
-import com.erp.model.dmp.entity.BiTargetManagementEntity;
+import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.server.bi.mapper.BiTargetManagementMapper;
 import com.erp.server.bi.service.BiTargetManagementService;
 import org.apache.commons.collections.CollectionUtils;

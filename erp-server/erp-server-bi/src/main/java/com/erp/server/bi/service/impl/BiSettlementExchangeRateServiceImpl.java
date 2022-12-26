@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.MathUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;

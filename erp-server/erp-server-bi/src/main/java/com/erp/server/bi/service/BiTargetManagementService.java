@@ -5,7 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.bi.dto.BiTargetManagementShowDTO;
-import com.erp.model.dmp.entity.BiTargetManagementEntity;
+import com.erp.model.bi.entity.BiTargetManagementEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;

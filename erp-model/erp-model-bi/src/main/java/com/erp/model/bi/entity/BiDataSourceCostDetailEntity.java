@@ -1,22 +1,24 @@
-package com.erp.model.dmp.entity;
+package com.erp.model.bi.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
  * @author Will
  * @version 1.0
- * @description: 结算汇率表
- * @date 2022/12/19 9:44
+ * @description: TODO
+ * @date 2022/12/14 15:21
  */
+@TableName(value ="bi_data_source_cost_detail")
 @Data
-@TableName(value ="bi_settlement_exchange_rate")
-public class BiSettlementExchangeRateEntity implements Serializable {
+public class BiDataSourceCostDetailEntity implements Serializable {
+
+    @TableField(exist = false)
+    private static final long serialVersionUID = 1L;
 
     /**
      * 主键id
@@ -61,33 +63,27 @@ public class BiSettlementExchangeRateEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 生效日期
+     * 成本类型
      */
-    @TableField(value = "settlement_date_begin")
-    private LocalDate settlementDateBegin;
+    @TableField("cost_type")
+    private String costType;
 
     /**
-     * 失效日期
+     * 成本值
      */
-    @TableField(value = "settlement_date_end")
-    private LocalDate settlementDateEnd;
+    @TableField("cost_value")
+    private BigDecimal costValue;
 
     /**
-     * 汇率
+     * 成本主表id
      */
-    @TableField(value = "exchange_rate")
-    private BigDecimal exchangeRate;
+    @TableField("cost_id")
+    private String costId;
 
     /**
-     * 源币种
+     * 值类型（0数值，1百分比）
      */
-    @TableField(value = "source_currency_code")
-    private String sourceCurrencyCode;
-
-    /**
-     * 目标币种
-     */
-    @TableField(value = "target_currency_code")
-    private String targetCurrencyCode;
+    @TableField("value_type")
+    private Integer valueType;
 
 }
