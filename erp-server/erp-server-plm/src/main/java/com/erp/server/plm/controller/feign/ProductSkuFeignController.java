@@ -1,9 +1,13 @@
 package com.erp.server.plm.controller.feign;
 
+import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,6 +31,10 @@ public class ProductSkuFeignController {
     private ProductDetailService productDetailService;
     @Resource
     private ProductSaleService productSaleService;
+    @Resource
+    private BasicCategoryService basicCategoryService;
+    @Resource
+    private ProductInfoService productInfoService;
 
     /**
      * 根据sku查询sku表信息
@@ -44,5 +53,41 @@ public class ProductSkuFeignController {
             productIdBySkuClean.setListingTime(productSaleEntity.get().getListingTime());
         }
         return productIdBySkuClean;
+    }
+
+    /**
+     * @description: 查询品类
+     * @author Will
+     * @date: 2022/12/26 11:48
+     * @param params
+     * @return BasicCategoryDTO
+     */
+    @PostMapping("/getCategoryByParam")
+    public BasicCategoryDTO getCategoryByParam(@RequestBody Map<String,String> params) {
+        return basicCategoryService.getCategoryByParam(params);
+    }
+
+    /**
+     * @description: 查询sku
+     * @author Will
+     * @date: 2022/12/26 11:49
+     * @param params
+     * @return ProductDetailDTO
+     */
+    @PostMapping("/getSkuByParam")
+    public ProductDetailDTO getSkuByParam(@RequestBody Map<String,String> params) {
+        return productDetailService.getSkuByParam(params);
+    }
+
+    /**
+     * @description: 查询spu
+     * @author Will
+     * @date: 2022/12/26 11:49
+     * @param params
+     * @return ProductInfoDTO
+     */
+    @PostMapping("/getSpuByParam")
+    public ProductInfoDTO getSpuByParam(@RequestBody Map<String,String> params) {
+        return productInfoService.getSpuByParam(params);
     }
 }

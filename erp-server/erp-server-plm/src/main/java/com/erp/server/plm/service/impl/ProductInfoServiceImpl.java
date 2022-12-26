@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -951,6 +952,30 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
 
         }
+    }
+
+    @Override
+    public ProductInfoDTO getSpuByParam(Map<String, String> params) {
+        if (params == null) {
+            return null;
+        }
+        String id = params.get("id");
+        String spuNo = params.get("spuNo");
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.eq(ProductInfoEntity::getId,id);
+        }
+        if (StringUtils.isNotBlank(spuNo)) {
+            queryWrapper.eq(ProductInfoEntity::getSpuNo,spuNo);
+        }
+        queryWrapper.last("limit 1");
+        ProductInfoEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity)) {
+            ProductInfoDTO dto = new ProductInfoDTO();
+            BeanUtils.copyProperties(entity,dto);
+            return dto;
+        }
+        return null;
     }
 
     /**

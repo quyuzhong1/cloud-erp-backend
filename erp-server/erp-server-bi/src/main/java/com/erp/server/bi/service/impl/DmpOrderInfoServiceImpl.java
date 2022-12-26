@@ -666,7 +666,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
-        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getSaleType));
+        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
@@ -691,7 +691,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getProductNo).collect(Collectors.toList());
+        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getSkuNo).collect(Collectors.toList());
         List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
@@ -702,7 +702,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getProductNo()))));
+                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getSkuNo()))));
         
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
@@ -719,7 +719,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         ));
         // 产品定位销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getProductNo()))));
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getSkuNo()))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -734,7 +734,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
-        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getSaleType));
+        Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = salesList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
@@ -753,7 +753,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getProductNo).collect(Collectors.toList());
+        List<String> sku = targetList.stream().map(BiTargetManagementEntity::getSkuNo).collect(Collectors.toList());
         List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByConditions(orderIds, null, sku);
         if (CollectionUtils.isEmpty(entityItemList)) {
             return new ArrayList<>();
@@ -765,7 +765,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getProductNo()))));
+                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getSkuNo()))));
 
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
@@ -782,7 +782,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 ));
         // 产品类型销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getProductNo()))));
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getSkuNo()))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;

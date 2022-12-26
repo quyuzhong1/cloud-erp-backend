@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -45,4 +46,13 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @return void
      */
     void getBestEntity(String id,BasicCategoryEntity bestEntity);
+
+    /**
+     * @description: 查询品类
+     * @author Will
+     * @date: 2022/12/26 11:50
+     * @param params
+     * @return BasicCategoryDTO
+     */
+    BasicCategoryDTO getCategoryByParam(Map<String, String> params);
 }

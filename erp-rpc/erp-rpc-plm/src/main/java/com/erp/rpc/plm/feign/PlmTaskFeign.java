@@ -1,12 +1,15 @@
 package com.erp.rpc.plm.feign;
 
+import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.CleanSkuDto;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.dto.ProductInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * plm 远程调用接口
@@ -26,4 +29,15 @@ public interface PlmTaskFeign {
     @PostMapping("plm/feign/product/getProductIdBySku")
     CleanSkuDto getProductIdBySku(@RequestBody String sku);
 
+    //根据品类参数查询品类，参数：id、name
+    @PostMapping("plm/feign/product/getCategoryByParam")
+    BasicCategoryDTO getCategoryByParam(@RequestBody Map<String,String> params);
+
+    //根据sku的参数查询sku，参数：id、skuNo
+    @PostMapping("plm/feign/product/getSkuByParam")
+    ProductDetailDTO getSkuByParam(@RequestBody Map<String,String> params);
+
+    //根据spu的参数查询spu，参数：id、spuNo
+    @PostMapping("plm/feign/product/getSpuByParam")
+    ProductInfoDTO getSpuByParam(@RequestBody Map<String,String> params);
 }

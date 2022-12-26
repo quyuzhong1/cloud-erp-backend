@@ -16,6 +16,10 @@ import java.math.BigDecimal;
 public class BiTargetManagementShowDTO {
 
     /**
+     * 年份
+     */
+    private String year;
+    /**
      * 平台名称
      */
     private String platformName;
@@ -26,14 +30,14 @@ public class BiTargetManagementShowDTO {
     private String category;
 
     /**
-     * 销售类型（0销量，1销售额）
+     * 目标类型（0销量，1销售额）
      */
-    private Integer saleType;
+    private Integer targetType;
 
     /**
      * 销售类型名称
      */
-    private String saleTypeName;
+    private String targetTypeName;
 
     /**
      * 产品类型（0新品，1老品）
@@ -51,9 +55,14 @@ public class BiTargetManagementShowDTO {
     private String productPosition;
 
     /**
-     * sku/spu
+     * sku
      */
-    private String productNo;
+    private String skuNo;
+
+    /**
+     * spu
+     */
+    private String spuNo;
 
     /**
      * 品名
@@ -63,7 +72,7 @@ public class BiTargetManagementShowDTO {
     /**
      * 客单价
      */
-    private BigDecimal perCustomerTransaction;
+    private BigDecimal salePrice;
 
     /**
      * 一月

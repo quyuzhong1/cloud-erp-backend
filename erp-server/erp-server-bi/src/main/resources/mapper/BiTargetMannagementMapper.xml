@@ -5,14 +5,22 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.BiTargetManagementShowDTO">
         select
+            concat(btm.year,'年') as year,
             btm.platform_name,
             btm.category,
-            btm.sale_type,
+            case when btm.target_type = 0 then '销量'
+                 when btm.target_type = 1 then '销售额'
+                 else '' end as targetTypeName,
+            btm.target_type,
+            case when btm.product_type = 0 then '新品'
+                 when btm.product_type = 1 then '老品'
+                 else '' end as productTypeName,
             btm.product_type,
             btm.product_position,
-            btm.product_no,
+            btm.sku_no,
+            btm.spu_no,
             btm.product_name,
-            btm.per_customer_transaction,
+            btm.sale_price,
             btm.january,
             btm.february,
             btm.march,
@@ -28,7 +36,7 @@
         from bi_target_management btm
         <where>
             <if test="params.searchContent != null and params.searchContent != ''">
-                and btm.product_no like concat('%',#{params.searchContent},'%')
+                and btm.sku_no like concat('%',#{params.searchContent},'%')
             </if>
         </where>
     </select>

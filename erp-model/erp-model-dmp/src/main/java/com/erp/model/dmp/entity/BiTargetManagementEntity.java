@@ -77,10 +77,10 @@ public class BiTargetManagementEntity {
     private String categoryId;
 
     /**
-     * 销售类型（0销量，1销售额）
+     * 目标类型（0销量，1销售额）
      */
-    @TableField(value = "sale_type")
-    private Integer saleType;
+    @TableField(value = "target_type")
+    private Integer targetType;
 
     /**
      * 产品类型（0新品，1老品）
@@ -95,10 +95,28 @@ public class BiTargetManagementEntity {
     private String productPosition;
 
     /**
-     * sku/spu
+     * sku主键id
      */
-    @TableField(value = "product_no")
-    private String productNo;
+    @TableField(value = "sku_id")
+    private String skuId;
+
+    /**
+     * sku
+     */
+    @TableField(value = "sku_no")
+    private String skuNo;
+
+    /**
+     * spu主键id
+     */
+    @TableField(value = "spu_id")
+    private String spuId;
+
+    /**
+     * spu
+     */
+    @TableField(value = "spu_no")
+    private String spuNo;
 
     /**
      * 品名
@@ -109,8 +127,14 @@ public class BiTargetManagementEntity {
     /**
      * 客单价
      */
-    @TableField(value = "per_customer_transaction")
-    private BigDecimal perCustomerTransaction;
+    @TableField(value = "sale_price")
+    private BigDecimal salePrice;
+
+    /**
+     * 年份
+     */
+    @TableField(value = "year")
+    private Integer year;
 
     /**
      * 一月

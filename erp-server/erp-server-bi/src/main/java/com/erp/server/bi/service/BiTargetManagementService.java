@@ -34,4 +34,12 @@ public interface BiTargetManagementService extends IService<BiTargetManagementEn
      * @return
      */
     List<BiTargetManagementEntity> getSales(LocalDateTime start, LocalDateTime end, String param);
+    /**
+     * @description: 根据平台、品类、销量/销售额、SKU（如果不存在则SPU代替）查询
+     * @author Will
+     * @date: 2022/12/26 15:24
+     * @param entity
+     * @return BiTargetManagementEntity
+     */
+    BiTargetManagementEntity getTargetByExcelData(BiTargetManagementEntity entity);
 }

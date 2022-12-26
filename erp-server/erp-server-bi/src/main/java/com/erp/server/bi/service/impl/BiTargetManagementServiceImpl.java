@@ -1,12 +1,13 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.MonthEnum;
-import com.common.core.utils.StrUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
@@ -15,7 +16,6 @@ import com.erp.model.dmp.entity.BiTargetManagementEntity;
 import com.erp.server.bi.mapper.BiTargetManagementMapper;
 import com.erp.server.bi.service.BiTargetManagementService;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  */
 @Service
 public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagementMapper, BiTargetManagementEntity> implements BiTargetManagementService {
+
     @Override
     public PagingVO<BiTargetManagementShowDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -50,10 +51,25 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
         }
         QueryWrapper<BiTargetManagementEntity> qw = new QueryWrapper<>();
         String addStr = monthList.stream().collect(Collectors.joining(" + ")) + " as january";
-        qw.select("id","platform_name","category","sale_type","product_type","product_position",
-                "product_no","product_name","per_customer_transaction",addStr);
+        qw.select("id","platform_name","category","target_type","product_type","product_position",
+                "sku_no","product_name","sale_price",addStr);
         qw.last(StrUtil.isNotBlank(param), param);
         List<BiTargetManagementEntity> entityList = baseMapper.selectList(qw);
         return entityList;
+    }
+
+    @Override
+    public BiTargetManagementEntity getTargetByExcelData(BiTargetManagementEntity entity) {
+        LambdaQueryWrapper<BiTargetManagementEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiTargetManagementEntity::getPlatformName,entity.getPlatformName());
+        queryWrapper.eq(BiTargetManagementEntity::getCategoryId,entity.getCategoryId());
+        queryWrapper.eq(BiTargetManagementEntity::getTargetType,entity.getTargetType());
+        if (StringUtils.isNotBlank(entity.getSkuId())) {
+            queryWrapper.eq(BiTargetManagementEntity::getSkuId,entity.getSkuId());
+        } else {
+            queryWrapper.eq(BiTargetManagementEntity::getSpuId,entity.getSpuId());
+        }
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 }

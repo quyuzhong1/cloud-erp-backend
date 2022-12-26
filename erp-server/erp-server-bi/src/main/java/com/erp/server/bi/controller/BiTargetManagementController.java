@@ -66,6 +66,20 @@ public class BiTargetManagementController extends BaseController {
     }
 
     /**
+     * 目标管理-删除
+     * @author Will
+     * @date: 2022/12/26 14:59
+     * @param id
+     * @return ApiResult
+     */
+    @PostMapping("/delete")
+    public ApiResult delete(@RequestParam("id") String id) {
+        biTargetManagementService.removeById(id);
+        return success();
+    }
+
+
+    /**
      * 目标管理-导入
      * @author Will
      * @date: 2022/12/21 18:05
@@ -80,8 +94,8 @@ public class BiTargetManagementController extends BaseController {
             List<BiTargetManagementImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
                 StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/dmpOrderInfo.xlsx";
-                String name = "dmpOrderInfo";
+                String excelPath = "excel/biTargetManagement.xlsx";
+                String name = "biTargetManagement";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
