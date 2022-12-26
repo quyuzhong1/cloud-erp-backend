@@ -5,6 +5,7 @@
 
     <select id="paging" resultType="com.erp.model.bi.dto.BiTargetManagementShowDTO">
         select
+            btm.id,
             concat(btm.year,'年') as year,
             btm.platform_name,
             btm.category,

@@ -428,7 +428,6 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                     cnMap.put(dcit.getName(),value);
                 }
             }
-            map.remove("id");
             cnMap.remove("id");
             cnResultMap.add(map);
         }

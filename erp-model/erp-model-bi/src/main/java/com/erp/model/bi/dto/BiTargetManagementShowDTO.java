@@ -16,6 +16,10 @@ import java.math.BigDecimal;
 public class BiTargetManagementShowDTO {
 
     /**
+     * 主键id
+     */
+    private String id;
+    /**
      * 年份
      */
     private String year;
