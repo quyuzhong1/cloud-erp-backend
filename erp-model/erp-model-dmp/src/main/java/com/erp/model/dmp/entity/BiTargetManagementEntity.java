@@ -65,13 +65,13 @@ public class BiTargetManagementEntity {
     private String platformName;
 
     /**
-     * 产品类别
+     * 品类
      */
     @TableField(value = "category")
     private String category;
 
     /**
-     * 产品类别Id
+     * 品类Id
      */
     @TableField(value = "category_id")
     private String categoryId;
