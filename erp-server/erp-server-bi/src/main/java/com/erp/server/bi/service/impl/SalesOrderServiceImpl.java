@@ -6,12 +6,15 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.server.bi.constant.ChartType;
+import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
+import com.erp.server.bi.service.BiSkuInfoService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 销售维度 模块服务
@@ -33,6 +37,10 @@ import java.util.Map;
 @Service
 public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, DmpOrderInfoEntity>
         implements SalesOrderService {
+
+    @Resource
+    private BiSkuInfoService skuInfoService;
+
     @Override
     public StatisticalDataVO getMonthSales() {
         StatisticalDataVO statistical = new StatisticalDataVO();
@@ -96,12 +104,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
                 LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                Double salesFlag = baseList.stream().
+                BigDecimal salesFlag = baseList.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
-                        ).mapToDouble(SalesBaseVO::getSales).sum();
-                salesTrend.add(new BigDecimal(salesFlag).setScale(2, RoundingMode.HALF_UP));
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
         }
@@ -145,12 +153,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
                 LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                Double salesFlag = baseList.stream().
+                BigDecimal salesFlag = baseList.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
-                        ).mapToDouble(SalesBaseVO::getSales).sum();
-                salesTrend.add(new BigDecimal(salesFlag).setScale(2, RoundingMode.HALF_UP));
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
         }
@@ -239,12 +247,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
                 LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
                 LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                Double salesFlag = baseList.stream().
+                BigDecimal salesFlag = baseList.stream().
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getShopNo())
-                        ).mapToDouble(SalesBaseVO::getSales).sum();
-                salesTrend.add(new BigDecimal(salesFlag).setScale(2, RoundingMode.HALF_UP));
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
 
@@ -287,4 +295,194 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         result.setData(chartVO);
         return result;
     }
+
+    /**
+     * 二级销售模块 店铺-国家销售额
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesGroupVO>
+     * @author yl
+     * @date 2022-12-26 10:10
+     */
+    @Override
+    public List<SalesGroupVO> byShopCountry(BiFilterDTO dto) {
+        List<CountryCountVO> countryNameList = baseMapper.getCountryList();
+        int countrySize = countryNameList.size();
+        List<ShopSalesVO> list = baseMapper.byShopCountry(dto);
+        Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
+        int initSize = groupMap.size();
+        List<SalesGroupVO> resultList = new ArrayList<>(initSize);
+
+        for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
+            List<ShopSalesVO> shopSalesList = item.getValue();
+            String shopName = shopSalesList.get(0).getShopName();
+            SalesGroupVO vo = new SalesGroupVO();
+            vo.setName(shopName);
+            List<SalesGroupBaseVO> baseList = new ArrayList<>(countrySize);
+            for (CountryCountVO country : countryNameList) {
+                SalesGroupBaseVO baseVO = new SalesGroupBaseVO();
+                baseVO.setFlagName(country.getName());
+                ShopSalesVO result = shopSalesList.stream().
+                        filter(s -> s.getPlatformName().equals(country)).
+                        findFirst().orElse(null);
+                if (result != null) {
+                    baseVO.setSales(result.getSales());
+                } else {
+                    baseVO.setSales(BigDecimal.ZERO);
+                }
+                baseList.add(baseVO);
+            }
+            vo.setList(baseList);
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+    /**
+     * 二级销售模块 店铺-品类销售额
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesGroupVO>
+     * @author yl
+     * @date 2022-12-26 10:10
+     */
+
+    @Override
+    public List<SalesGroupVO> byShopCategory(BiFilterDTO dto) {
+        //查询sku 分类以及分类下对应的skuno
+        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        int skuCategorySize = skuCategoryList.size();
+        List<ShopSalesVO> list = baseMapper.byShopCategory(dto);
+        Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
+        int initSize = groupMap.size();
+        List<SalesGroupVO> resultList = new ArrayList<>(initSize);
+        for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
+            List<ShopSalesVO> shopSalesList = item.getValue();
+            String shopName = shopSalesList.get(0).getShopName();
+            SalesGroupVO vo = new SalesGroupVO();
+            vo.setName(shopName);
+            List<SalesGroupBaseVO> baseList = new ArrayList<>(skuCategorySize);
+            for (SkuCategoryVO category : skuCategoryList) {
+                List<String> skuList = category.getSkuList();
+                SalesGroupBaseVO baseVO = new SalesGroupBaseVO();
+                baseVO.setFlagName(category.getName());
+                BigDecimal sales = shopSalesList.stream().
+                        filter(s -> skuList.contains(s.getSkuNo())).
+                        map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                baseVO.setSales(sales);
+                baseList.add(baseVO);
+            }
+            vo.setList(baseList);
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 二级销售模块 店铺的新/老品销售额
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesGroupVO>
+     * @author yl
+     * @date 2022-12-26 10:10
+     */
+    @Override
+    public List<ShopNewAndOldSalesVO> byShopNewAndOld(BiFilterDTO dto) {
+        List<ShopSalesVO> shopSalesList = baseMapper.byShopNewAndOld(dto);
+        int initSize = shopSalesList.size();
+        List<ShopNewAndOldSalesVO> resultList = new ArrayList<>(initSize);
+        Map<String, List<ShopSalesVO>> groupMap = shopSalesList.parallelStream().
+                collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
+        //新品
+        Integer newFlag = IsDeleted.YES;
+        //老品
+        Integer oldFlag = IsDeleted.NO;
+        for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
+            ShopNewAndOldSalesVO vo = new ShopNewAndOldSalesVO();
+            List<ShopSalesVO> salesList = item.getValue();
+            ShopSalesVO newItem = salesList.stream().filter(s -> s.getFlag().
+                    equals(newFlag)).findFirst().orElse(null);
+            ShopSalesVO oldItem = salesList.stream().filter(s -> s.getFlag().
+                    equals(oldFlag)).findFirst().orElse(null);
+            ShopSalesVO salesVO = salesList.get(0);
+            vo.setShopName(salesVO.getShopName());
+            if (newItem != null) {
+                vo.setNewSales(newItem.getSales());
+                vo.setNewSalesQuantity(newItem.getSalesQuantity());
+            }
+            if (oldItem != null) {
+                vo.setOldSales(oldItem.getSales());
+                vo.setOldSalesQuantity(oldItem.getSalesQuantity());
+            }
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 一级模块  国家销售额
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> byCountry(BiFilterDTO dto) {
+        List<SalesCountVO> resultList = baseMapper.byCountry(dto);
+        BigDecimal totalSales = resultList.stream().
+                map(SalesCountVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (SalesCountVO item : resultList) {
+
+        }
+
+        return resultList;
+    }
+
+
+    /**
+     * 一级模块  品类销售额
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public StatisticalDataVO byCategory(BiFilterDTO dto) {
+        //查询sku 分类以及分类下对应的skuno
+        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        List<SalesBaseVO> list = baseMapper.byCategory(dto);
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setChartType(ChartType.BAR);
+        statistical.setName("销售品类排行");
+        ChartVO chart = new ChartVO();
+        List<Object> xAxisList = new ArrayList<>(skuCategoryList.size());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
+        //只有一个柱子
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("品类销售额");
+        List<Object> dataList = new ArrayList<>(10);
+        for (SkuCategoryVO item : skuCategoryList) {
+            List<String> skuList = item.getSkuList();
+            xAxisList.add(item.getName());
+            BigDecimal totalSales = list.stream().filter(s -> skuList.contains(s.getFlagNo())).
+                    map(SalesBaseVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            dataList.add(totalSales);
+        }
+
+
+        series.setData(dataList);
+        seriesList.add(series);
+        chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
+        statistical.setData(chart);
+        return statistical;
+    }
+
+
 }

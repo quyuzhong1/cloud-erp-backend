@@ -3,10 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.SalesByCountryVO;
-import com.erp.model.bi.vo.SalesVO;
-import com.erp.model.bi.vo.ShopSalesVO;
-import com.erp.model.bi.vo.StatisticalDataVO;
+import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -87,7 +84,7 @@ public class BiSalesModuleController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/byCountry")
+    @PostMapping("/bySkuCountry")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:sales:byCountry",
@@ -149,6 +146,89 @@ public class BiSalesModuleController extends BaseController {
         StatisticalDataVO result = salesOrderService.byTopShop(dto);
         return success(result);
     }
+
+
+    /**
+     * 销售相关-二级模块-店铺国家销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byShopCountry")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesGroupVO>> byShopCountry(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesGroupVO> resultList = salesOrderService.byShopCountry(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 销售相关-二级模块-品类销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byShopCategory")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesGroupVO>> byShopCategory(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesGroupVO> resultList = salesOrderService.byShopCategory(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 销售相关-二级模块-店铺的新/老品销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byShopNewAndOld")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<ShopNewAndOldSalesVO>> byShopNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
+        List<ShopNewAndOldSalesVO> resultList=salesOrderService.byShopNewAndOld(dto);
+        return success(resultList);
+    }
+
+
+    /**
+     * 销售相关-一级模块-国家销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byCountry")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byCountry(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> resultList=salesOrderService.byCountry(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 销售相关-一级模块-品类销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byCategory")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byCategory(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byCategory(dto);
+        return success(result);
+    }
+
 
 
 

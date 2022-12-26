@@ -109,4 +109,13 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return
      */
     Boolean copy(String subjectId);
+
+    /**
+     * 添加仪表盘
+     * @author yl
+     * @date 2022-12-26 9:31
+     * @param dto
+     * @return java.lang.String
+     */
+    String addDashboard(SubjectDTO dto);
 }

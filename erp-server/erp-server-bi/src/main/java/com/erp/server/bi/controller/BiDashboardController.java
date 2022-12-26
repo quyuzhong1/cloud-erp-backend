@@ -4,9 +4,11 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
+import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.CommonService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +41,21 @@ public class BiDashboardController extends BaseController {
 
 
 
+
+    /**
+     * 新增仪表盘
+     *
+     * @param dto 实体
+     * @return 新增结果
+     */
+    @PostMapping("/add")
+    public ApiResult<String> add(@RequestBody @Validated SubjectDTO dto) {
+        String id = subjectService.addDashboard(dto);
+        if (StringUtils.isNotBlank(id)) {
+            return success(id);
+        }
+        return failure();
+    }
 
     /**
      * 设置仪表盘默认

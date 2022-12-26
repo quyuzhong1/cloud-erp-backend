@@ -346,7 +346,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //分享给我的
         CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
         shareToMeDTO.setCategoryName("共享专题");
-        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s ->shareToMeIds.contains(s.getId()) ).collect(Collectors.toList());
+        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
         shareToMeDTO.setSubjectList(shareToMeList);
         resultList.add(shareToMeDTO);
         return resultList;
@@ -386,6 +386,54 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
         return null;
+    }
+
+
+    /**
+     * 添加仪表盘
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2022-12-26 9:32
+     */
+    @Override
+    public String addDashboard(SubjectDTO dto) {
+        String type = DictEnum.DASHBOARD.getType();
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String categoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+
+        String name = dto.getName();
+        //检查名字是否重复
+        checkName(null, name);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
+            categoryId = dict.getId();
+        }
+
+        BiSubjectEntity subject = new BiSubjectEntity();
+        //专题id
+        String subjectId = IdWorker.getIdStr();
+        String shareFlag = dto.getShareFlag();
+        subject.setName(name);
+        subject.setId(subjectId);
+        subject.setShareFlag(shareFlag);
+        subject.setCategoryId(categoryId);
+        subject.setCategoryName(categoryName);
+        Boolean result = this.save(subject);
+        if (result) {
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, subjectId);
+            }
+            return subjectId;
+        }
+        return "";
     }
 
 
