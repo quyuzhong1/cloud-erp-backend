@@ -58,4 +58,13 @@ public enum SalesPlatformEnum {
         }
         return null;
     }
+    public static SalesPlatformEnum getByName(String name) {
+        SalesPlatformEnum[] values = values();
+        for (SalesPlatformEnum value : values) {
+            if (value.name == name) {
+                return value;
+            }
+        }
+        return null;
+    }
 }

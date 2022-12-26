@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.model.bi.dto.BiTargetManagementImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
+import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
@@ -58,6 +59,11 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
         }
         if (StringUtils.isBlank(dto.getPlatformName())) {
             errorMsgList.add("平台名称不能为空");
+        } else {
+            SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getPlatformName());
+            if (ObjectUtils.isEmpty(platformEnum)) {
+                errorMsgList.add("系统中不存在此平台名称");
+            }
         }
         if (StringUtils.isBlank(dto.getCategory())) {
             errorMsgList.add("品类不能为空");
@@ -74,9 +80,6 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
         }
         if (StringUtils.isBlank(dto.getProductTypeName())) {
             errorMsgList.add("新老品不能为空");
-        }
-        if (StringUtils.isBlank(dto.getProductName())) {
-            errorMsgList.add("产品名称不能为空");
         }
         if (StringUtils.isBlank(dto.getSkuNo()) && StringUtils.isBlank(dto.getSpuNo())) {
             errorMsgList.add("sku/spu至少填一个");
