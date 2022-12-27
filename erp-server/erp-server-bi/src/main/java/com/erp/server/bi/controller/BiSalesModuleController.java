@@ -264,6 +264,138 @@ public class BiSalesModuleController extends BaseController {
     }
 
 
+    /**
+     * 销售相关-一级模块-国内国外占比
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byHomeAndAbroad")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byHomeAndAbroad(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byHomeAndAbroad(dto);
+        return success(result);
+    }
+
+
+    /**
+     * 销售相关-一级模块-人员销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byPeople")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byPeople(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byPeople(dto);
+        return success(result);
+    }
+
+
+    /**
+     * 销售相关-一级模块-人员销售额 周排行
+     * @param
+     * @return
+     */
+    @PostMapping("/byPeopleWeekRank")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleWeekRank() {
+        List<PeopleSalesRankVO> result=salesOrderService.byPeopleWeekRank();
+        return success(result);
+    }
+
+
+    /**
+     * 销售相关-一级模块-人员销售额 月排行
+     * @param
+     * @return
+     */
+    @PostMapping("/byPeopleMonthRank")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleMonthRank() {
+        return success();
+    }
+
+    /**
+     * 销售相关-一级模块-人员销售额 季度排行
+     * @param
+     * @return
+     */
+    @PostMapping("/byPeopleQuarterRank")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleQuarterRank() {
+        return success();
+    }
+
+    /**
+     * 销售相关-一级模块-人员销售额 年度排行
+     * @param
+     * @return
+     */
+    @PostMapping("/byPeopleYearRank")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleYearRank() {
+        return success();
+    }
+
+
+    /**
+     * 销售相关-一级模块-日期
+     * @param
+     * @return
+     */
+    @PostMapping("/byDate")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<PeopleSalesRankVO>> byDate() {
+        return success();
+    }
+
+
+    /**
+     * 销售相关-一级模块-事业部销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/byDept")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byDept(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byDept(dto);
+
+        return success(result);
+    }
+
+
+
 
 
 

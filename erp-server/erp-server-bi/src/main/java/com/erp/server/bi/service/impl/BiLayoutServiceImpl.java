@@ -345,12 +345,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             for (BiLayoutRefModuleEntity ref : moduleIds) {
                 LayoutRefModuleDTO refModule = new LayoutRefModuleDTO();
                 refModule.setId(ref.getId());
-                refModule.setType(ref.getType());
                 layoutRefList.add(refModule);
             }
-
             item.setModuleIdList(layoutRefList);
-
         }
         return list;
     }

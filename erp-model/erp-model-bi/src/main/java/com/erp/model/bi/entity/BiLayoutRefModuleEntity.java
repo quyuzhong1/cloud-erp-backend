@@ -46,10 +46,7 @@ public class BiLayoutRefModuleEntity implements Serializable {
      */
     private Integer serialNo;
 
-    /**
-     * 类型 module 模块  target 指标
-     */
-    private String type;
+
     /**
      * 创建人
      */

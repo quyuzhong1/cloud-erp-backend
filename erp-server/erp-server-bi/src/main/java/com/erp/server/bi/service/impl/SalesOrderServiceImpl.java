@@ -20,10 +20,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,7 +105,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
@@ -157,7 +154,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
@@ -251,7 +248,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getShopNo())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO,BigDecimal::add);
+                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
@@ -380,13 +377,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         return resultList;
     }
-    
+
     /**
      * 一级模块 - 品牌销售额
-     * @author yl
-     * @date 2022-12-27 9:09
+     *
      * @param dto
      * @return java.util.List<com.erp.model.bi.vo.SalesCountVO>
+     * @author yl
+     * @date 2022-12-27 9:09
      */
     @Override
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
@@ -396,11 +394,72 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 一级模块-平台销售额
+     *
      * @param dto
      * @return
      */
     @Override
     public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
+        List<SalesCountVO> list = baseMapper.byPlatform(dto);
+        return list;
+    }
+
+
+    /**
+     * 一级模块  国内/外销售占比
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-27 10:07
+     */
+    @Override
+    public StatisticalDataVO byHomeAndAbroad(BiFilterDTO dto) {
+        String chinaName = "中国";
+        List<SalesCountVO> resultList = baseMapper.byHomeAndAbroad(dto);
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("国内外销售额占比");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(5);
+        SeriesVO<Object> series = new SeriesVO();
+        List<Map<String, Object>> list = new ArrayList<>();
+        //国内
+        Map<String, Object> chinaMap = new HashMap();
+        chinaMap.put("name", "国内");
+        BigDecimal chinaSales = resultList.stream().
+                filter(s -> s.getName().contains(chinaName)).
+                map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        chinaMap.put("value", chinaSales);
+        list.add(chinaMap);
+        //国外
+        Map<String, Object> abroadMap = new HashMap();
+        abroadMap.put("name", "国内");
+        BigDecimal abroadSales = resultList.stream().
+                filter(s -> !s.getName().contains(chinaName)).
+                map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+        abroadMap.put("value", abroadSales);
+        list.add(abroadMap);
+        series.setData(Collections.singletonList(list));
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
+
+    }
+
+
+    /**
+     * 一级模块 人员销售额
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> byPeople(BiFilterDTO dto) {
+        List<SalesCountVO> resultList = baseMapper.byPeople(dto);
+
         return null;
     }
 
@@ -505,5 +564,30 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return statistical;
     }
 
+
+    /**  销售相关  一级模块 人员周排行榜
+     *
+     * @author yl
+     * @date 2022-12-27 11:05
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.PeopleSalesRankVO>
+     */
+    @Override
+    public List<PeopleSalesRankVO> byPeopleWeekRank() {
+        return null;
+    }
+
+
+    /**
+     * 一级模块  事业部销售额s
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> byDept(BiFilterDTO dto) {
+        List<SalesCountVO> list = baseMapper.byDept(dto);
+
+        return null;
+    }
 
 }
