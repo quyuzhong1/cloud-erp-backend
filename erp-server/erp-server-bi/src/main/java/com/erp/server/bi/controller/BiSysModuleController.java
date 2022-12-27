@@ -3,6 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.validator.UpdateGroup;
+import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.IsDeleted;
@@ -78,4 +79,14 @@ public class BiSysModuleController extends BaseController {
         List<Map<String, Object>> list = this.sysModuleService.getSysModuleList(IsDeleted.NO);
         return success(list);
     }
+
+    /**
+     * 模块配置
+     */
+    @PostMapping("/moduleConfiguration")
+    public ApiResult moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
+        Boolean flag = this.sysModuleService.moduleConfiguration(dto);
+        return flag == true ? success() : failure();
+    }
+
 }

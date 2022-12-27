@@ -9,12 +9,16 @@ import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.dmp.enums.SalesSiteEnum;
 import com.erp.server.bi.enums.*;
+import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +36,9 @@ public class BiDropDownListController extends BaseController {
 
     @Resource
     private BiDictService biDictService;
+
+    @Resource
+    private BiDataSourceCustomService biDataSourceCustomService;
 
     /**
      * 平台下拉列表
@@ -130,5 +137,45 @@ public class BiDropDownListController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
+
+    /**
+     * 数据来源下拉列表
+     * @return
+     */
+    @GetMapping("/dataSource/list")
+    public ApiResult<List<SelectShowVO>> listDataSourceDropDown() {
+        List<SelectShowVO> result = Arrays.stream(DataTypeEnum.values())
+                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 数据指标下拉列表
+     * @return
+     */
+    @GetMapping("/targetName/list")
+    public ApiResult<List<SelectShowVO>> listTargetNameDropDown(@RequestParam("dataSource") Integer dataSource) {
+        List<SelectShowVO> result = new ArrayList<>();
+        List<String> list = biDataSourceCustomService.listTargetNameByDataSource(dataSource);
+        if (CollectionUtils.isNotEmpty(list)) {
+             result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
+                    .collect(Collectors.toList());
+        }
+        return success(result);
+    }
+
+    /**
+     * 数据维度下拉列表
+     * @return
+     */
+    @GetMapping("/dataDimension/list")
+    public ApiResult<List<SelectShowVO>> listDataDimensionDropDown() {
+        List<SelectShowVO> result = Arrays.stream(BiDataSourceCustomTypeEnum.values())
+                .map(x -> new SelectShowVO(x.getCode(),x.getName(),x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
 
 }

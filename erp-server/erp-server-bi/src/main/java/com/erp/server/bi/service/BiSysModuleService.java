@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.model.bi.entity.BiSysModuleEntity;
 
@@ -26,4 +27,8 @@ public interface BiSysModuleService  extends IService<BiSysModuleEntity> {
     List<Map<String, Object>> getPid(String pid);
 
     void updateAddState(String id,Integer isAddFlag);
+    /**
+     * 模块配置
+     */
+    Boolean moduleConfiguration(ModuleSysConfigurationDTO dto);
 }

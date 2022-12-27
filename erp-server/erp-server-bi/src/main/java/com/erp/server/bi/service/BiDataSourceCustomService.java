@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -45,4 +46,13 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @param importType
      */
     void importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType);
+
+    /**
+     * @description: 根据数据类型查询所有数据指标
+     * @author Will
+     * @date: 2022/12/27 16:13
+     * @param dataType
+     * @return List<String>
+     */
+    List<String> listTargetNameByDataSource(Integer dataType);
 }

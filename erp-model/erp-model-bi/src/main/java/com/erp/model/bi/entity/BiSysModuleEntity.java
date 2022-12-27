@@ -35,6 +35,24 @@ public class BiSysModuleEntity implements Serializable {
     private Integer isAdd;
 
     /**
+     * 数据来源(0市场数据，1供应链数据，2经营数据，3财务数据 同DataTypeEnum)
+     */
+    @TableField(value = "data_source")
+    private Integer dataSource;
+
+    /**
+     * 数据指标（取自助数据指标名称）
+     */
+    @TableField(value = "target_names")
+    private String targetNames;
+
+    /**
+     * 数据维度（1年趋势，2季度趋势，3月趋势，4周趋势，5日趋势 同BiDataSourceCustomTypeEnum）
+     */
+    @TableField(value = "data_dimension")
+    private Integer dataDimension;
+
+    /**
      * 创建人id
      */
     @TableField(value = "create_user_id", fill = FieldFill.INSERT)

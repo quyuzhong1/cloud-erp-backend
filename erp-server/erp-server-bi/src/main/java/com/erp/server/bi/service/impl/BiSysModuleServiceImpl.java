@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.model.bi.entity.BiSysModuleEntity;
 import com.erp.server.bi.mapper.BiSysModuleMapper;
 import com.erp.server.bi.service.BiSysModuleService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -86,6 +88,14 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         updateWrapper.set(BiSysModuleEntity::getIsAdd, isAddFlag);
         updateWrapper.eq(BiSysModuleEntity::getId, id);
         this.update(updateWrapper);
+    }
+
+    @Override
+    public Boolean moduleConfiguration(ModuleSysConfigurationDTO dto) {
+        BiSysModuleEntity sysModule = new BiSysModuleEntity();
+        BeanUtils.copyProperties(dto,sysModule);
+        checkName(dto.getId(),dto.getName());
+        return this.save(sysModule);
     }
 
     private void checkName(String id, String name) {
