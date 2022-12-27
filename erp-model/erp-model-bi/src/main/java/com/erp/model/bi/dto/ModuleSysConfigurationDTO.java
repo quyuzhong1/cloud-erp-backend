@@ -1,6 +1,5 @@
 package com.erp.model.bi.dto;
 
-import com.erp.common.modules.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,7 +21,6 @@ public class ModuleSysConfigurationDTO implements Serializable {
     /**
      * 表id
      */
-    @NotBlank(message = "id不能为空",  groups = {UpdateGroup.class} )
     private String id;
 
     /**
