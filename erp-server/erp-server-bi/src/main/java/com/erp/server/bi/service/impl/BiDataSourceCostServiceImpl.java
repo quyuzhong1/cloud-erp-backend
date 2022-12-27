@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -345,16 +346,28 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                    continue;
                }
                 entity.setShopId(dmpShopInfoEntity.getId());
-                //新增成本主表数据
-                this.save(entity);
-                if (CollectionUtils.isNotEmpty(detailList)) {
-                    detailList.forEach(obj -> obj.setCostId(entity.getId()));
-                    biDataSourceCostDetailService.saveBatch(detailList);
+               //根据月份、店铺数据查询
+                BiDataSourceCostEntity cost = getByCostParam(entity);
+                if (ObjectUtils.isEmpty(cost)) {
+                    //新增成本主表数据
+                    this.save(entity);
+                    if (CollectionUtils.isNotEmpty(detailList)) {
+                        detailList.forEach(obj -> obj.setCostId(entity.getId()));
+                        biDataSourceCostDetailService.saveBatch(detailList);
+                    }
+                } else {
+                    entity.setId(cost.getId());
+                    //更新成本主表数据
+                    this.updateById(entity);
+                    //删除成本明细重新新增
+                    biDataSourceCostDetailService.removeByCostId(cost.getId());
+                    if (CollectionUtils.isNotEmpty(detailList)) {
+                        detailList.forEach(obj -> obj.setCostId(entity.getId()));
+                        biDataSourceCostDetailService.saveBatch(detailList);
+                    }
                 }
             }
         }
-
-
     }
 
     @Override
@@ -469,5 +482,16 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             cnResultMap.add(map);
         }
         return cnResultMap;
+    }
+
+
+    private BiDataSourceCostEntity getByCostParam(BiDataSourceCostEntity entity) {
+        LambdaQueryWrapper<BiDataSourceCostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDataSourceCostEntity::getShopName,entity.getShopName());
+        queryWrapper.eq(BiDataSourceCostEntity::getPlatformName,entity.getPlatformName());
+        queryWrapper.eq(BiDataSourceCostEntity::getSite,entity.getSite());
+        queryWrapper.eq(BiDataSourceCostEntity::getMonth,entity.getMonth());
+        queryWrapper.last("limit 1");
+        return  this.getOne(queryWrapper);
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.server.bi.mapper.BiDataSourceCostDetailMapper;
@@ -54,5 +55,12 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         LambdaQueryWrapper<BiDataSourceCostDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(BiDataSourceCostDetailEntity::getCostId,costIds);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public void removeByCostId(String costId) {
+        LambdaUpdateWrapper<BiDataSourceCostDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(BiDataSourceCostDetailEntity::getCostId,costId);
+        this.remove(updateWrapper);
     }
 }
