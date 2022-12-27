@@ -395,6 +395,41 @@ public class BiSalesModuleController extends BaseController {
     }
 
 
+    /**
+     * 销售相关-一级模块-事业部新老品销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/byDeptNewAndOld")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byDeptNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
+
+        return success();
+    }
+
+    /**
+     * 销售相关-一级模块-新/老 品销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/byNewAndOld")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byNewAndOld(dto);
+        return success(result);
+    }
+
+
+
+
 
 
 

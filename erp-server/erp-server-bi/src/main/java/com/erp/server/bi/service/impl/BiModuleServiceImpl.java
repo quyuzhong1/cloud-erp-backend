@@ -142,6 +142,23 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         return result;
     }
 
+
+    /**
+     * 根据id 获取到模块
+     *
+     * @param moduleIdList
+     * @return
+     */
+    @Override
+    public List<BiModuleEntity> getByIds(List<String> moduleIdList) {
+        if (CollectionUtils.isNotEmpty(moduleIdList)) {
+            LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(BiModuleEntity::getId, moduleIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
+    }
+
     /**
      * 新增数据
      *

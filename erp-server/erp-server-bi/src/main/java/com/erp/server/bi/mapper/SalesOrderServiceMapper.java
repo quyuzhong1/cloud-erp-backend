@@ -80,4 +80,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesCountVO> byPeople(@Param("params") BiFilterDTO dto);
 
     List<SalesCountVO> byDept(@Param("params") BiFilterDTO dto);
+
+    List<SalesCountVO> byNewAndOld(@Param("params") BiFilterDTO dto);
 }

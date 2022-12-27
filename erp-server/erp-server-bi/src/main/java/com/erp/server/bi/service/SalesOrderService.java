@@ -109,4 +109,6 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<PeopleSalesRankVO> byPeopleWeekRank();
 
     List<SalesCountVO> byDept(BiFilterDTO dto);
+
+    List<SalesCountVO> byNewAndOld(BiFilterDTO dto);
 }

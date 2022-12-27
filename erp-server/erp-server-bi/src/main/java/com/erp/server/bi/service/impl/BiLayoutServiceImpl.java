@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.bi.entity.BiLayoutEntity;
-import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
-import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.entity.*;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
@@ -52,6 +49,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Resource
     private BiDictService dictService;
 
+    @Resource
+    private BiModuleService moduleService;
+
 
     /**
      * 添加布局与专题
@@ -87,7 +87,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         subject.setCategoryName(categoryName);
         Boolean result = subjectService.updateById(subject);
         String shareFlag = subject.getShareFlag();
-        if(result){
+        if (result) {
             //如果是分享
             if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
                 List<String> userList = dto.getShareUserIdList();
@@ -335,6 +335,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         List<String> layoutIdList = list.stream().map(LayoutDetailsDTO::getId).collect(Collectors.toList());
 
         List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
+        List<String> moduleIdList = layoutRefModuleList.stream().map(BiLayoutRefModuleEntity::getModuleId).collect(Collectors.toList());
+        List<BiModuleEntity> moduleList = moduleService.getByIds(moduleIdList);
+
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();
@@ -343,8 +346,16 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                     collect(Collectors.toList());
             List<LayoutRefModuleDTO> layoutRefList = new ArrayList<>();
             for (BiLayoutRefModuleEntity ref : moduleIds) {
+                String moduleId = ref.getModuleId();
                 LayoutRefModuleDTO refModule = new LayoutRefModuleDTO();
-                refModule.setId(ref.getId());
+                BiModuleEntity module = moduleList.stream().filter(m -> m.getId().equals(moduleId)).
+                        findFirst().orElse(null);
+                refModule.setId(moduleId);
+                if (module != null) {
+                    refModule.setCode(module.getCode());
+                    refModule.setName(module.getName());
+                    refModule.setViewCode(module.getViewCode());
+                }
                 layoutRefList.add(refModule);
             }
             item.setModuleIdList(layoutRefList);

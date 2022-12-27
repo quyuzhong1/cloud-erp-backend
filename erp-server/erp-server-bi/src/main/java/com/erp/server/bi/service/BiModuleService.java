@@ -74,4 +74,6 @@ public interface BiModuleService  extends IService<BiModuleEntity> {
      * @return
      */
     ModuleDTO details(String id);
+
+    List<BiModuleEntity> getByIds(List<String> moduleIdList);
 }

@@ -33,6 +33,9 @@ public class SubjectDTO  implements Serializable {
    // @NotBlank(message = "分类id 不能为空")
     private String categoryId;
 
+
+    private Integer isFrequently=0;
+
     /**
      * 专题名
      */

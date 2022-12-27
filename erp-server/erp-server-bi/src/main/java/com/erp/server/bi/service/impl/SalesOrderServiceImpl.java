@@ -590,4 +590,17 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return null;
     }
 
+
+    /**
+     * 销售相关 一级模块  新/老品销售额
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> byNewAndOld(BiFilterDTO dto) {
+        List<SalesCountVO> list = baseMapper.byNewAndOld(dto);
+
+        return null;
+    }
+
 }
