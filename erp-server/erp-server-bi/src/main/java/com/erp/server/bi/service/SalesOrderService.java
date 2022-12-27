@@ -19,7 +19,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * 月度趋势
      * @return
      */
-    StatisticalDataVO getMonthSales();
+    StatisticalDataVO getMonthSales(BiFilterDTO dto);
 
     /**
      * 一级模块 sku 销售额
@@ -111,4 +111,10 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<SalesCountVO> byDept(BiFilterDTO dto);
 
     List<SalesCountVO> byNewAndOld(BiFilterDTO dto);
+
+    List<ProductNewAndOldVO> byPlatformNewAndOld(BiFilterDTO dto);
+
+    List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto);
+
+    List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto);
 }

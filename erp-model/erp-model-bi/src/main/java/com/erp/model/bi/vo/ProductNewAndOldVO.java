@@ -7,25 +7,24 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * @Classname ShopNewAndOldSales
+ * @Classname PlatformNewAndOldVO
  * @Description TODO
- * @Date 2022-12-26 11:23
+ * @Date 2022-12-27 15:45
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class ShopNewAndOldSalesVO implements Serializable {
-
+public class ProductNewAndOldVO implements Serializable {
 
     /**
-     * 店铺名称
+     * 平台名称
      */
-    private String  shopName;
+    private String name;
 
     /**
      * 新品销售额
      */
-    private BigDecimal newSales= BigDecimal.ZERO;
+    private BigDecimal newProductSales= BigDecimal.ZERO;
 
     /**
      * 新品销售量
@@ -36,10 +35,22 @@ public class ShopNewAndOldSalesVO implements Serializable {
     /**
      * 老品销售额
      */
-    private BigDecimal oldSales=BigDecimal.ZERO;
+    private BigDecimal oldProductSales=BigDecimal.ZERO;
 
     /**
      * 老品销售量
      */
     private Integer oldSalesQuantity=0;
+
+    /**
+     * 新品环比真正率
+     */
+    private Integer newProductChainRelativeRatio=0;
+
+    /**
+     * 老品环比真正率
+     */
+    private Integer oldProductChainRelativeRatio=0;
+
+
 }

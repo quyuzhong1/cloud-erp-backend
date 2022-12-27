@@ -39,12 +39,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private BiSkuInfoService skuInfoService;
 
     @Override
-    public StatisticalDataVO getMonthSales() {
+    public StatisticalDataVO getMonthSales(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setChartType(ChartType.BAR);
         statistical.setName("月销售额趋势");
         ChartVO chart = new ChartVO();
-        List<Map<String, Object>> resultList = baseMapper.getMonthSales();
+        LocalDateTime now = LocalDateTime.now();
+
+        dto.setStartTime(now.minusYears(3));
+        dto.setEndTime(now);
+        List<Map<String, Object>> resultList = baseMapper.getMonthSales(dto);
         int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
         List<Object> xAxisList = new ArrayList<>(initSize);
         List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
@@ -453,6 +457,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 一级模块 人员销售额
+     *
      * @param dto
      * @return
      */
@@ -565,12 +570,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
 
-    /**  销售相关  一级模块 人员周排行榜
+    /**
+     * 销售相关  一级模块 人员周排行榜
      *
-     * @author yl
-     * @date 2022-12-27 11:05
      * @param
      * @return java.util.List<com.erp.model.bi.vo.PeopleSalesRankVO>
+     * @author yl
+     * @date 2022-12-27 11:05
      */
     @Override
     public List<PeopleSalesRankVO> byPeopleWeekRank() {
@@ -580,6 +586,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 一级模块  事业部销售额s
+     *
      * @param dto
      * @return
      */
@@ -593,6 +600,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     /**
      * 销售相关 一级模块  新/老品销售额
+     *
      * @param dto
      * @return
      */
@@ -601,6 +609,83 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> list = baseMapper.byNewAndOld(dto);
 
         return null;
+    }
+
+
+    /**
+     * 销售相关 -各个平台新/老品销售额
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<ProductNewAndOldVO> byPlatformNewAndOld(BiFilterDTO dto) {
+        List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
+        //新品
+        Integer newFlag = IsDeleted.YES;
+        //老品
+        Integer oldFlag = IsDeleted.NO;
+
+        List<SalesFlagVO> list = baseMapper.byPlatformNewAndOld(dto);
+        Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesFlagVO::getName));
+
+        for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            List<SalesFlagVO> salesFlagList = item.getValue();
+            ProductNewAndOldVO vo = new ProductNewAndOldVO();
+            SalesFlagVO newItem = salesFlagList.stream().filter(s -> s.getFlag().
+                    equals(newFlag)).findFirst().orElse(null);
+            SalesFlagVO oldItem = salesFlagList.stream().filter(s -> s.getFlag().
+                    equals(oldFlag)).findFirst().orElse(null);
+            vo.setName(item.getKey());
+            if (newItem != null) {
+                vo.setNewProductSales(newItem.getSales());
+                vo.setNewSalesQuantity(newItem.getSalesQuantity());
+            }
+            if (oldItem != null) {
+                vo.setOldProductSales(oldItem.getSales());
+                vo.setOldSalesQuantity(oldItem.getSalesQuantity());
+            }
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto) {
+        return null;
+    }
+
+
+    /**
+     * 销售相关 各个品类新/老品销售额
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.ProductNewAndOldVO>
+     * @author yl
+     * @date 2022-12-27 16:53
+     */
+    @Override
+    public List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto) {
+        //新品
+        Integer newFlag = IsDeleted.YES;
+        //老品
+        Integer oldFlag = IsDeleted.NO;
+
+        List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
+        //查询sku 分类以及分类下对应的skuno
+        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
+        List<SalesFlagVO> list = baseMapper.byCategoryNewAndOld(dto);
+        for (SkuCategoryVO item : skuCategoryList) {
+            ProductNewAndOldVO vo = new ProductNewAndOldVO();
+            vo.setName(item.getName());
+            List<String> skuList = item.getSkuList();
+            BigDecimal newProductSales = list.stream()
+                    .filter(s -> skuList.contains(s.getSkuNo()) && newFlag.equals(s.getFlag()))
+                    .map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setNewProductSales(newProductSales);
+        }
+        return resultList;
     }
 
 }

@@ -18,7 +18,7 @@ import java.util.Map;
  */
 @Mapper
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
-    List<Map<String, Object>> getMonthSales();
+    List<Map<String, Object>> getMonthSales(@Param("params") BiFilterDTO dto);
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto);
 
@@ -82,4 +82,8 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesCountVO> byDept(@Param("params") BiFilterDTO dto);
 
     List<SalesCountVO> byNewAndOld(@Param("params") BiFilterDTO dto);
+
+    List<SalesFlagVO> byPlatformNewAndOld(@Param("params")BiFilterDTO dto);
+
+    List<SalesFlagVO> byCategoryNewAndOld(@Param("params")BiFilterDTO dto);
 }
