@@ -12,10 +12,10 @@
             bdsc.target_value
         from bi_data_source_custom bdsc
         <where>
-            <if test="params.dataType != null and params.dataType != ''">
+            <if test="params.dataType != null ">
                 and bdsc.data_type = #{params.dataType}
             </if>
-            <if test="params.type != null and params.type != ''">
+            <if test="params.type != null ">
                 and bdsc.type = #{params.type}
             </if>
             <if test="params.targetName != null and params.targetName != ''">
@@ -40,10 +40,10 @@
         bdsc.target_value
         from bi_data_source_custom bdsc
         <where>
-            <if test="params.dataType != null and params.dataType != ''">
+            <if test="params.dataType != null ">
                 and bdsc.data_type = #{params.dataType}
             </if>
-            <if test="params.type != null and params.type != ''">
+            <if test="params.type != null ">
                 and bdsc.type = #{params.type}
             </if>
             <if test="params.targetName != null and params.targetName != ''">
