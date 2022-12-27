@@ -14,6 +14,7 @@ import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,7 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     * @param analysisContext
     */
     @Override
+    @Transactional
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();

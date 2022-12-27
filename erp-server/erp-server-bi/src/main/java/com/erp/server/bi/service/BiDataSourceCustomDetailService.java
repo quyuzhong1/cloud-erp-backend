@@ -16,4 +16,11 @@ public interface BiDataSourceCustomDetailService  extends IService<BiDataSourceC
      * 根据自助主表id查询
      */
     List<BiDataSourceCustomDetailEntity> listByCustomIds(List<String> customIds);
+    /**
+     * @description: 根据自助表ids删除
+     * @author Will
+     * @date: 2022/12/27 11:50
+     * @param customIds
+     */
+    void removeByCustomIds(List<String> customIds);
 }

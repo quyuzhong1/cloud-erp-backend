@@ -3,6 +3,8 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
@@ -118,6 +120,7 @@ public class BiDataSourceCustomController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
 
     }

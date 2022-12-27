@@ -16,6 +16,7 @@ import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     */
     @Override
+    @Transactional
     public void invoke(DmpOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         DmpOrderInfoEntity entity = new DmpOrderInfoEntity();

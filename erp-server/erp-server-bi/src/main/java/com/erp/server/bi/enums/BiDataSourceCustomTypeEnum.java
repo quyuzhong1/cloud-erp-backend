@@ -8,8 +8,8 @@ package com.erp.server.bi.enums;
  */
 public enum BiDataSourceCustomTypeEnum {
     YEAR(1, "年"),
-    MONTH(2, "季度"),
-    QUARTER(3, "月"),
+    QUARTER(2, "季度"),
+    MONTH(3, "月"),
     WEEK(4, "周"),
     DAY(5, "日");
 

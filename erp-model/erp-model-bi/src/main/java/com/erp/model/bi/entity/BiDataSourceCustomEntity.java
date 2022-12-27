@@ -63,6 +63,12 @@ public class BiDataSourceCustomEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
+     * 数据类型（0市场数据，1供应链数据，2经营数据，3财务数据）
+     */
+    @TableField("data_type")
+    private Integer dataType;
+
+    /**
      * 类型(日，周，月，季）
      */
     @TableField("type")

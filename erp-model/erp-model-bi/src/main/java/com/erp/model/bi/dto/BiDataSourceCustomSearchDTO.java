@@ -23,6 +23,12 @@ public class BiDataSourceCustomSearchDTO {
     private String targetName;
 
     /**
+     * 数据类型（0市场数据，1供应链数据，2经营数据，3财务数据）
+     */
+    @NotNull(message = "数据类型不能为空")
+    private Integer dataType;
+
+    /**
      * 类型(1年，2季度，3月，4周，5日)
      */
     @NotNull(message = "类型不能为空")

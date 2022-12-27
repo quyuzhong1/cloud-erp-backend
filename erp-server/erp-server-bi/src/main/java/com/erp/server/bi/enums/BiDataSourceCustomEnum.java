@@ -9,6 +9,7 @@ package com.erp.server.bi.enums;
 public enum BiDataSourceCustomEnum {
 
     YEAR("year", "年份"),
+    DATATYPE("dataType", "数据类型（市场数据，供应链数据，经营数据，财务数据）"),
     TARGETTYPE("targetType", "指标分类"),
     TARGETNAME("targetName", "指标名称"),
     TARGEVALUE("targetValue", "目标值");

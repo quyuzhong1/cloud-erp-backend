@@ -30,6 +30,7 @@ import com.erp.server.bi.mapper.BiDataSourceCostMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -243,6 +244,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Transactional
     public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
         List<Map<String,String>> list = ExcelPrintUtils.makeData(excelFile);
         if (CollectionUtils.isEmpty(list)) {
@@ -356,6 +358,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
+    @Transactional
     public void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
