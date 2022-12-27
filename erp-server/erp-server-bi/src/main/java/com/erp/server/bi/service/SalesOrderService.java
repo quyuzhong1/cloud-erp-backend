@@ -43,7 +43,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return
      */
-    StatisticalDataVO getByPlatform(BiFilterDTO dto);
+    StatisticalDataVO getByPlatformRatio(BiFilterDTO dto);
 
     /**
      * 一级销售模块 店铺销售额
@@ -97,4 +97,8 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     StatisticalDataVO byCategory(BiFilterDTO dto);
 
     List<SalesGroupVO> byShopCategory(BiFilterDTO dto);
+
+    List<SalesCountVO> byBrand(BiFilterDTO dto);
+
+    List<SalesCountVO> byPlatform(BiFilterDTO dto);
 }

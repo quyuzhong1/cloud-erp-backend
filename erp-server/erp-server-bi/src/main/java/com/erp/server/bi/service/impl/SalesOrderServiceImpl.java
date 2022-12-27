@@ -190,7 +190,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-20 12:28
      */
     @Override
-    public StatisticalDataVO getByPlatform(BiFilterDTO dto) {
+    public StatisticalDataVO getByPlatformRatio(BiFilterDTO dto) {
         StatisticalDataVO statistical = new StatisticalDataVO();
         //获取各个平台的销售额
         List<Map<String, Object>> resultList = baseMapper.getPlatformSales(dto);
@@ -380,6 +380,29 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         return resultList;
     }
+    
+    /**
+     * 一级模块 - 品牌销售额
+     * @author yl
+     * @date 2022-12-27 9:09
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesCountVO>
+     */
+    @Override
+    public List<SalesCountVO> byBrand(BiFilterDTO dto) {
+        return null;
+    }
+
+
+    /**
+     * 一级模块-平台销售额
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
+        return null;
+    }
 
 
     /**
@@ -474,8 +497,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             dataList.add(totalSales);
         }
-
-
         series.setData(dataList);
         seriesList.add(series);
         chart.setXAxis(xAxisList);

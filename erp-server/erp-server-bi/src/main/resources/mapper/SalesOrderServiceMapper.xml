@@ -830,11 +830,7 @@
     <select id="byCategory" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT round( SUM ( i.sell_price * i.quantity * i.currency_rate )/10000, 4 ) sales,
         i.sku_no AS flagNo FROM dmp_order_item i
-        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-        SELECT round(SUM( i.sell_price * i.quantity * i.currency_rate)/10000,4 ) sales,
-        i.sku_no,o.shop_no,
-        ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
-        FROM dmp_order_item i 	LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -915,7 +911,6 @@
             </if>
         </where>
         GROUP BY  i.sku_no
-
     </select>
 
 </mapper>

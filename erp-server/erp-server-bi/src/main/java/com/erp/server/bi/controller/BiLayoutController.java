@@ -34,7 +34,7 @@ public class BiLayoutController extends BaseController {
 
 
     /**
-     * 添加专题
+     * 添加整个专题
      * @param dto
      * @return
      */

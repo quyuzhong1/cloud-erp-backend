@@ -289,7 +289,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         SubjectDTO subject = new SubjectDTO();
         subject.setName(dto.getName());
         subject.setCategoryId(dto.getCategoryId());
-        subject.setShareFlag(dto.getShareFlag());
+        subject.setShareFlag(DashboardEnum.SHARE.getFlag());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id
         String subjectId = subjectService.addSubject(subject);

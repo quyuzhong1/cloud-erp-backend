@@ -97,18 +97,18 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售相关-一级模块-平台销售额
+     * 销售相关-一级模块-TOB/TOC销售额
      * @param dto
      * @return
      */
-    @PostMapping("/byPlatform")
+    @PostMapping("/byPlatformRatio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
 //            menuCode = "bi:sales:byCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<StatisticalDataVO> byPlatform(@RequestBody @Validated BiFilterDTO dto) {
-        StatisticalDataVO result = salesOrderService.getByPlatform(dto);
+    public ApiResult<StatisticalDataVO> byPlatformRatio(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result = salesOrderService.getByPlatformRatio(dto);
         return success(result);
     }
 
@@ -229,6 +229,39 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+
+    /**
+     * 销售相关-一级模块-品牌销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byBrand")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byBrand(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byBrand(dto);
+        return success(result);
+    }
+
+
+    /**
+     * 销售相关-一级模块-平台销售额
+     * @param dto
+     * @return
+     */
+    @PostMapping("/byPlatform")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> byPlatform(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byPlatform(dto);
+        return success(result);
+    }
 
 
 
