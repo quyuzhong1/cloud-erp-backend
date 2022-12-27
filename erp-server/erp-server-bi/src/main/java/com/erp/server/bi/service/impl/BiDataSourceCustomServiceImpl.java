@@ -10,9 +10,9 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
-import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
+import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
 import com.erp.server.bi.enums.DataTypeEnum;
@@ -92,7 +92,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         String dataTypeName = DataTypeEnum.getName(dto.getDataType());
         String head = dataTypeName;
         String fileName = dmpOrderInfoService.getFileName(dataTypeName)+ ".xlsx";
-        ExcelUtil.easyUtil(headList,head,list,fileName,response);
+        ExcelUtil.easyUtilStr(headList,head,list,fileName,response);
     }
 
     @Override

@@ -74,4 +74,9 @@ public interface BiDataSourceCostService
      * @param list
      */
     void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list);
+
+    /**
+     * 根据成本参数查询
+     */
+    BiDataSourceCostEntity getByCostParam(BiDataSourceCostEntity entity);
 }

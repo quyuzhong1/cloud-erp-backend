@@ -112,9 +112,48 @@ public class ExcelUtil {
     }
 
     /**
-     * 导出
+     * 导入后导出
      */
-    public static void easyUtil(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName,HttpServletResponse response){
+    public static void easyUtil(List<String> heads,String head,List<Map<Integer, String>> list,String fileName,HttpServletResponse response){
+
+        List<List<String>> hs = new ArrayList<>();
+        for (String s : heads) {
+            hs.add(Arrays.asList(head,s));
+        }
+        Collection<String> values;
+        List<List<String>> list2 = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i++) {
+            List<String> objects = new ArrayList<>();
+            values = list.get(i).values();
+            for (String value : values) {
+                objects.add(value);
+            }
+            list2.add(objects);
+        }
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            // 这里需要设置不关闭流
+            EasyExcel.write(response.getOutputStream())
+                    .head(hs)
+                    .registerWriteHandler(getStyleStrategy())
+                    // 设置 sheet
+                    .autoCloseStream(Boolean.FALSE).sheet(fileName)
+                    .sheetName(fileName)
+                    //自定义注解
+                    .doWrite(list2);
+        } catch (Exception e) {
+          throw new ServiceException(ApiError.Default);
+        }
+    }
+
+    /**
+     * 单独导出
+     */
+    public static void easyUtilStr(List<String> heads,String head,List<LinkedHashMap<String, Object>> list,String fileName,HttpServletResponse response){
 
         List<List<String>> hs = new ArrayList<>();
         for (String s : heads) {
@@ -141,12 +180,12 @@ public class ExcelUtil {
                     .head(hs)
                     .registerWriteHandler(getStyleStrategy())
                     // 设置 sheet
-                    .autoCloseStream(Boolean.FALSE).sheet("成本导出")
+                    .autoCloseStream(Boolean.FALSE).sheet(fileName)
                     .sheetName(fileName)
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.Default);
         }
     }
 
