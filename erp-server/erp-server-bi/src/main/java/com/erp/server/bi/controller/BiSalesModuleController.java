@@ -559,8 +559,8 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<StatisticalDataVO> byMarketingCenter(@RequestBody @Validated BiFilterDTO dto) {
-        StatisticalDataVO result=salesOrderService.byNewProductTop(dto);
+    public ApiResult<List<SalesCountVO>> byMarketingCenter(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.byMarketingCenter(dto);
         return success(result);
     }
 

@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.vo.SysDeptDropDownVO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentTreeDTO;
@@ -145,9 +144,9 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Override
     public SysDepartmentDTO getDepartmentById(String deptId) {
         SysDepartmentEntity sysDepartmentEntity = this.getById(deptId);
-        SysDepartmentDTO  dto = new SysDepartmentDTO();
+        SysDepartmentDTO dto = new SysDepartmentDTO();
         if (ObjectUtils.isNotEmpty(sysDepartmentEntity)) {
-            BeanMapperUtils.copy(sysDepartmentEntity,dto);
+            BeanMapperUtils.copy(sysDepartmentEntity, dto);
         }
         return dto;
     }
@@ -157,10 +156,38 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         List<SysDepartmentEntity> list = lambdaQuery()
                 .eq(SysDepartmentEntity::getType, 1)
                 .list();
-        if (CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
         return list;
+    }
+
+
+    /**
+     * 根据部门名 获取部门id 以及下面的部门id
+     *
+     * @param deptName
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-12-28 15:26
+     */
+    @Override
+    public List<String> getDeptIds(String deptName) {
+        List<String> resultList = new ArrayList<>();
+        LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentEntity::getType, 1);
+        queryWrapper.eq(SysDepartmentEntity::getName, deptName);
+        queryWrapper.last("LIMIT 1");
+        SysDepartmentEntity dept = this.getOne(queryWrapper);
+        if (dept != null) {
+            List<SysDepartmentTreeDTO> flagList = baseMapper.findTree();
+            String deptId = dept.getId();
+            //根据用数据库查询的 树结构数据 获取到 该部门id 下有多少子的部门id
+            List<String> childrenDepartIds = getAllDepartIdsById(deptId, flagList);
+            resultList.add(deptId);
+            resultList.addAll(childrenDepartIds);
+        }
+        return resultList;
     }
 
     /**

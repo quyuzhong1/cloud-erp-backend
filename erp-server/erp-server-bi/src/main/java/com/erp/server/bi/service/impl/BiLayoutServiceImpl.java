@@ -10,6 +10,7 @@ import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
 import com.erp.server.bi.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -193,27 +194,31 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //删除 模块与布局关系表
         layoutRefModuleService.deleteBySubjectId(subjectId);
         List<String> LayoutIds = new ArrayList<>();
-        for (LayoutDetailsDTO item : layoutDetailsList) {
-            BiLayoutEntity entity = new BiLayoutEntity();
-            String id = item.getId();
-            if (StringUtils.isBlank(id)) {
-                id = IdWorker.getIdStr();
+        if(CollectionUtils.isNotEmpty(layoutDetailsList)){
+            for (LayoutDetailsDTO item : layoutDetailsList) {
+                BiLayoutEntity entity = new BiLayoutEntity();
+                String id = item.getId();
+                if (StringUtils.isBlank(id)) {
+                    id = IdWorker.getIdStr();
+                }
+                entity.setId(id);
+                String blockNo = item.getBlockNo();
+                entity.setBlockNo(blockNo);
+                entity.setHeight(item.getHeight());
+                Integer columnCount = LayoutBlockEnum.getCount(blockNo);
+                entity.setColumnCount(columnCount);
+                Boolean saveResult = this.saveOrUpdate(entity);
+                if (saveResult) {
+                    LayoutIds.add(id);
+                    //保存布局与 模块关系
+                    layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
+                }
             }
-            entity.setId(id);
-            String blockNo = item.getBlockNo();
-            entity.setBlockNo(blockNo);
-            entity.setHeight(item.getHeight());
-            Integer columnCount = LayoutBlockEnum.getCount(blockNo);
-            entity.setColumnCount(columnCount);
-            Boolean saveResult = this.saveOrUpdate(entity);
-            if (saveResult) {
-                LayoutIds.add(id);
-                //保存布局与 模块关系
-                layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
-            }
+            //保存专题与布局关系表
+            subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
         }
-        //保存专题与布局关系表
-        subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
+
+
         return flag;
     }
 
