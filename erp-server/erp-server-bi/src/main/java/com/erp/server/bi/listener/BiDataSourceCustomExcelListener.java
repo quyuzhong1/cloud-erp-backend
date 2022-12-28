@@ -29,13 +29,20 @@ import java.util.stream.Collectors;
 public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
     private BiDataSourceCustomService biDataSourceCustomService;
+
     private BiDataSourceCustomDetailService biDataSourceCustomDetailService;
-    List<Map<Integer,String>> list ;
-    Map<Integer,String> headMap;
-    List<String> headList;
-    List<BiDictEntity> quarterList;
-    List<BiDictEntity> monthList;
-    Integer importType;
+
+    private List<Map<Integer,String>> list ;
+
+    private Map<Integer,String> headMap;
+
+    private List<String> headList;
+
+    private List<BiDictEntity> quarterList;
+
+    private List<BiDictEntity> monthList;
+
+    private Integer importType;
 
     public BiDataSourceCustomExcelListener(BiDataSourceCustomService biDataSourceCustomService, BiDataSourceCustomDetailService biDataSourceCustomDetailService,
                                           List<BiDictEntity> quarterList,List<BiDictEntity> monthList,Integer importType) {
@@ -99,8 +106,13 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 }
                 //年导入
                 if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
+
                     String year = key.replace("年", "");
-                    detailEntity.setYear(Integer.valueOf(year));
+                    try {
+                        detailEntity.setYear(Integer.valueOf(year));
+                    } catch (Exception e){
+                        errorMsgList.add("年份格式有误，例如：2022年");
+                    }
                     detailEntity.setValue(value);
                     detailList.add(detailEntity);
                     //年导入时主表数据与明细数据一一对应
@@ -119,40 +131,56 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 //季度导入
                 if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(importType)) {
                     if (CollectionUtils.isNotEmpty(quarterList)) {
-                        String quarter = quarterList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
-                        detailEntity.setYear(yearDate);
-                        detailEntity.setQuarter(Integer.valueOf(quarter));
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
+                        try {
+                            String quarter = quarterList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
+                            detailEntity.setYear(yearDate);
+                            detailEntity.setQuarter(Integer.valueOf(quarter));
+                            detailEntity.setValue(value);
+                            detailList.add(detailEntity);
+                        } catch (Exception e){
+                            errorMsgList.add("季度格式有误，例如：Q1");
+                        }
                     }
                 }
                 //月导入
                 if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(importType)) {
-                    String month = monthList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
-                    detailEntity.setYear(yearDate);
-                    detailEntity.setMonth(Integer.valueOf(month));
-                    detailEntity.setValue(value);
-                    detailList.add(detailEntity);
+                    try {
+                        String month = monthList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
+                        detailEntity.setYear(yearDate);
+                        detailEntity.setMonth(Integer.valueOf(month));
+                        detailEntity.setValue(value);
+                        detailList.add(detailEntity);
+                    } catch (Exception e){
+                        errorMsgList.add("月份格式有误，例如：1月");
+                    }
                 }
                 //周导入
                 if (BiDataSourceCustomTypeEnum.WEEK.getCode().equals(importType)) {
-                    String week1 = key.split("-")[0];
-                    String week2 = key.split("-")[1];
-                    detailEntity.setYear(yearDate);
-                    detailEntity.setWeekBegin(week1);
-                    detailEntity.setWeekEnd(week2);
-                    detailEntity.setValue(value);
-                    detailList.add(detailEntity);
+                    try {
+                        String week1 = key.split("-")[0];
+                        String week2 = key.split("-")[1];
+                        detailEntity.setYear(yearDate);
+                        detailEntity.setWeekBegin(week1);
+                        detailEntity.setWeekEnd(week2);
+                        detailEntity.setValue(value);
+                        detailList.add(detailEntity);
+                    } catch (Exception e){
+                        errorMsgList.add("周期格式有误，例如：1月1日-1月7日");
+                    }
                 }
                 //日导入
                 if (BiDataSourceCustomTypeEnum.DAY.getCode().equals(importType)) {
-                    String month = key.split("月")[0];
-                    String day = key.split("月")[1].split("日")[0];
-                    detailEntity.setYear(yearDate);
-                    detailEntity.setMonth(Integer.valueOf(month));
-                    detailEntity.setDate(Integer.valueOf(day));
-                    detailEntity.setValue(value);
-                    detailList.add(detailEntity);
+                    try {
+                        String month = key.split("月")[0];
+                        String day = key.split("月")[1].split("日")[0];
+                        detailEntity.setYear(yearDate);
+                        detailEntity.setMonth(Integer.valueOf(month));
+                        detailEntity.setDate(Integer.valueOf(day));
+                        detailEntity.setValue(value);
+                        detailList.add(detailEntity);
+                    } catch (Exception e){
+                        errorMsgList.add("日期格式有误，例如：1月1日");
+                    }
                 }
 
             }

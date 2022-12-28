@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
@@ -35,13 +33,20 @@ import java.util.stream.Collectors;
 public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Integer,String>> {
 
     private BiDataSourceCostService biDataSourceCostService;
+
     private BiDataSourceCostDetailService biDataSourceCostDetailService;
-    List<DmpShopInfoEntity> shopList;
-    List<FindUserDTO> userList;
-    List<BiDictEntity> dictList;
-    List<Map<Integer,String>> list ;
-    Map<Integer,String> headMap;
-    List<String> headList;
+
+    private List<DmpShopInfoEntity> shopList;
+
+    private List<FindUserDTO> userList;
+
+    private List<BiDictEntity> dictList;
+
+    private  List<Map<Integer,String>> list ;
+
+    private Map<Integer,String> headMap;
+
+    private List<String> headList;
 
     public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService,BiDataSourceCostDetailService biDataSourceCostDetailService,
                                          List<DmpShopInfoEntity> shopList,List<FindUserDTO> userList,List<BiDictEntity> dictList) {
@@ -121,7 +126,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                             detailEntity.setCostType(costType);
                             //既不是数值也不是百分比
                             if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
-                                throw new ServiceException(ApiError.ERROR_97008);
+                                errorMsgList.add("成本必须是数值或百分比数据");
                             }
                             if (StrUtils.isDigit(value)) {
                                 detailEntity.setCostValue(MathUtil.valueOf(value));
