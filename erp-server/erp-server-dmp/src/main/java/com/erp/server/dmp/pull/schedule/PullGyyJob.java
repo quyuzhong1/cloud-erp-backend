@@ -29,7 +29,7 @@ public class PullGyyJob {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     // 拉取管易云数据任务
-    //@Scheduled(cron = "*/5 * * * * ?")
+    // @Scheduled(cron = "*/5 * * * * ?")
     @XxlJob("gyyExecute")
     public void execute() {
         while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {

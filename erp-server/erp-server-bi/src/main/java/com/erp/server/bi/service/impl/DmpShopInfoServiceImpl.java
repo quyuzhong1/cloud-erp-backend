@@ -65,6 +65,17 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         return new PagingVO(pageData);
     }
 
+    /**
+     * 查询所有店铺
+     * @Author Luo_WG
+     * @Date 2022/12/26 15:15
+     * @return com.erp.common.vo.PagingVO<com.erp.model.bi.dto.DmpShopInfoShowDTO>
+     **/
+    @Override
+    public List<DmpShopInfoEntity> shopList() {
+        return this.list();
+    }
+
     @Override
     public DmpShopInfoDTO getDmpShopInfoById(String id) {
         DmpShopInfoEntity dmpShopInfoEntity = this.getById(id);

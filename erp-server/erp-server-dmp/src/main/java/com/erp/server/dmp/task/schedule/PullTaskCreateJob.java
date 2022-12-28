@@ -39,7 +39,7 @@ public class PullTaskCreateJob {
      * @Date 2022/11/9 14:50
      **/
     //@Scheduled(cron = "0/20 * * * * ?")
-    @XxlJob("createOrderJob")
+    //@XxlJob("createOrderJob")
     public void createOrderJob() {
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
         if(list != null){
@@ -54,7 +54,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
-    @XxlJob("addShopTask")
+    //@XxlJob("addShopTask")
     public void addShopTask() {
          tbTaskTypeService.addTask();
     }
@@ -67,7 +67,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
-    @XxlJob("cleanOrderTask")
+    //@XxlJob("cleanOrderTask")
     public void cleanOrderTask() {
         dmpOrderInfoService.cleanOrder();
     }
@@ -79,7 +79,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
-    @XxlJob("cleanReturnOrderTask")
+    //@XxlJob("cleanReturnOrderTask")
     public void cleanReturnOrderTask() {
         dmpReturnOrderInfoService.cleanReturnOrderTask();
     }
@@ -92,7 +92,7 @@ public class PullTaskCreateJob {
      * @return void
      **/
     //@Scheduled(cron = "0/10 * * * * ?")
-    @XxlJob("cleanRefundTask")
+    //@XxlJob("cleanRefundTask")
     public void cleanRefundTask() {
         dmpRefundInfoService.cleanRefundTask();
     }

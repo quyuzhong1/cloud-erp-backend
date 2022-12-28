@@ -96,6 +96,11 @@ public class BiFilterDTO extends PermissionsDTO {
     private List<Long> userId;
 
     /**
+     * 时间类型：日: DAY; 周: WEEK; 月: MONTH; 季度: QUARTER; 年: YEAR
+     */
+    private String dateType;
+
+    /**
      *是否可以支持源币种
      * @param dto
      * @return

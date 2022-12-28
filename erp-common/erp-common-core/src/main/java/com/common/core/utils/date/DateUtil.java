@@ -408,4 +408,67 @@ public class DateUtil {
         return true;
     }
 
+    /**
+     * 获取某年第一天日期
+     * @param year 年份
+     * @return Date
+     */
+    public static Date getYearFirst(int year){
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.set(Calendar.YEAR, year);
+        Date currYearFirst = calendar.getTime();
+        return currYearFirst;
+    }
+
+    /**
+     * 获取某年最后一天日期
+     * @param year 年份
+     * @return Date
+     */
+    public static Date getYearLast(int year){
+        Calendar calendar = Calendar.getInstance();
+        calendar.clear();
+        calendar.set(Calendar.YEAR, year);
+        calendar.roll(Calendar.DAY_OF_YEAR, -1);
+        Date currYearLast = calendar.getTime();
+        return currYearLast;
+    }
+
+    /**
+     * 获取环比日期
+     * @param endDate
+     * @param startDate
+     * @return java.lang.String
+     */
+    public static String getRingRatioDate(Date endDate, Date startDate) {
+        if (endDate != null && startDate != null) {
+            long nd = 1000 * 24 * 60 * 60;
+            long nh = 1000 * 60 * 60;
+            long nm = 1000 * 60;
+            long ns = 1000;
+            // 获得两个时间的毫秒时间差异
+            long diff = endDate.getTime() - startDate.getTime();
+            // 计算差多少天
+            long day = diff / nd;
+            // 计算差多少小时
+            long hour = diff % nd / nh;
+            // 计算差多少分钟
+            long min = diff % nd % nh / nm;
+            // 计算差多少秒//输出结果
+            long sec = diff % nd % nh % nm / ns;
+
+            DateTime dateTime = new DateTime(startDate);
+            DateTime dateTime1 = dateTime.plusDays(Integer.valueOf(-day + ""));
+            DateTime dateTime2 = dateTime1.plusHours(Integer.valueOf(-hour + ""));
+            DateTime dateTime3 = dateTime2.plusMinutes(Integer.valueOf(-min + ""));
+            DateTime dateTime4 = dateTime3.plusSeconds(Integer.valueOf(-sec + ""));
+            //设置时间格式
+            SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String date = f.format(dateTime4.toDate());
+            return date;
+        }
+        return "";
+    }
+
 }

@@ -11,6 +11,7 @@ import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @author Will
@@ -27,6 +28,14 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return PagingVO<DmpShopInfoDTO>
      */
     PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto);
+
+    /**
+     * 查询所有店铺
+     * @Author Luo_WG
+     * @Date 2022/12/26 15:15
+     * @return com.erp.common.vo.PagingVO<com.erp.model.bi.dto.DmpShopInfoShowDTO>
+     **/
+    List<DmpShopInfoEntity> shopList();
 
     /**
      * @description: 根据id查询店铺数据

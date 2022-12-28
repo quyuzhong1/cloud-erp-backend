@@ -69,8 +69,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(0);
-        jobTaskDTO.setNextTime(0);
+        jobTaskDTO.setLastTime(1649091600);
+        jobTaskDTO.setNextTime(1649170800);
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
