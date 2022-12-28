@@ -3,25 +3,28 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.entity.BiDictEntity;
+import com.erp.model.bi.entity.BiSysModuleEntity;
+import com.erp.model.bi.vo.ChartVO;
+import com.erp.model.bi.vo.SeriesVO;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
 import com.erp.server.bi.enums.DataTypeEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiDataSourceCustomMapper;
-import com.erp.server.bi.service.BiDataSourceCustomDetailService;
-import com.erp.server.bi.service.BiDataSourceCustomService;
-import com.erp.server.bi.service.BiDictService;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,8 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     @Resource
     private BiDataSourceCustomDetailService biDataSourceCustomDetailService;
 
+    @Resource
+    private BiSysModuleService biSysModuleService;
 
 
     @Override
@@ -164,7 +170,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                         BeanUtils.copyProperties(entity,main);
                         main.setYear(Integer.valueOf(year));
                         //根据类型、数据类型、年份、指标分类、指标名称查询
-                        BiDataSourceCustomEntity custom = getCustomByPatam(main);
+                        BiDataSourceCustomEntity custom = getCustomByParam(main);
                         if (ObjectUtils.isEmpty(custom)) {
                             addList.add(main);
                         } else {
@@ -213,7 +219,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
                 }
             }
-            BiDataSourceCustomEntity custom = getCustomByPatam(entity);
+            BiDataSourceCustomEntity custom = getCustomByParam(entity);
             if (ObjectUtils.isEmpty(custom) && !BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
                 addList.add(entity);
             } else {
@@ -257,12 +263,83 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     }
 
     @Override
-    public List<String> listTargetType(Integer type, Integer dataType) {
+    public List<String> listTargetType(String moduleName,Integer type, Integer year) {
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(moduleName);
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            return new ArrayList<>();
+        }
+        //数据类型
+        Integer dataSource = biSysModuleEntity.getDataSource();
+        //指标名称
+        String targetNames = biSysModuleEntity.getTargetNames();
+
+        if (ObjectUtils.isEmpty(dataSource) || StringUtils.isBlank(targetNames) ) {
+            return new ArrayList<>();
+        }
+        List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
         LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDataSourceCustomEntity::getType,type);
-        queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataType);
+        queryWrapper.eq(BiDataSourceCustomEntity::getYear,year);
+        queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataSource);
+        queryWrapper.in(BiDataSourceCustomEntity::getTargetName,targetNameList);
         queryWrapper.select(BiDataSourceCustomEntity::getTargetType);
         return this.listObjs(queryWrapper,Object::toString);
+    }
+
+    @Override
+    public ChartVO listGraphicalData(String moduleName, Integer year) {
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(moduleName);
+        ChartVO chartVO = new ChartVO();
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            return chartVO;
+        }
+        //数据类型
+        Integer dataSource = biSysModuleEntity.getDataSource();
+        //指标名称
+        String targetNames = biSysModuleEntity.getTargetNames();
+        //数据维度(趋势图类型)
+        Integer dataDimension = biSysModuleEntity.getDataDimension();
+        if (ObjectUtils.isEmpty(dataSource) || StringUtils.isBlank(targetNames) || ObjectUtils.isEmpty(dataDimension)) {
+            return chartVO;
+        }
+        List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
+        //根据类型、数据类型、指标名称、年份查询
+        List<LinkedHashMap<String,Object>> list = getCustomByParams(dataDimension, dataSource, targetNameList, year);
+        if (CollectionUtils.isEmpty(list)) {
+            return chartVO;
+        }
+        LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
+        renewBiDataSourceCustom(list,headMap,dataDimension);
+        BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
+        //删除新增固定表头
+        for (BiDataSourceCustomEnum value:values) {
+            headMap.remove(value.getCode());
+        }
+        List<String> headList = headMap.values().stream().map(String::valueOf).collect(Collectors.toList());
+        List<BiDataSourceCustomGraphicalDTO> dataList = new ArrayList<>();
+        for (LinkedHashMap<String,Object> map: list) {
+            BiDataSourceCustomGraphicalDTO dto = new BiDataSourceCustomGraphicalDTO();
+            //目标值
+            BigDecimal targetValue = MathUtil.valueOf(map.get("targetValue"));
+            //指标名称
+            String targetName = map.get("targetName").toString();
+            dto.setTargetValue(targetValue);
+            dto.setTargetName(targetName);
+            List<BigDecimal> valueList = new ArrayList<>();
+            for (String head : headList) {
+                BigDecimal value = ObjectUtils.isEmpty(map.get(head)) ? BigDecimal.ZERO : MathUtil.valueOf(map.get(head));
+                valueList.add(value);
+            }
+            dto.setValues(valueList);
+            dataList.add(dto);
+        }
+        chartVO.setXAxis(headList);
+        SeriesVO seriesVO = new SeriesVO();
+        String desc = BiDataSourceCustomTypeEnum.getDesc(dataDimension);
+        seriesVO.setName(desc.concat("图"));
+        seriesVO.setData(dataList);
+        chartVO.setSeries(Arrays.asList(seriesVO));
+        return chartVO;
     }
 
 
@@ -362,8 +439,11 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         return list;
     }
 
-
-    private BiDataSourceCustomEntity getCustomByPatam(BiDataSourceCustomEntity entity) {
+    /**
+     * 根据类型、数据类型、指标名称、年份查询
+     */
+    @Override
+    public  BiDataSourceCustomEntity getCustomByParam(BiDataSourceCustomEntity entity) {
         LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDataSourceCustomEntity::getYear,entity.getYear());
         queryWrapper.eq(BiDataSourceCustomEntity::getType,entity.getType());
@@ -372,5 +452,12 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         queryWrapper.eq(BiDataSourceCustomEntity::getTargetName,entity.getTargetName());
         queryWrapper.last("limit 1");
         return  this.getOne(queryWrapper);
+    }
+
+    /**
+     * 根据类型、数据类型、指标名称、年份查询
+     */
+    private List<LinkedHashMap<String, Object>> getCustomByParams(Integer type, Integer dataType, List<String> targetNameList, Integer year) {
+        return  this.baseMapper.getCustomByParams(type,dataType,targetNameList,year);
     }
 }

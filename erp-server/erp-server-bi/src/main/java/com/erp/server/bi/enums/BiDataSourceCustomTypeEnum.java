@@ -35,12 +35,22 @@ public enum BiDataSourceCustomTypeEnum {
 
     public static String getName(Integer code) {
         for (BiDataSourceCustomTypeEnum biDataSourceCustomTypeEnum : BiDataSourceCustomTypeEnum.values()) {
-            if (code.equals(biDataSourceCustomTypeEnum.getCode())) {
+            if (biDataSourceCustomTypeEnum.getCode().equals(code)) {
                 return biDataSourceCustomTypeEnum.getName();
             }
         }
         return "";
     }
+
+    public static String getDesc(Integer code) {
+        for (BiDataSourceCustomTypeEnum biDataSourceCustomTypeEnum : BiDataSourceCustomTypeEnum.values()) {
+            if (biDataSourceCustomTypeEnum.getCode().equals(code)) {
+                return biDataSourceCustomTypeEnum.getDesc();
+            }
+        }
+        return "";
+    }
+
 
     public static Integer getCodeByName(String name) {
         BiDataSourceCustomTypeEnum[] enums = values();
@@ -51,4 +61,5 @@ public enum BiDataSourceCustomTypeEnum {
         }
         return null;
     }
+
 }

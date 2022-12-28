@@ -31,4 +31,12 @@ public interface BiSysModuleService  extends IService<BiSysModuleEntity> {
      * 模块配置
      */
     Boolean moduleConfiguration(ModuleSysConfigurationDTO dto);
+    /**
+     * @description: 根据名称查询
+     * @author Will
+     * @date: 2022/12/28 10:05
+     * @param name
+     * @return BiSysModuleEntity
+     */
+    BiSysModuleEntity getByName(String name);
 }

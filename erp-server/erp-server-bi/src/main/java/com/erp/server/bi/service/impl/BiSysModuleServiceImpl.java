@@ -98,6 +98,13 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         return this.save(sysModule);
     }
 
+    @Override
+    public BiSysModuleEntity getByName(String name) {
+        LambdaQueryWrapper<BiSysModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSysModuleEntity::getName,name);
+        return this.getOne(queryWrapper);
+    }
+
     private void checkName(String id, String name) {
         LambdaQueryWrapper<BiSysModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSysModuleEntity::getName, name);
