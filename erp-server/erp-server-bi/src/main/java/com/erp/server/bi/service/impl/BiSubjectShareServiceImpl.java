@@ -163,6 +163,14 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
 
     }
 
+    @Override
+    public List<String> getUserIdsBySubjectId(String subjectId) {
+        LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiSubjectShareEntity::getUserId);
+        queryWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
     private Boolean getShare(String userId, String subjectId) {
         LambdaQueryWrapper<BiSubjectShareEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSubjectShareEntity::getUserId, userId);

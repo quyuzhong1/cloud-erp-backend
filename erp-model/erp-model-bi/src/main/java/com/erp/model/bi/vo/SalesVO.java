@@ -38,7 +38,16 @@ public class SalesVO implements Serializable {
 
 
 
+    /**
+     *订单统计
+     */
+    private Integer orderCount;
 
+
+    /**
+     * 客单假
+     */
+    private BigDecimal perCustomerTransaction;
 
     /**
      * 名字

@@ -10,6 +10,7 @@ public class LocalDateUtil {
 
     /**
      * LocalDate转Date
+     *
      * @param localDate
      * @return
      */
@@ -24,6 +25,7 @@ public class LocalDateUtil {
 
     /**
      * Date转LocalDate
+     *
      * @param date
      */
     public static LocalDate date2LocalDate(Date date) {
@@ -36,44 +38,62 @@ public class LocalDateUtil {
 
     /**
      * Date转换为LocalDateTime
+     *
      * @param date
      */
-    public static LocalDateTime date2LocalDateTime(Date date){
+    public static LocalDateTime date2LocalDateTime(Date date) {
         Instant instant = date.toInstant();
         ZoneId zoneId = ZoneId.systemDefault();
         LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-      return localDateTime;
+        return localDateTime;
     }
 
     /**
      * LocalDateTime转换为Date
+     *
      * @param localDateTime
      */
-    public static Date localDateTime2Date( LocalDateTime localDateTime){
+    public static Date localDateTime2Date(LocalDateTime localDateTime) {
         ZoneId zoneId = ZoneId.systemDefault();
         ZonedDateTime zdt = localDateTime.atZone(zoneId);
         Date date = Date.from(zdt.toInstant());
-       return date;
+        return date;
     }
 
 
     /**
      * 获取当天开始时间
+     *
      * @param localDate
      */
-    public static LocalDateTime  startLocalDateTime( LocalDate localDate){
+    public static LocalDateTime startLocalDateTime(LocalDate localDate) {
         LocalDateTime startTime = LocalDateTime.of(localDate, LocalTime.MIN);
         return startTime;
     }
 
     /**
      * 获取当天开始时间
+     *
      * @param localDate
      */
-    public static LocalDateTime  endLocalDateTime( LocalDate localDate){
+    public static LocalDateTime endLocalDateTime(LocalDate localDate) {
         LocalDateTime endTime = LocalDateTime.of(localDate, LocalTime.MAX);
         return endTime;
     }
-    
+
+
+    /**
+     * 获取环比日期
+     *
+     * @return
+     */
+    public static LocalDateTime getRingRatioDate(LocalDateTime startDate,LocalDateTime endDate ) {
+        if (endDate != null && startDate != null) {
+            long diff = Duration.between(startDate,endDate).toDays();
+            return startDate.minusDays(diff);
+        }
+        return null;
+    }
+
 }
 

@@ -56,6 +56,40 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInf
         return resultList;
     }
 
+
+    /**
+     * 品牌分类 获取sku
+     * @return
+     */
+    @Override
+    public List<SkuCategoryVO> getSkuBrandList() {
+        List<DmpSkuInfoEntity> list = this.getBrandList();
+        Map<String, List<DmpSkuInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(DmpSkuInfoEntity::getParentCategoryName));
+        List<SkuCategoryVO> resultList = new ArrayList<>(groupMap.size());
+        String defaultCategory = "无品牌";
+        for (Map.Entry<String, List<DmpSkuInfoEntity>> item : groupMap.entrySet()) {
+            SkuCategoryVO vo = new SkuCategoryVO();
+            List<DmpSkuInfoEntity> skuInfoList = item.getValue();
+            String brand = item.getKey();
+            if (StringUtils.isNotBlank(brand)) {
+                vo.setName(brand);
+            } else {
+                vo.setName(defaultCategory);
+            }
+            vo.setSkuList(skuInfoList.stream().map(DmpSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+    private List<DmpSkuInfoEntity> getBrandList() {
+        LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(DmpSkuInfoEntity::getBrandName, "")
+                .or().ne(DmpSkuInfoEntity::getBrandName, null);
+        return this.list(queryWrapper);
+    }
+
     private List<DmpSkuInfoEntity> getCategoryList() {
         LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.ne(DmpSkuInfoEntity::getParentCategoryName, "")

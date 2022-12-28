@@ -390,7 +390,6 @@ public class BiSalesModuleController extends BaseController {
 //    )
     public ApiResult<List<SalesCountVO>> byDept(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byDept(dto);
-
         return success(result);
     }
 
@@ -479,12 +478,85 @@ public class BiSalesModuleController extends BaseController {
     }
 
 
+    /**
+     * 销售相关-一级模块-站点销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/bySite")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<List<SalesCountVO>> bySite(@RequestBody @Validated BiFilterDTO dto) {
+        List<SalesCountVO> result=salesOrderService.bySite(dto);
+        return success(result);
+    }
+
+    /**
+     * 销售相关-一级模块-新品自研，外采贡献分析
+     * @param
+     * @return
+     */
+    @PostMapping("/byProductType")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byProductType(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byProductType(dto);
+        return success(result);
+    }
+
+    /**
+     * 销售相关-一级模块-销售额TOP20老品
+     * @param
+     * @return
+     */
+    @PostMapping("/byOldProductTop")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byOldProductTop(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byOldProductTop(dto);
+        return success(result);
+    }
 
 
+    /**
+     * 销售相关-一级模块-销售额TOP20老品
+     * @param
+     * @return
+     */
+    @PostMapping("/byNewProductTop")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byNewProductTop(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byNewProductTop(dto);
+        return success(result);
+    }
 
-
-
-
-
+    /**
+     * 销售相关-一级模块-营销中心销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/byMarketingCenter")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byMarketingCenter(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byNewProductTop(dto);
+        return success(result);
+    }
 
 }

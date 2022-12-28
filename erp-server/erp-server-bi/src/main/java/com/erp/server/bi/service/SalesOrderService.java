@@ -117,4 +117,12 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto);
 
     List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto);
+
+    List<SalesCountVO> bySite(BiFilterDTO dto);
+
+    StatisticalDataVO byProductType(BiFilterDTO dto);
+
+    StatisticalDataVO byOldProductTop(BiFilterDTO dto);
+
+    StatisticalDataVO byNewProductTop(BiFilterDTO dto);
 }

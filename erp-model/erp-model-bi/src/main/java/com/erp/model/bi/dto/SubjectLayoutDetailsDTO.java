@@ -36,6 +36,26 @@ public class SubjectLayoutDetailsDTO implements Serializable {
     private String name;
 
 
+    /**
+     * 分类名
+     *
+     */
+    private String categoryName;
+
+    /**
+     * 分类id
+     */
+    // @NotBlank(message = "分类id 不能为空")
+    private String categoryId;
+
+
+
+    /**
+     * 分享的用户集合
+     */
+    private List<String> shareUserIdList;
+
+
     @Valid
     private List<LayoutDetailsDTO> layoutDetailsList;
 

@@ -113,6 +113,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
             item.setSalesTrend(salesTrend);
+            BigDecimal sales = item.getSales();
+            Integer orderCount = item.getOrderCount();
+            //客单价
+            BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
+            item.setPerCustomerTransaction(perCustomerTransaction);
         }
 
         return resultList;
@@ -392,6 +397,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
+        //查询sku 分类以及分类下对应的skuno
+        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuBrandList();
         return null;
     }
 
@@ -405,6 +412,47 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<SalesCountVO> byPlatform(BiFilterDTO dto) {
         List<SalesCountVO> list = baseMapper.byPlatform(dto);
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        List<SalesCountVO> chainList = baseMapper.byPlatform(dto);
+
+        //同比开始时间
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesCountVO> yearBasisList = baseMapper.byPlatform(dto);
+
+        //总的销售额
+        BigDecimal totalSales = list.stream().
+                map(SalesCountVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (SalesCountVO item : list) {
+            String name = item.getName();
+            BigDecimal sales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+
+        }
+
         return list;
     }
 
@@ -520,14 +568,74 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<SalesCountVO> byCountry(BiFilterDTO dto) {
         List<SalesCountVO> resultList = baseMapper.byCountry(dto);
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+
+        //这个是环比的查询出来的
+        List<SalesCountVO> chainList = baseMapper.byCountry(dto);
+
+        //同比开始时间
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesCountVO> yearBasisList = baseMapper.byCountry(dto);
+
+        //总的
         BigDecimal totalSales = resultList.stream().
                 map(SalesCountVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         for (SalesCountVO item : resultList) {
-
+            String name = item.getName();
+            BigDecimal sales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
         }
-
         return resultList;
+    }
+
+
+    /**
+     * 获取销售占比
+     *
+     * @return
+     */
+    public BigDecimal getSalesRatio(BigDecimal totalSales, BigDecimal sales) {
+        BigDecimal ratio = sales.divide(totalSales, 2, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100"));
+    }
+
+    /**
+     * 获取销售环比
+     * 本期销售额-同期销售额/同期销售额 *100
+     *
+     * @return
+     */
+    public BigDecimal getChainRelativeRatio(BigDecimal sales, BigDecimal oldSales) {
+        BigDecimal differ = sales.subtract(oldSales);
+        BigDecimal zero = BigDecimal.ZERO;
+        if (oldSales.compareTo(zero) == 0) {
+            return zero;
+        }
+        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100"));
     }
 
 
@@ -607,8 +715,44 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<SalesCountVO> byNewAndOld(BiFilterDTO dto) {
         List<SalesCountVO> list = baseMapper.byNewAndOld(dto);
-
-        return null;
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        //这个是环比的查询出来的
+        List<SalesCountVO> chainList = baseMapper.byNewAndOld(dto);
+        //同比开始时间
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesCountVO> yearBasisList = baseMapper.byNewAndOld(dto);
+        //总的
+        BigDecimal totalSales = list.stream().
+                map(SalesCountVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (SalesCountVO item : list) {
+            String name = item.getName();
+            BigDecimal sales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+        }
+        return list;
     }
 
 
@@ -621,30 +765,52 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<ProductNewAndOldVO> byPlatformNewAndOld(BiFilterDTO dto) {
         List<ProductNewAndOldVO> resultList = new ArrayList<>(10);
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+
         //新品
         Integer newFlag = IsDeleted.YES;
         //老品
         Integer oldFlag = IsDeleted.NO;
 
         List<SalesFlagVO> list = baseMapper.byPlatformNewAndOld(dto);
+
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        List<SalesFlagVO> chainList = baseMapper.byPlatformNewAndOld(dto);
+
         Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesFlagVO::getName));
 
         for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            String name = item.getKey();
             List<SalesFlagVO> salesFlagList = item.getValue();
             ProductNewAndOldVO vo = new ProductNewAndOldVO();
             SalesFlagVO newItem = salesFlagList.stream().filter(s -> s.getFlag().
                     equals(newFlag)).findFirst().orElse(null);
             SalesFlagVO oldItem = salesFlagList.stream().filter(s -> s.getFlag().
                     equals(oldFlag)).findFirst().orElse(null);
-            vo.setName(item.getKey());
+            vo.setName(name);
             if (newItem != null) {
                 vo.setNewProductSales(newItem.getSales());
                 vo.setNewSalesQuantity(newItem.getSalesQuantity());
+
+                BigDecimal newChainSales = chainList.stream().
+                        filter(c -> name.equals(c.getName()) && c.getFlag().equals(newFlag)).
+                        map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                vo.setNewProductChainRelativeRatio(getChainRelativeRatio(newItem.getSales(), newChainSales));
             }
             if (oldItem != null) {
                 vo.setOldProductSales(oldItem.getSales());
                 vo.setOldSalesQuantity(oldItem.getSalesQuantity());
+                BigDecimal oldChainSales = chainList.stream().
+                        filter(c -> name.equals(c.getName()) && c.getFlag().equals(oldFlag)).
+                        map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                vo.setOldProductChainRelativeRatio(getChainRelativeRatio(oldItem.getSales(), oldChainSales));
             }
             resultList.add(vo);
         }
@@ -684,8 +850,163 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     .filter(s -> skuList.contains(s.getSkuNo()) && newFlag.equals(s.getFlag()))
                     .map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setNewProductSales(newProductSales);
+            Integer newSalesQuantity = list.stream()
+                    .filter(s -> skuList.contains(s.getSkuNo()) && newFlag.equals(s.getFlag()))
+                    .mapToInt(SalesFlagVO::getSalesQuantity).sum();
+            vo.setNewSalesQuantity(newSalesQuantity);
+
+            BigDecimal oldProductSales = list.stream()
+                    .filter(s -> skuList.contains(s.getSkuNo()) && oldFlag.equals(s.getFlag()))
+                    .map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setOldProductSales(oldProductSales);
+            Integer oldSalesQuantity = list.stream()
+                    .filter(s -> skuList.contains(s.getSkuNo()) && oldFlag.equals(s.getFlag()))
+                    .mapToInt(SalesFlagVO::getSalesQuantity).sum();
+            vo.setOldSalesQuantity(oldSalesQuantity);
+            resultList.add(vo);
         }
         return resultList;
     }
+
+
+    /**
+     * 一级模块 -站点销售额
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<SalesCountVO> bySite(BiFilterDTO dto) {
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        List<SalesCountVO> list = baseMapper.bySite(dto);
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+
+        //这个是环比的查询出来的
+        List<SalesCountVO> chainList = baseMapper.bySite(dto);
+
+        //同比开始时间
+        LocalDateTime  yearBasisStartTime=startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime  yearBasisEndTime=endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesCountVO> yearBasisList = baseMapper.bySite(dto);
+
+        //总的
+        BigDecimal totalSales = list.stream().
+                map(SalesCountVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (SalesCountVO item : list) {
+            String name = item.getName();
+            BigDecimal sales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                item.setChainRelativeRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+            }
+            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                item.setYearBasisRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * 一级模块 -新品自研，外采贡献分析
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-28 9:18
+     */
+    @Override
+    public StatisticalDataVO byProductType(BiFilterDTO dto) {
+        return null;
+    }
+
+    /**
+     * 一级模块 销售额TOP20老品
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-28 9:24
+     */
+    @Override
+    public StatisticalDataVO byOldProductTop(BiFilterDTO dto) {
+        List<SalesBaseVO> list = baseMapper.byOldProductTop(dto);
+        int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
+
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("销售额TOP20% 老品");
+        statistical.setChartType(ChartType.BAR);
+        ChartVO chart = new ChartVO();
+        List<Object> xAxisList = new ArrayList<>(initSize);
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        //只有一个柱子
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Object> dataList = new ArrayList<>(initSize);
+        for (SalesBaseVO item : list) {
+            dataList.add(item.getSales());
+            xAxisList.add(item.getFlagNo());
+        }
+        series.setData(dataList);
+        seriesList.add(series);
+        chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
+        statistical.setData(chart);
+        return statistical;
+
+    }
+
+
+    /**
+     * 一级模块 销售额TOP20新品
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-28 9:24
+     */
+    @Override
+    public StatisticalDataVO byNewProductTop(BiFilterDTO dto) {
+        List<SalesBaseVO> list = baseMapper.byNewProductTop(dto);
+        int initSize = CollectionUtils.isNotEmpty(list) ? list.size() : 10;
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("销售额TOP20% 老品");
+        statistical.setChartType(ChartType.BAR);
+        ChartVO chart = new ChartVO();
+        List<Object> xAxisList = new ArrayList<>(initSize);
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        //只有一个柱子
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Object> dataList = new ArrayList<>(initSize);
+        for (SalesBaseVO item : list) {
+            dataList.add(item.getSales());
+            xAxisList.add(item.getFlagNo());
+        }
+        series.setData(dataList);
+        seriesList.add(series);
+        chart.setXAxis(xAxisList);
+        chart.setSeries(seriesList);
+        statistical.setData(chart);
+        return statistical;
+
+    }
+
 
 }

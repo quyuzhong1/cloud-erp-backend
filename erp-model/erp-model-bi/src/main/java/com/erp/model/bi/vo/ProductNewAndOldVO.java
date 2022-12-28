@@ -45,12 +45,12 @@ public class ProductNewAndOldVO implements Serializable {
     /**
      * 新品环比真正率
      */
-    private Integer newProductChainRelativeRatio=0;
+    private BigDecimal newProductChainRelativeRatio=BigDecimal.ZERO;
 
     /**
      * 老品环比真正率
      */
-    private Integer oldProductChainRelativeRatio=0;
+    private BigDecimal oldProductChainRelativeRatio=BigDecimal.ZERO;
 
 
 }

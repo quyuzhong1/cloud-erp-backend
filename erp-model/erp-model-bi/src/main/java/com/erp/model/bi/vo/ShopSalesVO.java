@@ -53,6 +53,18 @@ public class ShopSalesVO  implements Serializable {
     private String skuNo;
 
 
+
+    /**
+     * 客单假
+     */
+    private BigDecimal perCustomerTransaction;
+
+
+    /**
+     *订单统计
+     */
+    private Integer orderCount;
+
     /**
      * 销量
      */
