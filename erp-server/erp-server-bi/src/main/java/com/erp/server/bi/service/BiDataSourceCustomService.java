@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
+import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.vo.ChartVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,15 +62,13 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @description: 根据类型和数据类型查询指标分类
      * @author Will
      * @date: 2022/12/28 9:05
-     * @param moduleName
-     * @param type
-     * @param year
+     * @param dto
      * @return List<String>
      */
-    List<String> listTargetType(String moduleName,Integer type, Integer year);
+    List<String> listTargetType(BiDataSourceCustomTableDTO dto);
 
     /**
-     * @description: 根据模块名称和年份查询
+     * @description: 柱状图数据查询
      * @author Will
      * @date: 2022/12/28 10:03
      * @param moduleName
@@ -86,4 +85,13 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @return BiDataSourceCustomEntity
      */
     BiDataSourceCustomEntity getCustomByParam(BiDataSourceCustomEntity entity);
+
+    /**
+     * @description: 表格数据查询
+     * @author Will
+     * @date: 2022/12/28 14:29
+     * @param dto
+     * @return ChartVO
+     */
+    ChartVO listTableData(BiDataSourceCustomTableDTO dto);
 }

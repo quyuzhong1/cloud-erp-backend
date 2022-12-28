@@ -67,10 +67,10 @@
             bdsc.target_value
         from bi_data_source_custom bdsc
         <where>
-            <if test="dataType != null ">
+            <if test="params.dataType != null ">
                 and bdsc.data_type = #{dataType}
             </if>
-            <if test="type != null ">
+            <if test="params.type != null ">
                 and bdsc.type = #{type}
             </if>
             <if test="targetNameList != null and targetNameList != ''">
@@ -79,10 +79,14 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="year != null ">
+            <if test="params.year != null ">
                 and bdsc.year = #{year}
+            </if>
+            <if test="params.targetType != null and params.targetType != ''">
+                and bdsc.target_type like concat('%',#{params.targetType},'%')
             </if>
         </where>
     </select>
+
 
 </mapper>
