@@ -342,10 +342,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         dmpOrderInfoEntity.setOrderState(4);
 
-        if (kingdeeOrderEntity.getFCloseStatus().equals("C")) {
-            dmpOrderInfoEntity.setOrderState(5);
-        }
-
         //买家账号
         dmpOrderInfoEntity.setBuyerUserId("");
 

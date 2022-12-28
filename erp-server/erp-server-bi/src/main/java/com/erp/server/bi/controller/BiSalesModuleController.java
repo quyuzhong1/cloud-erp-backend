@@ -3,7 +3,9 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.SkuFilterDTO;
 import com.erp.model.bi.vo.*;
+import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,8 @@ public class BiSalesModuleController extends BaseController {
     @Resource
     private SalesOrderService salesOrderService;
 
+    @Resource
+    private BiComprehensiveAnalyseService biComprehensiveAnalyseService;
 
     /**
      * 销售额- 一级模块-月销售额趋势
@@ -372,8 +376,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<PeopleSalesRankVO>> byDate() {
-        return success();
+    public ApiResult<List<SaleDetailVO>> byDate(@RequestBody @Validated SkuFilterDTO biFilterDTO) {
+        List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
+        return success(saleDetailVOList);
     }
 
 
