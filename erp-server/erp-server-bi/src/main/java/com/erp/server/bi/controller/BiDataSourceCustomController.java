@@ -136,7 +136,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listTargetType")
-    public ApiResult listTargetType(@RequestParam("moduleName") String moduleName,@RequestParam("year") Integer year,@RequestParam("type") Integer type) {
+    public ApiResult<List<String>> listTargetType(@RequestParam("moduleName") String moduleName,@RequestParam("year") Integer year,@RequestParam("type") Integer type) {
        List<String> targetTypeList= biDataSourceCustomService.listTargetType(moduleName,type,year);
        return success(targetTypeList);
     }
@@ -150,9 +150,11 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listGraphicalData")
-    public ApiResult listGraphicalData(@RequestParam("moduleName") String moduleName,@RequestParam("year") Integer year) {
+    public ApiResult<ChartVO> listGraphicalData(@RequestParam("moduleName") String moduleName,@RequestParam("year") Integer year) {
         ChartVO vo =biDataSourceCustomService.listGraphicalData(moduleName,year);
         return success(vo);
     }
+
+
 
 }
