@@ -58,4 +58,31 @@
         </where>
     </select>
 
+    <select id="getCustomByParams" resultType="java.util.LinkedHashMap">
+        select
+            bdsc.id,
+            bdsc.year,
+            bdsc.target_type,
+            bdsc.target_name,
+            bdsc.target_value
+        from bi_data_source_custom bdsc
+        <where>
+            <if test="dataType != null ">
+                and bdsc.data_type = #{dataType}
+            </if>
+            <if test="type != null ">
+                and bdsc.type = #{type}
+            </if>
+            <if test="targetNameList != null and targetNameList != ''">
+                and bdsc.target_name in
+                <foreach collection="targetNameList" separator="," open="(" close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="year != null ">
+                and bdsc.year = #{year}
+            </if>
+        </where>
+    </select>
+
 </mapper>

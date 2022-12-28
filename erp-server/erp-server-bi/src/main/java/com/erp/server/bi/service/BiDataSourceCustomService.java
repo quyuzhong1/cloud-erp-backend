@@ -5,6 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
+import com.erp.model.bi.vo.ChartVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -60,9 +61,29 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @description: 根据类型和数据类型查询指标分类
      * @author Will
      * @date: 2022/12/28 9:05
+     * @param moduleName
      * @param type
-     * @param dataType
+     * @param year
      * @return List<String>
      */
-    List<String> listTargetType(Integer type, Integer dataType);
+    List<String> listTargetType(String moduleName,Integer type, Integer year);
+
+    /**
+     * @description: 根据模块名称和年份查询
+     * @author Will
+     * @date: 2022/12/28 10:03
+     * @param moduleName
+     * @param year
+     * @return ChartVO
+     */
+    ChartVO listGraphicalData(String moduleName, Integer year);
+
+    /**
+     * @description: 根据类型、数据类型、指标名称、年份查询
+     * @author Will
+     * @date: 2022/12/28 11:31
+     * @param entity
+     * @return BiDataSourceCustomEntity
+     */
+    BiDataSourceCustomEntity getCustomByParam(BiDataSourceCustomEntity entity);
 }
