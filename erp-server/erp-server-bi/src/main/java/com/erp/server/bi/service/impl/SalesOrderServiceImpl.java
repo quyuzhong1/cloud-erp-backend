@@ -5,6 +5,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
@@ -37,6 +38,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiSkuInfoService skuInfoService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
 
     @Override
     public StatisticalDataVO getMonthSales(BiFilterDTO dto) {
@@ -891,9 +896,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.bySite(dto);
 
         //同比开始时间
-        LocalDateTime  yearBasisStartTime=startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
         //同比开始时间
-        LocalDateTime  yearBasisEndTime=endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -911,12 +916,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (chainVO != null) {
-                item.setChainRelativeRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
             }
             SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
             }
         }
 
@@ -1006,6 +1011,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setData(chart);
         return statistical;
 
+    }
+
+
+    /**
+     * 销售相关 -一级模块 -营销中心销售额
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.bi.vo.SalesCountVO>
+     * @author yl
+     * @date 2022-12-28 16:01
+     */
+    @Override
+    public List<SalesCountVO> byMarketingCenter(BiFilterDTO dto) {
+        String deptName = "营销中心";
+        List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
+        return null;
     }
 
 

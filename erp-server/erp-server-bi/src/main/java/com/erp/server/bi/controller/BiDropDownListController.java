@@ -139,7 +139,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 数据来源下拉列表
+     * 模块配置-数据来源下拉列表
      * @return
      */
     @GetMapping("/dataSource/list")
@@ -151,7 +151,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 数据指标下拉列表
+     * 模块配置-数据指标下拉列表
      * @return
      */
     @GetMapping("/targetName/list")
@@ -166,7 +166,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 数据维度下拉列表
+     * 模块配置-数据维度下拉列表
      * @return
      */
     @GetMapping("/dataDimension/list")
@@ -177,5 +177,34 @@ public class BiDropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 指标分类-指标名称下拉列表
+     * @return
+     */
+    @GetMapping("/all/targetName/list")
+    public ApiResult<List<SelectShowVO>> listAllTargetNameDropDown() {
+        List<SelectShowVO> result = new ArrayList<>();
+        List<String> list = biDataSourceCustomService.listAllTargetNameDropDown();
+        if (CollectionUtils.isNotEmpty(list)) {
+            result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
+                    .collect(Collectors.toList());
+        }
+        return success(result);
+    }
+
+    /**
+     * 指标分类-指标分类下拉列表
+     * @return
+     */
+    @GetMapping("/all/targetType/list")
+    public ApiResult<List<SelectShowVO>> listAllTargetTypeDropDown() {
+        List<SelectShowVO> result = new ArrayList<>();
+        List<String> list = biDataSourceCustomService.listAllTargetTypeDropDown();
+        if (CollectionUtils.isNotEmpty(list)) {
+            result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
+                    .collect(Collectors.toList());
+        }
+        return success(result);
+    }
 
 }

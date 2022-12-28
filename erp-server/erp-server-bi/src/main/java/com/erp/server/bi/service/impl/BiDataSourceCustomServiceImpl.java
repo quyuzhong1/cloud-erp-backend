@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -14,10 +15,8 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
-import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
-import com.erp.model.bi.entity.BiDataSourceCustomEntity;
-import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.bi.entity.BiSysModuleEntity;
+import com.erp.model.bi.dto.BiTargetTypeDTO;
+import com.erp.model.bi.entity.*;
 import com.erp.model.bi.vo.ChartVO;
 import com.erp.model.bi.vo.SeriesVO;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
@@ -60,6 +59,9 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Resource
     private BiSysModuleService biSysModuleService;
+
+    @Resource
+    private BiModuleService biModuleService;
 
 
     @Override
@@ -141,7 +143,12 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Override
     public List<String> listTargetType(BiDataSourceCustomTableDTO dto) {
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(dto.getModuleName());
+
+        BiModuleEntity biModuleEntity = biModuleService.getById(dto.getModuleId());
+        if (ObjectUtils.isEmpty(biModuleEntity)) {
+            return new ArrayList<>();
+        }
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
             return new ArrayList<>();
         }
@@ -164,9 +171,14 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     }
 
     @Override
-    public ChartVO listGraphicalData(String moduleName, Integer year) {
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(moduleName);
+    public ChartVO listGraphicalData(String moduleId, Integer year) {
         ChartVO chartVO = new ChartVO();
+        BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
+        if (ObjectUtils.isEmpty(biModuleEntity)) {
+            return chartVO;
+        }
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
+
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
             return chartVO;
         }
@@ -220,11 +232,15 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     }
 
     @Override
-    public ChartVO listTableData(BiDataSourceCustomTableDTO dto) {
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(dto.getModuleName());
-        ChartVO chartVO = new ChartVO();
+    public LinkedHashMap<String,Object> listTableData(BiDataSourceCustomTableDTO dto) {
+        LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
+        BiModuleEntity biModuleEntity = biModuleService.getById(dto.getModuleId());
+        if (ObjectUtils.isEmpty(biModuleEntity)) {
+            return resultMap;
+        }
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
-            return chartVO;
+            return resultMap;
         }
         //数据类型
         Integer dataSource = biSysModuleEntity.getDataSource();
@@ -233,15 +249,16 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         //数据维度(趋势图类型)
         Integer dataDimension = biSysModuleEntity.getDataDimension();
         if (ObjectUtils.isEmpty(dataSource) || StringUtils.isBlank(targetNames) || ObjectUtils.isEmpty(dataDimension)) {
-            return chartVO;
+            return resultMap;
         }
         List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
 
         //根据类型、数据类型、指标名称、年份查询
         List<LinkedHashMap<String,Object>> list = this.getCustomByParams(dto.getType(), dataSource, targetNameList, dto.getYear(),dto.getTargetType());
         if (CollectionUtils.isEmpty(list)) {
-            return chartVO;
+            return resultMap;
         }
+        List<LinkedHashMap<String,Object>> dataMapList = new ArrayList<>();
         LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
         renewBiDataSourceCustom(list,headMap,dataDimension);
         BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
@@ -252,17 +269,47 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             }
         }
         List<String> headList = headMap.values().stream().map(String::valueOf).collect(Collectors.toList());
-
         for (LinkedHashMap<String,Object> map: list) {
-            List<String> valueList = new ArrayList<>();
+            LinkedHashMap<String,Object> dataMap = new LinkedHashMap<>();
             for (String head : headList) {
                 String value = ObjectUtils.isEmpty(map.get(head)) ? BigDecimal.ZERO.toString() : String.valueOf(map.get(head));
-                valueList.add(value);
+                dataMap.put(head,value);
             }
+            dataMapList.add(dataMap);
         }
-        chartVO.setXAxis(headList);
-        SeriesVO seriesVO = new SeriesVO();
-        return null;
+        resultMap.put("head",headMap);
+        resultMap.put("data",dataMapList);
+        return resultMap;
+    }
+
+    @Override
+    public List<String> listAllTargetNameDropDown() {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiDataSourceCustomEntity::getTargetName);
+        List<String> list = this.listObjs(queryWrapper,Object::toString);
+        if (CollectionUtils.isNotEmpty(list)) {
+            list = list.stream().distinct().collect(Collectors.toList());
+        }
+        return list;
+    }
+
+    @Override
+    public List<String> listAllTargetTypeDropDown() {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiDataSourceCustomEntity::getTargetType);
+        List<String> list = this.listObjs(queryWrapper,Object::toString);
+        if (CollectionUtils.isNotEmpty(list)) {
+            list = list.stream().distinct().collect(Collectors.toList());
+        }
+        return list;
+    }
+
+    @Override
+    public void updateTargetType(BiTargetTypeDTO dto) {
+        LambdaUpdateWrapper<BiDataSourceCustomEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(BiDataSourceCustomEntity::getTargetName,dto.getTargetNameList());
+        updateWrapper.set(BiDataSourceCustomEntity::getTargetType,dto.getTargetType());
+        this.update(updateWrapper);
     }
 
     /**

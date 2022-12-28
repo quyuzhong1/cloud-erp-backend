@@ -17,10 +17,10 @@ import javax.validation.constraints.NotNull;
 public class BiDataSourceCustomTableDTO {
 
     /**
-     * 模块名称
+     * 模块id
      */
-    @NotBlank(message = "模块名称不能为空")
-    private String moduleName;
+    @NotBlank(message = "模块id不能为空")
+    private String moduleId;
 
     /**
      * 年份
