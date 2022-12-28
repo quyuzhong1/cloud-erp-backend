@@ -3,11 +3,9 @@ package com.erp.server.bi.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
 import com.erp.server.bi.enums.DataTypeEnum;
@@ -32,9 +30,6 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
 
     private BiDataSourceCustomService biDataSourceCustomService;
     private BiDataSourceCustomDetailService biDataSourceCustomDetailService;
-    List<DmpShopInfoEntity> shopList;
-    List<FindUserDTO> userList;
-    List<BiDictEntity> dictList;
     List<Map<Integer,String>> list ;
     Map<Integer,String> headMap;
     List<String> headList;
@@ -43,12 +38,9 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
     Integer importType;
 
     public BiDataSourceCustomExcelListener(BiDataSourceCustomService biDataSourceCustomService, BiDataSourceCustomDetailService biDataSourceCustomDetailService,
-                                           List<DmpShopInfoEntity> shopList, List<FindUserDTO> userList, List<BiDictEntity> dictList,List<BiDictEntity> quarterList,List<BiDictEntity> monthList,Integer importType) {
+                                          List<BiDictEntity> quarterList,List<BiDictEntity> monthList,Integer importType) {
         this.biDataSourceCustomService = biDataSourceCustomService;
         this.biDataSourceCustomDetailService = biDataSourceCustomDetailService;
-        this.shopList = shopList;
-        this.userList = userList;
-        this.dictList = dictList;
         this.quarterList = quarterList;
         this.monthList = monthList;
         this.importType = importType;
@@ -77,8 +69,9 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 if (ObjectUtils.isEmpty(entry.getKey())) {
                     continue;
                 }
-                String key = entry.getKey().toString();
+                Integer mapKey = Integer.valueOf(entry.getKey().toString());
                 String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                String key = headMap.get(mapKey);
                 //明细数据
                 BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
                 if (BiDataSourceCustomEnum.YEAR.getName().equals(key)) {

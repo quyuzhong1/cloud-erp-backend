@@ -1,12 +1,12 @@
 package com.erp.server.bi.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -23,16 +23,17 @@ import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
 import com.erp.server.bi.enums.DataTypeEnum;
 import com.erp.server.bi.enums.DictEnum;
+import com.erp.server.bi.listener.BiDataSourceCustomExcelListener;
 import com.erp.server.bi.mapper.BiDataSourceCustomMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -104,153 +105,24 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     @Override
     @Transactional
     public void importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType) {
-        List<Map<String,String>> list = ExcelPrintUtils.makeData(excelFile);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
         //季度数据
         List<BiDictEntity> quarterList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMQUARTER.getType());
         //月份数据
         List<BiDictEntity> monthList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMMONTH.getType());
-
-        for (Map<String,String> map:list) {
-            //遍历map下的数据
-            Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-            //主表数据
-            BiDataSourceCustomEntity entity = new BiDataSourceCustomEntity();
-            entity.setType(importType);
-            //年导入时的主表新增数据
-            List<BiDataSourceCustomEntity> addList = new ArrayList<>();
-            //年导入时的主表修改数据
-            List<BiDataSourceCustomEntity> updateList = new ArrayList<>();
-            List<BiDataSourceCustomDetailEntity> detailList = new ArrayList<>();
-            Integer yearDate = 0;
-            //旧数据时记录
-            if (ObjectUtils.isNotEmpty(iterator)) {
-                while (iterator.hasNext()) {
-                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
-                    if (ObjectUtils.isEmpty(entry.getKey())) {
-                        continue;
-                    }
-                    String key = entry.getKey().toString();
-                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
-                    //明细数据
-                    BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
-                    if (BiDataSourceCustomEnum.YEAR.getName().equals(key)) {
-                        String year = value.replace("年", "");
-                        entity.setYear(Integer.valueOf(year));
-                        yearDate = Integer.valueOf(year);
-                        continue;
-                    }
-                    if (BiDataSourceCustomEnum.DATATYPE.getName().equals(key)) {
-                        Integer code = DataTypeEnum.getCodeByName(value);
-                        entity.setDataType(code);
-                        continue;
-                    }
-                    if (BiDataSourceCustomEnum.TARGETTYPE.getName().equals(key)) {
-                        entity.setTargetType(value);
-                        continue;
-                    }
-                    if (BiDataSourceCustomEnum.TARGETNAME.getName().equals(key)) {
-                        entity.setTargetName(value);
-                        continue;
-                    }
-                    if (BiDataSourceCustomEnum.TARGEVALUE.getName().equals(key)) {
-                        entity.setTargetValue(value);
-                        continue;
-                    }
-                    //年导入
-                    if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
-                        String year = key.replace("年", "");
-                        detailEntity.setYear(Integer.valueOf(year));
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
-                        //年导入时主表数据与明细数据一一对应
-                        BiDataSourceCustomEntity main = new BiDataSourceCustomEntity();
-                        BeanUtils.copyProperties(entity,main);
-                        main.setYear(Integer.valueOf(year));
-                        //根据类型、数据类型、年份、指标分类、指标名称查询
-                        BiDataSourceCustomEntity custom = getCustomByParam(main);
-                        if (ObjectUtils.isEmpty(custom)) {
-                            addList.add(main);
-                        } else {
-                            main.setId(custom.getId());
-                            updateList.add(main);
-                        }
-                    }
-                    //季度导入
-                    if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(importType)) {
-                        if (CollectionUtils.isNotEmpty(quarterList)) {
-                            String quarter = quarterList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
-                            detailEntity.setYear(yearDate);
-                            detailEntity.setQuarter(Integer.valueOf(quarter));
-                            detailEntity.setValue(value);
-                            detailList.add(detailEntity);
-                        }
-                    }
-                    //月导入
-                    if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(importType)) {
-                        String month = monthList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
-                        detailEntity.setYear(yearDate);
-                        detailEntity.setMonth(Integer.valueOf(month));
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
-                    }
-                    //周导入
-                    if (BiDataSourceCustomTypeEnum.WEEK.getCode().equals(importType)) {
-                        String week1 = key.split("-")[0];
-                        String week2 = key.split("-")[1];
-                        detailEntity.setYear(yearDate);
-                        detailEntity.setWeekBegin(week1);
-                        detailEntity.setWeekEnd(week2);
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
-                    }
-                    //日导入
-                    if (BiDataSourceCustomTypeEnum.DAY.getCode().equals(importType)) {
-                        String month = key.split("月")[0];
-                        String day = key.split("月")[1].split("日")[0];
-                        detailEntity.setYear(yearDate);
-                        detailEntity.setMonth(Integer.valueOf(month));
-                        detailEntity.setDate(Integer.valueOf(day));
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
-                    }
-
-                }
+        BiDataSourceCustomExcelListener excelListenerUtil = new BiDataSourceCustomExcelListener(this,biDataSourceCustomDetailService,quarterList,monthList,importType);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
+            List<Map<Integer, String>> list = excelListenerUtil.getDateList();
+            if (CollectionUtils.isEmpty(list) || list.size() == 0) {
+                return;
             }
-            BiDataSourceCustomEntity custom = getCustomByParam(entity);
-            if (ObjectUtils.isEmpty(custom) && !BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
-                addList.add(entity);
-            } else {
-                entity.setId(custom.getId());
-                updateList.add(entity);
-            }
-            //新增数据
-            if (CollectionUtils.isNotEmpty(addList)) {
-                this.saveBatch(addList);
-                if (CollectionUtils.isNotEmpty(detailList)) {
-                    detailList.forEach(obj -> {
-                        String id = addList.stream().filter(e -> e.getYear().equals(obj.getYear())).map(BiDataSourceCustomEntity::getId).findFirst().orElse("");
-                        obj.setCustomId(id);
-                    });
-                    biDataSourceCustomDetailService.saveBatch(detailList);
-                }
-            }
-            //修改数据
-            if (CollectionUtils.isNotEmpty(updateList)) {
-                this.updateBatchById(updateList);
-                //先删除原有明细再新增
-                List<String> customIds = updateList.stream().map(BiDataSourceCustomEntity::getId).collect(Collectors.toList());
-                biDataSourceCustomDetailService.removeByCustomIds(customIds);
-                if (CollectionUtils.isNotEmpty(detailList)) {
-                    detailList.forEach(obj -> {
-                        String id = updateList.stream().filter(e -> e.getYear().equals(obj.getYear())).map(BiDataSourceCustomEntity::getId).findFirst().orElse("");
-                        obj.setCustomId(id);
-                    });
-                    biDataSourceCustomDetailService.saveBatch(detailList);
-                }
-            }
+            List<String> headList = excelListenerUtil.getHead();
+            String head = "自助数据表";
+            String fileName = dmpOrderInfoService.getFileName("自助数据表导出")+ ".xlsx";
+            ExcelUtil.easyUtil(headList,head,list,fileName, response);
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

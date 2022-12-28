@@ -310,6 +310,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         try {
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
+            if (CollectionUtils.isEmpty(list) || list.size() == 0) {
+                return;
+            }
             List<String> headList = excelListenerUtil.getHead();
             String head = "成本数据表";
             String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
