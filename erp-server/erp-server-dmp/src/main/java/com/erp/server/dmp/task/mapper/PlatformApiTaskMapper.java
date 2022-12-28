@@ -6,6 +6,7 @@ import com.erp.model.dmp.dto.JobTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public interface PlatformApiTaskMapper extends BaseMapper<PlatformApiTaskEntity>
 
     List<JobTaskDTO> selectApiTask(@Param("pageNumber") Integer pageNumber,
                                    @Param("pageSize") Integer pageSize,
-                                   @Param("localTime") Long localTime);
+                                   @Param("localTime") LocalDateTime localTime);
 
     void updateTaskTypeState(@Param("jobTaskDTOList") List<JobTaskDTO> jobTaskDTOList);
 

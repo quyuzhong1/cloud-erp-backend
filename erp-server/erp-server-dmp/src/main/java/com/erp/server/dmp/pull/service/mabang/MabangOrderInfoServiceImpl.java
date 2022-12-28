@@ -35,6 +35,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -72,8 +73,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(0);
-        jobTaskDTO.setNextTime(0);
+        jobTaskDTO.setLastTime(null);
+        jobTaskDTO.setNextTime(null);
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -136,25 +137,23 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
      */
     public List<OrderEntity> pullDate(RequestDTO dto) {
         List<OrderEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime =  dto.getJobTaskDTO().getLastTime();
-        Integer nextTime =  dto.getJobTaskDTO().getNextTime();
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         String st = "";
         String sd = "";
-        if (lastTime != 0 && nextTime != 0) {
-            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
-            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(date);
-            sd = sdf.format(new Date(nextTime * 1000L));
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
+            LocalDateTime localDateTime = lastTime.minusMonths(5);
+            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(localDateTime);
+            sd = sdf.format(nextTime);
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            Date date = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-            Calendar cl = Calendar.getInstance();
-            cl.setTime(date);
-            cl.add(Calendar.DAY_OF_MONTH, -1);
-            st = sdf.format(cl.getTime());
+            LocalDateTime date = LocalDateTime.now();
+            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+            LocalDateTime localDateTime = date.minusDays(1);
+            st = sdf.format(localDateTime);
             sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            dto.getJobTaskDTO().setLastTime(date);
         }
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 

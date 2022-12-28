@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -53,13 +54,13 @@ public class PlatformApiTaskEntity implements Serializable {
      * 上次执行时间
      */
     @TableField(value = "last_time")
-    private Integer lastTime;
+    private LocalDateTime lastTime;
 
     /**
      * 下次执行时间
      */
     @TableField(value = "next_time")
-    private Integer nextTime;
+    private LocalDateTime nextTime;
 
     /**
      * 任务状态：1：待拉取  2：拉取中
@@ -71,13 +72,13 @@ public class PlatformApiTaskEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 修改时间
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

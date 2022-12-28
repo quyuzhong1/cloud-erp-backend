@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +35,7 @@ public class TbTaskTypeService {
      * @return java.util.List<com.erp.server.entity.PlatformApiTaskEntity>
      **/
     public List<JobTaskDTO> getTask() {
-        Long localTime = System.currentTimeMillis() / 1000;
+        LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
         List<JobTaskDTO> jobTaskDTOList = platformApiTaskMapper.selectApiTask((pageNumber - 1), pageSize, localTime);
         pageNumber++;
@@ -64,9 +65,9 @@ public class TbTaskTypeService {
                     taskType.setIntervalTime(60 * 30);
                     taskType.setState(1);
                     taskType.setApiId(req.getId());
-                    taskType.setLastTime(0);
-                    taskType.setNextTime(0);
-                    taskType.setCreateTime(new Date());
+                    taskType.setLastTime(null);
+                    taskType.setNextTime(null);
+                    taskType.setCreateTime(LocalDateTime.now());
                     taskType.setPlatformId(req.getPlatformId());
                     taskType.setApiCode(req.getApiCode());
                     taskType.setApiName(req.getApiName());

@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -96,22 +98,22 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
      */
     public List<KingdeeSkuEntity> pullDate(RequestDTO dto) {
         List<KingdeeSkuEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         String st = "";
         String sd = "";
-        if (lastTime != 0 && nextTime != 0) {
-            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
-            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(date);
-            sd = sdf.format(new Date(nextTime * 1000L));
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
+            LocalDateTime localDateTime = lastTime.minusMonths(5);
+            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(localDateTime);
+            sd = sdf.format(nextTime);
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
+            LocalDateTime date = LocalDateTime.now();
             st = "";
             sd = "";
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            dto.getJobTaskDTO().setLastTime(date);
         }
-
         //读取配置，初始化SDK
         K3CloudApi client = new K3CloudApi();
 

@@ -93,13 +93,17 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
      */
     public List<ShopEntity> pullDate(RequestDTO dto) {
         List<ShopEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
-        if (lastTime != 0 && nextTime != 0) {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            LocalDateTime date = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(date);
         }
+
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
         Map<String, Object> paramsMap = new HashMap();

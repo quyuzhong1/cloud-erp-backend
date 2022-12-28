@@ -8,6 +8,7 @@ import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
@@ -24,8 +25,8 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
     @Override
     public Boolean updateTaskStateById(JobTaskDTO jobTaskDTO){
         Integer interval = jobTaskDTO.getIntervalTime();
-        Integer lastTime = jobTaskDTO.getLastTime();
-        Integer nextTime = lastTime + interval;
+        LocalDateTime lastTime = jobTaskDTO.getLastTime();
+        LocalDateTime nextTime = lastTime.plusSeconds(interval);
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);

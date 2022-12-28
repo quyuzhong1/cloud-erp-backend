@@ -60,8 +60,8 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setApiName("管易云查询店铺列表");
         jobTaskDTO.setId(36L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(0);
-        jobTaskDTO.setNextTime(0);
+        jobTaskDTO.setLastTime(null);
+        jobTaskDTO.setNextTime(null);
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -117,13 +117,17 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
      */
     public List<GyyShopInfoEntity> pullDate(RequestDTO dto) {
         List<GyyShopInfoEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
-        if (lastTime != 0 && nextTime != 0) {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            LocalDateTime date = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(date);
         }
+
         GyyAppEntity gyyAppEntity = new GyyAppEntity();
 
         //每次最多获取100条
