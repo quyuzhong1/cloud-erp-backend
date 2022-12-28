@@ -91,7 +91,7 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @author Will
      * @date: 2022/12/28 14:29
      * @param dto
-     * @return ChartVO
+     * @return LinkedHashMap<String,Object>
      */
-    ChartVO listTableData(BiDataSourceCustomTableDTO dto);
+    LinkedHashMap<String,Object> listTableData(BiDataSourceCustomTableDTO dto);
 }

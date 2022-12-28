@@ -132,13 +132,13 @@ public class BiDataSourceCustomController extends BaseController {
      * 自助数据-柱状图数据查询
      * @author Will
      * @date: 2022/12/28 11:50
-     * @param moduleName
+     * @param moduleId
      * @param year
      * @return ApiResult
      */
     @GetMapping("/listGraphicalData")
-    public ApiResult<ChartVO> listGraphicalData(@RequestParam("moduleName") String moduleName,@RequestParam("year") Integer year) {
-        ChartVO vo =biDataSourceCustomService.listGraphicalData(moduleName,year);
+    public ApiResult<ChartVO> listGraphicalData(@RequestParam("moduleId") String moduleId,@RequestParam("year") Integer year) {
+        ChartVO vo = biDataSourceCustomService.listGraphicalData(moduleId,year);
         return success(vo);
     }
 
@@ -151,7 +151,7 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @PostMapping("/listTargetType")
     public ApiResult<List<String>> listTargetType(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
-        List<String> targetTypeList= biDataSourceCustomService.listTargetType(dto);
+        List<String> targetTypeList = biDataSourceCustomService.listTargetType(dto);
         return success(targetTypeList);
     }
 
@@ -160,11 +160,11 @@ public class BiDataSourceCustomController extends BaseController {
      * @author Will
      * @date: 2022/12/28 14:28
      * @param dto
-     * @return ApiResult<ChartVO>
+     * @return ApiResult<LinkedHashMap<String,Object>>
      */
     @PostMapping("/listTableData")
-    public ApiResult<ChartVO> listTableData(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
-        ChartVO vo =biDataSourceCustomService.listTableData(dto);
+    public ApiResult<LinkedHashMap<String,Object>> listTableData(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
+        LinkedHashMap<String,Object> vo = biDataSourceCustomService.listTableData(dto);
         return success(vo);
     }
 

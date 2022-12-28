@@ -89,4 +89,13 @@ public class BiSysModuleController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 分析页面编辑配置查询
+     */
+    @GetMapping("/getByModuleId")
+    public ApiResult getByModuleId(@RequestParam("moduleId") String moduleId) {
+        ModuleSysConfigurationDTO dto = this.sysModuleService.getByModuleId(moduleId);
+        return success(dto);
+    }
+
 }
