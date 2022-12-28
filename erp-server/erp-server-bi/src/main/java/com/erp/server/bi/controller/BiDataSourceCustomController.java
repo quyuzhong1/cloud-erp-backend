@@ -8,6 +8,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
+import com.erp.model.bi.dto.BiTargetTypeDTO;
 import com.erp.model.bi.vo.ChartVO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -143,6 +144,19 @@ public class BiDataSourceCustomController extends BaseController {
     }
 
     /**
+     * 自助数据-表格数据查询
+     * @author Will
+     * @date: 2022/12/28 14:28
+     * @param dto
+     * @return ApiResult<LinkedHashMap<String,Object>>
+     */
+    @PostMapping("/listTableData")
+    public ApiResult<LinkedHashMap<String,Object>> listTableData(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
+        LinkedHashMap<String,Object> vo = biDataSourceCustomService.listTableData(dto);
+        return success(vo);
+    }
+
+    /**
      * 自助数据-查询指标分类
      * @author Will
      * @date: 2022/12/28 9:07
@@ -156,16 +170,16 @@ public class BiDataSourceCustomController extends BaseController {
     }
 
     /**
-     * 自助数据-表格数据查询
+     * 自助数据-指标分类
      * @author Will
-     * @date: 2022/12/28 14:28
+     * @date: 2022/12/28 17:23
      * @param dto
-     * @return ApiResult<LinkedHashMap<String,Object>>
+     * @return ApiResult
      */
-    @PostMapping("/listTableData")
-    public ApiResult<LinkedHashMap<String,Object>> listTableData(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
-        LinkedHashMap<String,Object> vo = biDataSourceCustomService.listTableData(dto);
-        return success(vo);
+    @PostMapping("/updateTargetType")
+    public ApiResult updateTargetType(@RequestBody @Validated BiTargetTypeDTO dto) {
+        biDataSourceCustomService.updateTargetType(dto);
+        return success();
     }
 
 }

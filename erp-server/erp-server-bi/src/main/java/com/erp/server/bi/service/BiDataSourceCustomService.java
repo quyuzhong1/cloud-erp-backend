@@ -5,6 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
+import com.erp.model.bi.dto.BiTargetTypeDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.vo.ChartVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -94,4 +95,26 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @return LinkedHashMap<String,Object>
      */
     LinkedHashMap<String,Object> listTableData(BiDataSourceCustomTableDTO dto);
+    /**
+     * @description: 查询所有指标名称
+     * @author Will
+     * @date: 2022/12/28 17:06
+     * @return List<String>
+     */
+    List<String> listAllTargetNameDropDown();
+    /**
+     * @description: 查询所有指标分类
+     * @author Will
+     * @date: 2022/12/28 17:12
+     * @return List<String>
+     */
+    List<String> listAllTargetTypeDropDown();
+    /**
+     * @description: 指标分类
+     * @author Will
+     * @date: 2022/12/28 17:23
+     * @param dto
+
+     */
+    void updateTargetType(BiTargetTypeDTO dto);
 }

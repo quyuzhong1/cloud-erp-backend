@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -14,6 +15,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
+import com.erp.model.bi.dto.BiTargetTypeDTO;
 import com.erp.model.bi.entity.*;
 import com.erp.model.bi.vo.ChartVO;
 import com.erp.model.bi.vo.SeriesVO;
@@ -278,6 +280,36 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         resultMap.put("head",headMap);
         resultMap.put("data",dataMapList);
         return resultMap;
+    }
+
+    @Override
+    public List<String> listAllTargetNameDropDown() {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiDataSourceCustomEntity::getTargetName);
+        List<String> list = this.listObjs(queryWrapper,Object::toString);
+        if (CollectionUtils.isNotEmpty(list)) {
+            list = list.stream().distinct().collect(Collectors.toList());
+        }
+        return list;
+    }
+
+    @Override
+    public List<String> listAllTargetTypeDropDown() {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiDataSourceCustomEntity::getTargetType);
+        List<String> list = this.listObjs(queryWrapper,Object::toString);
+        if (CollectionUtils.isNotEmpty(list)) {
+            list = list.stream().distinct().collect(Collectors.toList());
+        }
+        return list;
+    }
+
+    @Override
+    public void updateTargetType(BiTargetTypeDTO dto) {
+        LambdaUpdateWrapper<BiDataSourceCustomEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(BiDataSourceCustomEntity::getTargetName,dto.getTargetNameList());
+        updateWrapper.set(BiDataSourceCustomEntity::getTargetType,dto.getTargetType());
+        this.update(updateWrapper);
     }
 
     /**
