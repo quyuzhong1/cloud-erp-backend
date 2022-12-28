@@ -134,9 +134,13 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             throw new ServiceException(ApiError.ERROR_97000);
         }
         subjectShareService.checkPermission(userId, subject);
+        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
+        details.setCategoryId(subject.getCategoryId());
+        details.setCategoryName(subject.getCategoryName());
+        details.setShareUserIdList(shareUserIdList);
         List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId);
         details.setLayoutDetailsList(layoutDetailsList);
         return details;
@@ -165,13 +169,22 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         subjectService.checkCanHandle(subject, userId);
 
         boolean flag = true;
-        //如果更改了名字就要更改实体
-        if (!subject.getName().equals(name)) {
-            //检查名字能否重复
-            subjectService.checkName(subjectId, name);
-            subject.setName(name);
-            flag = subjectService.updateById(subject);
+
+        //检查名字能否重复
+        subjectService.checkName(subjectId, name);
+        subject.setName(name);
+        String categoryId = dto.getCategoryId();
+        BiDictEntity dict = dictService.getById(categoryId);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
         }
+        subject.setCategoryId(categoryId);
+        subject.setCategoryName(categoryName);
+        flag = subjectService.updateById(subject);
+        List<String> userList = dto.getShareUserIdList();
+        //添加专题的分享用户
+        subjectShareService.addSubjectShare(userList, subjectId);
         //布局表
         List<LayoutDetailsDTO> layoutDetailsList = dto.getLayoutDetailsList();
 
@@ -355,6 +368,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                     refModule.setCode(module.getCode());
                     refModule.setName(module.getName());
                     refModule.setViewCode(module.getViewCode());
+                    refModule.setImageUrl(module.getImageUrl());
                 }
                 layoutRefList.add(refModule);
             }

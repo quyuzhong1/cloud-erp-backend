@@ -86,7 +86,6 @@ public class BiLayoutController extends BaseController {
 
 
     /**
-     *修改专题布局
      *  删除布局模块
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
@@ -100,7 +99,6 @@ public class BiLayoutController extends BaseController {
     }
 
     /**
-     *修改专题布局
      *  删除布局
      * @param dto
      * @return com.erp.common.dto.base.ApiResult

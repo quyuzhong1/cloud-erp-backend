@@ -44,5 +44,10 @@ public class LayoutRefModuleDTO implements Serializable {
      */
     private String code;
 
+    /**
+     * 缩略图地址
+     */
+    private String imageUrl;
+
 
 }

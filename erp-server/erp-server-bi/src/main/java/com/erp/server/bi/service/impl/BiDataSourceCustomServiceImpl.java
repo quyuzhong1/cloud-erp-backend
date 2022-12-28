@@ -13,6 +13,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
+import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.entity.BiDictEntity;
@@ -131,12 +132,16 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataType);
         queryWrapper.select(BiDataSourceCustomEntity::getTargetName);
-        return this.listObjs(queryWrapper, Object::toString);
+        List<String> strings = this.listObjs(queryWrapper, Object::toString);
+        if (CollectionUtils.isNotEmpty(strings)) {
+            strings = strings.stream().distinct().collect(Collectors.toList());
+        }
+        return strings;
     }
 
     @Override
-    public List<String> listTargetType(String moduleName,Integer type, Integer year) {
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(moduleName);
+    public List<String> listTargetType(BiDataSourceCustomTableDTO dto) {
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(dto.getModuleName());
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
             return new ArrayList<>();
         }
@@ -150,8 +155,8 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         }
         List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
         LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiDataSourceCustomEntity::getType,type);
-        queryWrapper.eq(BiDataSourceCustomEntity::getYear,year);
+        queryWrapper.eq(BiDataSourceCustomEntity::getType,dto.getType());
+        queryWrapper.eq(BiDataSourceCustomEntity::getYear,dto.getYear());
         queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataSource);
         queryWrapper.in(BiDataSourceCustomEntity::getTargetName,targetNameList);
         queryWrapper.select(BiDataSourceCustomEntity::getTargetType);
@@ -176,7 +181,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         }
         List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
         //根据类型、数据类型、指标名称、年份查询
-        List<LinkedHashMap<String,Object>> list = getCustomByParams(dataDimension, dataSource, targetNameList, year);
+        List<LinkedHashMap<String,Object>> list = getCustomByParams(dataDimension, dataSource, targetNameList, year,null);
         if (CollectionUtils.isEmpty(list)) {
             return chartVO;
         }
@@ -192,9 +197,9 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         for (LinkedHashMap<String,Object> map: list) {
             BiDataSourceCustomGraphicalDTO dto = new BiDataSourceCustomGraphicalDTO();
             //目标值
-            BigDecimal targetValue = MathUtil.valueOf(map.get("targetValue"));
+            BigDecimal targetValue = MathUtil.valueOf(map.get(BiDataSourceCustomEnum.TARGEVALUE.getCode()));
             //指标名称
-            String targetName = map.get("targetName").toString();
+            String targetName = map.get(BiDataSourceCustomEnum.TARGETNAME.getCode()).toString();
             dto.setTargetValue(targetValue);
             dto.setTargetName(targetName);
             List<BigDecimal> valueList = new ArrayList<>();
@@ -214,6 +219,66 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         return chartVO;
     }
 
+    @Override
+    public ChartVO listTableData(BiDataSourceCustomTableDTO dto) {
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getByName(dto.getModuleName());
+        ChartVO chartVO = new ChartVO();
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            return chartVO;
+        }
+        //数据类型
+        Integer dataSource = biSysModuleEntity.getDataSource();
+        //指标名称
+        String targetNames = biSysModuleEntity.getTargetNames();
+        //数据维度(趋势图类型)
+        Integer dataDimension = biSysModuleEntity.getDataDimension();
+        if (ObjectUtils.isEmpty(dataSource) || StringUtils.isBlank(targetNames) || ObjectUtils.isEmpty(dataDimension)) {
+            return chartVO;
+        }
+        List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
+
+        //根据类型、数据类型、指标名称、年份查询
+        List<LinkedHashMap<String,Object>> list = this.getCustomByParams(dto.getType(), dataSource, targetNameList, dto.getYear(),dto.getTargetType());
+        if (CollectionUtils.isEmpty(list)) {
+            return chartVO;
+        }
+        LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
+        renewBiDataSourceCustom(list,headMap,dataDimension);
+        BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
+        //删除新增固定表头,保留指标名称、目标值
+        for (BiDataSourceCustomEnum value:values) {
+            if (!value.getCode().equals(BiDataSourceCustomEnum.TARGETNAME.getCode()) && !value.getCode().equals(BiDataSourceCustomEnum.TARGEVALUE.getCode())) {
+                headMap.remove(value.getCode());
+            }
+        }
+        List<String> headList = headMap.values().stream().map(String::valueOf).collect(Collectors.toList());
+
+        for (LinkedHashMap<String,Object> map: list) {
+            List<String> valueList = new ArrayList<>();
+            for (String head : headList) {
+                String value = ObjectUtils.isEmpty(map.get(head)) ? BigDecimal.ZERO.toString() : String.valueOf(map.get(head));
+                valueList.add(value);
+            }
+        }
+        chartVO.setXAxis(headList);
+        SeriesVO seriesVO = new SeriesVO();
+        return null;
+    }
+
+    /**
+     * 根据类型、数据类型、指标名称、年份查询
+     */
+    @Override
+    public  BiDataSourceCustomEntity getCustomByParam(BiDataSourceCustomEntity entity) {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDataSourceCustomEntity::getYear,entity.getYear());
+        queryWrapper.eq(BiDataSourceCustomEntity::getType,entity.getType());
+        queryWrapper.eq(BiDataSourceCustomEntity::getDataType,entity.getDataType());
+        queryWrapper.eq(BiDataSourceCustomEntity::getTargetType,entity.getTargetType());
+        queryWrapper.eq(BiDataSourceCustomEntity::getTargetName,entity.getTargetName());
+        queryWrapper.last("limit 1");
+        return  this.getOne(queryWrapper);
+    }
 
     /**
      * 返回字段处理
@@ -311,25 +376,16 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         return list;
     }
 
-    /**
-     * 根据类型、数据类型、指标名称、年份查询
-     */
-    @Override
-    public  BiDataSourceCustomEntity getCustomByParam(BiDataSourceCustomEntity entity) {
-        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiDataSourceCustomEntity::getYear,entity.getYear());
-        queryWrapper.eq(BiDataSourceCustomEntity::getType,entity.getType());
-        queryWrapper.eq(BiDataSourceCustomEntity::getDataType,entity.getDataType());
-        queryWrapper.eq(BiDataSourceCustomEntity::getTargetType,entity.getTargetType());
-        queryWrapper.eq(BiDataSourceCustomEntity::getTargetName,entity.getTargetName());
-        queryWrapper.last("limit 1");
-        return  this.getOne(queryWrapper);
-    }
 
     /**
      * 根据类型、数据类型、指标名称、年份查询
      */
-    private List<LinkedHashMap<String, Object>> getCustomByParams(Integer type, Integer dataType, List<String> targetNameList, Integer year) {
-        return  this.baseMapper.getCustomByParams(type,dataType,targetNameList,year);
+    private List<LinkedHashMap<String, Object>> getCustomByParams(Integer type, Integer dataType, List<String> targetNameList, Integer year,String targetType) {
+        BiDataSourceCustomEntity entity = new BiDataSourceCustomEntity();
+        entity.setType(type);
+        entity.setDataType(dataType);
+        entity.setYear(year);
+        entity.setTargetType(targetType);
+        return  this.baseMapper.getCustomByParams(targetNameList,entity);
     }
 }

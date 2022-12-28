@@ -14,56 +14,67 @@ import java.util.List;
  * @author yl
  * @since 2022-12-08 14:33:46
  */
-public interface BiSubjectShareService  extends IService<BiSubjectShareEntity> {
-
+public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
 
 
     /**
      * 设置专题分享信息
-     * @author yl
-     * @date 2022-12-08 17:15
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-12-08 17:15
      */
     Boolean setShare(UpdateSubjectShareDTO dto);
 
-    
+
     /**
      * 获取分享给我的仪表盘id
-     * @author yl
-     * @date 2022-12-09 11:02
+     *
      * @param userId
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2022-12-09 11:02
      */
     List<String> getShareToMeDashboardIds(String userId);
 
-    
+
     /**
      * 方法说明
-     * @author yl
-     * @date 2022-12-13 11:36
+     *
      * @param userList
      * @param subjectId
      * @return void
+     * @author yl
+     * @date 2022-12-13 11:36
      */
     Boolean addSubjectShare(List<String> userList, String subjectId);
 
     /**
      * 根据专题id 删除分享信息
-     * @author yl
-     * @date 2022-12-13 11:57
+     *
      * @param id
      * @return void
+     * @author yl
+     * @date 2022-12-13 11:57
      */
     void deleteBySubjectId(String id);
 
     /**
      * 检查用户是否可见该专题
-     * @author yl
-     * @date 2022-12-13 18:10
+     *
      * @param userId
      * @param subject
      * @return void
+     * @author yl
+     * @date 2022-12-13 18:10
      */
     void checkPermission(String userId, BiSubjectEntity subject);
+
+    /**
+     * 获取可以看到的 专题 的用户id
+     * @param subjectId
+     * @return
+     */
+    List<String> getUserIdsBySubjectId(String subjectId);
 }

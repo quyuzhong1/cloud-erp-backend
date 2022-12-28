@@ -41,11 +41,9 @@ public interface BiDataSourceCustomMapper extends BaseMapper<BiDataSourceCustomE
      * @description: 根据类型、数据类型、指标名称、年份查询
      * @author Will
      * @date: 2022/12/28 11:51
-     * @param type
-     * @param dataType
      * @param targetNameList
-     * @param year
+     * @param params
      * @return List<LinkedHashMap<Object>>
      */
-    List<LinkedHashMap<String, Object>> getCustomByParams(@Param("type")Integer type,@Param("dataType") Integer dataType,@Param("targetNameList") List<String> targetNameList,@Param("year") Integer year);
+    List<LinkedHashMap<String, Object>> getCustomByParams(@Param("targetNameList") List<String> targetNameList,@Param("params") BiDataSourceCustomEntity params);
 }

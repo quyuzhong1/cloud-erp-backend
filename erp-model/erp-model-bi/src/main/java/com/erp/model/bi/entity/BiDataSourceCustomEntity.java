@@ -69,7 +69,7 @@ public class BiDataSourceCustomEntity implements Serializable {
     private Integer dataType;
 
     /**
-     * 类型(日，周，月，季）
+     * 类型(1年，2季度，3月，4周，5日）
      */
     @TableField("type")
     private Integer type;

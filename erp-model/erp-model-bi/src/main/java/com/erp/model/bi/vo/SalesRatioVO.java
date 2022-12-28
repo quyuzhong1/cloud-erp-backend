@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * @Classname SalesRatioVO
@@ -18,18 +19,18 @@ public class SalesRatioVO implements Serializable {
     /**
      * 销售占比
      */
-    private Integer salesRatio;
+    private BigDecimal salesRatio;
 
 
     /**
      * 销售同比
      */
-    private Integer yearBasisRatio;
+    private BigDecimal yearBasisRatio=BigDecimal.ZERO;
 
 
 
     /**
      * 销售环比
      */
-    private Integer chainRelativeRatio;
+    private BigDecimal chainRelativeRatio=BigDecimal.ZERO;
 }
