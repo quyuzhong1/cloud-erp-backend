@@ -5,10 +5,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.ContrastTrendVO;
-import com.erp.model.bi.vo.MatrixVO;
-import com.erp.model.bi.vo.SaleDetailVO;
-import com.erp.model.bi.vo.ShopContrastTrendVO;
+import com.erp.model.bi.dto.SkuDateFilterDTO;
+import com.erp.model.bi.dto.SkuFilterDTO;
+import com.erp.model.bi.vo.*;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -85,5 +84,14 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SaleDetailVO> saleDetailDate(BiFilterDTO biFilterDTO);
+    List<SaleDetailVO> saleDetailDate(SkuFilterDTO biFilterDTO);
+
+    /**
+     * SKU日期销售额趋势图
+     * @Author Luo_WG
+     * @Date 2022/12/27 10:41
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
+     **/
+    List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO);
 }

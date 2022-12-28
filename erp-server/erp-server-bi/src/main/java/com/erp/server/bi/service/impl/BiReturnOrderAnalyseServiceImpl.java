@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.ReturnOrderFilterDTO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -96,11 +97,11 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<DateReturnOrderVO> returnOrderAnalByDate(PagingDTO<BiFilterDTO> biFilterDTO) {
+    public PagingVO<DateReturnOrderVO> returnOrderAnalByDate(PagingDTO<ReturnOrderFilterDTO> biFilterDTO) {
         biFilterDTO.getParams().setParam(biFilterDTO.getParam());
         Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
         IPage<DateReturnOrderVO> dateReturnOrderVOIPage = null;
-                switch (biFilterDTO.getParams().getDateType()) {
+        switch (biFilterDTO.getParams().getDateType()) {
             case "DAY":
                 dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(query, biFilterDTO.getParams());
                 break;
