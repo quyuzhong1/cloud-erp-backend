@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * 数据源管理
@@ -124,5 +125,19 @@ public class BiDataSourceCustomController extends BaseController {
         }
 
     }
+    /**
+     * 自助数据-查询指标分类
+     * @author Will
+     * @date: 2022/12/28 9:07
+     * @param type
+     * @param dataType
+     * @return ApiResult
+     */
+    @GetMapping("/listTargetType")
+    public ApiResult listTargetType(@RequestParam("type") Integer type,@RequestParam("dataType") Integer dataType) {
+       List<String> targetTypeList= biDataSourceCustomService.listTargetType(type,dataType);
+       return success(targetTypeList);
+    }
+
 
 }

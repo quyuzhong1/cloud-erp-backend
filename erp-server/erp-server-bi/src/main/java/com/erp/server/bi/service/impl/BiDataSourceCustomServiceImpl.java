@@ -256,6 +256,15 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    @Override
+    public List<String> listTargetType(Integer type, Integer dataType) {
+        LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDataSourceCustomEntity::getType,type);
+        queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataType);
+        queryWrapper.select(BiDataSourceCustomEntity::getTargetType);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
+
 
     /**
      * 返回字段处理
