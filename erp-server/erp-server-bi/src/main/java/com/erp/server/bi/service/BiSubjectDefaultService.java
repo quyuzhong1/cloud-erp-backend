@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
+import com.erp.model.bi.entity.BiSubjectEntity;
 
 import java.util.List;
 
@@ -25,4 +26,8 @@ public interface BiSubjectDefaultService extends IService<BiSubjectDefaultEntity
      * @return void
      */
     void deleteBySubjectId(String subjectId);
+
+
+    BiSubjectEntity getDefault(String userId);
+
 }

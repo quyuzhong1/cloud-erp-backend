@@ -14,6 +14,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
@@ -33,7 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -183,6 +187,37 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             queryWrapper.eq(DmpShopInfoEntity::getName,shopName);
         }
         return this.count(queryWrapper);
+    }
+
+    /**
+     * 店铺站点分类
+     * @author yl
+     * @date 2022-12-28 17:57
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.ShopCategoryVO>
+     */
+    @Override
+    public List<ShopSiteVO> getShopCategoryList() {
+        List<DmpShopInfoEntity> list = this.getSiteShopList();
+        Map<String, List<DmpShopInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(DmpShopInfoEntity::getSite));
+        List<ShopSiteVO> resultList=new ArrayList<>(groupMap.size());
+        for (Map.Entry<String, List<DmpShopInfoEntity>> item : groupMap.entrySet()) {
+            ShopSiteVO vo = new ShopSiteVO();
+            List<DmpShopInfoEntity> shopInfoList = item.getValue();
+            String site = item.getKey();
+            vo.setSite(site);
+            vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlarformShopNo).collect(Collectors.toList()));
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+    private List<DmpShopInfoEntity> getSiteShopList() {
+        LambdaQueryWrapper<DmpShopInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(DmpShopInfoEntity::getSite, "")
+                .or().ne(DmpShopInfoEntity::getSite, null);
+        return this.list(queryWrapper);
     }
 
 

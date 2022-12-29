@@ -564,4 +564,21 @@ public class BiSalesModuleController extends BaseController {
         return success(result);
     }
 
+
+    /**
+     * 销售相关-一级模块-营销中心销售额
+     * @param
+     * @return
+     */
+    @PostMapping("/byEuropeAndJapanSite")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byShopCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byEuropeAndJapanSite(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result=salesOrderService.byEuropeAndJapanSite(dto);
+        return success(result);
+    }
+
 }

@@ -2,7 +2,9 @@ package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
+import com.erp.model.bi.entity.BiSubjectEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @Classname BiSubjectDefaultMapper
@@ -12,4 +14,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface BiSubjectDefaultMapper  extends BaseMapper<BiSubjectDefaultEntity> {
+    BiSubjectEntity getDefaultSubject(@Param("userId") String userId);
 }
