@@ -6,6 +6,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
@@ -73,8 +75,9 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
         dmpReturnOrderInfoService.exportExcel(dto, response);
+        return success();
     }
 
     /**
@@ -86,7 +89,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping("/importReturnOrderFile")
-    public void importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public ApiResult importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         DmpReturnOrderInfoExcelListener excelListenerUtil = new DmpReturnOrderInfoExcelListener(importType,dmpOrderInfoService, dmpReturnOrderInfoService, dmpShopInfoService,dmpReturnOrderItemService);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpReturnOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -99,10 +102,12 @@ public class DmpReturnOrderInfoController extends BaseController {
                 sb.append(date);
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                return failure();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return  success();
     }
 
 
@@ -114,7 +119,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpReturnOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -131,8 +136,9 @@ public class DmpReturnOrderInfoController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
-
+        return success();
     }
 
 }

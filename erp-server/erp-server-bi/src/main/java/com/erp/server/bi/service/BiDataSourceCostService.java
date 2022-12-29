@@ -66,7 +66,7 @@ public interface BiDataSourceCostService
     /**
      * 导入
      */
-    void importExcel(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
     /**
      * @description: 编辑
      * @author Will

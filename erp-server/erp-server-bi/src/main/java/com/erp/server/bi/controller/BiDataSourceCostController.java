@@ -3,6 +3,8 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -56,8 +58,9 @@ public class BiDataSourceCostController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
         biDataSourceCostService.exportExcel(dto, response);
+        return success();
     }
 
 
@@ -69,8 +72,9 @@ public class BiDataSourceCostController extends BaseController {
      * @param response
      */
     @PostMapping("/importBiDataSourceCostFile")
-    public void importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        biDataSourceCostService.importExcel(excelFile, response);
+    public ApiResult importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = biDataSourceCostService.importExcel(excelFile, response);
+        return flag == true ? this.success() : this.failure();
     }
 
     /**
@@ -93,7 +97,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biDataSourceCost.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -110,8 +114,9 @@ public class BiDataSourceCostController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
-
+        return success();
     }
 
 }

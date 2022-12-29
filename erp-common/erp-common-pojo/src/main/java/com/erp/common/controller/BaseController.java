@@ -26,6 +26,12 @@ public class BaseController {
     private static final Integer CODE_FAILURE = 1;
     private static final String MSG_FAILURE = "请求失败！";
 
+    /**
+     * 部分成功默认消息
+     */
+    private static final Integer CODE_PARTIAL_SUCCESS = 2;
+    private static final String MSG_PARTIAL_SUCCESS = "部分成功！";
+
 
     /**
      * 完成消息构造
@@ -79,6 +85,41 @@ public class BaseController {
      */
     protected <T> ApiResult<T> success(T data) {
         return message(CODE_SUCCESS, MSG_SUCCESS, data);
+    }
+
+    /**
+     * 部分成功空数据
+     *
+     * @param <T>
+     * @return
+     */
+    protected <T> ApiResult<T> partialSuccess() {
+        return message(CODE_PARTIAL_SUCCESS, MSG_PARTIAL_SUCCESS, null);
+    }
+
+
+    /**
+     * 部分成功，通用代码
+     *
+     * @param message
+     * @param data
+     * @param <T>
+     * @return
+     */
+    protected <T> ApiResult<T> partialSuccess(String message, T data) {
+        return message(CODE_PARTIAL_SUCCESS, message, data);
+    }
+
+
+    /**
+     * 部分成功，仅内容
+     *
+     * @param data
+     * @param <T>
+     * @return
+    */
+    protected <T> ApiResult<T> partialSuccess(T data) {
+        return message(CODE_PARTIAL_SUCCESS, MSG_PARTIAL_SUCCESS, data);
     }
 
 
