@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -154,7 +155,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Override
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
-                .eq(SysDepartmentEntity::getType, 1)
+                .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1,2)))
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
