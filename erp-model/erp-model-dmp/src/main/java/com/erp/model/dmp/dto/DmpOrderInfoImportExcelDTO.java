@@ -21,31 +21,31 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 订单号
      */
-    @ExcelProperty(value = "订单号", index = 0)
+    @ExcelProperty(value = "*订单号", index = 0)
     private String platformOrderId;
 
     /**
      * 平台名称
      */
-    @ExcelProperty(value = "平台名称", index = 1)
+    @ExcelProperty(value = "*平台名称", index = 1)
     private String sourcePlatform;
 
     /**
      * 站点
      */
-    @ExcelProperty(value = "站点", index = 2)
+    @ExcelProperty(value = "*站点", index = 2)
     private String site;
 
     /**
      * 店铺名称
      */
-    @ExcelProperty(value = "店铺名称", index = 3)
+    @ExcelProperty(value = "*店铺名称", index = 3)
     private String shopName;
 
     /**
      * 订单销售额[原币种]
      */
-    @ExcelProperty(value = "订单销售额[原币种]", index = 4)
+    @ExcelProperty(value = "*订单销售额[原币种]", index = 4)
     private BigDecimal itemTotal;
 
     /**
@@ -63,7 +63,7 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 买家姓名（下单人）
      */
-    @ExcelProperty(value = "下单人", index = 7)
+    @ExcelProperty(value = "*下单人", index = 7)
     private String buyerName;
 
     /**
@@ -93,13 +93,13 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 国家名称
      */
-    @ExcelProperty(value = "国家名称", index = 12)
+    @ExcelProperty(value = "*国家名称", index = 12)
     private String countryNameCn;
 
     /**
      * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废
      */
-    @ExcelProperty(value = "订单状态", index = 13)
+    @ExcelProperty(value = "*订单状态", index = 13)
     private String orderStateName;
 
     /**
@@ -117,7 +117,7 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 销售员
      */
-    @ExcelProperty(value = "销售员", index = 16)
+    @ExcelProperty(value = "*销售员", index = 16)
     private String chargeName;
 
     /**
@@ -127,8 +127,32 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     private String currencyCode;
 
     /**
+     * SKU
+     */
+    @ExcelProperty(value = "*SKU", index = 18)
+    private String skuNo;
+
+    /**
+     * 品名
+     */
+    @ExcelProperty(value = "*品名", index = 19)
+    private String itemName;
+
+    /**
+     * 单价
+     */
+    @ExcelProperty(value = "*单价", index = 19)
+    private BigDecimal sellPrice;
+
+    /**
+     * 数量
+     */
+    @ExcelProperty(value = "*数量", index = 20)
+    private Integer quantity;
+
+    /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误信息", index = 18)
+    @ExcelProperty(value = "错误信息", index = 21)
     private String errorMsg;
 }

@@ -16,6 +16,7 @@ import com.erp.model.dmp.dto.DmpOrderStateDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -49,6 +50,9 @@ public class DmpOrderInfoController extends BaseController {
 
     @Resource
     private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private DmpOrderItemService dmpOrderItemService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -104,7 +108,7 @@ public class DmpOrderInfoController extends BaseController {
      */
     @PostMapping("/importOrderFile")
     public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType, dmpOrderInfoService, dmpShopInfoService, sysUserFeign);
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,dmpOrderItemService, dmpOrderInfoService, dmpShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
