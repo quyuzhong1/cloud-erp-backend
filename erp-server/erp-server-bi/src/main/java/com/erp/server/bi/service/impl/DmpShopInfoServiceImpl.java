@@ -120,6 +120,11 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (ObjectUtils.isEmpty(findUserDTO)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
+        if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
+            if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
+                throw new ServiceException(ApiError.ERROR_9013);
+            }
+        }
         dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
         DmpShopChangeLogEntity logEntity = new DmpShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
