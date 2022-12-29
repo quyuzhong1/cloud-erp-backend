@@ -47,6 +47,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Resource
     private DmpShopChangeLogMapper dmpShopChangeLogMapper;
 
+    @Resource
+    private DmpSkuInfoService dmpSkuInfoService;
+
     /**
      * 添加订单信息
      * @Author Luo_WG
@@ -164,17 +167,16 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
             }
 
-            //查询订单商品明细，根据sku查询plm系统sku信息，获取'类别'、'品牌' 同步到商品信息
+            //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
-                    CleanSkuDto productIdBySku = plmTaskFeign.getProductIdBySku(dmpOrderItemEntity.getSkuNo());
-                    if (productIdBySku != null) {
-                        dmpOrderItemEntity.setCategoryId(productIdBySku.getCategoryId());
-                        dmpOrderItemEntity.setCategoryName(productIdBySku.getCategoryName());
-                        dmpOrderItemEntity.setBrandId(productIdBySku.getBrandId());
-                        dmpOrderItemEntity.setBrandName(productIdBySku.getBrandName());
-                        Date listingTime = productIdBySku.getListingTime();
+                    DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo());
+
+                    if (skuBySkuNo != null) {
+                        dmpOrderItemEntity.setCategoryName(skuBySkuNo.getParentCategoryName());
+                        dmpOrderItemEntity.setBrandName(skuBySkuNo.getBrandName());
+                        Date listingTime = skuBySkuNo.getListingTime();
                         Date platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
                         if (null !=  listingTime && null != platformCreateTime) {
                             dmpOrderItemEntity.setNewSign(LocalDateUtil.date2LocalDate(listingTime).getYear() == LocalDateUtil.date2LocalDateTime(platformCreateTime).getYear() ? 1 : 0);

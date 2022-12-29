@@ -137,6 +137,12 @@ public class DmpSkuInfoEntity implements Serializable {
     @TableField(value = "company_name")
     private String companyName;
 
+    /**
+     * 上市时间
+     */
+    @TableField(value = "listing_time")
+    private Date listingTime;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -161,6 +167,7 @@ public class DmpSkuInfoEntity implements Serializable {
                 ", platformSign='" + platformSign + '\'' +
                 ", companyId='" + companyId + '\'' +
                 ", companyName='" + companyName + '\'' +
+                ", listingTime='" + listingTime + '\'' +
                 '}';
     }
 }

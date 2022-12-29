@@ -122,7 +122,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         queryfilters.add(String.format("FModifyDate >= '%s'", st));
         queryfilters.add(String.format("FModifyDate <= '%s'", sd));
         String filterStr = String.join(" and ", queryfilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ";
 
         Boolean dataSign = true;
         //当前页数
@@ -171,6 +171,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                         kingdeeSkuEntity.setF_PRVD_Assistant(valMap.get("F_PRVD_Assistant.FDataValue"));
                         kingdeeSkuEntity.setF_PRVD_Assistant1(valMap.get("F_PRVD_Assistant1.FDataValue"));
                         kingdeeSkuEntity.setFSalePrice_CMK(valMap.get("FSalePrice_CMK"));
+                        kingdeeSkuEntity.setFSSRQ(valMap.get("F_SSRQ"));
                         infoArrayList.add(kingdeeSkuEntity);
                     }
                 } else {
@@ -279,6 +280,11 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
 
         //企业名称
         dmpSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
+
+        //上市时间
+        if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
+            dmpSkuInfoEntity.setListingTime(sdf.parse(skuInfoEntity.getFSSRQ()));
+        }
 
         dmpSkuInfoEntity.setCreateTime(new Date());
 
