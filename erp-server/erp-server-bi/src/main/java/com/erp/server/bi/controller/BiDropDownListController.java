@@ -72,9 +72,17 @@ public class BiDropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/site/list")
-    public ApiResult<List<SalesSiteEnumVO>> listSiteDropDown() {
-        List<SalesSiteEnumVO> result = Arrays.stream(SalesSiteEnum.values())
-                .map(x -> new SalesSiteEnumVO(x.getCode(),x.getName(),x.getDesc()))
+    public ApiResult<List<ShopDropDownVO>> listSiteDropDown() {
+        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream()
+                .map(x -> new ShopDropDownVO(x.getSite()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
