@@ -339,47 +339,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return this.getOne(queryWrapper);
     }
 
-    @Override
-    public TargetSaleSumVO statisticsRingRatio(BiFilterDTO dto) {
-        return getTargetSaleSumVO(dto, 0);
-    }
-
-    private TargetSaleSumVO getTargetSaleSumVO(BiFilterDTO dto,Integer type) {
-        // 查询当期销售额
-        dto.setEndTime(dto.getEndTime().plusMinutes(1));
-        TargetSaleSumVO currentVo = sumSales(dto);
-        BigDecimal currentAmount = currentVo.getValue();
-        if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
-            return new TargetSaleSumVO(BigDecimal.ZERO);
-        }
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        if (0 == type){
-            // 查询上一个周期销售额
-            Duration duration = Duration.between(startTime,endTime);
-            LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
-            dto.setStartTime(preStartTime);
-            dto.setEndTime(startTime);
-       }else {
-            // 查询去年同周期
-            dto.setStartTime(startTime.minusYears(1));
-            dto.setEndTime(endTime.minusYears(1));
-       }
-        TargetSaleSumVO previousOneVo = sumSales(dto);
-        BigDecimal rate;
-        BigDecimal preAmount = previousOneVo.getValue();
-        if (BigDecimal.ZERO.compareTo(preAmount)  == 0){
-            rate = BigDecimal.ONE;
-        }else {
-            rate = currentAmount.subtract(preAmount).divide(preAmount, 4, BigDecimal.ROUND_HALF_UP);
-        }
-        return new TargetSaleSumVO(rate.multiply(new BigDecimal(100)));
-    }
-
-    @Override
-    public TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto) {
-        return getTargetSaleSumVO(dto,1);
-    }
 
     @Override
     public TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto) {
@@ -871,6 +830,156 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
+    }
+
+    @Override
+    public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime());
+        TargetSaleSumVO currentVo = sumSales(dto);
+        BigDecimal currentAmount = currentVo.getValue();
+        if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
+            return new TargetSaleAndYoySumVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleSumVO ringVo = sumSales(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleSumVO yoyVo = sumSales(dto);
+
+        return new TargetSaleAndYoySumVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime());
+        TargetSaleCountVO currentVo = countSalesVolume(dto);
+        Integer currentAmount = currentVo.getValue();
+        if (0 == currentAmount){
+            return new TargetSaleAndYoyCountVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleCountVO ringVo = countSalesVolume(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleCountVO yoyVo = countSalesVolume(dto);
+
+        return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime());
+        TargetSaleCountVO currentVo = countOrderQuantity(dto);
+        Integer currentAmount = currentVo.getValue();
+        if (0 == currentAmount){
+            return new TargetSaleAndYoyCountVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleCountVO ringVo = countOrderQuantity(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleCountVO yoyVo = countOrderQuantity(dto);
+
+        return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public TargetSaleAndYoySumVO countRefundRateAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime().plusMinutes(1));
+        TargetSaleSumVO currentVo = countRefundRate(dto);
+        BigDecimal currentAmount = currentVo.getValue();
+        if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
+            return new TargetSaleAndYoySumVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleSumVO ringVo = countRefundRate(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleSumVO yoyVo = countRefundRate(dto);
+
+        return new TargetSaleAndYoySumVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public TargetSaleAndYoySumVO countRefundAmountAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime().plusMinutes(1));
+        TargetSaleSumVO currentVo = countRefundAmount(dto);
+        BigDecimal currentAmount = currentVo.getValue();
+        if (BigDecimal.ZERO.compareTo(currentAmount)  == 0){
+            return new TargetSaleAndYoySumVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleSumVO ringVo = countRefundAmount(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleSumVO yoyVo = countRefundAmount(dto);
+
+        return new TargetSaleAndYoySumVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public TargetSaleAndYoyCountVO countRefundOrderNumAndYoy(BiFilterDTO dto) {
+        // 查询当期销售额
+        dto.setEndTime(dto.getEndTime().plusMinutes(1));
+        TargetSaleCountVO currentVo = countRefundOrderNum(dto);
+        Integer currentAmount = currentVo.getValue();
+        if (0 == currentAmount){
+            return new TargetSaleAndYoyCountVO();
+        }
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        // 查询上一个周期销售额 环比
+        Duration duration = Duration.between(startTime,endTime);
+        LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
+        dto.setStartTime(preStartTime);
+        dto.setEndTime(startTime.minusDays(1));
+        TargetSaleCountVO ringVo = countRefundOrderNum(dto);
+        // 查询去年同周期 同比
+        dto.setStartTime(startTime.minusYears(1));
+        dto.setEndTime(endTime.minusYears(1));
+        TargetSaleCountVO yoyVo = countRefundOrderNum(dto);
+
+        return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
     }
 
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,

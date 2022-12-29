@@ -16,6 +16,6 @@ public class TargetSaleCountVO {
     private Integer value;
 
     public TargetSaleCountVO(Integer count) {
-        this.value = count;
+        this.value = null != count? count : 0;
     }
 }
