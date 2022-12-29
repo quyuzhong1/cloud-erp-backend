@@ -101,7 +101,7 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         BiSysModuleEntity sysModule = new BiSysModuleEntity();
         BeanUtils.copyProperties(dto,sysModule);
         checkName(dto.getId(),dto.getName());
-        return this.save(sysModule);
+        return this.saveOrUpdate(sysModule);
     }
 
     @Override

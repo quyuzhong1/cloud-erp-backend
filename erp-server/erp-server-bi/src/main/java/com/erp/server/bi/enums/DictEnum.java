@@ -11,6 +11,7 @@ public enum DictEnum {
     DASHBOARD("个人仪表盘","subjectCategory","dashboard"),
     MODULE("模块分类","moduleCategory",""),
     CURRENCY("币别","currency",""),
+    SALESMONITORINGTYPE("销售监控类型","salesMonitoringType",""),
     DATASOURCECOST("数据源成本","dataSourceCost",""),
     DATASOURCECUSTOMMONTH("数据源自助数据月份","dataSourceCustomMonth",""),
     DATASOURCECUSTOMQUARTER("数据源自助数据季度","dataSourceCustomQuarter","");

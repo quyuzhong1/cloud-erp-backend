@@ -101,6 +101,10 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             }
         }
 
+        if(StringUtils.isBlank(dto.getChargeName())) {
+            errorMsgList.add("销售员不能为空");
+        }
+
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
             BaseSearchDTO baseSearchDTO = new BaseSearchDTO();

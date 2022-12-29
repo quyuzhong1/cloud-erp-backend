@@ -2,18 +2,15 @@ package com.erp.server.bi.controller;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.core.utils.StrUtils;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
-import com.erp.model.bi.vo.SalesSiteEnumVO;
 import com.erp.model.bi.vo.SelectShowVO;
 import com.erp.model.bi.vo.ShopDropDownVO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
-import com.erp.model.dmp.enums.SalesSiteEnum;
 import com.erp.server.bi.enums.*;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
@@ -275,6 +272,19 @@ public class BiDropDownListController extends BaseController {
         List<ShopDropDownVO> result = list.stream().map(x -> new ShopDropDownVO(x.getBrandName()))
                 .distinct()
                 .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 销售监控类型下拉列表
+     * @return
+     */
+    @GetMapping("/biSalesMonitoring/type/list")
+    public ApiResult<List<SelectShowVO>> listBiSalesMonitoringTypeDropDown() {
+        List<BiDictEntity> biDictList = biDictService.listEntityByType(DictEnum.SALESMONITORINGTYPE.getType());
+        List<SelectShowVO> result = biDictList.stream()
+                .map(x -> new SelectShowVO().setCode(Integer.valueOf(x.getValue())).setName(x.getName()).setDesc(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
