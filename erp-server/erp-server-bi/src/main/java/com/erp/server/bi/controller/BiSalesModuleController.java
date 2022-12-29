@@ -313,8 +313,8 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<PeopleSalesRankVO>> byPeopleWeekRank() {
-        List<PeopleSalesRankVO> result=salesOrderService.byPeopleWeekRank();
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleWeekRank(@RequestBody @Validated BiFilterDTO dto) {
+        List<PeopleSalesRankVO> result=salesOrderService.byPeopleWeekRank(dto);
         return success(result);
     }
 
