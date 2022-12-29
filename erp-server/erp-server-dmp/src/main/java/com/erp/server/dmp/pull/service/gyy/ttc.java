@@ -16,10 +16,10 @@ public class ttc {
         //读取配置，初始化SDK
         K3CloudApi client = new K3CloudApi();
 
-        String formId = "SAL_OUTSTOCK";
+        String formId = "BD_MATERIAL";
 
 
-        String jsonData = "{\"CreateOrgId\":0,\"Number\":\"\",\"Id\":\"2739839\",\"IsSortBySeq\":\"false\"}";
+        String jsonData = "{\"CreateOrgId\":0,\"Number\":\"0005\",\"Id\":\"\",\"IsSortBySeq\":\"false\"}";
 //调用接口
         String resultJson = client.view(formId,jsonData);
 
