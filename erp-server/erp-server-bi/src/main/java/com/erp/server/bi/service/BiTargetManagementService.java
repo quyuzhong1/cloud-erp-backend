@@ -42,4 +42,14 @@ public interface BiTargetManagementService extends IService<BiTargetManagementEn
      * @return BiTargetManagementEntity
      */
     BiTargetManagementEntity getTargetByExcelData(BiTargetManagementEntity entity);
+
+    /**
+     * 获取单月份目标数据
+     * @param start
+     * @param end
+     * @param param
+     * @param targetType
+     * @return BiTargetManagementEntity
+     */
+    BiTargetManagementEntity getMonthSales(LocalDateTime start, LocalDateTime end, String param, Integer targetType);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -90,6 +91,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -141,6 +145,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -172,6 +179,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -200,6 +210,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();

@@ -28,6 +28,8 @@ public class BiTargetFinancialController extends BaseController {
     
     /**
      * 销售毛利润
+     *
+     * code = indicator_sales_profit
      * @param dto
      * @return ApiResult<TargetSaleSumVO>
      */
@@ -39,6 +41,8 @@ public class BiTargetFinancialController extends BaseController {
 
     /**
      * 统计主营收入
+     *
+     * code = indicator_main_revenue
      * @param dto
      * @return ApiResult<TargetSaleSumVO>
      */
@@ -49,6 +53,8 @@ public class BiTargetFinancialController extends BaseController {
     }
     /**
      * 统计销售成本
+     *
+     * code = indicator_sales_cost
      * @param dto
      * @return ApiResult<TargetSaleSumVO>
      */
@@ -60,6 +66,8 @@ public class BiTargetFinancialController extends BaseController {
 
     /**
      * 毛利率
+     *
+     * code = indicator_sales_ratio
      * @param dto
      * @return ApiResult<TargetSaleSumVO>
      */
