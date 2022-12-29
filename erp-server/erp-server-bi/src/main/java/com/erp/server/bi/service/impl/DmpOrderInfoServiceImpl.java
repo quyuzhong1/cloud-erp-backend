@@ -121,7 +121,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 query.select("sum(item_total*currency_rate) as item_total");
             }
             DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
-            amount = dmpOrderInfoEntity.getItemTotal();
+            amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getItemTotal(): BigDecimal.ZERO;
         } else {
             // 条件存在sku的情况
             // 先查询订单号
