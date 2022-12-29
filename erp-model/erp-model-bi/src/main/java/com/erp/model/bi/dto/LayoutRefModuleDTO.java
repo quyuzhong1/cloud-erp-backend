@@ -28,6 +28,10 @@ public class LayoutRefModuleDTO implements Serializable {
     @NotBlank(message = "模块或者指标id 不能为空")
     private String id;
 
+    /**
+     * 系统模块id
+     */
+    private String sysModuleId;
 
     /**
      * 模块名称

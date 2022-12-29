@@ -370,6 +370,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                         findFirst().orElse(null);
                 refModule.setId(moduleId);
                 if (module != null) {
+                    refModule.setSysModuleId(module.getSysModuleId());
                     refModule.setCode(module.getCode());
                     refModule.setName(module.getName());
                     refModule.setViewCode(module.getViewCode());
