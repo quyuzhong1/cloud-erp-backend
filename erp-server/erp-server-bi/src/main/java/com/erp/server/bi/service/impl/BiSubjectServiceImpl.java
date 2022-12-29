@@ -22,6 +22,7 @@ import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
 import com.erp.server.bi.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -497,10 +498,13 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             categoryId = dict.getId();
         }
         //这个是默认的
-        BiSubjectEntity subjectEntity = subjectDefaultService.getDefault(userId);
-        if (subjectEntity != null) {
-            if (categoryId.equals(subjectEntity.getCategoryId())) {
-                subjectId = subjectEntity.getId();
+        List<BiSubjectEntity> subjectList = subjectDefaultService.getDefault(userId);
+        if (CollectionUtils.isNotEmpty(subjectList)) {
+            String dashboardCategoryId= categoryId;
+            BiSubjectEntity subject = subjectList.stream().filter(s -> s.getCategoryId().equals(dashboardCategoryId))
+                    .findFirst().orElse(null);
+            if (subject != null) {
+                subjectId = subject.getId();
             }
         }
         if (StringUtils.isNotBlank(subjectId)) {
@@ -508,7 +512,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
         //当默认的没有 就找 是仪表盘的 开启的最近一条
         BiSubjectEntity dashboard = getByCategoryId(categoryId);
-        if(dashboard!=null){
+        if (dashboard != null) {
             return layoutService.subjectInfo(dashboard.getId());
         }
 

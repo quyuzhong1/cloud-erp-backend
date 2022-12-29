@@ -1161,6 +1161,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Override
     public List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto) {
+
+        List<SalesFlagVO> chainList = baseMapper.byPeopleNewAndOld(dto);
+
+
         return null;
     }
 

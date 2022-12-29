@@ -6,6 +6,8 @@ import com.erp.model.bi.entity.BiSubjectEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Classname BiSubjectDefaultMapper
  * @Description TODO
@@ -14,5 +16,5 @@ import org.apache.ibatis.annotations.Param;
  */
 @Mapper
 public interface BiSubjectDefaultMapper  extends BaseMapper<BiSubjectDefaultEntity> {
-    BiSubjectEntity getDefaultSubject(@Param("userId") String userId);
+    List<BiSubjectEntity> getDefaultSubject(@Param("userId") String userId);
 }

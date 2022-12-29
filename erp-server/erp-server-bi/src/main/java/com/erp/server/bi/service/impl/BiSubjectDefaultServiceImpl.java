@@ -9,6 +9,7 @@ import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.mapper.BiSubjectDefaultMapper;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.CommonService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -53,8 +54,8 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
     @Override
     public Boolean setDefault(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
-        BiSubjectEntity subject = getDefault(userId);
-        if (subject != null) {
+        List<BiSubjectEntity> subjectList = getDefault(userId);
+        if (CollectionUtils.isNotEmpty(subjectList)) {
             throw new ServiceException(ApiError.ERROR_97014);
         }
         BiSubjectDefaultEntity defaultSubject = new BiSubjectDefaultEntity();
@@ -65,7 +66,7 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
 
 
     @Override
-    public BiSubjectEntity getDefault(String userId) {
+    public List<BiSubjectEntity> getDefault(String userId) {
         return baseMapper.getDefaultSubject(userId);
     }
 
