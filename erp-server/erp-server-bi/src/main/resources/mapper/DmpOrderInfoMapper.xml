@@ -51,7 +51,7 @@
                 and doi.shop_name like concat('%',#{params.shopName},'%')
             </if>
             <if test="params.platformName != null and params.platformName != ''">
-                and doi.platform_order_id like concat('%',#{params.platformName},'%')
+                and doi.source_platform like concat('%',#{params.platformName},'%')
             </if>
             <if test="params.orderState != null and params.orderState != ''">
                 and doi.order_state = #{params.orderState}

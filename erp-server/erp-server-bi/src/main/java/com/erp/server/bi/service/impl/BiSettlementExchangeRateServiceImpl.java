@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -90,7 +91,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     @Override
     public List<Map<String, Object>> listSettlementExchangeRate() {
         List<Map<String, Object>> mapList = new ArrayList<>();
-        List<BiSettlementExchangeRateEntity> list = this.list();
+        LambdaQueryWrapper<BiSettlementExchangeRateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByAsc(BiSettlementExchangeRateEntity::getSettlementDateBegin);
+        List<BiSettlementExchangeRateEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<BiSettlementExchangeRateEntity>> newMap = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDateBegin().toString().concat(",").concat(obj.getSettlementDateEnd().toString())));
            for (Map.Entry<String, List<BiSettlementExchangeRateEntity>> entry:newMap.entrySet()) {

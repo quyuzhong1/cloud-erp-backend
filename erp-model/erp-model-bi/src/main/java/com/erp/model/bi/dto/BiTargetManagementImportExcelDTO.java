@@ -19,31 +19,31 @@ public class BiTargetManagementImportExcelDTO implements Serializable {
     /**
      * 年份
      */
-    @ExcelProperty(value = "年份", index = 0)
+    @ExcelProperty(value = "*年份", index = 0)
     private Integer year;
 
     /**
      * 平台
      */
-    @ExcelProperty(value = "平台", index = 1)
+    @ExcelProperty(value = "*平台", index = 1)
     private String platformName;
 
     /**
      * 品类
      */
-    @ExcelProperty(value = "品类", index = 2)
+    @ExcelProperty(value = "*品类", index = 2)
     private String category;
 
     /**
      * 销量/销售额
      */
-    @ExcelProperty(value = "销量/销售额", index = 3)
+    @ExcelProperty(value = "*销量/销售额", index = 3)
     private String targetTypeName;
 
     /**
      * 新老品
      */
-    @ExcelProperty(value = "新品/老品", index = 4)
+    @ExcelProperty(value = "*新品/老品", index = 4)
     private String productTypeName;
 
     /**
@@ -55,13 +55,13 @@ public class BiTargetManagementImportExcelDTO implements Serializable {
     /**
      * SKU
      */
-    @ExcelProperty(value = "SKU", index = 6)
+    @ExcelProperty(value = "*SKU", index = 6)
     private String skuNo;
 
     /**
      * SPU
      */
-    @ExcelProperty(value = "SPU", index = 7)
+    @ExcelProperty(value = "*SPU", index = 7)
     private String spuNo;
 
     /**
