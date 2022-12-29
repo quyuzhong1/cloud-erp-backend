@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
@@ -557,9 +558,72 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byPeople(BiFilterDTO dto) {
-        List<SalesCountVO> resultList = baseMapper.byPeople(dto);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
 
-        return null;
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        List<SalesBaseVO> list = baseMapper.byPeople(dto);
+
+
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        //这个是环比的查询出来的
+        List<SalesBaseVO> chainList = baseMapper.byPeople(dto);
+
+
+        //同比开始时间
+        LocalDateTime  yearBasisStartTime=startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime  yearBasisEndTime=endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesBaseVO> yearBasisList = baseMapper.byPeople(dto);
+
+        List<SalesCountVO> resultList = new ArrayList<>(list.size());
+        //总的
+        BigDecimal totalSales = list.stream().
+                map(SalesBaseVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (SalesBaseVO item : list) {
+            String flagNo = item.getFlagNo();
+            SalesCountVO vo = new SalesCountVO();
+            BigDecimal sales = item.getSales();
+
+            vo.setSales(sales);
+            vo.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+
+            SalesBaseVO chainVO = chainList.stream().filter(c -> c.getFlagNo().equals(flagNo))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                vo.setChainRelativeRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+            }
+
+            SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                vo.setYearBasisRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+            }
+
+            vo.setOrderCount(item.getOrderCount());
+            vo.setSalesQuantity(item.getSalesQuantity());
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setName(userInfo.getUserName());
+            } else {
+                vo.setName("无");
+            }
+            resultList.add(vo);
+        }
+
+
+        return resultList;
     }
 
 
@@ -664,8 +728,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @return
      */
     public BigDecimal getSalesRatio(BigDecimal totalSales, BigDecimal sales) {
-        BigDecimal ratio = sales.divide(totalSales, 2, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100"));
+        BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -680,8 +744,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (oldSales.compareTo(zero) == 0) {
             return zero;
         }
-        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100"));
+        BigDecimal ratio = differ.divide(oldSales, 5, BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP);
     }
 
 
@@ -733,7 +797,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-27 11:05
      */
     @Override
-    public List<PeopleSalesRankVO> byPeopleWeekRank() {
+    public List<PeopleSalesRankVO> byPeopleWeekRank(BiFilterDTO dto) {
+
+
         return null;
     }
 

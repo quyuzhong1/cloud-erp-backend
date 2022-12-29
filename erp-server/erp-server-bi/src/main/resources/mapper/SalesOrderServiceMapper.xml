@@ -1088,9 +1088,9 @@
         GROUP BY country_name_cn
     </select>
 
-    <select id="byPeople" resultType="com.erp.model.bi.vo.SalesCountVO">
+    <select id="byPeople" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT round(SUM(o.order_fee)/10000,4) AS sales,
-        o.charge_id AS name, SUM ( i.quantity ) AS salesQuantity,
+        COALESCE(o.charge_id,'无')  AS flagNo, SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>

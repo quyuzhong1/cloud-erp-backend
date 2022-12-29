@@ -276,6 +276,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String dbSysModuleId = module.getSysModuleId();
         module.setCategoryId(biModule.getCategoryId());
         module.setSysModuleId(sysModuleId);
+        module.setCode(biModule.getCode());
+
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.updateById(module);
         if (flag) {
