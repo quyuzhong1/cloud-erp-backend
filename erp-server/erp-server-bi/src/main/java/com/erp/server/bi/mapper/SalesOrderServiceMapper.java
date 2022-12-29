@@ -87,11 +87,13 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesFlagVO> byCategoryNewAndOld(@Param("params") BiFilterDTO dto);
 
-    List<SalesCountVO> bySite(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> bySite(@Param("params") BiFilterDTO dto);
 
     List<SalesBaseVO> byOldProductTop(@Param("params") BiFilterDTO dto);
 
     List<SalesBaseVO> byNewProductTop(@Param("params") BiFilterDTO dto);
 
     List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto);
+
+    List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto);
 }
