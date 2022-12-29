@@ -45,6 +45,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             for (int j = i + 1; j < list.size();j++) {
                 Map<String, Object> map2 = list.get(j);
                 List<String> settlementDateList2 = (List<String>) map2.get("settlementDateList");
+                if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
+                    throw new ServiceException(ApiError.ERROR_97015);
+                }
                 String settlementDateBegin2 = settlementDateList2.get(0);
                 String settlementDateEnd2 = settlementDateList2.get(1);
                  overlap = isOverlap(settlementDateBegin1, settlementDateEnd1, settlementDateBegin2, settlementDateEnd2);
