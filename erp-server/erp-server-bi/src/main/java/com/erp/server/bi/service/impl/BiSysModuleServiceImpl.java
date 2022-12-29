@@ -8,7 +8,6 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
-import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSysModuleEntity;
 import com.erp.server.bi.mapper.BiSysModuleMapper;
 import com.erp.server.bi.service.BiModuleService;
@@ -112,12 +111,8 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
     }
 
     @Override
-    public ModuleSysConfigurationDTO getByModuleId(String moduleId) {
-        BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
-        if (ObjectUtils.isEmpty(biModuleEntity)) {
-            throw new ServiceException(ApiError.Default);
-        }
-        BiSysModuleEntity biSysModuleEntity = this.getById(biModuleEntity.getSysModuleId());
+    public ModuleSysConfigurationDTO getBySysModuleId(String sysModuleId) {
+        BiSysModuleEntity biSysModuleEntity = this.getById(sysModuleId);
         if (ObjectUtils.isEmpty(biSysModuleEntity)) {
             throw new ServiceException(ApiError.ERROR_97012);
         }
