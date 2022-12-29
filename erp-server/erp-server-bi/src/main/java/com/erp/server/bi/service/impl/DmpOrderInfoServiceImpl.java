@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,9 +19,9 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.*;
-import com.erp.model.bi.vo.*;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -95,7 +96,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         list.forEach(obj ->obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState())));
         //导出销售数据
-        List<DmpOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpOrderInfoExcelDTO.class, list);
+        List<DmpOrderInfoExcelDTO> excelList = BeanUtil.copyToList(list,DmpOrderInfoExcelDTO.class);
         String fileName = getFileName("销售数据导出");
         ExcelUtil.export(fileName, "销售数据导出", excelList, DmpOrderInfoExcelDTO.class, response);
         return;
