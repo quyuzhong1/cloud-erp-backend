@@ -37,6 +37,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         for (int i = 0; i < list.size();i++) {
             Map<String, Object> map1 = list.get(i);
             List<String> settlementDateList1 = (List<String>) map1.get("settlementDateList");
+            if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
+                throw new ServiceException(ApiError.ERROR_97015);
+            }
             String settlementDateBegin1 = settlementDateList1.get(0);
             String settlementDateEnd1 = settlementDateList1.get(1);
             for (int j = i + 1; j < list.size();j++) {
