@@ -45,7 +45,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
 
     @Resource
-    private DmpShopChangeLogMapper dmpShopChangeLogMapper;
+    private DmpShopChangeLogService dmpShopChangeLogService;
 
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
@@ -150,7 +150,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
-            DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogMapper.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
+            DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
             if (shopChargeName != null) {
                 updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
                 updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());

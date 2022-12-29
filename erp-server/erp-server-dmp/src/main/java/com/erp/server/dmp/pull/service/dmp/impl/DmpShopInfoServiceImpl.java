@@ -12,6 +12,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -107,7 +108,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign) {
         DmpShopInfoEntity req = getShopByShopNo(shopNo, platformSign);
         DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
-        BeanMapper.copy(req, dmpShopInfoDTO);
+        BeanUtils.copyProperties(req, dmpShopInfoDTO);
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
 
             List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(dmpShopInfoDTO.getChargeId())).collect(Collectors.toList());
