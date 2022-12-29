@@ -87,7 +87,7 @@ public class BiTargetManagementController extends BaseController {
      * @param response
      */
     @PostMapping("/importOrderFile")
-    public void importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -99,11 +99,13 @@ public class BiTargetManagementController extends BaseController {
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);
                 sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(),excelPath);
+                return failure();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return success();
     }
 
 
@@ -115,7 +117,7 @@ public class BiTargetManagementController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biTargetManagementTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -134,7 +136,7 @@ public class BiTargetManagementController extends BaseController {
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
-
+        return success();
     }
 
 }

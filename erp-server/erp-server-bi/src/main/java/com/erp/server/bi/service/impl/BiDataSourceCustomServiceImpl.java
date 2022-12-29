@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
@@ -107,7 +109,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Override
     @Transactional
-    public void importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType) {
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType) {
         //季度数据
         List<BiDictEntity> quarterList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMQUARTER.getType());
         //月份数据
@@ -117,16 +119,16 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
             if (CollectionUtils.isEmpty(list) || list.size() == 0) {
-                return;
+                return true;
             }
             List<String> headList = excelListenerUtil.getHead();
             String head = "自助数据表";
             String fileName = dmpOrderInfoService.getFileName("自助数据表导出")+ ".xlsx";
             ExcelUtil.easyUtil(headList,head,list,fileName, response);
-            return;
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return false;
     }
 
     @Override

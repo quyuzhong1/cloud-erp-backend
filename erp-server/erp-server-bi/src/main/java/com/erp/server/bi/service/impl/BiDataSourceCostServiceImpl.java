@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -11,6 +12,8 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
@@ -88,6 +91,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -139,6 +145,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -170,6 +179,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -198,6 +210,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 获取详情数据并转为 map 计算
         HashMap<String, Map<String, BigDecimal>> dataSourceCostDetailMap = biDataSourceCostDetailService.convertListByCostIds(costIds, dictValues);
+        if(CollectionUtil.isEmpty(dataSourceCostDetailMap)){
+            return new TargetSaleSumVO(BigDecimal.ZERO);
+        }
         // 计算单条记录毛利率
         Map<String, BigDecimal> detailListMap = dataSourceCostDetailMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
             Map<String, BigDecimal> tempMap = e.getValue();
@@ -297,7 +312,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     }
 
     @Override
-    public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
 
         //查询店铺数据
         List<DmpShopInfoEntity> shopList = dmpShopInfoService.list();
@@ -311,16 +326,16 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
             if (CollectionUtils.isEmpty(list) || list.size() == 0) {
-                return;
+                return true;
             }
             List<String> headList = excelListenerUtil.getHead();
             String head = "成本数据表";
             String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
             ExcelUtil.easyUtil(headList,head,list,fileName, response);
-            return;
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return false;
     }
 
 

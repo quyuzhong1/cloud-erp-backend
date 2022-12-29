@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -37,11 +38,17 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         for (int i = 0; i < list.size();i++) {
             Map<String, Object> map1 = list.get(i);
             List<String> settlementDateList1 = (List<String>) map1.get("settlementDateList");
+            if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
+                throw new ServiceException(ApiError.ERROR_97015);
+            }
             String settlementDateBegin1 = settlementDateList1.get(0);
             String settlementDateEnd1 = settlementDateList1.get(1);
             for (int j = i + 1; j < list.size();j++) {
                 Map<String, Object> map2 = list.get(j);
                 List<String> settlementDateList2 = (List<String>) map2.get("settlementDateList");
+                if (CollectionUtils.isEmpty(settlementDateList1) || settlementDateList1.size() == 0) {
+                    throw new ServiceException(ApiError.ERROR_97015);
+                }
                 String settlementDateBegin2 = settlementDateList2.get(0);
                 String settlementDateEnd2 = settlementDateList2.get(1);
                  overlap = isOverlap(settlementDateBegin1, settlementDateEnd1, settlementDateBegin2, settlementDateEnd2);
@@ -84,7 +91,9 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     @Override
     public List<Map<String, Object>> listSettlementExchangeRate() {
         List<Map<String, Object>> mapList = new ArrayList<>();
-        List<BiSettlementExchangeRateEntity> list = this.list();
+        LambdaQueryWrapper<BiSettlementExchangeRateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByAsc(BiSettlementExchangeRateEntity::getSettlementDateBegin);
+        List<BiSettlementExchangeRateEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<BiSettlementExchangeRateEntity>> newMap = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDateBegin().toString().concat(",").concat(obj.getSettlementDateEnd().toString())));
            for (Map.Entry<String, List<BiSettlementExchangeRateEntity>> entry:newMap.entrySet()) {

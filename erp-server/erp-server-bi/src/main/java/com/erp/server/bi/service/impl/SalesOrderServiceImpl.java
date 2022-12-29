@@ -407,9 +407,46 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byBrand(BiFilterDTO dto) {
-        //查询sku 分类以及分类下对应的skuno
-        List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuBrandList();
-        return null;
+        List<SalesCountVO> list = baseMapper.byBrand(dto);
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        List<SalesCountVO> chainList = baseMapper.byBrand(dto);
+
+        //同比开始时间
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesCountVO> yearBasisList = baseMapper.byPlatform(dto);
+        //总的销售额
+        BigDecimal totalSales = list.stream().
+                map(SalesCountVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (SalesCountVO item : list) {
+            String name = item.getName();
+            BigDecimal sales = item.getSales();
+            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+        }
+        return list;
     }
 
 
@@ -460,7 +497,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (yearBasisVO != null) {
                 item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
             }
-
         }
 
         return list;
@@ -889,7 +925,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesCountVO> bySite(BiFilterDTO dto) {
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
-        List<SalesCountVO> list = baseMapper.bySite(dto);
+        List<ShopSalesVO> list = baseMapper.bySite(dto);
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
         //获取到环比的结束日期
@@ -898,7 +934,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(ringRatioEndDate);
 
         //这个是环比的查询出来的
-        List<SalesCountVO> chainList = baseMapper.bySite(dto);
+        List<ShopSalesVO> chainList = baseMapper.bySite(dto);
 
         //同比开始时间
         LocalDateTime yearBasisStartTime = startTime.minusYears(1);
@@ -907,30 +943,55 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
-        List<SalesCountVO> yearBasisList = baseMapper.bySite(dto);
+        List<ShopSalesVO> yearBasisList = baseMapper.bySite(dto);
 
         //总的
         BigDecimal totalSales = list.stream().
-                map(SalesCountVO::getSales).
+                map(ShopSalesVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<ShopSiteVO> shopCategoryList = shopInfoService.getShopCategoryList();
 
-        for (SalesCountVO item : list) {
-            String name = item.getName();
-            BigDecimal sales = item.getSales();
-            item.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
-            SalesCountVO chainVO = chainList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (chainVO != null) {
-                item.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
-            }
-            SalesCountVO yearBasisVO = yearBasisList.stream().filter(c -> c.getName().equals(name))
-                    .findFirst().orElse(null);
-            if (yearBasisVO != null) {
-                item.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
-            }
+        List<SalesCountVO> resultList = new ArrayList<>(shopCategoryList.size());
+        for (ShopSiteVO item : shopCategoryList) {
+            SalesCountVO vo = new SalesCountVO();
+            //对应的店铺信息
+            List<String> shopNoList = item.getShopNo();
+            String site = item.getSite();
+            vo.setName(site);
+            BigDecimal sales = list.stream().
+                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    map(ShopSalesVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            vo.setSalesRatio(getSalesRatio(totalSales, sales));
+            vo.setSales(sales);
+            Integer salesQuantity = list.stream().
+                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    mapToInt(ShopSalesVO::getSalesQuantity).
+                    sum();
+            vo.setSalesQuantity(salesQuantity);
+
+            Integer orderCount = list.stream().
+                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    mapToInt(ShopSalesVO::getOrderCount).
+                    sum();
+            vo.setOrderCount(orderCount);
+
+            BigDecimal chainSales = chainList.stream().
+                    filter(c -> shopNoList.contains(c.getShopNo())).
+                    map(ShopSalesVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainSales));
+
+            BigDecimal yearBasisSales = yearBasisList.stream().
+                    filter(c -> shopNoList.contains(c.getShopNo())).
+                    map(ShopSalesVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisSales));
+            resultList.add(vo);
         }
-
-        return list;
+        return resultList;
     }
 
     /**

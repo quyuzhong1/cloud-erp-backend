@@ -61,8 +61,9 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
     }
 
 
@@ -75,8 +76,9 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping("/importBiDataSourceCustomFile")
-    public void importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        biDataSourceCustomService.importExcel(excelFile, response,importType);
+    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType);
+        return flag == true ? this.success() : this.failure();
     }
 
 
@@ -88,7 +90,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
         String path = "";
         switch (importType) {
             case 1:
@@ -126,7 +128,7 @@ public class BiDataSourceCustomController extends BaseController {
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
-
+        return success();
     }
 
     /**

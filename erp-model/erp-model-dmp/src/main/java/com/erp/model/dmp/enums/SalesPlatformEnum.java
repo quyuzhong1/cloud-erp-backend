@@ -61,7 +61,7 @@ public enum SalesPlatformEnum {
     public static SalesPlatformEnum getByName(String name) {
         SalesPlatformEnum[] values = values();
         for (SalesPlatformEnum value : values) {
-            if (value.name == name) {
+            if (value.name.equals(name)) {
                 return value;
             }
         }

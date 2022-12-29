@@ -3,10 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -60,7 +57,7 @@ public class BiSettlementExchangeRateController extends BaseController {
      * @date: 2022/12/20 18:48
      * @return ApiResult
      */
-    @RequestMapping("/list")
+    @PostMapping("/list")
     public ApiResult<List<Map<String, Object>>> listSettlementExchangeRate() {
         List<Map<String, Object>> list=  biSettlementExchangeRateService.listSettlementExchangeRate();
         return  success(list);
