@@ -3,9 +3,13 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.BiDataSourceCustomDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
+import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
+import com.erp.model.bi.dto.BiTargetTypeDTO;
+import com.erp.model.bi.vo.ChartVO;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -19,6 +23,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * 数据源管理
@@ -39,11 +45,11 @@ public class BiDataSourceCustomController extends BaseController {
     * @author Will
     * @date: 2022/12/16 13:18
     * @param dto
-    * @return ApiResult<PagingVO<BiDataSourceCustomDTO>>
+    * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
     */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<BiDataSourceCustomDTO>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
-        PagingVO<BiDataSourceCustomDTO> pagingVO = biDataSourceCustomService.paging(dto);
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
     }
 
@@ -70,20 +76,39 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @PostMapping("/importBiDataSourceCustomFile")
     public void importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-
+        biDataSourceCustomService.importExcel(excelFile, response,importType);
     }
 
 
     /**
-     * 成本数据-下载模板
+     * 自助数据-下载模板
      * @author Will
      * @date: 2022/12/15 18:42
      * @param request
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/biDataSourceCustom.xlsx";
+    public void exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
+        String path = "";
+        switch (importType) {
+            case 1:
+                path = "classpath:excel/biDataSourceCustomYear.xlsx";
+                break;
+            case 2:
+                path = "classpath:excel/biDataSourceCustomQuarter.xlsx";
+                break;
+            case 3:
+                path = "classpath:excel/biDataSourceCustomMonth.xlsx";
+                break;
+            case 4:
+                path = "classpath:excel/biDataSourceCustomWeek.xlsx";
+                break;
+            case 5:
+                path = "classpath:excel/biDataSourceCustomDay.xlsx";
+                break;
+            default:
+                break;
+        }
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -99,8 +124,62 @@ public class BiDataSourceCustomController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
         }
 
+    }
+
+    /**
+     * 自助数据-柱状图数据查询
+     * @author Will
+     * @date: 2022/12/28 11:50
+     * @param moduleId
+     * @param year
+     * @return ApiResult
+     */
+    @GetMapping("/listGraphicalData")
+    public ApiResult<ChartVO> listGraphicalData(@RequestParam("moduleId") String moduleId,@RequestParam("year") Integer year) {
+        ChartVO vo = biDataSourceCustomService.listGraphicalData(moduleId,year);
+        return success(vo);
+    }
+
+    /**
+     * 自助数据-表格数据查询
+     * @author Will
+     * @date: 2022/12/28 14:28
+     * @param dto
+     * @return ApiResult<LinkedHashMap<String,Object>>
+     */
+    @PostMapping("/listTableData")
+    public ApiResult<LinkedHashMap<String,Object>> listTableData(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
+        LinkedHashMap<String,Object> vo = biDataSourceCustomService.listTableData(dto);
+        return success(vo);
+    }
+
+    /**
+     * 自助数据-查询指标分类
+     * @author Will
+     * @date: 2022/12/28 9:07
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/listTargetType")
+    public ApiResult<List<String>> listTargetType(@RequestBody @Validated BiDataSourceCustomTableDTO dto) {
+        List<String> targetTypeList = biDataSourceCustomService.listTargetType(dto);
+        return success(targetTypeList);
+    }
+
+    /**
+     * 自助数据-指标分类
+     * @author Will
+     * @date: 2022/12/28 17:23
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/updateTargetType")
+    public ApiResult updateTargetType(@RequestBody @Validated BiTargetTypeDTO dto) {
+        biDataSourceCustomService.updateTargetType(dto);
+        return success();
     }
 
 }

@@ -29,7 +29,7 @@
         INNER JOIN platform_api pa ON pat.api_id = pa.id
         INNER JOIN platform p ON pa.platform_id = p.id
         WHERE
-        <![CDATA[  pat.next_time < #{localTime}]]>
+        (pat.next_time &lt; #{localTime} OR pat.next_time IS NULL)
         AND state=1
         limit #{pageSize} offset #{pageNumber}
     </select>

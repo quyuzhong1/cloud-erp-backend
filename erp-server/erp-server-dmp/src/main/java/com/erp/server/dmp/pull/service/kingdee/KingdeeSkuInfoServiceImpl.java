@@ -29,6 +29,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -96,22 +98,22 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
      */
     public List<KingdeeSkuEntity> pullDate(RequestDTO dto) {
         List<KingdeeSkuEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         String st = "";
         String sd = "";
-        if (lastTime != 0 && nextTime != 0) {
-            Date date = new Date(Long.valueOf(lastTime - (3L * 60L)) * 1000L);
-            SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(date);
-            sd = sdf.format(new Date(nextTime * 1000L));
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
+            LocalDateTime localDateTime = lastTime.minusMinutes(5);
+            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+            st = sdf.format(localDateTime);
+            sd = sdf.format(nextTime);
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
+            LocalDateTime date = LocalDateTime.now();
             st = "";
             sd = "";
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            dto.getJobTaskDTO().setLastTime(date);
         }
-
         //读取配置，初始化SDK
         K3CloudApi client = new K3CloudApi();
 
@@ -120,7 +122,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         queryfilters.add(String.format("FModifyDate >= '%s'", st));
         queryfilters.add(String.format("FModifyDate <= '%s'", sd));
         String filterStr = String.join(" and ", queryfilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ";
 
         Boolean dataSign = true;
         //当前页数
@@ -169,6 +171,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                         kingdeeSkuEntity.setF_PRVD_Assistant(valMap.get("F_PRVD_Assistant.FDataValue"));
                         kingdeeSkuEntity.setF_PRVD_Assistant1(valMap.get("F_PRVD_Assistant1.FDataValue"));
                         kingdeeSkuEntity.setFSalePrice_CMK(valMap.get("FSalePrice_CMK"));
+                        kingdeeSkuEntity.setFSSRQ(valMap.get("F_SSRQ"));
                         infoArrayList.add(kingdeeSkuEntity);
                     }
                 } else {
@@ -277,6 +280,11 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
 
         //企业名称
         dmpSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
+
+        //上市时间
+        if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
+            dmpSkuInfoEntity.setListingTime(sdf.parse(skuInfoEntity.getFSSRQ()));
+        }
 
         dmpSkuInfoEntity.setCreateTime(new Date());
 

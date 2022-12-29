@@ -1,0 +1,61 @@
+package com.erp.server.bi.service;
+
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.ReturnOrderFilterDTO;
+import com.erp.model.bi.vo.DateReturnOrderVO;
+import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
+
+/**
+ * 退货分析相关/一级模块
+ * @Author Luo_WG
+ * @Date 2022/12/16 11:07
+ **/
+public interface BiReturnOrderAnalyseService {
+
+    /**
+     * 退货分析-类别
+     * @Author Luo_WG
+     * @Date 2022/12/19 19:59
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
+     **/
+    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+
+    /**
+     * 退货分析-店铺
+     * @Author Luo_WG
+     * @Date 2022/12/19 11:35
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
+     **/
+    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+
+    /**
+     * 退货分析-平台
+     * @Author Luo_WG
+     * @Date 2022/12/19 11:35
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
+     **/
+    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+
+    /**
+     * 退货分析-事业部
+     * @Author Luo_WG
+     * @Date 2022/12/19 11:35
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
+     **/
+    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+
+    /**
+     * 退货分析-日期
+     * @Author Luo_WG
+     * @Date 2022/12/19 11:35
+     * @param biFilterDTO biFilterDTO
+     * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
+     **/
+    PagingVO<DateReturnOrderVO> returnOrderAnalByDate(PagingDTO<ReturnOrderFilterDTO> biFilterDTO);
+}

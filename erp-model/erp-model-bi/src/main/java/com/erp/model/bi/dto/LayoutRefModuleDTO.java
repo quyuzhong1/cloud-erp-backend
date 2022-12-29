@@ -1,6 +1,5 @@
 package com.erp.model.bi.dto;
 
-import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -20,18 +19,35 @@ public class LayoutRefModuleDTO implements Serializable {
 
     /**
      * 模块或者指标id
+     *
      * @author yl
      * @date 2022-12-15 10:49
      * @param null
-     * @return 
+     * @return
      */
     @NotBlank(message = "模块或者指标id 不能为空")
     private String id;
 
+
     /**
-     * 类型
-     * module 模块  target 指标
+     * 模块名称
      */
-    @StateEnumValue(strValues = {"module","target"},message = "类型有误")
-    private String type;
+    private String name;
+
+    /**
+     * 前端组件名
+     */
+    private String viewCode;
+
+    /**
+     * 唯一code
+     */
+    private String code;
+
+    /**
+     * 缩略图地址
+     */
+    private String imageUrl;
+
+
 }

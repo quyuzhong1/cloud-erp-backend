@@ -30,8 +30,11 @@ public class SubjectDTO  implements Serializable {
     /**
      * 分类id
      */
-    @NotBlank(message = "分类id 不能为空")
+   // @NotBlank(message = "分类id 不能为空")
     private String categoryId;
+
+
+    private Integer isFrequently=0;
 
     /**
      * 专题名
@@ -40,11 +43,7 @@ public class SubjectDTO  implements Serializable {
     @Size(max = 20,message = "最大20个字符")
     private String name;
 
-    /**
-     * 是否常用
-     * 0 不是 1 是
-     */
-    private Integer isFrequently;
+
 
 
     /**
@@ -61,6 +60,17 @@ public class SubjectDTO  implements Serializable {
     @NotBlank(message = "分享标示不能为空")
     @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
     private String shareFlag="personal";
+
+    /**
+     * 创建人id
+     */
+    private String createUserId;
+
+
+    /**
+     * 创建人
+     */
+    private String createUserName;
 
 
     /**

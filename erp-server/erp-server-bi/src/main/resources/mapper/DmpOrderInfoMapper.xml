@@ -21,102 +21,102 @@
         country_name_en,country_name_cn
     </sql>
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
         select
-            droi.id,
-            droi.platform_order_id,
-            droi.source_platform,
-            droi.shop_name,
-            droi.item_total,
-            round(droi.item_total * droi.currency_rate,2) as cnyRealTimeAmount,
-            round(droi.item_total * droi.cny_settle_rate,2) as cny_settle_amount,
-            droi.buyer_name,
-            droi.man_phone,
-            droi.second_phone,
-            droi.man_street,
-            droi.second_street,
-            droi.country_name_cn,
-            droi.order_state,
-            droi.correction_status,
-            droi.create_time,
-            droi.platform_order_id,
-            droi.delivery_time,
-            droi.charge_name
-        from dmp_order_info droi
+            doi.id,
+            doi.platform_order_id,
+            doi.source_platform,
+            doi.shop_name,
+            doi.item_total,
+            round(doi.item_total * doi.currency_rate,2) as cnyRealTimeAmount,
+            round(doi.item_total * doi.cny_settle_rate,2) as cny_settle_amount,
+            doi.buyer_name,
+            doi.man_phone,
+            doi.second_phone,
+            doi.man_street,
+            doi.second_street,
+            doi.country_name_cn,
+            doi.order_state,
+            doi.correction_status,
+            doi.create_time,
+            doi.platform_order_id,
+            doi.delivery_time,
+            doi.charge_name
+        from dmp_order_info doi
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
-                and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+                and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
             </if>
             <if test="params.shopName != null and params.shopName != ''">
-                and droi.shop_name like concat('%',#{params.shopName},'%')
+                and doi.shop_name like concat('%',#{params.shopName},'%')
             </if>
             <if test="params.platformName != null and params.platformName != ''">
-                and droi.platform_order_id like concat('%',#{params.platformName},'%')
+                and doi.platform_order_id like concat('%',#{params.platformName},'%')
             </if>
             <if test="params.orderState != null and params.orderState != ''">
-                and droi.order_state = #{params.orderState}
+                and doi.order_state = #{params.orderState}
             </if>
-            <if test="params.createTime_begin != null and params.createTime_begin != ''">
-                and to_char(droi.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+            <if test="params.createTime_begin != null ">
+                and doi.create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
-            <if test="params.createTime_end != null and params.createTime_end != ''">
-                and to_char(droi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+            <if test="params.createTime_end != null ">
+                and doi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
-            <if test="params.deliveryTime_begin != null and params.deliveryTime_begin != ''">
-                and to_char(droi.delivery_time,'yyyy-MM-dd') &gt;= to_char(#{params.deliveryTime_begin},'yyyy-MM-dd')
+            <if test="params.deliveryTime_begin != null ">
+                and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
             </if>
-            <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
-                and to_char(droi.delivery_time,'yyyy-MM-dd') &lt;= to_char(#{params.deliveryTime_end},'yyyy-MM-dd')
+            <if test="params.deliveryTime_end != null ">
+                and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
         </where>
 
     </select>
 
-    <select id="getAllDmpOrderInfo" resultType="com.erp.model.bi.dto.DmpOrderInfoDTO">
+    <select id="getAllDmpOrderInfo" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
         select
-        droi.platform_order_id,
-        droi.source_platform,
-        droi.shop_name,
-        droi.item_total,
-        round(droi.item_total * droi.currency_rate,2) as cnyRealTimeAmount,
-        droi.cny_settle_amount,
-        droi.buyer_name,
-        droi.man_phone,
-        droi.second_phone,
-        droi.man_street,
-        droi.second_street,
-        droi.country_name_cn,
-        droi.order_state,
-        droi.correction_status,
-        droi.create_time,
-        droi.platform_order_id,
-        droi.delivery_time,
-        droi.charge_name
-        from dmp_return_order_info droi
+        doi.platform_order_id,
+        doi.source_platform,
+        doi.shop_name,
+        doi.item_total,
+        round(doi.item_total * doi.currency_rate,2) as cnyRealTimeAmount,
+        round(doi.item_total * doi.cny_settle_rate,2) as cny_settle_amount,
+        doi.buyer_name,
+        doi.man_phone,
+        doi.second_phone,
+        doi.man_street,
+        doi.second_street,
+        doi.country_name_cn,
+        doi.order_state,
+        doi.correction_status,
+        doi.create_time,
+        doi.platform_order_id,
+        doi.delivery_time,
+        doi.charge_name
+        from dmp_order_info doi
         <where>
         <if test="params.platformOrderId != null and params.platformOrderId != ''">
-            and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+            and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
         </if>
         <if test="params.shopName != null and params.shopName != ''">
-            and droi.shop_name like concat('%',#{params.shopName},'%')
+            and doi.shop_name like concat('%',#{params.shopName},'%')
         </if>
         <if test="params.platformName != null and params.platformName != ''">
-            and droi.platform_order_id like concat('%',#{params.platformName},'%')
+            and doi.platform_order_id like concat('%',#{params.platformName},'%')
         </if>
         <if test="params.orderState != null and params.orderState != ''">
-            and droi.order_state = #{params.orderState}
+            and doi.order_state = #{params.orderState}
         </if>
-        <if test="params.createTime_begin != null and params.createTime_begin != ''">
-            and to_char(droi.create_time,'yyyy-MM-dd') &gt;= to_char(#{params.createTime_begin},'yyyy-MM-dd')
+        <if test="params.createTime_begin != null ">
+            and doi.create_time &gt;= #{params.createTime_begin}::timestamp
         </if>
-        <if test="params.createTime_end != null and params.createTime_end != ''">
-            and to_char(droi.create_time,'yyyy-MM-dd') &lt;= to_char(#{params.createTime_end},'yyyy-MM-dd')
+        <if test="params.createTime_end != null ">
+            and doi.create_time &lt;= #{params.createTime_end}::timestamp
         </if>
-        <if test="params.deliveryTime_begin != null and params.deliveryTime_begin != ''">
-            and to_char(droi.delivery_time,'yyyy-MM-dd') &gt;= to_char(#{params.deliveryTime_begin},'yyyy-MM-dd')
+        <if test="params.deliveryTime_begin != null ">
+            and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
         </if>
-        <if test="params.deliveryTime_end != null and params.deliveryTime_end != ''">
-            and to_char(droi.delivery_time,'yyyy-MM-dd') &lt;= to_char(#{params.deliveryTime_end},'yyyy-MM-dd')
+        <if test="params.deliveryTime_end != null ">
+            and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
         </if>
         </where>
     </select>

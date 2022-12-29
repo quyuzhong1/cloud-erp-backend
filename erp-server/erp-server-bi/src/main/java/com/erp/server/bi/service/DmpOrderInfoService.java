@@ -4,15 +4,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.DmpOrderInfoDTO;
-import com.erp.model.bi.dto.DmpOrderInfoSearchDTO;
-import com.erp.model.bi.dto.DmpOrderStateDTO;
-import com.erp.model.bi.vo.StatisticalDataVO;
-import com.erp.model.bi.vo.TargetSaleCountVO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.dmp.dto.DmpOrderInfoDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpOrderStateDTO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 订单服务类
@@ -118,4 +117,82 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      */
     DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId);
 
+    /**
+     * 统计环比增长率
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsRingRatio(BiFilterDTO dto);
+
+    /**
+     * 统计同比增长率
+     * @param dto
+     * @return
+     */
+    TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto);
+
+    /**
+     * 季度销售额指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVO> sumQuarterSales(BiFilterDTO dto);
+
+    /**
+     * 季度销量指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumQuarterSalesVolume(BiFilterDTO dto);
+
+    /**
+     * 月度销售额指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVO> sumMonthSales(BiFilterDTO dto);
+
+    /**
+     * 月度销量指标分析
+     * @param dto
+     * @return
+     */
+    TargetAnalysisVO<QuarterMonthSalesVolumeVO> sumMonthSalesVolume(BiFilterDTO dto);
+
+    /**
+     * 平台销售完成排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumPlatformSalesCompletion(BiFilterDTO dto);
+
+    /**
+     * 品类销售完成排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumCategorySalesCompletion(BiFilterDTO dto);
+
+    /**
+     * 新品销售完成排行
+     *
+     * @param dto
+     * @param newSign
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumNewProductSalesCompletion(BiFilterDTO dto, Integer newSign);
+
+    /**
+     * 产品定位销售排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumProductPositionSalesCompletion(BiFilterDTO dto);
+
+    /**
+     * 新老品销售情况排行
+     * @param dto
+     * @return
+     */
+    List<SalesCompletionInfoVO> sumProductTypeCompletion(BiFilterDTO dto);
 }

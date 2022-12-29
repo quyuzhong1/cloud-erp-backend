@@ -7,9 +7,9 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpRefundInfoDTO;
-import com.erp.model.bi.dto.DmpRefundInfoImportExcelDTO;
-import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.server.bi.listener.DmpRefundInfoExcelListener;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpRefundInfoService;
@@ -118,7 +118,7 @@ public class DmpRefundInfoController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/dmpRefundInfo.xlsx";
+        String path = "classpath:excel/dmpRefundInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

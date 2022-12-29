@@ -88,17 +88,18 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
 
     /**
      * 根据 type 获取到对应的分类id 和分类名
-     * @author yl
-     * @date 2022-12-13 11:30
+     *
      * @param type
      * @return
+     * @author yl
+     * @date 2022-12-13 11:30
      */
     @Override
-    public List<Pair<String,String>> getCategory(String type) {
+    public List<Pair<String, String>> getCategory(String type) {
         List<Map<String, Object>> mapList = listByType(type);
-        List<Pair<String,String>> resultList = new ArrayList<>();
-        for(Map<String, Object> map:mapList){
-            Pair<String,String> pair=new Pair<>(map.get("id").toString(),map.get("name").toString());
+        List<Pair<String, String>> resultList = new ArrayList<>();
+        for (Map<String, Object> map : mapList) {
+            Pair<String, String> pair = new Pair<>(map.get("id").toString(), map.get("name").toString());
             resultList.add(pair);
         }
         return resultList;
@@ -107,14 +108,39 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     @Override
     public List<BiDictEntity> listEntityByType(String type) {
         LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BiDictEntity::getType,type);
+        queryWrapper.eq(BiDictEntity::getType, type);
         queryWrapper.orderByAsc(BiDictEntity::getId);
-        return  this.list(queryWrapper);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * 根据类型都值 获取字典
+     *
+     * @param type
+     * @param flag
+     * @return com.erp.model.bi.entity.BiDictEntity
+     * @author yl
+     * @date 2022-12-26 9:43
+     */
+    @Override
+    public BiDictEntity getByTypeValue(String type, String flag) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDictEntity::getType, type);
+        queryWrapper.eq(BiDictEntity::getValue, flag);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<BiDictEntity> getByType(String type) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDictEntity::getType, type);
+        return this.list(queryWrapper);
     }
 
     @Override
     public Map<String, BiDictEntity> listByValues(List<String> dictValues) {
-        if (CollectionUtils.isEmpty(dictValues)){
+        if (CollectionUtils.isEmpty(dictValues)) {
             return new HashMap<>(0);
         }
         List<BiDictEntity> list = lambdaQuery().in(BiDictEntity::getValue, dictValues)

@@ -1,7 +1,7 @@
 package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
+import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -31,4 +31,11 @@ public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCos
      * @return List<BiDataSourceCostDetailEntity>
      */
     List<BiDataSourceCostDetailEntity> listByCostIds(List<String> costIds);
+    /**
+     * @description: 根据成本id删除明细
+     * @author Will
+     * @date: 2022/12/27 14:06
+     * @param costId
+     */
+    void removeByCostId(String costId);
 }

@@ -6,10 +6,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.CategorySubjectDTO;
-import com.erp.model.bi.dto.MyDashboardDTO;
-import com.erp.model.bi.dto.SubjectDTO;
-import com.erp.model.bi.dto.SubjectPagingDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiSubjectEntity;
 
 import java.util.List;
@@ -109,4 +106,31 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return
      */
     Boolean copy(String subjectId);
+
+    /**
+     * 添加仪表盘
+     * @author yl
+     * @date 2022-12-26 9:31
+     * @param dto
+     * @return java.lang.String
+     */
+    String addDashboard(SubjectDTO dto);
+
+    /**
+     * 专题的列表
+     * @author yl
+     * @date 2022-12-29 9:45
+     * @return java.util.List<com.erp.model.bi.dto.CategorySubjectListDTO>
+     */
+    List<CategorySubjectDTO> categoryList(String searchKeyword);
+
+    
+    /**
+     * 获取到默认的仪表盘
+     * @author yl
+     * @date 2022-12-29 10:52
+     * @param
+     * @return com.erp.model.bi.dto.SubjectLayoutDetailsDTO
+     */
+    SubjectLayoutDetailsDTO dashboardInfo();
 }

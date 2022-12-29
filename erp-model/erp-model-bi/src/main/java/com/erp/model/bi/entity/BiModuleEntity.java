@@ -52,6 +52,11 @@ public class BiModuleEntity implements Serializable {
      * 前端组件名
      */
     private String viewCode;
+
+    /**
+     * 唯一Code与前段交互模板唯一标识
+     */
+    private String code;
     /**
      * 创建人id
      */

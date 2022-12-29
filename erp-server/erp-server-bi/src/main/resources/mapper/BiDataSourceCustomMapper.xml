@@ -3,10 +3,90 @@
 <mapper namespace="com.erp.server.bi.mapper.BiDataSourceCustomMapper">
 
 
-    <select id="paging" resultType="com.erp.model.bi.dto.BiDataSourceCustomDTO">
+    <select id="paging" resultType="java.util.LinkedHashMap">
         select
-            *
-        from bi_data_source_cost
+            bdsc.id,
+            bdsc.year,
+            bdsc.target_type,
+            bdsc.target_name,
+            bdsc.target_value
+        from bi_data_source_custom bdsc
+        <where>
+            <if test="params.dataType != null ">
+                and bdsc.data_type = #{params.dataType}
+            </if>
+            <if test="params.type != null ">
+                and bdsc.type = #{params.type}
+            </if>
+            <if test="params.targetName != null and params.targetName != ''">
+                and bdsc.target_name like concat('%',#{params.targetName},'%')
+            </if>
+            <if test="params.createTime_begin != null ">
+                and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
+            </if>
+            <if test="params.createTime_end != null ">
+                and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
+            </if>
+        </where>
     </select>
+
+
+    <select id="getAllBiDataSourceCustom" resultType="java.util.LinkedHashMap">
+        select
+        bdsc.id,
+        bdsc.year,
+        bdsc.target_type,
+        bdsc.target_name,
+        bdsc.target_value
+        from bi_data_source_custom bdsc
+        <where>
+            <if test="params.dataType != null ">
+                and bdsc.data_type = #{params.dataType}
+            </if>
+            <if test="params.type != null ">
+                and bdsc.type = #{params.type}
+            </if>
+            <if test="params.targetName != null and params.targetName != ''">
+                and bdsc.target_name like concat('%',#{params.targetName},'%')
+            </if>
+            <if test="params.createTime_begin != null ">
+                and bdsc.create_time &gt;= #{params.createTime_begin}::timestamp
+            </if>
+            <if test="params.createTime_end != null ">
+                and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
+            </if>
+        </where>
+    </select>
+
+    <select id="getCustomByParams" resultType="java.util.LinkedHashMap">
+        select
+            bdsc.id,
+            bdsc.year,
+            bdsc.target_type,
+            bdsc.target_name,
+            bdsc.target_value
+        from bi_data_source_custom bdsc
+        <where>
+            <if test="params.dataType != null ">
+                and bdsc.data_type = #{dataType}
+            </if>
+            <if test="params.type != null ">
+                and bdsc.type = #{type}
+            </if>
+            <if test="targetNameList != null and targetNameList != ''">
+                and bdsc.target_name in
+                <foreach collection="targetNameList" separator="," open="(" close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.year != null ">
+                and bdsc.year = #{year}
+            </if>
+            <if test="params.targetType != null and params.targetType != ''">
+                and bdsc.target_type like concat('%',#{params.targetType},'%')
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

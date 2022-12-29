@@ -20,7 +20,15 @@ public class StrUtils {
      * 判断是否为数字
      */
     public static boolean isDigit(String str) {
-        String regex = "^([0-9]*|d*.d{1}?d*)$";
+        String regex = "^[+-]?(0|([1-9]\\d*))(\\.\\d+)?$";
+        return str.matches(regex);
+    }
+
+    /**
+     * 判断是否为百分比
+     */
+    public static boolean isPercentage(String str) {
+        String regex = "^([0-9.]+)[ ]*%$";
         return str.matches(regex);
     }
 

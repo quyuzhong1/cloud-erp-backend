@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -93,12 +94,15 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
      */
     public List<SkuInfoEntity> pullDate(RequestDTO dto) {
         List<SkuInfoEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
-        if (lastTime != 0 && nextTime != 0) {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000)));
+            LocalDateTime date = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(date);
         }
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 

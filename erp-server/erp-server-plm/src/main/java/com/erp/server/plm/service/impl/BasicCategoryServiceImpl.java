@@ -17,6 +17,7 @@ import com.erp.server.plm.mapper.BasicCategoryMapper;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -156,6 +157,30 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             return;
         }
          getBestEntity(entity.getPid(),bestEntity);
+    }
+
+    @Override
+    public BasicCategoryDTO getCategoryByParam(Map<String, String> params) {
+        if (params == null) {
+            return null;
+        }
+        String id = params.get("id");
+        String name = params.get("name");
+        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.eq(BasicCategoryEntity::getId,id);
+        }
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.eq(BasicCategoryEntity::getName,name);
+        }
+        queryWrapper.last("limit 1");
+        BasicCategoryEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity)) {
+            BasicCategoryDTO dto = new BasicCategoryDTO();
+            BeanUtils.copyProperties(entity,dto);
+            return dto;
+        }
+        return null;
     }
 
     /**

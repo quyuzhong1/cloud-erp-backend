@@ -4,10 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.CategorySubjectDTO;
-import com.erp.model.bi.dto.SubjectDTO;
-import com.erp.model.bi.dto.SubjectPagingDTO;
-import com.erp.model.bi.dto.UpdateSubjectShareDTO;
+import com.erp.model.bi.dto.*;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
@@ -114,7 +111,6 @@ public class BiSubjectController extends BaseController {
     }
 
 
-
     /**
      * 专题首页
      *
@@ -123,7 +119,7 @@ public class BiSubjectController extends BaseController {
     @PostMapping("/homePage")
     public ApiResult<List<CategorySubjectDTO>> homePage(@RequestBody @Validated BaseSearchDTO dto) {
         List<CategorySubjectDTO> list = this.biSubjectService.homePage(dto.getSearchKeyword());
-        return  success(list);
+        return success(list);
     }
 
 
@@ -133,7 +129,17 @@ public class BiSubjectController extends BaseController {
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated BaseIdDTO dto) {
         Boolean copyResult = biSubjectService.copy(dto.getId());
-        return copyResult==true?success():failure();
+        return copyResult == true ? success() : failure();
+    }
+
+
+    /**
+     * 专题列表
+     */
+    @PostMapping("/list")
+    public ApiResult<List<CategorySubjectDTO>> list(@RequestBody @Validated BaseSearchDTO dto) {
+        List<CategorySubjectDTO> list = biSubjectService.categoryList(dto.getSearchKeyword());
+        return success(list);
     }
 
 

@@ -53,7 +53,6 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
                 refModule.setSerialNo(i + 1);
                 LayoutRefModuleDTO ref = moduleIdList.get(i);
                 refModule.setModuleId(ref.getId());
-                refModule.setType(ref.getType());
                 addList.add(refModule);
             }
             this.saveBatch(addList);

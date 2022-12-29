@@ -1,34 +1,39 @@
 package com.erp.server.bi.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostDetailEntity;
-import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.enums.DictEnum;
+import com.erp.server.bi.listener.BiDataSourceCostExcelListener;
 import com.erp.server.bi.mapper.BiDataSourceCostMapper;
-import com.erp.server.bi.service.BiDataSourceCostDetailService;
-import com.erp.server.bi.service.BiDataSourceCostService;
-import com.erp.server.bi.service.BiDictService;
-import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,13 +57,23 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @Override
     public PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCostSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BiDataSourceCostSearchDTO params = dto.getParams();
         IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
-        List<LinkedHashMap<String, Object>> linkedHashMaps = renewBiDataSourceCost(pageData.getRecords());
-        pageData.setRecords(linkedHashMaps);
+        LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
+        renewBiDataSourceCost(pageData.getRecords(),headMap);
+        resultMap.put("head",headMap);
+        resultMap.put("data",pageData.getRecords());
+        pageData.setRecords(Arrays.asList(resultMap));
         return new PagingVO(pageData);
     }
 
@@ -207,81 +222,172 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list);
+        //表头信息
+        LinkedHashMap<String, Object> heads = new LinkedHashMap<>();
+        List<LinkedHashMap<String, Object>> costList = renewBiDataSourceCost(list,heads);
         if (CollectionUtils.isEmpty(costList)) {
             return;
         }
-        List<String> heads = new ArrayList<>();		//表头信息
-        String head = "成本数据表";
-        String fileName = dmpOrderInfoService.getFileName("退货数据导出")+ ".xlsx";
-        BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
-        List<String> enumList = Arrays.stream(values).map(BiDataSourceCostEnum::getName).collect(Collectors.toList());
-        heads.addAll(enumList);
-        //查询成本字典数据
-        List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
-        if (CollectionUtils.isNotEmpty(dictList)) {
-            List<String> nameList = dictList.stream().map(BiDictEntity::getName).collect(Collectors.toList());
-            heads.addAll(nameList);
+        List<String> headList = new ArrayList<>();
+        for (Map.Entry<String,Object> map:heads.entrySet()) {
+            String value = map.getValue().toString();
+            headList.add(value);
         }
-        ExcelUtil.easyUtil(heads,head,list,fileName);
+        String head = "成本数据表";
+        String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
+        ExcelUtil.easyUtilStr(headList,head,list,fileName, response);
         return;
     }
 
     @Override
-    public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        List<Map<String,String>> list = ExcelPrintUtils.makeData(excelFile);
+    @Transactional
+    public void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (Map<String,String> map:list) {
-            //遍历map下的数据
-            Iterator<Map.Entry<String, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
-            //旧数据时记录
+        List<BiDataSourceCostDetailEntity> updateList= new ArrayList<>();
+        List<BiDataSourceCostDetailEntity> saveList= new ArrayList<>();
+        for (LinkedHashMap<String, Object> map: list) {
+            String id = map.get("id").toString();
+            List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList = biDataSourceCostDetailService.listByCostIds(Arrays.asList(id));
+            Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
             if (ObjectUtils.isNotEmpty(iterator)) {
-                while (iterator .hasNext()){
-                    Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
-                    String key =  entry.getKey().toString();
-                    String value = entry.getValue().toString();
-                    String name = BiDataSourceCostEnum.getCodeByName(key);
-                    if (StringUtils.isBlank(name))  {
-
+                while (iterator.hasNext()) {
+                    Map.Entry entry = (java.util.Map.Entry) iterator.next();
+                    if (ObjectUtils.isEmpty(entry.getKey()) || "id".equals(entry.getKey())) {
+                        continue;
+                    }
+                    BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
+                    String key = entry.getKey().toString();
+                    String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                    detailEntity.setCostType(key);
+                    detailEntity.setCostId(id);
+                    if (StrUtils.isDigit(value)) {
+                        BigDecimal costValue = MathUtil.valueOf(value);
+                        detailEntity.setCostValue(costValue);
+                        detailEntity.setValueType(MathUtil.ZERO);
+                    }
+                    if (StrUtils.isPercentage(value)) {
+                        String costValue = value.replace("%", "");
+                        detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue), new BigDecimal(100), 4));
+                        detailEntity.setValueType(MathUtil.ONE);
+                    }
+                    if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
+                        BiDataSourceCostDetailEntity detail = biDataSourceCostDetailList.stream().filter(e -> e.getCostType().equals(key)).findFirst().orElse(null);
+                        if (ObjectUtils.isNotEmpty(detail)) {
+                            detailEntity.setId(detail.getId());
+                            updateList.add(detailEntity);
+                        } else {
+                            saveList.add(detailEntity);
+                        }
+                    } else {
+                        saveList.add(detailEntity);
                     }
                 }
             }
         }
+        //更新明细数据
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            biDataSourceCostDetailService.updateBatchById(updateList);
+        }
+        //明细不存在时新增明细数据
+       if (CollectionUtils.isNotEmpty(saveList)) {
+           biDataSourceCostDetailService.saveBatch(saveList);
+       }
+    }
 
+    @Override
+    public void importExcel(MultipartFile excelFile, HttpServletResponse response) {
 
+        //查询店铺数据
+        List<DmpShopInfoEntity> shopList = dmpShopInfoService.list();
+        //查人员数据
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //查询成本字典数据
+        List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
+
+        BiDataSourceCostExcelListener excelListenerUtil = new BiDataSourceCostExcelListener(this,biDataSourceCostDetailService,shopList,userList,dictList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
+            List<Map<Integer, String>> list = excelListenerUtil.getDateList();
+            if (CollectionUtils.isEmpty(list) || list.size() == 0) {
+                return;
+            }
+            List<String> headList = excelListenerUtil.getHead();
+            String head = "成本数据表";
+            String fileName = dmpOrderInfoService.getFileName("成本数据表导出")+ ".xlsx";
+            ExcelUtil.easyUtil(headList,head,list,fileName, response);
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     /**
      * 返回字段处理
      */
-    private List<LinkedHashMap<String,Object>> renewBiDataSourceCost(List<LinkedHashMap<String,Object>> list) {
-        if (CollectionUtils.isEmpty(list))  {
-            return list;
-        }
+    private List<LinkedHashMap<String,Object>> renewBiDataSourceCost(List<LinkedHashMap<String,Object>> list,LinkedHashMap<String,Object> head) {
+
+        //返回中文类型的数据
+        List<LinkedHashMap<String,Object>> cnResultMap = new ArrayList<>();
+
         //查询成本字典数据
         List<BiDictEntity> dictList = biDictService.listEntityByType(DictEnum.DATASOURCECOST.getType());
-        if (CollectionUtils.isEmpty(dictList))  {
-            return list;
+
+        List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(list)) {
+            //查询明细数据
+            List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
+            biDataSourceCostDetailList= biDataSourceCostDetailService.listByCostIds(costIds);
         }
-        List<String> costIds = list.stream().map((Map m) -> (String) m.get("id")).collect(Collectors.toList());
-        List<BiDataSourceCostDetailEntity> biDataSourceCostDetailList= biDataSourceCostDetailService.listByCostIds(costIds);
-        if (CollectionUtils.isEmpty(biDataSourceCostDetailList)) {
-            return list;
-        }
-        for (LinkedHashMap<String,Object> map: list) {
-            BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
-            for (BiDataSourceCostEnum value:values) {
-                map.put(value.getName(),map.get(value.getCode()));
+        BiDataSourceCostEnum[] values = BiDataSourceCostEnum.values();
+        //新增固定表头
+        for (BiDataSourceCostEnum value:values) {
+            if (ObjectUtils.isEmpty(head.get(value.getCode()))) {
+                head.put(value.getCode(),value.getName());
             }
+        }
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            //新增变动表头
             for (BiDictEntity dcit : dictList) {
-                BigDecimal value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
-                        .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
-                map.put(dcit.getName(),value);
+                if (ObjectUtils.isEmpty(head.get(dcit.getValue()))) {
+                    head.put(dcit.getValue(),dcit.getName());
+                }
             }
         }
-        return list;
+        //数据处理
+        for (LinkedHashMap<String,Object> map: list) {
+            LinkedHashMap<String,Object> cnMap = new LinkedHashMap<>();
+
+            for (BiDataSourceCostEnum value:values) {
+                cnMap.put(value.getName(),map.get(value.getCode()));
+            }
+            if (CollectionUtils.isNotEmpty(dictList)) {
+                for (BiDictEntity dcit : dictList) {
+                    BigDecimal value = BigDecimal.ZERO;
+                    if (CollectionUtils.isNotEmpty(biDataSourceCostDetailList)) {
+                         value = biDataSourceCostDetailList.stream().filter(obj -> obj.getCostId().equals(map.get("id")) && obj.getCostType().equals(dcit.getValue()))
+                                .map(BiDataSourceCostDetailEntity::getCostValue).findFirst().orElse(BigDecimal.ZERO);
+                    }
+                    map.put(dcit.getValue(),value);
+                    cnMap.put(dcit.getName(),value);
+                }
+            }
+            cnMap.remove("id");
+            cnResultMap.add(map);
+        }
+        return cnResultMap;
+    }
+
+    @Override
+    public BiDataSourceCostEntity getByCostParam(BiDataSourceCostEntity entity) {
+        LambdaQueryWrapper<BiDataSourceCostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDataSourceCostEntity::getShopName,entity.getShopName());
+        queryWrapper.eq(BiDataSourceCostEntity::getPlatformName,entity.getPlatformName());
+        queryWrapper.eq(BiDataSourceCostEntity::getSite,entity.getSite());
+        queryWrapper.eq(BiDataSourceCostEntity::getMonth,entity.getMonth());
+        queryWrapper.last("limit 1");
+        return  this.getOne(queryWrapper);
     }
 }

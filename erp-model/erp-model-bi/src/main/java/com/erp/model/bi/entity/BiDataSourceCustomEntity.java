@@ -1,0 +1,101 @@
+package com.erp.model.bi.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: TODO
+ * @date 2022/12/14 15:21
+ */
+@TableName(value ="bi_data_source_custom")
+@Data
+public class BiDataSourceCustomEntity implements Serializable {
+
+
+    @TableField(exist = false)
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 主键id
+     */
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private String id;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
+    private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    /**
+     * 数据类型（0市场数据，1供应链数据，2经营数据，3财务数据）
+     */
+    @TableField("data_type")
+    private Integer dataType;
+
+    /**
+     * 类型(1年，2季度，3月，4周，5日）
+     */
+    @TableField("type")
+    private Integer type;
+
+    /**
+     * 年份
+     */
+    @TableField("year")
+    private Integer year;
+
+    /**
+     * 指标分类
+     */
+    @TableField("target_type")
+    private String targetType;
+
+    /**
+     * 指标名称
+     */
+    @TableField("target_name")
+    private String targetName;
+
+    /**
+     * 目标值
+     */
+    @TableField("target_value")
+    private String targetValue;
+
+}

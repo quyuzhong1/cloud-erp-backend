@@ -3,11 +3,13 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.bi.dto.BiDataSourceCustomDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
-import com.erp.model.dmp.entity.BiDataSourceCustomEntity;
+import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -24,7 +26,24 @@ public interface BiDataSourceCustomMapper extends BaseMapper<BiDataSourceCustomE
      * @date: 2022/12/14 16:44
      * @param query
      * @param params
-     * @return IPage<BiDataSourceCustomDTO>
+     * @return IPage<LinkedHashMap<String,Object>>
      */
-    IPage<BiDataSourceCustomDTO> paging(Page query, @Param("params") BiDataSourceCustomSearchDTO params);
+    IPage<LinkedHashMap<String,Object>> paging(Page query, @Param("params") BiDataSourceCustomSearchDTO params);
+    /**
+     * @description: 查询所有数据
+     * @author Will
+     * @date: 2022/12/20 10:40
+     * @param dto
+     * @return List<LinkedHashMap<Object>>
+     */
+    List<LinkedHashMap<String, Object>> getAllBiDataSourceCustom( @Param("params") BiDataSourceCustomSearchDTO dto);
+    /**
+     * @description: 根据类型、数据类型、指标名称、年份查询
+     * @author Will
+     * @date: 2022/12/28 11:51
+     * @param targetNameList
+     * @param params
+     * @return List<LinkedHashMap<Object>>
+     */
+    List<LinkedHashMap<String, Object>> getCustomByParams(@Param("targetNameList") List<String> targetNameList,@Param("params") BiDataSourceCustomEntity params);
 }

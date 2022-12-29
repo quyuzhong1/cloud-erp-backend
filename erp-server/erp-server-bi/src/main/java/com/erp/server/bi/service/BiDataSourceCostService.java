@@ -6,11 +6,12 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
-import com.erp.model.dmp.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Will
@@ -66,4 +67,16 @@ public interface BiDataSourceCostService
      * 导入
      */
     void importExcel(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * @description: 编辑
+     * @author Will
+     * @date: 2022/12/21 17:02
+     * @param list
+     */
+    void updateBiDataSourceCost(List<LinkedHashMap<String, Object>> list);
+
+    /**
+     * 根据成本参数查询
+     */
+    BiDataSourceCostEntity getByCostParam(BiDataSourceCostEntity entity);
 }

@@ -2,16 +2,22 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
+import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSysModuleEntity;
 import com.erp.server.bi.mapper.BiSysModuleMapper;
+import com.erp.server.bi.service.BiModuleService;
 import com.erp.server.bi.service.BiSysModuleService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +30,8 @@ import java.util.Map;
 @Service
 public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSysModuleEntity> implements BiSysModuleService {
 
+    @Resource
+    private BiModuleService biModuleService;
 
     @Override
     public Boolean insert(ModuleSysDTO dto) {
@@ -55,8 +63,11 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
     @Override
     public List<Map<String, Object>> getSysModuleList(Integer isAdd) {
         LambdaQueryWrapper<BiSysModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(BiSysModuleEntity::getId, BiSysModuleEntity::getName);
-        queryWrapper.eq(BiSysModuleEntity::getIsAdd, isAdd);
+        queryWrapper.select(BiSysModuleEntity::getId,
+                BiSysModuleEntity::getName,
+                BiSysModuleEntity::getIsAdd);
+       // queryWrapper.eq(BiSysModuleEntity::getIsAdd, isAdd);
+
         return this.listMaps(queryWrapper);
     }
 
@@ -83,6 +94,36 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         updateWrapper.set(BiSysModuleEntity::getIsAdd, isAddFlag);
         updateWrapper.eq(BiSysModuleEntity::getId, id);
         this.update(updateWrapper);
+    }
+
+    @Override
+    public Boolean moduleConfiguration(ModuleSysConfigurationDTO dto) {
+        BiSysModuleEntity sysModule = new BiSysModuleEntity();
+        BeanUtils.copyProperties(dto,sysModule);
+        checkName(dto.getId(),dto.getName());
+        return this.save(sysModule);
+    }
+
+    @Override
+    public BiSysModuleEntity getByName(String name) {
+        LambdaQueryWrapper<BiSysModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSysModuleEntity::getName,name);
+        return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public ModuleSysConfigurationDTO getByModuleId(String moduleId) {
+        BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
+        if (ObjectUtils.isEmpty(biModuleEntity)) {
+            throw new ServiceException(ApiError.Default);
+        }
+        BiSysModuleEntity biSysModuleEntity = this.getById(biModuleEntity.getSysModuleId());
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            throw new ServiceException(ApiError.ERROR_97012);
+        }
+        ModuleSysConfigurationDTO dto = new ModuleSysConfigurationDTO();
+        BeanUtils.copyProperties(biSysModuleEntity,dto);
+        return dto;
     }
 
     private void checkName(String id, String name) {

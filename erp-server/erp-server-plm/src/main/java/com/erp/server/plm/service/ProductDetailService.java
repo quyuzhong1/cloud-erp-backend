@@ -10,6 +10,7 @@ import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 public interface ProductDetailService extends IService<ProductDetailEntity> {
 
@@ -282,4 +283,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean restartProcessPass(ProductDetailOperateDTO dto);
+    /**
+     * @description: 根据sku参数查询
+     * @author Will
+     * @date: 2022/12/26 11:56
+     * @param params
+     * @return ProductDetailDTO
+     */
+    ProductDetailDTO getSkuByParam(Map<String, String> params);
 }

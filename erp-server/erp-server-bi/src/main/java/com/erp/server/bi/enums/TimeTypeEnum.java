@@ -1,5 +1,7 @@
 package com.erp.server.bi.enums;
 
+import com.erp.model.dmp.enums.SalesSiteEnum;
+
 /**
  * 指标条件时间类型枚举
  *
@@ -8,24 +10,40 @@ package com.erp.server.bi.enums;
  **/
 public enum TimeTypeEnum {
     // 订单时间类型
-    ORDER_TIME(0,"订单时间"),
+    ORDER_TIME(0,"订单时间","以订单创建时间为统计维度"),
     // 发货时间类型
-    DELIVERY_TIME( 1, "发货时间");
+    DELIVERY_TIME( 1, "发货时间","以订单发货时间为统计维度-财务");
 
     private int code;
 
-    private String value;
+    private String name;
 
-
-    TimeTypeEnum(int code, String value) {
-        this.code = code;
-        this.value= value;
-    }
+    private String desc;
 
     public int getCode() {
         return code;
     }
-    public String getValue() {
-        return value;
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    TimeTypeEnum(int code, String name, String desc) {
+        this.code = code;
+        this.name = name;
+        this.desc = desc;
+    }
+    public static TimeTypeEnum getByCode(int code) {
+        TimeTypeEnum[] values = values();
+        for (TimeTypeEnum value : values) {
+            if (value.code == code) {
+                return value;
+            }
+        }
+        return null;
     }
 }

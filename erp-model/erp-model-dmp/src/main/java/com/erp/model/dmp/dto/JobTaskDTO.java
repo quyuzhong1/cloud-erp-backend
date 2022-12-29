@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -35,12 +37,12 @@ public class JobTaskDTO {
     /**
      * 上次执行时间
      */
-    private Integer lastTime;
+    private LocalDateTime lastTime;
 
     /**
      * 下次执行时间
      */
-    private Integer nextTime;
+    private LocalDateTime nextTime;
 
     /**
      * 任务状态：1：待拉取  2：拉取中
@@ -50,7 +52,7 @@ public class JobTaskDTO {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 平台api接口

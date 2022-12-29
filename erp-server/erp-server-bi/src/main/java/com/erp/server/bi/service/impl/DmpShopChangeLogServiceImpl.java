@@ -1,15 +1,16 @@
 package com.erp.server.bi.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.bi.dto.DmpShopChangeLogDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.dto.AdvanceSearchDTO;
+import com.erp.model.dmp.dto.DmpShopChangeLogDTO;
 import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import com.erp.server.bi.mapper.DmpShopChangeLogMapper;
 import com.erp.server.bi.service.DmpShopChangeLogService;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * @author Will
@@ -23,11 +24,10 @@ public class DmpShopChangeLogServiceImpl extends ServiceImpl<DmpShopChangeLogMap
 
 
     @Override
-    public List<DmpShopChangeLogDTO> listByShopId(String shopId) {
-        LambdaQueryWrapper<DmpShopChangeLogEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DmpShopChangeLogEntity::getShopId,shopId);
-        List<DmpShopChangeLogEntity> list = this.list(queryWrapper);
-        List<DmpShopChangeLogDTO> dmpShopChangeLogList = BeanMapperUtils.copyList(DmpShopChangeLogDTO.class, list);
-        return dmpShopChangeLogList;
+    public PagingVO<DmpShopChangeLogDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        AdvanceSearchDTO params = dto.getParams();
+        IPage<DmpShopChangeLogDTO> pageData = baseMapper.paging(query, params);
+        return new PagingVO(pageData);
     }
 }

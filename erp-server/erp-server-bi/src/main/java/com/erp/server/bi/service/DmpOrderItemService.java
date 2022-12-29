@@ -5,6 +5,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -45,4 +46,11 @@ public interface DmpOrderItemService extends IService<DmpOrderItemEntity> {
      * @return List<DmpOrderItemEntity>
      */
     List<DmpOrderItemEntity> listByOrderInfoIds(List<String> orderInfoIds);
+
+    /**
+     *
+     * @param orderIds
+     * @return
+     */
+    List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku);
 }

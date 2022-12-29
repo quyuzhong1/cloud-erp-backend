@@ -16,7 +16,7 @@
         picture_url,platform_update_time,track_number
     </sql>
 
-    <select id="paging" resultType="com.erp.model.bi.dto.DmpRefundInfoDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
             dri.refund_id,
             dri.platform_order_id,
@@ -47,23 +47,23 @@
             <if test="params.refundStatus != null and params.refundStatus != ''">
                 and dri.refund_status = #{params.refundStatus}
             </if>
-            <if test="params.refundTime_begin != null and params.refundTime_begin != ''">
-                and to_char(dri.refund_time,'yyyy-MM-dd') &gt;= to_char(#{params.refundTime_begin},'yyyy-MM-dd')
+            <if test="params.refundTime_begin != null ">
+                and dri.refund_time &gt;= #{params.refundTime_begin}::timestamp
             </if>
-            <if test="params.refundTime_end != null and params.refundTime_end != ''">
-                and to_char(dri.refund_time,'yyyy-MM-dd') &lt;= to_char(#{params.refundTime_end},'yyyy-MM-dd')
+            <if test="params.refundTime_end != null ">
+                and dri.refund_time &lt;= #{params.refundTime_end}::timestamp
             </if>
-            <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-                and to_char(dri.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+            <if test="params.orderTime_begin != null ">
+                and dri.order_time &gt;= #{params.orderTime_begin}::timestamp
             </if>
-            <if test="params.orderTime_end != null and params.orderTime_end != ''">
-                and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+            <if test="params.orderTime_end != null ">
+                and dri.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
         </where>
 
     </select>
 
-    <select id="getAllRefundInfo" resultType="com.erp.model.bi.dto.DmpRefundInfoDTO">
+    <select id="getAllRefundInfo" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
         dri.refund_id,
         dri.platform_order_id,
@@ -73,7 +73,7 @@
         drid.refund_num,
         dri.refund_amount,
         round(dri.refund_amount * dri.currency_rate,2) as cnyRealTimeAmount,
-        dri.cny_settle_amount,
+        round(dri.refund_amount * dri.cny_settle_rate,2)  as cny_settle_amount,
         dri.refund_status,
         dri.refund_time
         from dmp_refund_info dri
@@ -94,17 +94,17 @@
         <if test="params.refundStatus != null and params.refundStatus != ''">
             and dri.refund_status = #{params.refundStatus}
         </if>
-        <if test="params.refundTime_begin != null and params.refundTime_begin != ''">
-            and to_char(dri.refund_time,'yyyy-MM-dd') &gt;= to_char(#{params.refundTime_begin},'yyyy-MM-dd')
+        <if test="params.refundTime_begin != null ">
+            and dri.refund_time &gt;= #{params.refundTime_begin}::timestamp
         </if>
-        <if test="params.refundTime_end != null and params.refundTime_end != ''">
-            and to_char(dri.refund_time,'yyyy-MM-dd') &lt;= to_char(#{params.refundTime_end},'yyyy-MM-dd')
+        <if test="params.refundTime_end != null ">
+            and dri.refund_time &lt;= #{params.refundTime_end}::timestamp
         </if>
-        <if test="params.orderTime_begin != null and params.orderTime_begin != ''">
-            and to_char(dri.order_time,'yyyy-MM-dd') &gt;= to_char(#{params.orderTime_begin},'yyyy-MM-dd')
+        <if test="params.orderTime_begin != null ">
+            and dri.order_time &gt;= #{params.orderTime_begin}::timestamp
         </if>
-        <if test="params.orderTime_end != null and params.orderTime_end != ''">
-            and to_char(dri.order_time,'yyyy-MM-dd') &lt;= to_char(#{params.orderTime_end},'yyyy-MM-dd')
+        <if test="params.orderTime_end != null ">
+            and dri.order_time &lt;= #{params.orderTime_end}::timestamp
         </if>
         </where>
     </select>

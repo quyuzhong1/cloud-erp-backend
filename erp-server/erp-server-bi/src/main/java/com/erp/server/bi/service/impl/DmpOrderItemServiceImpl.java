@@ -12,6 +12,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     @Override
     public Integer countSalesVolume(List<String> orderIds, List<String> sku) {
         QueryWrapper query = new QueryWrapper();
-        query.select("SUM(NULLIF(quantity, 0)) as quantity")
+        query.select("SUM(COALESCE(quantity, 0)) as quantity")
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
         DmpOrderItemEntity dmpOrderItemEntity = baseMapper.selectOne(query);
@@ -62,16 +63,11 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
 
     @Override
     public Integer countOrderQuantityBySku(List<String> orderIds, List<String> sku) {
-        QueryWrapper<DmpOrderItemEntity> query = new QueryWrapper();
-        query.select("order_id")
-                .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
-                .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
-        List<DmpOrderItemEntity> list = baseMapper.selectList(query);
-        if(CollectionUtils.isNotEmpty(list)){
-            return 0;
-        }
-        long count = list.stream().map(DmpOrderItemEntity::getOrderId).distinct().count();
-        return new Long(count).intValue();
+        Integer count = lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(orderIds), DmpOrderItemEntity::getOrderId, orderIds)
+                .in(CollectionUtils.isNotEmpty(sku), DmpOrderItemEntity::getSkuNo, sku)
+                .count();
+        return count;
     }
 
     @Override
@@ -82,6 +78,19 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         LambdaQueryWrapper<DmpOrderItemEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(DmpOrderItemEntity::getOrderId,orderInfoIds);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<DmpOrderItemEntity> listByConditions(List<String> orderIds, Integer newSign, List<String> sku) {
+        if (CollectionUtils.isEmpty(orderIds)) {
+            return new ArrayList<>();
+        }
+        List<DmpOrderItemEntity> list = lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(orderIds), DmpOrderItemEntity::getOrderId, orderIds)
+                .in(CollectionUtils.isNotEmpty(sku), DmpOrderItemEntity::getSkuNo, sku)
+                .eq(null != newSign, DmpOrderItemEntity::getNewSign, newSign)
+                .list();
+        return list;
     }
 
 }

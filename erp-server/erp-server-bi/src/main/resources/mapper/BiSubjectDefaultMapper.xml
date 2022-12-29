@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiSubjectDefaultMapper">
+
+
+    <select id="getDefaultSubject" resultType="com.erp.model.bi.entity.BiSubjectEntity">
+         SELECT * FROM bi_subject
+         WHERE id=(SELECT subject_id FROM bi_subject_default WHERE user_id=#{userId} LIMIT 1)
+    </select>
+</mapper>

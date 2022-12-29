@@ -7,16 +7,16 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.dto.OrderMongoDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.MabangAppEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.model.dmp.dto.OrderMongoDTO;
-import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.*;
+import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -93,13 +93,17 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
      */
     public List<ShopEntity> pullDate(RequestDTO dto) {
         List<ShopEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
-        if (lastTime != 0 && nextTime != 0) {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            LocalDateTime date = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(date);
         }
+
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
         Map<String, Object> paramsMap = new HashMap();

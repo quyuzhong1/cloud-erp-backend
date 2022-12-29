@@ -142,6 +142,23 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         return result;
     }
 
+
+    /**
+     * 根据id 获取到模块
+     *
+     * @param moduleIdList
+     * @return
+     */
+    @Override
+    public List<BiModuleEntity> getByIds(List<String> moduleIdList) {
+        if (CollectionUtils.isNotEmpty(moduleIdList)) {
+            LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(BiModuleEntity::getId, moduleIdList);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
+    }
+
     /**
      * 新增数据
      *
@@ -155,19 +172,26 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String name = biModule.getName();
         checkName(null, name);
         String sysModuleId = biModule.getSysModuleId();
-        MultipartFile imageFile = biModule.getImageFile();
-        File file = FileUtil.multiToFile(imageFile);
-        String fileName = imageFile.getOriginalFilename().toLowerCase();
-        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-        if (StringUtils.isBlank(fileUrl)) {
-            throw new ServiceException(ApiError.ERROR_95018);
+        Object imageObject = biModule.getImageFile();
+        String fileUrl = "";
+        if (imageObject != null && !imageObject.equals("null")) {
+            MultipartFile imageFile = (MultipartFile) imageObject;
+            File file = FileUtil.multiToFile(imageFile);
+            String fileName = imageFile.getOriginalFilename().toLowerCase();
+            fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            if (StringUtils.isBlank(fileUrl)) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
         }
+
         module.setImageUrl(fileUrl);
         module.setName(name);
         module.setRemark(biModule.getRemark());
         module.setViewCode(biModule.getViewCode());
         module.setCategoryId(biModule.getCategoryId());
         module.setSysModuleId(sysModuleId);
+        module.setCode(biModule.getCode());
+        checkCode(null, biModule.getCode());
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.save(module);
         if (flag) {
@@ -203,6 +227,21 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
 
     }
 
+
+    public void checkCode(String id, String code) {
+        LambdaQueryWrapper<BiModuleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiModuleEntity::getCode, code);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(BiModuleEntity::getId, id);
+        }
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_97009);
+        }
+
+    }
+
     /**
      * 修改数据
      *
@@ -218,9 +257,10 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         String name = biModule.getName();
         checkName(biModule.getId(), name);
         Boolean uploadFlag = biModule.getUploadFlag();
-        MultipartFile imageFile = biModule.getImageFile();
+        Object imageObject = biModule.getImageFile();
         //当上传了文件 且文件不为空的时候
-        if (imageFile != null &&uploadFlag) {
+        if (imageObject != null && !imageObject.equals("null") && uploadFlag) {
+            MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);

@@ -5,25 +5,20 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.model.bi.dto.DmpOrderInfoImportExcelDTO;
+import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,6 +53,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     */
     @Override
+    @Transactional
     public void invoke(DmpOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         DmpOrderInfoEntity entity = new DmpOrderInfoEntity();
@@ -82,20 +78,10 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("店铺在系统中未找到");
             }
         }
-
-       if (!StrUtils.isDigit(dto.getItemTotal())) {
-            errorMsgList.add("订单销售额[原币种]只能包含数字");
-        }
-        if (!StrUtils.isDigit(dto.getCurrencyRate())) {
-            errorMsgList.add("汇率只能包含数字");
-        }
-        if (!StrUtils.isDigit(dto.getCnySettleRate())) {
-            errorMsgList.add("结算汇率只能包含数字");
-        }
         if (StringUtils.isBlank(dto.getBuyerName())) {
             errorMsgList.add("下单人不能为空");
         }
-        if (StringUtils.isBlank(dto.getOrderState())) {
+        if (StringUtils.isBlank(dto.getOrderStateName())) {
             errorMsgList.add("订单状态不能为空");
         }
         DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
@@ -105,25 +91,13 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         }
 
         if (StringUtils.isNotBlank(dto.getManPhone())) {
-            if (ValidatorUtil.isMobile(dto.getManPhone())) {
+            if (!ValidatorUtil.isMobile(dto.getManPhone())) {
                 errorMsgList.add("下单电话1不正确");
             }
         }
         if (StringUtils.isNotBlank(dto.getSecondPhone())) {
-            if (ValidatorUtil.isMobile(dto.getManPhone())) {
+            if (!ValidatorUtil.isMobile(dto.getManPhone())) {
                 errorMsgList.add("下单电话2不正确");
-            }
-        }
-
-        if (StringUtils.isNotBlank(dto.getPlatformCreateTime())) {
-            if (!DateUtil.isValid(dto.getPlatformCreateTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
-                errorMsgList.add("订单下单时间格式不正确");
-            }
-        }
-
-        if (StringUtils.isNotBlank(dto.getDeliveryTime())) {
-            if (!DateUtil.isValid(dto.getDeliveryTime(),DateTimeFormatter.ISO_LOCAL_DATE)) {
-                errorMsgList.add("订单发货时间格式不正确");
             }
         }
 
@@ -139,8 +113,8 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         }
 
         Integer saleState = null;
-        if (StringUtils.isNotBlank(dto.getOrderState())) {
-            saleState = OrderStateEnum.getCodeByName(dto.getOrderState());
+        if (StringUtils.isNotBlank(dto.getOrderStateName())) {
+            saleState = OrderStateEnum.getCodeByName(dto.getOrderStateName());
             if (saleState == null || saleState == 0) {
                 errorMsgList.add("订单状态不正确：订单状态：配货中，已发货，已完成，已作废，退货，退款");
             }
@@ -157,12 +131,8 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             return;
         }
         BeanMapperUtils.copy(dto,entity);
-        entity.setPlatformCreateTime(EnumTimePattern.parseDate(dto.getPlatformCreateTime()));
-        entity.setDeliveryTime(EnumTimePattern.parseDate(dto.getDeliveryTime()));
-        entity.setOrderState(OrderStateEnum.getCodeByName(dto.getOrderState()));
-        entity.setItemTotal(new BigDecimal(dto.getItemTotal()));
-        entity.setCurrencyRate(new BigDecimal(dto.getCurrencyRate()));
-        entity.setCnySettleRate(new BigDecimal(dto.getCnySettleRate()));
+        entity.setOrderState(OrderStateEnum.getCodeByName(dto.getOrderStateName()));
+        entity.setChargeId(chargeNameList.get(0).getUserId());
         dmpOrderInfoService.save(entity);
     }
 

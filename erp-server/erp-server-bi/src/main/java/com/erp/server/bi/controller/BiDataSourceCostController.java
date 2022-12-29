@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * 数据源管理
@@ -72,6 +73,17 @@ public class BiDataSourceCostController extends BaseController {
         biDataSourceCostService.importExcel(excelFile, response);
     }
 
+    /**
+     * 成本数据-编辑
+     * @author Will
+     * @date: 2022/12/21 17:02
+     * @param list
+     */
+    @PostMapping("/updateBiDataSourceCost")
+    public ApiResult updateBiDataSourceCost(@RequestBody List<LinkedHashMap<String,Object>> list) {
+        biDataSourceCostService.updateBiDataSourceCost(list);
+        return success();
+    }
 
     /**
      * 成本数据-下载模板

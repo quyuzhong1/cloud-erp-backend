@@ -10,6 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>erp-common-core</artifactId>
+    <properties>
+        <hutool.version>5.8.10</hutool.version>
+    </properties>
 
     <dependencies>
 
@@ -171,6 +174,12 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.66</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool.version}</version>
         </dependency>
 
     </dependencies>

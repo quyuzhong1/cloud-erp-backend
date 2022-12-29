@@ -20,7 +20,11 @@
         <include refid="Base_Column_List"/>
         FROM dmp_order_info
         WHERE clean_state = 1
-        AND retry_count &lt;= 5
+        <!--AND retry_count &lt;= 5-->
+        OR charge_id IS NULL
+        OR site IS NULL
+        OR delivery_time IS NULL
+        OR dept_name IS NULL
         ORDER BY retry_count
         limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
     </select>

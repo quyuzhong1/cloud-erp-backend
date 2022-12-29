@@ -36,6 +36,7 @@ import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.ListUtils;
@@ -1488,6 +1489,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .setOperation("重启审核流程").setContent("SKU["+entity.getSkuNo()+"]重启审核流程"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
+    }
+
+    @Override
+    public ProductDetailDTO getSkuByParam(Map<String, String> params) {
+        if (params == null) {
+            return null;
+        }
+        String id = params.get("id");
+        String skuNo = params.get("skuNo");
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.eq(ProductDetailEntity::getId,id);
+        }
+        if (StringUtils.isNotBlank(skuNo)) {
+            queryWrapper.eq(ProductDetailEntity::getSkuNo,skuNo);
+        }
+        queryWrapper.last("limit 1");
+        ProductDetailEntity entity = this.getOne(queryWrapper);
+        if (ObjectUtils.isNotEmpty(entity)) {
+            ProductDetailDTO dto = new ProductDetailDTO();
+            BeanUtils.copyProperties(entity,dto);
+            return dto;
+        }
+        return null;
     }
 
 

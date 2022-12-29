@@ -1,0 +1,29 @@
+package com.erp.server.bi.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.bi.dto.AdvanceSearchDTO;
+import com.erp.model.bi.dto.BiTargetManagementShowDTO;
+import com.erp.model.bi.entity.BiTargetManagementEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: TODO
+ * @date 2022/12/21 17:35
+ */
+@Mapper
+public interface BiTargetManagementMapper extends BaseMapper<BiTargetManagementEntity> {
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2022/12/21 17:45
+     * @param query
+     * @param params
+     * @return IPage<BiTargetManagementShowDTO>
+     */
+    IPage<BiTargetManagementShowDTO> paging(Page query,@Param("params") AdvanceSearchDTO params);
+}

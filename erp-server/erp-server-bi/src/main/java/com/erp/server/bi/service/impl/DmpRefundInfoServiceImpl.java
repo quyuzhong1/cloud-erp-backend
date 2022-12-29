@@ -8,9 +8,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.DmpRefundInfoDTO;
-import com.erp.model.bi.dto.DmpRefundInfoExcelDTO;
-import com.erp.model.bi.dto.DmpRefundInfoSearchDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.server.bi.enums.RefundStatusEnum;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
@@ -51,6 +51,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        list.forEach(obj ->obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));
         //导出销售数据
         List<DmpRefundInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpRefundInfoExcelDTO.class, list);
         String fileName = dmpOrderInfoService.getFileName("退款数据导出");

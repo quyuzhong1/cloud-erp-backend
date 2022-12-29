@@ -5,5 +5,18 @@
 <mapper namespace="com.erp.server.bi.mapper.DmpShopChangeLogMapper">
 
 
-
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpShopChangeLogDTO">
+        select
+            dscl.update_user_name,
+            dscl.update_time,
+            dscl.charge_name,
+            dscl.enable_time_begin,
+            dscl.enable_time_end
+        from dmp_shop_change_log dscl
+        <where>
+            <if test="params.searchContent != null and params.searchContent != ''">
+                and dscl.id like concat('%',#{params.searchContent},'%')
+            </if>
+        </where>
+    </select>
 </mapper>

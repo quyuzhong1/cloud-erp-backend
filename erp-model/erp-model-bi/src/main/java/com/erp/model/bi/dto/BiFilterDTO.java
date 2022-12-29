@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections.CollectionUtils;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,12 +28,14 @@ public class BiFilterDTO extends PermissionsDTO {
      * 对应枚举 TimeTypeEnum
      */
     @NotNull(message = "时间类型不能为空")
+    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class )
     private Integer timeType;
 
     /**
      * 开始日期
      */
     @NotNull(message = "开始时间不能为空")
+    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class )
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
@@ -42,6 +43,7 @@ public class BiFilterDTO extends PermissionsDTO {
      * 结束日期
      */
     @NotNull(message = "结束时间不能为空")
+    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class )
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
@@ -49,7 +51,7 @@ public class BiFilterDTO extends PermissionsDTO {
      * 0 CNY实时  1 CNY结算  2原币种
      * 对应枚举 SettleMethodEnum
      */
-    @NotBlank(message = "结算方式不能为空")
+    @NotNull(message = "结算方式不能为空")
     private Integer settleMethod;
 
     /**
@@ -107,5 +109,12 @@ public class BiFilterDTO extends PermissionsDTO {
      */
     private Boolean hasNewSign;
 
+    /**
+     * 排行数量
+     */
+    private Integer rankNum = 5;
+
+
+    public interface SelectTargetModule{}
 
 }

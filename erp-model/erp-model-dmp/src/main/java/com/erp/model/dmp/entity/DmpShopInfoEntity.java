@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -131,8 +132,8 @@ public class DmpShopInfoEntity implements Serializable {
     /**
      * 启用日期
      */
-    @TableField(value = "enable_time" , fill = FieldFill.INSERT)
-    private LocalDateTime enableTime;
+    @TableField(value = "enable_time")
+    private LocalDate enableTime;
 
 
     @TableField(exist = false)

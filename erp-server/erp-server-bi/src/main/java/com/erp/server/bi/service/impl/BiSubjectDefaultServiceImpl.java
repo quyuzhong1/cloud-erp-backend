@@ -2,7 +2,10 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
+import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.mapper.BiSubjectDefaultMapper;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.CommonService;
@@ -50,10 +53,20 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
     @Override
     public Boolean setDefault(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
+        BiSubjectEntity subject = getDefault(userId);
+        if (subject != null) {
+            throw new ServiceException(ApiError.ERROR_97014);
+        }
         BiSubjectDefaultEntity defaultSubject = new BiSubjectDefaultEntity();
         defaultSubject.setSubjectId(subjectId);
         defaultSubject.setUserId(userId);
         return this.save(defaultSubject);
+    }
+
+
+    @Override
+    public BiSubjectEntity getDefault(String userId) {
+        return baseMapper.getDefaultSubject(userId);
     }
 
 

@@ -6,14 +6,14 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.gyy.GyyShopInfoEntity;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -60,8 +60,8 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setApiName("管易云查询店铺列表");
         jobTaskDTO.setId(36L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(0);
-        jobTaskDTO.setNextTime(0);
+        jobTaskDTO.setLastTime(null);
+        jobTaskDTO.setNextTime(null);
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -117,13 +117,17 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
      */
     public List<GyyShopInfoEntity> pullDate(RequestDTO dto) {
         List<GyyShopInfoEntity> infoArrayList = new ArrayList<>();
-        Integer lastTime = dto.getJobTaskDTO().getLastTime();
-        Integer nextTime = dto.getJobTaskDTO().getNextTime();
-        if (lastTime != 0 && nextTime != 0) {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        String st = "";
+        String sd = "";
+        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
             dto.getJobTaskDTO().setLastTime(nextTime);
         } else {
-            dto.getJobTaskDTO().setLastTime(Integer.parseInt(String.valueOf(System.currentTimeMillis() / 1000L)));
+            LocalDateTime date = LocalDateTime.now();
+            dto.getJobTaskDTO().setLastTime(date);
         }
+
         GyyAppEntity gyyAppEntity = new GyyAppEntity();
 
         //每次最多获取100条

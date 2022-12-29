@@ -9,4 +9,6 @@ package com.erp.server.bi.constant;
 public interface BiConstant {
 
     String PID = "0";
+
+    Integer OK = 1;
 }

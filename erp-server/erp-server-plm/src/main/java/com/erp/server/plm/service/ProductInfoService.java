@@ -66,4 +66,12 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     List<ProductShowDTO> getProductInfoByIds(List<String> productIds);
 
     void checkProduct(String productId);
+    /**
+     * @description: 根据spu参数查询
+     * @author Will
+     * @date: 2022/12/26 11:59
+     * @param params
+     * @return ProductInfoDTO
+     */
+    ProductInfoDTO getSpuByParam(Map<String, String> params);
 }

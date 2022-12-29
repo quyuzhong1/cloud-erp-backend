@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiTargetManagementMapper">
+
+
+    <select id="paging" resultType="com.erp.model.bi.dto.BiTargetManagementShowDTO">
+        select
+            btm.id,
+            concat(btm.year,'年') as year,
+            btm.platform_name,
+            btm.category,
+            case when btm.target_type = 0 then '销量'
+                 when btm.target_type = 1 then '销售额'
+                 else '' end as targetTypeName,
+            btm.target_type,
+            case when btm.product_type = 0 then '新品'
+                 when btm.product_type = 1 then '老品'
+                 else '' end as productTypeName,
+            btm.product_type,
+            btm.product_position,
+            btm.sku_no,
+            btm.spu_no,
+            btm.product_name,
+            btm.sale_price,
+            btm.january,
+            btm.february,
+            btm.march,
+            btm.april,
+            btm.may,
+            btm.june,
+            btm.july,
+            btm.august,
+            btm.september,
+            btm.october,
+            btm.november,
+            btm.december
+        from bi_target_management btm
+        <where>
+            <if test="params.searchContent != null and params.searchContent != ''">
+                and btm.sku_no like concat('%',#{params.searchContent},'%')
+            </if>
+        </where>
+    </select>
+
+</mapper>

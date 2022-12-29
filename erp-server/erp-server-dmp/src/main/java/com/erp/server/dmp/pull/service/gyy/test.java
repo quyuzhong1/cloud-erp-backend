@@ -32,12 +32,12 @@ public class test {
         StringBuilder Info = new StringBuilder();
         //业务对象标识
         String formId = "SAL_SaleOrder";
-        String formIdT = "SAL_OUTSTOCK";
+        String formIdT = "BD_MATERIAL";
         String formIdS = "AR_REFUNDBILL";
         String fieldKey = "FSalePhaseID,FID,FBillNo,FDate,FBillTypeId.FName,FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode";
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCustomerID,FCustomerID.FName,FSalesManID,FSalesManID.FName,FSaleDeptID.FName,FReceiverID.FName,FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus,FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName,FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FBillAmount,FExchangeRate";
         String fieldKeyst = "FSalCostPrice,FSoorDerno,FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate,FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1";
-        String test = "FBillNo";
+        String test = "F_SSRQ";
         LinkedList<String> queryfilters = new LinkedList<>();
 
         queryfilters.add(String.format("FSoorDerno = '%s'", "XSD-20221205-33085"));
@@ -48,7 +48,7 @@ public class test {
 
         param.setFormId(formIdT);
         param.setFieldKeys(test);
-        param.setFilterString(filterStr);
+        //param.setFilterString(filterStr);
         param.setLimit(10000);
         param.setStartRow(0);
         param.setTopRowCount(10000);
