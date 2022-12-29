@@ -8,8 +8,10 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.constant.IsDeleted;
+import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.BiSkuInfoService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +40,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiSkuInfoService skuInfoService;
+
+    @Resource
+    private DmpShopInfoService shopInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -1027,6 +1032,49 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String deptName = "营销中心";
         List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
         return null;
+    }
+
+    /**
+     * @param dto
+     * @return
+     */
+    @Override
+    public StatisticalDataVO byEuropeAndJapanSite(BiFilterDTO dto) {
+        List<ShopSalesVO> list = baseMapper.byShop(dto);
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("亚马逊欧美日占比趋势分析");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        List<String> siteNameList = new ArrayList<>(3);
+        siteNameList.add("欧洲站");
+        siteNameList.add("美国站");
+        siteNameList.add("日本站");
+        //获取到 站点的 店铺
+        List<ShopSiteVO> shopCategoryList = shopInfoService.getShopCategoryList();
+
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("站点销售额");
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        for (String siteName : siteNameList) {
+            Map<String, Object> siteMap = new HashMap<>();
+            siteMap.put("name", siteName);
+            //根据 站点名获取大盘站点信息
+            List<String> siteList = SiteEnum.getSiteList(siteName);
+            List<ShopSiteVO> siteShopList = shopCategoryList.stream().filter(s -> siteList.contains(s.getSite()))
+                    .collect(Collectors.toList());
+            List<String> shopNoList = siteShopList.stream().flatMap(s -> s.getShopNo().stream()).collect(Collectors.toList());
+            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo())).
+                    map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+            siteMap.put("value", value);
+            dataList.add(siteMap);
+        }
+        series.setData(Collections.singletonList(dataList));
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        chartVO.setXAxis(siteNameList);
+        statistical.setData(chartVO);
+        return statistical;
     }
 
 

@@ -132,6 +132,13 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     }
 
     @Override
+    public List<BiDictEntity> getByType(String type) {
+        LambdaQueryWrapper<BiDictEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiDictEntity::getType, type);
+        return this.list(queryWrapper);
+    }
+
+    @Override
     public Map<String, BiDictEntity> listByValues(List<String> dictValues) {
         if (CollectionUtils.isEmpty(dictValues)) {
             return new HashMap<>(0);

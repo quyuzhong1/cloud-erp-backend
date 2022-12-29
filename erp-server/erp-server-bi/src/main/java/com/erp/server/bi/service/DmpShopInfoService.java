@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.DmpShopInfoChangeDTO;
 import com.erp.model.dmp.dto.DmpShopInfoDeptChangeDTO;
 import com.erp.model.dmp.dto.DmpShopInfoShowDTO;
@@ -97,4 +98,14 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @return Integer
      */
     Integer getDmpShopInfoByParam(String platform, String site, String shopName);
+
+
+    /**
+     * 店铺站点分类
+     * @author yl
+     * @date 2022-12-28 17:57
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.ShopCategoryVO>
+     */
+    List<ShopSiteVO> getShopCategoryList();
 }

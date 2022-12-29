@@ -1545,4 +1545,11 @@
           ORDER BY sales DESC LIMIT 20
     </select>
 
+    <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
+        SELECT o.shop_no,round( SUM ( o.order_fee ) / 10000, 4 ) AS sales
+        FROM dmp_order_info o
+	    GROUP BY o.shop_no
+
+    </select>
+
 </mapper>

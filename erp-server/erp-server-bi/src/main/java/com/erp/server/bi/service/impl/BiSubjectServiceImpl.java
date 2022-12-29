@@ -16,6 +16,7 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
@@ -385,7 +386,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (flag) {
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
-        return null;
+        return true;
     }
 
 
@@ -434,6 +435,98 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             return subjectId;
         }
         return "";
+    }
+
+
+    /**
+     * 专题的列表
+     *
+     * @return java.util.List<com.erp.model.bi.dto.CategorySubjectListDTO>
+     * @author yl
+     * @date 2022-12-29 9:45
+     */
+    @Override
+    public List<CategorySubjectDTO> categoryList(String searchKeyword) {
+        List<CategorySubjectDTO> resultList = new ArrayList<>(10);
+        String userId = commonService.getUserInfo().getUid();
+        String type = DictEnum.DASHBOARD.getType();
+        List<BiDictEntity> dictList = dictService.getByType(type);
+        //查询到用户可见的专题
+        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+        //获取到非仪表盘的列表
+        dictList = dictList.stream().filter(d -> StringUtils.isBlank(d.getValue())).collect(Collectors.toList());
+        for (BiDictEntity dict : dictList) {
+            CategorySubjectDTO result = new CategorySubjectDTO();
+            String categoryId = dict.getId();
+            result.setCategoryId(categoryId);
+            result.setCategoryName(dict.getName());
+            List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            result.setSubjectList(subjectResultList);
+            resultList.add(result);
+        }
+        List<String> categoryIds = dictList.stream().map(BiDictEntity::getId).collect(Collectors.toList());
+        //我创建的
+        CategorySubjectDTO myCreate = new CategorySubjectDTO();
+        myCreate.setCategoryName("我创建的专题");
+        List<SubjectDTO> myCreateList = subjectList.stream().
+                filter(s -> userId.equals(s.getCreateUserId()) && categoryIds.contains(s.getCategoryId()))
+                .collect(Collectors.toList());
+        myCreate.setSubjectList(myCreateList);
+        resultList.add(myCreate);
+
+
+        return resultList;
+    }
+
+    /**
+     * 找到默认的仪表盘信息
+     *
+     * @return
+     */
+    @Override
+    public SubjectLayoutDetailsDTO dashboardInfo() {
+        String userId = commonService.getUserInfo().getUid();
+        String type = DictEnum.DASHBOARD.getType();
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String subjectId = "";
+        String categoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+        if (dict != null) {
+            categoryId = dict.getId();
+        }
+        //这个是默认的
+        BiSubjectEntity subjectEntity = subjectDefaultService.getDefault(userId);
+        if (subjectEntity != null) {
+            if (categoryId.equals(subjectEntity.getCategoryId())) {
+                subjectId = subjectEntity.getId();
+            }
+        }
+        if (StringUtils.isNotBlank(subjectId)) {
+            return layoutService.subjectInfo(subjectId);
+        }
+        //当默认的没有 就找 是仪表盘的 开启的最近一条
+        BiSubjectEntity dashboard = getByCategoryId(categoryId);
+        if(dashboard!=null){
+            return layoutService.subjectInfo(dashboard.getId());
+        }
+
+        return null;
+    }
+
+
+    /**
+     * 根据分类id 获取最后一个
+     *
+     * @return
+     */
+    public BiSubjectEntity getByCategoryId(String categoryId) {
+        LambdaQueryWrapper<BiSubjectEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectEntity::getState, BiConstant.OK);
+        queryWrapper.eq(BiSubjectEntity::getCategoryId, categoryId);
+        queryWrapper.last("LIMIT 1");
+        return getOne(queryWrapper);
     }
 
 
