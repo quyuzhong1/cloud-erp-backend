@@ -24,4 +24,5 @@ public class KingdeeSkuEntity {
     private String f_PRVD_Assistant1;
     private String fSalePrice_CMK;
     private String FSSRQ;
+    private String FErpClsID;
 }

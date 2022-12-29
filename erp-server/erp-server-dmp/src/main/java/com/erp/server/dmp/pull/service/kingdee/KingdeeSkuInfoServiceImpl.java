@@ -122,7 +122,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         queryfilters.add(String.format("FModifyDate >= '%s'", st));
         queryfilters.add(String.format("FModifyDate <= '%s'", sd));
         String filterStr = String.join(" and ", queryfilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ";
+        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ,FErpClsID";
 
         Boolean dataSign = true;
         //当前页数
@@ -172,6 +172,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                         kingdeeSkuEntity.setF_PRVD_Assistant1(valMap.get("F_PRVD_Assistant1.FDataValue"));
                         kingdeeSkuEntity.setFSalePrice_CMK(valMap.get("FSalePrice_CMK"));
                         kingdeeSkuEntity.setFSSRQ(valMap.get("F_SSRQ"));
+                        kingdeeSkuEntity.setFErpClsID(valMap.get("FErpClsID"));
                         infoArrayList.add(kingdeeSkuEntity);
                     }
                 } else {
@@ -285,6 +286,26 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
             dmpSkuInfoEntity.setListingTime(sdf.parse(skuInfoEntity.getFSSRQ()));
         }
+        String itemProperty = "";
+        switch (skuInfoEntity.getFErpClsID()) {
+            case "1" :
+                itemProperty = "外购";
+                break;
+            case "2" :
+                itemProperty = "自制";
+                break;
+            case "3" :
+                itemProperty = "委外";
+                break;
+            case "6" :
+                itemProperty = "服务";
+                break;
+            default:
+                itemProperty = "";
+                break;
+        }
+        //物料属性
+        dmpSkuInfoEntity.setItemProperty(itemProperty);
 
         dmpSkuInfoEntity.setCreateTime(new Date());
 

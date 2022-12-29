@@ -143,6 +143,12 @@ public class DmpSkuInfoEntity implements Serializable {
     @TableField(value = "listing_time")
     private Date listingTime;
 
+    /**
+     * 物料属性
+     */
+    @TableField(value = "item_property")
+    private String itemProperty;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
