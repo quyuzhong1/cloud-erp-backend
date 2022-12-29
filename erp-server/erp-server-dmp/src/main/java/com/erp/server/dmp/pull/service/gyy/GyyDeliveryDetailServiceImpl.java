@@ -130,7 +130,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         String st = "";
         String sd = "";
         if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMonths(5);
+            LocalDateTime localDateTime = lastTime.minusMinutes(5);
             DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
             st = sdf.format(localDateTime);
             sd = sdf.format(nextTime);
