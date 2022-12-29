@@ -33,7 +33,7 @@ public class BiTargetModuleController extends BaseController {
      * 季度销售额完成情况
      */
     @PostMapping("/quarter/sales")
-    public ApiResult quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumQuarterSales(dto);
         return success(vo);
     }
@@ -43,7 +43,7 @@ public class BiTargetModuleController extends BaseController {
      * 季度销量完成情况
      */
     @PostMapping("/quarter/sales/volume")
-    public ApiResult quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumQuarterSalesVolume(dto);
         return success(vo);
     }
@@ -52,7 +52,7 @@ public class BiTargetModuleController extends BaseController {
      * 月度销售额完成情况
      */
     @PostMapping("/month/sales")
-    public ApiResult monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumMonthSales(dto);
         return success(vo);
     }
@@ -61,7 +61,7 @@ public class BiTargetModuleController extends BaseController {
      * 月度销售额完成情况
      */
     @PostMapping("/month/sales/volume")
-    public ApiResult monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumMonthSalesVolume(dto);
         return success(vo);
     }
@@ -76,7 +76,7 @@ public class BiTargetModuleController extends BaseController {
      * 平台销售额/销量完成情况
      */
     @PostMapping("/platform/sales")
-    public ApiResult platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumPlatformSalesCompletion(dto);
         return success(vo);
     }
@@ -94,7 +94,7 @@ public class BiTargetModuleController extends BaseController {
      * 品类销售额/销量完成情况
      */
     @PostMapping("/category/sales")
-    public ApiResult categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumCategorySalesCompletion(dto);
         return success(vo);
     }
@@ -103,7 +103,7 @@ public class BiTargetModuleController extends BaseController {
      * 新品销售额/销量完成情况
      */
     @PostMapping("/new/product/sales")
-    public ApiResult newProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> newProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 1);
         return success(vo);
     }
@@ -112,7 +112,7 @@ public class BiTargetModuleController extends BaseController {
      * 老品销售额/销量完成情况
      */
     @PostMapping("/old/product/sales")
-    public ApiResult oldProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> oldProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 0);
         return success(vo);
     }
@@ -121,7 +121,7 @@ public class BiTargetModuleController extends BaseController {
      * 产品定位销售额/销量完成情况
      */
     @PostMapping("/product/position/sales")
-    public ApiResult positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductPositionSalesCompletion(dto);
         return success(vo);
     }
@@ -133,7 +133,7 @@ public class BiTargetModuleController extends BaseController {
      * @return
      */
     @PostMapping("/product/type/sales")
-    public ApiResult productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductTypeCompletion(dto);
         return success(vo);
     }
@@ -142,7 +142,7 @@ public class BiTargetModuleController extends BaseController {
      * SKU销售额/销量完成情况
      */
     @PostMapping("/sku/sales")
-    public ApiResult skuSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
+    public ApiResult<List<SalesCompletionInfoVO>> skuSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, null);
         return success(vo);
     }

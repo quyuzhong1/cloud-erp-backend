@@ -31,6 +31,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-销售额（区分新老品）
+     * menuCode = "bi:indicator:sales"
+     * code = indicator_sales
      */
     @PostMapping("/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -45,6 +47,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-销量
+     * menuCode = "bi:indicator:sales:volume"
+     * code = indicator_volume
      */
     @PostMapping("/sales/volume")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -59,6 +63,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-订单量
+     * menuCode = "bi:indicator:order:quantity"
+     * code = indicator_quantity
      */
     @PostMapping("/order/quantity")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -73,6 +79,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-退款率
+     * menuCode = "bi:indicator:refund:rate"
+     * code = indicator_refund_rate
      */
     @PostMapping("/refund/rate")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -87,6 +95,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-退款金额
+     * menuCode = "bi:indicator:refund:amount"
+     * code = indicator_refund_amount
      */
     @PostMapping("/refund/amount")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -101,6 +111,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-退款订单数
+     * menuCode = "bi:indicator:refund:order:number"
+     * code = indicator_refund_order
      */
     @PostMapping("/refund/order/number")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -115,6 +127,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-客单价
+     * menuCode = "bi:indicator:customer:price"
+     * code = indicator_customer_price
      */
     @PostMapping("/customer/price")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -134,6 +148,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-国内销售占比
+     * menuCode = "bi:indicator:domestic:ratio"
+     * code = indicator_domestic_ratio
      */
     @PostMapping("/domestic/sales/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -148,6 +164,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-销售额环比
+     * menuCode = "bi:indicator:ring:ratio"
+     * code = indicator_ring_ratio
      */
     @PostMapping("/ring/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -162,6 +180,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-销售额同比
+     * menuCode = "bi:indicator:yoy:ratio"
+     * code = indicator_yoy_ratio
      */
     @PostMapping("/yoy/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
