@@ -167,8 +167,7 @@ public class LocalDateUtil {
      * @return
      */
     public static LocalDateTime getLastMonthStart(LocalDate date) {
-        LocalDateTime monMin = LocalDateTime.of(date.with(TemporalAdjusters.firstDayOfMonth()), LocalTime.MIN).plusMonths(-1);
-        return monMin;
+        return LocalDateTime.of(date.minus(1L, ChronoUnit.MONTHS).with(TemporalAdjusters.firstDayOfMonth()), LocalTime.MIN);
     }
 
     /**
@@ -177,8 +176,8 @@ public class LocalDateUtil {
      * @return
      */
     public static LocalDateTime getLastMonthEnd(LocalDate date) {
-        LocalDateTime monMax = LocalDateTime.of(date.with(TemporalAdjusters.firstDayOfMonth()), LocalTime.MAX).plusMonths(-1);
-        return monMax;
+        return LocalDateTime.of(date.minus(1L, ChronoUnit.MONTHS).with(TemporalAdjusters.lastDayOfMonth()), LocalTime.MAX);
+
     }
 
     /**

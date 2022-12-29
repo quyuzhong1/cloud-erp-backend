@@ -1638,4 +1638,34 @@
         GROUP BY i.brand_name
     </select>
 
+
+    <select id="byPeopleRank" resultType="com.erp.model.bi.vo.SalesBaseVO">
+        SELECT 	round( SUM ( order_fee ) / 10000, 4 ) AS sales,
+        COALESCE(charge_id,'无')  AS flagNo FROM dmp_order_info
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    paid_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND paid_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        GROUP BY charge_id ORDER BY sales desc
+    </select>
+
 </mapper>

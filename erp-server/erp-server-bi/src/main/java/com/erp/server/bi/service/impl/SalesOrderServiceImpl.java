@@ -559,11 +559,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<SalesCountVO> byPeople(BiFilterDTO dto) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-
         LocalDateTime startTime = dto.getStartTime();
         LocalDateTime endTime = dto.getEndTime();
         List<SalesBaseVO> list = baseMapper.byPeople(dto);
-
 
         //获取到环比的开始日期
         LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
@@ -576,9 +574,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
 
         //同比开始时间
-        LocalDateTime  yearBasisStartTime=startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
         //同比开始时间
-        LocalDateTime  yearBasisEndTime=endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -601,13 +599,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesBaseVO chainVO = chainList.stream().filter(c -> c.getFlagNo().equals(flagNo))
                     .findFirst().orElse(null);
             if (chainVO != null) {
-                vo.setChainRelativeRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+                vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
             }
 
             SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                vo.setYearBasisRatio(getChainRelativeRatio(sales,chainVO.getSales()));
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
             }
 
             vo.setOrderCount(item.getOrderCount());
@@ -729,7 +727,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     public BigDecimal getSalesRatio(BigDecimal totalSales, BigDecimal sales) {
         BigDecimal ratio = sales.divide(totalSales, 5, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -745,7 +743,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             return zero;
         }
         BigDecimal ratio = differ.divide(oldSales, 5, BigDecimal.ROUND_HALF_UP);
-        return ratio.multiply(new BigDecimal("100")).setScale(2,BigDecimal.ROUND_HALF_UP);
+        return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
 
@@ -798,14 +796,246 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<PeopleSalesRankVO> byPeopleWeekRank(BiFilterDTO dto) {
+        List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDate nowDate = LocalDate.now();
+        //本周开始时间
+        LocalDateTime weekStart = LocalDateUtil.getThisWeekStart(nowDate);
+        //本周结束时间
+        LocalDateTime weekEnd = LocalDateUtil.getThisWeekEnd(nowDate);
+        dto.setStartTime(weekStart);
+        dto.setEndTime(weekEnd);
+        //本周结果
+        List<SalesBaseVO> list = baseMapper.byPeopleRank(dto);
 
+        //上周开始时间
+        LocalDateTime lastWeekStart = LocalDateUtil.getLastWeekStart(nowDate);
+        //上周结束时间
+        LocalDateTime lastWeekEnd = LocalDateUtil.getLastWeekEnd(nowDate);
+        dto.setStartTime(lastWeekStart);
+        dto.setEndTime(lastWeekEnd);
+        //上周查询结果
+        List<SalesBaseVO> lastList = baseMapper.byPeopleRank(dto);
+        int cutSize = list.size() >= 10 ? 10 : list.size();
+        //取前十
+        list = list.subList(0, cutSize);
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+            SalesBaseVO base = list.get(i);
+            String flagNo = base.getFlagNo();
+            PeopleSalesRankVO vo = new PeopleSalesRankVO();
+            vo.setRanking(i + 1);
+            BigDecimal weekSales = base.getSales();
+            vo.setSales(weekSales);
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setUserName(userInfo.getUserName());
+            }
+            SalesBaseVO last = lastList.stream().filter(l -> l.getFlagNo().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (last != null) {
+                int lastRanking = lastList.indexOf(last) + 1;
+                vo.setLastRanking(lastRanking);
+                BigDecimal lastWeekSales = last.getSales();
+                vo.setChainRelativeRatio(getChainRelativeRatio(weekSales,lastWeekSales));
+            }
 
-        return null;
+            resultList.add(vo);
+        }
+
+        return resultList;
+    }
+
+    /**
+     * 销售相关  一级模块 人员 月排行榜
+     *
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.PeopleSalesRankVO>
+     * @author yl
+     * @date 2022-12-27 11:05
+     */
+    @Override
+    public List<PeopleSalesRankVO> byPeopleMonthRank(BiFilterDTO dto) {
+        List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDate nowDate = LocalDate.now();
+        //本月开始时间
+        LocalDateTime monthStart = LocalDateUtil.getThisMonthStart(nowDate);
+        //本月结束时间
+        LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(nowDate);
+        dto.setStartTime(monthStart);
+        dto.setEndTime(monthEnd);
+        //本月结果
+        List<SalesBaseVO> list = baseMapper.byPeopleRank(dto);
+
+        //上月开始时间
+        LocalDateTime lastMonthStart = LocalDateUtil.getLastMonthStart(nowDate);
+        //上月结束时间
+        LocalDateTime lastMonthEnd = LocalDateUtil.getLastMonthEnd(nowDate);
+        dto.setStartTime(lastMonthStart);
+        dto.setEndTime(lastMonthEnd);
+        //上月查询结果
+        List<SalesBaseVO> lastList = baseMapper.byPeopleRank(dto);
+        int cutSize = list.size() >= 10 ? 10 : list.size();
+        //取前十
+        list = list.subList(0, cutSize);
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+            SalesBaseVO base = list.get(i);
+            String flagNo = base.getFlagNo();
+            PeopleSalesRankVO vo = new PeopleSalesRankVO();
+            vo.setRanking(i + 1);
+            BigDecimal monthSales = base.getSales();
+            vo.setSales(monthSales);
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setUserName(userInfo.getUserName());
+            }
+            SalesBaseVO last = lastList.stream().filter(l -> l.getFlagNo().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (last != null) {
+                int lastRanking = lastList.indexOf(last) + 1;
+                vo.setLastRanking(lastRanking);
+                BigDecimal lastMonthSales = last.getSales();
+                vo.setChainRelativeRatio(getChainRelativeRatio(monthSales,lastMonthSales));
+            }
+
+            resultList.add(vo);
+        }
+
+        return resultList;
     }
 
 
     /**
-     * 一级模块  事业部销售额s
+     * 销售相关  一级模块 人员 季度排行榜
+     *
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.PeopleSalesRankVO>
+     * @author yl
+     * @date 2022-12-27 11:05
+     */
+    @Override
+    public List<PeopleSalesRankVO> byPeopleQuarterRank(BiFilterDTO dto) {
+        List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDate nowDate = LocalDate.now();
+        //本季度开始时间
+        LocalDateTime quarterStart = LocalDateUtil.getThisQuarterStart(nowDate);
+        //本季度结束时间
+        LocalDateTime quarterEnd = LocalDateUtil.getThisQuarterEnd(nowDate);
+        dto.setStartTime(quarterStart);
+        dto.setEndTime(quarterEnd);
+        //本月结果
+        List<SalesBaseVO> list = baseMapper.byPeopleRank(dto);
+
+        //上季度开始时间
+        LocalDateTime lastQuarterStart = LocalDateUtil.getLastQuarterStart(nowDate);
+        //上季度结束时间
+        LocalDateTime lastQuarterEnd = LocalDateUtil.getLastQuarterEnd(nowDate);
+        dto.setStartTime(lastQuarterStart);
+        dto.setEndTime(lastQuarterEnd);
+        //上季度查询结果
+        List<SalesBaseVO> lastList = baseMapper.byPeopleRank(dto);
+        int cutSize = list.size() >= 10 ? 10 : list.size();
+        //取前十
+        list = list.subList(0, cutSize);
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+            SalesBaseVO base = list.get(i);
+            String flagNo = base.getFlagNo();
+            PeopleSalesRankVO vo = new PeopleSalesRankVO();
+            vo.setRanking(i + 1);
+            BigDecimal quarterSales = base.getSales();
+            vo.setSales(quarterSales);
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setUserName(userInfo.getUserName());
+            }
+            SalesBaseVO last = lastList.stream().filter(l -> l.getFlagNo().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (last != null) {
+                int lastRanking = lastList.indexOf(last) + 1;
+                vo.setLastRanking(lastRanking);
+                BigDecimal lastQuarterSales = last.getSales();
+                vo.setChainRelativeRatio(getChainRelativeRatio(quarterSales,lastQuarterSales));
+            }
+
+            resultList.add(vo);
+        }
+
+        return resultList;
+    }
+
+
+
+    /**
+     * 销售相关  一级模块 人员 年度排行榜
+     *
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.PeopleSalesRankVO>
+     * @author yl
+     * @date 2022-12-27 11:05
+     */
+    @Override
+    public List<PeopleSalesRankVO> byPeopleYearRank(BiFilterDTO dto) {
+        List<PeopleSalesRankVO> resultList = new ArrayList<>(10);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        LocalDate nowDate = LocalDate.now();
+        //本年度 开始时间
+        LocalDateTime yearStart = LocalDateUtil.getThisYearStart(nowDate);
+        //本年度 结束时间
+        LocalDateTime yearEnd = LocalDateUtil.getThisYearEnd(nowDate);
+        dto.setStartTime(yearStart);
+        dto.setEndTime(yearEnd);
+        //本年结果
+        List<SalesBaseVO> list = baseMapper.byPeopleRank(dto);
+
+        //上年开始时间
+        LocalDateTime lastYearStart = LocalDateUtil.getLastYearStart(nowDate);
+        //上年结束时间
+        LocalDateTime lastYearEnd = LocalDateUtil.getLastYearEnd(nowDate);
+        dto.setStartTime(lastYearStart);
+        dto.setEndTime(lastYearEnd);
+        //上年查询结果
+        List<SalesBaseVO> lastList = baseMapper.byPeopleRank(dto);
+        int cutSize = list.size() >= 10 ? 10 : list.size();
+        //取前十
+        list = list.subList(0, cutSize);
+        int size = list.size();
+        for (int i = 0; i < size; i++) {
+            SalesBaseVO base = list.get(i);
+            String flagNo = base.getFlagNo();
+            PeopleSalesRankVO vo = new PeopleSalesRankVO();
+            vo.setRanking(i + 1);
+            BigDecimal yearSales = base.getSales();
+            vo.setSales(yearSales);
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setUserName(userInfo.getUserName());
+            }
+            SalesBaseVO last = lastList.stream().filter(l -> l.getFlagNo().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (last != null) {
+                int lastRanking = lastList.indexOf(last) + 1;
+                vo.setLastRanking(lastRanking);
+                BigDecimal lastYearSales = last.getSales();
+                vo.setChainRelativeRatio(getChainRelativeRatio(yearSales,lastYearSales));
+            }
+
+            resultList.add(vo);
+        }
+
+        return resultList;
+    }
+
+
+    /**
+     * 一级模块  事业部销售额
      *
      * @param dto
      * @return
@@ -1203,6 +1433,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setData(chartVO);
         return statistical;
     }
+
+
 
 
 }

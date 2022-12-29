@@ -26,7 +26,7 @@ public class PeopleSalesRankVO implements Serializable {
     /**
      * 名字
      */
-    private String userName;
+    private String userName="无";
 
 
     /**
@@ -38,11 +38,11 @@ public class PeopleSalesRankVO implements Serializable {
     /**
      * 上一次排名
      */
-    private Integer lastRanking;
+    private Integer lastRanking=0;
 
 
     /**
      * 环比率
      */
-    private Integer chainRelativeRatio;
+    private BigDecimal chainRelativeRatio=BigDecimal.ZERO;
 }

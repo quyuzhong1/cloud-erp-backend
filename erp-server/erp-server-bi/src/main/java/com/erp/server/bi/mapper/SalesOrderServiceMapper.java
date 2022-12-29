@@ -96,4 +96,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto);
 
     List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto);
+
+    List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto);
 }
