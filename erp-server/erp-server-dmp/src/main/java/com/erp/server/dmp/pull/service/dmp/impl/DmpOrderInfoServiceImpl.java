@@ -5,13 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.plm.dto.CleanSkuDto;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
+import com.erp.server.dmp.pull.mapper.DmpShopChangeLogMapper;
 import com.erp.server.dmp.pull.service.dmp.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -45,6 +43,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Resource
     private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+
+    @Resource
+    private DmpShopChangeLogMapper dmpShopChangeLogMapper;
 
     /**
      * 添加订单信息
@@ -146,10 +147,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
+            DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogMapper.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
+            if (shopChargeName != null) {
+                updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
+                updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());
+            }
+
             if (shopByShopNo != null) {
                 updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
-                updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
-                updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
             }
 
             //根据负责人获取部门信息，同步到订单
