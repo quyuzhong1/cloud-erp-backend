@@ -53,6 +53,7 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
         String addStr = monthList.stream().collect(Collectors.joining(" + ")) + " as january";
         qw.select("id","platform_name","category","target_type","product_type","product_position",
                 "sku_no","product_name","sale_price",addStr);
+        qw.eq("year", start.getYear());
         qw.last(StrUtil.isNotBlank(param), param);
         List<BiTargetManagementEntity> entityList = baseMapper.selectList(qw);
         return entityList;
@@ -71,5 +72,18 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
         }
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public BiTargetManagementEntity getMonthSales(LocalDateTime start, LocalDateTime end, String param, Integer targetType) {
+        QueryWrapper<BiTargetManagementEntity> qw = new QueryWrapper<>();
+        qw.select("sum(january) as january","sum(february) as february", "sum(march) as march", "sum(april) as april","sum(may) as may",
+                "sum(june) as  june","sum(july) as july","sum(august) as august",
+                "sum(september) as september","sum(october) as october","sum(november) as november","sum(december) as december");
+        qw.eq(null != targetType,"target_type",  targetType);
+        qw.eq("year", start.getYear());
+        qw.last(StrUtil.isNotBlank(param), param);
+        BiTargetManagementEntity entity = baseMapper.selectOne(qw);
+        return entity;
     }
 }

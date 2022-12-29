@@ -19,14 +19,8 @@
             enable_time_begin,
             enable_time_end
         FROM dmp_shop_change_log
-        <where>
-            <if test="shopId != '' and shopId != null">
-                AND shop_id = #{shopId}
-            </if>
-            <if test="date != '' and date != null">
-                AND #{date} >= enable_time_begin
-                AND #{date} &lt;= enable_time_end
-            </if>
-        </where>
+        WHERE shop_id = #{shopId}
+        AND #{date} >= enable_time_begin
+        AND #{date} &lt;= enable_time_end
     </select>
 </mapper>

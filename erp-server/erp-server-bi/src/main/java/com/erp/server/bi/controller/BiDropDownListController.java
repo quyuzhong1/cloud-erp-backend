@@ -1,16 +1,24 @@
 package com.erp.server.bi.controller;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.vo.SalesPlatformEnumVO;
 import com.erp.model.bi.vo.SalesSiteEnumVO;
 import com.erp.model.bi.vo.SelectShowVO;
+import com.erp.model.bi.vo.ShopDropDownVO;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.dmp.enums.SalesSiteEnum;
 import com.erp.server.bi.enums.*;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import com.erp.server.bi.service.BiDictService;
+import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.DmpSkuInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +48,12 @@ public class BiDropDownListController extends BaseController {
     @Resource
     private BiDataSourceCustomService biDataSourceCustomService;
 
+    @Resource
+    private DmpSkuInfoService dmpSkuInfoService;
+
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
     /**
      * 平台下拉列表
      *
@@ -58,9 +72,17 @@ public class BiDropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/site/list")
-    public ApiResult<List<SalesSiteEnumVO>> listSiteDropDown() {
-        List<SalesSiteEnumVO> result = Arrays.stream(SalesSiteEnum.values())
-                .map(x -> new SalesSiteEnumVO(x.getCode(),x.getName(),x.getDesc()))
+    public ApiResult<List<ShopDropDownVO>> listSiteDropDown() {
+        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream()
+                .map(x -> new ShopDropDownVO(x.getSite()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -207,4 +229,53 @@ public class BiDropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 店铺下拉框
+     */
+    @GetMapping("/shop/list")
+    public ApiResult<List<ShopDropDownVO>> listShopDropDown() {
+        List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
+                .eq(DmpShopInfoEntity::getStatus, 1)
+                .list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream()
+                .map(x -> new ShopDropDownVO(x.getName()))
+                .distinct()
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 品类
+     */
+    @GetMapping("/category/list")
+    public ApiResult<List<ShopDropDownVO>> listCategoryDropDown() {
+        List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream().map(x -> new ShopDropDownVO(x.getParentCategoryName()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 品牌
+     */
+    @GetMapping("/brand/list")
+    public ApiResult<List<ShopDropDownVO>> listBrandDropDown() {
+        List<DmpSkuInfoEntity> list = dmpSkuInfoService.list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream().map(x -> new ShopDropDownVO(x.getBrandName()))
+                .distinct()
+                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
 }

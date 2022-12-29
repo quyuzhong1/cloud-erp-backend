@@ -206,6 +206,7 @@ public enum ApiError implements Serializable {
     ERROR_97012(97012,"系统模块未找到"),
     ERROR_97013(97013,"启用时间不能小于上任负责人启用时间"),
     ERROR_97014(97014,"已有默认仪表盘"),
+    ERROR_97015(97015,"汇率日期不能为空"),
 
     ERROR_end(1000000, "系统错误");
 

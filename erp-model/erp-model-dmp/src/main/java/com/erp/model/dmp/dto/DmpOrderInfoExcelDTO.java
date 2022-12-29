@@ -2,12 +2,14 @@ package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.excel.LocalDateTimeConverter;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -115,9 +117,9 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      * 订单下单时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单下单时间", index = 13)
+    @ExcelProperty(value = "订单下单时间", index = 13,converter = LocalDateTimeConverter.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 订单发货时间

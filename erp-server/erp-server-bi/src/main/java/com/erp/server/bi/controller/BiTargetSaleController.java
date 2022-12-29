@@ -6,6 +6,8 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.TargetSaleAndYoyCountVO;
+import com.erp.model.bi.vo.TargetSaleAndYoySumVO;
 import com.erp.model.bi.vo.TargetSaleCountVO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -31,6 +33,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-销售额（区分新老品）
+     * menuCode = "bi:indicator:sales"
+     * code = indicator_sales
      */
     @PostMapping("/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -38,13 +42,15 @@ public class BiTargetSaleController extends BaseController {
 //            menuCode = "bi:indicator:sales",
 //            tableAlias = "dmp_order_info"
 //    )
-    public ApiResult countSales(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleSumVO vo = dmpOrderInfoService.sumSales(dto);
+    public ApiResult<TargetSaleAndYoySumVO> countSales(@RequestBody @Validated BiFilterDTO dto){
+        TargetSaleAndYoySumVO vo = dmpOrderInfoService.getSalesAndYoy(dto);
         return success(vo);
     }
 
     /**
      * 指标-销量
+     * menuCode = "bi:indicator:sales:volume"
+     * code = indicator_volume
      */
     @PostMapping("/sales/volume")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -53,12 +59,14 @@ public class BiTargetSaleController extends BaseController {
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult countSalesVolume(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleCountVO vo = dmpOrderInfoService.countSalesVolume(dto);
+        TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countSalesVolumeAndYoy(dto);
         return success(vo);
     }
 
     /**
      * 指标-订单量
+     * menuCode = "bi:indicator:order:quantity"
+     * code = indicator_quantity
      */
     @PostMapping("/order/quantity")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -67,12 +75,14 @@ public class BiTargetSaleController extends BaseController {
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult countOrderQuantity(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleCountVO vo = dmpOrderInfoService.countOrderQuantity(dto);
+        TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countOrderQuantityAndYoy(dto);
         return success(vo);
     }
 
     /**
      * 指标-退款率
+     * menuCode = "bi:indicator:refund:rate"
+     * code = indicator_refund_rate
      */
     @PostMapping("/refund/rate")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -81,12 +91,14 @@ public class BiTargetSaleController extends BaseController {
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult countRefundRate(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleSumVO vo = dmpOrderInfoService.countRefundRate(dto);
+        TargetSaleAndYoySumVO vo = dmpOrderInfoService.countRefundRateAndYoy(dto);
         return success(vo);
     }
 
     /**
-     * 指标-退款金额
+     * 指标-退货金额
+     * menuCode = "bi:indicator:refund:amount"
+     * code = indicator_refund_amount
      */
     @PostMapping("/refund/amount")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -95,12 +107,14 @@ public class BiTargetSaleController extends BaseController {
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult countRefundAmount(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleSumVO vo = dmpOrderInfoService.countRefundAmount(dto);
+        TargetSaleAndYoySumVO vo = dmpOrderInfoService.countRefundAmountAndYoy(dto);
         return success(vo);
     }
 
     /**
      * 指标-退款订单数
+     * menuCode = "bi:indicator:refund:order:number"
+     * code = indicator_refund_order
      */
     @PostMapping("/refund/order/number")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -109,12 +123,14 @@ public class BiTargetSaleController extends BaseController {
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult countRefundOrderNumber(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleCountVO vo = dmpOrderInfoService.countRefundOrderNum(dto);
+        TargetSaleAndYoyCountVO vo = dmpOrderInfoService.countRefundOrderNumAndYoy(dto);
         return success(vo);
     }
 
     /**
      * 指标-客单价
+     * menuCode = "bi:indicator:customer:price"
+     * code = indicator_customer_price
      */
     @PostMapping("/customer/price")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -134,6 +150,8 @@ public class BiTargetSaleController extends BaseController {
 
     /**
      * 指标-国内销售占比
+     * menuCode = "bi:indicator:domestic:ratio"
+     * code = indicator_domestic_ratio
      */
     @PostMapping("/domestic/sales/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -146,31 +164,4 @@ public class BiTargetSaleController extends BaseController {
         return success(vo);
     }
 
-    /**
-     * 指标-销售额环比
-     */
-    @PostMapping("/ring/ratio")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:indicator:ring:ratio",
-//            tableAlias = "dmp_order_info"
-//    )
-    public ApiResult countRingRatio(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleSumVO vo = dmpOrderInfoService.statisticsRingRatio(dto);
-        return success(vo);
-    }
-
-    /**
-     * 指标-销售额同比
-     */
-    @PostMapping("/yoy/ratio")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:indicator:yoy:ratio",
-//            tableAlias = "dmp_order_info"
-//    )
-    public ApiResult countYoyRatio(@RequestBody @Validated BiFilterDTO dto){
-        TargetSaleSumVO vo = dmpOrderInfoService.statisticsYoyRatio(dto);
-        return success(vo);
-    }
 }

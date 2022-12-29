@@ -10,5 +10,13 @@ import java.util.Date;
 @Mapper
 public interface DmpShopChangeLogMapper extends BaseMapper<DmpShopChangeLogEntity> {
 
+    /**
+     * 查询店铺负责人
+     * @Author Luo_WG
+     * @Date 2022/12/29 16:21
+     * @param shopId shopId
+     * @param date date
+     * @return com.erp.model.dmp.entity.DmpShopChangeLogEntity
+     **/
     DmpShopChangeLogEntity getShopChargeName(@Param("shopId") String shopId, @Param("date") Date date);
 }

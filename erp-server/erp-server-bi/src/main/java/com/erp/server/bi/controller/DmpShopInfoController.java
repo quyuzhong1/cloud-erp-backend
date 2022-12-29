@@ -132,7 +132,8 @@ public class DmpShopInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
         dmpShopInfoService.exportExcel(dto, response);
+        return  success();
     }
 }

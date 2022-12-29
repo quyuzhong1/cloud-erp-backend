@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -31,9 +32,12 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         }
         List<BiDataSourceCostDetailEntity> detailEntities = lambdaQuery()
                 .in(BiDataSourceCostDetailEntity::getId, costIds)
-                .eq(BiDataSourceCostDetailEntity::getCostType, dictValues)
+                .in(BiDataSourceCostDetailEntity::getCostType, dictValues)
                 .list();
 
+        if(CollectionUtil.isEmpty(detailEntities)){
+            return new HashMap<>(0);
+        }
         Map<String, List<BiDataSourceCostDetailEntity>> detailMap = detailEntities.stream()
                 .collect(Collectors.groupingBy(BiDataSourceCostDetailEntity::getCostId));
         HashMap<String, Map<String, BigDecimal>> entityMap = new HashMap<>(detailMap.keySet().size());

@@ -88,8 +88,9 @@ public class DmpOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    public void exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
         dmpOrderInfoService.exportExcel(dto, response);
+        return success();
     }
 
 
@@ -102,7 +103,7 @@ public class DmpOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping("/importOrderFile")
-    public void importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType, dmpOrderInfoService, dmpShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -115,10 +116,12 @@ public class DmpOrderInfoController extends BaseController {
                 sb.append(date);
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                return failure();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return  success();
     }
 
 
@@ -130,7 +133,7 @@ public class DmpOrderInfoController extends BaseController {
      * @param response
      */
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -149,7 +152,7 @@ public class DmpOrderInfoController extends BaseController {
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
-
+        return success();
     }
 
 }

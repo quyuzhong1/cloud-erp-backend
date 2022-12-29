@@ -118,20 +118,6 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     DmpOrderInfoEntity getByPlatformOrderId(String platformOrderId);
 
     /**
-     * 统计环比增长率
-     * @param dto
-     * @return
-     */
-    TargetSaleSumVO statisticsRingRatio(BiFilterDTO dto);
-
-    /**
-     * 统计同比增长率
-     * @param dto
-     * @return
-     */
-    TargetSaleSumVO statisticsYoyRatio(BiFilterDTO dto);
-
-    /**
      * 季度销售额指标分析
      * @param dto
      * @return
@@ -195,4 +181,46 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     List<SalesCompletionInfoVO> sumProductTypeCompletion(BiFilterDTO dto);
+
+    /**
+     * 获取销售额,同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto);
+
+    /**
+     * 获取销量，同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto);
+
+    /**
+     * 获取订单量，同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoyCountVO countOrderQuantityAndYoy(BiFilterDTO dto);
+
+    /**
+     * 获取退款率，同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoySumVO countRefundRateAndYoy(BiFilterDTO dto);
+
+    /**
+     * 获取退货金额，同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoySumVO countRefundAmountAndYoy(BiFilterDTO dto);
+
+    /**
+     * 退款订单数, 同比，环比
+     * @param dto
+     * @return
+     */
+    TargetSaleAndYoyCountVO countRefundOrderNumAndYoy(BiFilterDTO dto);
 }
