@@ -48,7 +48,7 @@ public class DmpShopInfoExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "店铺状态", index = 4)
-    private Integer status;
+    private String statusName;
 
     /**
      * 店铺标识

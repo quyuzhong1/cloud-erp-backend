@@ -14,14 +14,14 @@ import lombok.NoArgsConstructor;
 public class BiSalesMonitoringViewVO {
 
     /**
-     * 销量监控
-     */
-    private SeriesVO<BiSalesMonitoringTableVO> salesQtyMonitoring;
-
-    /**
      * 销售额监控
      */
     private SeriesVO<BiSalesMonitoringTableVO> salesAmountMonitoring;
+
+    /**
+     * 销量监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> salesQtyMonitoring;
 
     /**
      * 新品销售额监控

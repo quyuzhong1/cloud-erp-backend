@@ -15,7 +15,7 @@
         from dmp_shop_change_log dscl
         <where>
             <if test="params.searchContent != null and params.searchContent != ''">
-                and dscl.id like concat('%',#{params.searchContent},'%')
+                and dscl.shop_id like concat('%',#{params.searchContent},'%')
             </if>
         </where>
     </select>
