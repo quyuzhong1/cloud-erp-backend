@@ -1,14 +1,15 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.ExcelUtil;
@@ -27,17 +28,22 @@ import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.TimeTypeEnum;
+import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.mapper.DmpOrderInfoMapper;
 import com.erp.server.bi.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -67,6 +73,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private RedisService redisService;
     @Resource
     private BiTargetManagementService biTargetManagementService;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
@@ -91,13 +102,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     @Override
     public void exportExcel(DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
         //查询所有数据
-        List<DmpOrderInfoDTO> list = baseMapper.getAllDmpOrderInfo(dto);
-        if (CollectionUtils.isEmpty(list)) {
+        List<DmpOrderInfoExcelDTO> excelList = baseMapper.getAllDmpOrderInfo(dto);
+        if (CollectionUtils.isEmpty(excelList)) {
             return;
         }
-        list.forEach(obj ->obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState())));
-        //导出销售数据
-        List<DmpOrderInfoExcelDTO> excelList = BeanUtil.copyToList(list,DmpOrderInfoExcelDTO.class);
         String fileName = getFileName("销售数据导出");
         ExcelUtil.export(fileName, "销售数据导出", excelList, DmpOrderInfoExcelDTO.class, response);
         return;
@@ -980,6 +988,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         TargetSaleCountVO yoyVo = countRefundOrderNum(dto);
 
         return new TargetSaleAndYoyCountVO(currentVo, ringVo, yoyVo);
+    }
+
+    @Override
+    public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+        //系统中已存在的订单
+        List<DmpOrderInfoEntity> orderList = this.list();
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,orderList,plmTaskFeign,dmpOrderItemService, this, dmpShopInfoService, sysUserFeign);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
+            if (list.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/dmpOrderInfo.xlsx";
+                String name = "dmpOrderInfo";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                return false;
+            }
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.Default);
+        }
+        return  true;
     }
 
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,

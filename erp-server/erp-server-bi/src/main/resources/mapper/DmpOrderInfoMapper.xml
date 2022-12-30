@@ -72,7 +72,7 @@
 
     </select>
 
-    <select id="getAllDmpOrderInfo" resultType="com.erp.model.dmp.dto.DmpOrderInfoDTO">
+    <select id="getAllDmpOrderInfo" resultType="com.erp.model.dmp.dto.DmpOrderInfoExcelDTO">
         select
         doi.platform_order_id,
         doi.source_platform,
@@ -86,13 +86,24 @@
         doi.man_street,
         doi.second_street,
         doi.country_name_cn,
-        doi.order_state,
+       case when doi.order_state = 2 then '配货中'
+            when doi.order_state = 3 then '已发货'
+            when doi.order_state = 4 then '已完成'
+            when doi.order_state = 5 then '已作废'
+            else '' end order_state_name,
         doi.correction_status,
         doi.create_time,
         doi.platform_order_id,
         doi.delivery_time,
-        doi.charge_name
+        doi.charge_name,
+        doi.currency_code,
+        doi2.sku_no,
+        doi2.item_name,
+        doi2.sell_price,
+        doi2.quantity,
+        round(doi2.sell_price * doi2.quantity,2) as sellAmount
         from dmp_order_info doi
+        left join dmp_order_item doi2 on doi.id = doi2.order_id
         <where>
         <if test="params.platformOrderId != null and params.platformOrderId != ''">
             and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')

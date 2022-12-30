@@ -1,8 +1,5 @@
 package com.erp.server.bi.controller;
 
-import com.alibaba.excel.EasyExcel;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
@@ -10,11 +7,9 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
-import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.listener.DmpOrderInfoExcelListener;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
@@ -28,11 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
 
 /**
  * 数据源管理
@@ -108,24 +100,8 @@ public class DmpOrderInfoController extends BaseController {
      */
     @PostMapping("/importOrderFile")
     public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,dmpOrderItemService, dmpOrderInfoService, dmpShopInfoService, sysUserFeign);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/dmpOrderInfo.xlsx";
-                String name = "dmpOrderInfo";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                return failure();
-            }
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
-        }
-        return  success();
+        Boolean flag = dmpOrderInfoService.importOrderFile(excelFile, importType, response);
+        return flag == true ? this.success() : this.failure();
     }
 
 

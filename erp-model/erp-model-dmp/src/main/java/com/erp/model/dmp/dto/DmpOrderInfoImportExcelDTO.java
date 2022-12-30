@@ -141,18 +141,18 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 单价
      */
-    @ExcelProperty(value = "*单价", index = 19)
+    @ExcelProperty(value = "*单价", index = 20)
     private BigDecimal sellPrice;
 
     /**
      * 数量
      */
-    @ExcelProperty(value = "*数量", index = 20)
+    @ExcelProperty(value = "*数量", index = 21)
     private Integer quantity;
 
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误信息", index = 21)
+    @ExcelProperty(value = "错误信息", index = 22)
     private String errorMsg;
 }

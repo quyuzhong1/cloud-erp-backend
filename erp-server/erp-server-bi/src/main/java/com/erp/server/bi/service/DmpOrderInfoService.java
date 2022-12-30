@@ -9,6 +9,7 @@ import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -223,4 +224,14 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     TargetSaleAndYoyCountVO countRefundOrderNumAndYoy(BiFilterDTO dto);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2022/12/30 9:20
+     * @param excelFile
+     * @param importType
+     * @param response
+     * @return Boolean
+     */
+    Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
 }
