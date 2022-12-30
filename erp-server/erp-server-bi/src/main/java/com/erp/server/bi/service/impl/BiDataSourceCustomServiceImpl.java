@@ -240,29 +240,19 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         if (ObjectUtils.isEmpty(biModuleEntity)) {
             return resultMap;
         }
-        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
-        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+        //判断是否是固定4个分析报表
+        Integer dataType = DataTypeEnum.getCodeByDesc(biModuleEntity.getName());
+        if (ObjectUtils.isEmpty(dataType)) {
             return resultMap;
         }
-        //数据类型
-        Integer dataSource = biSysModuleEntity.getDataSource();
-        //指标名称
-        String targetNames = biSysModuleEntity.getTargetNames();
-        //数据维度(趋势图类型)
-        Integer dataDimension = biSysModuleEntity.getDataDimension();
-        if (ObjectUtils.isEmpty(dataSource) || StringUtils.isBlank(targetNames) || ObjectUtils.isEmpty(dataDimension)) {
-            return resultMap;
-        }
-        List<String> targetNameList = Arrays.stream(targetNames.split(",")).collect(Collectors.toList());
-
         //根据类型、数据类型、指标名称、年份查询
-        List<LinkedHashMap<String,Object>> list = this.getCustomByParams(dto.getType(), dataSource, targetNameList, dto.getYear(),dto.getTargetType());
+        List<LinkedHashMap<String,Object>> list = this.getCustomByParams(dto.getType(), dataType, null, dto.getYear(),dto.getTargetType());
         if (CollectionUtils.isEmpty(list)) {
             return resultMap;
         }
         List<LinkedHashMap<String,Object>> dataMapList = new ArrayList<>();
         LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
-        renewBiDataSourceCustom(list,headMap,dataDimension);
+        renewBiDataSourceCustom(list,headMap,dto.getType());
         BiDataSourceCustomEnum[] values = BiDataSourceCustomEnum.values();
         //删除新增固定表头,保留指标名称、目标值
         for (BiDataSourceCustomEnum value:values) {

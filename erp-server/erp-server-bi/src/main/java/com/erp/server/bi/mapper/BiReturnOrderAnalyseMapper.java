@@ -10,6 +10,8 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 @Mapper
 public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntity> {
 
@@ -38,7 +40,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-事业部

@@ -8,10 +8,10 @@ package com.erp.server.bi.enums;
  */
 public enum DataTypeEnum {
 
-    DATAMARKET(0, "市场数据","自助-市场"),
-    DATASCM(1, "供应链数据","自助-供应链"),
-    DATAMANAGE(2, "经营数据","自助-经营"),
-    DATAFINANCE(3, "财务数据","自助-财务");
+    DATAMARKET(0, "市场数据","市场分析"),
+    DATASCM(1, "供应链数据","供应链分析"),
+    DATAMANAGE(2, "经营数据","经营分析"),
+    DATAFINANCE(3, "财务数据","财务分析");
 
     private Integer code;
     private String name;
@@ -46,6 +46,16 @@ public enum DataTypeEnum {
         DataTypeEnum[] enums = values();
         for (DataTypeEnum typeEnum : enums) {
             if (typeEnum.getName().equals(name)) {
+                return typeEnum.getCode();
+            }
+        }
+        return null;
+    }
+
+    public static Integer getCodeByDesc(String desc) {
+        DataTypeEnum[] enums = values();
+        for (DataTypeEnum typeEnum : enums) {
+            if (typeEnum.getDesc().equals(desc)) {
                 return typeEnum.getCode();
             }
         }

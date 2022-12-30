@@ -16,6 +16,7 @@ import com.erp.server.bi.service.BiReturnOrderAnalyseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 退货分析相关/一级模块
@@ -67,11 +68,9 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(query, biFilterDTO.getParams());
-        return new PagingVO(returnOrderAnalyseTableVoIPage);
+    public List<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(BiFilterDTO biFilterDTO) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVOIPage = baseMapper.returnOrderAnalByPlatformPaging(biFilterDTO);
+        return returnOrderAnalyseTableVOIPage;
     }
 
     /**
@@ -85,7 +84,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
     public PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(PagingDTO<BiFilterDTO> biFilterDTO) {
         biFilterDTO.getParams().setParam(biFilterDTO.getParam());
         Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(query, biFilterDTO.getParams());
+        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByDeptPaging(query, biFilterDTO.getParams());
         return new PagingVO(returnOrderAnalyseTableVoIPage);
     }
 

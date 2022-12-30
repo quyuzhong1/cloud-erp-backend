@@ -28,6 +28,6 @@ public interface BiSubjectDefaultService extends IService<BiSubjectDefaultEntity
     void deleteBySubjectId(String subjectId);
 
 
-    BiSubjectEntity getDefault(String userId);
+    List<BiSubjectEntity> getDefault(String userId);
 
 }

@@ -1,6 +1,7 @@
 package com.common.core.utils;
 
-import org.dozer.DozerBeanMapper;
+import com.github.dozermapper.core.DozerBeanMapperBuilder;
+import com.github.dozermapper.core.Mapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
  * @Created by yl
  */
 public class BeanMapper {
-    private static DozerBeanMapper dozerBeanMapper = new DozerBeanMapper();
+    private static Mapper dozerBeanMapper =  DozerBeanMapperBuilder.buildDefault();
 
     public static void copy(Object source, Object destinationObject) {
         if (source != null) {

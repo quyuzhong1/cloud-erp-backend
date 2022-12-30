@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 退货分析相关/一级模块
@@ -38,7 +39,7 @@ public class BiReturnOrderAnalyseController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>>
      **/
     @PostMapping("/returnOrderAnalByCategoryPaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByCategoryPaging", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByCategoryPaging", tableAlias = "doi")
     public ApiResult<PagingVO<ReturnOrderAnalyseTableVO>> returnOrderAnalByCategoryPaging(@RequestBody @Validated PagingDTO<BiFilterDTO> dto) {
         PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByCategoryPaging(dto);
         return success(returnOrderAnalyseTableVoPagingVO);
@@ -52,7 +53,7 @@ public class BiReturnOrderAnalyseController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>>
      **/
     @PostMapping("/returnOrderAnalByShopPaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByShopPaging", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByShopPaging", tableAlias = "doi")
     public ApiResult<PagingVO<ReturnOrderAnalyseTableVO>> returnOrderAnalByShopPaging(@RequestBody @Validated PagingDTO<BiFilterDTO> dto) {
         PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByShopPaging(dto);
         return success(returnOrderAnalyseTableVoPagingVO);
@@ -66,9 +67,9 @@ public class BiReturnOrderAnalyseController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>>
      **/
     @PostMapping("/returnOrderAnalByPlatformPaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByPlatformPaging", tableAlias = "doi")
-    public ApiResult<PagingVO<ReturnOrderAnalyseTableVO>> returnOrderAnalByPlatformPaging(@RequestBody @Validated PagingDTO<BiFilterDTO> dto) {
-        PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByPlatformPaging(dto);
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByPlatformPaging", tableAlias = "doi")
+    public ApiResult<List<ReturnOrderAnalyseTableVO>> returnOrderAnalByPlatformPaging(@RequestBody @Validated BiFilterDTO dto) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByPlatformPaging(dto);
         return success(returnOrderAnalyseTableVoPagingVO);
     }
 
@@ -80,7 +81,7 @@ public class BiReturnOrderAnalyseController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>>
      **/
     @PostMapping("/returnOrderAnalByDeptPaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByDeptPaging", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByDeptPaging", tableAlias = "doi")
     public ApiResult<PagingVO<ReturnOrderAnalyseTableVO>> returnOrderAnalByDeptPaging(@RequestBody @Validated PagingDTO<BiFilterDTO> dto) {
         PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByDeptPaging(dto);
         return success(returnOrderAnalyseTableVoPagingVO);
@@ -94,7 +95,7 @@ public class BiReturnOrderAnalyseController extends BaseController {
      * @return com.erp.common.dto.base.ApiResult<com.erp.common.vo.PagingVO<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>>
      **/
     @PostMapping("/returnOrderAnalByDate")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByDate", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByDate", tableAlias = "doi")
     public ApiResult<PagingVO<DateReturnOrderVO>> returnOrderAnalByDate(@RequestBody @Validated PagingDTO<ReturnOrderFilterDTO> dto) {
         PagingVO<DateReturnOrderVO> dateReturnOrderVOPagingVO = biReturnOrderAnalyseService.returnOrderAnalByDate(dto);
         return success(dateReturnOrderVOPagingVO);

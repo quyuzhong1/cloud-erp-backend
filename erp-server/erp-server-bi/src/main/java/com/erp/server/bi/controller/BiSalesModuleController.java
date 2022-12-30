@@ -330,8 +330,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<PeopleSalesRankVO>> byPeopleMonthRank() {
-        return success();
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleMonthRank(@RequestBody @Validated BiFilterDTO dto) {
+        List<PeopleSalesRankVO> result=salesOrderService.byPeopleMonthRank(dto);
+        return success(result);
     }
 
     /**
@@ -345,8 +346,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<PeopleSalesRankVO>> byPeopleQuarterRank() {
-        return success();
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleQuarterRank(@RequestBody @Validated BiFilterDTO dto) {
+        List<PeopleSalesRankVO> result=salesOrderService.byPeopleQuarterRank(dto);
+        return success(result);
     }
 
     /**
@@ -360,8 +362,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<PeopleSalesRankVO>> byPeopleYearRank() {
-        return success();
+    public ApiResult<List<PeopleSalesRankVO>> byPeopleYearRank(@RequestBody @Validated BiFilterDTO dto) {
+        List<PeopleSalesRankVO> result=salesOrderService.byPeopleYearRank(dto);
+        return success(result);
     }
 
 

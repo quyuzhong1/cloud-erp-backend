@@ -92,9 +92,9 @@ public class BiSysModuleController extends BaseController {
     /**
      * 分析页面编辑配置查询
      */
-    @GetMapping("/getByModuleId")
-    public ApiResult getByModuleId(@RequestParam("moduleId") String moduleId) {
-        ModuleSysConfigurationDTO dto = this.sysModuleService.getByModuleId(moduleId);
+    @GetMapping("/getBySysModuleId")
+    public ApiResult getBySysModuleId(@RequestParam("sysModuleId") String sysModuleId) {
+        ModuleSysConfigurationDTO dto = this.sysModuleService.getBySysModuleId(sysModuleId);
         return success(dto);
     }
 

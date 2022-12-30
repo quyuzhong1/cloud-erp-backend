@@ -4,7 +4,8 @@
 
 
     <select id="getDefaultSubject" resultType="com.erp.model.bi.entity.BiSubjectEntity">
-         SELECT * FROM bi_subject
-         WHERE id=(SELECT subject_id FROM bi_subject_default WHERE user_id=#{userId} LIMIT 1)
+         SELECT bs.* FROM bi_subject bs
+         LEFT JOIN bi_subject_default bd on  bs.id=bd.subject_id
+         WHERE bd.user_id=#{userId} AND bs.is_deleted=0
     </select>
 </mapper>
