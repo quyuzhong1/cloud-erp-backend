@@ -1,11 +1,9 @@
 package com.erp.server.sys.controller.feign;
 
 import com.erp.common.controller.BaseController;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.server.sys.service.SysDepartmentService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -26,5 +24,10 @@ public class SysDeptFeignController extends BaseController {
     @PostMapping("/getDeptIdList")
     public List<String> getMarketingCenterDeptIds(@RequestBody String deptName) {
         return departmentService.getDeptIds(deptName);
+    }
+
+    @GetMapping("/getDeptList")
+    public List<SysDepartmentDTO> getDeptList() {
+        return departmentService.getDeptList();
     }
 }

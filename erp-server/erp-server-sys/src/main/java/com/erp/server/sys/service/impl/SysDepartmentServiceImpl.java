@@ -155,7 +155,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Override
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
-                .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1,2)))
+                .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -189,6 +189,12 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             resultList.addAll(childrenDepartIds);
         }
         return resultList;
+    }
+
+    @Override
+    public List<SysDepartmentDTO> getDeptList() {
+
+        return baseMapper.getDeptList();
     }
 
     /**
