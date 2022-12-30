@@ -243,6 +243,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtils.isEmpty(costList)) {
             return;
         }
+        list.stream().forEach(obj ->obj.remove("id"));
         List<String> headList = new ArrayList<>();
         for (Map.Entry<String,Object> map:heads.entrySet()) {
             String value = map.getValue().toString();
