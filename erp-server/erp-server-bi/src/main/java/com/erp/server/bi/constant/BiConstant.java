@@ -11,4 +11,9 @@ public interface BiConstant {
     String PID = "0";
 
     Integer OK = 1;
+
+
+    Integer NEW = 1;
+
+    Integer OLD = 0;
 }
