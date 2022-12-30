@@ -15,8 +15,8 @@
             bdsc.combination
         from bi_data_source_cost bdsc
         <where>
-            <if test="params.month != null ">
-                and to_char(bdsc.month,'yyyyMM') = to_char(#{params.month}::timestamp,'yyyyMM')
+            <if test="params.month != null and params.shopName != ''">
+                and to_char(bdsc.month,'yyyy-MM') = #{params.month}
             </if>
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
