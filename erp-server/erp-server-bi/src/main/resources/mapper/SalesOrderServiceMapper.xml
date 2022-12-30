@@ -1929,4 +1929,153 @@
         GROUP BY i.new_sign,o.dept_id
     </select>
 
+    <select id="byMarketingCenter" resultType="com.erp.model.bi.vo.SalesFlagVO">
+       SELECT round(SUM ( o.order_fee * o.currency_rate ) / 10000, 4) AS sales,
+       EXTRACT(MONTH FROM ${timeFlag})  flag,
+      COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
+      SUM ( i.quantity ) AS salesQuantity FROM
+      dmp_order_item i 	LEFT JOIN dmp_order_info o ON i.order_id = o.id
+      WHERE
+      EXTRACT ( YEAR FROM ${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
+
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+
+        GROUP BY
+	EXTRACT ( MONTH FROM ${timeFlag} )
+    </select>
+
+    <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT round(SUM ( o.order_fee * o.currency_rate ) / 10000, 4) AS sales,
+        EXTRACT(MONTH FROM ${timeFlag})  flag,
+        COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
+        SUM ( i.quantity ) AS salesQuantity FROM
+        dmp_order_item i 	LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        WHERE
+        EXTRACT ( YEAR FROM ${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
+
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+
+        GROUP BY
+        EXTRACT ( MONTH FROM ${timeFlag} )
+
+    </select>
+
 </mapper>

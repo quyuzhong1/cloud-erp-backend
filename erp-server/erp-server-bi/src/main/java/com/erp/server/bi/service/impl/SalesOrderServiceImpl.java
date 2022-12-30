@@ -1147,11 +1147,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setNewProductSales(newProductSales);
             vo.setOldProductSales(oldProductSales);
-            Integer newSalesQuantity=salesList.stream().
+            Integer newSalesQuantity = salesList.stream().
                     filter(s -> s.getFlag().equals(newFlag)).
                     mapToInt(SalesFlagVO::getSalesQuantity).
                     sum();
-            Integer oldSalesQuantity=salesList.stream().
+            Integer oldSalesQuantity = salesList.stream().
                     filter(s -> s.getFlag().equals(oldFlag)).
                     mapToInt(SalesFlagVO::getSalesQuantity).
                     sum();
@@ -1596,9 +1596,41 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byMarketingCenter(BiFilterDTO dto) {
+        List<SalesCountVO> resultList = new ArrayList<>(12);
         String deptName = "营销中心";
-        List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
-        return null;
+        //  List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
+        String timeFlag = "o.delivery_time";
+        if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
+            timeFlag = "o.platform_create_time";
+        }
+        List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag);
+
+        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag);
+        //获取到当前月
+        int nowMonth = LocalDate.now().getMonthValue();
+        int year = LocalDate.now().getYear();
+        for (int m = 1; m <= nowMonth; m++) {
+            int month = m;
+            SalesCountVO vo = new SalesCountVO();
+            vo.setName(year + "年" + m + "月份");
+            SalesFlagVO flag = list.stream().filter(s -> s.getFlag().equals(month)).
+                    findFirst().orElse(null);
+            BigDecimal sales=BigDecimal.ZERO;
+            if (flag != null) {
+                vo.setSalesQuantity(flag.getSalesQuantity());
+                 sales = flag.getSales();
+                vo.setSales(sales);
+            }
+            SalesFlagVO LastFlag = lastYearList.stream().filter(s -> s.getFlag().equals(month)).
+                    findFirst().orElse(null);
+            if(LastFlag!=null){
+                vo.setYearBasisRatio(getChainRelativeRatio(sales,LastFlag.getSales()));
+            }
+
+            resultList.add(vo);
+        }
+
+        return resultList;
     }
 
     /**

@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 销售额模块Api 接口
+ * 销售相关
  *
  * @Classname BiSalesBusinessDivisionController
  * @Description TODO
