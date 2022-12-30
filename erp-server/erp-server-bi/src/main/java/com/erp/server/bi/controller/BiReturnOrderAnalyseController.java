@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
+import com.erp.model.bi.vo.DateBarAndLineVO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
 import com.erp.server.bi.service.BiReturnOrderAnalyseService;
@@ -91,8 +92,8 @@ public class BiReturnOrderAnalyseController extends BaseController {
      **/
     @PostMapping("/returnOrderAnalByDate")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByDate", tableAlias = "doi")
-    public ApiResult<List<DateReturnOrderVO>> returnOrderAnalByDate(@RequestBody @Validated ReturnOrderFilterDTO dto) {
-        List<DateReturnOrderVO> dateReturnOrderVOList = biReturnOrderAnalyseService.returnOrderAnalByDate(dto);
-        return success(dateReturnOrderVOList);
+    public ApiResult<DateBarAndLineVO> returnOrderAnalByDate(@RequestBody @Validated ReturnOrderFilterDTO dto) {
+        DateBarAndLineVO dateBarAndLineVO = biReturnOrderAnalyseService.returnOrderAnalByDate(dto);
+        return success(dateBarAndLineVO);
     }
 }

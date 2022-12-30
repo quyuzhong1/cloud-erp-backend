@@ -4,6 +4,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
+import com.erp.model.bi.vo.DateBarAndLineVO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
 
@@ -59,5 +60,5 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    List<DateReturnOrderVO> returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO);
+    DateBarAndLineVO returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO);
 }

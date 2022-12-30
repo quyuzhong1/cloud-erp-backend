@@ -7,8 +7,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
-import com.erp.model.bi.vo.DateReturnOrderVO;
-import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.server.bi.mapper.BiReturnOrderAnalyseMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -16,6 +15,7 @@ import com.erp.server.bi.service.BiReturnOrderAnalyseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -90,7 +90,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public List<DateReturnOrderVO> returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO) {
+    public DateBarAndLineVO returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO) {
         List<DateReturnOrderVO> dateReturnOrderVOIPage = null;
         switch (biFilterDTO.getDateType()) {
             case "DAY":
@@ -112,7 +112,28 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
                 dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(biFilterDTO);
                 break;
         }
-        return dateReturnOrderVOIPage;
+        DateBarAndLineVO barAndLineVO = new DateBarAndLineVO();
+        List<String> listDate = new ArrayList<>();
+        List<DateRefundOrderRateVO> dateRefundOrderRateVOList = new ArrayList<>();
+        List<DateRefundRate> dateRefundRateList = new ArrayList<>();
+        dateReturnOrderVOIPage.forEach(req -> {
+            listDate.add(req.getDateTime());
+            DateRefundOrderRateVO dateRefundOrderRateVO = new DateRefundOrderRateVO();
+            dateRefundOrderRateVO.setDateTime(req.getDateTime());
+            dateRefundOrderRateVO.setRefundOrderRate(req.getRefundOrderRate());
+            dateRefundOrderRateVOList.add(dateRefundOrderRateVO);
+
+            DateRefundRate dateRefundRate = new DateRefundRate();
+            dateRefundRate.setDateTime(req.getDateTime());
+            dateRefundRate.setRefundRate(req.getRefundRate());
+            dateRefundRateList.add(dateRefundRate);
+
+        });
+        barAndLineVO.setDateTime(listDate);
+        barAndLineVO.setDateRefundOrderRateVOList(dateRefundOrderRateVOList);
+        barAndLineVO.setDateRefundRateList(dateRefundRateList);
+
+        return barAndLineVO;
     }
 
 
