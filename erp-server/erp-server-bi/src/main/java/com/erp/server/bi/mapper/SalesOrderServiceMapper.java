@@ -79,7 +79,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesBaseVO> byPeople(@Param("params") BiFilterDTO dto);
 
-    List<SalesCountVO> byDept(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byDept(@Param("params") BiFilterDTO dto);
 
     List<SalesCountVO> byNewAndOld(@Param("params") BiFilterDTO dto);
 
@@ -100,4 +100,6 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto);
 
     List<SalesFlagVO> byPeopleNewAndOld(@Param("params") BiFilterDTO dto);
+
+    List<SalesFlagVO> byDeptNewAndOld(@Param("params") BiFilterDTO dto);
 }

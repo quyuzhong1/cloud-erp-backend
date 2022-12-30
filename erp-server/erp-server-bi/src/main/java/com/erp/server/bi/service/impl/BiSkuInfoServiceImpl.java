@@ -83,6 +83,43 @@ public class BiSkuInfoServiceImpl extends ServiceImpl<BiSkuInfoMapper, DmpSkuInf
         return resultList;
     }
 
+    
+    /**
+     * 获取sku 属性信息 自研发 外采
+     * @author yl
+     * @date 2022-12-30 11:33
+     * @param
+     * @return java.util.List<com.erp.model.bi.vo.SkuCategoryVO>
+     */
+    @Override
+    public List<SkuCategoryVO> getSkuPropertyList() {
+        List<DmpSkuInfoEntity> list = this.getPropertyList();
+        Map<String, List<DmpSkuInfoEntity>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(DmpSkuInfoEntity::getItemProperty));
+        List<SkuCategoryVO> resultList = new ArrayList<>(groupMap.size());
+        String defaultCategory = "无";
+        for (Map.Entry<String, List<DmpSkuInfoEntity>> item : groupMap.entrySet()) {
+            SkuCategoryVO vo = new SkuCategoryVO();
+            List<DmpSkuInfoEntity> skuInfoList = item.getValue();
+            String itemProperty = item.getKey();
+            if (StringUtils.isNotBlank(itemProperty)) {
+                vo.setName(itemProperty);
+            } else {
+                vo.setName(defaultCategory);
+            }
+            vo.setSkuList(skuInfoList.stream().map(DmpSkuInfoEntity::getSkuNo).collect(Collectors.toList()));
+            resultList.add(vo);
+        }
+        return resultList;
+    }
+
+    private List<DmpSkuInfoEntity> getPropertyList() {
+        LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ne(DmpSkuInfoEntity::getItemProperty, "")
+                .or().ne(DmpSkuInfoEntity::getItemProperty, null);
+        return this.list(queryWrapper);
+    }
+
     private List<DmpSkuInfoEntity> getBrandList() {
         LambdaQueryWrapper<DmpSkuInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.ne(DmpSkuInfoEntity::getBrandName, "")

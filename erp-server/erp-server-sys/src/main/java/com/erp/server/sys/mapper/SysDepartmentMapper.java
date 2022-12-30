@@ -2,6 +2,7 @@ package com.erp.server.sys.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentTreeDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -19,4 +20,6 @@ import java.util.List;
 public interface SysDepartmentMapper extends BaseMapper<SysDepartmentEntity> {
 
     List<SysDepartmentTreeDTO> findTree();
+
+    List<SysDepartmentDTO> getDeptList();
 }

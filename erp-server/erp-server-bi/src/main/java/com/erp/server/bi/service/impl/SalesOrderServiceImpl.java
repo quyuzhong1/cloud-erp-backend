@@ -6,6 +6,7 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
@@ -1042,11 +1043,125 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byDept(BiFilterDTO dto) {
-        List<SalesCountVO> list = baseMapper.byDept(dto);
+        LocalDateTime startTime = dto.getStartTime();
+        LocalDateTime endTime = dto.getEndTime();
+        List<SalesBaseVO> list = baseMapper.byDept(dto);
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
 
-        return null;
+        //获取到环比的开始日期
+        LocalDateTime ringRatioStartDate = LocalDateUtil.getRingRatioDate(startTime, endTime);
+        //获取到环比的结束日期
+        LocalDateTime ringRatioEndDate = startTime;
+        dto.setStartTime(ringRatioStartDate);
+        dto.setEndTime(ringRatioEndDate);
+        //这个是环比的查询出来的
+        List<SalesBaseVO> chainList = baseMapper.byDept(dto);
+
+        //同比开始时间
+        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        //同比开始时间
+        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        dto.setStartTime(yearBasisStartTime);
+        dto.setEndTime(yearBasisEndTime);
+        //这是同比查询出来的
+        List<SalesBaseVO> yearBasisList = baseMapper.byDept(dto);
+
+        List<SalesCountVO> resultList = new ArrayList<>(list.size());
+        //总的
+        BigDecimal totalSales = list.stream().
+                map(SalesBaseVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (SalesBaseVO item : list) {
+            String flagNo = item.getFlagNo();
+
+            SalesCountVO vo = new SalesCountVO();
+            SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(flagNo)).
+                    findFirst().orElse(null);
+            if (dept != null) {
+                vo.setName(dept.getName());
+            } else {
+                vo.setName("无");
+            }
+
+            BigDecimal sales = item.getSales();
+            vo.setSales(sales);
+            vo.setSalesRatio(getSalesRatio(totalSales, item.getSales()));
+
+            SalesBaseVO chainVO = chainList.stream().filter(c -> c.getFlagNo().equals(flagNo))
+                    .findFirst().orElse(null);
+            if (chainVO != null) {
+                vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+
+            SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
+                    .findFirst().orElse(null);
+            if (yearBasisVO != null) {
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+            }
+            vo.setOrderCount(item.getOrderCount());
+            vo.setSalesQuantity(item.getSalesQuantity());
+            resultList.add(vo);
+        }
+        return resultList;
     }
 
+
+    /**
+     * 二级级模块  事业部-新/老品
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    public List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto) {
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SalesFlagVO> list = baseMapper.byDeptNewAndOld(dto);
+        //新品
+        Integer newFlag = BiConstant.NEW;
+        //老品
+        Integer oldFlag = BiConstant.OLD;
+        List<ProductNewAndOldVO> resultList = new ArrayList<>(list.size());
+        Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesFlagVO::getName));
+
+        for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            String deptId = item.getKey();
+            List<SalesFlagVO> salesList = item.getValue();
+            ProductNewAndOldVO vo = new ProductNewAndOldVO();
+            SysDepartmentDTO dept = deptList.stream().filter(u -> u.getId().equals(deptId)).
+                    findFirst().orElse(null);
+            if (dept != null) {
+                vo.setName(dept.getName());
+            } else {
+                vo.setName("无");
+            }
+
+            BigDecimal newProductSales = salesList.stream().
+                    filter(s -> s.getFlag().equals(newFlag)).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal oldProductSales = salesList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag)).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setNewProductSales(newProductSales);
+            vo.setOldProductSales(oldProductSales);
+            Integer newSalesQuantity=salesList.stream().
+                    filter(s -> s.getFlag().equals(newFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).
+                    sum();
+            Integer oldSalesQuantity=salesList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).
+                    sum();
+            vo.setNewSalesQuantity(newSalesQuantity);
+            vo.setOldSalesQuantity(oldSalesQuantity);
+            resultList.add(vo);
+        }
+
+        return resultList;
+    }
 
     /**
      * 销售相关 一级模块  新/老品销售额
@@ -1198,7 +1313,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setOldProductSales(oldItemSales);
-            Integer oldItemSalesQuantity= salesFlagList.stream().
+            Integer oldItemSalesQuantity = salesFlagList.stream().
                     filter(s -> s.getFlag().equals(oldFlag)).
                     mapToInt(SalesFlagVO::getSalesQuantity).sum();
             vo.setOldSalesQuantity(oldItemSalesQuantity);
@@ -1343,7 +1458,59 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public StatisticalDataVO byProductType(BiFilterDTO dto) {
-        return null;
+        StatisticalDataVO statistical = new StatisticalDataVO();
+
+        List<SalesBaseVO> list = baseMapper.byCategory(dto);
+        //获取到sku 属性分类
+        List<SkuCategoryVO> itemPropertyList = skuInfoService.getSkuPropertyList();
+        //自研
+        List<SkuCategoryVO> homemadeList = itemPropertyList.stream().
+                filter(s -> BiConstant.HOMEMADE.equals(s.getName())).
+                collect(Collectors.toList());
+        List<String> skuHomemadeList = homemadeList.stream().
+                flatMap(s -> s.getSkuList().stream()).collect(Collectors.toList());
+
+        //外采
+        List<SkuCategoryVO> purchaseList = itemPropertyList.stream().
+                filter(s -> BiConstant.PURCHASE.equals(s.getName())).
+                collect(Collectors.toList());
+
+        List<String> skuPurchaseList = purchaseList.stream().
+                flatMap(s -> s.getSkuList().stream()).collect(Collectors.toList());
+
+        statistical.setName("新品自研/外采贡献分析");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("销售额");
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        // BiConstant.HOMEMADE
+        //自研
+        Map<String, Object> homemadeMap = new HashMap<>();
+        homemadeMap.put("name", "自研");
+        BigDecimal homemadeSales = list.stream().
+                filter(s -> skuHomemadeList.contains(s.getFlagNo())).
+                map(SalesBaseVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+        homemadeMap.put("value", homemadeSales);
+        dataList.add(homemadeMap);
+
+        //外采
+        Map<String, Object> purchaseMap = new HashMap<>();
+        purchaseMap.put("name", "外采");
+        BigDecimal purchaseSales = list.stream().
+                filter(s -> skuPurchaseList.contains(s.getFlagNo())).
+                map(SalesBaseVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+        purchaseMap.put("value", purchaseSales);
+        dataList.add(purchaseMap);
+        series.setData(Collections.singletonList(dataList));
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        chartVO.setXAxis(Arrays.asList("自研", "外采"));
+        statistical.setData(chartVO);
+        return statistical;
     }
 
     /**

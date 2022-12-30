@@ -53,5 +53,6 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
 
     List<String>  getDeptIds(String deptName);
 
+    List<SysDepartmentDTO> getDeptList();
 }
 
