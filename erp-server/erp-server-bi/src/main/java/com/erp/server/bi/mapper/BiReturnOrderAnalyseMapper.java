@@ -22,7 +22,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-店铺
@@ -31,7 +31,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-平台
@@ -49,7 +49,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期-年
@@ -58,7 +58,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<DateReturnOrderVO> returnOrderAnalByDateYear(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<DateReturnOrderVO> returnOrderAnalByDateYear(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期-季度
@@ -67,7 +67,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<DateReturnOrderVO> returnOrderAnalByDateQuarter(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<DateReturnOrderVO> returnOrderAnalByDateQuarter(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期-月
@@ -76,7 +76,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<DateReturnOrderVO> returnOrderAnalByDateMonth(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<DateReturnOrderVO> returnOrderAnalByDateMonth(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期-周
@@ -85,7 +85,7 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<DateReturnOrderVO> returnOrderAnalByDateWeek(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<DateReturnOrderVO> returnOrderAnalByDateWeek(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期-日
@@ -94,5 +94,5 @@ public interface BiReturnOrderAnalyseMapper extends BaseMapper<DmpOrderInfoEntit
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    IPage<DateReturnOrderVO> returnOrderAnalByDateDay(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<DateReturnOrderVO> returnOrderAnalByDateDay(@Param("params") BiFilterDTO biFilterDTO);
 }

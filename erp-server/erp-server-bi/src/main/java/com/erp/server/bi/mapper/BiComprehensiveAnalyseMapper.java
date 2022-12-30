@@ -1,11 +1,8 @@
 package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,21 +18,19 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * SKU矩阵
      * @Author Luo_WG
      * @Date 2022/12/26 10:35
-     * @param query query
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    IPage<MatrixVO> skuMatrix(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<MatrixVO> skuMatrix(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 店铺矩阵
      * @Author Luo_WG
      * @Date 2022/12/26 10:35
-     * @param query query
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    IPage<MatrixVO> shopMatrix(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<MatrixVO> shopMatrix(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 平台店铺对比趋势
@@ -50,11 +45,10 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * 品类矩阵
      * @Author Luo_WG
      * @Date 2022/12/26 10:35
-     * @param query query
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    IPage<MatrixVO> categoryMatrix(Page query, @Param("params") BiFilterDTO biFilterDTO);
+    List<MatrixVO> categoryMatrix(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 销售明细表-SKU

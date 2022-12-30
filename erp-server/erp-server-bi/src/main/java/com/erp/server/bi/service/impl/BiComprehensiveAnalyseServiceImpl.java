@@ -48,11 +48,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @Override
-    public PagingVO<MatrixVO> skuMatrix(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<MatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(query, biFilterDTO.getParams());
-        return new PagingVO(skuMatrixVOIPage);
+    public List<MatrixVO> skuMatrix(BiFilterDTO biFilterDTO) {
+        List<MatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
+        return skuMatrixVOIPage;
     }
 
     /**
@@ -63,11 +61,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @Override
-    public PagingVO<MatrixVO> shopMatrix(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(query, biFilterDTO.getParams());
-        return new PagingVO(skuMatrixVOIPage);
+    public List<MatrixVO> shopMatrix(BiFilterDTO biFilterDTO) {
+        List<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(biFilterDTO);
+        return skuMatrixVOIPage;
     }
 
     /**
@@ -104,11 +100,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @Override
-    public PagingVO<MatrixVO> categoryMatrix(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<MatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(query, biFilterDTO.getParams());
-        return new PagingVO(skuMatrixVOIPage);
+    public List<MatrixVO> categoryMatrix(BiFilterDTO biFilterDTO) {
+        List<MatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(biFilterDTO);
+        return skuMatrixVOIPage;
     }
 
     /**

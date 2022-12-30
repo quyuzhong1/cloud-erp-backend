@@ -41,8 +41,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/skuMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:skuMatrix", tableAlias = "doi")
-    public ApiResult<PagingVO<MatrixVO>> skuMatrix(@RequestBody @Validated PagingDTO<BiFilterDTO> biFilterDTO) {
-        PagingVO<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
+    public ApiResult<List<MatrixVO>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 
@@ -55,8 +55,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/shopMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:shopMatrix", tableAlias = "doi")
-    public ApiResult<PagingVO<MatrixVO>> shopMatrix(@RequestBody @Validated PagingDTO<BiFilterDTO> biFilterDTO) {
-        PagingVO<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.shopMatrix(biFilterDTO);
+    public ApiResult<List<MatrixVO>> shopMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.shopMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 
@@ -83,8 +83,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/categoryMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:categoryMatrix", tableAlias = "doi")
-    public ApiResult<PagingVO<MatrixVO>> categoryMatrix(@RequestBody @Validated PagingDTO<BiFilterDTO> biFilterDTO) {
-        PagingVO<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
+    public ApiResult<List<MatrixVO>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 
