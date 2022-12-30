@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 退货分析相关/一级模块
@@ -67,8 +68,8 @@ public class BiReturnOrderAnalyseController extends BaseController {
      **/
     @PostMapping("/returnOrderAnalByPlatformPaging")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:return:order:returnOrderAnalByPlatformPaging", tableAlias = "doi")
-    public ApiResult<PagingVO<ReturnOrderAnalyseTableVO>> returnOrderAnalByPlatformPaging(@RequestBody @Validated PagingDTO<BiFilterDTO> dto) {
-        PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByPlatformPaging(dto);
+    public ApiResult<List<ReturnOrderAnalyseTableVO>> returnOrderAnalByPlatformPaging(@RequestBody @Validated BiFilterDTO dto) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoPagingVO = biReturnOrderAnalyseService.returnOrderAnalByPlatformPaging(dto);
         return success(returnOrderAnalyseTableVoPagingVO);
     }
 

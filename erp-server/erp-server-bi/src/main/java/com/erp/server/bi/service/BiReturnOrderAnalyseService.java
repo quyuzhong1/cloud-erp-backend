@@ -7,6 +7,8 @@ import com.erp.model.bi.dto.ReturnOrderFilterDTO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
 
+import java.util.List;
+
 /**
  * 退货分析相关/一级模块
  * @Author Luo_WG
@@ -39,7 +41,7 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-事业部

@@ -13,18 +13,18 @@
         LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -111,18 +111,18 @@
         ORDER BY SUM(doit.sell_price)
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -207,18 +207,18 @@
 
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -304,18 +304,18 @@
         LEFT JOIN dmp_shop_info shop ON shop.plarform_shop_no = doi.shop_no
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -406,18 +406,18 @@
 
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -560,18 +560,18 @@
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -680,18 +680,18 @@
         GROUP BY dsi.charge_name
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -799,18 +799,18 @@
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -960,18 +960,18 @@
             </if>
 
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -1060,18 +1060,18 @@
             </if>
 
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -1160,18 +1160,18 @@
             </if>
 
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -1260,18 +1260,18 @@
             </if>
 
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
@@ -1360,18 +1360,18 @@
             </if>
 
             <if test="params.timeType == 0">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <if test="params.timeType == 1">
-                <if test="params.startTime != '' and params.startTime != null">
+                <if test="params.startTime != null">
                     AND doi.delivery_time >= #{params.startTime}
                 </if>
-                <if test="params.endTime != '' and params.endTime != null">
+                <if test="params.endTime != null">
                     AND doi.delivery_time &lt;= #{params.endTime}
                 </if>
             </if>
