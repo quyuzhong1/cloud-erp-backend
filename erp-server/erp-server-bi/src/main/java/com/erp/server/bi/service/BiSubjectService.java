@@ -102,10 +102,10 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
 
     /**
      * 复制专题id
-     * @param subjectId
+     * @param dto
      * @return
      */
-    Boolean copy(String subjectId);
+    Boolean copy(CopySubjectDTO dto);
 
     /**
      * 添加仪表盘
@@ -133,4 +133,11 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return com.erp.model.bi.dto.SubjectLayoutDetailsDTO
      */
     SubjectLayoutDetailsDTO dashboardInfo();
+
+    /**
+     * 复制仪表盘
+     * @param dto
+     * @return
+     */
+    Boolean copyDashboard(CopySubjectDTO dto);
 }

@@ -358,16 +358,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     /**
      * 复制专题
      *
-     * @param subjectId
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2022-12-15 9:27
      */
     @Override
-    public Boolean copy(String subjectId) {
+    public Boolean copy(CopySubjectDTO dto) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
+        String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
@@ -375,7 +376,14 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         BiSubjectEntity copySubject = new BiSubjectEntity();
         BeanMapper.copy(subject, copySubject);
         String newSubjectId = IdWorker.getIdStr();
+
+        String name = dto.getName();
+        //检查名字是否重复
+        checkName(null, name);
+        String shareFlag = dto.getShareFlag();
+
         copySubject.setId(newSubjectId);
+        copySubject.setShareFlag(shareFlag);
         copySubject.setCreateUserId(userId);
         copySubject.setCreateTime(nowDate);
         copySubject.setCreateUserName(userName);
@@ -385,6 +393,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         boolean flag = this.save(copySubject);
         //当复制成功的时候
         if (flag) {
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, newSubjectId);
+            }
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
         return true;
@@ -500,7 +514,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //这个是默认的
         List<BiSubjectEntity> subjectList = subjectDefaultService.getDefault(userId);
         if (CollectionUtils.isNotEmpty(subjectList)) {
-            String dashboardCategoryId= categoryId;
+            String dashboardCategoryId = categoryId;
             BiSubjectEntity subject = subjectList.stream().filter(s -> s.getCategoryId().equals(dashboardCategoryId))
                     .findFirst().orElse(null);
             if (subject != null) {
@@ -517,6 +531,57 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
 
         return null;
+    }
+
+
+    /**
+     * 复制仪表盘
+     *
+     * @param dto
+     * @return
+     */
+    @Override
+    @Transactional
+    public Boolean copyDashboard(CopySubjectDTO dto) {
+        String subjectId = dto.getSubjectId();
+        BiSubjectEntity subject = this.getById(subjectId);
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String type = DictEnum.DASHBOARD.getType();
+        String categoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+        if (dict != null) {
+            categoryId = dict.getId();
+        }
+        if (!subject.getCategoryId().equals(categoryId)) {
+            throw new ServiceException(ApiError.ERROR_97017);
+        }
+        String name = dto.getName();
+        String shareFlag = dto.getShareFlag();
+        checkName(null, name);
+        BiSubjectEntity copySubject = new BiSubjectEntity();
+        String newSubjectId = IdWorker.getIdStr();
+        copySubject.setId(newSubjectId);
+        copySubject.setName(name);
+        copySubject.setShareFlag(shareFlag);
+        copySubject.setCategoryId(subject.getCategoryId());
+        copySubject.setCategoryName(subject.getCategoryName());
+        copySubject.setIsFrequently(dto.getIsFrequently());
+        boolean flag = this.save(copySubject);
+        //当复制成功的时候
+        if (flag) {
+            //如果是分享
+            if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+                List<String> userList = dto.getShareUserIdList();
+                //添加专题的分享用户
+                subjectShareService.addSubjectShare(userList, newSubjectId);
+            }
+            layoutService.copySubjectLayout(newSubjectId, subjectId);
+        }
+        return flag;
     }
 
 

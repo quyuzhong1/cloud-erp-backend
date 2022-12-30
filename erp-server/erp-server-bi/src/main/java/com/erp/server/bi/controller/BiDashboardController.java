@@ -3,6 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.model.bi.dto.CopySubjectDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
@@ -87,6 +88,15 @@ public class BiDashboardController extends BaseController {
         String userId = commonService.getUserInfo().getUid();
         MyDashboardDTO myDashboard = subjectService.myDashboard(userId, searchKeyword);
         return success(myDashboard);
+    }
+
+    /**
+     * 复制仪表盘
+     */
+    @PostMapping("/copy")
+    public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
+        Boolean copyResult = subjectService.copyDashboard(dto);
+        return copyResult == true ? success() : failure();
     }
 
 }
