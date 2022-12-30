@@ -7,6 +7,7 @@ import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.SiteEnum;
@@ -838,7 +839,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 int lastRanking = lastList.indexOf(last) + 1;
                 vo.setLastRanking(lastRanking);
                 BigDecimal lastWeekSales = last.getSales();
-                vo.setChainRelativeRatio(getChainRelativeRatio(weekSales,lastWeekSales));
+                vo.setChainRelativeRatio(getChainRelativeRatio(weekSales, lastWeekSales));
             }
 
             resultList.add(vo);
@@ -899,7 +900,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 int lastRanking = lastList.indexOf(last) + 1;
                 vo.setLastRanking(lastRanking);
                 BigDecimal lastMonthSales = last.getSales();
-                vo.setChainRelativeRatio(getChainRelativeRatio(monthSales,lastMonthSales));
+                vo.setChainRelativeRatio(getChainRelativeRatio(monthSales, lastMonthSales));
             }
 
             resultList.add(vo);
@@ -961,7 +962,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 int lastRanking = lastList.indexOf(last) + 1;
                 vo.setLastRanking(lastRanking);
                 BigDecimal lastQuarterSales = last.getSales();
-                vo.setChainRelativeRatio(getChainRelativeRatio(quarterSales,lastQuarterSales));
+                vo.setChainRelativeRatio(getChainRelativeRatio(quarterSales, lastQuarterSales));
             }
 
             resultList.add(vo);
@@ -969,7 +970,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         return resultList;
     }
-
 
 
     /**
@@ -1024,7 +1024,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 int lastRanking = lastList.indexOf(last) + 1;
                 vo.setLastRanking(lastRanking);
                 BigDecimal lastYearSales = last.getSales();
-                vo.setChainRelativeRatio(getChainRelativeRatio(yearSales,lastYearSales));
+                vo.setChainRelativeRatio(getChainRelativeRatio(yearSales, lastYearSales));
             }
 
             resultList.add(vo);
@@ -1161,11 +1161,50 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Override
     public List<ProductNewAndOldVO> byPeopleNewAndOld(BiFilterDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
 
-        List<SalesFlagVO> chainList = baseMapper.byPeopleNewAndOld(dto);
+        //新品
+        Integer newFlag = BiConstant.NEW;
+        //老品
+        Integer oldFlag = BiConstant.OLD;
 
+        List<SalesFlagVO> list = baseMapper.byPeopleNewAndOld(dto);
 
-        return null;
+        Map<String, List<SalesFlagVO>> groupMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesFlagVO::getName));
+        List<ProductNewAndOldVO> resultList = new ArrayList<>(groupMap.size());
+
+        for (Map.Entry<String, List<SalesFlagVO>> item : groupMap.entrySet()) {
+            String name = item.getKey();
+            List<SalesFlagVO> salesFlagList = item.getValue();
+            ProductNewAndOldVO vo = new ProductNewAndOldVO();
+            FindUserDTO userInfo = userList.stream().filter(u -> u.getUserId().equals(name)).
+                    findFirst().orElse(null);
+            if (userInfo != null) {
+                vo.setName(userInfo.getUserName());
+            }
+
+            BigDecimal newItemSales = salesFlagList.stream().
+                    filter(s -> s.getFlag().
+                            equals(newFlag)).map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            Integer newItemSalesQuantity = salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(newFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).sum();
+            vo.setNewProductSales(newItemSales);
+            vo.setNewSalesQuantity(newItemSalesQuantity);
+            BigDecimal oldItemSales = salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag)).
+                    map(SalesFlagVO::getSales).
+                    reduce(BigDecimal.ZERO, BigDecimal::add);
+            vo.setOldProductSales(oldItemSales);
+            Integer oldItemSalesQuantity= salesFlagList.stream().
+                    filter(s -> s.getFlag().equals(oldFlag)).
+                    mapToInt(SalesFlagVO::getSalesQuantity).sum();
+            vo.setOldSalesQuantity(oldItemSalesQuantity);
+            resultList.add(vo);
+        }
+        return resultList;
     }
 
 
@@ -1437,8 +1476,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setData(chartVO);
         return statistical;
     }
-
-
 
 
 }
