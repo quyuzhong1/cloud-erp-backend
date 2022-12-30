@@ -152,33 +152,43 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
             if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue()).multiply(BigDecimal.valueOf(100)));
+                if (targetSaleSumVO.getValue() != null) {
+                    saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                } else {
+                    saleDetailVO.setSaleProportion(BigDecimal.ZERO);
+                }
             }
             //计算去年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
             if (skuYearSakeAmountVO != null) {
                 saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
-                saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount).multiply(BigDecimal.valueOf(100)));
+                if (yearSakeAmount != null) {
+                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                } else {
+                    saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
+                }
+
             }
             //计算前年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
             if (skuYearSakeAmountVOT != null) {
                 saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
-                saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT).multiply(BigDecimal.valueOf(100)));
+                if (yearSakeAmountT != null) {
+                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                } else {
+                    saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
+                }
             }
 
             //退货环比
             SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO1 != null) {
-                saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount()).multiply(BigDecimal.valueOf(100)));
+            if (skuYearSakeAmountVOT != null) {
+                if (skuYearSakeAmountVO1.getAmount() != null) {
+                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
+                } else {
+                    saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
+                }
             }
-
-            if (skuYearSakeAmountVO1.getAmount() != null) {
-                saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount()).multiply(BigDecimal.valueOf(100)));
-            } else {
-                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-            }
-
         }
         return saleDetailList;
     }
