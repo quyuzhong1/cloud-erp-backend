@@ -12,6 +12,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
+import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
 import com.erp.model.bi.vo.BiSalesMonitoringViewVO;
 import com.erp.model.bi.vo.SeriesVO;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
@@ -125,6 +126,13 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     }
 
     private void listSalesQtyMonitoring(BiSalesMonitoringEntity entity,SeriesVO<BiSalesMonitoringViewVO> seriesVO) {
+        Integer type = MathUtil.ONE;//1代表销量
+        //查询本月份销量
+        List<BiSalesMonitoringTableVO>  sumSecondMonthSaleList =  this.baseMapper.listSumSecondMonthSale(type);
+        //查询上月份销量
+        List<BiSalesMonitoringTableVO>  sumFirstMonthSaleList =  this.baseMapper.listSumFirstMonthSale(type);
+        //查询全年销量
+        List<BiSalesMonitoringTableVO>  sumYearSaleList =  this.baseMapper.listSumYearSale(type);
 
         //查询销量监控数据
         if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0 ) {
@@ -132,7 +140,6 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
 
         }
-
     }
 
     /**

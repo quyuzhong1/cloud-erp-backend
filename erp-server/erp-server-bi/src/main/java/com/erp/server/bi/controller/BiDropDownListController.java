@@ -121,6 +121,31 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
+     * 退货状态下拉框
+     * @return
+     */
+    @GetMapping("/ReturnStatus/list")
+    public ApiResult<List<SelectShowVO>> listReturnStatusDropDown() {
+        List<SelectShowVO> result = Arrays.stream(ReturnOrderStatusEnum.values())
+                .map(x -> new SelectShowVO().setCode(x.getCode()).setName(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+
+    /**
+     * 退款状态下拉框
+     * @return
+     */
+    @GetMapping("/RefundStatus/list")
+    public ApiResult<List<SelectShowVO>> listRefundStatusDropDown() {
+        List<SelectShowVO> result = Arrays.stream(RefundStatusEnum.values())
+                .map(x -> new SelectShowVO().setCode(x.getCode()).setName(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
      * 时间类型下拉列表
      * @return
      */

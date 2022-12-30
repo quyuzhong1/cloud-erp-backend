@@ -3,5 +3,17 @@
 <mapper namespace="com.erp.server.bi.mapper.BiSalesMonitoringMapper">
 
 
+    <select id="listSumSecondMonthSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
+
+    </select>
+
+    <select id="listSumFirstMonthSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
+
+    </select>
+
+    <select id="listSumYearSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
+
+    </select>
+
 
 </mapper>
