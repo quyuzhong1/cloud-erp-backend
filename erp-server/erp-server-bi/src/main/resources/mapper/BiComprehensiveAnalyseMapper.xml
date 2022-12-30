@@ -38,7 +38,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -109,8 +109,7 @@
         LEFT JOIN dmp_order_info doi ON shop.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
-        GROUP BY shop.plarform_shop_no,shop."name"
-        ORDER BY SUM(doit.sell_price)
+
         <where>
             <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -136,7 +135,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -194,6 +193,7 @@
 
         </where>
         GROUP BY shop.plarform_shop_no,shop."name"
+        ORDER BY SUM(doit.sell_price)
     </select>
 
     <select id="shopContrastTrend" resultType="com.erp.model.bi.vo.ContrastTrendVO">
@@ -232,7 +232,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -330,7 +330,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -431,7 +431,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -585,7 +585,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -679,7 +679,7 @@
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
-        GROUP BY dsi.charge_name
+
         <where>
             <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -705,7 +705,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -763,7 +763,7 @@
             </if>
 
         </where>
-        GROUP BY dsi.name, dsi.plarform_shop_no
+        GROUP BY dsi.charge_name
     </select>
 
     <select id="userYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
@@ -824,7 +824,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -985,7 +985,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -1085,7 +1085,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -1185,7 +1185,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -1285,7 +1285,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
@@ -1385,7 +1385,7 @@
                     #{deptId}
                 </foreach>
             </if>
-            /*平台*/
+            <!--平台-->
             <if test="params.platform!=null and params.platform.size>0">
                 AND doi.source_platform IN
                 <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
