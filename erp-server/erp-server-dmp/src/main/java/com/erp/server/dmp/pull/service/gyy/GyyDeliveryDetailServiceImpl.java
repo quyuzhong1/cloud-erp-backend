@@ -138,7 +138,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         } else {
             LocalDateTime date = LocalDateTime.now();
             DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(1);
+            LocalDateTime localDateTime = date.minusDays(30);
             st = sdf.format(localDateTime);
             sd = sdf.format(date);
             dto.getJobTaskDTO().setLastTime(date);
@@ -160,8 +160,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
             datas.put("method", dto.getJobTaskDTO().getApiCode());
             datas.put("appkey", gyyAppEntity.getAppKey());
             datas.put("sessionkey", gyyAppEntity.getSessionKey());
-            datas.put("start_delivery_date", st);
-            datas.put("end_delivery_date", sd);
+            datas.put("start_delivery_date", "2022-06-01 00:00:00");
+            datas.put("end_delivery_date", "2022-06-02 00:00:00");
+
             datas.put("page_no", pageIndex);
             datas.put("page_size", pageSize);
             datas.put("delivery", 1);
