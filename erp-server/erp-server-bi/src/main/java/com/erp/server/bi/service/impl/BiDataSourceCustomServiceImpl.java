@@ -240,8 +240,12 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         if (ObjectUtils.isEmpty(biModuleEntity)) {
             return resultMap;
         }
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            return resultMap;
+        }
         //判断是否是固定4个分析报表
-        Integer dataType = DataTypeEnum.getCodeByDesc(biModuleEntity.getName());
+        Integer dataType = DataTypeEnum.getCodeByDesc(biSysModuleEntity.getName());
         if (ObjectUtils.isEmpty(dataType)) {
             return resultMap;
         }

@@ -13,4 +13,38 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BiSalesMonitoringViewVO {
 
+    /**
+     * 销量监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> salesQtyMonitoring;
+
+    /**
+     * 销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> salesAmountMonitoring;
+
+    /**
+     * 新品销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> newProductsMonitoring;
+
+    /**
+     * 老品销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> oldProductsMonitoring;
+
+    /**
+     * 品牌销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> brandNameMonitoring;
+
+    /**
+     * 品类销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> categoryMonitoring;
+
+    /**
+     * 人员销售额监控
+     */
+    private SeriesVO<BiSalesMonitoringTableVO> chargeNameMonitoring;
 }

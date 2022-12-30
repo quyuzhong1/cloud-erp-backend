@@ -10,6 +10,7 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
+import com.erp.model.bi.vo.BiSalesMonitoringViewVO;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
 import com.erp.server.bi.service.BiSalesMonitoringService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -77,6 +78,11 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             resultList =  BeanUtil.copyToList(list,BiSalesMonitoringDTO.class);
         }
         return resultList;
+    }
+
+    @Override
+    public List<BiSalesMonitoringViewVO> listBiSalesMonitoringView() {
+        return null;
     }
 
     /**
