@@ -264,7 +264,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                 headMap.remove(value.getCode());
             }
         }
-        List<String> headList = headMap.values().stream().map(String::valueOf).collect(Collectors.toList());
+        List<String> headList = headMap.keySet().stream().map(String::valueOf).collect(Collectors.toList());
         for (LinkedHashMap<String,Object> map: list) {
             LinkedHashMap<String,Object> dataMap = new LinkedHashMap<>();
             for (String head : headList) {

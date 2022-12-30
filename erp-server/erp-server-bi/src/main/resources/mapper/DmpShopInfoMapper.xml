@@ -44,7 +44,9 @@
         dsi.platform_name,
         dsi.site,
         dsi.charge_name,
-        dsi.status,
+        case when dsi.status = 1 then '启用'
+             when dsi.status = 0 then '禁用'
+             else '' end statusName,
         dsi.store_sign,
         dsi.create_user_name,
         dsi.create_time,
