@@ -373,8 +373,11 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             for (BiDataSourceCustomEnum value:values) {
                 cnMap.put(value.getName(),map.get(value.getCode()));
             }
-            if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) || BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) || BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
-                for (BiDataSourceCustomDetailEntity entity: biDataSourceCustomDetailList) {
+            //相同主表id的赋值
+            if (CollectionUtils.isNotEmpty(biDataSourceCustomDetailList))  {
+                List<BiDataSourceCustomDetailEntity> detailEntityList = biDataSourceCustomDetailList.stream().filter(obj -> obj.getCustomId().equals(map.get("id"))).collect(Collectors.toList());
+                if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) || BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) || BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
+                for (BiDataSourceCustomDetailEntity entity: detailEntityList) {
                     if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type)) {
                         map.put(entity.getYear().toString().concat("年"),entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
                         cnMap.put(entity.getYear().toString().concat("年"),entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
@@ -394,6 +397,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                         continue;
                     }
                 }
+            }
             }
             if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(type) || BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(type)) {
                 for (BiDictEntity dcit : dictList) {
