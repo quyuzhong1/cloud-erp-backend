@@ -33,7 +33,7 @@ public enum BiDataSourceCostEnum {
 
     public static String getName(String code) {
         for (BiDataSourceCostEnum biDataSourceCostEnum : BiDataSourceCostEnum.values()) {
-            if (code.equals(biDataSourceCostEnum.getCode())) {
+            if (biDataSourceCostEnum.getCode().equals(code)) {
                 return biDataSourceCostEnum.getName();
             }
         }

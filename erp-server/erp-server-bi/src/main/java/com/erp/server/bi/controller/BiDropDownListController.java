@@ -277,7 +277,7 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
-     * 销售监控类型下拉列表
+     * 销售监控-类型下拉列表
      * @return
      */
     @GetMapping("/biSalesMonitoring/type/list")
@@ -285,6 +285,18 @@ public class BiDropDownListController extends BaseController {
         List<BiDictEntity> biDictList = biDictService.listEntityByType(DictEnum.SALESMONITORINGTYPE.getType());
         List<SelectShowVO> result = biDictList.stream()
                 .map(x -> new SelectShowVO().setCode(Integer.valueOf(x.getValue())).setName(x.getName()).setDesc(x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 销售监控-比较符下拉列表
+     * @return
+     */
+    @GetMapping("/compare/list")
+    public ApiResult<List<SelectShowVO>> listCmpareDropDown() {
+        List<SelectShowVO> result = Arrays.stream(BiCompareEnum.values())
+                .map(x -> new SelectShowVO().setName(x.getCode()).setDesc(x.getCode()))
                 .collect(Collectors.toList());
         return success(result);
     }
