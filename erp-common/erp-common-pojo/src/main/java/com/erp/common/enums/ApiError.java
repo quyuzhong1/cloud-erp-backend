@@ -209,7 +209,7 @@ public enum ApiError implements Serializable {
     ERROR_97015(97015,"汇率日期不能为空"),
     ERROR_97016(97016,"销售监控设置不能为空"),
     ERROR_97017(97017,"不是仪表盘"),
-
+    ERROR_97018(97018,"销售监控类型不能重复选择"),
 
 
     ERROR_end(1000000, "系统错误");

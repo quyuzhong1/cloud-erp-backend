@@ -20,7 +20,7 @@ public interface BiSalesMonitoringService extends IService<BiSalesMonitoringEnti
      * @date: 2022/12/29 17:00
      * @param list
      */
-    void batchAdd(List<BiSalesMonitoringDTO> list);
+    Boolean batchAdd(List<BiSalesMonitoringDTO> list);
     /**
      * @description: 批量更新
      * @author Will

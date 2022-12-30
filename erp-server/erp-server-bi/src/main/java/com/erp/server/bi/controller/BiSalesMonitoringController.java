@@ -33,8 +33,8 @@ public class BiSalesMonitoringController extends BaseController {
      */
     @PostMapping("/batchAdd")
     public ApiResult batchAdd (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
-        biSalesMonitoringService.batchAdd(list);
-        return success();
+        Boolean flag = biSalesMonitoringService.batchAdd(list);
+        return flag == true ? success() : failure();
     }
 
     /**
