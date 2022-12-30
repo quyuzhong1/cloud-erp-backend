@@ -5,15 +5,19 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoImportExcelDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
 import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,9 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     private DmpOrderInfoService dmpOrderInfoService;
 
+    private DmpOrderItemService dmpOrderItemService;
+
+
     private DmpShopInfoService dmpShopInfoService;
 
     private SysUserFeign sysUserFeign;
@@ -36,9 +43,10 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
-    public DmpOrderInfoExcelListener(Integer importType, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
+    public DmpOrderInfoExcelListener(Integer importType, DmpOrderItemService dmpOrderItemService, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
+        this.dmpOrderItemService = dmpOrderItemService;
         this.dmpShopInfoService = dmpShopInfoService;
         this.sysUserFeign = sysUserFeign;
         this.list = new ArrayList<>();
@@ -63,8 +71,17 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");
         }
+        if (!StrUtils.isLetterDigit(dto.getPlatformOrderId())) {
+            errorMsgList.add("订单号只能包含字母和数字");
+        }
+
         if (StringUtils.isBlank(dto.getSourcePlatform())) {
             errorMsgList.add("平台名称不能为空");
+        } else {
+            SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(dto.getSourcePlatform());
+            if (ObjectUtils.isEmpty(platformEnum)) {
+                errorMsgList.add("系统中不存在此平台名称");
+            }
         }
         if (StringUtils.isBlank(dto.getSite())) {
             errorMsgList.add("站点不能为空");
@@ -100,6 +117,9 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("下单电话2不正确");
             }
         }
+        if(StringUtils.isBlank(dto.getCountryNameCn())) {
+            errorMsgList.add("国家名称不能为空");
+        }
 
         if(StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("销售员不能为空");
@@ -123,7 +143,18 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("订单状态不正确：订单状态：配货中，已发货，已完成，已作废，退货，退款");
             }
         }
-
+        if(StringUtils.isBlank(dto.getSkuNo())) {
+            errorMsgList.add("SKU不能为空");
+        }
+        if(StringUtils.isBlank(dto.getItemName())) {
+            errorMsgList.add("品名不能为空");
+        }
+        if(ObjectUtils.isEmpty(dto.getSellPrice())) {
+            errorMsgList.add("单价不能为空");
+        }
+        if(ObjectUtils.isEmpty(dto.getQuantity())) {
+            errorMsgList.add("数量不能为空");
+        }
         String errStr = "";
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
@@ -138,6 +169,14 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         entity.setOrderState(OrderStateEnum.getCodeByName(dto.getOrderStateName()));
         entity.setChargeId(chargeNameList.get(0).getUserId());
         dmpOrderInfoService.save(entity);
+        DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
+        dmpOrderItemEntity.setOrderId(entity.getId());
+        dmpOrderItemEntity.setSkuNo(dto.getSkuNo());
+        dmpOrderItemEntity.setItemName(dto.getItemName());
+        dmpOrderItemEntity.setSellPrice(dto.getSellPrice());
+        dmpOrderItemEntity.setQuantity(dto.getQuantity());
+        dmpOrderItemService.save(dmpOrderItemEntity);
+
     }
 
     public List<DmpOrderInfoImportExcelDTO> getDateList(){

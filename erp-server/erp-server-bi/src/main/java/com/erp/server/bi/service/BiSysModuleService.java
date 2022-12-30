@@ -43,8 +43,8 @@ public interface BiSysModuleService  extends IService<BiSysModuleEntity> {
      * @description: 根据模块id查询系统模块信息
      * @author Will
      * @date: 2022/12/28 16:06
-     * @param moduleId
+     * @param sysModuleId
      * @return ModuleSysConfigurationDTO
      */
-    ModuleSysConfigurationDTO getByModuleId(String moduleId);
+    ModuleSysConfigurationDTO getBySysModuleId(String sysModuleId);
 }

@@ -12,5 +12,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class BiSalesMonitoringTableVO {
-
+    /**
+     *
+     */
+    private Integer seq;
 }
