@@ -48,8 +48,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @Override
-    public List<MatrixVO> skuMatrix(BiFilterDTO biFilterDTO) {
-        List<MatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
+    public List<SkuMatrixVO> skuMatrix(BiFilterDTO biFilterDTO) {
+        List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
         return skuMatrixVOIPage;
     }
 
@@ -100,8 +100,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @Override
-    public List<MatrixVO> categoryMatrix(BiFilterDTO biFilterDTO) {
-        List<MatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(biFilterDTO);
+    public List<SkuMatrixVO> categoryMatrix(BiFilterDTO biFilterDTO) {
+        List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(biFilterDTO);
         return skuMatrixVOIPage;
     }
 

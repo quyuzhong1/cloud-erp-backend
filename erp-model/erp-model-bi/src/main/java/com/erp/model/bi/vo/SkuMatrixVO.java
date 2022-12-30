@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
-public class MatrixVO {
+public class SkuMatrixVO {
     /**
      * 名称
      */
@@ -19,7 +19,7 @@ public class MatrixVO {
     private BigDecimal sales;
 
     /**
-     * 净利润
+     * 退款+退货金额
      */
-    private BigDecimal netProfit;
+    private BigDecimal amount;
 }

@@ -41,8 +41,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/skuMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:skuMatrix", tableAlias = "doi")
-    public ApiResult<List<MatrixVO>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
+    public ApiResult<List<SkuMatrixVO>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<SkuMatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 
@@ -83,8 +83,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/categoryMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:categoryMatrix", tableAlias = "doi")
-    public ApiResult<List<MatrixVO>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
+    public ApiResult<List<SkuMatrixVO>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<SkuMatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 

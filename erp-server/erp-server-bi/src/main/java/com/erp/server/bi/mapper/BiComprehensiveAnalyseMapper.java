@@ -21,7 +21,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    List<MatrixVO> skuMatrix(@Param("params") BiFilterDTO biFilterDTO);
+    List<SkuMatrixVO> skuMatrix(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 店铺矩阵
@@ -48,7 +48,7 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    List<MatrixVO> categoryMatrix(@Param("params") BiFilterDTO biFilterDTO);
+    List<SkuMatrixVO> categoryMatrix(@Param("params") BiFilterDTO biFilterDTO);
 
     /**
      * 销售明细表-SKU
