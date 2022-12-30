@@ -3,6 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
+import com.erp.model.bi.vo.BiSalesMonitoringViewVO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +64,17 @@ public class BiSalesMonitoringController extends BaseController {
     }
 
 
+    /**
+     * 销售监控-分析报表查询
+     * @author Will
+     * @date: 2022/12/30 12:27
+     * @return ApiResult<List<BiSalesMonitoringViewVO>>
+     */
+    @GetMapping("/view")
+    public ApiResult<List<BiSalesMonitoringViewVO>> listBiSalesMonitoringView() {
+        List<BiSalesMonitoringViewVO> list =  biSalesMonitoringService.listBiSalesMonitoringView();
+        return success(list);
+    }
 
 
 }
