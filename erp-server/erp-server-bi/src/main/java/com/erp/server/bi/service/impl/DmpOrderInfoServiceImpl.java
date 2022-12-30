@@ -162,7 +162,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 品牌
                 .in(CollectionUtils.isNotEmpty(dto.getBrand()), "brand", dto.getBrand())
                 // 人员
-                .in(CollectionUtils.isNotEmpty(dto.getUserId()), "charge_name_id", dto.getUserId())
+                .in(CollectionUtils.isNotEmpty(dto.getUserId()), "charge_id", dto.getUserId())
                 // 平台
                 .in(CollectionUtils.isNotEmpty(dto.getPlatform()), "source_platform", dto.getPlatform())
                 // 店铺
@@ -532,7 +532,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 根据订单号的分组计算销量
         Map<String, Integer> orderQuantityMap = entityItemList.stream().collect(Collectors.groupingBy(DmpOrderItemEntity::getOrderId,
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
-        // 对订单号进行季度分组
+        // 对订单号进行月度分组
         Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x ->
                         // 按照季度分组
                         LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
@@ -1012,6 +1012,35 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             throw new ServiceException(ApiError.Default);
         }
         return  true;
+    }
+
+    @Override
+    public Map<Integer, BigDecimal> statisticsSalesByDate(BiFilterDTO dto, Integer type) {
+        // 查询销售额
+        List<DmpOrderInfoEntity> list = lambdaQuery()
+                .in(CollectionUtil.isNotEmpty(dto.getDepartment()), DmpOrderInfoEntity::getDeptId, dto.getDepartment())
+                .in(CollectionUtil.isNotEmpty(dto.getPlatform()), DmpOrderInfoEntity::getSourcePlatform, dto.getPlatform())
+                .in(CollectionUtil.isNotEmpty(dto.getSite()), DmpOrderInfoEntity::getSite, dto.getSite())
+                .in(CollectionUtil.isNotEmpty(dto.getShopName()), DmpOrderInfoEntity::getShopName, dto.getShopName())
+                .in(CollectionUtil.isNotEmpty(dto.getUserId()), DmpOrderInfoEntity::getChargeId, dto.getUserId())
+                .ge(2 == type && ObjectUtil.isNotEmpty(dto.getStartTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
+                .le(2 == type && ObjectUtil.isNotEmpty(dto.getEndTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
+                .list();
+        Map<Integer, BigDecimal> resultMap = new HashMap<>();
+        if (0 == type){
+            // 月份
+            resultMap = list.stream().collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
+                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+        }else if (1 == type){
+            // 季度
+            resultMap = list.stream().collect(Collectors.groupingBy(x -> (LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue()-1) / 3 + 1,
+                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+        }else {
+            // 年度
+            resultMap = list.stream().collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getYear(),
+                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+        }
+        return resultMap;
     }
 
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,

@@ -4,10 +4,14 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
+import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
+import com.erp.model.bi.vo.DateCostVO;
+import com.erp.model.bi.vo.DeptCostVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -36,4 +40,23 @@ public interface BiDataSourceCostMapper extends BaseMapper<BiDataSourceCostEntit
      * @return List<LinkedHashMap<Object>>
      */
     List<LinkedHashMap<String,Object>> getAllBiDataSourceCost(@Param("params") BiDataSourceCostSearchDTO params);
+
+    /**
+     * 成本分析部门和成本类型
+     *
+     * @param month
+     * @param dto
+     * @param dictValues
+     * @param groupName
+     * @return
+     */
+    List<DeptCostVO> sumByDeptAndCostType(@Param("month") LocalDateTime month, @Param("params") BiFilterDTO dto, @Param("dictValues") List<String> dictValues,@Param("groupName") String groupName);
+    /**
+     * 成本分析部门和成本类型
+     *
+     * @param dto
+     * @param dictValues
+     * @return
+     */
+    List<DateCostVO> sumByDateAndCostType(@Param("params") BiFilterDTO dto, @Param("dictValues") List<String> dictValues);
 }
