@@ -164,8 +164,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             if (StringUtils.isNotBlank(dmpOrderInfoEntity.getShopNo())) {
                 DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
                 if (dmpShopInfoDTO != null) {
-                    updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
-                    updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
+                    if (StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId())) {
+                        updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
+                    }
+                    if (StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
+                        updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
+                    }
                 }
             }
 
