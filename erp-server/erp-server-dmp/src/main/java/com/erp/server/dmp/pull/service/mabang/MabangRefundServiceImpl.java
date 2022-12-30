@@ -7,6 +7,7 @@ import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
@@ -14,6 +15,7 @@ import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.MabangAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.mabang.RefundOrderEntity;
 import com.erp.model.dmp.mabang.RefundOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -22,6 +24,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
+import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +59,26 @@ public class MabangRefundServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    public static void main(String[] args) {
+        GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("order-get-refund-list");
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode("order-get-refund-list");
+        jobTaskDTO.setApiId(7);
+        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setId(32L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(null);
+        jobTaskDTO.setNextTime(null);
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        List<GyyDeliveryDetailEntity> orderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        System.out.println(orderEntities);
+    }
 
     /**
      * 拉取退款数据

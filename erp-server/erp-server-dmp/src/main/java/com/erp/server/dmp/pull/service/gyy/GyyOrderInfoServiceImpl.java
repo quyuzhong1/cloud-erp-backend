@@ -185,8 +185,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
             datas.put("sessionkey", gyyAppEntity.getSessionKey());
             datas.put("date_type", 3);
             datas.put("order_state", 2);
-            datas.put("start_date", "2022-06-01 00:00:00");
-            datas.put("end_date", "2022-06-02 00:00:00");
+            datas.put("start_date", st);
+            datas.put("end_date", sd);
             datas.put("page_no", pageIndex);
             datas.put("page_size", pageSize);
 
