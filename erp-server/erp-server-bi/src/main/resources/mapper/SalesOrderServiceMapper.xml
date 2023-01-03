@@ -13,10 +13,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -82,10 +82,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -167,15 +167,15 @@
     <select id="getLastThirtyDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT round( SUM ( i.sell_price * i.quantity * i.currency_rate ), 2 ) sales,
         i.sku_no AS flagNo,COUNT ( i.order_id ) orderCount,SUM ( i.quantity ) AS salesQuantity,
-        o.paid_time AS flagDate
+        o.platform_create_time AS flagDate
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!--发货时间-->
@@ -249,7 +249,7 @@
             </if>
         </where>
         GROUP BY i.sku_no,
-        o.paid_time
+        o.platform_create_time
     </select>
 
     <select id="getBySpu" resultType="com.erp.model.bi.vo.SalesVO">
@@ -262,10 +262,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -367,10 +367,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -433,16 +433,16 @@
             o.delivery_time AS flagDate
         </if>
         <if test="params.timeType!=null and params.timeType==0">
-            o.paid_time AS flagDate
+            o.platform_create_time AS flagDate
         </if>
         FROM dmp_order_info o
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -498,7 +498,7 @@
                 o.delivery_time
             </if>
             <if test="params.timeType!=null and params.timeType==0">
-                o.paid_time
+                o.platform_create_time
             </if>
         </where>
 
@@ -513,10 +513,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -571,10 +571,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -631,10 +631,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -718,10 +718,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -807,10 +807,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -893,10 +893,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -980,10 +980,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1065,10 +1065,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    paid_time &gt;= #{params.startTime}
+                    platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND paid_time &lt;= #{params.endTime}
+                    AND platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1096,10 +1096,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1184,10 +1184,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1271,10 +1271,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1360,10 +1360,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1447,10 +1447,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1535,10 +1535,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1643,10 +1643,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1729,10 +1729,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    paid_time &gt;= #{params.startTime}
+                    platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND paid_time &lt;= #{params.endTime}
+                    AND platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1762,10 +1762,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1850,10 +1850,10 @@
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.paid_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.paid_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;= #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2011,7 +2011,6 @@
         dmp_order_item i 	LEFT JOIN dmp_order_info o ON i.order_id = o.id
         WHERE
         EXTRACT ( YEAR FROM ${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
-
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN

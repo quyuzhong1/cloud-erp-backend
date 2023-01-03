@@ -1676,5 +1676,4 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return statistical;
     }
 
-
 }

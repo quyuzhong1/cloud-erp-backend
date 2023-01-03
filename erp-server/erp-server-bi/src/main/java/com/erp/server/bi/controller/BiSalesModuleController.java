@@ -569,7 +569,7 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售相关-一级模块-营销中心销售额
+     * 销售相关-一级模块-亚马逊欧美日占比趋势分析
      * @param
      * @return
      */
