@@ -22,7 +22,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto);
 
-    List<SalesBaseVO> getLastThirtyDays(@Param("params") BiFilterDTO dto);
+    List<SalesVO> getLastDays(@Param("params") BiFilterDTO dto);
 
 
     List<SalesVO> getBySpu(BiFilterDTO dto);
@@ -48,7 +48,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto);
 
-    List<SalesBaseVO> getShopLastThirtyDays(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto);
 
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto);
 

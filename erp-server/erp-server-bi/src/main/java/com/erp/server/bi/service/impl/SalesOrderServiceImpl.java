@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -92,45 +91,42 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesVO> getBySku(BiFilterDTO dto) {
         List<SalesVO> resultList = baseMapper.getBySku(dto);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDate nowDate = LocalDate.now();
         LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
-        //查询进三十天信息
-        List<SalesBaseVO> baseList = baseMapper.getLastThirtyDays(dto);
-        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
-        for (SalesVO item : resultList) {
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
-            //近七天销售量
-            Integer lastSevenDaysSalesQuantity = baseList.stream().
-                    filter(b -> b.getFlagDate().isAfter(beforeSevenDays)
-                            && b.getFlagDate().isBefore(nowTime)
-                            && b.getFlagNo().equals(item.getName())
-                    ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
 
-            Integer lastThirtyDaysSalesQuantity = baseList.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
-                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+        //查询进三十天信息
+        List<SalesVO> lastThirtyDays = baseMapper.getLastDays(dto);
+        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
+
+        dto.setStartTime(beforeSevenDays);
+        dto.setEndTime(nowTime);
+        //查询近七天信息
+        List<SalesVO> lastSevenDays = baseMapper.getLastDays(dto);
+
+        for (SalesVO item : resultList) {
+            Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getName()) && b.getName().equals(item.getName())).
+                    mapToInt(SalesVO::getSalesQuantity).sum();
+
+            Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getName()) && b.getName().equals(item.getName())).
+                    mapToInt(SalesVO::getSalesQuantity).sum();
 
             item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
-            for (int i = 6; i >= 0; i--) {
-                LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
-                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = baseList.stream().
-                        filter(b -> b.getFlagDate().isAfter(startTime)
-                                && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getName())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
-            }
+            List<BigDecimal> salesTrend = lastSevenDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getName()) && b.getName().equals(item.getName())).
+                    map(SalesVO::getSales).collect(Collectors.toList());
             item.setSalesTrend(salesTrend);
             BigDecimal sales = item.getSales();
             Integer orderCount = item.getOrderCount();
-            //客单价
-            BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
-            item.setPerCustomerTransaction(perCustomerTransaction);
+            if (orderCount != 0 && sales != null) {
+                //客单价
+                BigDecimal perCustomerTransaction = sales.divide(new BigDecimal(orderCount), 2, BigDecimal.ROUND_HALF_UP);
+                item.setPerCustomerTransaction(perCustomerTransaction);
+            }
+
         }
 
         return resultList;
@@ -144,45 +140,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesVO> getBySpu(BiFilterDTO dto) {
-        List<SalesVO> resultList = baseMapper.getBySpu(dto);
-        LocalDateTime nowTime = LocalDateTime.now();
-        LocalDate nowDate = LocalDate.now();
-        LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
-        dto.setStartTime(beforeThirtyDays);
-        dto.setEndTime(nowTime);
-        //查询进三十天信息
-        List<SalesBaseVO> baseList = baseMapper.getLastThirtyDays(dto);
-        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
-        for (SalesVO item : resultList) {
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
-            //近七天销售量
-            Integer lastSevenDaysSalesQuantity = baseList.stream().
-                    filter(b -> b.getFlagDate().isAfter(beforeSevenDays)
-                            && b.getFlagDate().isBefore(nowTime)
-                            && b.getFlagNo().equals(item.getName())
-                    ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
-
-            Integer lastThirtyDaysSalesQuantity = baseList.stream().
-                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getName())).
-                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
-
-            item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
-            item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
-            for (int i = 6; i >= 0; i--) {
-                LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
-                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = baseList.stream().
-                        filter(b -> b.getFlagDate().isAfter(startTime)
-                                && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getName())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
-            }
-            item.setSalesTrend(salesTrend);
-        }
-
-        return resultList;
+        return null;
     }
 
 
@@ -196,7 +154,38 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesByCountryVO> getByCountry(BiFilterDTO dto) {
-        return baseMapper.getByCountry(dto);
+        List<SalesByCountryVO> list = baseMapper.getByCountry(dto);
+
+        Map<String, List<SalesByCountryVO>> countryMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesByCountryVO::getCountry));
+        Map<String, List<SalesByCountryVO>> skuMap = list.parallelStream().
+                collect(Collectors.groupingBy(SalesByCountryVO::getSku));
+        List<String> countryList = new ArrayList<>(countryMap.size());
+        for (Map.Entry<String, List<SalesByCountryVO>> item : countryMap.entrySet()) {
+            countryList.add(item.getKey());
+        }
+        List<String> skuList = new ArrayList<>(countryMap.size());
+        for (Map.Entry<String, List<SalesByCountryVO>> item : skuMap.entrySet()) {
+            skuList.add(item.getKey());
+        }
+        List<SalesByCountryVO> resultList = new ArrayList<>(skuList.size()*countryList.size());
+        for (String sku : skuList) {
+            for (String country : countryList) {
+                SalesByCountryVO vo = new SalesByCountryVO();
+                vo.setCountry(country);
+                vo.setSku(sku);
+                SalesByCountryVO product = list.stream().filter(s -> s.getSku().equals(sku)).findFirst().orElse(null);
+                if (product != null) {
+                    vo.setProductName(product.getProductName());
+                }
+                SalesByCountryVO salesInfo = list.stream().filter(s -> sku.equals(s.getSku()) && country.equals(s.getCountry())).findFirst().orElse(null);
+                if (salesInfo != null) {
+                    vo.setSales(salesInfo.getSales());
+                }
+                resultList.add(vo);
+            }
+        }
+        return resultList;
     }
 
 
@@ -221,7 +210,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
         SeriesVO<Object> series = new SeriesVO();
         series.setName("平台销售额");
-        series.setData(Collections.singletonList(resultList));
+        List<Object> list = new ArrayList<>(resultList.size());
+        for (Map<String, Object> map : resultList) {
+            list.add(map);
+        }
+        series.setData(list);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
@@ -240,39 +233,33 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<ShopSalesVO> getByShop(BiFilterDTO dto) {
         List<ShopSalesVO> resultList = baseMapper.getByShop(dto);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDate nowDate = LocalDate.now();
         LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         //查询进三十天信息
-        List<SalesBaseVO> baseList = baseMapper.getShopLastThirtyDays(dto);
+        List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto);
         LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
+
+        dto.setStartTime(beforeSevenDays);
+        dto.setEndTime(nowTime);
+
+        //查询近七天信息
+        List<SalesBaseVO> lastSevenList = baseMapper.getShopLastDays(dto);
         for (ShopSalesVO item : resultList) {
-            //七天的销售额
-            List<BigDecimal> salesTrend = new ArrayList<>(7);
+
             //近七天销售量
-            Integer lastSevenDaysSalesQuantity = baseList.stream().
-                    filter(b -> b.getFlagDate().isAfter(beforeSevenDays)
-                            && b.getFlagDate().isBefore(nowTime)
-                            && b.getFlagNo().equals(item.getShopNo())
+            Integer lastSevenDaysSalesQuantity = lastSevenList.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getShopNo())
                     ).mapToInt(SalesBaseVO::getSalesQuantity).sum();
             //近三十天销售量
-            Integer lastThirtyDaysSalesQuantity = baseList.stream().
+            Integer lastThirtyDaysSalesQuantity = lastThirtyList.stream().
                     filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getShopNo())).
                     mapToInt(SalesBaseVO::getSalesQuantity).sum();
             item.setLastSevenDaysSalesQuantity(lastSevenDaysSalesQuantity);
             item.setLastThirtyDaysSalesQuantity(lastThirtyDaysSalesQuantity);
-            for (int i = 6; i >= 0; i--) {
-                LocalDate flagDay = nowDate.minus(i, ChronoUnit.DAYS);
-                LocalDateTime startTime = LocalDateUtil.startLocalDateTime(flagDay);
-                LocalDateTime endTime = LocalDateUtil.endLocalDateTime(flagDay);
-                BigDecimal salesFlag = baseList.stream().
-                        filter(b -> b.getFlagDate().isAfter(startTime)
-                                && b.getFlagDate().isBefore(endTime)
-                                && b.getFlagNo().equals(item.getShopNo())
-                        ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-                salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
-            }
+            List<BigDecimal> salesTrend = lastSevenList.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getShopNo())
+                    ).map(SalesBaseVO::getSales).collect(Collectors.toList());
             item.setSalesTrend(salesTrend);
 
 
@@ -525,7 +512,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         chartVO.setXAxis(new ArrayList<>());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(5);
         SeriesVO<Object> series = new SeriesVO();
-        List<Map<String, Object>> list = new ArrayList<>();
+        List<Object> list = new ArrayList<>();
         //国内
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
@@ -1484,7 +1471,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         SeriesVO<Object> series = new SeriesVO();
         series.setName("销售额");
-        List<Map<String, Object>> dataList = new ArrayList<>();
+        List<Object> dataList = new ArrayList<>();
         // BiConstant.HOMEMADE
         //自研
         Map<String, Object> homemadeMap = new HashMap<>();
@@ -1638,12 +1625,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setYearBasisRatio(getChainRelativeRatio(sales, LastYearFlag.getSales()));
             }
             //当是第一个的时候
-            if(m==1){
+            if (m == 1) {
                 vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonth.getSales()));
-            }else {
-                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(month-1)).
+            } else {
+                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(month - 1)).
                         findFirst().orElse(null);
-                if(lastMonthFlag!=null){
+                if (lastMonthFlag != null) {
                     vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonthFlag.getSales()));
                 }
             }
@@ -1675,7 +1662,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SeriesVO<Object>> seriesList = new ArrayList<>(10);
         SeriesVO<Object> series = new SeriesVO();
         series.setName("站点销售额");
-        List<Map<String, Object>> dataList = new ArrayList<>();
+        List<Object> dataList = new ArrayList<>();
         for (String siteName : siteNameList) {
             Map<String, Object> siteMap = new HashMap<>();
             siteMap.put("name", siteName);

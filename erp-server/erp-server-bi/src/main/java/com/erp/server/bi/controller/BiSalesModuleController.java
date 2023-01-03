@@ -67,23 +67,6 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售额- 一级模块-SKU销售额
-     *
-     * @return
-     */
-    @PostMapping("/bySpu")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:bySpu",
-//            tableAlias = "o"
-//    )
-    public ApiResult<List<SalesVO>> getBySpu(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesVO> resultList = salesOrderService.getBySpu(dto);
-        return success(resultList);
-    }
-
-
-    /**
      * 销售相关-一级模块-SKU国家销售额
      * @param dto
      * @return
