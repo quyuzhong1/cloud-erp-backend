@@ -175,6 +175,6 @@ public class DmpOrderInfoExcelDTO implements Serializable {
      * 销售额[原币别]
      */
     @ExcelProperty(value = "销售额[原币别]", index = 22)
-    private Integer sellAmount;
+    private BigDecimal sellAmount;
 
 }

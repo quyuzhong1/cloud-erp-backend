@@ -6,7 +6,7 @@
     <select id="paging" resultType="java.util.LinkedHashMap">
         select
             bdsc.id,
-            bdsc.month,
+            to_char(bdsc.month,'yyyy-MM') as month,
             bdsc.dept_name,
             bdsc.platform_name,
             bdsc.site,
@@ -28,7 +28,7 @@
     <select id="getAllBiDataSourceCost" resultType="java.util.LinkedHashMap">
         select
         bdsc.id,
-        to_char(bdsc.month,'yyyy-MM-dd') as month,
+        to_char(bdsc.month,'yyyy-MM') as month,
         bdsc.dept_name,
         bdsc.platform_name,
         bdsc.site,

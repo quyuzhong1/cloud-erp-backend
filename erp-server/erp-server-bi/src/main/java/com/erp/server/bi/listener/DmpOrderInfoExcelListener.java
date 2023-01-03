@@ -102,7 +102,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isNotBlank(dto.getShopName())) {
             Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
             if (count == 0) {
-                errorMsgList.add("店铺在系统中未找到");
+                errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
         if (StringUtils.isBlank(dto.getBuyerName())) {
@@ -131,6 +131,9 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         }
         if(StringUtils.isBlank(dto.getCountryNameCn())) {
             errorMsgList.add("国家名称不能为空");
+        }
+        if(ObjectUtils.isNull(dto.getPlatformCreateTime())) {
+            errorMsgList.add("订单下单时间不能为空");
         }
 
         if(StringUtils.isBlank(dto.getChargeName())) {

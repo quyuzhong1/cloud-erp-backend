@@ -12,6 +12,7 @@ import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
 
     @Override
+    @Transactional
     public Boolean batchAddSettlementExchangeRate(List<Map<String, Object>> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.Default);
@@ -117,6 +119,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     }
 
     @Override
+    @Transactional
     public Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list) {
         List<BiSettlementExchangeRateEntity> list1 = this.list();
         if (CollectionUtils.isNotEmpty(list1)) {

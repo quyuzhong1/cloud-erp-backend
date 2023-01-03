@@ -3,6 +3,9 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.entity.BiDataSourceCustomDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @author Will
@@ -12,4 +15,8 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface BiDataSourceCustomDetailMapper extends BaseMapper<BiDataSourceCustomDetailEntity> {
+    /**
+     * 根据主表ids查询
+     */
+    List<BiDataSourceCustomDetailEntity> listByCustomIds(@Param("customIds") List<String> customIds);
 }

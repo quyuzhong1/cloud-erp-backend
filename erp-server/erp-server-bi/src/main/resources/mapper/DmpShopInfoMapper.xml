@@ -49,9 +49,9 @@
              else '' end statusName,
         dsi.store_sign,
         dsi.create_user_name,
-        dsi.create_time,
+        to_char(dsi.create_time,'yyyy-MM-dd HH:mm:ss') as create_time,
         dsi.update_user_name,
-        dsi.update_time
+        to_char(dsi.update_time,'yyyy-MM-dd HH:mm:ss') as update_time
         from dmp_shop_info dsi
         <where>
             <if test="params.shopName != null and params.shopName != ''">

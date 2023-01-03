@@ -2,17 +2,49 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.bi.mapper.BiSalesMonitoringMapper">
 
-
+    <!-- 查询当月销量（销售额） -->
     <select id="listSumSecondMonthSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
-
+        select
+            row_number()over() as seq,
+            doi.sku_no,
+            doi.item_name,
+               case when #{type} = 1 then sum(doi.quantity)
+                    when #{type} = 2 then sum(doi.quantity * doi.sell_price)
+                    else 0 end sumSecondMonthSale
+        from dmp_order_item doi
+        left join dmp_order_info doio on doi.order_id = doio.id
+        where to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE,'YYYYMM')
+        group by doi.sku_no,doi.item_name;
     </select>
 
+    <!-- 查询上个月销量（销售额） -->
     <select id="listSumFirstMonthSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
-
+        select
+            row_number()over() as seq,
+                doi.sku_no,
+            doi.item_name,
+            case when #{type} = 1 then sum(doi.quantity)
+                 when #{type} = 2 then sum(doi.quantity * doi.sell_price)
+                 else 0 end sumSecondMonthSale
+        from dmp_order_item doi
+                 left join dmp_order_info doio on doi.order_id = doio.id
+        where to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYYMM')
+        group by doi.sku_no,doi.item_name;
     </select>
 
+    <!-- 查询全年度销量（销售额） -->
     <select id="listSumYearSale" resultType="com.erp.model.bi.vo.BiSalesMonitoringTableVO">
-
+        select
+            row_number()over() as seq,
+                doi.sku_no,
+            doi.item_name,
+            case when #{type} = 1 then sum(doi.quantity)
+                 when #{type} = 2 then sum(doi.quantity * doi.sell_price)
+                 else 0 end sumSecondMonthSale
+        from dmp_order_item doi
+                 left join dmp_order_info doio on doi.order_id = doio.id
+        where to_char(doio.platform_create_time,'YYYY') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYY')
+        group by doi.sku_no,doi.item_name;
     </select>
 
 

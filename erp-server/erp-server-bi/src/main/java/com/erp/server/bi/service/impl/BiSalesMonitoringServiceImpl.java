@@ -15,6 +15,7 @@ import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 import com.erp.model.bi.vo.BiSalesMonitoringTableVO;
 import com.erp.model.bi.vo.BiSalesMonitoringViewVO;
 import com.erp.model.bi.vo.SeriesVO;
+import com.erp.server.bi.enums.BiCompareEnum;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
 import com.erp.server.bi.service.BiSalesMonitoringService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -106,7 +107,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             return new ArrayList<>();
         }
         for (BiSalesMonitoringEntity entity : list) {
-            SeriesVO<BiSalesMonitoringViewVO> seriesVO = new SeriesVO<>();
+            SeriesVO<BiSalesMonitoringTableVO> seriesVO = new SeriesVO<>();
            switch (entity.getType()) {
                case 0:
                case 1:this.listSalesQtyMonitoring(entity,seriesVO);
@@ -125,7 +126,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         return null;
     }
 
-    private void listSalesQtyMonitoring(BiSalesMonitoringEntity entity,SeriesVO<BiSalesMonitoringViewVO> seriesVO) {
+    private void listSalesQtyMonitoring(BiSalesMonitoringEntity entity,SeriesVO<BiSalesMonitoringTableVO> seriesVO) {
         Integer type = MathUtil.ONE;//1代表销量
         //查询本月份销量
         List<BiSalesMonitoringTableVO>  sumSecondMonthSaleList =  this.baseMapper.listSumSecondMonthSale(type);
@@ -133,13 +134,58 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         List<BiSalesMonitoringTableVO>  sumFirstMonthSaleList =  this.baseMapper.listSumFirstMonthSale(type);
         //查询全年销量
         List<BiSalesMonitoringTableVO>  sumYearSaleList =  this.baseMapper.listSumYearSale(type);
+        List<BiSalesMonitoringTableVO> list = new ArrayList<>();
+        //sku和品名需要取本月和上月的并集
+        List<BiSalesMonitoringTableVO> intersection = (List<BiSalesMonitoringTableVO>) CollectionUtils.union(sumSecondMonthSaleList, sumFirstMonthSaleList);
+        if (CollectionUtils.isNotEmpty(intersection)) {
+            for (BiSalesMonitoringTableVO vo: intersection) {
+                //本月销量
+                BigDecimal sumSecondMonthSale = sumSecondMonthSaleList.stream().filter(obj -> obj.getSkuNo().equals(vo.getSkuNo()) && obj.getItemName().equals(vo.getItemName()))
+                        .map(BiSalesMonitoringTableVO::getSumSecondMonthSale).findFirst().orElse(BigDecimal.ZERO);
 
-        //查询销量监控数据
-        if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0 ) {
-            //最新月基础值大于0则为参数值
+                //查询销量监控数据
+                if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0 ) {
+                    //大于等于
+                    if (BiCompareEnum.GREATERTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                            if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
+                                continue;
+                            }
+                    }
+                    //小于等于
+                    if (BiCompareEnum.LESSTHANEQUAL.getCode().equals(entity.getLatestMonthCompare())) {
+                        if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >= 0)) {
+                            continue;
+                        }
+                    }
+                    //大于
+                    if (BiCompareEnum.GREATERTHAN.getCode().equals(entity.getLatestMonthCompare())) {
+                        if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
+                            continue;
+                        }
+                    }
+                    //小于
+                    if (BiCompareEnum.LESSTHAN.getCode().equals(entity.getLatestMonthCompare())) {
+                        if (!(MathUtil.compareTo(entity.getLatestMonthValue(),sumSecondMonthSale) >=0)) {
+                            continue;
+                        }
+                    }
+
+                }
+                //上月销量
+                BigDecimal sumFirstMonthSale = sumSecondMonthSaleList.stream().filter(obj -> obj.getSkuNo().equals(vo.getSkuNo()) && obj.getItemName().equals(vo.getItemName()))
+                        .map(BiSalesMonitoringTableVO::getSumSecondMonthSale).findFirst().orElse(BigDecimal.ZERO);
+
+                //全年销量
+                BigDecimal sumYearSale = sumYearSaleList.stream().filter(obj -> obj.getSkuNo().equals(vo.getSkuNo()) && obj.getItemName().equals(vo.getItemName()))
+                        .map(BiSalesMonitoringTableVO::getSumYearSale).findFirst().orElse(BigDecimal.ZERO);
 
 
+
+            }
         }
+
+
+
     }
 
     /**

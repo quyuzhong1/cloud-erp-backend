@@ -119,6 +119,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                     BiDataSourceCustomEntity main = new BiDataSourceCustomEntity();
                     BeanUtils.copyProperties(entity,main);
                     main.setYear(Integer.valueOf(year));
+                    entity.setYear(Integer.valueOf(year));
                     //根据类型、数据类型、年份、指标分类、指标名称查询
                     BiDataSourceCustomEntity custom = biDataSourceCustomService.getCustomByParam(main);
                     if (ObjectUtils.isEmpty(custom)) {
@@ -211,7 +212,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         BiDataSourceCustomEntity custom = biDataSourceCustomService.getCustomByParam(entity);
         if (ObjectUtils.isEmpty(custom) && !BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
             addList.add(entity);
-        } else {
+        } else if (ObjectUtils.isNotEmpty(custom)){
             entity.setId(custom.getId());
             updateList.add(entity);
         }
