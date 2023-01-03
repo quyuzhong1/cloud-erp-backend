@@ -131,9 +131,59 @@
         </if>
         </where>
     </select>
+    <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DimensionSalesVO">
+        SELECT ${groupName} AS dimension,
+        SUM(item_total * currency_rate) AS salesAmount
+        FROM dmp_order_info AS doi
+        WHERE doi.${groupName} IS NOT NULL
+        <if test="params.startTime != null">
+            AND doi.platform_create_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime != null">
+            AND doi.platform_create_time &lt;= #{params.endTime}
+        </if>
+        /*部门*/
+        <if test="params.department!=null and params.department.size>0">
+            AND doi.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        /*平台*/
+        <if test="params.platform!=null and params.platform.size>0">
+            AND doi.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        /*站点*/
+        <if test="params.site!=null and params.site.size>0">
+            AND doi.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
 
-
-
+        /*店铺*/
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND doi.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        /*用户id*/
+        <if test="params.userId!=null and params.userId.size>0">
+            AND doi.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+        GROUP BY doi.${groupName}
+    </select>
 
 
 </mapper>

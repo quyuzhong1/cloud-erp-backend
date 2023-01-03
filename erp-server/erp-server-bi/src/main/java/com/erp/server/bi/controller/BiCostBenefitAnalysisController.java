@@ -3,7 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.ChartVO;
+import com.erp.model.bi.vo.CostProfitAnalyzeRankVO;
 import com.erp.model.bi.vo.PieChartVO;
 import com.erp.model.bi.vo.SeriesVO;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -48,14 +47,29 @@ public class BiCostBenefitAnalysisController extends BaseController {
         return success(vo);
     }
     /**
-     * 指标趋势 图表
+     * 指标趋势 图表 月
      */
     @PostMapping("/month/profit")
     public ApiResult<List<SeriesVO>> getMonthProfitChart(@RequestBody BiFilterDTO dto) {
         List<SeriesVO> vo = biDataSourceCostService.getMonthCostProfit(dto);
         return success(vo);
     }
-
+    /**
+     * 指标趋势 图表 季度
+     */
+    @PostMapping("/quarter/profit")
+    public ApiResult<List<SeriesVO>> getQuarterProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO> vo = biDataSourceCostService.getQuarterCostProfit(dto);
+        return success(vo);
+    }
+    /**
+     * 指标趋势 图表 年
+     */
+    @PostMapping("/year/profit")
+    public ApiResult<List<SeriesVO>> getYearProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO> vo = biDataSourceCostService.getYearCostProfit(dto);
+        return success(vo);
+    }
     /**
      * 各平台毛利润占比分析 图表 PieChartVO
      */
@@ -72,22 +86,41 @@ public class BiCostBenefitAnalysisController extends BaseController {
         List<SeriesVO> vo = biDataSourceCostService.getPlatformCostProfit(dto);
         return success(vo);
     }
+
     /**
-     * 店铺成本/利润 表格
+     * 事业部成本/利润  排名表格
      */
+    @PostMapping("/dept/cost/profit")
+    public ApiResult<List<CostProfitAnalyzeRankVO>> getDeptCostProfitSheet(@RequestBody BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> vo = biDataSourceCostService.getDeptCostProfitRank(dto);
+        return success(vo);
+    }
 
     /**
      * 平台成本/利润
      */
-
+    @PostMapping("/platform/cost/profit")
+    public ApiResult<List<CostProfitAnalyzeRankVO>> getPlatformCostProfitSheet(@RequestBody BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> vo = biDataSourceCostService.getPlatformCostProfitRank(dto);
+        return success(vo);
+    }
     /**
-     * 事业部成本/利润  表格
+     * 店铺成本/利润 表格
      */
-
+    @PostMapping("/shop/cost/profit")
+    public ApiResult<List<CostProfitAnalyzeRankVO>> getShopCostProfitSheet(@RequestBody BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> vo = biDataSourceCostService.getShopCostProfitRank(dto);
+        return success(vo);
+    }
     /**
      *
      * 成员成本/利润  表格
      */
+    @PostMapping("/user/cost/profit")
+    public ApiResult<List<CostProfitAnalyzeRankVO>> getUserCostProfitSheet(@RequestBody BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> vo = biDataSourceCostService.getUserCostProfitRank(dto);
+        return success(vo);
+    }
 
     /**
      * 新品成本/利润  表格

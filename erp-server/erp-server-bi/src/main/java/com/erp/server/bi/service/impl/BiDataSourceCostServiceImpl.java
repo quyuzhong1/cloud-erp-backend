@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -43,7 +44,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -424,7 +428,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtil.isEmpty(deptCostVOS)){
             return getDeptSeriesVo(null, null);
         }
-        // 销售毛利率
+        // 销售毛利润
         Map<String, Map<String, BigDecimal>> costMap = deptCostVOS.stream()
                 .collect(Collectors.groupingBy(DeptCostVO::getName,
                         Collectors.toMap(DeptCostVO::getCostType, DeptCostVO::getCostValue)));
@@ -451,7 +455,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         SeriesVO costVo = new SeriesVO<>();
         costVo.setName("成本");
         List<BigDecimal> costList = Collections.emptyList();
-        if (CollectionUtil.isEmpty(costSaleExpenses)){
+        if (CollectionUtil.isNotEmpty(costSaleExpenses)){
             costList = costSaleExpenses.stream().map(DeptCostVO::getCostValue).collect(Collectors.toList());
         }
         costVo.setData(costList);
@@ -459,7 +463,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         SeriesVO profitVo = new SeriesVO<>();
         profitVo.setName("毛利润");
         List<BigDecimal> profitList = Collections.emptyList();
-        if (CollectionUtil.isEmpty(costSaleExpenses)){
+        if (CollectionUtil.isNotEmpty(costSaleExpenses)){
             profitList = costSaleExpenses.stream().map(x -> profitMap.get(x.getName())).collect(Collectors.toList());
         }
         profitVo.setData(profitList);
@@ -467,13 +471,15 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         SeriesVO yAxis = new SeriesVO<>();
         yAxis.setName("名称");
         List<String> deptNames = Collections.emptyList();
-        if (CollectionUtil.isEmpty(costSaleExpenses)){
+        if (CollectionUtil.isNotEmpty(costSaleExpenses)){
             deptNames = costSaleExpenses.stream().map(DeptCostVO::getName).collect(Collectors.toList());
         }
         yAxis.setData(deptNames);
         seriesList.add(yAxis);
         return seriesList;
     }
+
+
 
     @Override
     public BiDataSourceCostEntity getMaxMonth() {
@@ -499,6 +505,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 //            month = null;
 //        }
         List<DeptCostVO> vo = baseMapper.sumByDeptAndCostType(month, dto, dictValues, groupName);
+        if(CollectionUtil.isNotEmpty(vo)){
+            vo.stream().peek(x -> x.setMonth(month)).collect(Collectors.toList());
+        }
         return vo;
     }
 
@@ -569,7 +578,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         if (CollectionUtil.isEmpty(shopCostVos)){
             return Collections.emptyList();
         }
-        // 销售毛利率
+        // 销售毛利润
         Map<String, Map<String, BigDecimal>> costMap = shopCostVos.stream()
                 .collect(Collectors.groupingBy(DeptCostVO::getName,
                         Collectors.toMap(DeptCostVO::getCostType, DeptCostVO::getCostValue)));
@@ -603,11 +612,11 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
 
     @Override
     public List<SeriesVO> getMonthCostProfit(BiFilterDTO dto) {
-        // 成本-利润
+        // 成本 利润
         // 统计成本数据
-        List<DateCostVO> dateCostVOS = this.sumCostByDate(dto);
+        List<DateCostVO> dateCostVOS = this.sumCostByDate(dto, 0);
         if (CollectionUtil.isEmpty(dateCostVOS)){
-            return getDeptSeriesVo(null, null);
+            return getDateAnalyze(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), 12);
         }
         // 销售毛利率
         Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
@@ -626,21 +635,262 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .filter(x -> "cost_saleExpenses".equals(x.getCostType()))
                 .sorted(Comparator.comparing(DateCostVO::getGroupDate))
                 .collect(Collectors.toList());
-
+        // 月度成本汇总
+        Map<Integer, BigDecimal> monthCostMap = costSaleExpenses.stream()
+                .collect(Collectors.toMap(x -> x.getGroupDate().getMonthValue(), DateCostVO::getCostValue));
         // 时间分组销售额-月
         Map<Integer, BigDecimal> monthSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 0);
 
+        // 净利润
+        HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>();
         // 表头 SeriesVO
-        List<SeriesVO> seriesList = getDeptSeriesVo(profitMap, costSaleExpenses, monthSalesMap);
+        List<SeriesVO> seriesList = getDateAnalyze(profitMap, monthCostMap, monthSalesMap, netProfitMap, 12);
         return seriesList;
     }
 
-    private List<DateCostVO> sumCostByDate(BiFilterDTO dto) {
+    /**
+     * 日期数据分析
+     *
+     * @param profitMap
+     * @param costMap
+     * @param salesMap
+     * @param netProfitMap
+     * @param dateType  12 月 4 季度  0 年
+     * @return
+     */
+    private List<SeriesVO> getDateAnalyze(Map<Integer, BigDecimal> profitMap, Map<Integer, BigDecimal> costMap, Map<Integer, BigDecimal> salesMap,
+                                          HashMap<Integer, BigDecimal> netProfitMap, Integer dateType) {
+        List<SeriesVO> seriesList = new ArrayList<>();
+        SeriesVO xAxis = new SeriesVO<>();
+        xAxis.setName("名称");
+        String format;
+        Integer startRange = 1;
+        Integer endRange = dateType;
+        if(12 == dateType){
+            format = "{}月";
+        }else if (4 == dateType){
+            format = "Q{}";
+        } else {
+            format = "{}年";
+            Set<Integer> year1 = new HashSet<>(profitMap.keySet());
+            Set<Integer> year2 = new HashSet<>(salesMap.keySet());
+            year1.addAll(year2);
+            startRange = year1.stream().min(Integer::compareTo).get();
+            endRange = year1.stream().max(Integer::compareTo).get();
+        }
+        List<String> deptNames = IntStream.rangeClosed(startRange, endRange).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
+
+        xAxis.setData(deptNames);
+        seriesList.add(xAxis);
+
+        // 必须包含12 个月
+        SeriesVO salesVo = new SeriesVO<>();
+        salesVo.setName("销售额");
+        List<String> salesList = IntStream.rangeClosed(startRange, endRange).mapToObj(x ->
+                        salesMap.getOrDefault(x, BigDecimal.ZERO).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros().toPlainString())
+                    .collect(Collectors.toList());
+        salesVo.setData(salesList);
+        seriesList.add(salesVo);
+
+        SeriesVO costVo = new SeriesVO<>();
+        costVo.setName("成本");
+        List<String> costList = IntStream.rangeClosed(startRange, endRange).mapToObj(x ->
+                        costMap.getOrDefault(x, BigDecimal.ZERO).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros().toPlainString())
+                    .collect(Collectors.toList());
+        costVo.setData(costList);
+        seriesList.add(costVo);
+
+        SeriesVO profitVo = new SeriesVO<>();
+        profitVo.setName("毛利润");
+        List<String> profitList = IntStream.rangeClosed(startRange, endRange).mapToObj(x ->
+                        profitMap.getOrDefault(x, BigDecimal.ZERO).setScale(4, BigDecimal.ROUND_DOWN).stripTrailingZeros().toPlainString())
+                    .collect(Collectors.toList());
+        profitVo.setData(profitList);
+        seriesList.add(profitVo);
+
+        SeriesVO netProfitVo = new SeriesVO<>();
+        netProfitVo.setName("净利率");
+        List<String> netProfitList =IntStream.rangeClosed(startRange, endRange).mapToObj(x ->
+                        netProfitMap.getOrDefault(x,BigDecimal.ZERO).setScale(4, BigDecimal.ROUND_HALF_UP).stripTrailingZeros().toPlainString())
+                    .collect(Collectors.toList());
+
+        netProfitVo.setData(netProfitList);
+        seriesList.add(netProfitVo);
+
+        return seriesList;
+
+    }
+
+    @Override
+    public List<SeriesVO> getQuarterCostProfit(BiFilterDTO dto) {
+        // 成本 利润
+        // 统计成本数据
+        List<DateCostVO> dateCostVOS = this.sumCostByDate(dto, 0);
+        if (CollectionUtil.isEmpty(dateCostVOS)){
+            return getDateAnalyze(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), 4);
+        }
+        // 销售毛利率 按照季度汇总数据
+        Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
+                .collect(Collectors.groupingBy(x -> x.getGroupDate(),
+                        Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
+        // 月度数据
+        Map<Integer, BigDecimal> profitMap = costMap.keySet().stream().collect(Collectors.toMap(e -> e.getMonthValue(), v -> {
+            Map<String, BigDecimal> tempMap = costMap.get(v);
+            BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+            BigDecimal costTotalCost = tempMap.getOrDefault("cost_totalCost", BigDecimal.ZERO);
+            BigDecimal costSaleExpenses = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
+            return costMainBusinessIncome.subtract(costTotalCost).subtract(costSaleExpenses);
+        }));
+        // 季度数据  (x- 1) / 3 + 1
+        Map<Integer, BigDecimal> quarterMap = profitMap.entrySet().stream()
+                .collect(Collectors.groupingBy(x -> (x.getKey() - 1) / 3 + 1,
+                        BigDecimalUtil.summingBigDecimal(Map.Entry::getValue)));
+
+        // 成本
+        List<DateCostVO> costSaleExpenses = dateCostVOS.stream()
+                .filter(x -> "cost_saleExpenses".equals(x.getCostType()))
+                .sorted(Comparator.comparing(DateCostVO::getGroupDate))
+                .collect(Collectors.toList());
+        // 季度成本汇总
+        Map<Integer, BigDecimal> quarterCostMap = costSaleExpenses.stream()
+                .collect(Collectors.groupingBy(x -> (x.getGroupDate().getMonthValue() - 1) / 3 + 1,
+                        BigDecimalUtil.summingBigDecimal(DateCostVO::getCostValue)));
+
+        // 时间分组销售额-季度
+        Map<Integer, BigDecimal> quarterSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 1);
+
+        // 净利润 TODO
+        HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
+        // 表头 SeriesVO
+        List<SeriesVO> seriesList = getDateAnalyze(quarterMap, quarterCostMap, quarterSalesMap, netProfitMap, 4);
+        return seriesList;
+    }
+
+    @Override
+    public List<SeriesVO> getYearCostProfit(BiFilterDTO dto) {
+        // 成本 利润
+        // 统计成本数据
+        List<DateCostVO> dateCostVOS = this.sumCostByDate(dto, 1);
+        if (CollectionUtil.isEmpty(dateCostVOS)){
+            return getDateAnalyze(new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), 0);
+        }
+        // 销售毛利率
+        Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
+                .collect(Collectors.groupingBy(x -> x.getGroupDate(),
+                        Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
+        // 年度分组数据销售毛利率
+        Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), BigDecimalUtil.summingBigDecimal(v -> {
+            Map<String, BigDecimal> tempMap = costMap.get(v);
+            BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+            BigDecimal costTotalCost = tempMap.getOrDefault("cost_totalCost", BigDecimal.ZERO);
+            BigDecimal costSaleExpenses = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
+            return costMainBusinessIncome.subtract(costTotalCost).subtract(costSaleExpenses);
+        })));
+
+        // 成本
+        List<DateCostVO> costSaleExpenses = dateCostVOS.stream()
+                .filter(x -> "cost_saleExpenses".equals(x.getCostType()))
+                .sorted(Comparator.comparing(DateCostVO::getGroupDate))
+                .collect(Collectors.toList());
+        // 季度成本汇总
+        Map<Integer, BigDecimal> yearCostMap = costSaleExpenses.stream()
+                .collect(Collectors.groupingBy(x -> x.getGroupDate().getYear(),
+                        BigDecimalUtil.summingBigDecimal(DateCostVO::getCostValue)));
+
+        // 时间分组销售额-季度
+        Map<Integer, BigDecimal> yearSalesMap = dmpOrderInfoService.statisticsSalesByDate(dto, 2);
+
+        // 净利润 TODO
+        HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
+        // 表头 SeriesVO
+        List<SeriesVO> seriesList = getDateAnalyze(yearMap, yearCostMap, yearSalesMap, netProfitMap, 0);
+        return seriesList;
+    }
+
+    @Override
+    public List<CostProfitAnalyzeRankVO> getDeptCostProfitRank(BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "dept_name", "dept_name");
+        return rankResult;
+    }
+
+    private List<CostProfitAnalyzeRankVO> getCostProfitAnalyzeRankVOS(BiFilterDTO dto, String groupName, String saleGroupName) {
+        // 统计成本数据
+        List<DeptCostVO> deptCostVOS = this.sumCostByCondition(dto,groupName);
+//        if (CollectionUtil.isEmpty(deptCostVOS)){
+//            return new ArrayList<>();
+//        }
+        // 销售毛利润
+        Map<String, Map<String, BigDecimal>> costMap = deptCostVOS.stream()
+                .collect(Collectors.groupingBy(DeptCostVO::getName,
+                        Collectors.toMap(DeptCostVO::getCostType, DeptCostVO::getCostValue)));
+        Map<String, BigDecimal> deptProfitMap = costMap.keySet().stream().collect(Collectors.toMap(e -> e, v -> {
+            Map<String, BigDecimal> tempMap = costMap.get(v);
+            BigDecimal costMainBusinessIncome = tempMap.getOrDefault("cost_mainBusinessIncome", BigDecimal.ZERO);
+            BigDecimal costTotalCost = tempMap.getOrDefault("cost_totalCost", BigDecimal.ZERO);
+            BigDecimal costSaleExpenses = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
+            return costMainBusinessIncome.subtract(costTotalCost).subtract(costSaleExpenses);
+        }));
+
+        // 销售成本
+        Map<String, BigDecimal> deptCostMap = deptCostVOS.stream()
+                .filter(x -> "cost_saleExpenses".equals(x.getCostType()))
+                .collect(Collectors.toMap(DeptCostVO::getName, DeptCostVO::getCostValue));
+        // 主营收入
+        Map<String, BigDecimal> deptMainMap = deptCostVOS.stream()
+                .filter(x -> "cost_mainBusinessIncome".equals(x.getCostType()))
+                .collect(Collectors.toMap(DeptCostVO::getName, DeptCostVO::getCostValue));
+        // 部门销售额
+        dto.setStartTime(LocalDateTime.of(LocalDate.from(deptCostVOS.get(0).getMonth().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN));
+        dto.setEndTime(LocalDateTime.of(LocalDate.from(deptCostVOS.get(0).getMonth().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX));
+        Map<String, BigDecimal> deptSalesMap = dmpOrderInfoService.statisticsSalesByCondition(dto, saleGroupName);
+        List<CostProfitAnalyzeRankVO> resultList = deptProfitMap.keySet().stream().map(x -> new CostProfitAnalyzeRankVO(x, deptProfitMap.getOrDefault(x, BigDecimal.ZERO),
+                deptCostMap.getOrDefault(x, BigDecimal.ZERO), deptSalesMap.getOrDefault(x, BigDecimal.ZERO),
+                deptMainMap.getOrDefault(x, BigDecimal.ZERO))).collect(Collectors.toList());
+        AtomicInteger rankIndex = new AtomicInteger(1);
+        List<CostProfitAnalyzeRankVO> rankResult = resultList.stream()
+                .sorted(Comparator.comparing(CostProfitAnalyzeRankVO.getByRankKey(dto.getRankKey())).reversed())
+                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .filter(x ->x.getRanking() <= dto.getRankNum())
+                .collect(Collectors.toList());
+        return rankResult;
+    }
+
+    @Override
+    public List<CostProfitAnalyzeRankVO> getPlatformCostProfitRank(BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "platform_name", "source_platform");
+        return rankResult;
+    }
+
+    @Override
+    public List<CostProfitAnalyzeRankVO> getShopCostProfitRank(BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "shop_name", "shop_name");
+        return rankResult;
+    }
+
+    @Override
+    public List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto) {
+        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "charge_name", "charge_name");
+        return rankResult;
+    }
+
+    /**
+     * 通过日期汇总成本数据
+     * @param dto
+     * @param type  0 返回今年数据  1 返回所有年份数据
+     * @return
+     */
+    private List<DateCostVO> sumCostByDate(BiFilterDTO dto, Integer type) {
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
-        LocalDateTime startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-        LocalDateTime endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
-        dto.setStartTime(startTime);
-        dto.setEndTime(endTime);
+        if (0 == type) {
+            LocalDateTime startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
+            LocalDateTime endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
+            dto.setStartTime(startTime);
+            dto.setEndTime(endTime);
+        }else {
+            dto.setStartTime(null);
+            dto.setEndTime(null);
+        }
+
         List<DateCostVO> vo = baseMapper.sumByDateAndCostType(dto, dictValues);
         return vo;
     }

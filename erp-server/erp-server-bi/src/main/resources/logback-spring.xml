@@ -62,7 +62,7 @@
 	<!--TRACE, DEBUG, INFO, WARN, ERROR, ALL and OFF -->
 	<!-- spring配置文件值：spring.profiles.active=dev -->
 	<springProfile name="dev">
-		<root level="Info">
+		<root level="DEBUG">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="INFO_FILE" />
 <!--			<appender-ref ref="ERROR_FILE" />-->

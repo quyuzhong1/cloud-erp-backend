@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * TODO
@@ -32,4 +33,6 @@ public class DeptCostVO {
      * 成本值
      */
     private BigDecimal costValue;
+
+    private LocalDateTime month;
 }

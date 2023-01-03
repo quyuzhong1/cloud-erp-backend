@@ -243,4 +243,14 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     Map<Integer, BigDecimal> statisticsSalesByDate(BiFilterDTO dto, Integer type);
+
+    /**
+     *  根据不通维度统计销售额
+     * @param dto
+     * @param groupName
+     * @return
+     */
+    Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName);
+
+    List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName);
 }

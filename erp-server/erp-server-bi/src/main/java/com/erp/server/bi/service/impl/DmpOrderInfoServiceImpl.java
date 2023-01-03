@@ -22,6 +22,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
@@ -1023,26 +1024,42 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .in(CollectionUtil.isNotEmpty(dto.getSite()), DmpOrderInfoEntity::getSite, dto.getSite())
                 .in(CollectionUtil.isNotEmpty(dto.getShopName()), DmpOrderInfoEntity::getShopName, dto.getShopName())
                 .in(CollectionUtil.isNotEmpty(dto.getUserId()), DmpOrderInfoEntity::getChargeId, dto.getUserId())
-                .ge(2 == type && ObjectUtil.isNotEmpty(dto.getStartTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
-                .le(2 == type && ObjectUtil.isNotEmpty(dto.getEndTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
+                .ge(2 != type && ObjectUtil.isNotEmpty(dto.getStartTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
+                .le(2 != type && ObjectUtil.isNotEmpty(dto.getEndTime()), DmpOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
                 .list();
         Map<Integer, BigDecimal> resultMap = new HashMap<>();
         if (0 == type){
             // 月份
-            resultMap = list.stream().collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
                     BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else if (1 == type){
             // 季度
-            resultMap = list.stream().collect(Collectors.groupingBy(x -> (LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue()-1) / 3 + 1,
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> (LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue()-1) / 3 + 1,
                     BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else {
             // 年度
-            resultMap = list.stream().collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getYear(),
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getYear(),
                     BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }
         return resultMap;
     }
 
+    @Override
+    public Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName) {
+        List<DimensionSalesVO> list = this.sumSalesByCondition(dto, groupName);
+        if(CollectionUtil.isEmpty(list)){
+            return new HashMap<>();
+        }
+        Map<String, BigDecimal> collect = list.stream()
+                .collect(Collectors.toMap(DimensionSalesVO::getDimension,
+                        DimensionSalesVO::getSalesAmount));
+        return collect;
+    }
+    @Override
+    public List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName) {
+        List<DimensionSalesVO> list = baseMapper.sumByDeptAndCostType(dto, groupName);
+        return list;
+    }
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,
                                                               Map<String, String> skuMap, Map<String, Integer> salesVolumeMap, Map<String, BigDecimal> saleAmountMap) {
         // 组合数据计算目标达成率
@@ -1057,8 +1074,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
         AtomicInteger rankIndex = new AtomicInteger(1);
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
-                .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate)
-                        .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate))
+                .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate).reversed()
+                        .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate).reversed())
                 .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
                 .filter(x ->x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());

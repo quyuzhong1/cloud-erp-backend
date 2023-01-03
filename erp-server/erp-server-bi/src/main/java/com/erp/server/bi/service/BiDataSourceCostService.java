@@ -10,7 +10,6 @@ import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -128,4 +127,46 @@ public interface BiDataSourceCostService
      * @return
      */
     List<SeriesVO> getMonthCostProfit(BiFilterDTO dto);
+
+    /**
+     * 季度成本分析
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getQuarterCostProfit(BiFilterDTO dto);
+
+    /**
+     * 年度成本分析
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getYearCostProfit(BiFilterDTO dto);
+
+    /**
+     * 获取事业部成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getDeptCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取平台成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getPlatformCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取站点成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getShopCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取人员成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto);
 }
