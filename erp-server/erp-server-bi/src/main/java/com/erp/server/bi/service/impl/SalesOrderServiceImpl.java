@@ -1596,6 +1596,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesCountVO> byMarketingCenter(BiFilterDTO dto) {
+        LocalDate nowDate = LocalDate.now();
         List<SalesCountVO> resultList = new ArrayList<>(12);
         String deptName = "营销中心";
         //  List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
@@ -1606,6 +1607,16 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag);
 
         List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag);
+        //上个月开始时间
+        LocalDateTime lastMonthStart = LocalDateUtil.getLastMonthStart(nowDate);
+        //上个月结束时间
+        LocalDateTime lastMonthEnd = LocalDateUtil.getLastMonthEnd(nowDate);
+        dto.setStartTime(lastMonthStart);
+        dto.setEndTime(lastMonthEnd);
+        //获取上个月
+        SalesFlagVO lastMonth = baseMapper.byLastMonth(dto);
+
+
         //获取到当前月
         int nowMonth = LocalDate.now().getMonthValue();
         int year = LocalDate.now().getYear();
@@ -1615,16 +1626,26 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setName(year + "年" + m + "月份");
             SalesFlagVO flag = list.stream().filter(s -> s.getFlag().equals(month)).
                     findFirst().orElse(null);
-            BigDecimal sales=BigDecimal.ZERO;
+            BigDecimal sales = BigDecimal.ZERO;
             if (flag != null) {
                 vo.setSalesQuantity(flag.getSalesQuantity());
-                 sales = flag.getSales();
+                sales = flag.getSales();
                 vo.setSales(sales);
             }
-            SalesFlagVO LastFlag = lastYearList.stream().filter(s -> s.getFlag().equals(month)).
+            SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().equals(month)).
                     findFirst().orElse(null);
-            if(LastFlag!=null){
-                vo.setYearBasisRatio(getChainRelativeRatio(sales,LastFlag.getSales()));
+            if (LastYearFlag != null) {
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, LastYearFlag.getSales()));
+            }
+            //当是第一个的时候
+            if(m==1){
+                vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonth.getSales()));
+            }else {
+                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(month-1)).
+                        findFirst().orElse(null);
+                if(lastMonthFlag!=null){
+                    vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonthFlag.getSales()));
+                }
             }
 
             resultList.add(vo);

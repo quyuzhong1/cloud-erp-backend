@@ -105,5 +105,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesFlagVO> byMarketingCenter(@Param("params") BiFilterDTO dto,@Param("timeFlag") String  timeFlag);
 
-    List<SalesFlagVO> byLastYear(@Param("params")BiFilterDTO dto, String timeFlag);
+    List<SalesFlagVO> byLastYear(@Param("params")BiFilterDTO dto, @Param("timeFlag")String timeFlag);
+
+    SalesFlagVO byLastMonth(@Param("params")BiFilterDTO dto);
 }

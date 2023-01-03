@@ -328,15 +328,31 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         //查询到用户可见的专题
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+
+
+        String type = DictEnum.DASHBOARD.getType();
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String dashboardCategoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+        if (dict != null) {
+            dashboardCategoryId = dict.getId();
+        }
+
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+
+        String finalDashboardCategoryId = dashboardCategoryId;
+        subjectList=subjectList.stream().filter(s->!finalDashboardCategoryId.equals(s.getCategoryId())).collect(Collectors.toList());
         for (Pair<String, String> pair : pairList) {
-            CategorySubjectDTO result = new CategorySubjectDTO();
             String categoryId = pair.getKey();
-            result.setCategoryId(categoryId);
-            result.setCategoryName(pair.getValue());
-            List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
-            result.setSubjectList(subjectResultList);
-            resultList.add(result);
+            if(!finalDashboardCategoryId.equals(categoryId)){
+                CategorySubjectDTO result = new CategorySubjectDTO();
+                result.setCategoryId(categoryId);
+                result.setCategoryName(pair.getValue());
+                List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+                result.setSubjectList(subjectResultList);
+                resultList.add(result);
+            }
         }
         //我创建的
         CategorySubjectDTO myCreate = new CategorySubjectDTO();
