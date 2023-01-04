@@ -16,12 +16,14 @@ import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
+import com.erp.model.bi.entity.BiSysModuleEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.enums.BiCompareEnum;
 import com.erp.server.bi.enums.SalesMonitoringTypeEnum;
 import com.erp.server.bi.mapper.BiSalesMonitoringMapper;
 import com.erp.server.bi.service.BiModuleService;
 import com.erp.server.bi.service.BiSalesMonitoringService;
+import com.erp.server.bi.service.BiSysModuleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
 
     @Resource
     private BiModuleService biModuleService;
+    @Resource
+    private BiSysModuleService biSysModuleService;
 
     @Override
     public Boolean batchAdd(List<BiSalesMonitoringDTO> list) {
@@ -112,58 +116,62 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_403);
         }
+        ChartVO viewVO = new ChartVO();
         BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
         if (ObjectUtils.isEmpty(biModuleEntity)) {
-            return new ChartVO();
+            return viewVO;
         }
-        ChartVO viewVO = new ChartVO();
+        BiSysModuleEntity biSysModuleEntity = biSysModuleService.getById(biModuleEntity.getSysModuleId());
+        if (ObjectUtils.isEmpty(biSysModuleEntity)) {
+            return viewVO;
+        }
         List<BiSalesMonitoringEntity> list = listByChargeId(loginUser.getUid());
         if (CollectionUtils.isEmpty(list)) {
-            return new ChartVO();
+            return viewVO;
         }
         List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable();
         if (CollectionUtils.isEmpty(biSalesMonitoringTableList)) {
-            return new ChartVO();
+            return viewVO;
         }
         List<String> head = new ArrayList<>();
         SeriesVO seriesVO = new SeriesVO<>();
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESQTYMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESQTYMONITORING.getDesc())) {
             BiSalesMonitoringEntity  entity= list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.SALESQTYMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listSalesMonitoring(head,biSalesMonitoringTableList,entity,seriesVO,MathUtil.ONE,null,"销量监控");
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESAMOUNTMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.SALESAMOUNTMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.SALESAMOUNTMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listSalesMonitoring(head, biSalesMonitoringTableList, entity, seriesVO, MathUtil.TWO, null, "销售额监控");
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.NEWPRODUCTSMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.NEWPRODUCTSMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.NEWPRODUCTSMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listSalesMonitoring(head,biSalesMonitoringTableList,entity,seriesVO,MathUtil.TWO,null,"新品销售额监控");
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.OLDPRODUCTSMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.OLDPRODUCTSMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.OLDPRODUCTSMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listSalesMonitoring(head, biSalesMonitoringTableList, entity, seriesVO, MathUtil.TWO, null, "老品销售额监控");
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.BRANDNAMEMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.BRANDNAMEMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.BRANDNAMEMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listBrandNameMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.CATEGORYMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.CATEGORYMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.CATEGORYMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listCategoryMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
             }
         }
-        if (biModuleEntity.getName().equals(SalesMonitoringTypeEnum.CHARGENAMEMONITORING.getDesc())) {
+        if (biSysModuleEntity.getName().equals(SalesMonitoringTypeEnum.CHARGENAMEMONITORING.getDesc())) {
             BiSalesMonitoringEntity entity = list.stream().filter(obj -> obj.getType().equals(SalesMonitoringTypeEnum.CHARGENAMEMONITORING.getCode())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(entity)) {
                 this.listChargeNameMonitoring(head, biSalesMonitoringTableList, entity, seriesVO);
@@ -189,8 +197,8 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                 .collect(Collectors.groupingBy(obj -> obj.getSkuNo().concat(",").concat(obj.getItemName())));
         LocalDate now = LocalDate.now();
         //当前时间年月
-        String month = String.valueOf(now.getYear())+ now.getMonth();
-        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + now.getMonth();
+        String month = String.valueOf(now.getYear())+ now.getMonth().getValue();
+        String lastMonth = String.valueOf(LocalDateUtil.getLastMonthStart(now).getYear()) + LocalDateUtil.getLastMonthStart(now).getMonth().getValue();
         String year = String.valueOf(now.getYear());
         List<BiSalesMonitoringTableVO> resultList = new ArrayList<>();
         if (MathUtil.ONE.equals(type)) {
@@ -201,19 +209,19 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         Integer seq = MathUtil.ONE;
         for (Map.Entry<String, List<BiSalesMonitoringTableDTO>> entry: listMap.entrySet()) {
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
-            BiSalesMonitoringTableVO vo = new BiSalesMonitoringTableVO();
-            BeanUtils.copyProperties(value.get(0),vo);
             //本月销量
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //上月销量
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //全年销量
             BigDecimal sumYearSale =  value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
                     .map(obj-> MathUtil.ONE.equals(type)? new BigDecimal(obj.getQuantity()) : MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             BiSalesMonitoringTableVO biSalesMonitoringTableVO = setBiSalesMonitoringTableVO(entity, sumSecondMonthSale, sumFirstMonthSale, sumYearSale);
             if (ObjectUtils.isNotEmpty(biSalesMonitoringTableVO)) {
+                biSalesMonitoringTableVO.setSkuNo(value.get(0).getSkuNo());
+                biSalesMonitoringTableVO.setItemName(value.get(0).getItemName());
                 biSalesMonitoringTableVO.setSeq(seq);
                 resultList.add(biSalesMonitoringTableVO);
                 seq++;
@@ -240,10 +248,10 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO> value = entry.getValue();
             BiBrandNameMonitoringTableVO vo = new BiBrandNameMonitoringTableVO();
             //本月销售额
-            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumSecondMonthSale =  value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //上月销售额
-            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumFirstMonthSale =  value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //全年销售额
             BigDecimal sumYearSale =  value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
@@ -279,10 +287,10 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiCategoryMonitoringTableVO vo = new BiCategoryMonitoringTableVO();
             BeanUtils.copyProperties(value.get(0),vo);
             //本月销售额
-            BigDecimal sumSecondMonthSale = value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumSecondMonthSale = value.stream().filter(obj -> month.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //上月销售额
-            BigDecimal sumFirstMonthSale = value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth()))
+            BigDecimal sumFirstMonthSale = value.stream().filter(obj -> lastMonth.equals(String.valueOf(obj.getPlatformCreateTime().getYear())+ obj.getPlatformCreateTime().getMonth().getValue()))
                     .map(obj-> MathUtil.multiply(new BigDecimal(obj.getQuantity()),obj.getSellPrice())).findFirst().orElse(BigDecimal.ZERO);
             //全年销售额
             BigDecimal sumYearSale = value.stream().filter(obj -> year.equals(String.valueOf(obj.getPlatformCreateTime().getYear())))
