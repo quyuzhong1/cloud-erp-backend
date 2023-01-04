@@ -3,7 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
-import com.erp.model.bi.vo.BiSalesMonitoringViewVO;
+import com.erp.model.bi.vo.ChartVO;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public interface BiSalesMonitoringService extends IService<BiSalesMonitoringEnti
      * @description:
      * @author Will
      * @date: 2022/12/30 12:29
-     * @return List<BiSalesMonitoringViewVO>
+     * @return ChartVO
      */
-    List<BiSalesMonitoringViewVO> listBiSalesMonitoringView();
+    ChartVO listBiSalesMonitoringView(String moduleId);
 }

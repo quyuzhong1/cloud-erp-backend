@@ -71,7 +71,7 @@ public class BiSalesMonitoringEntity implements Serializable {
     private BigDecimal latestMonthValue;
 
     /**
-     * 环比(百分比)
+     * 环比(默认乘以100，直接加百分号即可)
      */
     @TableField(value = "relative_ratio")
     private BigDecimal relativeRatio;

@@ -13,21 +13,16 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
-public class BiSalesMonitoringTableVO {
+public class BiCategoryMonitoringTableVO {
     /**
      * 排名
      */
     private Integer seq;
 
     /**
-     * SKU
+     * 品类
      */
-    private String skuNo;
-
-    /**
-     * 品名
-     */
-    private String itemName;
+    private String category;
 
     /**
      * 年累计销售额（或销量）
