@@ -3,13 +3,13 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
-import com.erp.model.bi.vo.ChartVO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -72,9 +72,9 @@ public class BiSalesMonitoringController extends BaseController {
      * @return ApiResult<BiSalesMonitoringViewVO>
      */
     @GetMapping("/view")
-    public ApiResult<ChartVO> listBiSalesMonitoringView(@Param("moduleId") String moduleId) {
-        ChartVO chartVO =  biSalesMonitoringService.listBiSalesMonitoringView(moduleId);
-        return success(chartVO);
+    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@Param("moduleId") String moduleId) {
+        LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(moduleId);
+        return success(map);
     }
 
 
