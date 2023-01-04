@@ -105,7 +105,7 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 订单下单时间
      */
-    @ExcelProperty(value = "订单下单时间", index = 14)
+    @ExcelProperty(value = "*订单下单时间", index = 14)
     private Date platformCreateTime;
 
     /**
