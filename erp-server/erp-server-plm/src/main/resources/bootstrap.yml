@@ -11,3 +11,5 @@ spring:
 server:
   port: 9050
 
+logging:
+  config: classpath:logback-spring.xml

@@ -7,13 +7,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,9 +24,6 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Autowired
     private DmpShopInfoMapper dmpShopInfoMapper;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     /**
      * 添加店铺信息
@@ -94,18 +89,19 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     /**
      * 根据平台查询店铺信息
+     *
+     * @param shopNo       店铺编号
+     * @param platformSign 平台
+     * @param userDeptList
+     * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      * @Author Luo_WG
      * @Date 2022/12/13 17:48
-     * @param shopNo 店铺编号
-     * @param platformSign 平台
-     * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      **/
     @Override
-    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign) {
+    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) {
         DmpShopInfoEntity req = getShopByShopNo(shopNo, platformSign);
         DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
         BeanUtil.copyProperties(req, dmpShopInfoDTO);
-        List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
 
         List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(req.getChargeId())).collect(Collectors.toList());
         if (CollectionUtil.isNotEmpty(collect)) {

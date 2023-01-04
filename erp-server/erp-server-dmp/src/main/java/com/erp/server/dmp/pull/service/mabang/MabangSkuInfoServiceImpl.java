@@ -81,8 +81,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
                 } else {
                     mongoService.saveMongoData(skuInfoEntity, MongoTableNameContant.ORIGINAL_MABANG_SKU);
                 }
-                //存储数据到中台
-                analysisSku(skuInfoEntity);
+                //存储数据到中台  sku信息只保留金蝶数据
+//                analysisSku(skuInfoEntity);
             }
         }
     }
