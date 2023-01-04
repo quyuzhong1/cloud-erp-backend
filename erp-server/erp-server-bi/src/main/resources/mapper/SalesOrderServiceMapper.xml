@@ -1624,7 +1624,7 @@
 
     <select id="bySite" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT round(SUM ( i.sell_price * i.quantity * i.currency_rate ) / 10000, 4 ) AS sales,
-        o.shop_no ,SUM ( i.quantity ) AS salesQuantity,
+        COALESCE(o.shop_no,'') AS shopNo  ,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id

@@ -635,7 +635,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);
-        series.setData(Collections.singletonList(list));
+        series.setData(list);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         statistical.setData(chartVO);
@@ -1493,6 +1493,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //总的
         BigDecimal totalSales = list.stream().
+                filter(s->s.getSales()!=null).
                 map(ShopSalesVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         List<ShopSiteVO> shopCategoryList = shopInfoService.getShopCategoryList();
@@ -1597,7 +1598,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseMap.put("value", purchaseSales);
         dataList.add(purchaseMap);
-        series.setData(Collections.singletonList(dataList));
+        series.setData(dataList);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         chartVO.setXAxis(Arrays.asList("自研", "外采"));
@@ -1781,7 +1782,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             siteMap.put("value", value);
             dataList.add(siteMap);
         }
-        series.setData(Collections.singletonList(dataList));
+        series.setData(dataList);
         seriesList.add(series);
         chartVO.setSeries(seriesList);
         chartVO.setXAxis(siteNameList);
