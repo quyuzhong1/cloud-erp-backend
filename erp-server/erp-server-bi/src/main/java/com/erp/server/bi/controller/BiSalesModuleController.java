@@ -88,6 +88,18 @@ public class BiSalesModuleController extends BaseController {
      * @param dto
      * @return
      */
+    @PostMapping("/byTobToc")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byTobToc(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result = salesOrderService.byTobToc(dto);
+        return success(result);
+    }
+
+
     @PostMapping("/byPlatformRatio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",

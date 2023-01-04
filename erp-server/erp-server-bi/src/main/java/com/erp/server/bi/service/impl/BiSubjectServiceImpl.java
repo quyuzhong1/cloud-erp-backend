@@ -320,7 +320,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     @Override
     public List<CategorySubjectDTO> homePage(String searchKeyword) {
         List<CategorySubjectDTO> resultList = new ArrayList<>(10);
-        String userId = commonService.getUserInfo().getUid();
+        String userId =commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
 
         //分享给我的

@@ -250,6 +250,50 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     }
 
     /**
+     * 一级销售模块 TOB  TOC
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2022-12-20 12:28
+     */
+    @Override
+    public StatisticalDataVO byTobToc(BiFilterDTO dto) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        //获取各个平台的销售额
+        List<SalesFlagVO> resultList = baseMapper.byTobToc(dto);
+        int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
+        statistical.setName("平台销售额");
+        statistical.setChartType(ChartType.PIE);
+        ChartVO chartVO = new ChartVO();
+        chartVO.setXAxis(new ArrayList<>());
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        SeriesVO<Object> series = new SeriesVO();
+        series.setName("平台销售额");
+        List<Object> list = new ArrayList<>(2);
+        Map<String, Object> tobMap = new HashMap<>();
+        String b2b = "B2B";
+        tobMap.put("name", "TOB");
+        BigDecimal tobSales = resultList.stream().filter(b -> b2b.equals(b.getName())).
+                map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+        tobMap.put("value", tobSales);
+        list.add(tobMap);
+
+        Map<String, Object> tocMap = new HashMap<>();;
+        tocMap.put("name", "TOC");
+        BigDecimal toCSales = resultList.stream().filter(b -> !b2b.equals(b.getName())).
+                map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+        tocMap.put("value", toCSales);
+        list.add(tocMap);
+
+        series.setData(list);
+        seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        statistical.setData(chartVO);
+        return statistical;
+    }
+
+    /**
      * 一级销售模块 店铺销售额
      *
      * @param dto

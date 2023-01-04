@@ -438,9 +438,26 @@
 
     <select id="getPlatformSales" resultType="java.util.Map">
         SELECT source_platform AS platform,
-        round (SUM ( order_fee )/10000,4) AS Sales
+        round (SUM ( order_fee )/10000,4) AS sales
         FROM dmp_order_info
         <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
@@ -1141,10 +1158,10 @@
     <select id="byHomeAndAbroad" resultType="com.erp.model.bi.vo.SalesCountVO">
         SELECT round( SUM ( order_fee ) / 10000, 4 ) AS sales,
         country_name_cn AS name FROM dmp_order_info
-        <where>
+        WHERE (country_name_cn!=null or country_name_cn!='')
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    platform_create_time &gt;= #{params.startTime}
+                   AND  platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
                     AND platform_create_time &lt;= #{params.endTime}
@@ -1163,7 +1180,7 @@
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
             </if>
-        </where>
+
         GROUP BY country_name_cn
     </select>
 
@@ -2241,7 +2258,36 @@
             </if>
         </where>
         LIMIT 1
+    </select>
 
+    <select id="byTobToc" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT source_platform AS name,
+        round (SUM ( order_fee )/10000,4) AS sales
+        FROM dmp_order_info
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        GROUP BY source_platform
     </select>
 
 </mapper>

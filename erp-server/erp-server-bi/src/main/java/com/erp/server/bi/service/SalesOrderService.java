@@ -45,6 +45,14 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      */
     StatisticalDataVO getByPlatformRatio(BiFilterDTO dto);
 
+
+    /**
+     * 一级销售模块 TOB/TOC销售额
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO byTobToc(BiFilterDTO dto);
+
     /**
      * 一级销售模块 店铺销售额
      * @author yl
