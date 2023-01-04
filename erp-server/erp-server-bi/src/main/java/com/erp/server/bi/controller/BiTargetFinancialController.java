@@ -1,8 +1,10 @@
 package com.erp.server.bi.controller;
 
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.TargetSaleSumVO;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -34,6 +36,11 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/profit")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:financial:profit",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult countSales(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesProfit(dto);
         return success(vo);
@@ -46,7 +53,13 @@ public class BiTargetFinancialController extends BaseController {
      * @param dto
      * @return ApiResult<TargetSaleSumVO>
      */
+
     @PostMapping("/main/revenue")
+    //    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:financial:revenue",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult countMainRevenue(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumMainRevenue(dto);
         return success(vo);
@@ -59,6 +72,11 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/cost")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:financial:cost",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult countSalesCost(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesCost(dto);
         return success(vo);
@@ -72,6 +90,11 @@ public class BiTargetFinancialController extends BaseController {
      * @return ApiResult<TargetSaleSumVO>
      */
     @PostMapping("/sales/ratio")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:financial:ratio",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult count(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesRatio(dto);
         return success(vo);

@@ -1,7 +1,9 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.vo.QuarterMonthSalesVO;
 import com.erp.model.bi.vo.QuarterMonthSalesVolumeVO;
@@ -33,6 +35,11 @@ public class BiTargetModuleController extends BaseController {
      * 季度销售额完成情况
      */
     @PostMapping("/quarter/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:target:quarter",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumQuarterSales(dto);
         return success(vo);
@@ -43,6 +50,11 @@ public class BiTargetModuleController extends BaseController {
      * 季度销量完成情况
      */
     @PostMapping("/quarter/sales/volume")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:target:volume",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumQuarterSalesVolume(dto);
         return success(vo);
@@ -52,6 +64,11 @@ public class BiTargetModuleController extends BaseController {
      * 月度销售额完成情况
      */
     @PostMapping("/month/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:target:month",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVO> vo = dmpOrderInfoService.sumMonthSales(dto);
         return success(vo);
@@ -61,6 +78,11 @@ public class BiTargetModuleController extends BaseController {
      * 月度销售额完成情况
      */
     @PostMapping("/month/sales/volume")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:month:volume",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         TargetAnalysisVO<QuarterMonthSalesVolumeVO> vo = dmpOrderInfoService.sumMonthSalesVolume(dto);
         return success(vo);
@@ -76,6 +98,11 @@ public class BiTargetModuleController extends BaseController {
      * 平台销售额/销量完成情况
      */
     @PostMapping("/platform/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:platform:sales",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumPlatformSalesCompletion(dto);
         return success(vo);
@@ -94,6 +121,11 @@ public class BiTargetModuleController extends BaseController {
      * 品类销售额/销量完成情况
      */
     @PostMapping("/category/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:category:sales",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumCategorySalesCompletion(dto);
         return success(vo);
@@ -103,6 +135,11 @@ public class BiTargetModuleController extends BaseController {
      * 新品销售额/销量完成情况
      */
     @PostMapping("/new/product/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:new:product:sales",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> newProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 1);
         return success(vo);
@@ -112,6 +149,11 @@ public class BiTargetModuleController extends BaseController {
      * 老品销售额/销量完成情况
      */
     @PostMapping("/old/product/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:old:product:sales",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> oldProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, 0);
         return success(vo);
@@ -121,6 +163,11 @@ public class BiTargetModuleController extends BaseController {
      * 产品定位销售额/销量完成情况
      */
     @PostMapping("/product/position/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:product:position",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductPositionSalesCompletion(dto);
         return success(vo);
@@ -133,6 +180,11 @@ public class BiTargetModuleController extends BaseController {
      * @return
      */
     @PostMapping("/product/type/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:product:type",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumProductTypeCompletion(dto);
         return success(vo);
@@ -142,6 +194,11 @@ public class BiTargetModuleController extends BaseController {
      * SKU销售额/销量完成情况
      */
     @PostMapping("/sku/sales")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sku:sales",
+//            tableAlias = "bi_data_source_cost"
+//    )
     public ApiResult<List<SalesCompletionInfoVO>> skuSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
         List<SalesCompletionInfoVO> vo = dmpOrderInfoService.sumNewProductSalesCompletion(dto, null);
         return success(vo);

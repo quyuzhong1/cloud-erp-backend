@@ -495,15 +495,6 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         BiDataSourceCostEntity entity = getMaxMonth();
         LocalDateTime month = entity.getMonth();
         List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost", "cost_saleExpenses"));
-//        LocalDateTime startTime = null;
-//        LocalDateTime endTime = null;
-//        if ("month".equals(groupName) || "quarter".equals(groupName)){
-//            startTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.firstDayOfYear())), LocalTime.MIN);
-//            endTime = LocalDateTime.of(LocalDate.from(LocalDateTime.now().with(TemporalAdjusters.lastDayOfYear())), LocalTime.MAX);
-//            dto.setStartTime(startTime);
-//            dto.setEndTime(endTime);
-//            month = null;
-//        }
         List<DeptCostVO> vo = baseMapper.sumByDeptAndCostType(month, dto, dictValues, groupName);
         if(CollectionUtil.isNotEmpty(vo)){
             vo.stream().peek(x -> x.setMonth(month)).collect(Collectors.toList());
@@ -816,9 +807,9 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     private List<CostProfitAnalyzeRankVO> getCostProfitAnalyzeRankVOS(BiFilterDTO dto, String groupName, String saleGroupName) {
         // 统计成本数据
         List<DeptCostVO> deptCostVOS = this.sumCostByCondition(dto,groupName);
-//        if (CollectionUtil.isEmpty(deptCostVOS)){
-//            return new ArrayList<>();
-//        }
+        if (CollectionUtil.isEmpty(deptCostVOS)){
+            return new ArrayList<>();
+        }
         // 销售毛利润
         Map<String, Map<String, BigDecimal>> costMap = deptCostVOS.stream()
                 .collect(Collectors.groupingBy(DeptCostVO::getName,
