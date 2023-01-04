@@ -8,7 +8,10 @@ import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;

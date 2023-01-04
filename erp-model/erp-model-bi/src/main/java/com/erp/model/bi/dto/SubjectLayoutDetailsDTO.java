@@ -35,6 +35,11 @@ public class SubjectLayoutDetailsDTO implements Serializable {
     @Size(max = 20,message = "最大20个字符")
     private String name;
 
+    /**
+     * 分享标示 personal 私人  share 共享
+     */
+    private String shareFlag;
+
 
     /**
      * 分类名

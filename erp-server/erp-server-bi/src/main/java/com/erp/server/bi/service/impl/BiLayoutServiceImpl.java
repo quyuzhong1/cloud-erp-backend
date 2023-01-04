@@ -139,6 +139,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
+        details.setShareFlag(subject.getShareFlag());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
         details.setShareUserIdList(shareUserIdList);

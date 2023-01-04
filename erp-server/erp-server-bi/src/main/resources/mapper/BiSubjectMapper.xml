@@ -29,7 +29,7 @@
     </select>
 
     <select id="paging" resultType="com.erp.model.bi.dto.SubjectPagingDTO">
-        SELECT id,name,category_name,category_id,create_user_id,
+        SELECT id,name,category_name ,category_id,create_user_id,
         create_user_name,create_time,update_user_id,update_user_name,
         update_time,share_flag,is_frequently,state
         FROM bi_subject WHERE is_deleted=0

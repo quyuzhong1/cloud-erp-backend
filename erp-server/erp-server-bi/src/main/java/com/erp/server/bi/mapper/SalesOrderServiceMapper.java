@@ -18,11 +18,11 @@ import java.util.Map;
  */
 @Mapper
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
-    List<Map<String, Object>> getMonthSales(@Param("params") BiFilterDTO dto);
+    List<Map<String, Object>> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesVO> getBySku(@Param("params") BiFilterDTO dto);
+    List<SalesVO> getBySku(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesVO> getLastDays(@Param("params") BiFilterDTO dto);
+    List<SalesVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
 
     List<SalesVO> getBySpu(BiFilterDTO dto);
@@ -32,27 +32,27 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @return
      */
-    List<SalesByCountryVO> getByCountry(@Param("params") BiFilterDTO dto);
+    List<SalesByCountryVO> getByCountry(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     /**
      * 根据平台查询销售额
      * @param dto
      * @return
      */
-    List<Map<String, Object>> getPlatformSales(@Param("params") BiFilterDTO dto);
+    List<Map<String, Object>> getPlatformSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     /**
      * 根据店铺查询销售额
      * @param dto
      * @return
      */
-    List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto);
+    List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<ShopSalesVO> byShopCountry(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> byShopCountry(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     /**
      * 获取国家
@@ -65,49 +65,49 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      * @param dto
      * @return
      */
-    List<ShopSalesVO> byShopNewAndOld(@Param("params")BiFilterDTO dto);
+    List<ShopSalesVO> byShopNewAndOld(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byCountry(@Param("params") BiFilterDTO dto);
+    List<SalesCountVO> byCountry(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<ShopSalesVO> byShopCategory(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> byShopCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byCategory(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byCategory(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byPlatform(@Param("params") BiFilterDTO dto);
+    List<SalesCountVO> byPlatform(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byHomeAndAbroad(@Param("params") BiFilterDTO dto);
+    List<SalesCountVO> byHomeAndAbroad(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byPeople(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byPeople(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byDept(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byDept(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byNewAndOld(@Param("params") BiFilterDTO dto);
+    List<SalesCountVO> byNewAndOld(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byPlatformNewAndOld(@Param("params")BiFilterDTO dto);
+    List<SalesFlagVO> byPlatformNewAndOld(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byCategoryNewAndOld(@Param("params") BiFilterDTO dto);
+    List<SalesFlagVO> byCategoryNewAndOld(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<ShopSalesVO> bySite(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> bySite(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byOldProductTop(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byOldProductTop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byNewProductTop(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byNewProductTop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto);
+    List<ShopSalesVO> byShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto);
+    List<SalesCountVO> byBrand(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto);
+    List<SalesBaseVO> byPeopleRank(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byPeopleNewAndOld(@Param("params") BiFilterDTO dto);
+    List<SalesFlagVO> byPeopleNewAndOld(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byDeptNewAndOld(@Param("params") BiFilterDTO dto);
+    List<SalesFlagVO> byDeptNewAndOld(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byMarketingCenter(@Param("params") BiFilterDTO dto,@Param("timeFlag") String  timeFlag);
+    List<SalesFlagVO> byMarketingCenter(@Param("params") BiFilterDTO dto,@Param("timeFlag") String  timeFlag,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byLastYear(@Param("params")BiFilterDTO dto, @Param("timeFlag")String timeFlag);
+    List<SalesFlagVO> byLastYear(@Param("params")BiFilterDTO dto, @Param("timeFlag")String timeFlag,@Param("settleRate") String settleRate);
 
-    SalesFlagVO byLastMonth(@Param("params")BiFilterDTO dto);
+    SalesFlagVO byLastMonth(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesFlagVO> byTobToc(@Param("params")BiFilterDTO dto);
+    List<SalesFlagVO> byTobToc(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 }
