@@ -36,6 +36,11 @@
         select
         bdsc.id,
         bdsc.year,
+        case when bdsc.data_type = 0 then '市场数据'
+             when bdsc.data_type = 1 then '供应链数据'
+             when bdsc.data_type = 2 then '经营数据'
+             when bdsc.data_type = 3 then '财务数据'
+             else '' end as data_type,
         bdsc.target_type,
         bdsc.target_name,
         bdsc.target_value
@@ -57,6 +62,7 @@
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
         </where>
+        order by bdsc.year
     </select>
 
     <select id="getCustomByParams" resultType="java.util.LinkedHashMap">

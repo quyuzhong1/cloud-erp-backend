@@ -8,17 +8,19 @@ package com.erp.server.bi.enums;
  */
 public enum BiDataSourceCustomEnum {
 
-    YEAR("year", "年份"),
-    DATATYPE("dataType", "数据类型（市场数据，供应链数据，经营数据，财务数据）"),
-    TARGETTYPE("targetType", "指标分类"),
-    TARGETNAME("targetName", "指标名称"),
-    TARGEVALUE("targetValue", "目标值");
+    YEAR("year", "年份","*年份"),
+    DATATYPE("dataType", "数据类型","*数据类型"),
+    TARGETTYPE("targetType", "指标分类","*指标分类"),
+    TARGETNAME("targetName", "指标名称","*指标名称"),
+    TARGEVALUE("targetValue", "目标值","*目标值");
     private String code;
     private String name;
+    private String desc;
 
-    BiDataSourceCustomEnum(String code, String name) {
+    BiDataSourceCustomEnum(String code, String name, String desc) {
         this.code = code;
         this.name = name;
+        this.desc = desc;
     }
 
     public String getCode() {
@@ -26,6 +28,9 @@ public enum BiDataSourceCustomEnum {
     }
     public String getName() {
         return name;
+    }
+    public String getDesc() {
+        return desc;
     }
 
     public static String getName(String code) {

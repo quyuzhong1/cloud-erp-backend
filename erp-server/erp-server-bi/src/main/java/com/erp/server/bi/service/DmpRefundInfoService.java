@@ -6,6 +6,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -38,4 +39,15 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @return DmpRefundInfoEntity
      */
     DmpRefundInfoEntity getByRefundId(String refundId);
+
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/1/4 16:39
+     * @param excelFile
+     * @param importType
+     * @param response
+     * @return Boolean
+     */
+    Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
 }

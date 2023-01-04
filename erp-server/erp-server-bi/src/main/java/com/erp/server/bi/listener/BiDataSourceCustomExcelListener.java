@@ -72,7 +72,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         //旧数据时记录
         if (ObjectUtils.isNotEmpty(iterator)) {
             while (iterator.hasNext()) {
-                Map.Entry entry = (java.util.Map.Entry) iterator.next();
+                Map.Entry entry = iterator.next();
                 if (ObjectUtils.isEmpty(entry.getKey())) {
                     continue;
                 }
@@ -81,26 +81,26 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 String key = headMap.get(mapKey);
                 //明细数据
                 BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
-                if (BiDataSourceCustomEnum.YEAR.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.YEAR.getDesc().equals(key)) {
                     String year = value.replace("年", "");
                     entity.setYear(Integer.valueOf(year));
                     yearDate = Integer.valueOf(year);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.DATATYPE.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.DATATYPE.getDesc().equals(key)) {
                     Integer code = DataTypeEnum.getCodeByName(value);
                     entity.setDataType(code);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.TARGETTYPE.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGETTYPE.getDesc().equals(key)) {
                     entity.setTargetType(value);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.TARGETNAME.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGETNAME.getDesc().equals(key)) {
                     entity.setTargetName(value);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.TARGEVALUE.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGEVALUE.getDesc().equals(key)) {
                     entity.setTargetValue(value);
                     continue;
                 }
@@ -197,6 +197,9 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         }
         if (ObjectUtils.isEmpty(entity.getTargetName())) {
             errorMsgList.add("指标名称不能为空");
+        }
+        if (ObjectUtils.isEmpty(entity.getTargetValue())) {
+            errorMsgList.add("目标值不能为空");
         }
         String errStr = "";
         if (errorMsgList.size() > 0) {

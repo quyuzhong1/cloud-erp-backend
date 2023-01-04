@@ -2,22 +2,31 @@ package com.erp.server.bi.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderItemService;
 import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpReturnOrderInfoImportExcelDTO> {
     private Integer importType;
@@ -31,16 +40,21 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
 
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
+    private PlmTaskFeign plmTaskFeign;
 
     private List<DmpReturnOrderInfoImportExcelDTO> list;
 
-    public DmpReturnOrderInfoExcelListener(Integer importType, DmpOrderInfoService dmpOrderInfoService, DmpReturnOrderInfoService dmpReturnOrderInfoService
-            , DmpShopInfoService dmpShopInfoService, DmpReturnOrderItemService dmpReturnOrderItemService) {
+    private List<DmpReturnOrderInfoEntity> returnOrderList;
+
+    public DmpReturnOrderInfoExcelListener(Integer importType,List<DmpReturnOrderInfoEntity> returnOrderList, DmpOrderInfoService dmpOrderInfoService, DmpReturnOrderInfoService dmpReturnOrderInfoService
+            , DmpShopInfoService dmpShopInfoService, DmpReturnOrderItemService dmpReturnOrderItemService,PlmTaskFeign plmTaskFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
         this.dmpShopInfoService = dmpShopInfoService;
         this.dmpReturnOrderInfoService = dmpReturnOrderInfoService;
         this.dmpReturnOrderItemService = dmpReturnOrderItemService;
+        this.plmTaskFeign = plmTaskFeign;
+        this.returnOrderList = returnOrderList;
         this.list = new ArrayList<>();
     }
 
@@ -56,15 +70,24 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();
-        DmpReturnOrderItemEntity itemEntity = new DmpReturnOrderItemEntity();
+
         if (StringUtils.isBlank(dto.getReturnOrderId())) {
             errorMsgList.add("退货单号不能为空");
         }
+        if (CollectionUtils.isNotEmpty(returnOrderList)) {
+            long count = returnOrderList.stream().filter(obj -> obj.getReturnOrderId().equals(dto.getReturnOrderId())).count();
+            if (count > 0) {
+                errorMsgList.add("退货单号已存在，不能重复添加");
+            }
+        }
         if (StringUtils.isBlank(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号不能为空");
+            errorMsgList.add("原订单号不能为空");
         }
         if (StringUtils.isNotBlank(dto.getReturnOrderId()) && dto.getReturnOrderId().length() > 50) {
             errorMsgList.add("退货单号不能超过50个字节");
+        }
+        if (!StrUtils.isLetterDigit(dto.getReturnOrderId())) {
+            errorMsgList.add("退货单号只能包含字母和数字");
         }
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");
@@ -75,20 +98,43 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         if (StringUtils.isBlank(dto.getShopName())) {
             errorMsgList.add("店铺名称不能为空");
         }
-        if (StringUtils.isBlank(dto.getSkuNo())) {
+        if(StringUtils.isBlank(dto.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
+        } else {
+            if (!StrUtils.isLetterDigit(dto.getSkuNo())) {
+                errorMsgList.add("SKU只能包含字母和数字");
+            }
+            //根据sku编号查询sku
+            Map<String,String> skuParams = new HashMap<>();
+            skuParams.put("skuNo",dto.getSkuNo());
+            ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
+            if (ObjectUtils.isEmpty(productDetailDTO)) {
+                errorMsgList.add("系统中不存在此sku编号");
+            }
+        }
+        if (MathUtil.compareTo(dto.getRefundNum(),MathUtil.ZERO) <= 0) {
+            errorMsgList.add("退货数量必须大于0");
+        }
+        if (MathUtil.compareTo(dto.getOrderFee(),MathUtil.ZERO) <= 0) {
+            errorMsgList.add("退货金额必须大于0");
+        }
+        if (StringUtils.isBlank(dto.getStatusName())) {
+            errorMsgList.add("退货状态不能为空");
+        }
+        if (StringUtils.isBlank(dto.getCurrencyCode())) {
+            errorMsgList.add("币种不能为空");
+        }
+        CurrencyEnum currencyEnum = CurrencyEnum.getByCode(dto.getCurrencyCode());
+        if (ObjectUtils.isEmpty(currencyEnum)) {
+            errorMsgList.add("系统中未发现该币种！");
         }
         if (StringUtils.isNotBlank(dto.getShopName())) {
             Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getPlatformName(),null, dto.getShopName());
             if (count == 0) {
-                errorMsgList.add("店铺在系统中未找到");
+                errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
-        //查询退货
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnOrderId());
-        if(ObjectUtils.isNotEmpty(dmpReturnOrderInfoEntity)) {
-            errorMsgList.add("退货单号已存在，不能重复添加");
-        }
+
         //查询订单
         DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
         if(ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
@@ -103,6 +149,7 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             }
         }
 
+
         String errStr = "";
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
@@ -113,16 +160,28 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             list.add(dto);
             return;
         }
-        BeanMapperUtils.copy(dto,entity);
-        entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
-        boolean flag = dmpReturnOrderInfoService.save(entity);
-        //新增sku明细
-        if (flag) {
-            itemEntity.setReturnOrderId(entity.getId());
-            itemEntity.setQuantity(dto.getRefundNum());
-            itemEntity.setSkuNo(dto.getSkuNo());
-            dmpReturnOrderItemService.save(itemEntity);
+        //查询退货
+        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnOrderId());
+        if (ObjectUtils.isEmpty(dmpReturnOrderInfoEntity)) {
+            BeanUtils.copyProperties(dto,entity);
+            entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
+            entity.setOrderTime(dmpOrderInfoEntity.getPlatformCreateTime());
+            dmpReturnOrderInfoService.save(entity);
         }
+        //同订单sku新增到同一订单下
+        DmpReturnOrderItemEntity itemEntity = new DmpReturnOrderItemEntity();
+        if (ObjectUtils.isNotEmpty(dmpReturnOrderInfoEntity)) {
+            itemEntity.setReturnOrderId(dmpReturnOrderInfoEntity.getId());
+        } else {
+            itemEntity.setReturnOrderId(entity.getId());
+        }
+        itemEntity.setQuantity(dto.getRefundNum());
+        itemEntity.setSkuNo(dto.getSkuNo());
+        itemEntity.setSellPrice(MathUtil.divide(dto.getOrderFee(),new BigDecimal(dto.getRefundNum())));
+        dmpReturnOrderItemService.save(itemEntity);
+
+        //根据明细金额更新主表订单金额
+        dmpReturnOrderInfoService.updateOrderFeeById(itemEntity.getReturnOrderId());
     }
 
     public List<DmpReturnOrderInfoImportExcelDTO> getDateList(){

@@ -22,6 +22,12 @@
                 </foreach>
             </if>
         </where>
-        order by bdscd.year , bdscd.month , bdscd.date
+        order by
+        bdscd.quarter,
+        bdscd.month ,
+        case bdscd.week_begin when '' then bdscd.week_begin
+        else to_char(concat(bdscd.year,'-',replace(replace(bdscd.week_begin, '月', '-'),'日',''))::timestamp,'MM-dd')
+        end ,
+        bdscd.date
     </select>
 </mapper>

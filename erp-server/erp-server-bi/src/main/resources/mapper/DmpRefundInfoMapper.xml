@@ -28,7 +28,8 @@
             round(dri.refund_amount * dri.currency_rate,2) as cnyRealTimeAmount,
             round(dri.refund_amount * dri.cny_settle_rate,2)  as cny_settle_amount,
             dri.refund_status,
-            dri.refund_time
+            dri.refund_time,
+            dri.order_time
         from dmp_refund_info dri
         inner join dmp_refund_item drid on dri.id = drid.refund_id
         <where>
