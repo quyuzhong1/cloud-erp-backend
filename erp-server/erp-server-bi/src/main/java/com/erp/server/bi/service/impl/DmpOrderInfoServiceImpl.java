@@ -120,14 +120,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
             if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 if (BiFilterDTO.validOriginalCurrency(dto)){
-                    query.select("sum(item_total) as item_total");
+                    query.select("sum(order_fee) as item_total");
                 }else {
                     return new TargetSaleSumVO(amount);
                 }
             } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
-                query.select("sum(item_total*settle_rate) as item_total");
+                query.select("sum(order_fee*settle_rate) as item_total");
             } else  {
-                query.select("sum(item_total*currency_rate) as item_total");
+                query.select("sum(order_fee*currency_rate) as item_total");
             }
             DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
             amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getItemTotal(): BigDecimal.ZERO;
@@ -371,7 +371,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(item_total*currency_rate,0)) as item_total", groupByStr);
+        qw.select("SUM(COALESCE(order_fee*currency_rate,0)) as item_total", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getQuarterResultList(quarterTargetMap,new HashMap<>(4),start.getYear());
@@ -475,7 +475,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(item_total*currency_rate, 0)) as item_total", groupByStr);
+        qw.select("SUM(COALESCE(order_fee*currency_rate, 0)) as item_total", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());

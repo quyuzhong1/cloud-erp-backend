@@ -27,9 +27,9 @@
             doi.platform_order_id,
             doi.source_platform,
             doi.shop_name,
-            doi.item_total,
-            round(doi.item_total * doi.currency_rate,2) as cnyRealTimeAmount,
-            round(doi.item_total * doi.cny_settle_rate,2) as cny_settle_amount,
+            doi.order_fee,
+            round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
+            round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
             doi.buyer_name,
             doi.man_phone,
             doi.second_phone,
@@ -77,9 +77,9 @@
         doi.platform_order_id,
         doi.source_platform,
         doi.shop_name,
-        doi.item_total,
-        round(doi.item_total * doi.currency_rate,2) as cnyRealTimeAmount,
-        round(doi.item_total * doi.cny_settle_rate,2) as cny_settle_amount,
+        doi.order_fee,
+        round(doi.order_fee * doi.currency_rate,2) as cnyRealTimeAmount,
+        round(doi.order_fee * doi.cny_settle_rate,2) as cny_settle_amount,
         doi.buyer_name,
         doi.man_phone,
         doi.second_phone,
@@ -133,7 +133,7 @@
     </select>
     <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DimensionSalesVO">
         SELECT ${groupName} AS dimension,
-        SUM(item_total * currency_rate) AS salesAmount
+        SUM(order_fee * currency_rate) AS salesAmount
         FROM dmp_order_info AS doi
         WHERE doi.${groupName} IS NOT NULL
         <if test="params.startTime != null">
