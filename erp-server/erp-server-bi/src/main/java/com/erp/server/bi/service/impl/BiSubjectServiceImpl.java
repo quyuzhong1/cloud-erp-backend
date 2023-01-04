@@ -342,10 +342,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
 
         String finalDashboardCategoryId = dashboardCategoryId;
-        subjectList=subjectList.stream().filter(s->!finalDashboardCategoryId.equals(s.getCategoryId())).collect(Collectors.toList());
+        subjectList = subjectList.stream().filter(s -> !finalDashboardCategoryId.equals(s.getCategoryId())).collect(Collectors.toList());
         for (Pair<String, String> pair : pairList) {
             String categoryId = pair.getKey();
-            if(!finalDashboardCategoryId.equals(categoryId)){
+            if (!finalDashboardCategoryId.equals(categoryId)) {
                 CategorySubjectDTO result = new CategorySubjectDTO();
                 result.setCategoryId(categoryId);
                 result.setCategoryName(pair.getValue());

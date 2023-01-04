@@ -153,39 +153,67 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-20 9:15
      */
     @Override
-    public List<SalesByCountryVO> getByCountry(BiFilterDTO dto) {
+    public XyAxesResultVO getByCountry(BiFilterDTO dto) {
+        XyAxesResultVO result = new XyAxesResultVO();
         List<SalesByCountryVO> list = baseMapper.getByCountry(dto);
 
         Map<String, List<SalesByCountryVO>> countryMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getCountry));
         Map<String, List<SalesByCountryVO>> skuMap = list.parallelStream().
                 collect(Collectors.groupingBy(SalesByCountryVO::getSku));
+
+        //列名
+        List<XAxesVO> columnList = new ArrayList<>(countryMap.size() + 1);
+        XAxesVO shopAxes = new XAxesVO();
+        shopAxes.setProp("sku");
+        shopAxes.setLabel("SKU");
+        columnList.add(shopAxes);
+
+        //品名
+        XAxesVO productNameAxes = new XAxesVO();
+        productNameAxes.setProp("productName");
+        productNameAxes.setLabel("品名");
+        columnList.add(productNameAxes);
+
+        //国家
         List<String> countryList = new ArrayList<>(countryMap.size());
         for (Map.Entry<String, List<SalesByCountryVO>> item : countryMap.entrySet()) {
-            countryList.add(item.getKey());
+            String country = item.getKey();
+            countryList.add(country);
+            XAxesVO axes = new XAxesVO();
+            axes.setProp(country);
+            axes.setLabel(country);
+            columnList.add(axes);
         }
-        List<String> skuList = new ArrayList<>(countryMap.size());
+        //sku
+        List<String> skuList = new ArrayList<>(skuMap.size());
         for (Map.Entry<String, List<SalesByCountryVO>> item : skuMap.entrySet()) {
             skuList.add(item.getKey());
         }
-        List<SalesByCountryVO> resultList = new ArrayList<>(skuList.size()*countryList.size());
+        List<Map<String, Object>> rowAxesList = new ArrayList<>(skuMap.size());
+
         for (String sku : skuList) {
+            Map<String, Object> rowMap = new HashMap<>();
+            rowMap.put("sku", sku);
             for (String country : countryList) {
-                SalesByCountryVO vo = new SalesByCountryVO();
-                vo.setCountry(country);
-                vo.setSku(sku);
+                String productName = "";
                 SalesByCountryVO product = list.stream().filter(s -> s.getSku().equals(sku)).findFirst().orElse(null);
                 if (product != null) {
-                    vo.setProductName(product.getProductName());
+                    productName = product.getProductName();
                 }
+                rowMap.put("productName", productName);
                 SalesByCountryVO salesInfo = list.stream().filter(s -> sku.equals(s.getSku()) && country.equals(s.getCountry())).findFirst().orElse(null);
                 if (salesInfo != null) {
-                    vo.setSales(salesInfo.getSales());
+                    rowMap.put(country, salesInfo.getSales());
+                } else {
+                    rowMap.put(country, BigDecimal.ZERO);
                 }
-                resultList.add(vo);
+                rowAxesList.add(rowMap);
             }
         }
-        return resultList;
+        result.setColumnList(columnList);
+        result.setRowList(rowAxesList);
+        return result;
     }
 
 
@@ -311,38 +339,56 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @date 2022-12-26 10:10
      */
     @Override
-    public List<SalesGroupVO> byShopCountry(BiFilterDTO dto) {
-        List<CountryCountVO> countryNameList = baseMapper.getCountryList();
-        int countrySize = countryNameList.size();
+    public XyAxesResultVO byShopCountry(BiFilterDTO dto) {
+        XyAxesResultVO result = new XyAxesResultVO();
         List<ShopSalesVO> list = baseMapper.byShopCountry(dto);
-        Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
+        //以店铺
+        Map<String, List<ShopSalesVO>> groupShopMap = list.parallelStream().
                 collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
-        int initSize = groupMap.size();
-        List<SalesGroupVO> resultList = new ArrayList<>(initSize);
 
-        for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
+        //以国家
+        Map<String, List<ShopSalesVO>> groupCountryMap = list.parallelStream().
+                collect(Collectors.groupingBy(ShopSalesVO::getPlatformName));
+        int countryMapSize = groupCountryMap.size();
+        //列名
+        List<XAxesVO> columnList = new ArrayList<>(countryMapSize + 1);
+        XAxesVO shopAxes = new XAxesVO();
+        shopAxes.setProp("name");
+        shopAxes.setLabel("店铺名称");
+        columnList.add(shopAxes);
+        List<String> countryNameList = new ArrayList<>(countryMapSize);
+        for (Map.Entry<String, List<ShopSalesVO>> item : groupCountryMap.entrySet()) {
+            XAxesVO axes = new XAxesVO();
+            String country = item.getKey();
+            axes.setProp(country);
+            axes.setLabel(country);
+            columnList.add(axes);
+            countryNameList.add(country);
+        }
+
+        List<Map<String, Object>> rowAxesList = new ArrayList<>(groupShopMap.size());
+
+        for (Map.Entry<String, List<ShopSalesVO>> item : groupShopMap.entrySet()) {
+            Map<String, Object> rowAxes = new HashMap<>();
             List<ShopSalesVO> shopSalesList = item.getValue();
             String shopName = shopSalesList.get(0).getShopName();
-            SalesGroupVO vo = new SalesGroupVO();
-            vo.setName(shopName);
-            List<SalesGroupBaseVO> baseList = new ArrayList<>(countrySize);
-            for (CountryCountVO country : countryNameList) {
-                SalesGroupBaseVO baseVO = new SalesGroupBaseVO();
-                baseVO.setFlagName(country.getName());
-                ShopSalesVO result = shopSalesList.stream().
+            rowAxes.put("name", shopName);
+            for (String country : countryNameList) {
+                BigDecimal value = BigDecimal.ZERO;
+                ShopSalesVO shopSales = shopSalesList.stream().
                         filter(s -> s.getPlatformName().equals(country)).
                         findFirst().orElse(null);
-                if (result != null) {
-                    baseVO.setSales(result.getSales());
-                } else {
-                    baseVO.setSales(BigDecimal.ZERO);
+                if (shopSales != null) {
+                    value = shopSales.getSales();
                 }
-                baseList.add(baseVO);
+                rowAxes.put(country, value);
             }
-            vo.setList(baseList);
-            resultList.add(vo);
+
+            rowAxesList.add(rowAxes);
         }
-        return resultList;
+        result.setColumnList(columnList);
+        result.setRowList(rowAxesList);
+        return result;
     }
 
     /**
@@ -355,36 +401,51 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
 
     @Override
-    public List<SalesGroupVO> byShopCategory(BiFilterDTO dto) {
+    public XyAxesResultVO byShopCategory(BiFilterDTO dto) {
+        XyAxesResultVO result = new XyAxesResultVO();
         //查询sku 分类以及分类下对应的skuno
         List<SkuCategoryVO> skuCategoryList = skuInfoService.getSkuCategoryList();
         int skuCategorySize = skuCategoryList.size();
+        //列名
+        List<XAxesVO> columnList = new ArrayList<>(skuCategorySize + 1);
+        XAxesVO shopAxes = new XAxesVO();
+        shopAxes.setProp("name");
+        shopAxes.setLabel("店铺名称");
+        columnList.add(shopAxes);
+
+        for (SkuCategoryVO category : skuCategoryList) {
+            XAxesVO axes = new XAxesVO();
+            String categoryName = category.getName();
+            axes.setProp(categoryName);
+            axes.setLabel(categoryName);
+            columnList.add(axes);
+        }
+
         List<ShopSalesVO> list = baseMapper.byShopCategory(dto);
         Map<String, List<ShopSalesVO>> groupMap = list.parallelStream().
                 collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
         int initSize = groupMap.size();
-        List<SalesGroupVO> resultList = new ArrayList<>(initSize);
+
+        List<Map<String, Object>> rowAxesList = new ArrayList<>(initSize);
+
         for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
+            Map<String, Object> rowMap = new HashMap<>();
+
             List<ShopSalesVO> shopSalesList = item.getValue();
             String shopName = shopSalesList.get(0).getShopName();
-            SalesGroupVO vo = new SalesGroupVO();
-            vo.setName(shopName);
-            List<SalesGroupBaseVO> baseList = new ArrayList<>(skuCategorySize);
+            rowMap.put("name", shopName);
             for (SkuCategoryVO category : skuCategoryList) {
                 List<String> skuList = category.getSkuList();
-                SalesGroupBaseVO baseVO = new SalesGroupBaseVO();
-                baseVO.setFlagName(category.getName());
                 BigDecimal sales = shopSalesList.stream().
                         filter(s -> skuList.contains(s.getSkuNo())).
                         map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                baseVO.setSales(sales);
-                baseList.add(baseVO);
+                rowMap.put(category.getName(), sales);
             }
-            vo.setList(baseList);
-            resultList.add(vo);
+            rowAxesList.add(rowMap);
         }
-        return resultList;
+        result.setColumnList(columnList);
+        result.setRowList(rowAxesList);
+        return result;
     }
 
     /**

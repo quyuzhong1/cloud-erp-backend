@@ -36,7 +36,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      */
     List<SalesVO> getBySpu(BiFilterDTO dto);
 
-    List<SalesByCountryVO> getByCountry(BiFilterDTO dto);
+    XyAxesResultVO getByCountry(BiFilterDTO dto);
 
     /**
      * 一级销售模块更具平台分
@@ -71,7 +71,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.bi.vo.SalesGroupVO>
      */
-    List<SalesGroupVO> byShopCountry(BiFilterDTO dto);
+    XyAxesResultVO byShopCountry(BiFilterDTO dto);
 
     /**
      * 二级销售模块 店铺的新/老品销售额
@@ -96,7 +96,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      */
     StatisticalDataVO byCategory(BiFilterDTO dto);
 
-    List<SalesGroupVO> byShopCategory(BiFilterDTO dto);
+    XyAxesResultVO byShopCategory(BiFilterDTO dto);
 
     List<SalesCountVO> byBrand(BiFilterDTO dto);
 

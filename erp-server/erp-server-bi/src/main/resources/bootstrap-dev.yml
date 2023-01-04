@@ -3,10 +3,10 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.12
-        namespace: ${NACOS_NAMESPACE:dev-cloud}
+        namespace: dev-yl
       config:
         server-addr: 172.16.100.12
-        namespace: ${NACOS_NAMESPACE:dev-cloud}
+        namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-dmp.yml,druid-common.yml
 #显示日期的
