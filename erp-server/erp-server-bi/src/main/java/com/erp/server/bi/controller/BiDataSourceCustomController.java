@@ -41,6 +41,33 @@ public class BiDataSourceCustomController extends BaseController {
     @Resource
     private BiDataSourceCustomService biDataSourceCustomService;
 
+
+    /**
+     * 自助数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     *  自助数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/exportExcel")
+    public ApiResult exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
+
    /**
     * 自助数据-市场数据-分页查询
     * @author Will
