@@ -86,8 +86,8 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         if (StringUtils.isNotBlank(dto.getReturnOrderId()) && dto.getReturnOrderId().length() > 50) {
             errorMsgList.add("退货单号不能超过50个字节");
         }
-        if (!StrUtils.isLetterDigit(dto.getReturnOrderId())) {
-            errorMsgList.add("退货单号只能包含字母和数字");
+        if (!StrUtils.isLetterDigitBar(dto.getReturnOrderId())) {
+            errorMsgList.add("退货单号只能包含字母、数字、-");
         }
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");

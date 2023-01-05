@@ -81,8 +81,8 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");
         }
-        if (!StrUtils.isLetterDigit(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号只能包含字母和数字");
+        if (!StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
+            errorMsgList.add("订单号只能包含字母、数字、-");
         }
 
         if (StringUtils.isBlank(dto.getSourcePlatform())) {

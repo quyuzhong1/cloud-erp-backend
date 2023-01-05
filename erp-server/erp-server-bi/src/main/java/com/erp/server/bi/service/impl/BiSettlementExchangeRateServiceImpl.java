@@ -98,7 +98,8 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         List<BiSettlementExchangeRateEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Map<String, List<BiSettlementExchangeRateEntity>> newMap = list.stream().collect(Collectors.groupingBy(obj -> obj.getSettlementDateBegin().toString().concat(",").concat(obj.getSettlementDateEnd().toString())));
-           for (Map.Entry<String, List<BiSettlementExchangeRateEntity>> entry:newMap.entrySet()) {
+            List<Map.Entry<String, List<BiSettlementExchangeRateEntity>>> collect = newMap.entrySet().stream().sorted(Comparator.comparing(obj -> obj.getKey().split(",")[0])).collect(Collectors.toList());
+            for (Map.Entry<String, List<BiSettlementExchangeRateEntity>> entry:collect) {
                String key = entry.getKey();
                String[] date = key.split(",");
                List<BiSettlementExchangeRateEntity> value = entry.getValue();

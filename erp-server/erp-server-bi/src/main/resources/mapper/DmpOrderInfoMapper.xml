@@ -95,12 +95,18 @@
             when doi.order_state = 4 then '已完成'
             when doi.order_state = 5 then '已作废'
             else '' end order_state_name,
+        case when doi.correction_status = 2 then '配货中'
+            when doi.correction_status = 3 then '已发货'
+            when doi.correction_status = 4 then '已完成'
+            when doi.correction_status = 5 then '已作废'
+            else '' end correction_status_name,
         doi.correction_status,
         doi.create_time,
         doi.platform_order_id,
         doi.delivery_time,
         doi.charge_name,
         doi.currency_code,
+        doi.dept_name,
         doi2.sku_no,
         doi2.item_name,
         doi2.sell_price,

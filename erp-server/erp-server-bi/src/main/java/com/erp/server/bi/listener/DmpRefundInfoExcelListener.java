@@ -79,8 +79,8 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
         if (StringUtils.isNotBlank(dto.getRefundId()) && dto.getRefundId().length() > 50) {
             errorMsgList.add("退款单号不能超过50个字节");
         }
-        if (!StrUtils.isLetterDigit(dto.getRefundId())) {
-            errorMsgList.add("退款单号只能包含字母和数字");
+        if (!StrUtils.isLetterDigitBar(dto.getRefundId())) {
+            errorMsgList.add("退款单号只能包含字母、数字、-");
         }
 
         if (CollectionUtils.isNotEmpty(refundList)) {

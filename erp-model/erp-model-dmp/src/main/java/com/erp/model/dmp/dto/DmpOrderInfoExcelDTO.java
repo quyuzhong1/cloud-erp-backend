@@ -37,87 +37,88 @@ public class DmpOrderInfoExcelDTO implements Serializable {
     private String sourcePlatform;
 
     /**
-     * 站点
-     */
-    @ExcelProperty(value = "站点", index = 2)
-    private String site;
-
-    /**
      * 店铺名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "店铺名称", index = 3)
+    @ExcelProperty(value = "店铺名称", index = 2)
     private String shopName;
 
     /**
      * 订单销售额[原币种]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单销售额[原币种]", index = 4)
+    @ExcelProperty(value = "订单销售额[原币种]", index = 3)
     private BigDecimal itemTotal;
 
     /**
      * 订单销售额[RMB-实时]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单销售额[RMB-实时]", index = 5)
+    @ExcelProperty(value = "订单销售额[RMB-实时]", index = 4)
     private BigDecimal cnyRealTimeAmount;
 
     /**
      * 订单销售额[RMB-结算]
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单销售额[RMB-结算]", index = 6)
+    @ExcelProperty(value = "订单销售额[RMB-结算]", index = 5)
     private BigDecimal cnySettleAmount;
 
     /**
      * 买家姓名（下单人）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "下单人", index = 7)
+    @ExcelProperty(value = "下单人", index = 6)
     private String buyerName;
 
     /**
      * 买家电话1（下单电话1）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "下单电话1", index = 8)
+    @ExcelProperty(value = "下单电话1", index = 7)
     private String manPhone;
 
     /**
      * 买家电话2（下单电话2）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "下单电话2", index = 9)
+    @ExcelProperty(value = "下单电话2", index = 8)
     private String secondPhone;
 
     /**
      * 买家地址1（下单地址1）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "下单地址1", index = 10)
+    @ExcelProperty(value = "下单地址1", index = 9)
     private String manStreet;
 
     /**
      * 买家地址2（下单地址2）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "下单地址2", index = 11)
+    @ExcelProperty(value = "下单地址2", index = 10)
     private String secondStreet;
 
     /**
-     * 国家名称
+     * 国家
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "国家名称", index = 12)
+    @ExcelProperty(value = "国家", index = 11)
     private String countryNameCn;
 
     /**
-     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废
+     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "订单状态", index = 13)
+    @ExcelProperty(value = "订单状态", index = 12)
     private String orderStateName;
+
+    /**
+     * 订单修正状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "订单修正状态", index = 13)
+    private String correctionStatusName;
 
     /**
      * 订单下单时间
@@ -141,40 +142,40 @@ public class DmpOrderInfoExcelDTO implements Serializable {
     @ExcelProperty(value = "销售员", index = 16)
     private String chargeName;
 
-    /**
-     * 币种
-     */
-    @ExcelProperty(value = "币种", index = 17)
-    private String currencyCode;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "SKU", index = 18)
+    @ExcelProperty(value = "SKU", index = 17)
     private String skuNo;
 
     /**
      * 品名
      */
-    @ExcelProperty(value = "品名", index = 19)
+    @ExcelProperty(value = "品名", index = 18)
     private String itemName;
 
     /**
      * 单价
      */
-    @ExcelProperty(value = "单价", index = 20)
+    @ExcelProperty(value = "单价", index = 19)
     private BigDecimal sellPrice;
 
     /**
      * 数量
      */
-    @ExcelProperty(value = "数量", index = 21)
+    @ExcelProperty(value = "数量", index = 20)
     private Integer quantity;
 
     /**
-     * 销售额[原币别]
+     * 销售额[原币种]
      */
-    @ExcelProperty(value = "销售额[原币别]", index = 22)
+    @ExcelProperty(value = "销售额[原币种]", index = 21)
     private BigDecimal sellAmount;
 
+    /**
+     * 销售事业部
+     */
+    @ExcelProperty(value = "销售事业部", index = 22)
+    private String deptName;
 }
