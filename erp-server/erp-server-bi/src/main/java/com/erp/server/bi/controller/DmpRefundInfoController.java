@@ -1,9 +1,11 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
@@ -59,7 +61,7 @@ public class DmpRefundInfoController extends BaseController {
     * @return ApiResult<PagingVO<DmpRefundInfoDTO>>
     */
     @PostMapping("/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dri")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpRefundInfoSearchDTO> dto) {
         PagingVO<DmpRefundInfoDTO> pagingVO = dmpRefundInfoService.paging(dto);
         return success(pagingVO);
@@ -73,7 +75,7 @@ public class DmpRefundInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dri")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
     public ApiResult exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
         dmpRefundInfoService.exportExcel(dto, response);
         return success();

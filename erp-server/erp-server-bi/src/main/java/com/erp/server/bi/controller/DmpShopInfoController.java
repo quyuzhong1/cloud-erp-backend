@@ -1,10 +1,12 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.bi.dto.*;
+import com.erp.model.bi.dto.AdvanceSearchDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.server.bi.service.DmpShopChangeLogService;
 import com.erp.server.bi.service.DmpShopInfoService;
@@ -39,7 +41,7 @@ public class DmpShopInfoController extends BaseController {
     * @return ApiResult<PagingVO<DmpShopInfoShowDTO>>
     */
     @PostMapping("/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dsi")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
     public ApiResult<PagingVO<DmpShopInfoShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpShopInfoSearchDTO> dto) {
         PagingVO<DmpShopInfoShowDTO> pagingVO = dmpShopInfoService.paging(dto);
         return success(pagingVO);
@@ -133,7 +135,7 @@ public class DmpShopInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dsi")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
     public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
         dmpShopInfoService.exportExcel(dto, response);
         return  success();

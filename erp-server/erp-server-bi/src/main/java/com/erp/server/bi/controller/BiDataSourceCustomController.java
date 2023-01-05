@@ -1,9 +1,11 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
@@ -47,7 +49,7 @@ public class BiDataSourceCustomController extends BaseController {
     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
     */
     @PostMapping("/market/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:market:paging", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> marketQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
@@ -61,7 +63,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
      */
     @PostMapping("/supplyChain/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:supplyChain:paging", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> supplyChainQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
@@ -76,7 +78,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
      */
     @PostMapping("/operate/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:operate:paging", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> operateQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
@@ -90,7 +92,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
      */
     @PostMapping("/finance/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:finance:paging", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> financeQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
@@ -105,21 +107,21 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/market/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:market:paging", tableAlias = "bdsc")
     public ApiResult marketExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
 
     /**
-     *  自助数据-供应链-导出
+     *  自助数据-供应链数据-导出
      * @author Will
      * @date: 2022/12/15 10 10:45
      * @param dto
      * @param response
      */
     @PostMapping(value = "/supplyChain/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:supplyChain:paging", tableAlias = "bdsc")
     public ApiResult supplyChainExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
@@ -133,7 +135,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/operate/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:operate:paging", tableAlias = "bdsc")
     public ApiResult operateExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
@@ -147,7 +149,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/finance/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:finance:paging", tableAlias = "bdsc")
     public ApiResult financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
