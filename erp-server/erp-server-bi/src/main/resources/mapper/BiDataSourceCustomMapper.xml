@@ -27,6 +27,9 @@
             <if test="params.createTime_end != null ">
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
         order by bdsc.year
     </select>
@@ -60,6 +63,9 @@
             </if>
             <if test="params.createTime_end != null ">
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         order by bdsc.year

@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class BiDataSourceCustomSearchDTO {
+public class BiDataSourceCustomSearchDTO extends BaseSearchDTO {
 
     /**
      * 指标名称

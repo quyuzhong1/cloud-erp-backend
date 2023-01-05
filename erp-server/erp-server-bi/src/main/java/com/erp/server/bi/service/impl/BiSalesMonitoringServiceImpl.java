@@ -13,6 +13,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
+import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringTableDTO;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
@@ -32,7 +33,10 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -108,7 +112,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
     }
 
     @Override
-    public LinkedHashMap<String,Object> listBiSalesMonitoringView(String moduleId) {
+    public LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO dto) {
+        //模块id
+        String moduleId = dto.getModuleId();
         //当前登录人
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
@@ -127,7 +133,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         if (CollectionUtils.isEmpty(list)) {
             return map;
         }
-        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable();
+        List<BiSalesMonitoringTableDTO> biSalesMonitoringTableList = this.baseMapper.listBiSalesMonitoringTable(dto);
         if (CollectionUtils.isEmpty(biSalesMonitoringTableList)) {
             return map;
         }

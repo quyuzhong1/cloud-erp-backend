@@ -190,6 +190,18 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     private BigDecimal cnySettleRate;
 
     /**
+     * 负责人id
+     */
+    @TableField(value = "charge_id")
+    private String chargeId;
+
+    /**
+     * 负责人
+     */
+    @TableField(value = "charge_name")
+    private String chargeName;
+
+    /**
      * 清洗状态  1 未清洗 2 清洗完成
      */
     @TableField(value = "clean_state")

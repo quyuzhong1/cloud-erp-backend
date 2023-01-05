@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.dto.base.BaseSearchDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-public class BiDataSourceCostSearchDTO {
+public class BiDataSourceCostSearchDTO extends BaseSearchDTO {
 
     /**
      * 店铺名称

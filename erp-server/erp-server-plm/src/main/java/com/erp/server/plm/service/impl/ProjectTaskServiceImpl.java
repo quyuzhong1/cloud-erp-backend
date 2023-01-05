@@ -1210,14 +1210,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
 
-        List<String> updateField = getUpdateField(dto);
+       /* List<String> updateField = getUpdateField(dto);
         if (updateField.size() > 0) {
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(dto.getProductId());
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-        }
+        }*/
+        //新增任务操作日志
+
 
         boolean flag = this.updateById(taskEntity);
         if (flag) {

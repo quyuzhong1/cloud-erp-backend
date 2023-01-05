@@ -21,6 +21,9 @@
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
 
     </select>
@@ -43,8 +46,13 @@
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
+
+
     <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DeptCostVO">
         SELECT bdsc.${groupName} AS name,
                bdscd.cost_type,

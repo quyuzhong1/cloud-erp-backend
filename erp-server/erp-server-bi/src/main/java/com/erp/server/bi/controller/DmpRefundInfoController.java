@@ -59,6 +59,7 @@ public class DmpRefundInfoController extends BaseController {
     * @return ApiResult<PagingVO<DmpRefundInfoDTO>>
     */
     @PostMapping("/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dri")
     public ApiResult<PagingVO<DmpRefundInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpRefundInfoSearchDTO> dto) {
         PagingVO<DmpRefundInfoDTO> pagingVO = dmpRefundInfoService.paging(dto);
         return success(pagingVO);
@@ -72,6 +73,7 @@ public class DmpRefundInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dri")
     public ApiResult exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
         dmpRefundInfoService.exportExcel(dto, response);
         return success();

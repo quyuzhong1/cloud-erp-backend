@@ -695,7 +695,8 @@ public class ExcelPrintUtils {
 		String exportFileName = URLEncoder.encode(fileName+ ExcelTypeEnum.XLSX.getValue(), StandardCharsets.UTF_8.toString());
 		//response.setContentType("application/force-download");
 		response.setHeader("Content-Disposition", "attachment;filename=" + exportFileName);
-		response.setContentType("application/json;charset=utf-8");
+		//response.setContentType("application/json;charset=utf-8");
+		response.setContentType("application/octet-stream");
 		//导出的文件名
 //        String excelFileName = URLEncoder.encode(fileName, "utf-8");
 //        response.setHeader("Content-disposition", "attachment; filename=" + new String(excelFileName.getBytes("UTF-8"), "ISO-8859-1"));

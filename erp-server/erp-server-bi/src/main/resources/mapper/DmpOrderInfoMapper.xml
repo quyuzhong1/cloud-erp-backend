@@ -68,6 +68,9 @@
             <if test="params.deliveryTime_end != null ">
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
 
     </select>
@@ -105,32 +108,36 @@
         from dmp_order_info doi
         left join dmp_order_item doi2 on doi.id = doi2.order_id
         <where>
-        <if test="params.platformOrderId != null and params.platformOrderId != ''">
-            and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
-        </if>
-        <if test="params.shopName != null and params.shopName != ''">
-            and doi.shop_name like concat('%',#{params.shopName},'%')
-        </if>
-        <if test="params.platformName != null and params.platformName != ''">
-            and doi.platform_order_id like concat('%',#{params.platformName},'%')
-        </if>
-        <if test="params.orderState != null and params.orderState != ''">
-            and doi.order_state = #{params.orderState}
-        </if>
-        <if test="params.createTime_begin != null ">
-            and doi.create_time &gt;= #{params.createTime_begin}::timestamp
-        </if>
-        <if test="params.createTime_end != null ">
-            and doi.create_time &lt;= #{params.createTime_end}::timestamp
-        </if>
-        <if test="params.deliveryTime_begin != null ">
-            and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
-        </if>
-        <if test="params.deliveryTime_end != null ">
-            and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
-        </if>
+            <if test="params.platformOrderId != null and params.platformOrderId != ''">
+                and doi.platform_order_id like concat('%',#{params.platformOrderId},'%')
+            </if>
+            <if test="params.shopName != null and params.shopName != ''">
+                and doi.shop_name like concat('%',#{params.shopName},'%')
+            </if>
+            <if test="params.platformName != null and params.platformName != ''">
+                and doi.platform_order_id like concat('%',#{params.platformName},'%')
+            </if>
+            <if test="params.orderState != null and params.orderState != ''">
+                and doi.order_state = #{params.orderState}
+            </if>
+            <if test="params.createTime_begin != null ">
+                and doi.create_time &gt;= #{params.createTime_begin}::timestamp
+            </if>
+            <if test="params.createTime_end != null ">
+                and doi.create_time &lt;= #{params.createTime_end}::timestamp
+            </if>
+            <if test="params.deliveryTime_begin != null ">
+                and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
+            </if>
+            <if test="params.deliveryTime_end != null ">
+                and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
+
     <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DimensionSalesVO">
         SELECT ${groupName} AS dimension,
         SUM(order_fee * currency_rate) AS salesAmount

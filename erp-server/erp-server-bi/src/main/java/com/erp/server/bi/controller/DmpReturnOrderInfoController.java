@@ -58,6 +58,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "droi")
     public ApiResult<PagingVO<DmpReturnOrderInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
         PagingVO<DmpReturnOrderInfoDTO> pagingVO = dmpReturnOrderInfoService.paging(dto);
         return success(pagingVO);
@@ -71,6 +72,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "droi")
     public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
         dmpReturnOrderInfoService.exportExcel(dto, response);
         return success();

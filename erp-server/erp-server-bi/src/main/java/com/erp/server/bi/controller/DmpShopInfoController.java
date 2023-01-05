@@ -39,6 +39,7 @@ public class DmpShopInfoController extends BaseController {
     * @return ApiResult<PagingVO<DmpShopInfoShowDTO>>
     */
     @PostMapping("/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dsi")
     public ApiResult<PagingVO<DmpShopInfoShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpShopInfoSearchDTO> dto) {
         PagingVO<DmpShopInfoShowDTO> pagingVO = dmpShopInfoService.paging(dto);
         return success(pagingVO);
@@ -132,6 +133,7 @@ public class DmpShopInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "dsi")
     public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
         dmpShopInfoService.exportExcel(dto, response);
         return  success();

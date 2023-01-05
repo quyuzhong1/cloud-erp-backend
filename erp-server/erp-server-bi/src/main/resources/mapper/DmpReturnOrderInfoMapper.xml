@@ -59,6 +59,9 @@
             <if test="params.orderTime_end != null ">
                 and droi.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
 
@@ -104,6 +107,9 @@
             </if>
             <if test="params.orderTime_end != null ">
                 and droi.order_time &lt;= #{params.orderTime_end}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

@@ -3,8 +3,8 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
+import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,9 +71,10 @@ public class BiSalesMonitoringController extends BaseController {
      * @date: 2022/12/30 12:27
      * @return ApiResult<BiSalesMonitoringViewVO>
      */
-    @GetMapping("/view")
-    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@Param("moduleId") String moduleId) {
-        LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(moduleId);
+    @PostMapping("/view")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "doio")
+    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO dto) {
+        LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(dto);
         return success(map);
     }
 

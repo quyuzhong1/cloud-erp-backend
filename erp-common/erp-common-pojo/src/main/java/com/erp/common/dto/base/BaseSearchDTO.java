@@ -3,8 +3,6 @@ package com.erp.common.dto.base;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
 /**
  * @Classname BaseSearchDTO
  * @Description TODO
@@ -13,7 +11,7 @@ import java.io.Serializable;
  */
 @NoArgsConstructor
 @Data
-public class BaseSearchDTO  extends PermissionsDTO implements Serializable {
+public class BaseSearchDTO extends PermissionsDTO {
 
     /**
      * 搜索关键字

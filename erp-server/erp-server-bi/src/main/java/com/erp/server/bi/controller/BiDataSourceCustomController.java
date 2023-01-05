@@ -16,7 +16,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -41,46 +40,118 @@ public class BiDataSourceCustomController extends BaseController {
     private BiDataSourceCustomService biDataSourceCustomService;
 
    /**
-    * 自助数据-分页查询
+    * 自助数据-市场数据-分页查询
     * @author Will
     * @date: 2022/12/16 13:18
     * @param dto
     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
     */
-    @PostMapping("/paging")
-    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+    @PostMapping("/market/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> marketQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
         return success(pagingVO);
     }
 
     /**
-     *  自助数据-导出
+     * 自助数据-供应链数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/supplyChain/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> supplyChainQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 自助数据-经营数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/operate/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> operateQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 自助数据-财务数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/finance/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> financeQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     *  自助数据-市场数据-导出
      * @author Will
      * @date: 2022/12/15 10 10:45
      * @param dto
      * @param response
      */
-    @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    @PostMapping(value = "/market/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult marketExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
 
-
     /**
-     * 自助数据-导入
+     *  自助数据-供应链-导出
      * @author Will
-     * @date: 2022/12/16 11:10
-     * @param excelFile
-     * @param importType
+     * @date: 2022/12/15 10 10:45
+     * @param dto
      * @param response
      */
-    @PostMapping("/importBiDataSourceCustomFile")
-    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType);
-        return flag == true ? this.success() : this.failure();
+    @PostMapping(value = "/supplyChain/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult supplyChainExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
     }
 
+    /**
+     *  自助数据-经营数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/operate/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult operateExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
+
+    /**
+     *  自助数据-财务数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/finance/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    public ApiResult financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
 
     /**
      * 自助数据-下载模板
