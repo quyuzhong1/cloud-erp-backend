@@ -1,5 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -111,8 +113,12 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
             DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpRefundInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
-                updateWrapper.set(DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
-                updateWrapper.set(DmpRefundInfoEntity::getCleanState, 2);
+                updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
+                updateWrapper.set(StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()), DmpRefundInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());
+                updateWrapper.set(StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeName()), DmpRefundInfoEntity::getChargeName, dmpOrderInfoEntity.getChargeName());
+                if (ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeName())){
+                    updateWrapper.set(DmpRefundInfoEntity::getCleanState, 2);
+                }
             }
             updateWrapper.set(DmpRefundInfoEntity::getRetryCount, dmpRefundInfoEntity.getRetryCount() + 1);
             updateWrapper.eq(DmpRefundInfoEntity::getId, dmpRefundInfoEntity.getId());
