@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
@@ -80,6 +81,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
+                if (StrUtil.isNotEmpty(dmpOrderInfoEntity.getSite())){
+                    dmpShopInfoEntity.setSite(dmpOrderInfoEntity.getSite());
+                }
                 this.updateShopByShopNo(dmpShopInfoEntity);
             }
         } else {
