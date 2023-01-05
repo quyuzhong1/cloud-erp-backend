@@ -75,6 +75,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+
         IPage pageData = baseMapper.paging(query, params);
         List<SubjectPagingDTO> list = pageData.getRecords();
         for (SubjectPagingDTO item : list) {

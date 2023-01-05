@@ -36,6 +36,9 @@
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
 
         ORDER BY create_time DESC
     </select>

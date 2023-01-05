@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @NoArgsConstructor
 @Data
-public class BaseSearchDTO implements Serializable {
+public class BaseSearchDTO  extends PermissionsDTO implements Serializable {
 
     /**
      * 搜索关键字

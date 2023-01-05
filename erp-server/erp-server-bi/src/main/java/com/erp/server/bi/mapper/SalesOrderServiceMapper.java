@@ -22,7 +22,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    List<SalesBaseVO> getLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate ,@Param("findTime") String  findTime);
 
 
     List<SalesVO> getBySpu(BiFilterDTO dto);
@@ -48,7 +48,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
      */
     List<ShopSalesVO> getByShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
-    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    List<SalesBaseVO> getShopLastDays(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("findTime") String findTime);
 
     List<Map<String, Object>> byTopShop(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 
