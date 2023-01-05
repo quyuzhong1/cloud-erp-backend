@@ -37,10 +37,10 @@ public class DmpShopInfoExcelDTO {
     private String site;
 
     /**
-     * 负责人名称
+     * 店铺负责人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "负责人名称", index = 3)
+    @ExcelProperty(value = "店铺负责人", index = 3)
     private String chargeName;
 
     /**
@@ -57,32 +57,33 @@ public class DmpShopInfoExcelDTO {
     @ExcelProperty(value = "店铺标识", index = 5)
     private String storeSign;
 
-    /**
-     * 创建时间
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 6)
-    private String createTime;
-
-    /**
-     * 更新时间
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "更新时间", index = 7)
-    private String updateTime;
 
     /**
      * 创建人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建人", index = 8)
+    @ExcelProperty(value = "创建人", index = 6)
     private String createUserName;
+
+    /**
+     * 创建时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "创建时间", index = 7)
+    private String createTime;
 
     /**
      * 更新人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "更新人", index = 9)
+    @ExcelProperty(value = "更新人", index = 8)
     private String updateUserName;
+
+    /**
+     * 更新时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "更新时间", index = 9)
+    private String updateTime;
 
 }

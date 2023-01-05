@@ -41,7 +41,8 @@
             doi.create_time,
             doi.platform_order_id,
             doi.delivery_time,
-            doi.charge_name
+            doi.charge_name,
+            doi.platform_create_time
         from dmp_order_info doi
         <where>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">

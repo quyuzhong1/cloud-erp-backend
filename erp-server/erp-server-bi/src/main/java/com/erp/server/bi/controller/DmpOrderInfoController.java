@@ -11,10 +11,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpOrderItemService;
-import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -41,15 +38,6 @@ public class DmpOrderInfoController extends BaseController {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
-    @Resource
-    private DmpShopInfoService dmpShopInfoService;
-
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     /**
      * 销售数据-分页查询
