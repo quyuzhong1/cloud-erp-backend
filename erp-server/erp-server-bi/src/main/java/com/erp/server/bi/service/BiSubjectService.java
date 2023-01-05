@@ -9,6 +9,7 @@ import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.vo.CategorySubjectVO;
 
 import java.util.List;
 
@@ -99,7 +100,7 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @param
      * @return java.util.List<com.erp.model.bi.dto.CategorySubjectDTO>
      */
-    List<CategorySubjectDTO> homePage(String searchKeyword);
+    List<CategorySubjectVO> homePage(String searchKeyword);
 
     /**
      * 复制专题id

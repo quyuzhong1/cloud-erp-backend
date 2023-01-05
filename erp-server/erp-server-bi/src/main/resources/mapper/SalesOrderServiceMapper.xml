@@ -1362,7 +1362,7 @@
     </select>
 
     <select id="byNewAndOld" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round( SUM ( o.order_fee *${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee *o.${settleRate} ) / 10000, 4 ) AS sales,
         CASE WHEN i.new_sign = 0 THEN '老品' ELSE'新品' END AS name,
         SUM ( i.quantity ) AS salesQuantity,COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1449,7 +1449,7 @@
 
     </select>
     <select id="byPlatformNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee*o.${settleRate} ) / 10000, 4 ) AS sales,
         i.new_sign AS flag,o.source_platform AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -1851,7 +1851,7 @@
     </select>
 
     <select id="byPeopleNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee*o.${settleRate} ) / 10000, 4 ) AS sales,
         i.new_sign AS flag,COALESCE(o.charge_id,'无') AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount

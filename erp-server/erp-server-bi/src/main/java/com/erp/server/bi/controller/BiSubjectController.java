@@ -5,6 +5,7 @@ import com.erp.common.dto.base.*;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
@@ -138,8 +139,8 @@ public class BiSubjectController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/homePage")
-    public ApiResult<List<CategorySubjectDTO>> homePage(@RequestBody @Validated BaseSearchDTO dto) {
-        List<CategorySubjectDTO> list = this.biSubjectService.homePage(dto.getSearchKeyword());
+    public ApiResult<List<CategorySubjectVO>> homePage(@RequestBody @Validated BaseSearchDTO dto) {
+        List<CategorySubjectVO> list = this.biSubjectService.homePage(dto.getSearchKeyword());
         return success(list);
     }
 

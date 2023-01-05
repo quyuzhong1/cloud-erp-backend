@@ -18,6 +18,8 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.vo.CategorySubjectVO;
+import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
@@ -336,8 +338,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      * @date 2022-12-14 16:14
      */
     @Override
-    public List<CategorySubjectDTO> homePage(String searchKeyword) {
-        List<CategorySubjectDTO> resultList = new ArrayList<>(10);
+    public List<CategorySubjectVO> homePage(String searchKeyword) {
+        List<CategorySubjectVO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
 
@@ -348,43 +350,50 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
 
 
-        String type = DictEnum.DASHBOARD.getType();
-        String dashboardFlag = DictEnum.DASHBOARD.getValue();
-        String dashboardCategoryId = "";
-        //获取我的仪表盘的专题
-        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
-        if (dict != null) {
-            dashboardCategoryId = dict.getId();
-        }
+//        String type = DictEnum.DASHBOARD.getType();
+//        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+//        String dashboardCategoryId = "";
+//        //获取我的仪表盘的专题
+//        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+//        if (dict != null) {
+//            dashboardCategoryId = dict.getId();
+//        }
 
-        List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+        List<SubjectVO> subjectList = baseMapper.getSubjectByIds(subjectIdList, searchKeyword);
 
-        String finalDashboardCategoryId = dashboardCategoryId;
-        subjectList = subjectList.stream().filter(s -> !finalDashboardCategoryId.equals(s.getCategoryId())).collect(Collectors.toList());
         for (Pair<String, String> pair : pairList) {
             String categoryId = pair.getKey();
-            if (!finalDashboardCategoryId.equals(categoryId)) {
-                CategorySubjectDTO result = new CategorySubjectDTO();
-                result.setCategoryId(categoryId);
-                result.setCategoryName(pair.getValue());
-                List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
-                result.setSubjectList(subjectResultList);
-                resultList.add(result);
+            CategorySubjectVO result = new CategorySubjectVO();
+            result.setCategoryId(categoryId);
+            result.setCategoryName(pair.getValue());
+            List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            for(SubjectVO item:subjectResultList){
+                //我创造的
+                if(userId.equals(item.getCreateUserId())){
+                    item.setMyCreateVisible(true);
+                }
+                //分享给我
+                if(shareToMeIds.contains(item.getId())){
+                    item.setShareVisible(true);
+                }
             }
-        }
-        //我创建的
-        CategorySubjectDTO myCreate = new CategorySubjectDTO();
-        myCreate.setCategoryName("我创建的专题");
-        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
-        myCreate.setSubjectList(myCreateList);
-        resultList.add(myCreate);
+            result.setSubjectList(subjectResultList);
+            resultList.add(result);
 
-        //分享给我的
-        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
-        shareToMeDTO.setCategoryName("共享专题");
-        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
-        shareToMeDTO.setSubjectList(shareToMeList);
-        resultList.add(shareToMeDTO);
+        }
+//        //我创建的
+//        CategorySubjectDTO myCreate = new CategorySubjectDTO();
+//        myCreate.setCategoryName("我创建的专题");
+//        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
+//        myCreate.setSubjectList(myCreateList);
+//        resultList.add(myCreate);
+//
+//        //分享给我的
+//        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
+//        shareToMeDTO.setCategoryName("共享专题");
+//        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
+//        shareToMeDTO.setSubjectList(shareToMeList);
+//        resultList.add(shareToMeDTO);
         return resultList;
     }
 
