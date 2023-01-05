@@ -23,7 +23,7 @@ import java.util.List;
 public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
 
 
-    List<DashboardDTO> getDashboardFrequentlyList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("findIdList") List<String> idList,@Param("searchKeyword") String searchKeyword);
+    List<DashboardDTO> getDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("findIdList") List<String> idList,@Param("searchKeyword") String searchKeyword);
 
     List<DashboardDTO> getMyCreateDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("userId") String userId,@Param("searchKeyword") String searchKeyword);
 

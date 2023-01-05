@@ -79,7 +79,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<SubjectPagingDTO> list = pageData.getRecords();
         for (SubjectPagingDTO item : list) {
             String categoryName = item.getCategoryName();
-            if(StringUtils.isBlank(categoryName)){
+            if (StringUtils.isBlank(categoryName)) {
                 item.setCategoryName("个人创建");
             }
 
@@ -212,9 +212,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
          */
         List<String> shareDashboardIds = subjectShareService.getShareToMeDashboardIds(userId);
         findIdList.addAll(shareDashboardIds);
+        Integer frequentlyFlag = BiConstant.OK;
 
+        //这个是所有的
+        List<DashboardDTO> allList = baseMapper.getDashboardList(type, dashboardFlag, findIdList, searchKeyword);
         //这个是常用的
-        List<DashboardDTO> frequentlyList = baseMapper.getDashboardFrequentlyList(type, dashboardFlag, findIdList, searchKeyword);
+        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> f.getIsFrequently().equals(frequentlyFlag)).collect(Collectors.toList());
         for (DashboardDTO frequently : frequentlyList) {
             if (userDefaultSubjectIds.contains(frequently.getId())) {
                 frequently.setIsDefault(true);
@@ -222,6 +225,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
         result.setFrequentlyList(frequentlyList);
         result.setMyCreateList(myCreateList);
+        List<DashboardDTO> shareList=allList.stream().filter(d->shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
+        result.setOtherList(shareList);
+
         return result;
     }
 
