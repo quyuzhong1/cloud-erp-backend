@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -23,6 +25,7 @@ import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.constant.ClassPathConstant;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
@@ -121,6 +124,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProductDetailService productDetailService;
 
+    @Autowired
+    private SysLogService sysLogService;
 
     /**
      * 添加系统的产品任务
@@ -712,6 +717,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
         if (flag) {
+            //新增操作日志
+            sysLogService.addSysLogBySave("新增了一个：["+taskEntity.getName()+"]", ClassPathConstant.TASK_CLASS,taskEntity.getId(),null);
+            if (StringUtils.isNotBlank(taskEntity.getPid())) {
+                //创建子任务时父级任务新增操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("创建子任务[%s]", taskEntity.getName()))
+                                            .setBusinessId(taskEntity.getPid())
+                                            .setClassPath(ClassPathConstant.TASK_CLASS);
+                sysLogService.addSysLogByOther(sysLogEntity);
+            }
+
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
@@ -1163,6 +1178,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean updateTask(ProjectTaskDTO dto) {
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
+        ProjectTaskEntity oldEntity = new ProjectTaskEntity();
+        BeanMapper.copy(taskEntity, oldEntity);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
@@ -1218,9 +1235,30 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         }*/
+        //交付文档名称
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            String deliveryDocsNames = deliveryDocsList.stream().map(DocsDTO::getName).collect(Collectors.joining(","));
+            dto.setDeliveryDocsNames(deliveryDocsNames);
+        }
+        //前置任务名称
+        if (CollectionUtils.isNotEmpty(dto.getPreTaskIdList())) {
+            List<ProjectTaskEntity> projectTaskList = this.listByIds(dto.getPreTaskIdList());
+            if (CollectionUtils.isNotEmpty(projectTaskList)) {
+                String preTaskNames = projectTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                dto.setPreTaskNames(preTaskNames);
+            }
+        }
+        //关联sku名称查询
+        if (CollectionUtils.isNotEmpty(dto.getRefSkuIdList())) {
+            List<ProductDetailEntity> productDetailList = productDetailService.listByIds(dto.getRefSkuIdList());
+            if (CollectionUtils.isNotEmpty(productDetailList)) {
+                List<String> refSkuNoList = productDetailList.stream().map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+                dto.setRefSkuNoList(refSkuNoList);
+            }
+        }
+
         //新增任务操作日志
-
-
+        addProjectTaskLog(dto,oldEntity,taskEntity.getId(),null);
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             //保存交付文档
@@ -2953,6 +2991,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
+       //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        taskIdList.forEach(taskId -> {
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.WAIT_CONFIRM.getName(),TaskStateEnum.APPROVAL_ING.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
+
         String comment = dto.getComment();
         if (StringUtils.isBlank(comment)) {
             comment = "";
@@ -3028,6 +3073,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(taskIdList, approvalIngCode, TaskStateEnum.APPROVAL_NO_PASS.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            //操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            taskIdList.forEach(taskId -> {
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]",TaskStateEnum.APPROVAL_ING.getName(),TaskStateEnum.APPROVAL_NO_PASS.getName(),dto.getComment())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+            });
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
 
         List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
@@ -3160,6 +3211,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setRealityEndTime(new Date());
             this.updateById(taskEntity);
             taskOperatorRecordService.save(recordEntity);
+            //操作日志
+            SysLogEntity sysLogEntity = new SysLogEntity()
+                    .setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(taskEntity.getStatus()), TaskStateEnum.FINISH.getName()))
+                    .setClassPath(ClassPathConstant.TASK_CLASS)
+                    .setBusinessId(taskEntity.getId());
+            sysLogService.save(sysLogEntity);
         }
 
     }
@@ -3450,67 +3507,43 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
-     * @param productId
-     * @param dateDTO
-     * @return ProductMilepostDateDTO
-     * @description: 创建里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
+     * 编辑任务操作日志
      */
-    private ProductMilepostDateDTO getStartMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
-        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
-        dateDTO.setRealityEndTime(productInfoEntity.getCreateTime());
-        return dateDTO;
-
-    }
-
-    ;
-
-    /**
-     * @param productId
-     * @param dateDTO
-     * @return ProductMilepostDateDTO
-     * @description: 立项里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
-     */
-    private ProductMilepostDateDTO getApprovalMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
-        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
-        dateDTO.setRealityEndTime(productInfoEntity.getApprovalTime());
-        return dateDTO;
-    }
-
-    ;
-
-    /**
-     * @param taskId
-     * @param dateDTO
-     * @return ProductMilepostDateDTO
-     * @description: 任务里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
-     */
-    private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
-        ProjectTaskEntity projectTaskEntity = this.getById(taskId);
-        dateDTO.setPlanEndTime(projectTaskEntity.getPlanEndTime());
-        dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
-        return dateDTO;
-    }
-
-    ;
-
-    /**
-     * @param productId
-     * @param dateDTO
-     * @return ProductMilepostDateDTO
-     * @description: 归档里程碑结束时间
-     * @author Will
-     * @date: 2022/11/18 18:37
-     */
-    private ProductMilepostDateDTO getArchiveMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
-        ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
-        dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
-        return dateDTO;
+    private void addProjectTaskLog(ProjectTaskDTO projectTaskDTO,ProjectTaskEntity oldEntity,String businessId,String pid) {
+        ProjectTaskDTO oldDto = new ProjectTaskDTO();
+        //查询修改之前的任务数据
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            BeanMapperUtils.copy(oldEntity,oldDto);
+        }
+        //处理变更前交付文档
+        List<DeliveryDocsDTO> deliveryDocsList = taskDeliveryService.getByTaskId(businessId);
+        if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+            String deliveryDocsNames = deliveryDocsList.stream().map(DeliveryDocsDTO::getDeliveryDocsName).collect(Collectors.joining(","));
+            oldDto.setDeliveryDocsNames(deliveryDocsNames);
+        }
+        //处理变更前前置任务
+        List<String> preTaskIdList = preTaskService.getPreTaskIdList(businessId);
+        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
+            List<ProjectTaskEntity> projectTaskList = this.listByIds(preTaskIdList);
+            if (CollectionUtils.isNotEmpty(projectTaskList)) {
+                String preTaskNames = projectTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                oldDto.setPreTaskNames(preTaskNames);
+            }
+        }
+        //处理人员字段格式
+        List<String> chargeIds = Arrays.stream(oldEntity.getChargeId().split(",")).collect(Collectors.toList());
+        oldDto.setChargeIds(chargeIds);
+        //处理关联sku名称
+        List<ProjectTaskRefSkuEntity> refList = projectTaskRefSkuService.getByTaskId(businessId);
+        if (CollectionUtils.isNotEmpty(refList)) {
+            List<String> skuIds = refList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
+            List<ProductDetailEntity> skuList = productDetailService.listByIds(skuIds);
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                List<String> refSkuNoList = skuList.stream().map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+                oldDto.setRefSkuNoList(refSkuNoList);
+            }
+        }
+        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,ClassPathConstant.TASK_CLASS,businessId,pid,String.format("任务[%s]",oldEntity.getName()));
     }
 
 }
