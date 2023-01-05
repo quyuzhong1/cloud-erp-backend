@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -140,4 +141,13 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return
      */
     Boolean copyDashboard(CopySubjectDTO dto);
+
+    /**
+     * 检查能否编辑
+     * @author yl
+     * @date 2023-01-05 17:47
+     * @param id
+     * @return void
+     */
+    void checkEditSubject(BaseIdDTO id);
 }

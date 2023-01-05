@@ -195,6 +195,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         List<String> permissionUserIdList = biModule.getPermissionUserIdList();
         boolean flag = this.save(module);
         if (flag) {
+            //修改系统模块的状态
             sysModuleService.updateAddState(sysModuleId, IsDeleted.YES);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);

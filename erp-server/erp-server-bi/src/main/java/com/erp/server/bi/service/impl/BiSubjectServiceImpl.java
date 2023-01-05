@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.business.aspect.DataPermissionAspect;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -227,7 +229,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
         result.setFrequentlyList(frequentlyList);
         result.setMyCreateList(myCreateList);
-        List<DashboardDTO> shareList=allList.stream().filter(d->shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
+        List<DashboardDTO> shareList = allList.stream().filter(d -> shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
         result.setOtherList(shareList);
 
         return result;
@@ -557,12 +559,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (StringUtils.isNotBlank(subjectId)) {
             return layoutService.subjectInfo(subjectId);
         }
+
+        //查询到用户可见的专题
+        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        if (CollectionUtils.isEmpty(subjectIdList)) {
+            return null;
+        }
         //当默认的没有 就找 是仪表盘的 开启的最近一条
-        BiSubjectEntity dashboard = getByCategoryId(categoryId);
+        BiSubjectEntity dashboard = getByCategoryId(categoryId, subjectIdList);
         if (dashboard != null) {
             return layoutService.subjectInfo(dashboard.getId());
         }
-
         return null;
     }
 
@@ -617,16 +624,35 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         return flag;
     }
 
+    @Override
+    public void checkEditSubject(BaseIdDTO dto) {
+        Integer scopeSelf = DataPermissionAspect.DATA_SCOPE_SELF;
+        Integer dataScope = dto.getDataScope();
+        //如果是个人
+        if (scopeSelf.equals(dataScope)) {
+            BiSubjectEntity subject = this.getById(dto.getId());
+            if (Objects.isNull(subject)) {
+                throw new ServiceException(ApiError.ERROR_97000);
+            }
+            String userId = commonService.getUserInfo().getUid();
+            checkCanHandle(subject, userId);
+        }
+
+    }
+
 
     /**
      * 根据分类id 获取最后一个
      *
      * @return
      */
-    public BiSubjectEntity getByCategoryId(String categoryId) {
+    public BiSubjectEntity getByCategoryId(String categoryId, List<String> subjectIdList) {
         LambdaQueryWrapper<BiSubjectEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSubjectEntity::getState, BiConstant.OK);
         queryWrapper.eq(BiSubjectEntity::getCategoryId, categoryId);
+        if (CollectionUtils.isNotEmpty(subjectIdList)) {
+            queryWrapper.in(BiSubjectEntity::getId, subjectIdList);
+        }
         queryWrapper.last("LIMIT 1");
         return getOne(queryWrapper);
     }

@@ -1,9 +1,7 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
-import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
@@ -55,6 +53,19 @@ public class BiSubjectController extends BaseController {
         return success(pagingVO);
     }
 
+
+    /**
+     * 检查能否编辑
+     */
+    @PostMapping("/checkToEdit")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "bi:subject:edit",
+//            tableAlias = "bi_subject"
+//    )
+    public void checkEditSubject(@RequestBody @Validated BaseIdDTO idDTO) {
+        biSubjectService.checkEditSubject(idDTO);
+    }
 
     /**
      * 新增专题
