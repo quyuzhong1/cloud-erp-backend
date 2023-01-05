@@ -49,7 +49,7 @@
        SELECT id FROM bi_subject WHERE create_user_id=#{userId} AND state=1 AND is_deleted=0
     </select>
 
-    <select id="getByIds" resultType="com.erp.model.bi.vo.SubjectVO">
+    <select id="getByIds" resultType="com.erp.model.bi.dto.SubjectDTO">
         SELECT id,category_id,name,is_frequently,category_name,share_flag,
         create_user_id,create_user_name
         FROM bi_subject WHERE state=1 AND is_deleted=0
