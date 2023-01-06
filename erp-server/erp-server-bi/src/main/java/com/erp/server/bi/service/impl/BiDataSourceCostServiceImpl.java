@@ -520,7 +520,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             BigDecimal costSaleExpenses = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
             return costMainBusinessIncome.subtract(costTotalCost).subtract(costSaleExpenses);
         }));
-        Map<String, BigDecimal> result = MapUtil.sortByValue(profitMap, true);
+        Map<String, BigDecimal> result = MapUtil.sortByValue(profitMap, false);
         // 表头 SeriesVO
         List<SeriesVO> seriesList = getSeriesVOS(result);
         return seriesList;
@@ -556,7 +556,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         Map<String, BigDecimal> result = sortMap.entrySet().stream()
                 .limit(rankNum)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<String, BigDecimal> descSortMap = MapUtil.sortByValue(result, true);
+        Map<String, BigDecimal> descSortMap = MapUtil.sortByValue(result, false);
         // 表头 SeriesVO
         List<SeriesVO> seriesList = getSeriesVOS(descSortMap);
         return seriesList;
