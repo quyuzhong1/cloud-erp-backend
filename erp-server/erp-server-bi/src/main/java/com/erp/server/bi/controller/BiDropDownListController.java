@@ -270,6 +270,22 @@ public class BiDropDownListController extends BaseController {
     }
 
     /**
+     * 所有店铺下拉框
+     */
+    @GetMapping("/shop/listAll")
+    public ApiResult<List<ShopDropDownVO>> listAllShopDropDown() {
+        List<DmpShopInfoEntity> list = dmpShopInfoService.list();
+        if(CollectionUtil.isEmpty(list)){
+            return success(new ArrayList<>());
+        }
+        List<ShopDropDownVO> result = list.stream()
+                .map(x -> new ShopDropDownVO(x.getName()))
+                .distinct()
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
      * 品类
      */
     @GetMapping("/category/list")
