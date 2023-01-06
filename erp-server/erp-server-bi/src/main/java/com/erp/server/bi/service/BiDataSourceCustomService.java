@@ -55,9 +55,10 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @author Will
      * @date: 2022/12/27 16:13
      * @param dataType
+     * @param dataDimension
      * @return List<String>
      */
-    List<String> listTargetNameByDataSource(Integer dataType);
+    List<String> listTargetNameByDataSource(Integer dataType,Integer dataDimension);
 
     /**
      * @description: 根据类型和数据类型查询指标分类

@@ -199,9 +199,9 @@ public class BiDropDownListController extends BaseController {
      * @return
      */
     @GetMapping("/targetName/list")
-    public ApiResult<List<SelectShowVO>> listTargetNameDropDown(@RequestParam("dataSource") Integer dataSource) {
+    public ApiResult<List<SelectShowVO>> listTargetNameDropDown(@RequestParam("dataSource") Integer dataSource,@RequestParam("dataDimension") Integer dataDimension) {
         List<SelectShowVO> result = new ArrayList<>();
-        List<String> list = biDataSourceCustomService.listTargetNameByDataSource(dataSource);
+        List<String> list = biDataSourceCustomService.listTargetNameByDataSource(dataSource,dataDimension);
         if (CollectionUtils.isNotEmpty(list)) {
              result = list.stream().map(x -> new SelectShowVO().setName(x).setDesc(x))
                     .collect(Collectors.toList());

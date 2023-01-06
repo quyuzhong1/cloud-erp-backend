@@ -129,9 +129,10 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
     }
 
     @Override
-    public List<String> listTargetNameByDataSource(Integer dataType) {
+    public List<String> listTargetNameByDataSource(Integer dataType,Integer dataDimension) {
         LambdaQueryWrapper<BiDataSourceCustomEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiDataSourceCustomEntity::getDataType,dataType);
+        queryWrapper.eq(BiDataSourceCustomEntity::getType,dataDimension);
         queryWrapper.select(BiDataSourceCustomEntity::getTargetName);
         List<String> strings = this.listObjs(queryWrapper, Object::toString);
         if (CollectionUtils.isNotEmpty(strings)) {
