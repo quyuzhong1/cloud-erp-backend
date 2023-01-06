@@ -308,10 +308,23 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     @Override
     public Boolean addSubject(AddTotalSubjectDTO dto) {
+        List<LayoutDTO> layoutList = dto.getLayoutList();
+        if (CollectionUtils.isEmpty(layoutList)) {
+            throw new ServiceException(ApiError.ERROR_95090);
+        }
         SubjectDTO subject = new SubjectDTO();
+        String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
-        subject.setCategoryId(dto.getCategoryId());
-        subject.setShareFlag(DashboardEnum.SHARE.getFlag());
+        subject.setCategoryId(categoryId);
+        BiDictEntity dict = dictService.getById(categoryId);
+        String categoryName = "";
+        if (dict != null) {
+            categoryName = dict.getName();
+        }
+        String shareFlag = dto.getShareFlag();
+        subject.setShareFlag(shareFlag);
+        subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id
         String subjectId = subjectService.addSubject(subject);
@@ -319,7 +332,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             return false;
         }
 
-        List<LayoutDTO> layoutList = dto.getLayoutList();
         List<String> LayoutIds = new ArrayList<>();
         for (LayoutDTO layout : layoutList) {
             BiLayoutEntity entity = new BiLayoutEntity();
@@ -374,9 +386,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                 BiModuleEntity module = moduleList.stream().filter(m -> m.getId().equals(moduleId)).
                         findFirst().orElse(null);
                 refModule.setId(moduleId);
-                if(visibleModuleIdList.contains(moduleId)){
+                if (visibleModuleIdList.contains(moduleId)) {
                     refModule.setVisible(true);
-                }else{
+                } else {
                     refModule.setVisible(false);
                 }
                 if (module != null) {

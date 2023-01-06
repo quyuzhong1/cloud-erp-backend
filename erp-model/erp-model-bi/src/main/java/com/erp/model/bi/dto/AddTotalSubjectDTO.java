@@ -1,5 +1,6 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -46,9 +47,16 @@ public class AddTotalSubjectDTO implements Serializable {
      * personal 私人
      * share 共享
      */
-//    @NotBlank(message = "分享标示不能为空")
-//    @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
-//    private String shareFlag="personal";
+    @NotBlank(message = "分享标示不能为空")
+    @StateEnumValue(strValues = {"personal","share"},message = "分享标识有误")
+    private String shareFlag="personal";
+
+
+    /**
+     * 是否常用
+     * 1 是常用  0 不是
+     */
+    private Integer isFrequently=0;
 
     /**
      * 分享的用户集合

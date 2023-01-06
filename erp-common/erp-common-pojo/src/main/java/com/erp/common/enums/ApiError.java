@@ -185,6 +185,7 @@ public enum ApiError implements Serializable {
     ERROR_95087(95087,"SKU未审核通过，不支持反审核"),
     ERROR_95088(95088,"SKU非待审核状态，不支持重启审核流程"),
     ERROR_95089(95089,"字段名称未设置不能新增操作日志"),
+    ERROR_95090(95090,"至少需要一个布局"),
 
 
     /**

@@ -51,7 +51,6 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
     @Override
     public Boolean setDefault(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
-
         //先删除已有的
         deleteByUserId(userId);
         BiSubjectDefaultEntity defaultSubject = new BiSubjectDefaultEntity();
