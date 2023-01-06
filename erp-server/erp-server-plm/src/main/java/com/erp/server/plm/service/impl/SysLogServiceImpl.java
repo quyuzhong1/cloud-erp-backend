@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -8,32 +7,33 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.EnumsUtil;
 import com.common.core.utils.OperationLogUtil;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
-import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
-import com.erp.model.plm.entity.SysDocsEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.entity.SysLogFieldEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
-import com.erp.server.plm.mapper.SysDocsMapper;
 import com.erp.server.plm.mapper.SysLogMapper;
-import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.BasicDictService;
+import com.erp.server.plm.service.CommonService;
+import com.erp.server.plm.service.SysLogFieldService;
+import com.erp.server.plm.service.SysLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -218,5 +218,10 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         SysLogSelectDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto) {
+        return baseMapper.listSysLog(dto);
     }
 }

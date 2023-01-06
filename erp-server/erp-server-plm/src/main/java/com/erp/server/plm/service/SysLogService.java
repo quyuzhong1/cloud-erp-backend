@@ -1,12 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 
 import java.util.List;
@@ -68,4 +66,13 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @return PagingVO<SysLogShowDTO>
      */
     PagingVO<SysLogShowDTO> paging(PagingDTO<SysLogSelectDTO> dto);
+
+    /**
+     * @description: 列表不分页查询
+     * @author Will
+     * @date: 2023/1/6 16:48
+     * @param dto
+     * @return List<SysLogShowDTO>
+     */
+    List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto);
 }

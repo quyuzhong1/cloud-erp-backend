@@ -72,7 +72,6 @@ public class BiSalesMonitoringController extends BaseController {
      * @return ApiResult<BiSalesMonitoringViewVO>
      */
     @PostMapping("/view")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "doio")
     public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO dto) {
         LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(dto);
         return success(map);
