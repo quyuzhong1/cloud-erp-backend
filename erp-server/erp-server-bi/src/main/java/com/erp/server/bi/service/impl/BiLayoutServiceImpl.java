@@ -143,6 +143,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
         details.setShareFlag(subject.getShareFlag());
+        details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
         details.setShareUserIdList(shareUserIdList);

@@ -42,6 +42,11 @@ public class SubjectLayoutDetailsDTO implements Serializable {
 
 
     /**
+     * 是否常用 1 是   0  不是
+     */
+    private Integer isFrequently=0;
+
+    /**
      * 分类名
      *
      */
