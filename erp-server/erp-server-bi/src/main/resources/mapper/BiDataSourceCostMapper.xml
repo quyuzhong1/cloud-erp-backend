@@ -25,7 +25,7 @@
                 ${params.param}
             </if>
         </where>
-        order by bdsc.month
+        order by bdsc.month,bdsc.id
     </select>
 
     <select id="getAllBiDataSourceCost" resultType="java.util.LinkedHashMap">

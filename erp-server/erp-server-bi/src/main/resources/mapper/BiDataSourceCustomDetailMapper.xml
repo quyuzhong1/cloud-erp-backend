@@ -28,6 +28,7 @@
         case bdscd.week_begin when '' then bdscd.week_begin
         else to_char(concat(bdscd.year,'-',replace(replace(bdscd.week_begin, '月', '-'),'日',''))::timestamp,'MM-dd')
         end ,
-        bdscd.date
+        bdscd.date,
+        bdscd.id
     </select>
 </mapper>

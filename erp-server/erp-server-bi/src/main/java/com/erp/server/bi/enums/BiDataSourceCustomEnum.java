@@ -10,7 +10,7 @@ public enum BiDataSourceCustomEnum {
 
     YEAR("year", "年份","*年份"),
     DATATYPE("dataType", "数据类型","*数据类型"),
-    TARGETTYPE("targetType", "指标分类","*指标分类"),
+    TARGETTYPE("targetType", "指标分类","指标分类"),
     TARGETNAME("targetName", "指标名称","*指标名称"),
     TARGEVALUE("targetValue", "目标值","*目标值");
     private String code;

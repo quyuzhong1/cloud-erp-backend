@@ -31,7 +31,7 @@
                 ${params.param}
             </if>
         </where>
-        order by bdsc.year
+        order by bdsc.year,bdsc.id
     </select>
 
 

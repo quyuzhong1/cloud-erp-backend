@@ -108,7 +108,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 }
                 //年导入
                 if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
-                    if ("*实际值".equals(key)){
+                    if ("实际值".equals(key)){
                         detailEntity.setYear(yearDate);
                         detailEntity.setValue(value);
                         detailList.add(detailEntity);
