@@ -106,12 +106,12 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Override
     @Transactional
-    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType) {
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType,Integer dataType) {
         //季度数据
         List<BiDictEntity> quarterList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMQUARTER.getType());
         //月份数据
         List<BiDictEntity> monthList = biDictService.listEntityByType(DictEnum.DATASOURCECUSTOMMONTH.getType());
-        BiDataSourceCustomExcelListener excelListenerUtil = new BiDataSourceCustomExcelListener(this,biDataSourceCustomDetailService,quarterList,monthList,importType);
+        BiDataSourceCustomExcelListener excelListenerUtil = new BiDataSourceCustomExcelListener(this,biDataSourceCustomDetailService,quarterList,monthList,importType,dataType);
         try {
             EasyExcel.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
@@ -369,8 +369,8 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type)) {
-                        map.put(entity.getYear().toString().concat("年"),entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
-                        head.put(entity.getYear().toString().concat("年"),entity.getYear().toString().concat("年"));
+                        map.put("实际值",entity.getYear().equals(map.get("year")) ? entity.getValue() : "");
+                        head.put("实际值","实际值");
                         continue;
                     }
                     if (BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type)) {

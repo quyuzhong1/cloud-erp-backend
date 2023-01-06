@@ -1258,7 +1258,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //新增任务操作日志
-        addProjectTaskLog(dto,oldEntity,taskEntity.getId(),null);
+        addProjectTaskDTOLog(dto,oldEntity,taskEntity.getId());
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             //保存交付文档
@@ -1322,6 +1322,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        ProjectTaskEntity oldEntity = new ProjectTaskEntity();
+        BeanMapperUtils.copy(taskEntity,oldEntity);
+
         LoginUser loginUser = commonService.getUserInfo();
         //任务名
         String name = dto.getName();
@@ -1334,8 +1337,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String planEndTime = dto.getPlanEndTime();
             taskEntity.setPlanEndTime(DateUtil.stringToDate(planEndTime));
         }
-
-
         List<String> chargeIdList = dto.getChargeIdList();
         if (StringUtils.isNotBlank(name)) {
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
@@ -1347,6 +1348,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setChargeName(chargeName);
         }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
+        //添加操作日志
+        addUpdateTaskDTOLog(dto,oldEntity,oldEntity.getId());
         return this.updateById(taskEntity);
     }
 
@@ -3509,7 +3512,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 编辑任务操作日志
      */
-    private void addProjectTaskLog(ProjectTaskDTO projectTaskDTO,ProjectTaskEntity oldEntity,String businessId,String pid) {
+    private void addProjectTaskDTOLog(ProjectTaskDTO projectTaskDTO,ProjectTaskEntity oldEntity,String businessId) {
         ProjectTaskDTO oldDto = new ProjectTaskDTO();
         //查询修改之前的任务数据
         if (ObjectUtils.isNotEmpty(oldEntity)) {
@@ -3543,7 +3546,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 oldDto.setRefSkuNoList(refSkuNoList);
             }
         }
-        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,ClassPathConstant.TASK_CLASS,businessId,pid,String.format("任务[%s]",oldEntity.getName()));
+        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,ClassPathConstant.TASK_CLASS,businessId,null,String.format("任务[%s]",oldEntity.getName()));
+    }
+
+    /**
+     * 编辑任务操作日志
+     */
+    private void addUpdateTaskDTOLog(UpdateTaskDTO updateTaskDTO,ProjectTaskEntity oldEntity,String businessId) {
+        UpdateTaskDTO oldDto = new UpdateTaskDTO();
+        //查询修改之前的任务数据
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            BeanMapperUtils.copy(oldEntity,oldDto);
+        }
+
     }
 
 }

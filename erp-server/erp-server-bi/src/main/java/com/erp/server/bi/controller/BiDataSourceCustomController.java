@@ -192,8 +192,8 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping("/importBiDataSourceCustomFile")
-    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType);
+    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
+        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType,dataType);
         return flag == true ? this.success() : this.failure();
     }
 
