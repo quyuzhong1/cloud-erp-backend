@@ -120,17 +120,17 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (CollectionUtils.isEmpty(dto.getSku()) && ObjectUtils.isEmpty(dto.getHasNewSign())) {
             if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
                 if (BiFilterDTO.validOriginalCurrency(dto)){
-                    query.select("sum(order_fee) as item_total");
+                    query.select("sum(order_fee) as order_fee");
                 }else {
                     return new TargetSaleSumVO(amount);
                 }
             } else if (SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())) {
-                query.select("sum(order_fee*settle_rate) as item_total");
+                query.select("sum(order_fee*settle_rate) as order_fee");
             } else  {
-                query.select("sum(order_fee*currency_rate) as item_total");
+                query.select("sum(order_fee*currency_rate) as order_fee");
             }
             DmpOrderInfoEntity dmpOrderInfoEntity = baseMapper.selectOne(query);
-            amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getItemTotal(): BigDecimal.ZERO;
+            amount = null != dmpOrderInfoEntity?dmpOrderInfoEntity.getOrderFee(): BigDecimal.ZERO;
         } else {
             // 条件存在sku的情况
             // 先查询订单号
@@ -371,7 +371,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate,0)) as item_total", groupByStr);
+        qw.select("SUM(COALESCE(order_fee*currency_rate,0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getQuarterResultList(quarterTargetMap,new HashMap<>(4),start.getYear());
@@ -380,7 +380,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     // 按照季度分组
                     LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
                     // 对销售额进行求和
-                    Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getItemTotal, BigDecimal::add)
+                    Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getOrderFee, BigDecimal::add)
             ));
 
         // 计算完成率
@@ -475,7 +475,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         QueryWrapper<DmpOrderInfoEntity> qw = new QueryWrapper<>();
         boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
         String groupByStr = flag ? "platform_create_time" : "delivery_time";
-        qw.select("SUM(COALESCE(order_fee*currency_rate, 0)) as item_total", groupByStr);
+        qw.select("SUM(COALESCE(order_fee*currency_rate, 0)) as order_fee", groupByStr);
         List<DmpOrderInfoEntity> entityList = getOrderInfoEntities(dto, qw, start, end, groupByStr);
         if (CollectionUtils.isEmpty(entityList)) {
             return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());
@@ -484,7 +484,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         // 按照季度分组
                         LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
                 // 对销售额进行求和
-                Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getItemTotal, BigDecimal::add)
+                Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getOrderFee, BigDecimal::add)
         ));
 
         // 计算完成率
@@ -577,7 +577,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         Map<String, BigDecimal> saleAmountMap = orderInfoEntities.stream()
                 .collect(Collectors.groupingBy(DmpOrderInfoEntity::getSourcePlatform,
-                        Collectors.reducing(BigDecimal.ZERO, x -> x.getItemTotal().multiply(x.getCurrencyRate()), BigDecimal::add)));
+                        Collectors.reducing(BigDecimal.ZERO, x -> x.getOrderFee().multiply(x.getCurrencyRate()), BigDecimal::add)));
         // 查询实际销量
         List<String> orderIds = orderInfoEntities.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
         List<DmpOrderItemEntity> entityItemList = dmpOrderItemService.listByOrderInfoIds(orderIds);
@@ -1032,15 +1032,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         if (0 == type){
             // 月份
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
-                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else if (1 == type){
             // 季度
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> (LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue()-1) / 3 + 1,
-                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else {
             // 年度
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getYear(),
-                    BigDecimalUtil.summingBigDecimal(x -> x.getItemTotal().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
+                    BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }
         return resultMap;
     }
