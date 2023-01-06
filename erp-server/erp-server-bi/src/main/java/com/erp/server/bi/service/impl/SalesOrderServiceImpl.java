@@ -159,6 +159,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getName())
+                                && b.getSales() != null
                         ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
@@ -336,16 +337,18 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> tobMap = new HashMap<>();
         String b2b = "B2B";
         tobMap.put("name", "TOB");
-        BigDecimal tobSales = resultList.stream().filter(b -> b2b.equals(b.getName())).
-                map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal tobSales = resultList.stream().filter(
+                b -> b2b.equals(b.getName()) && b.getSales() != null
+        ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         tobMap.put("value", tobSales);
         list.add(tobMap);
 
         Map<String, Object> tocMap = new HashMap<>();
         ;
         tocMap.put("name", "TOC");
-        BigDecimal toCSales = resultList.stream().filter(b -> !b2b.equals(b.getName())).
-                map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal toCSales = resultList.stream().filter(
+                b -> !b2b.equals(b.getName()) && b.getSales() != null
+        ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         tocMap.put("value", toCSales);
         list.add(tocMap);
 
@@ -389,7 +392,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setEndTime(nowTime);
         //查询近七天信息
         List<SalesBaseVO> lastSevenList = baseMapper.getShopLastDays(dto, settleRate, findTime);
-        lastSevenList= lastSevenList.stream().filter(s->s.getSales()!=null).collect(Collectors.toList());
+        lastSevenList = lastSevenList.stream().filter(s -> s.getSales() != null).collect(Collectors.toList());
         for (ShopSalesVO item : resultList) {
             List<BigDecimal> salesTrend = new ArrayList<>(7);
 
@@ -413,6 +416,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                         filter(b -> b.getFlagDate().isAfter(startTime)
                                 && b.getFlagDate().isBefore(endTime)
                                 && b.getFlagNo().equals(item.getShopNo())
+                                && b.getSales() != null
                         ).map(SalesBaseVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 salesTrend.add(salesFlag.setScale(2, RoundingMode.HALF_UP));
             }
@@ -592,7 +596,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             for (SkuCategoryVO category : skuCategoryList) {
                 List<String> skuList = category.getSkuList();
                 BigDecimal sales = shopSalesList.stream().
-                        filter(s -> skuList.contains(s.getSkuNo())).
+                        filter(s -> skuList.contains(s.getSkuNo()) && s.getSales() != null).
                         map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 rowMap.put(category.getName(), sales);
             }
@@ -641,6 +645,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> yearBasisList = baseMapper.byBrand(dto, settleRate);
         //总的销售额
         BigDecimal totalSales = list.stream().
+                filter(s -> s.getSales() != null).
                 map(SalesCountVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -699,6 +704,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //总的销售额
         BigDecimal totalSales = list.stream().
+                filter(b -> b.getSales() != null).
                 map(SalesCountVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -753,7 +759,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> chinaMap = new HashMap();
         chinaMap.put("name", "国内");
         BigDecimal chinaSales = resultList.stream().
-                filter(s -> s.getName().contains(chinaName)).
+                filter(s -> s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         chinaMap.put("value", chinaSales);
@@ -762,7 +768,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> abroadMap = new HashMap();
         abroadMap.put("name", "国外");
         BigDecimal abroadSales = resultList.stream().
-                filter(s -> !s.getName().contains(chinaName)).
+                filter(s -> !s.getName().contains(chinaName) && s.getSales() != null).
                 map(SalesCountVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
         abroadMap.put("value", abroadSales);
         list.add(abroadMap);
@@ -816,6 +822,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> resultList = new ArrayList<>(list.size());
         //总的
         BigDecimal totalSales = list.stream().
+                filter(b -> b.getSales() != null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -1025,8 +1032,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (SkuCategoryVO item : skuCategoryList) {
             List<String> skuList = item.getSkuList();
             xAxisList.add(item.getName());
-            BigDecimal totalSales = list.stream().filter(s -> skuList.contains(s.getFlagNo())).
-                    map(SalesBaseVO::getSales).
+            BigDecimal totalSales = list.stream().filter(
+                    s -> skuList.contains(s.getFlagNo()) && s.getSales() != null
+            ).map(SalesBaseVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             dataList.add(totalSales);
@@ -1349,6 +1357,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> resultList = new ArrayList<>(list.size());
         //总的
         BigDecimal totalSales = list.stream().
+                filter(b -> b.getSales() != null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -1424,21 +1433,21 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             }
 
             BigDecimal newProductSales = salesList.stream().
-                    filter(s -> s.getFlag().equals(newFlag)).
+                    filter(s -> s.getFlag().equals(newFlag) && s.getSales() != null).
                     map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal oldProductSales = salesList.stream().
-                    filter(s -> s.getFlag().equals(oldFlag)).
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSales() != null).
                     map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setNewProductSales(newProductSales);
             vo.setOldProductSales(oldProductSales);
             Integer newSalesQuantity = salesList.stream().
-                    filter(s -> s.getFlag().equals(newFlag)).
+                    filter(s -> s.getFlag().equals(newFlag) && s.getSalesQuantity() != null).
                     mapToInt(SalesFlagVO::getSalesQuantity).
                     sum();
             Integer oldSalesQuantity = salesList.stream().
-                    filter(s -> s.getFlag().equals(oldFlag)).
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSalesQuantity() != null).
                     mapToInt(SalesFlagVO::getSalesQuantity).
                     sum();
             vo.setNewSalesQuantity(newSalesQuantity);
@@ -1484,6 +1493,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> yearBasisList = baseMapper.byNewAndOld(dto, settleRate);
         //总的
         BigDecimal totalSales = list.stream().
+                filter(b -> b.getSales() != null).
                 map(SalesCountVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         for (SalesCountVO item : list) {
@@ -1553,7 +1563,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setNewSalesQuantity(newItem.getSalesQuantity());
 
                 BigDecimal newChainSales = chainList.stream().
-                        filter(c -> name.equals(c.getName()) && c.getFlag().equals(newFlag)).
+                        filter(c -> name.equals(c.getName())
+                                && c.getFlag().equals(newFlag)
+                                && c.getSales() != null
+                        ).
                         map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 vo.setNewProductChainRelativeRatio(getChainRelativeRatio(newItem.getSales(), newChainSales));
             }
@@ -1561,7 +1574,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setOldProductSales(oldItem.getSales());
                 vo.setOldSalesQuantity(oldItem.getSalesQuantity());
                 BigDecimal oldChainSales = chainList.stream().
-                        filter(c -> name.equals(c.getName()) && c.getFlag().equals(oldFlag)).
+                        filter(
+                                c -> name.equals(c.getName())
+                                        && c.getFlag().equals(oldFlag)
+                                        && c.getSales() != null
+                        ).
                         map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
                 vo.setOldProductChainRelativeRatio(getChainRelativeRatio(oldItem.getSales(), oldChainSales));
             }
@@ -1601,7 +1618,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
             BigDecimal newItemSales = salesFlagList.stream().
                     filter(s -> s.getFlag().
-                            equals(newFlag)).map(SalesFlagVO::getSales).
+                            equals(newFlag)
+                    &&s.getSales()!=null).map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             Integer newItemSalesQuantity = salesFlagList.stream().
                     filter(s -> s.getFlag().equals(newFlag)).
@@ -1609,7 +1627,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setNewProductSales(newItemSales);
             vo.setNewSalesQuantity(newItemSalesQuantity);
             BigDecimal oldItemSales = salesFlagList.stream().
-                    filter(s -> s.getFlag().equals(oldFlag)).
+                    filter(s -> s.getFlag().equals(oldFlag) && s.getSales() != null).
                     map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setOldProductSales(oldItemSales);
@@ -1653,17 +1671,22 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setName(item.getName());
             List<String> skuList = item.getSkuList();
             BigDecimal newProductSales = list.stream()
-                    .filter(s -> skuList.contains(s.getSkuNo()) && newFlag.equals(s.getFlag()))
-                    .map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .filter(s -> skuList.contains(s.getSkuNo()) &&
+                            newFlag.equals(s.getFlag())&&
+                            s.getSales()!=null
+                    ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setNewProductSales(newProductSales);
             Integer newSalesQuantity = list.stream()
-                    .filter(s -> skuList.contains(s.getSkuNo()) && newFlag.equals(s.getFlag()))
-                    .mapToInt(SalesFlagVO::getSalesQuantity).sum();
+                    .filter(s -> skuList.contains(s.getSkuNo()) &&
+                            newFlag.equals(s.getFlag())
+                    ).mapToInt(SalesFlagVO::getSalesQuantity).sum();
             vo.setNewSalesQuantity(newSalesQuantity);
 
             BigDecimal oldProductSales = list.stream()
-                    .filter(s -> skuList.contains(s.getSkuNo()) && oldFlag.equals(s.getFlag()))
-                    .map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .filter(s -> skuList.contains(s.getSkuNo()) &&
+                            oldFlag.equals(s.getFlag()) &&
+                            s.getSales()!=null
+                    ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setOldProductSales(oldProductSales);
             Integer oldSalesQuantity = list.stream()
                     .filter(s -> skuList.contains(s.getSkuNo()) && oldFlag.equals(s.getFlag()))
@@ -1726,7 +1749,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String site = item.getSite();
             vo.setName(site);
             BigDecimal sales = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())).
+                    filter(s -> shopNoList.contains(s.getShopNo())&&s.getSales()!=null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -1745,14 +1768,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setOrderCount(orderCount);
 
             BigDecimal chainSales = chainList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo())).
+                    filter(c -> shopNoList.contains(c.getShopNo())&&c.getSales()!=null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainSales));
 
             BigDecimal yearBasisSales = yearBasisList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo())).
+                    filter(c -> shopNoList.contains(c.getShopNo())&&c.getSales()!=null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisSales));
@@ -1807,7 +1830,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> homemadeMap = new HashMap<>();
         homemadeMap.put("name", "自研");
         BigDecimal homemadeSales = list.stream().
-                filter(s -> skuHomemadeList.contains(s.getFlagNo())).
+                filter(s -> skuHomemadeList.contains(s.getFlagNo())&&s.getSales()!=null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         homemadeMap.put("value", homemadeSales);
@@ -1817,7 +1840,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> purchaseMap = new HashMap<>();
         purchaseMap.put("name", "外采");
         BigDecimal purchaseSales = list.stream().
-                filter(s -> skuPurchaseList.contains(s.getFlagNo())).
+                filter(s -> skuPurchaseList.contains(s.getFlagNo())&&s.getSales()!=null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseMap.put("value", purchaseSales);
@@ -2023,7 +2046,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<ShopSiteVO> siteShopList = shopCategoryList.stream().filter(s -> siteList.contains(s.getSite()))
                     .collect(Collectors.toList());
             List<String> shopNoList = siteShopList.stream().flatMap(s -> s.getShopNo().stream()).collect(Collectors.toList());
-            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo())).
+            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo())&&s.getSales()!=null).
                     map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             siteMap.put("value", value);
             dataList.add(siteMap);
