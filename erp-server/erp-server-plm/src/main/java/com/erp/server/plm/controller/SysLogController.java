@@ -43,7 +43,7 @@ public class SysLogController extends BaseController {
     }
 
     /**
-     * 操作日志-列表查询
+     * 操作日志-非分页查询
      * @author Will
      * @date: 2023/1/6 16:57
      * @param dto
