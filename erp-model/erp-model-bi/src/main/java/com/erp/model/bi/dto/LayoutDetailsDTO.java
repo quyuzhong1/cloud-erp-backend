@@ -41,7 +41,7 @@ public class LayoutDetailsDTO  implements Serializable {
      * 块的编号
      */
     @NotBlank(message = "模块编号不能为空")
-    @StateEnumValue(strValues = {"L01","L02","L04","L06"},message = "模块编号有误")
+    @StateEnumValue(strValues = {"L01","L02","L03","L04","L06"},message = "模块编号有误")
     private String blockNo;
 
 
