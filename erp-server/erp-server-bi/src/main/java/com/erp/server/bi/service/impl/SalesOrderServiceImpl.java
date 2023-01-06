@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -1458,6 +1459,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         return resultList;
     }
 
+
     /**
      * 销售相关 一级模块  新/老品销售额
      *
@@ -1619,7 +1621,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             BigDecimal newItemSales = salesFlagList.stream().
                     filter(s -> s.getFlag().
                             equals(newFlag)
-                    &&s.getSales()!=null).map(SalesFlagVO::getSales).
+                            && s.getSales() != null).map(SalesFlagVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             Integer newItemSalesQuantity = salesFlagList.stream().
                     filter(s -> s.getFlag().equals(newFlag)).
@@ -1672,8 +1674,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<String> skuList = item.getSkuList();
             BigDecimal newProductSales = list.stream()
                     .filter(s -> skuList.contains(s.getSkuNo()) &&
-                            newFlag.equals(s.getFlag())&&
-                            s.getSales()!=null
+                            newFlag.equals(s.getFlag()) &&
+                            s.getSales() != null
                     ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setNewProductSales(newProductSales);
             Integer newSalesQuantity = list.stream()
@@ -1685,7 +1687,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             BigDecimal oldProductSales = list.stream()
                     .filter(s -> skuList.contains(s.getSkuNo()) &&
                             oldFlag.equals(s.getFlag()) &&
-                            s.getSales()!=null
+                            s.getSales() != null
                     ).map(SalesFlagVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setOldProductSales(oldProductSales);
             Integer oldSalesQuantity = list.stream()
@@ -1749,7 +1751,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String site = item.getSite();
             vo.setName(site);
             BigDecimal sales = list.stream().
-                    filter(s -> shopNoList.contains(s.getShopNo())&&s.getSales()!=null).
+                    filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -1768,14 +1770,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             vo.setOrderCount(orderCount);
 
             BigDecimal chainSales = chainList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo())&&c.getSales()!=null).
+                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
 
             vo.setChainRelativeRatio(getChainRelativeRatio(sales, chainSales));
 
             BigDecimal yearBasisSales = yearBasisList.stream().
-                    filter(c -> shopNoList.contains(c.getShopNo())&&c.getSales()!=null).
+                    filter(c -> shopNoList.contains(c.getShopNo()) && c.getSales() != null).
                     map(ShopSalesVO::getSales).
                     reduce(BigDecimal.ZERO, BigDecimal::add);
             vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisSales));
@@ -1830,7 +1832,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> homemadeMap = new HashMap<>();
         homemadeMap.put("name", "自研");
         BigDecimal homemadeSales = list.stream().
-                filter(s -> skuHomemadeList.contains(s.getFlagNo())&&s.getSales()!=null).
+                filter(s -> skuHomemadeList.contains(s.getFlagNo()) && s.getSales() != null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         homemadeMap.put("value", homemadeSales);
@@ -1840,7 +1842,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, Object> purchaseMap = new HashMap<>();
         purchaseMap.put("name", "外采");
         BigDecimal purchaseSales = list.stream().
-                filter(s -> skuPurchaseList.contains(s.getFlagNo())&&s.getSales()!=null).
+                filter(s -> skuPurchaseList.contains(s.getFlagNo()) && s.getSales() != null).
                 map(SalesBaseVO::getSales).
                 reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseMap.put("value", purchaseSales);
@@ -1951,9 +1953,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> resultList = new ArrayList<>(12);
         String deptName = "营销中心";
         //  List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
-        String timeFlag = "o.delivery_time";
+        String timeFlag = "delivery_time";
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
-            timeFlag = "o.platform_create_time";
+            timeFlag = "platform_create_time";
         }
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2046,13 +2048,78 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             List<ShopSiteVO> siteShopList = shopCategoryList.stream().filter(s -> siteList.contains(s.getSite()))
                     .collect(Collectors.toList());
             List<String> shopNoList = siteShopList.stream().flatMap(s -> s.getShopNo().stream()).collect(Collectors.toList());
-            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo())&&s.getSales()!=null).
+            BigDecimal value = list.stream().filter(s -> shopNoList.contains(s.getShopNo()) && s.getSales() != null).
                     map(ShopSalesVO::getSales).reduce(BigDecimal.ZERO, BigDecimal::add);
             siteMap.put("value", value);
             dataList.add(siteMap);
         }
         series.setData(dataList);
         seriesList.add(series);
+        chartVO.setSeries(seriesList);
+        chartVO.setXAxis(siteNameList);
+        statistical.setData(chartVO);
+        return statistical;
+    }
+
+
+    /**
+     * 一级销售模块 -日期销售额
+     *
+     * @param dto
+     * @return com.erp.model.bi.vo.StatisticalDataVO
+     * @author yl
+     * @date 2023-01-06 11:19
+     */
+    @Override
+    public StatisticalDataVO byDate(DateFilterDTO dto) {
+        StatisticalDataVO statistical = new StatisticalDataVO();
+        statistical.setName("销售趋势");
+        statistical.setChartType(ChartType.PIE);
+
+
+        String dateType = dto.getDateType();
+        //获取到结算汇率
+        String settleRate = getSettleRate(dto.getSettleMethod());
+        if (StringUtils.isBlank(settleRate)) {
+            settleRate = SettleMethodEnum.CNY_SETTLE.getField();
+        }
+        //查找的日期
+        String timeFlag = "delivery_time";
+        if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
+            timeFlag = "platform_create_time";
+        }
+        List<SalesFlagVO> salesList = new ArrayList();
+        switch (dateType) {
+            case "DAY":
+                salesList=baseMapper.getByDay(dto,timeFlag,settleRate);
+                break;
+            case "MONTH":
+                salesList=baseMapper.getByMonth(dto,timeFlag,settleRate);
+                break;
+            case "QUARTER":
+                salesList=baseMapper.getByQuarter(dto,timeFlag,settleRate);
+                break;
+            case "YEAR":
+                salesList=baseMapper.getByYear(dto,timeFlag,settleRate);
+                break;
+            default:
+                break;
+        }
+        ChartVO chartVO = new ChartVO();
+        List<String> siteNameList= salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
+        //有两个
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(2);
+
+        SeriesVO<Object> salesQuantity = new SeriesVO();
+        salesQuantity.setName("销售量");
+        List<Object> salesQuantityList=salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
+        salesQuantity.setData(salesQuantityList);
+        seriesList.add(salesQuantity);
+        SeriesVO<Object> sales = new SeriesVO();
+        sales.setName("销售额");
+        List<Object> orderSalesList=salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
+        sales.setData(orderSalesList);
+        seriesList.add(sales);
         chartVO.setSeries(seriesList);
         chartVO.setXAxis(siteNameList);
         statistical.setData(chartVO);

@@ -3,7 +3,6 @@ package com.erp.model.bi.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -18,4 +17,6 @@ public class SeriesVO<T> {
 
     private String name;    //当前图名
     private List<T> data;   //数据
+
+
 }

@@ -2,6 +2,7 @@ package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -110,4 +111,12 @@ public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity>
     SalesFlagVO byLastMonth(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
 
     List<SalesFlagVO> byTobToc(@Param("params")BiFilterDTO dto,@Param("settleRate") String settleRate);
+
+    List<SalesFlagVO> getByDay(@Param("params")DateFilterDTO biFilterDTO,@Param("timeFlag")String timeFlag,@Param("settleRate") String settleRate);
+
+    List<SalesFlagVO> getByMonth(@Param("params") DateFilterDTO dto,@Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
+
+    List<SalesFlagVO> getByQuarter(@Param("params")DateFilterDTO dto, @Param("timeFlag")String timeFlag, @Param("settleRate")String settleRate);
+
+    List<SalesFlagVO> getByYear(@Param("params") DateFilterDTO dto, @Param("timeFlag") String timeFlag, @Param("settleRate")String settleRate);
 }

@@ -473,7 +473,7 @@
         SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS Sales,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( i.order_id )) AS orderCount
-        FROM dmp_order_item i  LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -540,63 +540,63 @@
         SELECT COALESCE( o.shop_no,'') AS flagNo, round( SUM ( o.order_fee *${settleRate}) / 10000, 4 ) AS Sales,
         COUNT ( o.id ) AS salesQuantity,o.${findTime} AS flagDate
         FROM dmp_order_info o
-          WHERE (o.shop_no!=null or o.shop_no!='')
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                    AND o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
-                </if>
+        WHERE (o.shop_no!=null or o.shop_no!='')
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                AND o.platform_create_time &gt;= #{params.startTime}
             </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
-                </if>
+            <if test="params.endTime !=null">
+                AND o.platform_create_time &lt;= #{params.endTime}
             </if>
-            <!-- 部门 -->
-            <if test="params.department!=null and params.department.size>0">
-                AND o.dept_id IN
-                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                    #{deptId}
-                </foreach>
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND o.delivery_time &gt;= #{params.startTime}
             </if>
-            <!-- 平台 -->
-            <if test="params.platform!=null and params.platform.size>0">
-                AND o.source_platform IN
-                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                    #{platform}
-                </foreach>
+            <if test="params.endTime !=null">
+                AND o.delivery_time &lt;= #{params.endTime}
             </if>
-            <!-- 站点 -->
-            <if test="params.site!=null and params.site.size>0">
-                AND o.site IN
-                <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                    #{site}
-                </foreach>
-            </if>
-            <!-- 店铺 -->
-            <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
-                </foreach>
-            </if>
-            <!-- 用户id -->
-            <if test="params.userId!=null and params.userId.size>0">
-                AND o.charge_id IN
-                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                    #{userId}
-                </foreach>
-            </if>
-            <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
-            </if>
+        </if>
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
 
         GROUP BY o.shop_no,o.${findTime}
 
@@ -727,84 +727,84 @@
         SUM ( i.quantity ) AS salesQuantity,o.shop_no,i.new_sign AS flag,
         ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-            WHERE (o.shop_no !=null OR  o.shop_no!='')
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                    AND o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
-                </if>
+        WHERE (o.shop_no !=null OR o.shop_no!='')
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                AND o.platform_create_time &gt;= #{params.startTime}
             </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
-                </if>
+            <if test="params.endTime !=null">
+                AND o.platform_create_time &lt;= #{params.endTime}
             </if>
-            <!-- 部门 -->
-            <if test="params.department!=null and params.department.size>0">
-                AND o.dept_id IN
-                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                    #{deptId}
-                </foreach>
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND o.delivery_time &gt;= #{params.startTime}
             </if>
-            <!-- 平台 -->
-            <if test="params.platform!=null and params.platform.size>0">
-                AND o.source_platform IN
-                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                    #{platform}
-                </foreach>
+            <if test="params.endTime !=null">
+                AND o.delivery_time &lt;= #{params.endTime}
             </if>
-            <!-- 站点 -->
-            <if test="params.site!=null and params.site.size>0">
-                AND o.site IN
-                <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                    #{site}
-                </foreach>
-            </if>
-            <!-- 店铺 -->
-            <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
-                </foreach>
-            </if>
-            <!-- sku -->
-            <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
-                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
-                    #{sku}
-                </foreach>
-            </if>
-            <!-- 品类 -->
-            <if test="params.category!=null and params.category.size>0">
-                AND i.category_id IN
-                <foreach collection="params.category" item="category" open="(" separator="," close=")">
-                    #{category}
-                </foreach>
-            </if>
-            <!-- 品牌 -->
-            <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_id IN
-                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
-                    #{brand}
-                </foreach>
-            </if>
-            <!-- 用户id -->
-            <if test="params.userId!=null and params.userId.size>0">
-                AND o.charge_id IN
-                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                    #{userId}
-                </foreach>
-            </if>
-            <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
-            </if>
+        </if>
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
 
         GROUP BY o.shop_no,i.new_sign
     </select>
@@ -903,84 +903,84 @@
         i.sku_no,o.shop_no,
         ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-        WHERE (o.shop_no !=null or  o.shop_no!='')
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                   AND o.platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
-                </if>
+        WHERE (o.shop_no !=null or o.shop_no!='')
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                AND o.platform_create_time &gt;= #{params.startTime}
             </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND o.delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
-                </if>
+            <if test="params.endTime !=null">
+                AND o.platform_create_time &lt;= #{params.endTime}
             </if>
-            <!-- 部门 -->
-            <if test="params.department!=null and params.department.size>0">
-                AND o.dept_id IN
-                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                    #{deptId}
-                </foreach>
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND o.delivery_time &gt;= #{params.startTime}
             </if>
-            <!-- 平台 -->
-            <if test="params.platform!=null and params.platform.size>0">
-                AND o.source_platform IN
-                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                    #{platform}
-                </foreach>
+            <if test="params.endTime !=null">
+                AND o.delivery_time &lt;= #{params.endTime}
             </if>
-            <!-- 站点 -->
-            <if test="params.site!=null and params.site.size>0">
-                AND o.site IN
-                <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                    #{site}
-                </foreach>
-            </if>
-            <!-- 店铺 -->
-            <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
-                </foreach>
-            </if>
-            <!-- sku -->
-            <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
-                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
-                    #{sku}
-                </foreach>
-            </if>
-            <!-- 品类 -->
-            <if test="params.category!=null and params.category.size>0">
-                AND i.category_id IN
-                <foreach collection="params.category" item="category" open="(" separator="," close=")">
-                    #{category}
-                </foreach>
-            </if>
-            <!-- 品牌 -->
-            <if test="params.brand!=null and params.brand.size>0">
-                AND i.brand_id IN
-                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
-                    #{brand}
-                </foreach>
-            </if>
-            <!-- 用户id -->
-            <if test="params.userId!=null and params.userId.size>0">
-                AND o.charge_id IN
-                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                    #{userId}
-                </foreach>
-            </if>
-            <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
-            </if>
+        </if>
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
         GROUP BY i.sku_no,o.shop_no
     </select>
 
@@ -1161,27 +1161,27 @@
         SELECT round( SUM ( order_fee* ${settleRate}) / 10000, 4 ) AS sales,
         country_name_cn AS name FROM dmp_order_info
         WHERE (country_name_cn!=null or country_name_cn!='')
-            <if test="params.timeType!=null and params.timeType==0">
-                <if test="params.startTime !=null">
-                   AND  platform_create_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND platform_create_time &lt;= #{params.endTime}
-                </if>
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                AND platform_create_time &gt;= #{params.startTime}
             </if>
-            <!-- 发货时间 -->
-            <if test="params.timeType!=null and params.timeType==1">
-                <if test="params.startTime !=null">
-                    AND delivery_time &gt;= #{params.startTime}
-                </if>
-                <if test="params.endTime !=null">
-                    AND delivery_time &lt;= #{params.endTime}
-                </if>
+            <if test="params.endTime !=null">
+                AND platform_create_time &lt;= #{params.endTime}
             </if>
-            <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND delivery_time &gt;= #{params.startTime}
             </if>
+            <if test="params.endTime !=null">
+                AND delivery_time &lt;= #{params.endTime}
+            </if>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
 
         GROUP BY country_name_cn
     </select>
@@ -1626,7 +1626,7 @@
 
     <select id="bySite" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) AS sales,
-        COALESCE(o.shop_no,'') AS shopNo  ,SUM ( i.quantity ) AS salesQuantity,
+        COALESCE(o.shop_no,'') AS shopNo ,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2029,12 +2029,12 @@
 
     <select id="byMarketingCenter" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT round(SUM ( o.order_fee * o.${settleRate} ) / 10000, 4) AS sales,
-        EXTRACT(MONTH FROM ${timeFlag}) flag,
+        EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         WHERE
-        EXTRACT ( YEAR FROM ${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
+        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
 
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
@@ -2098,17 +2098,17 @@
         </if>
 
         GROUP BY
-        EXTRACT ( MONTH FROM ${timeFlag} )
+        EXTRACT ( MONTH FROM o.${timeFlag} )
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT round(SUM ( o.order_fee * o.${settleRate} ) / 10000, 4) AS sales,
-        EXTRACT(MONTH FROM ${timeFlag}) flag,
+        EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         WHERE
-        EXTRACT ( YEAR FROM ${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
+        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2171,7 +2171,7 @@
         </if>
 
         GROUP BY
-        EXTRACT ( MONTH FROM ${timeFlag} )
+        EXTRACT ( MONTH FROM o.${timeFlag} )
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -2290,6 +2290,357 @@
             </if>
         </where>
         GROUP BY source_platform
+    </select>
+
+    <select id="getByDay" resultType="com.erp.model.bi.vo.SalesFlagVO">
+         SELECT round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS sales,
+         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
+         SUM ( i.quantity ) AS salesQuantity
+         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        group by name  order by  name  asc
+    </select>
+
+    <select id="getByMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS sales,
+        to_char(o.${timeFlag},'yyyy-mm') AS name,
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        group by name order by name asc
+    </select>
+
+    <select id="getByQuarter" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT 	round( SUM ( o.order_fee * o.currency_rate ) / 10000, 4 ) AS sales,
+        date_trunc('QUARTER',o.platform_create_time) AS name,SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        group by name order by name asc
+
+    </select>
+
+
+
+    <select id="getByYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
+        SELECT round( SUM ( o.order_fee * o.currency_rate ) / 10000, 4 ) AS sales,
+        to_char(o.platform_create_time,'yyyy') as name,
+        SUM ( i.quantity ) AS salesQuantity FROM
+	    dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt;= #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_no IN
+                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                    #{shopNo}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+        </where>
+        group by name order by name asc
+
     </select>
 
 </mapper>

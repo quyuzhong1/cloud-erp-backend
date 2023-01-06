@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -145,4 +146,6 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<PeopleSalesRankVO> byPeopleYearRank(BiFilterDTO dto);
 
     List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto);
+
+    StatisticalDataVO byDate(DateFilterDTO biFilterDTO);
 }

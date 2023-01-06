@@ -3,7 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
@@ -377,9 +377,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SaleDetailVO>> byDate(@RequestBody @Validated SkuFilterDTO biFilterDTO) {
-        List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
-        return success(saleDetailVOList);
+    public ApiResult<StatisticalDataVO> byDate(@RequestBody @Validated DateFilterDTO biFilterDTO) {
+        StatisticalDataVO result = salesOrderService.byDate(biFilterDTO);
+        return success(result);
     }
 
 
