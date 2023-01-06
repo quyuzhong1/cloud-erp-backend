@@ -544,7 +544,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             BigDecimal costSaleExpenses = tempMap.getOrDefault("cost_saleExpenses", BigDecimal.ZERO);
             return costMainBusinessIncome.subtract(costTotalCost).subtract(costSaleExpenses);
         }));
-        Map<String, BigDecimal> sortMap = MapUtil.sortByValue(profitMap, false);
+        Map<String, BigDecimal> sortMap = MapUtil.sortByValue(profitMap, true);
         Integer rankNum;
         if (profitMap.size() <= 5) {
             rankNum = profitMap.size();
