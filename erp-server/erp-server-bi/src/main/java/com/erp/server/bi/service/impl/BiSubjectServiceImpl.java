@@ -223,7 +223,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //这个是所有的
         List<DashboardDTO> allList = baseMapper.getDashboardList(type, dashboardFlag, findIdList, searchKeyword);
         //这个是常用的
-        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> f.getIsFrequently().equals(frequentlyFlag)).collect(Collectors.toList());
+        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> frequentlyFlag.equals(f.getIsFrequently())).collect(Collectors.toList());
         for (DashboardDTO frequently : frequentlyList) {
             if (userDefaultSubjectIds.contains(frequently.getId())) {
                 frequently.setIsDefault(true);
