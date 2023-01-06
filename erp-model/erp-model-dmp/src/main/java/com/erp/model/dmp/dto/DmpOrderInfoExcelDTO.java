@@ -142,40 +142,41 @@ public class DmpOrderInfoExcelDTO implements Serializable {
     @ExcelProperty(value = "销售员", index = 16)
     private String chargeName;
 
+    /**
+     * 销售事业部
+     */
+    @ExcelProperty(value = "销售事业部", index = 17)
+    private String deptName;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "SKU", index = 17)
+    @ExcelProperty(value = "SKU", index = 18)
     private String skuNo;
 
     /**
      * 品名
      */
-    @ExcelProperty(value = "品名", index = 18)
+    @ExcelProperty(value = "品名", index = 19)
     private String itemName;
 
     /**
      * 单价
      */
-    @ExcelProperty(value = "单价", index = 19)
+    @ExcelProperty(value = "单价", index = 20)
     private BigDecimal sellPrice;
 
     /**
      * 数量
      */
-    @ExcelProperty(value = "数量", index = 20)
+    @ExcelProperty(value = "数量", index = 21)
     private Integer quantity;
 
     /**
      * 销售额[原币种]
      */
-    @ExcelProperty(value = "销售额[原币种]", index = 21)
+    @ExcelProperty(value = "销售额[原币种]", index = 22)
     private BigDecimal sellAmount;
 
-    /**
-     * 销售事业部
-     */
-    @ExcelProperty(value = "销售事业部", index = 22)
-    private String deptName;
+
 }

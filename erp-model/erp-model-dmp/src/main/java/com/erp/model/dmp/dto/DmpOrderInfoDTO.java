@@ -118,6 +118,11 @@ public class DmpOrderInfoDTO {
     private String chargeName;
 
     /**
+     * 销售事业部
+     */
+    private String deptName;
+
+    /**
      * 子集
      */
     private List<DmpOrderItemDTO> children;

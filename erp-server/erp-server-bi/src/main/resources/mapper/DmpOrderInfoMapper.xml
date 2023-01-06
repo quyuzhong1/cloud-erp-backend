@@ -42,6 +42,7 @@
             doi.platform_order_id,
             doi.delivery_time,
             doi.charge_name,
+            doi.dept_name,
             doi.platform_create_time
         from dmp_order_info doi
         <where>

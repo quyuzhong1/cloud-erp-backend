@@ -14,6 +14,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
@@ -49,9 +50,11 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     private List<DmpOrderInfoEntity> orderList ;
 
+    private List<SysDepartmentDTO> deptList;
+
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
-    public DmpOrderInfoExcelListener(Integer importType,List<DmpOrderInfoEntity> orderList,PlmTaskFeign plmTaskFeign, DmpOrderItemService dmpOrderItemService, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
+    public DmpOrderInfoExcelListener(Integer importType, List<DmpOrderInfoEntity> orderList, List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, DmpOrderItemService dmpOrderItemService, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
         this.dmpOrderItemService = dmpOrderItemService;
@@ -59,6 +62,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         this.sysUserFeign = sysUserFeign;
         this.plmTaskFeign = plmTaskFeign;
         this.orderList = orderList;
+        this.deptList = deptList;
         this.list = new ArrayList<>();
     }
 
@@ -138,6 +142,21 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
         if(StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("销售员不能为空");
+        }
+
+        if(StringUtils.isBlank(dto.getDeptName())) {
+            errorMsgList.add("销售员不能为空");
+        }
+
+        if (StringUtils.isNotBlank(dto.getChargeName())) {
+            if (CollectionUtils.isEmpty(deptList)) {
+                errorMsgList.add("销售事业部在系统中未找到");
+            } else {
+                long count = deptList.stream().filter(obj -> dto.getDeptName().equals(obj.getName())).count();
+                if (count < 1) {
+                    errorMsgList.add("销售事业部在系统中未找到");
+                }
+            }
         }
 
         List<FindUserDTO> chargeNameList = new ArrayList<>();

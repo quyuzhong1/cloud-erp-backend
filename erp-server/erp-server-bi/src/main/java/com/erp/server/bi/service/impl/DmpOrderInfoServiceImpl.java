@@ -22,13 +22,13 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
@@ -995,7 +995,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         //系统中已存在的订单
         List<DmpOrderInfoEntity> orderList = this.list();
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,orderList,plmTaskFeign,dmpOrderItemService, this, dmpShopInfoService, sysUserFeign);
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType,orderList,deptList,plmTaskFeign,dmpOrderItemService, this, dmpShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
