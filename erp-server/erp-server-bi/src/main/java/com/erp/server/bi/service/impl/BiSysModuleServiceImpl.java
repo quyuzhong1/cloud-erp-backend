@@ -130,7 +130,7 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         queryWrapper.last("LIMIT 1");
         int count = this.count(queryWrapper);
         if (count > 0) {
-            new ServiceException(ApiError.ERROR_97003);
+           throw new ServiceException(ApiError.ERROR_97003);
         }
     }
 }
