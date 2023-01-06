@@ -18,6 +18,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -180,6 +181,20 @@ public class BiDataSourceCustomController extends BaseController {
     public ApiResult financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
+    }
+
+    /**
+     * 自助数据-导入
+     * @author Will
+     * @date: 2022/12/16 11:10
+     * @param excelFile
+     * @param importType
+     * @param response
+     */
+    @PostMapping("/importBiDataSourceCustomFile")
+    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType);
+        return flag == true ? this.success() : this.failure();
     }
 
     /**
