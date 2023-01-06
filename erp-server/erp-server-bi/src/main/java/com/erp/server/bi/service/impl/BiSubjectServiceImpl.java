@@ -53,6 +53,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     private BiSubjectShareService subjectShareService;
 
     @Resource
+    private BiSubjectRefLayoutService subjectRefLayoutService;
+
+    @Resource
     private BiSubjectDefaultService subjectDefaultService;
 
 
@@ -155,6 +158,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             subjectDefaultService.deleteBySubjectId(id);
             //分享的专题删除
             subjectShareService.deleteBySubjectId(id);
+
+            subjectRefLayoutService.deleteBySubjectId(id);
         }
         return flag;
     }

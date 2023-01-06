@@ -4,6 +4,7 @@ package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.sys.dto.DepartmentDTO;
+import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 
@@ -54,5 +55,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<String>  getDeptIds(String deptName);
 
     List<SysDepartmentDTO> getDeptList();
+
+    List<DeptUserDTO> deptUserTree();
 }
 

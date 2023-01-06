@@ -20,5 +20,7 @@ public class SysDepartmentUserNumberDTO implements Serializable {
 
     private String userId;
 
+    private String userName;
+
 
 }

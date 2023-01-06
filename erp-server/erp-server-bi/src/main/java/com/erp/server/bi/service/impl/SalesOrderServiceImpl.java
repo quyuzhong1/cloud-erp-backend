@@ -844,7 +844,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             SalesBaseVO yearBasisVO = yearBasisList.stream().filter(c -> c.getFlagNo().equals(flagNo))
                     .findFirst().orElse(null);
             if (yearBasisVO != null) {
-                vo.setYearBasisRatio(getChainRelativeRatio(sales, chainVO.getSales()));
+                vo.setYearBasisRatio(getChainRelativeRatio(sales, yearBasisVO.getSales()));
             }
 
             vo.setOrderCount(item.getOrderCount());
@@ -993,7 +993,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     public BigDecimal getChainRelativeRatio(BigDecimal sales, BigDecimal oldSales) {
         BigDecimal zero = BigDecimal.ZERO;
-        if (oldSales.compareTo(zero) == 0 || sales == null || oldSales == null) {
+        if (oldSales==null||oldSales.compareTo(zero) == 0 || sales == null || oldSales == null) {
             return zero;
         }
         BigDecimal differ = sales.subtract(oldSales);

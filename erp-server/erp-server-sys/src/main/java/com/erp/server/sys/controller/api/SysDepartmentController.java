@@ -1,11 +1,11 @@
 package com.erp.server.sys.controller.api;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.modules.sys.vo.SysDeptDropDownVO;
 import com.erp.model.sys.dto.DepartmentDTO;
+import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -39,6 +39,12 @@ public class SysDepartmentController extends BaseController {
     public ApiResult tree() {
         List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree();
         return success(treeVO);
+    }
+
+    @GetMapping("/deptUserTree")
+    public ApiResult deptUserTree() {
+        List<DeptUserDTO> deptUserList = sysDepartmentService.deptUserTree();
+        return success(deptUserList);
     }
 
 

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.BatchSysDepartUserDTO;
@@ -126,6 +125,8 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         }
         return false;
     }
+
+
 
 
     public void removeDepartmentUser(String departmentId, Set<String> userIds) {
