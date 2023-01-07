@@ -194,13 +194,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskList.add(entity);
                     noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
                 }
-                //新增产品操作日志
-                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-                productOperateRecordDTO.setProductId(productId);
-                List<String> remarkList = new ArrayList<>();
-                remarkList.add("新增了一个任务：[" + entity.getName() + "]");
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+                sysLogService.addSysLogBySave("新增了一个：["+entity.getName()+"]", ClassPathConstant.TASK_CLASS,entity.getId(),null);
+
             }
 
 
@@ -1107,64 +1102,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return TaskProcessTypeEnum.REVIEW_TASK.getCode();
     }
 
-
-    private List<String> getUpdateField(ProjectTaskDTO dto) {
-        ProjectTaskEntity entity = new ProjectTaskEntity();
-        BeanMapper.copy(dto, entity);
-        List<String> list = new ArrayList<>();
-        ProjectTaskEntity projectTaskEntity = this.getById(dto.getId());
-        if (!projectTaskEntity.getName().equals(dto.getName())) {
-            list.add("编辑任务字段[任务名]由[" + projectTaskEntity.getName() + "]改为[" + dto.getName() + "]");
-        }
-
-        if (dto.getType() != null) {
-            if (!projectTaskEntity.getType().equals(dto.getType())) {
-                String entityType = (projectTaskEntity.getType() == 0) ? "一般任务" : "审核任务";
-                String dtoType = (dto.getType() == 0) ? "一般任务" : "审核任务";
-                list.add("编辑任务字段[任务类型]由[" + entityType + "]改为[" + dtoType + "]");
-            }
-        }
-        //负责人ids
-        List<String> chargeIds = dto.getChargeIds();
-        String chargeNames = commonService.getNameByIds(chargeIds);
-        if (!projectTaskEntity.getChargeName().equals(chargeNames)) {
-            list.add("编辑任务字段[产品负责人]由[" + projectTaskEntity.getChargeName() + "]改为[" + chargeNames + "]");
-        }
-        if (dto.getPlanStartTime() != null) {
-            if (!dto.getPlanStartTime().equals(projectTaskEntity.getPlanStartTime())) {
-                list.add("编辑任务字段[计划开始时间]由[" + projectTaskEntity.getPlanStartTime() + "]改为[" + dto.getPlanStartTime() + "]");
-            }
-        }
-        if (dto.getPlanEndTime() != null) {
-            if (!dto.getPlanEndTime().equals(projectTaskEntity.getPlanEndTime())) {
-                list.add("编辑任务字段[计划结束时间]由[" + projectTaskEntity.getPlanEndTime() + "]改为[" + dto.getPlanEndTime() + "]");
-            }
-        }
-
-        if (dto.getPriority() != null) {
-            if (!projectTaskEntity.getPriority().equals(dto.getPriority())) {
-                String entityPriority = (projectTaskEntity.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
-                String dtoPriority = (dto.getPriority() == 1) ? "低级" : (dto.getType() == 2) ? "中级" : "高级";
-                list.add("编辑任务字段[任务优先级]由[" + entityPriority + "]改为[" + dtoPriority + "]");
-            }
-        }
-
-        if (dto.getPhaseName() != null) {
-            if (!projectTaskEntity.getPhaseName().equals(dto.getPhaseName())) {
-                list.add("编辑任务字段[任务阶段名]由[" + projectTaskEntity.getPhaseName() + "]改为[" + dto.getPhaseName() + "]");
-            }
-        }
-
-        if (dto.getDescription() != null) {
-            if (!projectTaskEntity.getDescription().equals(dto.getDescription())) {
-                list.add("编辑任务字段[任务描述]由[" + projectTaskEntity.getDescription() + "]改为[" + dto.getDescription() + "]");
-            }
-        }
-
-
-        return list;
-    }
-
     /**
      * 修改 任务信息
      *
@@ -1227,14 +1164,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
 
-       /* List<String> updateField = getUpdateField(dto);
-        if (updateField.size() > 0) {
-            //新增产品操作日志
-            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-            productOperateRecordDTO.setProductId(dto.getProductId());
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(updateField));
-            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-        }*/
         //交付文档名称
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
             String deliveryDocsNames = deliveryDocsList.stream().map(DocsDTO::getName).collect(Collectors.joining(","));
@@ -1349,7 +1278,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         //添加操作日志
-        addUpdateTaskDTOLog(dto,oldEntity,oldEntity.getId());
+        addUpdateTaskDTOLog(taskEntity,oldEntity,oldEntity.getId());
         return this.updateById(taskEntity);
     }
 
@@ -2535,6 +2464,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<String> taskIdList = generalTasks.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             this.updateTaskState(taskIdList, ingCode, new Date(), null);
             taskOperatorRecordService.batchSaveRecord(taskIds, TaskStateEnum.NOT_START.getCode(), ingCode, loginUser.getUid(), loginUser.getUserName(), "");
+
+            //操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            taskIdList.forEach(taskId -> {
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.NOT_START.getName(),TaskStateEnum.ING.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+            });
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送开始任务通知
             noticeMessageService.startTaskNotice(loginUser.getUserName(), generalTasks, dto.getProductId());
         }
@@ -2572,6 +2508,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = updateTaskState(generalTaskIds, TaskStateEnum.NOT_START.getCode(), null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveRecord(generalTaskIds, releasedCode, TaskStateEnum.NOT_START.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            //操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            generalTaskIds.forEach(taskId -> {
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.TO_BE_RELEASED.getName(),TaskStateEnum.NOT_START.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+            });
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发布任务消息
             noticeMessageService.releaseTaskNotice(loginUser.getUserName(), generalTasks, dto.getProductId());
         }
@@ -2687,6 +2629,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //发送取消发布的 通知
             noticeMessageService.cancelReleaseTaskNotice(loginUser.getUserName(), list, dto.getProductId());
             taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.TO_BE_RELEASED.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            //操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            list.forEach(task -> {
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.TO_BE_RELEASED.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+            });
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
         return flag;
 
@@ -2717,6 +2665,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.updateTaskState(taskIds, TaskStateEnum.CLOSE.getCode(), null, null);
         if (flag) {
             taskOperatorRecordService.batchSaveTaskRecord(list, TaskStateEnum.CLOSE.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+            //操作日志
+            List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+            list.forEach(task -> {
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.CLOSE.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+            });
+            sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送关闭任务通知
             noticeMessageService.closeTaskNotice(loginUser.getUserName(), list, dto.getProductId());
         }
@@ -2831,6 +2785,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
 
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
+        //操作日志
+        List<SysLogEntity> sysLogEntityList = new LinkedList<>();
+        list.forEach(task -> {
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.FINISH.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+        });
+        sysLogService.addSysLogByBatchSave(sysLogEntityList);
         //发送完成任务通知
         List<ProjectTaskEntity> finishSkuTaskList = list.stream().filter(p -> finishSkuTaskIdList.contains(p.getId())).collect(Collectors.toList());
         noticeMessageService.finishTaskNotice(loginUser.getUserName(), finishSkuTaskList, dto.getProductId());
@@ -3552,13 +3512,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 编辑任务操作日志
      */
-    private void addUpdateTaskDTOLog(UpdateTaskDTO updateTaskDTO,ProjectTaskEntity oldEntity,String businessId) {
-        UpdateTaskDTO oldDto = new UpdateTaskDTO();
-        //查询修改之前的任务数据
-        if (ObjectUtils.isNotEmpty(oldEntity)) {
-            BeanMapperUtils.copy(oldEntity,oldDto);
-        }
-
+    private void addUpdateTaskDTOLog(ProjectTaskEntity newEntity,ProjectTaskEntity oldEntity,String businessId) {
+        sysLogService.addSysLogByUpdate(oldEntity,newEntity,ClassPathConstant.TASK_CLASS,businessId,null,String.format("任务[%s]",oldEntity.getName()));
     }
 
 }
