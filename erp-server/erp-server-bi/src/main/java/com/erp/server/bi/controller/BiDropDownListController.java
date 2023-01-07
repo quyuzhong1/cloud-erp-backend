@@ -257,7 +257,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/shop/list")
     public ApiResult<List<ShopDropDownVO>> listShopDropDown() {
         List<DmpShopInfoEntity> list = dmpShopInfoService.lambdaQuery()
-                .eq(DmpShopInfoEntity::getStatus, 1)
+//                .eq(DmpShopInfoEntity::getStatus, 1)
                 .list();
         if(CollectionUtil.isEmpty(list)){
             return success(new ArrayList<>());
