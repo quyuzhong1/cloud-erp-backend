@@ -219,8 +219,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                     layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
                 }
             }
-            //先删除
-            subjectRefLayoutService.deleteBySubjectId(subjectId);
             //保存专题与布局关系表
             subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
         }
