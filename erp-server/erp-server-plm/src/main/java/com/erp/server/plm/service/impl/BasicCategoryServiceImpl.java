@@ -307,28 +307,38 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @param id
      */
     private void checkCategoryCode(String code,String pid,String id) {
-        if ("0".equals(pid)) {
-            //一级分类必须要填分类代码
-            if (StringUtils.isBlank(code)) {
-                throw new ServiceException(ApiError.ERROR_95069);
+        if (!"0".equals(pid) && StringUtils.isNotBlank(code)) {
+            BasicCategoryEntity parent = this.getById(pid);
+            //判断是否是二级分类，非一、二级分类无需添加代号
+            if (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid())) {
+                throw new ServiceException(ApiError.ERROR_95093);
+            }
+        }
+        //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
+        if (StringUtils.isBlank(code)) {
+            throw new ServiceException(ApiError.ERROR_95069);
+        } else {
+            Boolean flag = false;
+            for (int i = 65;i <= 90; i++) {
+                char c = (char) (i);
+                if ( code.equals(String.valueOf(c)) ) {
+                   flag = true;
+                }
+            }
+            if (!flag) {
+                throw new ServiceException(ApiError.ERROR_95071);
+            }
+            LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.eq(BasicCategoryEntity::getCode, code);
+            if ("0".equals(pid)) {
+                queryWrapper.eq(BasicCategoryEntity::getPid, pid);
             } else {
-                Boolean flag = false;
-                for (int i = 65;i <= 90; i++) {
-                    char c = (char) (i);
-                    if ( code.equals(String.valueOf(c)) ) {
-                       flag = true;
-                    }
-                }
-                if (!flag) {
-                    throw new ServiceException(ApiError.ERROR_95071);
-                }
-                LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
-                queryWrapper.eq(BasicCategoryEntity::getCode, code);
-                queryWrapper.last("LIMIT 1");
-                BasicCategoryEntity entity = this.getOne(queryWrapper);
-                if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
-                    throw new ServiceException(ApiError.ERROR_95070);
-                }
+                queryWrapper.ne(BasicCategoryEntity::getPid,"0");
+            }
+            queryWrapper.last("LIMIT 1");
+            BasicCategoryEntity entity = this.getOne(queryWrapper);
+            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
+                throw new ServiceException(ApiError.ERROR_95070);
             }
         }
     }
