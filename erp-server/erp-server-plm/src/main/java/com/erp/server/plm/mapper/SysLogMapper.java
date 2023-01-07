@@ -7,6 +7,9 @@ import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.SysLogEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @author Will
@@ -25,5 +28,14 @@ public interface SysLogMapper extends BaseMapper<SysLogEntity> {
      * @param yes
      * @return IPage
      */
-    IPage<SysLogShowDTO> paging(Page query, SysLogSelectDTO params, Integer yes);
+    IPage<SysLogShowDTO> paging(Page query,@Param("params") SysLogSelectDTO params, Integer yes);
+
+    /**
+     * @description:列表查询
+     * @author Will
+     * @date: 2023/1/6 17:08
+     * @param params
+     * @return List<SysLogShowDTO>
+     */
+    List<SysLogShowDTO> listSysLog(@Param("params") SysLogSelectDTO params);
 }

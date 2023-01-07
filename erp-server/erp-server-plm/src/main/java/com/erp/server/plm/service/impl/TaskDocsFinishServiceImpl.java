@@ -160,18 +160,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setOldFileUrl(fileUrl);
         finishEntity.setOldUploadType(dto.getUploadType());
         finishEntity.setOldFileName(fileName);
-
-        //新增产品操作日志
-        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-        productOperateRecordDTO.setProductId(dto.getProductId());
-        List<String> remarkList = new ArrayList<>();
-        remarkList.add("上传文件：[" + fileName + "]");
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-
         //新增上传交付物操作日志
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", fileName))
-                .setBusinessId(taskEntity.getPid())
+                .setBusinessId(taskEntity.getId())
+                .setOperation("文档操作")
                 .setClassPath(ClassPathConstant.TASK_CLASS);
         sysLogService.addSysLogByOther(sysLogEntity);
 
@@ -229,14 +221,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 throw new ServiceException(ApiError.ERROR_95040);
             }
         }
-
-        //新增产品操作日志
-        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-        productOperateRecordDTO.setProductId(entity.getProductId());
-        List<String> remarkList = new ArrayList<>();
-        remarkList.add("删除文件：[" + entity.getFileName() + "]");
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+        //新增删除交付物操作日志
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("删除了一个文件[%s]", entity.getFileName()))
+                .setBusinessId(taskEntity.getId())
+                .setOperation("文档操作")
+                .setClassPath(ClassPathConstant.TASK_CLASS);
+        sysLogService.addSysLogByOther(sysLogEntity);
         return this.removeById(id);
     }
 
@@ -328,14 +318,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             sb.append("变更为").append(fileName);
             docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
         }
+        //新增变更文档操作日志
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", fileName))
+                .setBusinessId(taskEntity.getId())
+                .setOperation("文档操作")
+                .setClassPath(ClassPathConstant.TASK_CLASS);
+        sysLogService.addSysLogByOther(sysLogEntity);
 
-        //新增产品操作日志
-        ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-        productOperateRecordDTO.setProductId(finishEntity.getProductId());
-        List<String> remarkList = new ArrayList<>();
-        remarkList.add("变更文档：[" + fileName + "]");
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-        productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         startChangeDocsProcess(loginUser.getUid(), taskEntity);
 
         return flag;

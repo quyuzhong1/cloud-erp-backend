@@ -219,4 +219,9 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
         return new PagingVO(pageData);
     }
+
+    @Override
+    public List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto) {
+        return baseMapper.listSysLog(dto);
+    }
 }
