@@ -3,7 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.SysLogFieldEntity;
-import com.erp.server.plm.constant.ClassPathConstant;
+import com.erp.server.plm.enums.SysLogClassPathEnum;
 import com.erp.server.plm.mapper.SysLogFieldMapper;
 import com.erp.server.plm.service.SysLogFieldService;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-         String  classPath = ClassPathConstant.TASK_CLASS;
+         String  classPath = SysLogClassPathEnum.PROJECTTASKENTITY.getDesc();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
             new SysLogFieldEntity().setField("planStartTime").setFieldName("开始时间").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("planEndTime").setFieldName("结束时间").setClassPath(classPath).setType(0) .setEnumClass(null),

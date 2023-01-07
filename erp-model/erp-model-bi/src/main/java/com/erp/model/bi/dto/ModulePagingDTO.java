@@ -47,10 +47,7 @@ public class ModulePagingDTO implements Serializable {
      */
     private Integer monthUsageCount=0;
 
-    /**
-     * 本月取消次数
-     */
-    private Integer monthCancelCount=0;
+
 
 
     /**
@@ -58,8 +55,5 @@ public class ModulePagingDTO implements Serializable {
      */
     private Integer usageCount=0;
 
-    /**
-     * 取消次数
-     */
-    private Integer cancelCount=0;
+
 }

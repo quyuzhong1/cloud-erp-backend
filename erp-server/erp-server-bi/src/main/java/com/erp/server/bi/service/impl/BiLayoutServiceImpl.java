@@ -143,6 +143,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
         details.setShareFlag(subject.getShareFlag());
+        details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
         details.setShareUserIdList(shareUserIdList);
@@ -316,14 +317,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
         subject.setCategoryId(categoryId);
-        BiDictEntity dict = dictService.getById(categoryId);
-        String categoryName = "";
-        if (dict != null) {
-            categoryName = dict.getName();
-        }
         String shareFlag = dto.getShareFlag();
         subject.setShareFlag(shareFlag);
-        subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id

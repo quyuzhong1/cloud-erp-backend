@@ -2,7 +2,10 @@ package com.erp.server.bi.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.bi.entity.BiSubjectRefLayoutEntity;
+import com.erp.model.bi.vo.LayoutVO;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * 专题与布局关系表(BiSubjectRefLayout)表数据库访问层
@@ -13,7 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface BiSubjectRefLayoutMapper  extends BaseMapper<BiSubjectRefLayoutEntity> {
 
-    
 
+    List<LayoutVO> getLayoutIds();
 }
 

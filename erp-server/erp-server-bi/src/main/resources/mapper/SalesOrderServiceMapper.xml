@@ -8,7 +8,7 @@
     <select id="getMonthSales" resultType="map">
         SELECT
         to_char( platform_create_time, 'yyyy-mm' ) AS MONTH,
-        round( SUM ( order_fee * ${settleRate} ) / 10000, 4 ) AS "orderSales"
+        round( SUM ( order_fee * ${settleRate} ) , 2 ) AS "orderSales"
         FROM dmp_order_info o
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -76,7 +76,7 @@
         (SELECT name_cn FROM dmp_sku_info ds WHERE ds.sku_no = i.sku_no LIMIT 1 ) productName,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( i.order_id )) AS orderCount,
-        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) / 10000, 4 ) sales,
+        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) , 2 ) sales,
         i.sku_no AS name FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
@@ -170,7 +170,7 @@
         SELECT
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( i.order_id )) AS orderCount,
-        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) / 10000, 4 ) sales,
+        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) , 2 ) sales,
         i.sku_no AS flagNo,o.${findTime} AS flagDate
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -260,7 +260,7 @@
         SELECT
         (SELECT name_cn FROM dmp_sku_info ds WHERE ds.sku_no = i.sku_no LIMIT 1 ) productName,
         SUM ( i.quantity ) AS salesQuantity,
-        round( SUM ( ( i.sell_price * i.quantity * i.currency_rate ) ) / 10000, 4 ) sales,
+        round( SUM ( ( i.sell_price * i.quantity * i.currency_rate ) ) ,2) sales,
         i.sku_no AS name FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
@@ -348,7 +348,7 @@
 
     <select id="getByCountry" resultType="com.erp.model.bi.vo.SalesByCountryVO">
         SELECT ( SELECT name_cn FROM dmp_sku_info ds WHERE ds.sku_no = i.sku_no LIMIT 1 ) productName,
-        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) / 10000, 4 ) sales,
+        round( SUM ( ( i.sell_price * i.quantity * i.${settleRate} ) ) , 2 ) sales,
         i.sku_no AS sku ,o.country_name_cn AS country
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -438,7 +438,7 @@
 
     <select id="getPlatformSales" resultType="java.util.Map">
         SELECT source_platform AS platform,
-        round (SUM ( order_fee*${settleRate} )/10000,4) AS sales
+        round (SUM ( order_fee*${settleRate} ),2) AS sales
         FROM dmp_order_info
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -470,7 +470,7 @@
         SELECT a.shop_no,a.sales,a.salesQuantity,s.name AS shopName,s.platform_name,
         a.orderCount
         FROM (
-        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS Sales,
+        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate} ), 2 ) AS Sales,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( i.order_id )) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -537,7 +537,7 @@
 
     </select>
     <select id="getShopLastDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT COALESCE( o.shop_no,'') AS flagNo, round( SUM ( o.order_fee *${settleRate}) / 10000, 4 ) AS Sales,
+        SELECT COALESCE( o.shop_no,'') AS flagNo, round( SUM ( o.order_fee *${settleRate}) , 2 ) AS Sales,
         COUNT ( o.id ) AS salesQuantity,o.${findTime} AS flagDate
         FROM dmp_order_info o
         WHERE (o.shop_no!=null or o.shop_no!='')
@@ -605,8 +605,8 @@
     <select id="byTopShop" resultType="java.util.Map">
         SELECT a.shop_no,a.sales,a.salesQuantity,s.name AS "shopName"
         FROM (
-        SELECT o.shop_no,round( SUM ( o.order_fee * ${settleRate}) / 10000,
-        4 ) AS sales , COUNT( o.id ) AS salesQuantity
+        SELECT o.shop_no,round( SUM ( o.order_fee * ${settleRate}) ,
+        2 ) AS sales , COUNT( o.id ) AS salesQuantity
         FROM dmp_order_info o
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -663,7 +663,7 @@
         o.shop_no,
         COALESCE(( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ),'') AS shopName,
         country_name_cn AS platformName,
-        round( SUM ( o.order_fee* ${settleRate}) / 10000, 4 ) AS sales
+        round( SUM ( o.order_fee* ${settleRate}) , 2 ) AS sales
         FROM
         dmp_order_info o
         WHERE (o.shop_no!='' OR o.shop_no!=NULL)
@@ -723,7 +723,7 @@
 
 
     <select id="byShopNewAndOld" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) sales,
         SUM ( i.quantity ) AS salesQuantity,o.shop_no,i.new_sign AS flag,
         ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -810,7 +810,7 @@
     </select>
 
     <select id="byCountry" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round ( SUM(i.sell_price * i.quantity * i.${settleRate})/10000,4 ) sales,
+        SELECT round ( SUM(i.sell_price * i.quantity * i.${settleRate}),2 ) sales,
         SUM ( i.quantity ) AS salesQuantity,o.country_name_cn AS name,
         count(distinct(i.order_id)) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -899,7 +899,7 @@
 
 
     <select id="byShopCategory" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT round(SUM( i.sell_price * i.quantity * i.${settleRate})/10000,4 ) sales,
+        SELECT round(SUM( i.sell_price * i.quantity * i.${settleRate}),2) sales,
         i.sku_no,o.shop_no,
         ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -985,7 +985,7 @@
     </select>
 
     <select id="byCategory" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} )/10000, 4 ) sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) sales,
         i.sku_no AS flagNo FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -1071,7 +1071,7 @@
     </select>
 
     <select id="byPlatform" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round(SUM (o.order_fee*o.${settleRate}) /10000,4) AS sales,
+        SELECT round(SUM (o.order_fee*o.${settleRate}) ,2) AS sales,
         o.source_platform AS NAME,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1158,7 +1158,7 @@
     </select>
 
     <select id="byHomeAndAbroad" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round( SUM ( order_fee* ${settleRate}) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( order_fee* ${settleRate}) , 2 ) AS sales,
         country_name_cn AS name FROM dmp_order_info
         WHERE (country_name_cn!=null or country_name_cn!='')
         <if test="params.timeType!=null and params.timeType==0">
@@ -1187,7 +1187,7 @@
     </select>
 
     <select id="byPeople" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT round(SUM(o.order_fee*o.${settleRate})/10000,4) AS sales,
+        SELECT round(SUM(o.order_fee*o.${settleRate}),2) AS sales,
         COALESCE(o.charge_id,'无') AS flagNo, SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1274,7 +1274,7 @@
     </select>
 
     <select id="byDept" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales,
         COALESCE(o.dept_id,'无') AS flagNo,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -1362,7 +1362,7 @@
     </select>
 
     <select id="byNewAndOld" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round( SUM ( o.order_fee *o.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee *o.${settleRate} ), 2) AS sales,
         CASE WHEN i.new_sign = 0 THEN '老品' ELSE'新品' END AS name,
         SUM ( i.quantity ) AS salesQuantity,COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1449,7 +1449,7 @@
 
     </select>
     <select id="byPlatformNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*o.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee*o.${settleRate}), 2 ) AS sales,
         i.new_sign AS flag,o.source_platform AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -1538,7 +1538,7 @@
     </select>
 
     <select id="byCategoryNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} )/10000, 4 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2 ) AS sales,
         i.new_sign AS flag,i.sku_no,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1625,7 +1625,7 @@
     </select>
 
     <select id="bySite" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2 ) AS sales,
         COALESCE(o.shop_no,'') AS shopNo ,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i
@@ -1713,14 +1713,14 @@
     </select>
 
     <select id="byOldProductTop" resultType="com.erp.model.bi.vo.SalesBaseVO">
-          SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) AS sales,
+          SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
           i.sku_no  AS flagNo FROM 	dmp_order_item i
           LEFT JOIN dmp_order_info o ON i.order_id = o.ID
           WHERE new_sign = 0  GROUP BY  i.sku_no
           ORDER BY sales DESC LIMIT 20
     </select>
     <select id="byNewProductTop" resultType="com.erp.model.bi.vo.SalesBaseVO">
-          SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) / 10000, 4 ) AS sales,
+          SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate}), 2) AS sales,
           i.sku_no  AS flagNo FROM 	dmp_order_item i
           LEFT JOIN dmp_order_info o ON i.order_id = o.ID
           WHERE new_sign = 1  GROUP BY  i.sku_no
@@ -1728,13 +1728,13 @@
     </select>
 
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate}) / 10000, 4 ) AS sales
+        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate}),2) AS sales
         FROM dmp_order_info o
 	    GROUP BY o.shop_no
     </select>
 
     <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round(SUM(i.sell_price * i.quantity * i.${settleRate})/10000,4) AS
+        SELECT round(SUM(i.sell_price * i.quantity * i.${settleRate}),2) AS
         sales,COALESCE(i.brand_name,'无品牌') AS name,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -1822,7 +1822,7 @@
 
 
     <select id="byPeopleRank" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT round( SUM ( order_fee* ${settleRate}) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( order_fee* ${settleRate}) , 2) AS sales,
         COALESCE(charge_id,'无') AS flagNo FROM dmp_order_info
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -1851,7 +1851,7 @@
     </select>
 
     <select id="byPeopleNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*o.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee*o.${settleRate} ) , 2 ) AS sales,
         i.new_sign AS flag,COALESCE(o.charge_id,'无') AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -1941,7 +1941,7 @@
     </select>
 
     <select id="byDeptNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} )/10000, 4 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales,
         i.new_sign AS flag,COALESCE(o.dept_id,'无') AS name,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -2028,7 +2028,7 @@
     </select>
 
     <select id="byMarketingCenter" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round(SUM ( o.order_fee * o.${settleRate} ) / 10000, 4) AS sales,
+        SELECT round(SUM ( o.order_fee * o.${settleRate} ) , 2) AS sales,
         EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
@@ -2102,7 +2102,7 @@
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round(SUM ( o.order_fee * o.${settleRate} ) / 10000, 4) AS sales,
+        SELECT round(SUM ( o.order_fee * o.${settleRate} ),2) AS sales,
         EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
@@ -2175,7 +2175,7 @@
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee * o.${settleRate} ) , 2 ) AS sales,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2264,7 +2264,7 @@
 
     <select id="byTobToc" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT source_platform AS name,
-        round (SUM ( order_fee *${settleRate})/10000,4) AS sales
+        round (SUM ( order_fee *${settleRate}),2) AS sales
         FROM dmp_order_info
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -2293,7 +2293,7 @@
     </select>
 
     <select id="getByDay" resultType="com.erp.model.bi.vo.SalesFlagVO">
-         SELECT round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS sales,
+         SELECT round( SUM ( o.order_fee * o.${settleRate} ),2) AS sales,
          to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
          SUM ( i.quantity ) AS salesQuantity
          FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2380,7 +2380,7 @@
     </select>
 
     <select id="getByMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.${settleRate} ) / 10000, 4 ) AS sales,
+        SELECT round( SUM ( o.order_fee * o.${settleRate} ), 2) AS sales,
         to_char(o.${timeFlag},'yyyy-mm') AS name,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2467,8 +2467,8 @@
     </select>
 
     <select id="getByQuarter" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT 	round( SUM ( o.order_fee * o.currency_rate ) / 10000, 4 ) AS sales,
-        date_trunc('QUARTER',o.platform_create_time) AS name,SUM ( i.quantity ) AS salesQuantity
+        SELECT 	round( SUM ( o.order_fee * o.${settleRate} ), 2) AS sales,
+        date_trunc('QUARTER',o.${timeFlag}) AS name,SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -2556,8 +2556,8 @@
 
 
     <select id="getByYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.currency_rate ) / 10000, 4 ) AS sales,
-        to_char(o.platform_create_time,'yyyy') as name,
+        SELECT round( SUM ( o.order_fee * o.${settleRate} ) , 2 ) AS sales,
+        to_char(o.${timeFlag},'yyyy') as name,
         SUM ( i.quantity ) AS salesQuantity FROM
 	    dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>

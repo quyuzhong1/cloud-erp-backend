@@ -6,10 +6,9 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.plm.constant.ClassPathConstant;
+import com.erp.server.plm.enums.SysLogClassPathEnum;
 import com.erp.server.plm.service.SysLogService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -56,38 +55,22 @@ public class SysLogController extends BaseController {
     }
 
     /**
-     * 操作日志-类路径-产品信息(SKU)
+     * 操作日志-类路径 (0：SKU,1：SPU,2：任务列表)
      * @author Will
      * @date: 2022/12/7 13:26
      * @return ApiResult
      */
-    @GetMapping("/getProductDetailClassPath")
-    public ApiResult getProductDetailClassPath() {
-        Class<ProductDetailEntity> classPath = ProductDetailEntity.class;
-        return success(String.valueOf(classPath));
-    }
-
-    /**
-     * 操作日志-类路径-产品管理(SPU)
-     * @author Will
-     * @date: 2022/12/12 13:26
-     * @return ApiResult
-     */
-    @GetMapping("/getProductInfoClassPath")
-    public ApiResult getProductInfoClassPath() {
-        Class<ProductInfoEntity> classPath = ProductInfoEntity.class;
-        return success(String.valueOf(classPath));
-    }
-
-    /**
-     * 操作日志-类路径-任务列表
-     * @author Will
-     * @date: 2022/12/12 13:26
-     * @return ApiResult
-     */
-    @GetMapping("/getProjectTaskClassPath")
-    public ApiResult getProjectTaskClassPath() {
-        String classPath = ClassPathConstant.TASK_CLASS;
-        return success(classPath);
+    @GetMapping("/getClassPath")
+    public ApiResult getClassPath(@Param("type") Integer type) {
+        switch (type) {
+            case 0:
+                return success(SysLogClassPathEnum.PRODUCTDETAILENTITY.getDesc());
+            case 1:
+                return success(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+            case 2:
+                return success(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+            default:
+                return failure();
+        }
     }
 }

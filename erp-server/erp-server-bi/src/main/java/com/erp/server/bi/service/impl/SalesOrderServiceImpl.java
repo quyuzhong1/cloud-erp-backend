@@ -993,12 +993,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     public BigDecimal getChainRelativeRatio(BigDecimal sales, BigDecimal oldSales) {
         BigDecimal zero = BigDecimal.ZERO;
-        if (oldSales==null||oldSales.compareTo(zero) == 0 || sales == null || oldSales == null) {
+        if (oldSales == null || oldSales.compareTo(zero) == 0 || sales == null || oldSales == null) {
             return zero;
         }
         BigDecimal differ = sales.subtract(oldSales);
 
-        BigDecimal ratio = differ.divide(oldSales, 5, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
         return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
@@ -2075,8 +2075,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售趋势");
         statistical.setChartType(ChartType.PIE);
-
-
         String dateType = dto.getDateType();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2091,39 +2089,74 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> salesList = new ArrayList();
         switch (dateType) {
             case "DAY":
-                salesList=baseMapper.getByDay(dto,timeFlag,settleRate);
+                salesList = baseMapper.getByDay(dto, timeFlag, settleRate);
                 break;
             case "MONTH":
-                salesList=baseMapper.getByMonth(dto,timeFlag,settleRate);
+                salesList = baseMapper.getByMonth(dto, timeFlag, settleRate);
                 break;
             case "QUARTER":
-                salesList=baseMapper.getByQuarter(dto,timeFlag,settleRate);
+                salesList = baseMapper.getByQuarter(dto, timeFlag, settleRate);
                 break;
             case "YEAR":
-                salesList=baseMapper.getByYear(dto,timeFlag,settleRate);
+                salesList = baseMapper.getByYear(dto, timeFlag, settleRate);
                 break;
             default:
+                salesList = new ArrayList<>();
                 break;
         }
+
+        //如果是季度
+        if (dateType.equals("QUARTER")) {
+            for (SalesFlagVO item : salesList) {
+                String name = item.getName();
+                String quarterName = conversionQuarterName(name);
+                item.setName(quarterName);
+            }
+        }
+
         ChartVO chartVO = new ChartVO();
-        List<String> siteNameList= salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
+        List<String> siteNameList = salesList.stream().map(SalesFlagVO::getName).collect(Collectors.toList());
         //有两个
         List<SeriesVO<Object>> seriesList = new ArrayList<>(2);
 
         SeriesVO<Object> salesQuantity = new SeriesVO();
         salesQuantity.setName("销售量");
-        List<Object> salesQuantityList=salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
+        List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
         SeriesVO<Object> sales = new SeriesVO();
         sales.setName("销售额");
-        List<Object> orderSalesList=salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
+        List<Object> orderSalesList = salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         sales.setData(orderSalesList);
         seriesList.add(sales);
         chartVO.setSeries(seriesList);
         chartVO.setXAxis(siteNameList);
         statistical.setData(chartVO);
         return statistical;
+    }
+
+    private String conversionQuarterName(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            String dateStr[] = name.split("-");
+            if (dateStr.length > 0) {
+                String year = dateStr[0];
+                String month = dateStr[1];
+                String quarter = "1";
+                if (month.contains("4")) {
+                    quarter = "2";
+                }
+                if (month.contains("7")) {
+                    quarter = "3";
+                }
+                if (month.contains("10")) {
+                    quarter = "4";
+                }
+
+                return year + "." + quarter + "季度";
+            }
+
+        }
+        return "";
     }
 
 }
