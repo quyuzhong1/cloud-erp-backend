@@ -17,6 +17,7 @@ import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.constant.ClassPathConstant;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
@@ -163,7 +164,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", fileName))
                 .setBusinessId(taskEntity.getId())
                 .setOperation("文档操作")
-                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                .setClassPath(ClassPathConstant.TASK_CLASS);
         sysLogService.addSysLogByOther(sysLogEntity);
 
         return this.saveOrUpdate(finishEntity);
@@ -224,7 +225,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("删除了一个文件[%s]", entity.getFileName()))
                 .setBusinessId(taskEntity.getId())
                 .setOperation("文档操作")
-                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                .setClassPath(ClassPathConstant.TASK_CLASS);
         sysLogService.addSysLogByOther(sysLogEntity);
         return this.removeById(id);
     }
@@ -321,7 +322,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", fileName))
                 .setBusinessId(taskEntity.getId())
                 .setOperation("文档操作")
-                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                .setClassPath(ClassPathConstant.TASK_CLASS);
         sysLogService.addSysLogByOther(sysLogEntity);
 
         startChangeDocsProcess(loginUser.getUid(), taskEntity);
