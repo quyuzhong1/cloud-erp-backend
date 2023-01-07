@@ -32,10 +32,7 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
          String  classPath = ClassPathConstant.TASK_CLASS;
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("planStartTime").setFieldName("开始时间").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("planEndTime").setFieldName("结束时间").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("name").setFieldName("任务名称").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("chargeName").setFieldName("任务负责人").setClassPath(classPath).setType(0) .setEnumClass(null)
+            new SysLogFieldEntity().setField("isMilepost").setFieldName("设置里程碑").setClassPath(classPath).setType(1) .setEnumClass(null)
                  /*new SysLogFieldEntity().setField("saleMethod").setFieldName("销售方式").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("entrustedDevelopCost").setFieldName("委托开发成本").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("moldCost").setFieldName("模具成本").setClassPath(classPath).setType(0) .setEnumClass(null),

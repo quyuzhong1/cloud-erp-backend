@@ -8,13 +8,10 @@ import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.plm.constant.ClassPathConstant;
 import com.erp.server.plm.service.SysLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 操作日志
@@ -38,21 +35,8 @@ public class SysLogController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<SysLogShowDTO>> paging(@RequestBody @Validated PagingDTO<SysLogSelectDTO> dto){
-        PagingVO<SysLogShowDTO> pagingVO = sysLogService.paging(dto);
+        PagingVO<SysLogShowDTO> pagingVO=sysLogService.paging(dto);
         return success(pagingVO);
-    }
-
-    /**
-     * 操作日志-非分页查询
-     * @author Will
-     * @date: 2023/1/6 16:57
-     * @param dto
-     * @return ApiResult<List<SysLogShowDTO>>
-     */
-    @PostMapping("/list")
-    public ApiResult<List<SysLogShowDTO>> list(@RequestBody @Validated SysLogSelectDTO dto){
-        List<SysLogShowDTO> list = sysLogService.listSysLog(dto);
-        return success(list);
     }
 
     /**
@@ -77,17 +61,5 @@ public class SysLogController extends BaseController {
     public ApiResult getProductInfoClassPath() {
         Class<ProductInfoEntity> classPath = ProductInfoEntity.class;
         return success(String.valueOf(classPath));
-    }
-
-    /**
-     * 操作日志-类路径-任务列表
-     * @author Will
-     * @date: 2022/12/12 13:26
-     * @return ApiResult
-     */
-    @GetMapping("/getProjectTaskClassPath")
-    public ApiResult getProjectTaskClassPath() {
-        String classPath = ClassPathConstant.TASK_CLASS;
-        return success(classPath);
     }
 }
