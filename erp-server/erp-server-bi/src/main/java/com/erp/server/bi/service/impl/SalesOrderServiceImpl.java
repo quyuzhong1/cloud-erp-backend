@@ -998,7 +998,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         BigDecimal differ = sales.subtract(oldSales);
 
-        BigDecimal ratio = differ.divide(oldSales, 5, BigDecimal.ROUND_HALF_UP);
+        BigDecimal ratio = differ.divide(oldSales, 2, BigDecimal.ROUND_HALF_UP);
         return ratio.multiply(new BigDecimal("100")).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
