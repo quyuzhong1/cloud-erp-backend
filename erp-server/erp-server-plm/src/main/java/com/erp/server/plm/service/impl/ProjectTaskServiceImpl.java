@@ -25,7 +25,6 @@ import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.ClassPathConstant;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.*;
@@ -194,7 +193,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskList.add(entity);
                     noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
                 }
-                sysLogService.addSysLogBySave("新增了一个：["+entity.getName()+"]", ClassPathConstant.TASK_CLASS,entity.getId(),null);
+                sysLogService.addSysLogBySave("新增了一个：["+entity.getName()+"]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),entity.getId(),null);
 
             }
 
@@ -713,12 +712,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.save(taskEntity);
         if (flag) {
             //新增操作日志
-            sysLogService.addSysLogBySave("新增了一个：["+taskEntity.getName()+"]", ClassPathConstant.TASK_CLASS,taskEntity.getId(),null);
+            sysLogService.addSysLogBySave("新增了一个：["+taskEntity.getName()+"]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),taskEntity.getId(),null);
             if (StringUtils.isNotBlank(taskEntity.getPid())) {
                 //创建子任务时父级任务新增操作日志
                 SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("创建子任务[%s]", taskEntity.getName()))
                                             .setBusinessId(taskEntity.getPid())
-                                            .setClassPath(ClassPathConstant.TASK_CLASS);
+                                            .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
                 sysLogService.addSysLogByOther(sysLogEntity);
             }
 
@@ -2639,7 +2638,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.NOT_START.getName(),TaskStateEnum.ING.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.NOT_START.getName(),TaskStateEnum.ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送开始任务通知
@@ -2682,7 +2681,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             generalTaskIds.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.TO_BE_RELEASED.getName(),TaskStateEnum.NOT_START.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.TO_BE_RELEASED.getName(),TaskStateEnum.NOT_START.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发布任务消息
@@ -2803,7 +2802,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             list.forEach(task -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.TO_BE_RELEASED.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.TO_BE_RELEASED.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
@@ -2839,7 +2838,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             list.forEach(task -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.CLOSE.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.CLOSE.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送关闭任务通知
@@ -2959,7 +2958,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         list.forEach(task -> {
-            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.FINISH.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(task.getId()));
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.FINISH.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
         //发送完成任务通知
@@ -3128,7 +3127,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
        //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         taskIdList.forEach(taskId -> {
-            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.WAIT_CONFIRM.getName(),TaskStateEnum.APPROVAL_ING.getName())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.WAIT_CONFIRM.getName(),TaskStateEnum.APPROVAL_ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
 
@@ -3210,7 +3209,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]",TaskStateEnum.APPROVAL_ING.getName(),TaskStateEnum.APPROVAL_NO_PASS.getName(),dto.getComment())).setClassPath(ClassPathConstant.TASK_CLASS).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]",TaskStateEnum.APPROVAL_ING.getName(),TaskStateEnum.APPROVAL_NO_PASS.getName(),dto.getComment())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
@@ -3348,7 +3347,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             SysLogEntity sysLogEntity = new SysLogEntity()
                     .setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(taskEntity.getStatus()), TaskStateEnum.FINISH.getName()))
-                    .setClassPath(ClassPathConstant.TASK_CLASS)
+                    .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc())
                     .setBusinessId(taskEntity.getId());
             sysLogService.save(sysLogEntity);
         }
@@ -3677,14 +3676,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 oldDto.setRefSkuNoList(refSkuNoList);
             }
         }
-        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,ClassPathConstant.TASK_CLASS,businessId,null,String.format("任务[%s]",oldEntity.getName()));
+        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),businessId,null,String.format("任务[%s]",oldEntity.getName()));
     }
 
     /**
      * 编辑任务操作日志
      */
     private void addUpdateTaskDTOLog(ProjectTaskEntity newEntity,ProjectTaskEntity oldEntity,String businessId) {
-        sysLogService.addSysLogByUpdate(oldEntity,newEntity,ClassPathConstant.TASK_CLASS,businessId,null,String.format("任务[%s]",oldEntity.getName()));
+        sysLogService.addSysLogByUpdate(oldEntity,newEntity,SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),businessId,null,String.format("任务[%s]",oldEntity.getName()));
     }
 
 }
