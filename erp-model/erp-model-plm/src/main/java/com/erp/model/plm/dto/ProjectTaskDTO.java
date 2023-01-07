@@ -182,13 +182,7 @@ public class ProjectTaskDTO  implements Serializable {
     private List<Map<String,Object>> refSkuFinishList;
 
 
-    /**
-     * 交付文档名称（逗号分隔，用于操作日志）
-     */
-    private String  deliveryDocsNames;
-    /**
-     * 前置任务名称（逗号分隔，用于操作 日志）
-     */
-    private String preTaskNames;
+
+    
 
 }

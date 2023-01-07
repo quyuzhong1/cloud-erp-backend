@@ -12,12 +12,10 @@ import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BusinessProcessEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.ClassPathConstant;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
@@ -76,9 +74,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     @Lazy
     private NoticeMessageService noticeMessageService;
-    
-    @Autowired
-    private SysLogService sysLogService;
+
 
     /**
      * 根据任务id 集合获取对应数据
@@ -169,11 +165,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
-        //新增上传交付物操作日志
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", fileName))
-                .setBusinessId(taskEntity.getPid())
-                .setClassPath(ClassPathConstant.TASK_CLASS);
-        sysLogService.addSysLogByOther(sysLogEntity);
 
         return this.saveOrUpdate(finishEntity);
     }
