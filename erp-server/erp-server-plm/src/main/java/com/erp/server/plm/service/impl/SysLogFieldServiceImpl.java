@@ -3,7 +3,6 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.SysLogFieldEntity;
-import com.erp.server.plm.enums.SysLogClassPathEnum;
 import com.erp.server.plm.mapper.SysLogFieldMapper;
 import com.erp.server.plm.service.SysLogFieldService;
 import org.springframework.stereotype.Service;
