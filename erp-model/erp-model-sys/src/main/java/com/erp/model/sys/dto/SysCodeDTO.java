@@ -31,27 +31,7 @@ public class SysCodeDTO implements Serializable {
     private Integer num;
 
     /**
-     * 颜色编码
-     */
-    private String colorCode;
-
-    /**
-     * 销售渠道
-     */
-    private String salesChannel;
-
-    /**
-     * 迭代版本
-     */
-    private String version;
-
-    /**
-     * 客户定制
-     */
-    private String customized;
-
-    /**
-     * 编码类型
+     * 编码类型 (枚举SysNoEnum，1:sku,2:spu)
      */
     private Integer type;
 

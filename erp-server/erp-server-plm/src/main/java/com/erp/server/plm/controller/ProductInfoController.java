@@ -12,6 +12,8 @@ import com.erp.model.plm.dto.*;
 import com.erp.server.plm.enums.ApprovalStatusEnum;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
+import com.erp.server.plm.service.SysCodeService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +41,8 @@ public class ProductInfoController extends BaseController {
     @Autowired
     private ProjectInfoService projectInfoService;
 
+    @Autowired
+    private SysCodeService sysCodeService;
 
     /**
      * 产品列表-普通分页
@@ -185,6 +189,19 @@ public class ProductInfoController extends BaseController {
             list.add(dto);
         });
         return success(list);
+    }
+
+    /**
+     * 产品列表-获取SPU编号
+     * @author Will
+     * @date: 2023/1/7 16:09
+     * @param categoryId
+     * @return ApiResult
+     */
+    @GetMapping("/getSpuNo")
+    public ApiResult getSpuNo(@Param("categoryId") String categoryId) {
+        String spuNo = sysCodeService.getSpuNo(categoryId);
+        return success(spuNo);
     }
 
 

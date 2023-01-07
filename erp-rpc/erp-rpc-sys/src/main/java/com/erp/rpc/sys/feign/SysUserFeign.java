@@ -4,6 +4,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
+import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -70,9 +71,13 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 
-    //查询编码
-    @PostMapping("sys/feign/code/getSysCode")
-    String getSysCode(@RequestBody SysCodeDTO dto);
+    //查询sku编码
+    @PostMapping("sys/feign/code/getSkuNo")
+    String getSkuNo(@RequestBody SysCodeSkuDTO dto);
+
+    //查询spu编码
+    @PostMapping("sys/feign/code/getSpuNo")
+    String getSpuNo(@RequestBody SysCodeDTO dto);
 
     @PostMapping("sys/feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
@@ -89,6 +94,7 @@ public interface SysUserFeign {
     // 获取所有的部门信息
     @GetMapping("sys/feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
+
 
 
 }

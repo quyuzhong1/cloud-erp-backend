@@ -160,6 +160,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private BasicDictService basicDictService;
 
+    @Autowired
+    private SysCodeService sysCodeService;
 
     private static final  String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -242,9 +244,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
         dto.setChargeName(chargeName);
-        String CategoryId = dto.getCategoryId();
+        String categoryId = dto.getCategoryId();
         BeanMapper.copy(dto, entity);
-        BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
+        BasicCategoryEntity category = basicCategoryService.getById(categoryId);
         if (category != null) {
             entity.setCategory(category.getName());
             dto.setCategory(category.getName());
@@ -272,6 +274,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
+        //自动生成产品编号
+        if (ObjectUtils.isEmpty(entity.getId()) && StringUtils.isBlank(entity.getSpuNo())) {
+            String spuNo = sysCodeService.getSpuNo(categoryId);
+            entity.setSpuNo(spuNo);
+        }
         Boolean flag = this.saveOrUpdate(entity);
 
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
@@ -714,6 +721,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             productInfoEntity.setUpdateUserId(loginUser.getUid());
             productInfoEntity.setUpdateUserName(loginUser.getUserName());
+        }
+        //自动生成产品编号
+        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+            String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
+            productInfoEntity.setSpuNo(spuNo);
         }
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();

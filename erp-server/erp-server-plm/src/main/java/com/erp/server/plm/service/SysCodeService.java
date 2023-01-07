@@ -17,4 +17,12 @@ public interface SysCodeService {
      * @return String
      */
     String getSkuNo(String productId,String variantColorProperty);
+    /**
+     * @description: 生成spuNo
+     * @author Will
+     * @date: 2023/1/7 9:14
+     * @param categoryId
+     * @return String
+     */
+    String getSpuNo(String categoryId);
 }
