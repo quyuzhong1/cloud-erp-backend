@@ -2,7 +2,7 @@ package com.erp.server.sys.controller.api;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.server.sys.service.SysCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -34,9 +34,9 @@ public class SysCodeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @RequestMapping("/getSysCode")
-    public ApiResult getSysCode(@RequestBody @Validated SysCodeDTO dto) {
-        String sysCode = sysCodeService.getSysCode(dto);
+    @RequestMapping("/getSkuNo")
+    public ApiResult getSkuNo(@RequestBody @Validated SysCodeSkuDTO dto) {
+        String sysCode = sysCodeService.getSkuNo(dto);
         return success(sysCode);
     }
 
