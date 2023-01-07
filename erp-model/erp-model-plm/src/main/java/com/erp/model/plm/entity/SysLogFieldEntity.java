@@ -46,6 +46,7 @@ public class SysLogFieldEntity {
 
     /**
      * 字段类型 0字符串，1是或否，2枚举，3字典,4人员
+     * 枚举需要实现EnumMessage，保持字段名称一致
      */
     private Integer type;
 

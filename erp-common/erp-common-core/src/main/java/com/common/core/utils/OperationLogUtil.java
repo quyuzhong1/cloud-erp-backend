@@ -97,13 +97,13 @@ public class OperationLogUtil {
                 typeName = typeName.replace("java.util.List<", "");
                 typeName = typeName.replace(">","");
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new ServiceException(ApiError.Default);
             }
             List<Object> list = TransitionUtil.transitionType(value, List.class);
             List<String> stringList = new ArrayList<>();
             for (int i = 0; list.size() > i;i++) {
                 int objectType1 = TransitionUtil.getObjectType(list.get(i));
-                if (objectType1 == 30) {
+                if (objectType1 == 30) {//判断是否是Map
                     Map map = (Map) list.get(i);
                     Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
                     while (iterator .hasNext()){
@@ -119,7 +119,7 @@ public class OperationLogUtil {
                     String newValue = DateFormatUtils.format(date,DateFormatUtils.ISO_DATE_FORMAT.getPattern());
                     stringList.add(newValue);
                 } else {
-                    String newValue = String.valueOf(value);
+                    String newValue = String.valueOf(list.get(i));
                     stringList.add(newValue);
                 }
             }
@@ -133,7 +133,7 @@ public class OperationLogUtil {
                 declaredField.setAccessible(true);
                 type = declaredField.getType().toString();
             } catch (NoSuchFieldException e) {
-                e.printStackTrace();
+                throw new ServiceException(ApiError.Default);
             }
             Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
             while (iterator .hasNext()){
