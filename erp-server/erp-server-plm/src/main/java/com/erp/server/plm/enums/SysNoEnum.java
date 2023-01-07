@@ -8,7 +8,8 @@ package com.erp.server.plm.enums;
  */
 public enum SysNoEnum {
 
-    SKU_NO(1, "sku_no");
+    SKU_NO(1, "sku_no"),
+    SPU_NO(2, "spu_no");
 
     private Integer code;
     private String name;

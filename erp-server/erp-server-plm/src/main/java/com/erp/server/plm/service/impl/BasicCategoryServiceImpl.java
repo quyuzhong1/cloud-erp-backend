@@ -183,6 +183,26 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         return null;
     }
 
+    @Override
+    public List<BasicCategoryEntity> listParentEntity(String categoryId) {
+        List<BasicCategoryEntity> list = new ArrayList<>();
+        setParentEntity(categoryId,list);
+        return list;
+    }
+
+    /**
+     * list加入父级品类
+     */
+    private void setParentEntity(String pid,List<BasicCategoryEntity> list) {
+        BasicCategoryEntity basicCategoryEntity = this.getById(pid);
+        if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
+            list.add(basicCategoryEntity);
+            if (!"0".equals(basicCategoryEntity.getPid())) {
+                setParentEntity(basicCategoryEntity.getPid(),list);
+            }
+        }
+    }
+
     /**
      * 获取父级id 集合
      *

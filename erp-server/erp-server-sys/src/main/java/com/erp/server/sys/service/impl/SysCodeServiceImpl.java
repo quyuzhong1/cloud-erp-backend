@@ -12,6 +12,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 import com.erp.server.sys.mapper.SysCodeMapper;
 import com.erp.server.sys.service.SysCodeService;
@@ -41,27 +42,29 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public String getSysCode(SysCodeDTO dto) {
+    public String getSkuNo(SysCodeSkuDTO dto) {
         //加锁
         long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
         if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
             throw new ServiceException(ApiError.ERROR_9026);
         }
         try {
+            SysCodeDTO sysCodeDto = new SysCodeDTO();
+            BeanMapperUtils.copy(dto,sysCodeDto);
             //生成单号
-            SysCodeDTO codeDto = getOrSaveSysCode(dto);
+            getOrSaveSysCode(sysCodeDto);
             StringBuffer sysCode = new StringBuffer();
-            sysCode.append(codeDto.getCategory())
-                    .append(String.format("%03d",codeDto.getNum()))
-                    .append(codeDto.getSalesChannel())
-                    .append(codeDto.getColorCode())
-                    .append(codeDto.getVersion())
-                    .append(codeDto.getCustomized());
+            sysCode.append(sysCodeDto.getCategory())
+                    .append(String.format("%03d",sysCodeDto.getNum()))
+                    .append(dto.getSalesChannel())
+                    .append(dto.getColorCode())
+                    .append(dto.getVersion())
+                    .append(dto.getCustomized());
             if (StringUtils.isBlank(sysCode)) {
                 throw new ServiceException(ApiError.ERROR_9027);
             }
             //更新当前顺序码
-            updateNumByCode(codeDto.getId(),codeDto.getNum());
+            updateNumByCode(sysCodeDto.getId(),sysCodeDto.getNum());
             return sysCode.toString();
         } finally {
             //解锁
@@ -69,14 +72,42 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         }
     }
 
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public String getSpuNo(SysCodeDTO dto) {
+        //加锁
+        long time = System.currentTimeMillis() + RedisLock.LOCK_TIMEOUT;
+        if (!redisLock.aotuTryLock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time))) {
+            throw new ServiceException(ApiError.ERROR_9026);
+        }
+        try {
+            //生成单号
+            getOrSaveSysCode(dto);
+            StringBuffer sysCode = new StringBuffer();
+            sysCode.append(dto.getCategory())
+                    .append(String.format("%02d",dto.getNum()));
+            if (StringUtils.isBlank(sysCode)) {
+                throw new ServiceException(ApiError.ERROR_9027);
+            }
+            //更新当前顺序码
+            updateNumByCode(dto.getId(),dto.getNum());
+            return sysCode.toString();
+        } finally {
+            //解锁
+            redisLock.unlock(LOCK_SYS_CODE + dto.getType(), String.valueOf(time));
+        }
+    }
+
+
+
+
     /**
      * @description: 验证编码类型是否已经存在
      * @author Will
      * @date: 2022/11/21 17:58
      * @param dto
-     
      */
-    private SysCodeDTO getOrSaveSysCode (SysCodeDTO dto) {
+    private void getOrSaveSysCode (SysCodeDTO dto) {
         LambdaQueryWrapper<SysCodeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysCodeEntity::getType,dto.getType());
         queryWrapper.eq(SysCodeEntity::getCategory,dto.getCategory());
@@ -85,7 +116,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         if (ObjectUtils.isNotEmpty(sysCodeEntity)) {
             dto.setNum(sysCodeEntity.getNum());
             dto.setId(sysCodeEntity.getId());
-            return dto;
+            return;
         }
         SysCodeEntity entity = new SysCodeEntity();
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
@@ -100,7 +131,6 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         if (!flag) {
             throw new ServiceException(ApiError.Default);
         }
-        return dto;
     }
 
     /**

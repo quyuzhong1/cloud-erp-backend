@@ -55,4 +55,12 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @return BasicCategoryDTO
      */
     BasicCategoryDTO getCategoryByParam(Map<String, String> params);
+    /**
+     * @description: 根据品类id查询所有父级分类及本身分类
+     * @author Will
+     * @date: 2023/1/7 9:37
+     * @param categoryId
+     * @return List<BasicCategoryEntity>
+     */
+    List<BasicCategoryEntity> listParentEntity(String categoryId);
 }
