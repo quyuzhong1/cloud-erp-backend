@@ -273,6 +273,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
         Boolean result = this.save(subject);
         if (result) {
             //如果是分享
@@ -372,13 +373,13 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             result.setCategoryId(categoryId);
             result.setCategoryName(pair.getValue());
             List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
-            for(SubjectVO item:subjectResultList){
+            for (SubjectVO item : subjectResultList) {
                 //我创造的
-                if(userId.equals(item.getCreateUserId())){
+                if (userId.equals(item.getCreateUserId())) {
                     item.setMyCreateVisible(true);
                 }
                 //分享给我
-                if(shareToMeIds.contains(item.getId())){
+                if (shareToMeIds.contains(item.getId())) {
                     item.setShareVisible(true);
                 }
             }
@@ -580,9 +581,15 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             return null;
         }
         //当默认的没有 就找 是仪表盘的 开启的最近一条
-        BiSubjectEntity dashboard = getByCategoryId(categoryId, subjectIdList);
-        if (dashboard != null) {
-            return layoutService.subjectInfo(dashboard.getId());
+        List<BiSubjectEntity> dashboardList = getByCategoryId(categoryId, subjectIdList);
+        if (CollectionUtils.isNotEmpty(dashboardList)) {
+            BiSubjectEntity myCreate = dashboardList.stream().filter(d -> userId.equals(d.getCreateUserId())).findFirst().orElse(null);
+            if(Objects.isNull(myCreate)){
+                return layoutService.subjectInfo(myCreate.getId());
+            }
+
+            return layoutService.subjectInfo(dashboardList.get(0).getId());
+
         }
         return null;
     }
@@ -660,15 +667,15 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      *
      * @return
      */
-    public BiSubjectEntity getByCategoryId(String categoryId, List<String> subjectIdList) {
+    public List<BiSubjectEntity> getByCategoryId(String categoryId, List<String> subjectIdList) {
         LambdaQueryWrapper<BiSubjectEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSubjectEntity::getState, BiConstant.OK);
         queryWrapper.eq(BiSubjectEntity::getCategoryId, categoryId);
         if (CollectionUtils.isNotEmpty(subjectIdList)) {
             queryWrapper.in(BiSubjectEntity::getId, subjectIdList);
         }
-        queryWrapper.last("LIMIT 1");
-        return getOne(queryWrapper);
+        queryWrapper.orderByDesc(BiSubjectEntity::getUpdateTime);
+        return list(queryWrapper);
     }
 
 

@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.entity.BiSubjectRefLayoutEntity;
+import com.erp.model.bi.vo.LayoutVO;
 
 import java.util.List;
 
@@ -28,4 +29,11 @@ public interface BiSubjectRefLayoutService  extends IService<BiSubjectRefLayoutE
     void deleteBySubjectId(String subjectId);
 
     Boolean delete(String subjectId, String layoutId);
+
+
+    /**
+     * 获取到布局id 集合
+     * @return
+     */
+    List<LayoutVO> getLayoutIds();
 }

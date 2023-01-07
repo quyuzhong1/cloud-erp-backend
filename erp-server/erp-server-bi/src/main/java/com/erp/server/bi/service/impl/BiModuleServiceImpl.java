@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -16,7 +17,9 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
+import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
+import com.erp.model.bi.vo.LayoutVO;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
@@ -30,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +63,13 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     private BiDictService dictService;
 
 
+    @Resource
+    private BiSubjectRefLayoutService subjectRefLayoutService;
+
+    @Resource
+    private BiLayoutRefModuleService layoutRefModuleService;
+
+
     /**
      * 模块分页
      *
@@ -71,6 +83,26 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
+        List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
+        List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());
+        List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
+        LocalDate localDate = LocalDate.now();
+        LocalDateTime monthStart = LocalDateUtil.getThisMonthStart(localDate);
+        LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(localDate);
+        List<String> monthLayoutIdList = layoutList.stream().filter(
+                l -> l.getSubjectCreateTime().compareTo(monthStart) >= 0 &&
+                        l.getSubjectCreateTime().compareTo(monthEnd) <= 0
+        ).map(LayoutVO::getLayoutId).collect(Collectors.toList());
+        List<ModulePagingDTO> list = pageData.getRecords();
+
+        for (ModulePagingDTO item : list) {
+            String moduleId = item.getId();
+            long monthUsageCount = layoutRefModuleList.stream().filter(m -> monthLayoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
+            long usageCount = layoutRefModuleList.stream().filter(m -> layoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
+            item.setMonthUsageCount((int) monthUsageCount);
+            item.setUsageCount((int) usageCount);
+        }
+
         return new PagingVO(pageData);
     }
 

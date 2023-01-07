@@ -219,6 +219,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                     layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
                 }
             }
+            //先删除
+            subjectRefLayoutService.deleteBySubjectId(subjectId);
             //保存专题与布局关系表
             subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
         }
@@ -317,14 +319,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
         subject.setCategoryId(categoryId);
-        BiDictEntity dict = dictService.getById(categoryId);
-        String categoryName = "";
-        if (dict != null) {
-            categoryName = dict.getName();
-        }
         String shareFlag = dto.getShareFlag();
         subject.setShareFlag(shareFlag);
-        subject.setCategoryName(categoryName);
         subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id
