@@ -43,8 +43,8 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_GET)
-public class GyyOrderInfoServiceImpl implements IReportSaveService {
+@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET)
+public class GyyHistoryOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private MongoService mongoService;
@@ -62,12 +62,12 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
     private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
-        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.get");
+        GyyHistoryOrderInfoServiceImpl gyyOrderInfoService = new GyyHistoryOrderInfoServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.history.get");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.get");
+        jobTaskDTO.setApiCode("gy.erp.trade.history.get");
         jobTaskDTO.setApiId(7);
-        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setApiName("管易云查询历史订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
         jobTaskDTO.setLastTime(null);
@@ -210,8 +210,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                     infoArrayList.addAll(dataList);
                 } else {
 
-                    log.info(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
-                    throw new RuntimeException(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
+                    log.info(" ===== 拉取历史订单失败，错误信息：+" + stringObjectMap + " ====");
+                    throw new RuntimeException(" ===== 拉取历史订单失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
