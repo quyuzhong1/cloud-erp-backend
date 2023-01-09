@@ -144,7 +144,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         AtomicInteger times = new AtomicInteger();
-        list.parallelStream().forEach(dmpOrderInfoEntity -> {
+        list.stream().forEach(dmpOrderInfoEntity -> {
             LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
             updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
             Integer flag = 0;
