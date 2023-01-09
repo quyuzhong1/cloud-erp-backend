@@ -1,11 +1,7 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.enums.DataAttributeEnum;
-import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
 import com.erp.model.bi.dto.SkuFilterDTO;
@@ -41,9 +37,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/skuMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:skuMatrix", tableAlias = "doi")
-    public ApiResult<List<SkuMatrixVO>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<SkuMatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
-        return success(matrixVOPagingVO);
+    public ApiResult<List<List<Object>>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<List<Object>> skuMatrixList = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
+        return success(skuMatrixList);
     }
 
     /**
@@ -55,8 +51,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/shopMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:shopMatrix", tableAlias = "doi")
-    public ApiResult<List<MatrixVO>> shopMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<MatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.shopMatrix(biFilterDTO);
+    public ApiResult<List<List<Object>>> shopMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<List<Object>> matrixVOPagingVO = biComprehensiveAnalyseService.shopMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 
@@ -83,8 +79,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/categoryMatrix")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:categoryMatrix", tableAlias = "doi")
-    public ApiResult<List<SkuMatrixVO>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<SkuMatrixVO> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
+    public ApiResult<List<List<Object>>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<List<Object>> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
     }
 

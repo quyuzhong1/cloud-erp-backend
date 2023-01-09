@@ -16,7 +16,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return com.erp.common.vo.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    List<SkuMatrixVO> skuMatrix(BiFilterDTO biFilterDTO);
+    List<List<Object>> skuMatrix(BiFilterDTO biFilterDTO);
 
     /**
      * 店铺矩阵
@@ -25,7 +25,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return com.erp.common.vo.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
-    List<MatrixVO> shopMatrix(BiFilterDTO biFilterDTO);
+    List<List<Object>> shopMatrix(BiFilterDTO biFilterDTO);
 
     /**
      * 平台店铺对比趋势
@@ -43,7 +43,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
-    List<SkuMatrixVO> categoryMatrix(BiFilterDTO biFilterDTO);
+    List<List<Object>> categoryMatrix(BiFilterDTO biFilterDTO);
 
     /**
      * 销售明细表-SKU
