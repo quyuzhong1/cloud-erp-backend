@@ -189,6 +189,7 @@ public enum ApiError implements Serializable {
     ERROR_95091(95091,"未找到所选品类的一级分类代号"),
     ERROR_95092(95092,"未找到所选品类的二级分类代号"),
     ERROR_95093(95093,"非一二级分类不能添加代号"),
+    ERROR_95094(95094,"sku必须选择一个"),
 
     /**
      * bi 错误
