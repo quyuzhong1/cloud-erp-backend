@@ -1551,7 +1551,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //不在的 任务状态
         List<Integer> notStateList = new ArrayList<>();
         //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)||TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
             notStateList.add(TaskStateEnum.CLOSE.getCode());
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
