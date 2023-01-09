@@ -192,6 +192,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 }
 
+            }else {
+                saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
+                saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
             //计算前年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
@@ -202,6 +205,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 }
+            }else {
+                saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
+                saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
 
             //退货环比
@@ -212,6 +218,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
                 }
+            }else {
+                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
         return saleDetailList;
@@ -357,6 +365,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 }
+            }else {
+                saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
+                saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
             }
             //计算前年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
@@ -367,6 +378,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
                 }
+            }else {
+                saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
+                saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
 
             //退货环比
@@ -377,6 +391,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
+            }else {
+                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
         return saleDetailList;
@@ -439,6 +455,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
+            }else {
+                saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
             //计算前年sku销售额
             SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
@@ -449,6 +467,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
+            }else {
+                saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
+                saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
 
             //退货环比
@@ -459,6 +480,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                 } else {
                     saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(),4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
+            }else {
+                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
         }
         return saleDetailList;

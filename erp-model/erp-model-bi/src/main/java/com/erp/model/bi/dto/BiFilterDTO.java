@@ -93,7 +93,7 @@ public class BiFilterDTO extends PermissionsDTO {
     /**
      * 用户id
      */
-    private List<Long> userId;
+    private List<String> userId;
 
     /**
      *是否可以支持源币种
