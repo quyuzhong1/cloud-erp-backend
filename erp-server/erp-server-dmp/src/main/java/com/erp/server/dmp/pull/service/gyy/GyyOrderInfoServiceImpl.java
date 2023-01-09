@@ -307,7 +307,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
         //平台订单时间
         if (StringUtils.isNotBlank(gyyOrderEntity.getCreatetime())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(gyyOrderEntity.getCreatetime()));
+            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(gyyOrderEntity.getDealtime()));
         }
 
         //平台交易号

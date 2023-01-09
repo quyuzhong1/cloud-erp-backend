@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -27,10 +28,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensiveAnalyseMapper, DmpOrderInfoEntity> implements BiComprehensiveAnalyseService {
@@ -48,9 +48,17 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @Override
-    public List<SkuMatrixVO> skuMatrix(BiFilterDTO biFilterDTO) {
+    public List<List<Object>>skuMatrix(BiFilterDTO biFilterDTO) {
         List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.skuMatrix(biFilterDTO);
-        return skuMatrixVOIPage;
+        List<List<Object>> skuMatrixList = new ArrayList<>();
+        skuMatrixVOIPage.stream().sorted(Comparator.comparing(SkuMatrixVO::getSales)).forEach(x -> {
+            List<Object> tempList = new ArrayList<>();
+            tempList.add(x.getName());
+            tempList.add(x.getSales());
+            tempList.add(x.getAmount());
+            skuMatrixList.add(tempList);
+        });
+        return skuMatrixList;
     }
 
     /**
@@ -61,9 +69,17 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @Override
-    public List<MatrixVO> shopMatrix(BiFilterDTO biFilterDTO) {
+    public List<List<Object>> shopMatrix(BiFilterDTO biFilterDTO) {
         List<MatrixVO> skuMatrixVOIPage = baseMapper.shopMatrix(biFilterDTO);
-        return skuMatrixVOIPage;
+        List<List<Object>> skuMatrixList = new ArrayList<>();
+        skuMatrixVOIPage.stream().sorted(Comparator.comparing(MatrixVO::getSales)).forEach(x -> {
+            List<Object> tempList = new ArrayList<>();
+            tempList.add(x.getName());
+            tempList.add(x.getSales());
+            tempList.add(x.getNetProfit());
+            skuMatrixList.add(tempList);
+        });
+        return skuMatrixList;
     }
 
     /**
@@ -100,9 +116,17 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @Override
-    public List<SkuMatrixVO> categoryMatrix(BiFilterDTO biFilterDTO) {
+    public List<List<Object>> categoryMatrix(BiFilterDTO biFilterDTO) {
         List<SkuMatrixVO> skuMatrixVOIPage = baseMapper.categoryMatrix(biFilterDTO);
-        return skuMatrixVOIPage;
+        List<List<Object>> skuMatrixList = new ArrayList<>();
+        skuMatrixVOIPage.stream().sorted(Comparator.comparing(SkuMatrixVO::getSales)).forEach(x -> {
+            List<Object> tempList = new ArrayList<>();
+            tempList.add(x.getName());
+            tempList.add(x.getSales());
+            tempList.add(x.getAmount());
+            skuMatrixList.add(tempList);
+        });
+        return skuMatrixList;
     }
 
     /**
