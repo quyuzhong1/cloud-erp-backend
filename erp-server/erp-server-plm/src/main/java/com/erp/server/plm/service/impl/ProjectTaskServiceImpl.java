@@ -1740,7 +1740,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
-        //任务条件 1 待完成  2 全部
+        //任务条件 1 待完成  2 全部  3 待审核
         Integer taskCondition = params.getTaskCondition();
         IPage pageData = new Page();
         //分组的标示
@@ -1753,7 +1753,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //是否是产品分组
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
         //不在的 任务状态
-        List<Integer> notStateList = getNoExistState(taskProperty, taskCondition);
+        List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
         List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
         //当不分组
         if (!ifGroup) {
@@ -2315,7 +2315,51 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         return noExistStateList;
+    }
 
+    /**
+     * 获取分配给我的 不在状态
+     *
+     * @param taskCondition
+     * @param taskProperty  "assignToMe", "myCreate", "all"
+     * @return java.util.List<java.lang.Integer>
+     * @author yl  1 待完成  2 全部
+     * @date 2022-11-09 9:47
+     */
+    public List<Integer> getAssignToMeNoExistState(String taskProperty, Integer taskCondition) {
+        List<Integer> noExistStateList = new ArrayList<>();
+        //待完成  未开始，进行中，审核不通过
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+            noExistStateList.add(TaskStateEnum.CLOSE.getCode());
+            noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            noExistStateList.add(TaskStateEnum.FINISH.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            noExistStateList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_NO_PASS.getCode());
+            noExistStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
+        }
+       // 待审核 待审核，审核中
+        if(TaskConstant.WAIT_AUDIT.equals(taskCondition)){
+            noExistStateList.add(TaskStateEnum.CLOSE.getCode());
+            noExistStateList.add(TaskStateEnum.ING.getCode());
+            noExistStateList.add(TaskStateEnum.NOT_START.getCode());
+            noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            noExistStateList.add(TaskStateEnum.FINISH.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            noExistStateList.add(TaskStateEnum.APPROVAL_NO_PASS.getCode());
+            noExistStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
+
+
+        }
+        //全部
+        if (TaskConstant.ALL_TASK.equals(taskCondition)) {
+            //分配给我   状态包含所有状态-除了待发布
+            if (TaskConstant.ASSIGN_TO_ME.equals(taskProperty)) {
+                noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            }
+        }
+        return noExistStateList;
     }
 
     /**
