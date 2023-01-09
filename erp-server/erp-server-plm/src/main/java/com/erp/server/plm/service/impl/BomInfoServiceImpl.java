@@ -54,7 +54,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95094);
         }
         //获取到
-        //    String serialNumber = getSerialNumber();
+        //   String serialNumber = getSerialNumber();
 
         BomInfoEntity bom = new BomInfoEntity();
         String bomId = IdWorker.getIdStr();

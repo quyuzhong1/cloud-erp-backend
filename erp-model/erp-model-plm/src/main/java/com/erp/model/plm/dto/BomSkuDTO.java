@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * bom 的sku
+ *
  * @Classname
  * @Description TODO
  * @Date 2023-01-09 12:10
@@ -17,10 +18,15 @@ import java.util.List;
 @NoArgsConstructor
 public class BomSkuDTO implements Serializable {
 
+
+    /**
+     * 父级 sku
+     */
+    private String parentSkuNo="0";
     /**
      * sku
      */
-    private String sku;
+    private String skuNo;
 
     /**
      * 数量
