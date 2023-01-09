@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 
 /**
  * @Classname BaseIdDTO
@@ -14,7 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class BaseIdDTO implements Serializable {
+public class BaseIdDTO   extends  PermissionsDTO  {
 
     @NotBlank(message = "id不能为空")
     private String id;

@@ -16,6 +16,15 @@ public class StrUtils {
         String regex = "^[a-z0-9A-Z]+$";
         return str.matches(regex);
     }
+
+    /**
+     *  判断字符串是否只包含数字、字母、-
+     */
+    public static boolean isLetterDigitBar(String str) {
+        String regex = "^[a-z0-9A-Z\\-]+$";
+        return str.matches(regex);
+    }
+
     /**
      * 判断是否为数字
      */

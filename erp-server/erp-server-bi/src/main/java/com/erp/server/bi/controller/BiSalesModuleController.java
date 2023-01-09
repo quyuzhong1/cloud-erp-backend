@@ -3,18 +3,21 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 销售额模块Api 接口
+ * 销售相关
  *
  * @Classname BiSalesBusinessDivisionController
  * @Description TODO
@@ -67,23 +70,6 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售额- 一级模块-SKU销售额
-     *
-     * @return
-     */
-    @PostMapping("/bySpu")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:bySpu",
-//            tableAlias = "o"
-//    )
-    public ApiResult<List<SalesVO>> getBySpu(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesVO> resultList = salesOrderService.getBySpu(dto);
-        return success(resultList);
-    }
-
-
-    /**
      * 销售相关-一级模块-SKU国家销售额
      * @param dto
      * @return
@@ -94,9 +80,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SalesByCountryVO>> getByCountry(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesByCountryVO> resultList = salesOrderService.getByCountry(dto);
-        return success(resultList);
+    public ApiResult<XyAxesResultVO> getByCountry(@RequestBody @Validated BiFilterDTO dto) {
+        XyAxesResultVO result = salesOrderService.getByCountry(dto);
+        return success(result);
     }
 
 
@@ -105,6 +91,18 @@ public class BiSalesModuleController extends BaseController {
      * @param dto
      * @return
      */
+    @PostMapping("/byTobToc")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "charge_id",
+//            menuCode = "bi:sales:byCountry",
+//            tableAlias = "o"
+//    )
+    public ApiResult<StatisticalDataVO> byTobToc(@RequestBody @Validated BiFilterDTO dto) {
+        StatisticalDataVO result = salesOrderService.byTobToc(dto);
+        return success(result);
+    }
+
+
     @PostMapping("/byPlatformRatio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
@@ -163,8 +161,8 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SalesGroupVO>> byShopCountry(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesGroupVO> resultList = salesOrderService.byShopCountry(dto);
+    public ApiResult<XyAxesResultVO> byShopCountry(@RequestBody @Validated BiFilterDTO dto) {
+        XyAxesResultVO resultList = salesOrderService.byShopCountry(dto);
         return success(resultList);
     }
 
@@ -179,9 +177,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SalesGroupVO>> byShopCategory(@RequestBody @Validated BiFilterDTO dto) {
-        List<SalesGroupVO> resultList = salesOrderService.byShopCategory(dto);
-        return success(resultList);
+    public ApiResult<XyAxesResultVO> byShopCategory(@RequestBody @Validated BiFilterDTO dto) {
+        XyAxesResultVO result = salesOrderService.byShopCategory(dto);
+        return success(result);
     }
 
     /**
@@ -379,9 +377,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SaleDetailVO>> byDate(@RequestBody @Validated SkuFilterDTO biFilterDTO) {
-        List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
-        return success(saleDetailVOList);
+    public ApiResult<StatisticalDataVO> byDate(@RequestBody @Validated DateFilterDTO biFilterDTO) {
+        StatisticalDataVO result = salesOrderService.byDate(biFilterDTO);
+        return success(result);
     }
 
 
@@ -413,9 +411,9 @@ public class BiSalesModuleController extends BaseController {
 //            menuCode = "bi:sales:byShopCountry",
 //            tableAlias = "o"
 //    )
-    public ApiResult<List<SalesCountVO>> byDeptNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
-
-        return success();
+    public ApiResult<List<ProductNewAndOldVO>> byDeptNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
+        List<ProductNewAndOldVO> result=salesOrderService.byDeptNewAndOld(dto);
+        return success(result);
     }
 
     /**
@@ -569,7 +567,7 @@ public class BiSalesModuleController extends BaseController {
 
 
     /**
-     * 销售相关-一级模块-营销中心销售额
+     * 销售相关-一级模块-亚马逊欧美日占比趋势分析
      * @param
      * @return
      */

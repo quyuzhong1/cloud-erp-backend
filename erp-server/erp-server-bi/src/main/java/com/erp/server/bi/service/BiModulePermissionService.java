@@ -20,4 +20,6 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
     void deleteByModuleId(String id);
 
     List<String> getByModuleId(String moduleId);
+
+    List<String> getModuleIdsByUserId(String userId);
 }

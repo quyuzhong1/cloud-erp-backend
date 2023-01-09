@@ -3,6 +3,7 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.enums.ApiError;
 import com.erp.model.bi.dto.CopySubjectDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
@@ -63,7 +64,7 @@ public class BiDashboardController extends BaseController {
         if (details != null) {
             return success(details);
         }
-        return failure();
+        return failure(ApiError.ERROR_97019,null);
     }
 
     /**

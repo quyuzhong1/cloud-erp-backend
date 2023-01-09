@@ -7,8 +7,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
-import com.erp.model.bi.vo.DateReturnOrderVO;
-import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.server.bi.mapper.BiReturnOrderAnalyseMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -16,6 +15,7 @@ import com.erp.server.bi.service.BiReturnOrderAnalyseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,11 +38,9 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByCategoryPaging(query, biFilterDTO.getParams());
-        return new PagingVO(returnOrderAnalyseTableVoIPage);
+    public List<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(BiFilterDTO biFilterDTO) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByCategoryPaging(biFilterDTO);
+        return returnOrderAnalyseTableVoIPage;
     }
 
     /**
@@ -53,11 +51,9 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(query, biFilterDTO.getParams());
-        return new PagingVO(returnOrderAnalyseTableVoIPage);
+    public List<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(BiFilterDTO biFilterDTO) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(biFilterDTO);
+        return returnOrderAnalyseTableVoIPage;
     }
 
     /**
@@ -81,11 +77,9 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(PagingDTO<BiFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByDeptPaging(query, biFilterDTO.getParams());
-        return new PagingVO(returnOrderAnalyseTableVoIPage);
+    public List<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(BiFilterDTO biFilterDTO) {
+        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByDeptPaging(biFilterDTO);
+        return returnOrderAnalyseTableVoIPage;
     }
 
     /**
@@ -96,31 +90,50 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
     @Override
-    public PagingVO<DateReturnOrderVO> returnOrderAnalByDate(PagingDTO<ReturnOrderFilterDTO> biFilterDTO) {
-        biFilterDTO.getParams().setParam(biFilterDTO.getParam());
-        Page query = new Page(biFilterDTO.getCurrPage(), biFilterDTO.getPageSize());
-        IPage<DateReturnOrderVO> dateReturnOrderVOIPage = null;
-        switch (biFilterDTO.getParams().getDateType()) {
+    public DateBarAndLineVO returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO) {
+        List<DateReturnOrderVO> dateReturnOrderVOIPage = null;
+        switch (biFilterDTO.getDateType()) {
             case "DAY":
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(biFilterDTO);
                 break;
             case "WEEK":
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateWeek(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateWeek(biFilterDTO);
                 break;
             case "MONTH":
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateMonth(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateMonth(biFilterDTO);
                 break;
             case "QUARTER":
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateQuarter(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateQuarter(biFilterDTO);
                 break;
             case "YEAR":
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateYear(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateYear(biFilterDTO);
                 break;
             default:
-                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(query, biFilterDTO.getParams());
+                dateReturnOrderVOIPage = baseMapper.returnOrderAnalByDateDay(biFilterDTO);
                 break;
         }
-        return new PagingVO(dateReturnOrderVOIPage);
+        DateBarAndLineVO barAndLineVO = new DateBarAndLineVO();
+        List<String> listDate = new ArrayList<>();
+        List<DateRefundOrderRateVO> dateRefundOrderRateVOList = new ArrayList<>();
+        List<DateRefundRate> dateRefundRateList = new ArrayList<>();
+        dateReturnOrderVOIPage.forEach(req -> {
+            listDate.add(req.getDateTime());
+            DateRefundOrderRateVO dateRefundOrderRateVO = new DateRefundOrderRateVO();
+            dateRefundOrderRateVO.setDateTime(req.getDateTime());
+            dateRefundOrderRateVO.setRefundOrderRate(req.getRefundOrderRate());
+            dateRefundOrderRateVOList.add(dateRefundOrderRateVO);
+
+            DateRefundRate dateRefundRate = new DateRefundRate();
+            dateRefundRate.setDateTime(req.getDateTime());
+            dateRefundRate.setRefundRate(req.getRefundRate());
+            dateRefundRateList.add(dateRefundRate);
+
+        });
+        barAndLineVO.setDateTime(listDate);
+        barAndLineVO.setDateRefundOrderRateVOList(dateRefundOrderRateVOList);
+        barAndLineVO.setDateRefundRateList(dateRefundRateList);
+
+        return barAndLineVO;
     }
 
 

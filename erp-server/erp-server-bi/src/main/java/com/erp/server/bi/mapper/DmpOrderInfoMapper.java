@@ -3,6 +3,8 @@ package com.erp.server.bi.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.vo.DimensionSalesVO;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
@@ -36,6 +38,13 @@ public interface DmpOrderInfoMapper extends BaseMapper<DmpOrderInfoEntity> {
     List<DmpOrderInfoExcelDTO> getAllDmpOrderInfo(@Param("params") DmpOrderInfoSearchDTO params);
 
 
+    /**
+     * 根据不同维度统计销售额
+     * @param dto
+     * @param groupName
+     * @return
+     */
+    List<DimensionSalesVO> sumByDeptAndCostType(@Param("params") BiFilterDTO dto, @Param("groupName") String groupName);
 }
 
 

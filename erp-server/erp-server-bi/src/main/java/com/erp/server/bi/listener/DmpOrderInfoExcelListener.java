@@ -14,6 +14,7 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.OrderStateEnum;
@@ -49,9 +50,11 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     private List<DmpOrderInfoEntity> orderList ;
 
+    private List<SysDepartmentDTO> deptList;
+
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
-    public DmpOrderInfoExcelListener(Integer importType,List<DmpOrderInfoEntity> orderList,PlmTaskFeign plmTaskFeign, DmpOrderItemService dmpOrderItemService, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
+    public DmpOrderInfoExcelListener(Integer importType, List<DmpOrderInfoEntity> orderList, List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, DmpOrderItemService dmpOrderItemService, DmpOrderInfoService dmpOrderInfoService, DmpShopInfoService dmpShopInfoService, SysUserFeign sysUserFeign) {
         this.importType = importType;
         this.dmpOrderInfoService = dmpOrderInfoService;
         this.dmpOrderItemService = dmpOrderItemService;
@@ -59,6 +62,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         this.sysUserFeign = sysUserFeign;
         this.plmTaskFeign = plmTaskFeign;
         this.orderList = orderList;
+        this.deptList = deptList;
         this.list = new ArrayList<>();
     }
 
@@ -81,8 +85,8 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
             errorMsgList.add("订单号不能超过50个字节");
         }
-        if (!StrUtils.isLetterDigit(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号只能包含字母和数字");
+        if (!StrUtils.isLetterDigitBar(dto.getPlatformOrderId())) {
+            errorMsgList.add("订单号只能包含字母、数字、-");
         }
 
         if (StringUtils.isBlank(dto.getSourcePlatform())) {
@@ -102,7 +106,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if (StringUtils.isNotBlank(dto.getShopName())) {
             Integer count = dmpShopInfoService.getDmpShopInfoByParam(dto.getSourcePlatform(), dto.getSite(), dto.getShopName());
             if (count == 0) {
-                errorMsgList.add("店铺在系统中未找到");
+                errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
         if (StringUtils.isBlank(dto.getBuyerName())) {
@@ -132,9 +136,27 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         if(StringUtils.isBlank(dto.getCountryNameCn())) {
             errorMsgList.add("国家名称不能为空");
         }
+        if(ObjectUtils.isNull(dto.getPlatformCreateTime())) {
+            errorMsgList.add("订单下单时间不能为空");
+        }
 
         if(StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("销售员不能为空");
+        }
+
+        if(StringUtils.isBlank(dto.getDeptName())) {
+            errorMsgList.add("销售员不能为空");
+        }
+
+        if (StringUtils.isNotBlank(dto.getChargeName())) {
+            if (CollectionUtils.isEmpty(deptList)) {
+                errorMsgList.add("销售事业部在系统中未找到");
+            } else {
+                long count = deptList.stream().filter(obj -> dto.getDeptName().equals(obj.getName())).count();
+                if (count < 1) {
+                    errorMsgList.add("销售事业部在系统中未找到");
+                }
+            }
         }
 
         List<FindUserDTO> chargeNameList = new ArrayList<>();

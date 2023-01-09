@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.bi.mapper.BiSubjectRefLayoutMapper">
+
+
+    <select id="getLayoutIds" resultType="com.erp.model.bi.vo.LayoutVO">
+        SELECT srl.layout_id,bs.create_time AS  subjectCreateTime
+        FROM bi_subject_ref_layout srl
+        INNER JOIN bi_subject bs ON bs.id=srl.subject_id
+        WHERE  bs.state=1 AND srl.is_deleted=0
+    </select>
+</mapper>

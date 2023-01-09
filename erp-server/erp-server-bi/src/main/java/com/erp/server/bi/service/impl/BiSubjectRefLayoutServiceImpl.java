@@ -3,6 +3,7 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.bi.entity.BiSubjectRefLayoutEntity;
+import com.erp.model.bi.vo.LayoutVO;
 import com.erp.server.bi.mapper.BiSubjectRefLayoutMapper;
 import com.erp.server.bi.service.BiSubjectRefLayoutService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -74,6 +75,19 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
         queryWrapper.eq(BiSubjectRefLayoutEntity::getSubjectId, subjectId);
         queryWrapper.eq(BiSubjectRefLayoutEntity::getLayoutId, layoutId);
         return this.remove(queryWrapper);
+    }
+
+    
+    /**
+     * 获取 开启专题的布局id
+     * @author yl
+     * @date 2023-01-07 9:58
+     * @param
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<LayoutVO> getLayoutIds() {
+        return baseMapper.getLayoutIds();
     }
 
 }

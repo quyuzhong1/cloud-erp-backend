@@ -4,10 +4,7 @@ package com.erp.server.sys.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.sys.dto.BatchSysDepartUserDTO;
-import com.erp.model.sys.dto.DepartmentSearchDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 
 import java.util.List;
@@ -38,4 +35,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     List<SysDepartmentUserNumberDTO> findUserNumber();
 
     boolean saveBatchDepartmentUser(BatchSysDepartUserDTO list);
+
+
 }

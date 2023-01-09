@@ -35,6 +35,9 @@
             <if test="params.createTime_end != null ">
                 and dsi.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
 
@@ -44,12 +47,14 @@
         dsi.platform_name,
         dsi.site,
         dsi.charge_name,
-        dsi.status,
+        case when dsi.status = 1 then '启用'
+             when dsi.status = 0 then '禁用'
+             else '' end statusName,
         dsi.store_sign,
         dsi.create_user_name,
-        dsi.create_time,
+        to_char(dsi.create_time,'yyyy-MM-dd HH:mm:ss') as create_time,
         dsi.update_user_name,
-        dsi.update_time
+        to_char(dsi.update_time,'yyyy-MM-dd HH:mm:ss') as update_time
         from dmp_shop_info dsi
         <where>
             <if test="params.shopName != null and params.shopName != ''">
@@ -66,6 +71,9 @@
             </if>
             <if test="params.createTime_end != null ">
                 and dsi.create_time &lt;= #{params.createTime_end}::timestamp
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
     </select>

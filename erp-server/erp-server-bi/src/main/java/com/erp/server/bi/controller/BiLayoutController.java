@@ -79,6 +79,11 @@ public class BiLayoutController extends BaseController {
      * @date 2022-12-13 17:06
      */
     @PostMapping("/subjectInfo")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "bi:layout:subjectInfo",
+//            serviceClass = BiLayoutService.class
+//    )
     public ApiResult<SubjectLayoutDetailsDTO> subjectInfo(@RequestBody @Validated BaseIdDTO dto) {
         SubjectLayoutDetailsDTO details = layoutService.subjectInfo(dto.getId());
         return success(details);

@@ -27,13 +27,13 @@ public class DmpOrderInfoEntity implements Serializable {
     private String platformOrderId;
 
     /**
-     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废
+     * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @TableField(value = "order_state")
     private Integer orderState;
 
     /**
-     * 修正状态
+     * 修正状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @TableField(value = "correction_status")
     private Integer correctionStatus;

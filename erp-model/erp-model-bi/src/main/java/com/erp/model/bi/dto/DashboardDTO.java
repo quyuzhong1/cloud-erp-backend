@@ -33,4 +33,10 @@ public class DashboardDTO implements Serializable {
     private Boolean isDefault=false;
 
 
+    /**
+     * 是否常用 1 是  0  不不是
+     */
+    private Integer isFrequently;
+
+
 }

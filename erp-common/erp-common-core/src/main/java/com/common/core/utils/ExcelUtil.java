@@ -133,7 +133,6 @@ public class ExcelUtil {
         }
         try {
             response.setCharacterEncoding("utf-8");
-            response.setCharacterEncoding("utf-8");
             response.setContentType("application/octet-stream");
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
             // 这里需要设置不关闭流
@@ -171,7 +170,6 @@ public class ExcelUtil {
             list2.add(objects);
         }
         try {
-            response.setCharacterEncoding("utf-8");
             response.setCharacterEncoding("utf-8");
             response.setContentType("application/octet-stream");
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));

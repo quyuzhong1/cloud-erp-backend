@@ -28,7 +28,16 @@ spring:
       remove-abandoned: true
       remove-abandoned-timeout: 1800
       transaction-query-timeout: 6000
-      filters: stat,wall,log4j2
+      filters:
+        stat:
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: false
+        wall:
+          config:
+            enable: true
+            multi-statement-allow: true
+            comment-allow: true
       connectionProperties: druid.stat.mergeSql\=true;druid.stat.slowSqlMillis\=5000
       web-stat-filter:
         enabled: true

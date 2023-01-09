@@ -7,10 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.model.sys.dto.DepartmentDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysDepartmentTreeDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -155,7 +152,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Override
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
-                .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1,2)))
+                .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -189,6 +186,53 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             resultList.addAll(childrenDepartIds);
         }
         return resultList;
+    }
+
+    @Override
+    public List<SysDepartmentDTO> getDeptList() {
+
+        return baseMapper.getDeptList();
+    }
+
+
+    /**
+     * 部门人员
+     *
+     * @param
+     * @return java.util.List<com.erp.model.sys.dto.DeptUserDTO>
+     * @author yl
+     * @date 2023-01-06 17:26
+     */
+    @Override
+    public List<DeptUserDTO> deptUserTree() {
+        List<SysDepartmentEntity> allList = this.list();
+        //获取所有部门人员
+        List<SysDepartmentUserNumberDTO> userNumberList = sysDepartmentUserService.findUserNumber();
+        List<DeptUserDTO> departList = new ArrayList<>(allList.size());
+        for (SysDepartmentEntity item : allList) {
+            DeptUserDTO dto = new DeptUserDTO();
+            dto.setId(item.getId());
+            dto.setName(item.getName());
+            dto.setParentId(item.getParentId());
+            dto.setType(item.getType());
+            departList.add(dto);
+        }
+        List<SysDepartmentTreeDTO> flagList = baseMapper.findTree();
+        List<DeptUserDTO> treeList = departList.stream().
+                filter(item -> "0".equals(item.getParentId()))
+                .map(item -> {
+                    item.setParentName("");
+                    //根据用数据库查询的 树结构数据 获取到 该部门id 下有多少子的部门id
+                    List<String> childrenDepartIds = getAllDepartIdsById(item.getId(), flagList);
+                    item.setChildrenList(getDeptUserChildren(item, departList, userNumberList, flagList));
+                    int userNumber = userNumberList.stream().filter(u -> childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId)).size();
+                    List<SysDepartmentUserNumberDTO> userList = userNumberList.stream().filter(u -> childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.toList());
+                    item.setUserNumber(userNumber);
+                    item.setUserList(userList);
+                    return item;
+                }).collect(Collectors.toList());
+
+        return treeList;
     }
 
     /**
@@ -227,6 +271,22 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                     int userNumber = userNumberList.stream().filter(u -> childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId)).size();
                     d.setUserNumber(userNumber);
                     d.setChildrenList(getChildren(d, departList, userNumberList, flagList));
+                    return d;
+                }).collect(Collectors.toList());
+        return CollectionUtils.isEmpty(collect) ? null : collect;
+    }
+
+
+    private List<DeptUserDTO> getDeptUserChildren(DeptUserDTO item, List<DeptUserDTO> departList, List<SysDepartmentUserNumberDTO> userNumberList, List<SysDepartmentTreeDTO> flagList) {
+        List<DeptUserDTO> collect = departList.stream().filter(dept -> item.getId().equals(dept.getParentId()))
+                .map(d -> {
+                    List<String> childrenDepartIds = getAllDepartIdsById(d.getId(), flagList);
+                    d.setParentName(item.getName());
+                    int userNumber = userNumberList.stream().filter(u -> childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId)).size();
+                    d.setUserNumber(userNumber);
+                    List<SysDepartmentUserNumberDTO> userList = userNumberList.stream().filter(u -> childrenDepartIds.contains(u.getDepartmentId())).collect(Collectors.toList());
+                    d.setUserList(userList);
+                    d.setChildrenList(getDeptUserChildren(d, departList, userNumberList, flagList));
                     return d;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collect) ? null : collect;

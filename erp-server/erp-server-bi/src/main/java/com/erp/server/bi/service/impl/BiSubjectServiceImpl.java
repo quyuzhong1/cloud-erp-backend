@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.business.aspect.DataPermissionAspect;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
@@ -16,6 +18,8 @@ import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.vo.CategorySubjectVO;
+import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
@@ -49,6 +53,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     private BiSubjectShareService subjectShareService;
 
     @Resource
+    private BiSubjectRefLayoutService subjectRefLayoutService;
+
+    @Resource
     private BiSubjectDefaultService subjectDefaultService;
 
 
@@ -75,7 +82,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+
         IPage pageData = baseMapper.paging(query, params);
+        List<SubjectPagingDTO> list = pageData.getRecords();
+        for (SubjectPagingDTO item : list) {
+            String categoryName = item.getCategoryName();
+            if (StringUtils.isBlank(categoryName)) {
+                item.setCategoryName("个人创建");
+            }
+
+        }
         return new PagingVO(pageData);
     }
 
@@ -141,6 +158,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             subjectDefaultService.deleteBySubjectId(id);
             //分享的专题删除
             subjectShareService.deleteBySubjectId(id);
+
+            subjectRefLayoutService.deleteBySubjectId(id);
         }
         return flag;
     }
@@ -204,9 +223,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
          */
         List<String> shareDashboardIds = subjectShareService.getShareToMeDashboardIds(userId);
         findIdList.addAll(shareDashboardIds);
+        Integer frequentlyFlag = BiConstant.OK;
 
+        //这个是所有的
+        List<DashboardDTO> allList = baseMapper.getDashboardList(type, dashboardFlag, findIdList, searchKeyword);
         //这个是常用的
-        List<DashboardDTO> frequentlyList = baseMapper.getDashboardFrequentlyList(type, dashboardFlag, findIdList, searchKeyword);
+        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> frequentlyFlag.equals(f.getIsFrequently())).collect(Collectors.toList());
         for (DashboardDTO frequently : frequentlyList) {
             if (userDefaultSubjectIds.contains(frequently.getId())) {
                 frequently.setIsDefault(true);
@@ -214,6 +236,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         }
         result.setFrequentlyList(frequentlyList);
         result.setMyCreateList(myCreateList);
+        List<DashboardDTO> shareList = allList.stream().filter(d -> shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
+        result.setOtherList(shareList);
+
         return result;
     }
 
@@ -248,6 +273,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
         Boolean result = this.save(subject);
         if (result) {
             //如果是分享
@@ -318,8 +344,8 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      * @date 2022-12-14 16:14
      */
     @Override
-    public List<CategorySubjectDTO> homePage(String searchKeyword) {
-        List<CategorySubjectDTO> resultList = new ArrayList<>(10);
+    public List<CategorySubjectVO> homePage(String searchKeyword) {
+        List<CategorySubjectVO> resultList = new ArrayList<>(10);
         String userId = commonService.getUserInfo().getUid();
         List<Pair<String, String>> pairList = dictService.getCategory(DictEnum.DASHBOARD.getType());
 
@@ -328,29 +354,52 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         //查询到用户可见的专题
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
-        List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
+
+
+//        String type = DictEnum.DASHBOARD.getType();
+//        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+//        String dashboardCategoryId = "";
+//        //获取我的仪表盘的专题
+//        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+//        if (dict != null) {
+//            dashboardCategoryId = dict.getId();
+//        }
+
+        List<SubjectVO> subjectList = baseMapper.getSubjectByIds(subjectIdList, searchKeyword);
+
         for (Pair<String, String> pair : pairList) {
-            CategorySubjectDTO result = new CategorySubjectDTO();
             String categoryId = pair.getKey();
+            CategorySubjectVO result = new CategorySubjectVO();
             result.setCategoryId(categoryId);
             result.setCategoryName(pair.getValue());
-            List<SubjectDTO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
+            for (SubjectVO item : subjectResultList) {
+                //我创造的
+                if (userId.equals(item.getCreateUserId())) {
+                    item.setMyCreateVisible(true);
+                }
+                //分享给我
+                if (shareToMeIds.contains(item.getId())) {
+                    item.setShareVisible(true);
+                }
+            }
             result.setSubjectList(subjectResultList);
             resultList.add(result);
-        }
-        //我创建的
-        CategorySubjectDTO myCreate = new CategorySubjectDTO();
-        myCreate.setCategoryName("我创建的专题");
-        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
-        myCreate.setSubjectList(myCreateList);
-        resultList.add(myCreate);
 
-        //分享给我的
-        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
-        shareToMeDTO.setCategoryName("共享专题");
-        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
-        shareToMeDTO.setSubjectList(shareToMeList);
-        resultList.add(shareToMeDTO);
+        }
+//        //我创建的
+//        CategorySubjectDTO myCreate = new CategorySubjectDTO();
+//        myCreate.setCategoryName("我创建的专题");
+//        List<SubjectDTO> myCreateList = subjectList.stream().filter(s -> userId.equals(s.getCreateUserId())).collect(Collectors.toList());
+//        myCreate.setSubjectList(myCreateList);
+//        resultList.add(myCreate);
+//
+//        //分享给我的
+//        CategorySubjectDTO shareToMeDTO = new CategorySubjectDTO();
+//        shareToMeDTO.setCategoryName("共享专题");
+//        List<SubjectDTO> shareToMeList = subjectList.stream().filter(s -> shareToMeIds.contains(s.getId())).collect(Collectors.toList());
+//        shareToMeDTO.setSubjectList(shareToMeList);
+//        resultList.add(shareToMeDTO);
         return resultList;
     }
 
@@ -439,6 +488,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         subject.setShareFlag(shareFlag);
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
+        subject.setIsFrequently(dto.getIsFrequently());
         Boolean result = this.save(subject);
         if (result) {
             //如果是分享
@@ -524,12 +574,23 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (StringUtils.isNotBlank(subjectId)) {
             return layoutService.subjectInfo(subjectId);
         }
-        //当默认的没有 就找 是仪表盘的 开启的最近一条
-        BiSubjectEntity dashboard = getByCategoryId(categoryId);
-        if (dashboard != null) {
-            return layoutService.subjectInfo(dashboard.getId());
-        }
 
+        //查询到用户可见的专题
+        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
+        if (CollectionUtils.isEmpty(subjectIdList)) {
+            return null;
+        }
+        //当默认的没有 就找 是仪表盘的 开启的最近一条
+        List<BiSubjectEntity> dashboardList = getByCategoryId(categoryId, subjectIdList);
+        if (CollectionUtils.isNotEmpty(dashboardList)) {
+            BiSubjectEntity myCreate = dashboardList.stream().filter(d -> userId.equals(d.getCreateUserId())).findFirst().orElse(null);
+            if(Objects.isNull(myCreate)){
+                return layoutService.subjectInfo(myCreate.getId());
+            }
+
+            return layoutService.subjectInfo(dashboardList.get(0).getId());
+
+        }
         return null;
     }
 
@@ -584,18 +645,37 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         return flag;
     }
 
+    @Override
+    public void checkEditSubject(BaseIdDTO dto) {
+        Integer scopeSelf = DataPermissionAspect.DATA_SCOPE_SELF;
+        Integer dataScope = dto.getDataScope();
+        //如果是个人
+        if (scopeSelf.equals(dataScope)) {
+            BiSubjectEntity subject = this.getById(dto.getId());
+            if (Objects.isNull(subject)) {
+                throw new ServiceException(ApiError.ERROR_97000);
+            }
+            String userId = commonService.getUserInfo().getUid();
+            checkCanHandle(subject, userId);
+        }
+
+    }
+
 
     /**
      * 根据分类id 获取最后一个
      *
      * @return
      */
-    public BiSubjectEntity getByCategoryId(String categoryId) {
+    public List<BiSubjectEntity> getByCategoryId(String categoryId, List<String> subjectIdList) {
         LambdaQueryWrapper<BiSubjectEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BiSubjectEntity::getState, BiConstant.OK);
         queryWrapper.eq(BiSubjectEntity::getCategoryId, categoryId);
-        queryWrapper.last("LIMIT 1");
-        return getOne(queryWrapper);
+        if (CollectionUtils.isNotEmpty(subjectIdList)) {
+            queryWrapper.in(BiSubjectEntity::getId, subjectIdList);
+        }
+        queryWrapper.orderByDesc(BiSubjectEntity::getUpdateTime);
+        return list(queryWrapper);
     }
 
 

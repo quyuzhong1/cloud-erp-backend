@@ -114,6 +114,11 @@ public class BiFilterDTO extends PermissionsDTO {
      */
     private Integer rankNum = 5;
 
+    /**
+     * 排序字段
+     */
+    private String rankKey;
+
 
     public interface SelectTargetModule{}
 

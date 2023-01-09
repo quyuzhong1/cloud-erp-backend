@@ -6,7 +6,7 @@
     <select id="paging" resultType="java.util.LinkedHashMap">
         select
             bdsc.id,
-            bdsc.month,
+            to_char(bdsc.month,'yyyy-MM') as month,
             bdsc.dept_name,
             bdsc.platform_name,
             bdsc.site,
@@ -15,20 +15,23 @@
             bdsc.combination
         from bi_data_source_cost bdsc
         <where>
-            <if test="params.month != null ">
-                and to_char(bdsc.month,'yyyyMM') = to_char(#{params.month}::timestamp,'yyyyMM')
+            <if test="params.month != null and params.month != ''">
+                and to_char(bdsc.month,'yyyy-MM') = #{params.month}
             </if>
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
-
+        order by bdsc.month,bdsc.id
     </select>
 
     <select id="getAllBiDataSourceCost" resultType="java.util.LinkedHashMap">
         select
         bdsc.id,
-        to_char(bdsc.month,'yyyy-MM-dd') as month,
+        to_char(bdsc.month,'yyyy-MM') as month,
         bdsc.dept_name,
         bdsc.platform_name,
         bdsc.site,
@@ -43,7 +46,137 @@
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
     </select>
 
+
+    <select id="sumByDeptAndCostType" resultType="com.erp.model.bi.vo.DeptCostVO">
+        SELECT bdsc.${groupName} AS name,
+               bdscd.cost_type,
+               sum(COALESCE(bdscd.cost_value,0)) as cost_value
+        FROM bi_data_source_cost AS bdsc
+        LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
+        WHERE bdscd.cost_type IS NOT NULL
+        AND bdsc.month = #{month}
+        /*部门*/
+        <if test="params.department!=null and params.department.size>0">
+            AND bdsc.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        /*平台*/
+        <if test="params.platform!=null and params.platform.size>0">
+            AND bdsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        /*站点*/
+        <if test="params.site!=null and params.site.size>0">
+            AND bdsc.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        /*店铺*/
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND bdsc.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        /**
+          成本类型
+         */
+        <if test="null != dictValues and dictValues.size > 0">
+            AND  bdscd.cost_type IN
+            <foreach collection="dictValues" separator="," open="(" close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        /*用户id*/
+        <if test="params.userId!=null and params.userId.size>0">
+            AND bdscd.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+        GROUP BY bdsc.${groupName},cost_type
+    </select>
+    <select id="sumByDateAndCostType" resultType="com.erp.model.bi.vo.DateCostVO">
+        SELECT bdsc.month AS groupDate,
+        bdscd.cost_type AS costType,
+        sum(COALESCE(bdscd.cost_value,0)) as costValue
+        FROM bi_data_source_cost AS bdsc
+        LEFT JOIN bi_data_source_cost_detail AS bdscd ON bdsc.id = bdscd.cost_id
+        WHERE bdscd.cost_type IS NOT NULL
+        /**
+        时间
+        */
+        <if test="null != params.startTime">
+            AND bdsc.month >= #{params.startTime}
+        </if>
+        <if test="null != params.endTime">
+            AND bdsc.month <![CDATA[ <= ]]> #{params.endTime}
+        </if>
+        /*部门*/
+        <if test="params.department!=null and params.department.size>0">
+            AND bdsc.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        /*平台*/
+        <if test="params.platform!=null and params.platform.size>0">
+            AND bdsc.platform_name IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        /*站点*/
+        <if test="params.site!=null and params.site.size>0">
+            AND bdsc.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+
+        /*店铺*/
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND bdsc.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
+        /**
+        成本类型
+        */
+        <if test="null != dictValues and dictValues.size > 0">
+            AND  bdscd.cost_type IN
+            <foreach collection="dictValues" separator="," open="(" close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        /*用户id*/
+        <if test="params.userId!=null and params.userId.size>0">
+            AND bdscd.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+        GROUP BY bdsc.month,cost_type
+    </select>
 </mapper>

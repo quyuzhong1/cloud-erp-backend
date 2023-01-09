@@ -1,26 +1,39 @@
 package com.erp.server.bi.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
+import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.RefundStatusEnum;
+import com.erp.server.bi.listener.DmpRefundInfoExcelListener;
 import com.erp.server.bi.mapper.DmpRefundInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpRefundInfoService;
+import com.erp.server.bi.service.DmpRefundItemService;
+import com.erp.server.bi.service.DmpShopInfoService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,6 +45,18 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+
+    @Resource
+    private DmpRefundInfoService dmpRefundInfoService;
+
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
+
+    @Resource
+    private DmpRefundItemService dmpRefundItemService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpRefundInfoSearchDTO> dto) {
@@ -65,6 +90,31 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
         queryWrapper.eq(DmpRefundInfoEntity::getRefundId,refundId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+        //系统中已存在的退款订单
+        List<DmpRefundInfoEntity> refundList = this.list();
+
+        DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(importType,refundList,dmpOrderInfoService, dmpRefundInfoService, dmpShopInfoService,dmpRefundItemService,plmTaskFeign);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            List<DmpRefundInfoImportExcelDTO> list = excelListenerUtil.getDateList();
+            if (list.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/dmpRefundInfo.xlsx";
+                String name = "dmpRefundInfo";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+                return false;
+            }
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.Default);
+        }
+        return  true;
     }
 
 

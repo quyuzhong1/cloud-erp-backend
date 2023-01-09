@@ -284,7 +284,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
 
         //上市时间
         if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
-            dmpSkuInfoEntity.setListingTime(sdf.parse(skuInfoEntity.getFSSRQ()));
+            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ()));
         }
         String itemProperty = "";
         switch (skuInfoEntity.getFErpClsID()) {

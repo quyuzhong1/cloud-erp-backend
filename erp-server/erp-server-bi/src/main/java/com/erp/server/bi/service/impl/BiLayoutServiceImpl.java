@@ -53,6 +53,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Resource
     private BiModuleService moduleService;
 
+    @Resource
+    private BiModulePermissionService modulePermissionService;
+
 
     /**
      * 添加布局与专题
@@ -139,10 +142,12 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         SubjectLayoutDetailsDTO details = new SubjectLayoutDetailsDTO();
         details.setSubjectId(subjectId);
         details.setName(subject.getName());
+        details.setShareFlag(subject.getShareFlag());
+        details.setIsFrequently(subject.getIsFrequently());
         details.setCategoryId(subject.getCategoryId());
         details.setCategoryName(subject.getCategoryName());
         details.setShareUserIdList(shareUserIdList);
-        List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId);
+        List<LayoutDetailsDTO> layoutDetailsList = getBySubjectId(subjectId, userId);
         details.setLayoutDetailsList(layoutDetailsList);
         return details;
     }
@@ -194,7 +199,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //删除 模块与布局关系表
         layoutRefModuleService.deleteBySubjectId(subjectId);
         List<String> LayoutIds = new ArrayList<>();
-        if(CollectionUtils.isNotEmpty(layoutDetailsList)){
+        if (CollectionUtils.isNotEmpty(layoutDetailsList)) {
             for (LayoutDetailsDTO item : layoutDetailsList) {
                 BiLayoutEntity entity = new BiLayoutEntity();
                 String id = item.getId();
@@ -304,10 +309,17 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     @Override
     public Boolean addSubject(AddTotalSubjectDTO dto) {
+        List<LayoutDTO> layoutList = dto.getLayoutList();
+        if (CollectionUtils.isEmpty(layoutList)) {
+            throw new ServiceException(ApiError.ERROR_95090);
+        }
         SubjectDTO subject = new SubjectDTO();
+        String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
-        subject.setCategoryId(dto.getCategoryId());
-        subject.setShareFlag(DashboardEnum.SHARE.getFlag());
+        subject.setCategoryId(categoryId);
+        String shareFlag = dto.getShareFlag();
+        subject.setShareFlag(shareFlag);
+        subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareUserIdList(dto.getShareUserIdList());
         //专题id
         String subjectId = subjectService.addSubject(subject);
@@ -315,7 +327,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             return false;
         }
 
-        List<LayoutDTO> layoutList = dto.getLayoutList();
         List<String> LayoutIds = new ArrayList<>();
         for (LayoutDTO layout : layoutList) {
             BiLayoutEntity entity = new BiLayoutEntity();
@@ -347,7 +358,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      * @author yl
      * @date 2022-12-13 18:51
      */
-    private List<LayoutDetailsDTO> getBySubjectId(String subjectId) {
+    private List<LayoutDetailsDTO> getBySubjectId(String subjectId, String userId) {
         List<LayoutDetailsDTO> list = baseMapper.getLayoutBySubjectId(subjectId);
         //获取到布局id
         List<String> layoutIdList = list.stream().map(LayoutDetailsDTO::getId).collect(Collectors.toList());
@@ -355,7 +366,8 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
         List<String> moduleIdList = layoutRefModuleList.stream().map(BiLayoutRefModuleEntity::getModuleId).collect(Collectors.toList());
         List<BiModuleEntity> moduleList = moduleService.getByIds(moduleIdList);
-
+        //用户可见的模块id
+        List<String> visibleModuleIdList = modulePermissionService.getModuleIdsByUserId(userId);
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();
@@ -369,6 +381,11 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                 BiModuleEntity module = moduleList.stream().filter(m -> m.getId().equals(moduleId)).
                         findFirst().orElse(null);
                 refModule.setId(moduleId);
+                if (visibleModuleIdList.contains(moduleId)) {
+                    refModule.setVisible(true);
+                } else {
+                    refModule.setVisible(false);
+                }
                 if (module != null) {
                     refModule.setSysModuleId(module.getSysModuleId());
                     refModule.setCode(module.getCode());

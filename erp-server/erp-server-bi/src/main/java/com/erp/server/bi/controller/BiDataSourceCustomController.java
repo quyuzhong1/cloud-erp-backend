@@ -1,9 +1,11 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
@@ -40,13 +42,14 @@ public class BiDataSourceCustomController extends BaseController {
     @Resource
     private BiDataSourceCustomService biDataSourceCustomService;
 
-   /**
-    * 自助数据-分页查询
-    * @author Will
-    * @date: 2022/12/16 13:18
-    * @param dto
-    * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
-    */
+
+    /**
+     * 自助数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
     @PostMapping("/paging")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
@@ -66,6 +69,119 @@ public class BiDataSourceCustomController extends BaseController {
         return  success();
     }
 
+   /**
+    * 自助数据-市场数据-分页查询
+    * @author Will
+    * @date: 2022/12/16 13:18
+    * @param dto
+    * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+    */
+    @PostMapping("/market/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:market:paging", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> marketQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 自助数据-供应链数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/supplyChain/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:supplyChain:paging", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> supplyChainQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 自助数据-经营数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/operate/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:operate:paging", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> operateQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 自助数据-财务数据-分页查询
+     * @author Will
+     * @date: 2022/12/16 13:18
+     * @param dto
+     * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
+     */
+    @PostMapping("/finance/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:finance:paging", tableAlias = "bdsc")
+    public ApiResult<PagingVO<LinkedHashMap<String,Object>>> financeQueryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCustomSearchDTO> dto) {
+        PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCustomService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     *  自助数据-市场数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/market/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:market:paging", tableAlias = "bdsc")
+    public ApiResult marketExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
+
+    /**
+     *  自助数据-供应链数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/supplyChain/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:supplyChain:paging", tableAlias = "bdsc")
+    public ApiResult supplyChainExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
+
+    /**
+     *  自助数据-经营数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/operate/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:operate:paging", tableAlias = "bdsc")
+    public ApiResult operateExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
+
+    /**
+     *  自助数据-财务数据-导出
+     * @author Will
+     * @date: 2022/12/15 10 10:45
+     * @param dto
+     * @param response
+     */
+    @PostMapping(value = "/finance/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:finance:paging", tableAlias = "bdsc")
+    public ApiResult financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+        biDataSourceCustomService.exportExcel(dto, response);
+        return  success();
+    }
 
     /**
      * 自助数据-导入
@@ -76,11 +192,10 @@ public class BiDataSourceCustomController extends BaseController {
      * @param response
      */
     @PostMapping("/importBiDataSourceCustomFile")
-    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType);
+    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
+        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType,dataType);
         return flag == true ? this.success() : this.failure();
     }
-
 
     /**
      * 自助数据-下载模板

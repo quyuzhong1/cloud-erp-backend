@@ -3,11 +3,13 @@ package com.erp.server.bi.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
+import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -33,8 +35,8 @@ public class BiSalesMonitoringController extends BaseController {
      */
     @PostMapping("/batchAdd")
     public ApiResult batchAdd (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
-        biSalesMonitoringService.batchAdd(list);
-        return success();
+        Boolean flag = biSalesMonitoringService.batchAdd(list);
+        return flag == true ? success() : failure();
     }
 
     /**
@@ -63,6 +65,17 @@ public class BiSalesMonitoringController extends BaseController {
     }
 
 
+    /**
+     * 销售监控-分析报表查询
+     * @author Will
+     * @date: 2022/12/30 12:27
+     * @return ApiResult<BiSalesMonitoringViewVO>
+     */
+    @PostMapping("/view")
+    public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO dto) {
+        LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(dto);
+        return success(map);
+    }
 
 
 }

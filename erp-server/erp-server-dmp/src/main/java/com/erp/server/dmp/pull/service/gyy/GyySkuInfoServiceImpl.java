@@ -111,8 +111,8 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                 } else {
                     mongoService.saveMongoData(gyySkuInfoEntity, MongoTableNameContant.ORIGINAL_GYY_SKU);
                 }
-                //存储数据到中台
-                analysisSku(gyySkuInfoEntity);
+                //存储数据到中台  sku信息只保留金蝶数据
+//                analysisSku(gyySkuInfoEntity);
             }
         }
     }

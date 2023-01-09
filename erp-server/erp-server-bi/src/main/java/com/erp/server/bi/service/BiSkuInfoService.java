@@ -17,4 +17,6 @@ public interface BiSkuInfoService  extends IService<DmpSkuInfoEntity> {
     List<SkuCategoryVO> getSkuCategoryList();
 
     List<SkuCategoryVO> getSkuBrandList();
+
+    List<SkuCategoryVO> getSkuPropertyList();
 }

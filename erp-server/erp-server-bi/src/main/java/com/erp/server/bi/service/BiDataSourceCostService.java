@@ -5,7 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
-import com.erp.model.bi.vo.TargetSaleSumVO;
+import com.erp.model.bi.vo.*;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,4 +79,94 @@ public interface BiDataSourceCostService
      * 根据成本参数查询
      */
     BiDataSourceCostEntity getByCostParam(BiDataSourceCostEntity entity);
+
+    /**
+     * 获取部分成本利率分析图形
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getDeptCostProfit(BiFilterDTO dto);
+
+    /**
+     * 获取最新月份
+     * @return
+     */
+    BiDataSourceCostEntity getMaxMonth();
+
+    /**
+     * 根据指定条件汇总成本数据
+     * @param dto
+     * @return
+     */
+    List<DeptCostVO> sumCostByCondition(BiFilterDTO dto, String groupName);
+
+    /**
+     * 获取利润top20% 店铺
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getShopCostProfit(BiFilterDTO dto);
+
+    /**
+     * 获取利润top20的平台
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getPlatformCostProfit(BiFilterDTO dto);
+
+    /**
+     * 获取平台毛利率占比分析
+     * @param dto
+     * @return
+     */
+    List<PieChartVO> getPlatformCostPercent(BiFilterDTO dto);
+
+    /**
+     * 月度成本利润分析
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getMonthCostProfit(BiFilterDTO dto);
+
+    /**
+     * 季度成本分析
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getQuarterCostProfit(BiFilterDTO dto);
+
+    /**
+     * 年度成本分析
+     * @param dto
+     * @return
+     */
+    List<SeriesVO> getYearCostProfit(BiFilterDTO dto);
+
+    /**
+     * 获取事业部成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getDeptCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取平台成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getPlatformCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取站点成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getShopCostProfitRank(BiFilterDTO dto);
+
+    /**
+     * 获取人员成本利润分析排名
+     * @param dto
+     * @return
+     */
+    List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto);
 }

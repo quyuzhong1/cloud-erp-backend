@@ -2,8 +2,10 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
+import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.model.bi.entity.BiSalesMonitoringEntity;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -20,7 +22,7 @@ public interface BiSalesMonitoringService extends IService<BiSalesMonitoringEnti
      * @date: 2022/12/29 17:00
      * @param list
      */
-    void batchAdd(List<BiSalesMonitoringDTO> list);
+    Boolean batchAdd(List<BiSalesMonitoringDTO> list);
     /**
      * @description: 批量更新
      * @author Will
@@ -35,5 +37,11 @@ public interface BiSalesMonitoringService extends IService<BiSalesMonitoringEnti
      * @return List<BiSalesMonitoringDTO>
      */
     List<BiSalesMonitoringDTO> listBiSalesMonitoring();
-
+    /**
+     * @description:
+     * @author Will
+     * @date: 2022/12/30 12:29
+     * @return LinkedHashMap<String,Object>
+     */
+    LinkedHashMap<String,Object> listBiSalesMonitoringView(BiSalesMonitoringSearchDTO dto);
 }

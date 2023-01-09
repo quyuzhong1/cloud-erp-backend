@@ -2,12 +2,14 @@ package com.erp.server.bi.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.vo.CategorySubjectVO;
 
 import java.util.List;
 
@@ -98,7 +100,7 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @param
      * @return java.util.List<com.erp.model.bi.dto.CategorySubjectDTO>
      */
-    List<CategorySubjectDTO> homePage(String searchKeyword);
+    List<CategorySubjectVO> homePage(String searchKeyword);
 
     /**
      * 复制专题id
@@ -140,4 +142,13 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @return
      */
     Boolean copyDashboard(CopySubjectDTO dto);
+
+    /**
+     * 检查能否编辑
+     * @author yl
+     * @date 2023-01-05 17:47
+     * @param id
+     * @return void
+     */
+    void checkEditSubject(BaseIdDTO id);
 }

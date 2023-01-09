@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -31,6 +32,7 @@ public class SysDepartmentDTO {
     private String remark;
 
 
+    @JsonInclude(value= JsonInclude.Include.NON_NULL)
     private List<SysDepartmentDTO> childrenList;
 
 

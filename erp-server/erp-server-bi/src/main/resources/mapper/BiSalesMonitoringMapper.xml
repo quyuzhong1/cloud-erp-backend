@@ -2,6 +2,29 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.bi.mapper.BiSalesMonitoringMapper">
 
-
+    <!-- 为减少数据量，只需要查询本年度和上个月的订单 -->
+    <select id="listBiSalesMonitoringTable" resultType="com.erp.model.bi.dto.BiSalesMonitoringTableDTO">
+        select
+        doi.sku_no,
+        doi.item_name,
+        doi.brand_id,
+        doi.brand_name,
+        doi.category_id,
+        doi.category_name,
+        doio.charge_id,
+        doio.charge_name,
+        doi.new_sign,
+        doi.quantity,
+        doi.sell_price,
+        doio.platform_create_time
+        from dmp_order_item doi
+        left join dmp_order_info doio on doi.order_id = doio.id
+        where doio.platform_create_time is not null
+          and (to_char(doio.platform_create_time,'YYYY') = to_char(CURRENT_DATE,'YYYY')
+          or to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYYMM'))
+        <if test="dto.param != null and dto.param != ''">
+            ${dto.param}
+        </if>
+    </select>
 
 </mapper>

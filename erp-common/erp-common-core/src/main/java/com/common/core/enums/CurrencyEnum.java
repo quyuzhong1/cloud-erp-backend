@@ -1,6 +1,5 @@
 package com.common.core.enums;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -164,5 +163,15 @@ public enum CurrencyEnum {
         this.currencyName = currencyName;
         this.currencySymbol = currencySymbol;
 
+    }
+
+    public static CurrencyEnum getByCode(String currencyCode) {
+        CurrencyEnum[] values = values();
+        for (CurrencyEnum value : values) {
+            if (value.currencyCode.equals(currencyCode)) {
+                return value;
+            }
+        }
+        return null;
     }
 }

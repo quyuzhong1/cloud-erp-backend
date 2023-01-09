@@ -2,14 +2,11 @@ package com.erp.server.bi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.entity.BiSubjectDefaultEntity;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.server.bi.mapper.BiSubjectDefaultMapper;
 import com.erp.server.bi.service.BiSubjectDefaultService;
 import com.erp.server.bi.service.CommonService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -54,14 +51,18 @@ public class BiSubjectDefaultServiceImpl extends ServiceImpl<BiSubjectDefaultMap
     @Override
     public Boolean setDefault(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
-        List<BiSubjectEntity> subjectList = getDefault(userId);
-        if (CollectionUtils.isNotEmpty(subjectList)) {
-            throw new ServiceException(ApiError.ERROR_97014);
-        }
+        //先删除已有的
+        deleteByUserId(userId);
         BiSubjectDefaultEntity defaultSubject = new BiSubjectDefaultEntity();
         defaultSubject.setSubjectId(subjectId);
         defaultSubject.setUserId(userId);
         return this.save(defaultSubject);
+    }
+
+    private void deleteByUserId(String userId) {
+        LambdaQueryWrapper<BiSubjectDefaultEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiSubjectDefaultEntity::getUserId, userId);
+        this.remove(queryWrapper);
     }
 
 

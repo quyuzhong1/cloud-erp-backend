@@ -25,17 +25,17 @@ public class SalesCountVO extends SalesRatioVO {
     /**
      * 销量
      */
-    private Integer salesQuantity;
+    private Integer salesQuantity=0;
 
 
     /**
      * 销售额
      */
-    private BigDecimal sales;
+    private BigDecimal sales=BigDecimal.ZERO;
 
 
     /**
      *订单量
      */
-    private Integer orderCount;
+    private Integer orderCount=0;
 }

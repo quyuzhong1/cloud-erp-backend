@@ -8,11 +8,9 @@ import com.erp.model.bi.entity.BiDataSourceCustomEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.server.bi.enums.BiDataSourceCustomEnum;
 import com.erp.server.bi.enums.BiDataSourceCustomTypeEnum;
-import com.erp.server.bi.enums.DataTypeEnum;
 import com.erp.server.bi.service.BiDataSourceCustomDetailService;
 import com.erp.server.bi.service.BiDataSourceCustomService;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,13 +42,16 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
 
     private Integer importType;
 
+    private Integer dataType;
+
     public BiDataSourceCustomExcelListener(BiDataSourceCustomService biDataSourceCustomService, BiDataSourceCustomDetailService biDataSourceCustomDetailService,
-                                          List<BiDictEntity> quarterList,List<BiDictEntity> monthList,Integer importType) {
+                                          List<BiDictEntity> quarterList,List<BiDictEntity> monthList,Integer importType,Integer dataType) {
         this.biDataSourceCustomService = biDataSourceCustomService;
         this.biDataSourceCustomDetailService = biDataSourceCustomDetailService;
         this.quarterList = quarterList;
         this.monthList = monthList;
         this.importType = importType;
+        this.dataType = dataType;
         this.list = new ArrayList<>();
     }
 
@@ -63,6 +64,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         //主表数据
         BiDataSourceCustomEntity entity = new BiDataSourceCustomEntity();
         entity.setType(importType);
+        entity.setDataType(dataType);
         //年导入时的主表新增数据
         List<BiDataSourceCustomEntity> addList = new ArrayList<>();
         //年导入时的主表修改数据
@@ -72,7 +74,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         //旧数据时记录
         if (ObjectUtils.isNotEmpty(iterator)) {
             while (iterator.hasNext()) {
-                Map.Entry entry = (java.util.Map.Entry) iterator.next();
+                Map.Entry entry = iterator.next();
                 if (ObjectUtils.isEmpty(entry.getKey())) {
                     continue;
                 }
@@ -81,51 +83,35 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                 String key = headMap.get(mapKey);
                 //明细数据
                 BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
-                if (BiDataSourceCustomEnum.YEAR.getName().equals(key)) {
-                    String year = value.replace("年", "");
-                    entity.setYear(Integer.valueOf(year));
+                if (BiDataSourceCustomEnum.YEAR.getDesc().equals(key)) {
+                    String year = "";
+                    try {
+                        year = value.replace("年", "");
+                        entity.setYear(Integer.valueOf(year));
+                    } catch (Exception e){
+                        errorMsgList.add("年份格式有误");
+                    }
                     yearDate = Integer.valueOf(year);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.DATATYPE.getName().equals(key)) {
-                    Integer code = DataTypeEnum.getCodeByName(value);
-                    entity.setDataType(code);
-                    continue;
-                }
-                if (BiDataSourceCustomEnum.TARGETTYPE.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGETTYPE.getDesc().equals(key)) {
                     entity.setTargetType(value);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.TARGETNAME.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGETNAME.getDesc().equals(key)) {
                     entity.setTargetName(value);
                     continue;
                 }
-                if (BiDataSourceCustomEnum.TARGEVALUE.getName().equals(key)) {
+                if (BiDataSourceCustomEnum.TARGEVALUE.getDesc().equals(key)) {
                     entity.setTargetValue(value);
                     continue;
                 }
                 //年导入
                 if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
-
-                    String year = key.replace("年", "");
-                    try {
-                        detailEntity.setYear(Integer.valueOf(year));
-                    } catch (Exception e){
-                        errorMsgList.add("年份格式有误，例如：2022年");
-                    }
-                    detailEntity.setValue(value);
-                    detailList.add(detailEntity);
-                    //年导入时主表数据与明细数据一一对应
-                    BiDataSourceCustomEntity main = new BiDataSourceCustomEntity();
-                    BeanUtils.copyProperties(entity,main);
-                    main.setYear(Integer.valueOf(year));
-                    //根据类型、数据类型、年份、指标分类、指标名称查询
-                    BiDataSourceCustomEntity custom = biDataSourceCustomService.getCustomByParam(main);
-                    if (ObjectUtils.isEmpty(custom)) {
-                        addList.add(main);
-                    } else {
-                        main.setId(custom.getId());
-                        updateList.add(main);
+                    if ("实际值".equals(key)){
+                        detailEntity.setYear(yearDate);
+                        detailEntity.setValue(value);
+                        detailList.add(detailEntity);
                     }
                 }
                 //季度导入
@@ -191,11 +177,11 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         if (ObjectUtils.isEmpty(entity.getDataType())) {
             errorMsgList.add("数据类型输入有误");
         }
-        if (ObjectUtils.isEmpty(entity.getTargetType())) {
-            errorMsgList.add("指标分类不能为空");
-        }
         if (ObjectUtils.isEmpty(entity.getTargetName())) {
             errorMsgList.add("指标名称不能为空");
+        }
+        if (ObjectUtils.isEmpty(entity.getTargetValue())) {
+            errorMsgList.add("目标值不能为空");
         }
         String errStr = "";
         if (errorMsgList.size() > 0) {
@@ -209,9 +195,9 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         }
 
         BiDataSourceCustomEntity custom = biDataSourceCustomService.getCustomByParam(entity);
-        if (ObjectUtils.isEmpty(custom) && !BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
+        if (ObjectUtils.isEmpty(custom)) {
             addList.add(entity);
-        } else {
+        } else if (ObjectUtils.isNotEmpty(custom)){
             entity.setId(custom.getId());
             updateList.add(entity);
         }

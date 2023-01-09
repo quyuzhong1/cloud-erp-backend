@@ -6,3 +6,6 @@ spring:
 
 server:
   port: 9030
+
+logging:
+  config: classpath:logback-spring.xml

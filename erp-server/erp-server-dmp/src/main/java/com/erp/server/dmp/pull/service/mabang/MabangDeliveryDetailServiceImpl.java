@@ -131,7 +131,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
         //每次最多获取100条
-        Integer pageSize = 1000;
+        Integer pageSize = 100;
         //当前页数
         Integer pageIndex = 1;
         //总页数

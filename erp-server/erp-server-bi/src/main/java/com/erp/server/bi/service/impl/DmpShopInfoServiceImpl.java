@@ -16,16 +16,12 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiStateEnum;
 import com.erp.server.bi.mapper.DmpShopInfoMapper;
-import com.erp.server.bi.service.DmpOrderInfoService;
-import com.erp.server.bi.service.DmpShopChangeLogService;
-import com.erp.server.bi.service.DmpShopInfoService;
+import com.erp.server.bi.service.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -57,6 +53,14 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+
+    @Resource
+    private DmpRefundInfoService dmpRefundInfoService;
+
+    @Resource
+    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
+
+
 
     @Override
     public PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto) {
@@ -137,9 +141,15 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         logEntity.setEnableTimeBegin(dmpShopInfoEntity.getEnableTime());
         logEntity.setEnableTimeEnd(dto.getEnableTime());
         //新增变更记录
-        dmpShopChangeLogService.save(logEntity);
-        //更新销售记录中的启用日期后的店铺业务负责人
-        updateCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+        boolean flag = dmpShopChangeLogService.save(logEntity);
+        if (flag) {
+            //更新销售数据中的启用日期后的店铺业务负责人
+            updateSaleCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+            //更新退款数据中的启用日期后的店铺业务负责人
+            updateRefundCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+            //更新退货数据中启用日期后的店铺业务负责人
+            updateReturnOrderCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+        }
         return this.updateById(dmpShopInfoEntity);
     }
 
@@ -222,18 +232,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
 
     /**
-     * @description: 更新订单负责人
-     * @author Will
-     * @date: 2022/12/15 15:57
-     * @param platformName
-     * @param site
-     * @param shopName
-     * @param enableTime
-     * @param userId
-     * @param userName
-
+     * 更新订单负责人
      */
-    private void updateCharge(String platformName, String site, String shopName, LocalDate enableTime, String userId, String userName) {
+    private void updateSaleCharge(String platformName, String site, String shopName, LocalDate enableTime, String userId, String userName) {
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(DmpOrderInfoEntity::getChargeId,userId);
         updateWrapper.set(DmpOrderInfoEntity::getChargeName,userName);
@@ -244,6 +245,31 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpOrderInfoService.update(updateWrapper);
     }
 
+    /**
+     * 更新退款单负责人
+     */
+    private void updateRefundCharge(String platformName, String shopName, LocalDate enableTime, String userId, String userName) {
+        LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(DmpRefundInfoEntity::getChargeId,userId);
+        updateWrapper.set(DmpRefundInfoEntity::getChargeName,userName);
+        updateWrapper.eq(DmpRefundInfoEntity::getPlatformName,platformName);
+        updateWrapper.eq(DmpRefundInfoEntity::getShopName,shopName);
+        updateWrapper.ge(DmpRefundInfoEntity::getOrderTime,enableTime);
+        dmpRefundInfoService.update(updateWrapper);
+    }
+
+    /**
+     * 更新退货单负责人
+     */
+    private void updateReturnOrderCharge(String platformName, String shopName, LocalDate enableTime, String userId, String userName) {
+        LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(DmpReturnOrderInfoEntity::getChargeId,userId);
+        updateWrapper.set(DmpReturnOrderInfoEntity::getChargeName,userName);
+        updateWrapper.eq(DmpReturnOrderInfoEntity::getPlatformName,platformName);
+        updateWrapper.eq(DmpReturnOrderInfoEntity::getShopName,shopName);
+        updateWrapper.ge(DmpReturnOrderInfoEntity::getOrderTime,enableTime);
+        dmpReturnOrderInfoService.update(updateWrapper);
+    }
 
     /**
      * @description: 验证店铺名称是否存在（同一个平台、一个站点不能有相同名称店铺）

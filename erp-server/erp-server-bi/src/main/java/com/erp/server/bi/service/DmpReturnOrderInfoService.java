@@ -7,6 +7,7 @@ import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -49,4 +50,21 @@ public interface DmpReturnOrderInfoService extends IService<DmpReturnOrderInfoEn
      * @return DmpReturnOrderInfoEntity
      */
     DmpReturnOrderInfoEntity getByReturnOrderId(String returnOrderId);
+    /**
+     * @description: 导入
+     * @author Will
+     * @date: 2023/1/4 16:41
+     * @param excelFile
+     * @param importType
+     * @param response
+     * @return Boolean
+     */
+    Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    /**
+     * @description: 根据明细更新主表订单金额
+     * @author Will
+     * @date: 2023/1/4 17:11
+     * @param returnOrderId
+     */
+    void updateOrderFeeById(String returnOrderId);
 }

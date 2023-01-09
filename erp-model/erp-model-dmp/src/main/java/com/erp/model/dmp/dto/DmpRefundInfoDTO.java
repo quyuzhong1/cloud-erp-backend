@@ -47,7 +47,7 @@ public class DmpRefundInfoDTO {
     private String skuNo;
 
     /**
-     * 退货金额
+     * 退款金额
      */
     private BigDecimal refundAmount;
 
@@ -81,6 +81,11 @@ public class DmpRefundInfoDTO {
      * 退款时间
      */
     private Date refundTime;
+
+    /**
+     * 原订单时间
+     */
+    private Date orderTime;
 
     /**
      * 订单状态

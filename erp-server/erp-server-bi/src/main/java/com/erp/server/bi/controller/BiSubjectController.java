@@ -5,11 +5,15 @@ import com.erp.common.dto.base.*;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
+import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -40,11 +44,29 @@ public class BiSubjectController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:subject:paging",
+//            tableAlias = "bi_subject"
+//    )
     public ApiResult<PagingVO<SubjectPagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SubjectPagingDTO> pagingVO = this.biSubjectService.queryByPage(dto);
         return success(pagingVO);
     }
 
+
+    /**
+     * 检查能否编辑
+     */
+    @PostMapping("/checkToEdit")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "bi:subject:edit",
+//            tableAlias = "bi_subject"
+//    )
+    public void checkEditSubject(@RequestBody @Validated BaseIdDTO idDTO) {
+        biSubjectService.checkEditSubject(idDTO);
+    }
 
     /**
      * 新增专题
@@ -117,8 +139,8 @@ public class BiSubjectController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/homePage")
-    public ApiResult<List<CategorySubjectDTO>> homePage(@RequestBody @Validated BaseSearchDTO dto) {
-        List<CategorySubjectDTO> list = this.biSubjectService.homePage(dto.getSearchKeyword());
+    public ApiResult<List<CategorySubjectVO>> homePage(@RequestBody @Validated BaseSearchDTO dto) {
+        List<CategorySubjectVO> list = this.biSubjectService.homePage(dto.getSearchKeyword());
         return success(list);
     }
 

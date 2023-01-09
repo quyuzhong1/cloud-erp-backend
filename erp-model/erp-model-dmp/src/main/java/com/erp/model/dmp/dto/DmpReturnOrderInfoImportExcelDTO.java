@@ -21,43 +21,43 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
     /**
      * 退货单号
      */
-    @ExcelProperty(value = "退货单号", index = 0)
+    @ExcelProperty(value = "*退货单号", index = 0)
     private String returnOrderId;
 
     /**
      * 原订单号
      */
-    @ExcelProperty(value = "原订单号", index = 1)
+    @ExcelProperty(value = "*原订单号", index = 1)
     private String platformOrderId;
 
     /**
      * 平台名称
      */
-    @ExcelProperty(value = "平台名称", index = 2)
+    @ExcelProperty(value = "*平台名称", index = 2)
     private String platformName;
 
     /**
      * 店铺名称
      */
-    @ExcelProperty(value = "店铺名称", index = 3)
+    @ExcelProperty(value = "*店铺名称", index = 3)
     private String shopName;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "SKU", index = 4)
+    @ExcelProperty(value = "*SKU", index = 4)
     private String skuNo;
 
     /**
      * 退货数量
      */
-    @ExcelProperty(value = "退货数量", index = 5)
+    @ExcelProperty(value = "*退货数量", index = 5)
     private Integer refundNum;
 
     /**
      * 退货金额
      */
-    @ExcelProperty(value = "退货金额", index = 6)
+    @ExcelProperty(value = "*退货金额", index = 6)
     private BigDecimal orderFee;
 
 
@@ -77,20 +77,20 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
     /**
      * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
-    @ExcelProperty(value = "退货状态", index = 9)
+    @ExcelProperty(value = "*退货状态", index = 9)
     private String statusName;
 
     /**
      * 退货时间
      */
-    @ExcelProperty(value = "退货时间", index = 10)
+    @ExcelProperty(value = "*退货时间", index = 10)
     private Date returnCreateTime;
 
     /**
-     * 原订单时间
+     * 币种
      */
-    @ExcelProperty(value = "原订单时间", index = 11)
-    private Date orderTime;
+    @ExcelProperty(value = "*币种", index = 11)
+    private String currencyCode;
 
     /**
      * 错误信息

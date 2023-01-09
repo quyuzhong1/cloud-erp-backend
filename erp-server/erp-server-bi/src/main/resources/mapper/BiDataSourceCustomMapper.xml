@@ -27,7 +27,11 @@
             <if test="params.createTime_end != null ">
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
+        order by bdsc.year,bdsc.id
     </select>
 
 
@@ -35,6 +39,11 @@
         select
         bdsc.id,
         bdsc.year,
+        case when bdsc.data_type = 0 then '市场数据'
+             when bdsc.data_type = 1 then '供应链数据'
+             when bdsc.data_type = 2 then '经营数据'
+             when bdsc.data_type = 3 then '财务数据'
+             else '' end as data_type,
         bdsc.target_type,
         bdsc.target_name,
         bdsc.target_value
@@ -55,7 +64,11 @@
             <if test="params.createTime_end != null ">
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
         </where>
+        order by bdsc.year
     </select>
 
     <select id="getCustomByParams" resultType="java.util.LinkedHashMap">
@@ -68,19 +81,19 @@
         from bi_data_source_custom bdsc
         <where>
             <if test="params.dataType != null ">
-                and bdsc.data_type = #{dataType}
+                and bdsc.data_type = #{params.dataType}
             </if>
             <if test="params.type != null ">
-                and bdsc.type = #{type}
+                and bdsc.type = #{params.type}
             </if>
-            <if test="targetNameList != null and targetNameList != ''">
+            <if test="targetNameList != null and targetNameList.size() > 0">
                 and bdsc.target_name in
                 <foreach collection="targetNameList" separator="," open="(" close=")" item="item">
                     #{item}
                 </foreach>
             </if>
             <if test="params.year != null ">
-                and bdsc.year = #{year}
+                and bdsc.year = #{params.year}
             </if>
             <if test="params.targetType != null and params.targetType != ''">
                 and bdsc.target_type like concat('%',#{params.targetType},'%')

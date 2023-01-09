@@ -1,18 +1,16 @@
 package com.erp.server.bi.controller;
 
-import com.alibaba.excel.EasyExcel;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
-import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoSearchDTO;
-import com.erp.server.bi.listener.DmpReturnOrderInfoExcelListener;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.service.DmpOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import com.erp.server.bi.service.DmpReturnOrderItemService;
@@ -27,11 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
 
 /**
  * 数据源管理
@@ -56,12 +51,16 @@ public class DmpReturnOrderInfoController extends BaseController {
     @Resource
     private DmpShopInfoService dmpShopInfoService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     /**
      * 退货数据-分页查询
      *
      * @return 查询结果
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
     public ApiResult<PagingVO<DmpReturnOrderInfoDTO>> queryByPage(@RequestBody @Validated PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
         PagingVO<DmpReturnOrderInfoDTO> pagingVO = dmpReturnOrderInfoService.paging(dto);
         return success(pagingVO);
@@ -75,6 +74,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
     public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
         dmpReturnOrderInfoService.exportExcel(dto, response);
         return success();
@@ -90,24 +90,8 @@ public class DmpReturnOrderInfoController extends BaseController {
      */
     @PostMapping("/importReturnOrderFile")
     public ApiResult importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        DmpReturnOrderInfoExcelListener excelListenerUtil = new DmpReturnOrderInfoExcelListener(importType,dmpOrderInfoService, dmpReturnOrderInfoService, dmpShopInfoService,dmpReturnOrderItemService);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), DmpReturnOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<DmpReturnOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/dmpReturnOrderInfo.xlsx";
-                String name = "dmpRefundInfo";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                return failure();
-            }
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
-        }
-        return  success();
+        Boolean flag = dmpReturnOrderInfoService.importOrderFile(excelFile, importType, response);
+        return flag == true ? this.success() : this.failure();
     }
 
 

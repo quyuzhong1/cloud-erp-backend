@@ -1,9 +1,11 @@
 package com.erp.server.dmp.pull.service.mabang;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.UrlContant;
@@ -179,7 +181,9 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
         dmpShopInfoEntity.setName(shopEntity.getName());
 
         //店铺站点
-        dmpShopInfoEntity.setSite(shopEntity.getAmazonsite());
+        if(StrUtil.isNotBlank(shopEntity.getAmazonsite())){
+            dmpShopInfoEntity.setSite(shopEntity.getAmazonsite());
+        }
 
         //店铺状态
         dmpShopInfoEntity.setStatus(shopEntity.getStatus());

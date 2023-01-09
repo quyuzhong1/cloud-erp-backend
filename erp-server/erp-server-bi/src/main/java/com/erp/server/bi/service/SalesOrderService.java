@@ -2,6 +2,7 @@ package com.erp.server.bi.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 
@@ -36,7 +37,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      */
     List<SalesVO> getBySpu(BiFilterDTO dto);
 
-    List<SalesByCountryVO> getByCountry(BiFilterDTO dto);
+    XyAxesResultVO getByCountry(BiFilterDTO dto);
 
     /**
      * 一级销售模块更具平台分
@@ -44,6 +45,14 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @return
      */
     StatisticalDataVO getByPlatformRatio(BiFilterDTO dto);
+
+
+    /**
+     * 一级销售模块 TOB/TOC销售额
+     * @param dto
+     * @return
+     */
+    StatisticalDataVO byTobToc(BiFilterDTO dto);
 
     /**
      * 一级销售模块 店铺销售额
@@ -71,7 +80,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.bi.vo.SalesGroupVO>
      */
-    List<SalesGroupVO> byShopCountry(BiFilterDTO dto);
+    XyAxesResultVO byShopCountry(BiFilterDTO dto);
 
     /**
      * 二级销售模块 店铺的新/老品销售额
@@ -96,7 +105,7 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
      */
     StatisticalDataVO byCategory(BiFilterDTO dto);
 
-    List<SalesGroupVO> byShopCategory(BiFilterDTO dto);
+    XyAxesResultVO byShopCategory(BiFilterDTO dto);
 
     List<SalesCountVO> byBrand(BiFilterDTO dto);
 
@@ -135,4 +144,8 @@ public interface SalesOrderService extends IService<DmpOrderInfoEntity> {
     List<PeopleSalesRankVO> byPeopleQuarterRank(BiFilterDTO dto);
 
     List<PeopleSalesRankVO> byPeopleYearRank(BiFilterDTO dto);
+
+    List<ProductNewAndOldVO> byDeptNewAndOld(BiFilterDTO dto);
+
+    StatisticalDataVO byDate(DateFilterDTO biFilterDTO);
 }

@@ -23,6 +23,8 @@ public class SalesByCountryVO implements Serializable {
      */
     private String sku;
 
+    private String productName="";
+
     /**
      * 国家
      */
@@ -32,5 +34,5 @@ public class SalesByCountryVO implements Serializable {
     /**
      * 销售额
      */
-    private BigDecimal sales;
+    private BigDecimal sales=BigDecimal.ZERO;
 }

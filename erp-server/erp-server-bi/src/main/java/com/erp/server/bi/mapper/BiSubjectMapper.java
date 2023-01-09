@@ -8,6 +8,7 @@ import com.erp.model.bi.dto.DashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
 import com.erp.model.bi.dto.SubjectPagingDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
+import com.erp.model.bi.vo.SubjectVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,7 +24,7 @@ import java.util.List;
 public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
 
 
-    List<DashboardDTO> getDashboardFrequentlyList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("findIdList") List<String> idList,@Param("searchKeyword") String searchKeyword);
+    List<DashboardDTO> getDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("findIdList") List<String> idList,@Param("searchKeyword") String searchKeyword);
 
     List<DashboardDTO> getMyCreateDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("userId") String userId,@Param("searchKeyword") String searchKeyword);
 
@@ -31,6 +32,9 @@ public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
 
     List<String> getUserVisibleSubjectId(@Param("userId") String userId);
 
+    List<SubjectVO> getSubjectByIds(@Param("subjectIdList") List<String> subjectIdList, @Param("searchKeyword") String searchKeyword);
+
     List<SubjectDTO> getByIds(@Param("subjectIdList") List<String> subjectIdList, @Param("searchKeyword") String searchKeyword);
+
 }
 

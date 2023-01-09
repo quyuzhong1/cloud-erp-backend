@@ -105,7 +105,7 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     /**
      * 订单下单时间
      */
-    @ExcelProperty(value = "订单下单时间", index = 14)
+    @ExcelProperty(value = "*订单下单时间", index = 14)
     private Date platformCreateTime;
 
     /**
@@ -121,38 +121,44 @@ public class DmpOrderInfoImportExcelDTO implements Serializable {
     private String chargeName;
 
     /**
+     * 销售事业部
+     */
+    @ExcelProperty(value = "*销售事业部", index = 17)
+    private String deptName;
+
+    /**
      * 币种
      */
-    @ExcelProperty(value = "币种", index = 17)
+    @ExcelProperty(value = "币种", index = 18)
     private String currencyCode;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "*SKU", index = 18)
+    @ExcelProperty(value = "*SKU", index = 19)
     private String skuNo;
 
     /**
      * 品名
      */
-    @ExcelProperty(value = "*品名", index = 19)
+    @ExcelProperty(value = "*品名", index = 20)
     private String itemName;
 
     /**
      * 单价
      */
-    @ExcelProperty(value = "*单价", index = 20)
+    @ExcelProperty(value = "*单价", index = 21)
     private BigDecimal sellPrice;
 
     /**
      * 数量
      */
-    @ExcelProperty(value = "*数量", index = 21)
+    @ExcelProperty(value = "*数量", index = 22)
     private Integer quantity;
 
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误信息", index = 22)
+    @ExcelProperty(value = "错误信息", index = 23)
     private String errorMsg;
 }

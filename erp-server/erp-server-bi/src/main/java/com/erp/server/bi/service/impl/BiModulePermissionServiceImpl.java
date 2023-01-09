@@ -67,4 +67,19 @@ public class BiModulePermissionServiceImpl extends ServiceImpl<BiModulePermissio
         queryWrapper.eq(BiModulePermissionEntity::getModuleId, moduleId);
         return this.listObjs(queryWrapper,Object::toString);
     }
+
+    /**
+     * 根据用户id 查询可以看见的模块id
+     * @author yl
+     * @date 2023-01-05 17:28
+     * @param userId
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> getModuleIdsByUserId(String userId) {
+        LambdaQueryWrapper<BiModulePermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(BiModulePermissionEntity::getModuleId);
+        queryWrapper.eq(BiModulePermissionEntity::getUserId, userId);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
 }

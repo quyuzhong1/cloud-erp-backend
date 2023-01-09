@@ -1,23 +1,18 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.ShopDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,9 +25,6 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     @Autowired
     private DmpShopInfoMapper dmpShopInfoMapper;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     /**
      * 添加店铺信息
@@ -89,6 +81,9 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
+                if (StrUtil.isNotEmpty(dmpOrderInfoEntity.getSite())){
+                    dmpShopInfoEntity.setSite(dmpOrderInfoEntity.getSite());
+                }
                 this.updateShopByShopNo(dmpShopInfoEntity);
             }
         } else {
@@ -98,31 +93,27 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
 
     /**
      * 根据平台查询店铺信息
+     *
+     * @param shopNo       店铺编号
+     * @param platformSign 平台
+     * @param userDeptList
+     * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      * @Author Luo_WG
      * @Date 2022/12/13 17:48
-     * @param shopNo 店铺编号
-     * @param platformSign 平台
-     * @return java.util.List<com.erp.model.dmp.dto.ShopDTO>
      **/
     @Override
-    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign) {
+    public DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) {
         DmpShopInfoEntity req = getShopByShopNo(shopNo, platformSign);
         DmpShopInfoDTO dmpShopInfoDTO = new DmpShopInfoDTO();
-        BeanUtils.copyProperties(req, dmpShopInfoDTO);
-        List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+        BeanUtil.copyProperties(req, dmpShopInfoDTO);
 
-            List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(dmpShopInfoDTO.getChargeId())).collect(Collectors.toList());
-            List<String> deptNameList = new ArrayList<>();
-            if (collect.size() > 1) {
-                for (SysUserDeptDTO sysUserDeptDTO : collect) {
-                    deptNameList.add(sysUserDeptDTO.getDeptName());
-                }
-            }
-            if (collect.size() > 0) {
-                dmpShopInfoDTO.setChargeId(collect.get(0).getUid());
-                dmpShopInfoDTO.setChargeName(collect.get(0).getUserName());
-                dmpShopInfoDTO.setDeptName(StringUtils.join(deptNameList, ","));
-            }
+        List<SysUserDeptDTO> collect = userDeptList.stream().filter(udl -> udl.getUid().equals(req.getChargeId())).collect(Collectors.toList());
+        if (CollectionUtil.isNotEmpty(collect)) {
+            dmpShopInfoDTO.setChargeId(collect.get(0).getUid());
+            dmpShopInfoDTO.setChargeName(collect.get(0).getUserName());
+            dmpShopInfoDTO.setDeptName(collect.get(0).getDeptName());
+            dmpShopInfoDTO.setDeptId(collect.get(0).getDeptId());
+        }
         return dmpShopInfoDTO;
     }
 }

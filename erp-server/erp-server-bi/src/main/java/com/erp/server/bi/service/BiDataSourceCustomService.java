@@ -48,16 +48,17 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @param response
      * @param importType
      */
-    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType);
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response, Integer importType,Integer dataType);
 
     /**
      * @description: 根据数据类型查询所有数据指标
      * @author Will
      * @date: 2022/12/27 16:13
      * @param dataType
+     * @param dataDimension
      * @return List<String>
      */
-    List<String> listTargetNameByDataSource(Integer dataType);
+    List<String> listTargetNameByDataSource(Integer dataType,Integer dataDimension);
 
     /**
      * @description: 根据类型和数据类型查询指标分类

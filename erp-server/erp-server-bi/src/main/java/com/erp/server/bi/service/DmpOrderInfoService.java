@@ -12,7 +12,9 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 订单服务类
@@ -234,4 +236,21 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return Boolean
      */
     Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+
+    /**
+     * 通过时间统计销售额
+     * @param dto
+     * @return
+     */
+    Map<Integer, BigDecimal> statisticsSalesByDate(BiFilterDTO dto, Integer type);
+
+    /**
+     *  根据不通维度统计销售额
+     * @param dto
+     * @param groupName
+     * @return
+     */
+    Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName);
+
+    List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName);
 }

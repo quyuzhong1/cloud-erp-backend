@@ -4,6 +4,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.ReturnOrderFilterDTO;
+import com.erp.model.bi.vo.DateBarAndLineVO;
 import com.erp.model.bi.vo.DateReturnOrderVO;
 import com.erp.model.bi.vo.ReturnOrderAnalyseTableVO;
 
@@ -23,7 +24,7 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-店铺
@@ -32,7 +33,7 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-平台
@@ -50,7 +51,7 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    PagingVO<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(PagingDTO<BiFilterDTO> biFilterDTO);
+    List<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(BiFilterDTO biFilterDTO);
 
     /**
      * 退货分析-日期
@@ -59,5 +60,5 @@ public interface BiReturnOrderAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ReturnOrderAnalyseTableVo>
      **/
-    PagingVO<DateReturnOrderVO> returnOrderAnalByDate(PagingDTO<ReturnOrderFilterDTO> biFilterDTO);
+    DateBarAndLineVO returnOrderAnalByDate(ReturnOrderFilterDTO biFilterDTO);
 }

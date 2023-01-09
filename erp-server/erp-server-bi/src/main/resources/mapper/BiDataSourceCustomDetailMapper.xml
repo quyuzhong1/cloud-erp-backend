@@ -3,4 +3,32 @@
 <mapper namespace="com.erp.server.bi.mapper.BiDataSourceCustomDetailMapper">
 
 
+    <select id="listByCustomIds" resultType="com.erp.model.bi.entity.BiDataSourceCustomDetailEntity">
+        select
+            bdscd.date,
+            bdscd.week_begin,
+            bdscd.week_end,
+            bdscd.month,
+            bdscd.quarter,
+            bdscd.year,
+            bdscd.value,
+            bdscd.custom_id
+        from  bi_data_source_custom_detail bdscd
+        <where>
+            <if test="customIds != null and customIds.size() > 0">
+                and bdscd.custom_id in
+                <foreach collection="customIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by
+        bdscd.quarter,
+        bdscd.month ,
+        case bdscd.week_begin when '' then bdscd.week_begin
+        else to_char(concat(bdscd.year,'-',replace(replace(bdscd.week_begin, '月', '-'),'日',''))::timestamp,'MM-dd')
+        end ,
+        bdscd.date,
+        bdscd.id
+    </select>
 </mapper>

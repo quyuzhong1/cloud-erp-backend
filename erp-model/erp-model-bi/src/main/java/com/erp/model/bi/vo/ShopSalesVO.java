@@ -55,7 +55,7 @@ public class ShopSalesVO  implements Serializable {
 
 
     /**
-     * 客单假
+     * 客单价
      */
     private BigDecimal perCustomerTransaction;
 

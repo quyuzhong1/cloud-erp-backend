@@ -3,6 +3,8 @@ package com.erp.model.bi.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 public class MatrixVO {
@@ -14,10 +16,10 @@ public class MatrixVO {
     /**
      * 销售额
      */
-    private String sales;
+    private BigDecimal sales;
 
     /**
      * 净利润
      */
-    private String netProfit;
+    private BigDecimal netProfit;
 }

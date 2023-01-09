@@ -61,7 +61,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
     private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
-        GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
+        MabangRefundServiceImpl gyyOrderInfoService = new MabangRefundServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("order-get-refund-list");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
         jobTaskDTO.setApiCode("order-get-refund-list");
@@ -76,8 +76,8 @@ public class MabangRefundServiceImpl implements IReportSaveService {
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyDeliveryDetailEntity> orderEntities = gyyOrderInfoService.pullDate(requestDTO);
-        System.out.println(orderEntities);
+        List<RefundOrderEntity> refundOrderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        System.out.println(refundOrderEntities);
     }
 
     /**
@@ -151,8 +151,8 @@ public class MabangRefundServiceImpl implements IReportSaveService {
         }
         MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
-        //每次最多获取1000条
-        Integer pageSize = 1000;
+        //每次最多获取100条
+        Integer pageSize = 100;
         //当前页数
         Integer pageIndex = 1;
         //总页数

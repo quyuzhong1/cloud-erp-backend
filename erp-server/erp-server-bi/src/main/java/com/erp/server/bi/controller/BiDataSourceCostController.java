@@ -45,6 +45,7 @@ public class BiDataSourceCostController extends BaseController {
      * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
      */
     @PostMapping("/paging")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCostSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCostService.paging(dto);
         return success(pagingVO);
@@ -58,6 +59,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
     public ApiResult exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
         biDataSourceCostService.exportExcel(dto, response);
         return success();

@@ -54,4 +54,10 @@ public class LayoutRefModuleDTO implements Serializable {
     private String imageUrl;
 
 
+    /**
+     * 是否可见  true 可见
+     * false 不可见
+     */
+    private Boolean visible;
+
 }

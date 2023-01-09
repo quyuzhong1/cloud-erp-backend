@@ -66,11 +66,12 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
             subject.setName(name);
         }
         subject.setShareFlag(shareFlag);
+        Boolean flag = subjectService.updateById(subject);
         //如果是分享
-        if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
+        if (DashboardEnum.SHARE.getFlag().equals(shareFlag)&&flag) {
             return addSubjectShare(dto.getShareUserIdList(), subjectId);
         }
-        return true;
+        return flag;
     }
 
 

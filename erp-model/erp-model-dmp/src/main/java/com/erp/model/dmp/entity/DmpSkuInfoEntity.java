@@ -6,6 +6,7 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -141,7 +142,7 @@ public class DmpSkuInfoEntity implements Serializable {
      * 上市时间
      */
     @TableField(value = "listing_time")
-    private Date listingTime;
+    private LocalDateTime listingTime;
 
     /**
      * 物料属性

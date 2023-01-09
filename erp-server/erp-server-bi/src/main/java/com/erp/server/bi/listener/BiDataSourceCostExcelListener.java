@@ -12,6 +12,7 @@ import com.erp.model.bi.entity.BiDataSourceCostDetailEntity;
 import com.erp.model.bi.entity.BiDataSourceCostEntity;
 import com.erp.model.bi.entity.BiDictEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.server.bi.enums.BiDataSourceCostEnum;
 import com.erp.server.bi.service.BiDataSourceCostDetailService;
 import com.erp.server.bi.service.BiDataSourceCostService;
@@ -78,7 +79,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 String key = headMap.get(mapKey);
                 BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
                 if (StringUtils.isNotBlank(key))  {
-                    if (BiDataSourceCostEnum.MONTH.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.MONTH.getDesc().equals(key)) {
                         DateFormat format= new SimpleDateFormat("yyyy年M月");
                         try {
                             Date parse = format.parse(value);
@@ -88,27 +89,27 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                         }
                         continue;
                     }
-                    if (BiDataSourceCostEnum.DEPTNAME.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.DEPTNAME.getDesc().equals(key)) {
                         entity.setDeptName(value);
                         continue;
                     }
-                    if (BiDataSourceCostEnum.PLATFORMNAME.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.PLATFORMNAME.getDesc().equals(key)) {
                         entity.setPlatformName(value);
                         continue;
                     }
-                    if (BiDataSourceCostEnum.SITE.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.SITE.getDesc().equals(key)) {
                         entity.setSite(value);
                         continue;
                     }
-                    if (BiDataSourceCostEnum.SHOPNAME.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.SHOPNAME.getDesc().equals(key)) {
                         entity.setShopName(value);
                         continue;
                     }
-                    if (BiDataSourceCostEnum.CHARGENAME.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.CHARGENAME.getDesc().equals(key)) {
                         if (CollectionUtils.isNotEmpty(userList)) {
                             FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserName().equals(value)).findFirst().orElse(null);
                             if (ObjectUtils.isEmpty(findUserDTO)) {
-                                errorMsgList.add("销售员系统中不存在");
+                                errorMsgList.add("系统中不存在该负责人");
                                 continue;
                             }
                             entity.setChargeId(findUserDTO.getUserId());
@@ -116,7 +117,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                         entity.setChargeName(value);
                         continue;
                     }
-                    if (BiDataSourceCostEnum.COMBINATION.getName().equals(key)) {
+                    if (BiDataSourceCostEnum.COMBINATION.getDesc().equals(key)) {
                         entity.setCombination(value);
                         continue;
                     }
@@ -142,9 +143,29 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                     }
                 }
             }
+            if (StringUtils.isBlank(entity.getDeptName())) {
+                errorMsgList.add("销售事业部不能为空");
+            }
+            if (StringUtils.isBlank(entity.getPlatformName())) {
+                errorMsgList.add("平台名称不能为空");
+            } else {
+                SalesPlatformEnum platformEnum = SalesPlatformEnum.getByName(entity.getPlatformName());
+                if (ObjectUtils.isEmpty(platformEnum)) {
+                    errorMsgList.add("系统中不存在此平台名称");
+                }
+            }
+            if (StringUtils.isBlank(entity.getSite())) {
+                errorMsgList.add("站点不能为空");
+            }
+            if (StringUtils.isBlank(entity.getShopName())) {
+                errorMsgList.add("店铺名称不能为空");
+            }
+            if (StringUtils.isBlank(entity.getChargeName())) {
+                errorMsgList.add("负责人不能为空");
+            }
             DmpShopInfoEntity dmpShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(dmpShopInfoEntity)) {
-                errorMsgList.add("所属平台及站点的店铺系统中不存在");
+                errorMsgList.add("在平台站点中未找到该店铺");
             }
             String errStr = "";
             if (errorMsgList.size() > 0) {

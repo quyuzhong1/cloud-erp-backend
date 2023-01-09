@@ -98,7 +98,7 @@ public class BiDataSourceCustomDetailEntity implements Serializable {
     private Integer year;
 
     /**
-     * 年
+     * 值
      */
     @TableField("value")
     private String value;

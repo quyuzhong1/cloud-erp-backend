@@ -1,5 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -126,7 +128,11 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpReturnOrderInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
-                updateWrapper.set(DmpReturnOrderInfoEntity::getCleanState, 2);
+                updateWrapper.set(DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());
+                updateWrapper.set(DmpReturnOrderInfoEntity::getChargeName, dmpOrderInfoEntity.getChargeName());
+                if (ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeName())){
+                    updateWrapper.set(DmpReturnOrderInfoEntity::getCleanState, 2);
+                }
             }
             updateWrapper.set(DmpReturnOrderInfoEntity::getRetryCount, dmpReturnOrderInfoEntity.getRetryCount() + 1);
             updateWrapper.eq(DmpReturnOrderInfoEntity::getId, dmpReturnOrderInfoEntity.getId());
