@@ -2364,6 +2364,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             noExistStateList.add(TaskStateEnum.CLOSE.getCode());
             noExistStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             noExistStateList.add(TaskStateEnum.FINISH.getCode());
+
             noExistStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
             noExistStateList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
             noExistStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
