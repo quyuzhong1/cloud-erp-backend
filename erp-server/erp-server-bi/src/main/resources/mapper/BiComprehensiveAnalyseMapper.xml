@@ -4,9 +4,9 @@
 
     <select id="skuMatrix" resultType="com.erp.model.bi.vo.SkuMatrixVO">
         SELECT
-            sku.sku_no AS name,
-            SUM(doit.sell_price) AS sales,
-            SUM(droi.order_fee) + SUM(dri.refund_amount) as amount
+            CONCAT(sku.sku_no,'[', sku.name_cn, ']') AS name,
+            COALESCE(SUM(doit.sell_price), 0) AS sales,
+            COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0)as amount
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
@@ -294,11 +294,11 @@
         ORDER BY shop."name",date_part('YEAR', doi.platform_create_time)
     </select>
 
-    <select id="categoryMatrix" resultType="com.erp.model.bi.vo.MatrixVO">
+    <select id="categoryMatrix" resultType="com.erp.model.bi.vo.SkuMatrixVO">
         SELECT
-            sku.parent_category_name AS name, AS name,
-            SUM(doit.sell_price) AS sales,
-            SUM(droi.order_fee) + SUM(dri.refund_amount) as amount
+            sku.parent_category_name AS name,
+            COALESCE(SUM(doit.sell_price), 0) AS sales,
+            COALESCE(SUM(droi.order_fee) + SUM(dri.refund_amount), 0) as amount
             FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
