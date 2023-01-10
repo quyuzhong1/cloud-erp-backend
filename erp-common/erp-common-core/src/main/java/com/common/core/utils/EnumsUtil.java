@@ -4,17 +4,10 @@ import com.common.core.constant.EnumMessage;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**根据值和枚举类型可以获得枚举对象。
  * */
@@ -56,9 +49,6 @@ public class EnumsUtil {
         }
         T retobj= (T)SINGLE_ENUM_MAP.get(value);
 
-        if(retobj == null){
-            throw  new ServiceException(ApiError.ERROR_9028);
-        }
         return retobj;
     }
 
