@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
@@ -26,11 +28,13 @@ public class BomSkuDTO implements Serializable {
     /**
      * sku
      */
+    @NotBlank(message = "sku不能为空")
     private String skuNo;
 
     /**
      * 数量
      */
+    @NotNull(message = "数量不能为空")
     private Integer quantity;
 
 

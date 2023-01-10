@@ -1,13 +1,19 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BusinessNoCreateUtil;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
+import com.erp.model.plm.dto.BomSearchPagingDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
@@ -65,6 +71,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
+        bom.setSequence(maxSequence+1);
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
@@ -87,6 +94,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
 
         return saveResult;
+    }
+
+    
+    /**
+     * 分页获取bom 列表
+     * @author yl
+     * @date 2023-01-10 17:30
+     * @param dto
+     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.vo.BomPagingVO>>
+     */
+    @Override
+    public PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto) {
+        BomSearchPagingDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query,params);
+
+
+        return new PagingVO(pageData);
     }
 
 

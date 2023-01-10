@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
@@ -56,17 +55,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
      */
     private void getSaveTree(String parentSkuNo, List<BomSkuEntity> saveBatchList, BomSkuDTO item, String bomId) {
         BomSkuEntity bomRefSku = new BomSkuEntity();
-        String id = IdWorker.getIdStr();
         bomRefSku.setBomId(bomId);
         bomRefSku.setParentSkuNo(parentSkuNo);
-        bomRefSku.setId(id);
         bomRefSku.setQuantity(item.getQuantity());
         bomRefSku.setSkuNo(item.getSkuNo());
         saveBatchList.add(bomRefSku);
         List<BomSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {
             for (BomSkuDTO childBomSku : childrenList) {
-                this.getSaveTree(id, saveBatchList,childBomSku,bomId);
+                this.getSaveTree(item.getSkuNo(), saveBatchList,childBomSku,bomId);
             }
         }
     }

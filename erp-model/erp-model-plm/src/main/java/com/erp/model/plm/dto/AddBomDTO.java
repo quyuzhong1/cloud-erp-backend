@@ -4,6 +4,7 @@ import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
@@ -25,8 +26,6 @@ public class AddBomDTO implements Serializable {
     private Integer version;
 
 
-    @NotNull(message = "skuNO不能为空")
-    private String skuNo;
 
     /**
      * 类型
@@ -41,5 +40,6 @@ public class AddBomDTO implements Serializable {
     private String submitType;
 
 
+    @Valid
     private List<BomSkuDTO> skuList;
 }

@@ -3,7 +3,11 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
+import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.server.plm.service.BomInfoService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * bom 信息表(BomInfo)表控制层
@@ -35,8 +40,9 @@ public class BomInfoController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    public ApiResult queryByPage() {
-        return success();
+    public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<BomSearchPagingDTO> dto) {
+        PagingVO<List<BomPagingVO>> pagingVO=bomInfoService.paging(dto);
+        return success(pagingVO);
     }
 
 
