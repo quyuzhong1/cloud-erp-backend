@@ -15,8 +15,11 @@ import com.erp.server.bi.service.BiReturnOrderAnalyseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 退货分析相关/一级模块
@@ -120,18 +123,18 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
             listDate.add(req.getDateTime());
             DateRefundOrderRateVO dateRefundOrderRateVO = new DateRefundOrderRateVO();
             dateRefundOrderRateVO.setDateTime(req.getDateTime());
-            dateRefundOrderRateVO.setRefundOrderRate(req.getRefundOrderRate());
+            dateRefundOrderRateVO.setRefundOrderRate(null != req.getRefundOrderRate()?req.getRefundOrderRate() : BigDecimal.ZERO);
             dateRefundOrderRateVOList.add(dateRefundOrderRateVO);
 
             DateRefundRate dateRefundRate = new DateRefundRate();
             dateRefundRate.setDateTime(req.getDateTime());
-            dateRefundRate.setRefundRate(req.getRefundRate());
+            dateRefundRate.setRefundRate(null != req.getRefundRate() ? req.getRefundRate() : BigDecimal.ZERO);
             dateRefundRateList.add(dateRefundRate);
 
         });
         barAndLineVO.setDateTime(listDate);
-        barAndLineVO.setDateRefundOrderRateVOList(dateRefundOrderRateVOList);
-        barAndLineVO.setDateRefundRateList(dateRefundRateList);
+        barAndLineVO.setDateRefundOrderRateVOList(dateRefundOrderRateVOList.stream().map(DateRefundOrderRateVO::getRefundOrderRate).collect(Collectors.toList()));
+        barAndLineVO.setDateRefundRateList(dateRefundRateList.stream().map(DateRefundRate::getRefundRate).collect(Collectors.toList()));
 
         return barAndLineVO;
     }

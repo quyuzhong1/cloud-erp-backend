@@ -135,7 +135,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/saleDetailDate")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:saleDetailDate", tableAlias = "doi")
-    public ApiResult<List<SaleDetailVO>> saleDetailDate(@RequestBody @Validated SkuFilterDTO biFilterDTO) {
+    public ApiResult<List<SaleDetailVO>> saleDetailDate(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
         return success(saleDetailVOList);
     }

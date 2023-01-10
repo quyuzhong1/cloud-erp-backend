@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -138,13 +139,15 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
 
     /**
      * 查询sku年销售额
+     *
+     * @param startTime startDate
+     * @param endTime   endDate
+     * @param dateType
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
-     * @param startTime startDate
-     * @param endTime endDate
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku);
+    List<SkuYearSaleAmountVO> dateYearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku, @Param("dateType") String dateType);
 
     /**
      * 根据sku查询年销售额
@@ -154,17 +157,19 @@ public interface BiComprehensiveAnalyseMapper extends BaseMapper<DmpOrderInfoEnt
      * @param endTime endDate
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    BigDecimal yearSaleAmountBySku(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku);
+    BigDecimal yearSaleAmountBySku(@Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime, @Param("sku") String sku);
 
     /**
      * 根据时间查询退货金额
+     *
+     * @param startTime startDate
+     * @param endTime   endDate
+     * @param dateType
+     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      * @Author Luo_WG
      * @Date 2022/12/27 10:41
-     * @param startTime startDate
-     * @param endTime endDate
-     * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SkuYearSaleAmountVO> dateReturnOrderAmountByDate(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku);
+    List<SkuYearSaleAmountVO> dateReturnOrderAmountByDate(@Param("startTime") String startTime, @Param("endTime") String endTime, @Param("sku") String sku,@Param("dateType") String dateType);
 
     /**
      * SKU日期销售额趋势图-日
