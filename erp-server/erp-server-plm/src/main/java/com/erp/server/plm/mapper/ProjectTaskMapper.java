@@ -130,5 +130,18 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProjectTaskEntity>
      **/
     List<ProjectTaskEntity> getProjectTaskByProductId(@Param("showDTO") ProductTaskCountShowDTO showDTO);
+
+    /**
+     * 分配给我待审额
+     * @param query
+     * @param userId
+     * @param notStateList
+     * @param params
+     * @param processInstanceIds
+     * @return
+     */
+    IPage<TaskPagingShowDTO> toMeWaitAuditProductTaskList(Page query, @Param("userId")String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,@Param("processInstanceIdList") List<String> processInstanceIds);
+
+    IPage<TaskPagingShowDTO> toMeWaitAuditPlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params,@Param("startTime") Date startTime, @Param("endTime") Date endTime,@Param("processInstanceIdList") List<String> processInstanceIds);
 }
 
