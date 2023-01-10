@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.EnumMessage;
 import com.common.core.utils.EnumsUtil;
 import com.common.core.utils.OperationLogUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -104,7 +105,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 }
                 Class<?> aClass = null;
                 try {
-                     aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
+                    aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
                 } catch (ClassNotFoundException e) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
@@ -113,10 +114,20 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
                 if (StringUtils.isNotBlank(oldValue)) {
-                    oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getName();
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        oldValue = enumObject.getName();
+                    } else {
+                        oldValue = "";
+                    }
                 }
                 if (StringUtils.isNotBlank(newValue)) {
-                    newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getName();
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        newValue = enumObject.getName();
+                    } else {
+                        newValue = "" ;
+                    }
                 }
 
             } else if (type == 3) {//字典
@@ -169,12 +180,12 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setClassPath(classPath)
-              .setBusinessId(businessId)
-              .setPid(pid)
-              .setContent(content)
-              .setOperation("新增信息")
-              .setCreateUserId(userId)
-              .setCreateUserName(userName);
+                .setBusinessId(businessId)
+                .setPid(pid)
+                .setContent(content)
+                .setOperation("新增信息")
+                .setCreateUserId(userId)
+                .setCreateUserName(userName);
         return this.save(entity);
     }
 
