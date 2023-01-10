@@ -3,14 +3,13 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.sys.dto.BatchSysDepartUserDTO;
-import com.erp.model.sys.dto.DepartmentSearchDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -20,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -126,7 +126,28 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         return false;
     }
 
+    @Override
+    public SysDepartmentUserNumberDTO getByUserId(String id) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentUserEntity::getUserId,id);
+        SysDepartmentUserEntity sysDepartmentUserEntity = this.getOne(queryWrapper);
+        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO();
+        if (ObjectUtils.isNotEmpty(sysDepartmentUserEntity)) {
+            BeanMapperUtils.copy(sysDepartmentUserEntity,dto);
+        }
+        return dto;
+    }
 
+    @Override
+    public List<SysDepartmentUserNumberDTO> listByDepartmentIds(List<String> departmentIdList) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIdList);
+        List<SysDepartmentUserEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return BeanMapperUtils.copyList(SysDepartmentUserNumberDTO.class, list);
+    }
 
 
     public void removeDepartmentUser(String departmentId, Set<String> userIds) {

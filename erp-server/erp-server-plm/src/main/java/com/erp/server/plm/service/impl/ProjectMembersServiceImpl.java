@@ -4,12 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
@@ -17,11 +18,13 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.DistributionTypeEnum;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -156,6 +159,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
             String userName = "";
             if (user != null) {
+
+
                 userName = user.getUserName();
             }
             entity.setMemberName(userName);
@@ -172,6 +177,30 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             List<String> membersTableIds = addList.stream().map(ProjectMembersEntity::getId).collect(Collectors.toList());
             roleRefMemberService.saveRef(membersTableIds, dto.getRoleId(), dto.getProductId());
         }
+        ProjectRoleEntity projectRoleEntity = projectRoleService.getById(dto.getRoleId());
+        if (ObjectUtils.isEmpty(projectRoleEntity)) {
+            throw new ServiceException(ApiError.ERROR_9021);
+        }
+        //成员新增成功后，需要更新产品下面的待审核任务
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
+        if (CollectionUtils.isNotEmpty(projectTaskList)) {
+            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType()) && projectRoleEntity.getName().equals(obj.getRoleName()) && !TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_ING.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(obj.getStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(list)) {
+                list.forEach(obj -> {
+                    if (StringUtils.isNotBlank(obj.getChargeId())) {
+                        List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                        for (String userId :dto.getUserIdList()) {
+                            if (!chargetIds.contains(userId)) {
+                                chargetIds.add(userId);
+                            }
+                        }
+                        obj.setChargeId(StringUtils.join(chargetIds,","));
+                    }
+                });
+                projectTaskService.updateBatchById(list);
+            }
+        }
+
         return flag;
 
     }

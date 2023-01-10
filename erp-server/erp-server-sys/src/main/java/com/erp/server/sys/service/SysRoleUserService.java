@@ -41,5 +41,7 @@ public interface SysRoleUserService extends IService<SysRoleUserEntity> {
     boolean saveBatchRoleUser(BatchSaveRoleUserDTO dto);
 
     void copyRoleUser(String copyRoleId, String newRoleId);
+
+    List<SysRoleUserEntity> roleUserList(String roleId);
 }
 

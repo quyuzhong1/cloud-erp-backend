@@ -49,7 +49,23 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("charge_name")
     private String chargeName;
 
+    /**
+     * 角色id
+     */
+    @TableField("role_id")
+    private String roleId;
 
+    /**
+     * 角色名称
+     */
+    @TableField("role_name")
+    private String roleName;
+
+    /**
+     * 分配类型（0角色，1人员）
+     */
+    @TableField("distribution_type")
+    private Integer distributionType;
 
     /**
      * 计划开始时间
@@ -185,4 +201,16 @@ public class ProjectTaskEntity implements Serializable {
      */
     @TableField(exist=false)
     private Integer isfinish;
+
+    /**
+     * 审核角色id 多个以逗号分割
+     */
+    @TableField("approval_role_id")
+    private String approvalRoleId;
+
+    /**
+     * 审核分配类型（0角色，1人员，2上级人员负责人）
+     */
+    @TableField("approval_distribution_type")
+    private Integer approvalDistributionType;
 }

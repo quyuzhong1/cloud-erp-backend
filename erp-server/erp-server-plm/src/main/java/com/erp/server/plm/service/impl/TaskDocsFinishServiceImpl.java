@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -335,28 +336,43 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-11-14 18:29
      */
     public Boolean startChangeDocsProcess(String userId, ProjectTaskEntity taskEntity) {
-        //这里需要启动一个变更流程
-        BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
+        //任务类型
+        Integer taskType = taskEntity.getType();
+        List<List<String>> membersIds = new ArrayList<>();
+        BusinessProcessEntity businessProcess ;
+        //这里需要启动一个变更流程,如果是评审任务则调用文档变更流程，一般任务采用原有流程
+        if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
+            String approvalUserId = taskEntity.getApprovalUserId();
+            if (StringUtils.isEmpty(approvalUserId)) {
+                throw new ServiceException(ApiError.ERROR_95045);
+            }
+            List<String> approvalUserIdList = Arrays.stream(approvalUserId.split("|")).collect(Collectors.toList());
+            for (String userIds:approvalUserIdList) {
+                List<String> userIdList = Arrays.stream(userIds.split(",")).collect(Collectors.toList());
+                membersIds.add(userIdList);
+            }
+            businessProcess = businessProcessService.getById(taskEntity.getBusinessProcessId());
+        } else {
+            //如果是 评审任务 就是任务负责人
+            String approvalUserId = taskEntity.getChargeId();
+            if (StringUtils.isEmpty(approvalUserId)) {
+                throw new ServiceException(ApiError.ERROR_95045);
+            }
+            List<String> userIdList = Arrays.asList(approvalUserId.split(","));
+            membersIds.add(userIdList);
+
+            businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
+        }
         StartProcessDTO startProcess = new StartProcessDTO();
         startProcess.setUserId(userId);
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
         startProcess.setBusinessKey(businessProcess.getBusinessType());
         Map<String, Object> parameterMap = new HashMap<>();
-        //任务类型
-        Integer taskType = taskEntity.getType();
-        String approvalUserId = "";
-        //如果是一般任务就是任务自定义审核人审核
-        if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
-            approvalUserId = taskEntity.getApprovalUserId();
-        } else {
-            //如果是 评审任务 就是任务负责人
-            approvalUserId = taskEntity.getChargeId();
+        String param = businessProcess.getParam();
+        List<String> paramList = Arrays.stream(param.split(",")).collect(Collectors.toList());
+        for (int i = 0; i < paramList.size(); i++) {
+            parameterMap.put(paramList.get(i), membersIds.get(i));
         }
-        if (StringUtils.isEmpty(approvalUserId)) {
-            throw new ServiceException(ApiError.ERROR_95045);
-        }
-        List<String> membersIds = Arrays.asList(approvalUserId.split(","));
-        parameterMap.put("memberChargeList", membersIds);
         startProcess.setParameterMap(parameterMap);
         ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
         String processId = processResult.getProcessId();

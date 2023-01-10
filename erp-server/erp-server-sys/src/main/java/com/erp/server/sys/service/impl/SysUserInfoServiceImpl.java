@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -77,7 +78,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private MailService mailService;
 
     @Resource
-    private SysMenuService sysMenuService;
+    private SysDepartmentUserService sysDepartmentUserService;
+
+    @Resource
+    private SysDepartmentService sysDepartmentService;
 
 
     @Resource
@@ -778,5 +782,59 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<SysUserDeptDTO> getUserDeptList(){
         return baseMapper.getUserDeptList();
+    }
+
+
+    @Override
+    public List<UserDTO> listSuperiorByUserId(String id) {
+        List<UserDTO> parentList = new ArrayList<>();
+        SysUserInfoEntity sysUserInfoEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(sysUserInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_9011);
+        }
+        SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getByUserId(id);
+        if (ObjectUtils.isEmpty(dto) || StringUtils.isBlank(dto.getDepartmentId())) {
+            throw new ServiceException(ApiError.ERROR_9029);
+        }
+        //上级部门
+        List<String> departmentIds = sysDepartmentService.getDepartmentIds(dto.getDepartmentId());
+        if (CollectionUtils.isEmpty(departmentIds)) {
+            return parentList;
+        }
+        //去除负责人本身部门
+        List<String> departmentIdList = departmentIds.stream().filter(obj -> !obj.equals(dto.getDepartmentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(departmentIdList)) {
+            return parentList;
+        }
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listByDepartmentIds(departmentIdList);
+        if (CollectionUtils.isEmpty(sysDepartmentUserNumberDTOS)) {
+            return parentList;
+        }
+        List<String> userIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserNumberDTO::getUserId).collect(Collectors.toList());
+        List<SysUserInfoEntity> sysUserInfoList = this.listByIds(userIds);
+        if (CollectionUtils.isEmpty(sysUserInfoList)) {
+            return parentList;
+        }
+        return BeanMapperUtils.copyList(UserDTO.class,sysUserInfoList);
+    }
+
+    @Override
+    public List<UserDTO> listSuperiorByRoleId(String roleId) {
+        List<UserDTO> resultList = new ArrayList<>();
+        List<SysRoleUserEntity> sysRoleUserList = sysRoleUserService.roleUserList(roleId);
+        if (CollectionUtils.isEmpty(sysRoleUserList)) {
+            return new ArrayList<>();
+        }
+        sysRoleUserList.forEach(obj ->{
+            List<UserDTO> userDTOS = this.listSuperiorByUserId(obj.getUserId());
+            if (CollectionUtils.isNotEmpty(userDTOS)) {
+                resultList.addAll(userDTOS);
+            }
+        });
+        if (CollectionUtils.isEmpty(resultList)) {
+            return resultList;
+        }
+        List<UserDTO> list = resultList.stream().distinct().collect(Collectors.toList());
+        return list;
     }
 }

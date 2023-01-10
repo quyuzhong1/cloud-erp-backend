@@ -143,4 +143,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return void
      */
     void skuChangeResult(StateDTO dto);
+
+    /**
+     * @description: 根据产品id查询任务
+     * @author Will
+     * @date: 2023/1/10 10:54
+     * @param productId
+     * @return List<ProjectTaskEntity>
+     */
+    List<ProjectTaskEntity> listByProductId(String productId);
 }

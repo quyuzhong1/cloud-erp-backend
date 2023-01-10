@@ -63,6 +63,18 @@ public class TemplateTaskEntity implements Serializable {
     private String approvalUserId;
 
     /**
+     * 审核角色id 多个以逗号分割
+     */
+    @TableField("approval_role_id")
+    private String approvalRoleId;
+
+    /**
+     * 审核分配类型（0角色，1人员，2上级人员负责人）
+     */
+    @TableField("approval_distribution_type")
+    private Integer approvalDistributionType;
+
+    /**
      * j计划结束时间
      */
     @TableField("plan_end_time")
@@ -158,5 +170,23 @@ public class TemplateTaskEntity implements Serializable {
      */
     @TableField("is_milepost")
     private Integer isMilepost;
+
+    /**
+     * 角色id
+     */
+    @TableField("role_id")
+    private String roleId;
+
+    /**
+     * 角色名称
+     */
+    @TableField("role_name")
+    private String roleName;
+
+    /**
+     * 分配类型（0角色，1人员）
+     */
+    @TableField("distribution_type")
+    private Integer distributionType;
 
 }

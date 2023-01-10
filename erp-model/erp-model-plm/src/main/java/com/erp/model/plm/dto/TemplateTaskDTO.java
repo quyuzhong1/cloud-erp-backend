@@ -55,6 +55,12 @@ public class TemplateTaskDTO implements Serializable {
         private String chargeName;
 
         /**
+         * 分配类型（0角色，1人员）
+         */
+        @NotNull(message = "分配类型不能为空")
+        private Integer distributionType;
+
+        /**
          * 计划开始时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
@@ -119,14 +125,29 @@ public class TemplateTaskDTO implements Serializable {
         /**
          * 审核人集合
          */
-        private List<UserInfoDTO> approvalUserIds;
+        private List<List<String>> approvalUserIds;
+
+        /**
+         * 审核角色集合
+         */
+        private List<List<String>> approvalRoleIds;
+
+        /**
+         * 审核分配类型（0角色，1人员，2上级人员负责人）
+         */
+        private Integer approvalDistributionType;
 
         /**
          * 负责人id
          */
-        @NotNull(message = "任务负责人集合不能为空")
-        @Size(min = 1,message = "负责人至少有一个")
+        @Size(min = 1,message = "分配负责人至少有一个")
         private List<String> chargeIds;
+
+        /**
+         * 角色id
+         */
+        @Size(min = 1,message = "分配角色至少有一个")
+        private List<String> roleIds;
 
         /**
          * 设置里程碑(0否，1是)
