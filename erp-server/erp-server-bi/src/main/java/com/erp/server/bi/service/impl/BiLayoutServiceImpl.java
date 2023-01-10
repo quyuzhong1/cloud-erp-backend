@@ -194,6 +194,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //布局表
         List<LayoutDetailsDTO> layoutDetailsList = dto.getLayoutDetailsList();
 
+        if (CollectionUtils.isEmpty(layoutDetailsList)) {
+            throw new ServiceException(ApiError.ERROR_97020);
+        }
         //删除布局主题关系
         subjectRefLayoutService.deleteBySubjectId(subjectId);
         //删除 模块与布局关系表
@@ -311,7 +314,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     public Boolean addSubject(AddTotalSubjectDTO dto) {
         List<LayoutDTO> layoutList = dto.getLayoutList();
         if (CollectionUtils.isEmpty(layoutList)) {
-            throw new ServiceException(ApiError.ERROR_95090);
+            throw new ServiceException(ApiError.ERROR_97020);
         }
         SubjectDTO subject = new SubjectDTO();
         String categoryId = dto.getCategoryId();
