@@ -16,7 +16,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;; #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -546,7 +546,7 @@
                 AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.platform_create_time &lt; #{params.endTime}
+                AND o.platform_create_time &lt;= #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
