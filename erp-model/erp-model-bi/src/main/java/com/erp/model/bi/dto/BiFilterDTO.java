@@ -10,10 +10,12 @@ import org.apache.commons.collections.CollectionUtils;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
  * BI 筛选条件
+ *
  * @author Cloud
  */
 @Data
@@ -28,23 +30,25 @@ public class BiFilterDTO extends PermissionsDTO {
      * 对应枚举 TimeTypeEnum
      */
     @NotNull(message = "时间类型不能为空")
-    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class )
+    @NotNull(message = "时间类型不能为空", groups = SelectTargetModule.class)
     private Integer timeType;
 
     /**
      * 开始日期
      */
     @NotNull(message = "开始时间不能为空")
-    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class )
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @NotNull(message = "开始时间不能为空", groups = SelectTargetModule.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
+
+
 
     /**
      * 结束日期
      */
     @NotNull(message = "结束时间不能为空")
-    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class )
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @NotNull(message = "结束时间不能为空", groups = SelectTargetModule.class)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endTime;
 
     /**
@@ -96,12 +100,19 @@ public class BiFilterDTO extends PermissionsDTO {
     private List<String> userId;
 
     /**
-     *是否可以支持源币种
+     * 是否可以支持源币种
+     *
      * @param dto
      * @return
      */
-    public static Boolean validOriginalCurrency(BiFilterDTO dto){
+    public static Boolean validOriginalCurrency(BiFilterDTO dto) {
         return CollectionUtils.isNotEmpty(dto.getSite()) || CollectionUtils.isNotEmpty(dto.getSku()) || CollectionUtils.isNotEmpty(dto.getShopName());
+    }
+
+
+
+    public LocalDateTime getEndTime() {
+        return LocalDateTime.of(endTime.plusDays(1).toLocalDate(), LocalTime.MIN);
     }
 
     /**
@@ -120,6 +131,7 @@ public class BiFilterDTO extends PermissionsDTO {
     private String rankKey;
 
 
-    public interface SelectTargetModule{}
+    public interface SelectTargetModule {
+    }
 
 }

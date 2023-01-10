@@ -430,7 +430,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         String shareFlag = dto.getShareFlag();
+        Integer isFrequently=dto.getIsFrequently();
         copySubject.setName(name);
+        copySubject.setIsFrequently(isFrequently);
         copySubject.setId(newSubjectId);
         copySubject.setShareFlag(shareFlag);
         copySubject.setCreateUserId(userId);
