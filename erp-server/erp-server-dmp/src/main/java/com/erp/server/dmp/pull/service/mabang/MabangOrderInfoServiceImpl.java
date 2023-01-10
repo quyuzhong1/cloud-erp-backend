@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.mabang;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
@@ -37,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 马帮订单
@@ -46,6 +48,8 @@ import java.util.*;
 @SaveData(method = PlatformApiEnum.ORDER_GET_ORDER_LIST)
 public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
+    private static final Integer NOT_SHIPPED_STATUS = 6;
+    private static final Integer NOT_UNSHIPPED_STATUS = 7;
     @Resource
     private MongoService mongoService;
 
@@ -57,9 +61,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
-    @Resource
-    private DmpShopInfoService dmpShopInfoService;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -81,7 +82,23 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
         List<OrderEntity> orderEntities = getOrderInfoService.pullDate(requestDTO);
-        System.out.println(orderEntities);
+        orderEntities.stream().peek(x -> System.out.println(StrUtil.format("{},{},{}",x.getSalesRecordNumber(),getOrderString(x.getOrderStatus()),  x.getPlatformId()))).collect(Collectors.toList());
+//        System.out.println(orderEntities);
+    }
+
+    private static String getOrderString(Integer orderStatus) {
+        switch (orderStatus){
+            case 2:
+                return "配货中";
+            case 3:
+                return "已发货";
+            case 4 :
+                return "已完成";
+            case 5 :
+                return "已作废";
+            default:
+                return orderStatus.toString();
+        }
     }
 
     /**
@@ -163,13 +180,15 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         Integer pageIndex = 1;
         //总页数
         Integer pageCount = 1;
+        Integer status = NOT_SHIPPED_STATUS;
         HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        while (pageIndex <= pageCount) {
+        while (pageIndex <= pageCount || NOT_SHIPPED_STATUS.equals(status)) {
             Map<String, Object> paramsMap = new HashMap();
             paramsMap.put("updateTimeStart", st);
             paramsMap.put("updateTimeEnd", sd);
             paramsMap.put("page", pageIndex);
             paramsMap.put("pageSize", pageSize);
+            paramsMap.put("status",status);
 
             // 封装传参数据
             Map<String, Object> datas = new HashMap();
@@ -219,6 +238,11 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                 throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====详情请看错误表");
             }
             pageIndex++;
+            if (pageIndex > pageCount && NOT_SHIPPED_STATUS.equals(status)) {
+                status = NOT_UNSHIPPED_STATUS;
+                pageIndex = 1;
+                pageCount = 1;
+            }
         }
 
         return infoArrayList;
