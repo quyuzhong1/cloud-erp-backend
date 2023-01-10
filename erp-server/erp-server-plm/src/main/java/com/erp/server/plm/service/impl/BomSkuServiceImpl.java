@@ -46,7 +46,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     /**
      * 获取到保存的数据 树结构
      *
-     * @param parentId      父级id
+     * @param
      * @param saveBatchList 对应保存的实体
      * @param item          具体的参数
      * @param bomId         bom 表id
@@ -54,14 +54,14 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
      * @author yl
      * @date 2023-01-09 14:30
      */
-    private void getSaveTree(String parentId, List<BomSkuEntity> saveBatchList, BomSkuDTO item, String bomId) {
+    private void getSaveTree(String parentSkuNo, List<BomSkuEntity> saveBatchList, BomSkuDTO item, String bomId) {
         BomSkuEntity bomRefSku = new BomSkuEntity();
         String id = IdWorker.getIdStr();
         bomRefSku.setBomId(bomId);
-        bomRefSku.setPid(parentId);
+        bomRefSku.setParentSkuNo(parentSkuNo);
         bomRefSku.setId(id);
         bomRefSku.setQuantity(item.getQuantity());
-        bomRefSku.setSku(item.getSku());
+        bomRefSku.setSkuNo(item.getSkuNo());
         saveBatchList.add(bomRefSku);
         List<BomSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {

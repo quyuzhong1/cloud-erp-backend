@@ -25,6 +25,9 @@ public class AddBomDTO implements Serializable {
     private Integer version;
 
 
+    @NotNull(message = "skuNO不能为空")
+    private String skuNo;
+
     /**
      * 类型
      */

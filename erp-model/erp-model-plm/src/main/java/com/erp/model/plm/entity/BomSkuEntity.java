@@ -48,11 +48,11 @@ public class BomSkuEntity implements Serializable {
     /**
      * 父级id '0' 是第一级
      */
-    private String pid;
+    private String parentSkuNo;
     /**
      * sku
      */
-    private String sku;
+    private String skuNo;
     /**
      * bom 表id
      */
