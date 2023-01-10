@@ -6,6 +6,7 @@ import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -88,6 +89,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      * @Date 2022/11/14 21:25
      * @return void
      **/
+    @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem) {
         for (DmpOrderItemEntity orderItemBean : orderItem) {
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
