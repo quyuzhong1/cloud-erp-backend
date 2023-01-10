@@ -56,9 +56,6 @@ public class EnumsUtil {
         }
         T retobj= (T)SINGLE_ENUM_MAP.get(value);
 
-        if(retobj == null){
-            throw  new ServiceException(ApiError.ERROR_9028);
-        }
         return retobj;
     }
 
