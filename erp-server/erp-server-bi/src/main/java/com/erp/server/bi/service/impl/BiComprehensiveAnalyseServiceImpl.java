@@ -1,15 +1,10 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
-import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
@@ -20,18 +15,10 @@ import com.erp.server.bi.service.DmpShopInfoService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.time.*;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 @Service
 public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensiveAnalyseMapper, DmpOrderInfoEntity> implements BiComprehensiveAnalyseService {
@@ -407,37 +394,28 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @Override
-    public List<SaleDetailVO> saleDetailDate(SkuFilterDTO biFilterDTO) {
+    public List<SaleDetailVO> saleDetailDate(SkuDateFilterDTO biFilterDTO) {
         //获取销售额
+        biFilterDTO.setSku(Arrays.asList(biFilterDTO.getSkuNo()));
         TargetSaleSumVO targetSaleSumVO = dmpOrderInfoService.sumSales(biFilterDTO);
 
         //查询去年sku销售信息
-        Date date = DateUtil.addDateYears(new Date(), -1);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        Integer year = calendar.get(Calendar.YEAR);//获取年
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
-        String startTime = sdf.format(DateUtil.getYearFirst(year));
-        String endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo());
+        LocalDateTime startTime = LocalDateTime.of(LocalDateTime.now().minusYears(1).toLocalDate(), LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(LocalDateTime.now().minusYears(1).toLocalDate(), LocalTime.MAX);
+        biFilterDTO.setDateType(StrUtil.isNotBlank(biFilterDTO.getDateType()) ? biFilterDTO.getDateType() : "DAY");
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.dateYearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
         BigDecimal yearSakeAmount = baseMapper.yearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo());
 
         //查询前年sku销售信息
-        date = DateUtil.addDateYears(new Date(), -2);
-        calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        year = calendar.get(Calendar.YEAR);//获取年
-        startTime = sdf.format(DateUtil.getYearFirst(year));
-        endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo());
-        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(startTime, endTime, biFilterDTO.getSkuNo());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.dateYearSaleAmountBySku(startTime.minusYears(1), endTime.minusYears(1), biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
+        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(startTime.minusYears(1), endTime.minusYears(1), biFilterDTO.getSkuNo());
 
         Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
         Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
         String start = DateUtil.getRingRatioDate(endDate, startDate);
         //设置时间格式
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.dateReturnOrderAmountByDate(start, f.format(startDate), biFilterDTO.getSkuNo());
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.dateReturnOrderAmountByDate(start, f.format(startDate), biFilterDTO.getSkuNo(), biFilterDTO.getDateType());
 
         //组装近两年销售额信息
         List<SaleDetailVO> saleDetailList = baseMapper.saleDetailDate(biFilterDTO);
@@ -457,6 +435,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount,4,BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
                 }
             }else {
+                saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
                 saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
             //计算前年sku销售额
