@@ -1892,7 +1892,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam(searchParamDTO.getParam());
+        searchParamDTO.getParams().setParam("");
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
