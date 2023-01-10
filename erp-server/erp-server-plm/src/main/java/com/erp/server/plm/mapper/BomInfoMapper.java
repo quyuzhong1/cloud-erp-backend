@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
-    
 
+    Integer getMaxSequence();
 }
 

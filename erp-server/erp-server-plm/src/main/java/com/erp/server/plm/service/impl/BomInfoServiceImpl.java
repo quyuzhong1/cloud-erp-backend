@@ -2,12 +2,14 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BusinessNoCreateUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.mapper.BomInfoMapper;
@@ -53,14 +55,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(bomSkuList)) {
             throw new ServiceException(ApiError.ERROR_95094);
         }
-        //获取到
-        //   String serialNumber = getSerialNumber();
-
+        //获取到最大的序号
+        Integer maxSequence = getMaxSequence();
+        //获取到 编号
+        String serialNumber = BusinessNoCreateUtil.getBusinessNo(BomConstant.BOM, maxSequence);
         BomInfoEntity bom = new BomInfoEntity();
         String bomId = IdWorker.getIdStr();
         bom.setType(dto.getType());
         bom.setVersion(dto.getVersion());
         bom.setId(bomId);
+        bom.setSerialNumber(serialNumber);
         String submitAudit = BomConstant.SUBMIT_AUDIT;
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
@@ -77,10 +81,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomSkuService.saveBomSku(bomId, bomSkuList);
 
             //添加 bom的操作日志
-            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(),"");
+            String operateContent = String.format(BomOperateContent.ADD, serialNumber);
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(),operateContent);
 
         }
 
         return saveResult;
+    }
+
+
+    /**
+     * 获取到最大的编号
+     *
+     * @param
+     * @return java.lang.Integer
+     * @author yl
+     * @date 2023-01-10 14:58
+     */
+    private Integer getMaxSequence() {
+        return baseMapper.getMaxSequence();
     }
 }

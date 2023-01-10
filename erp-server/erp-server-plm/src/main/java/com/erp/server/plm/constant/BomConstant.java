@@ -11,10 +11,13 @@ public interface BomConstant {
     /**
      * 提交审核
      */
-    String SUBMIT_AUDIT="submitAudit";
+    String SUBMIT_AUDIT = "submitAudit";
 
     /**
      * 创建
      */
-    String CREATE="create";
+    String CREATE = "create";
+
+
+    String BOM = "BOM";
 }

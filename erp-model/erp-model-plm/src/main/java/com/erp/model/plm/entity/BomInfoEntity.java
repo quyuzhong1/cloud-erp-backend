@@ -39,7 +39,7 @@ public class BomInfoEntity implements Serializable {
     /**
      * 更改人
      */
-    @TableField(value = "update_user_id",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
     /**
      * 编号
@@ -53,6 +53,11 @@ public class BomInfoEntity implements Serializable {
      * 状态
      */
     private Integer state;
+
+    /**
+     *
+     */
+    private Integer sequence;
     /**
      * 版本
      */
@@ -61,7 +66,6 @@ public class BomInfoEntity implements Serializable {
      * 备注
      */
     private String remark;
-
 
 
 }

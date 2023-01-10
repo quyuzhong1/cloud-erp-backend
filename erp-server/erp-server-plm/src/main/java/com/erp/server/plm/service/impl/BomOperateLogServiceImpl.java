@@ -14,19 +14,24 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, BomOperateLogEntity> implements BomOperateLogService {
-   
 
- /**
-  * 保存 bom 的操作记录
-  * @author yl
-  * @date 2023-01-09 17:24
-  * @param bomId
-  * @param operateType
-  * @param content
-  * @return void
-  */
+
+    /**
+     * 保存 bom 的操作记录
+     *
+     * @param bomId
+     * @param operateType
+     * @param content
+     * @return void
+     * @author yl
+     * @date 2023-01-09 17:24
+     */
     @Override
     public void saveOperate(String bomId, String operateType, String content) {
-        
+        BomOperateLogEntity operateLog = new BomOperateLogEntity();
+        operateLog.setBomId(bomId);
+        operateLog.setContent(content);
+        operateLog.setType(operateType);
+        this.save(operateLog);
     }
 }
