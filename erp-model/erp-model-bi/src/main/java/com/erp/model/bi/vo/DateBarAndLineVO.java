@@ -20,7 +20,7 @@ public class DateBarAndLineVO {
     private List<BigDecimal> dateRefundOrderRateVOList;
 
     /**
-     * 退款率
+     * 退货量
      */
-    private List<BigDecimal> dateRefundRateList;
+    private List<Integer> dateRefundQuantityList;
 }
