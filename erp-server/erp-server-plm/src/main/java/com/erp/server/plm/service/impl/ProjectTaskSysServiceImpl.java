@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -60,6 +61,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private TaskRefSkuConfigService taskRefSkuConfigService;
 
+    @Autowired
+    private TemplateRoleService templateRoleService;
 
     @Override
     @Transactional
@@ -73,6 +76,20 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         BeanMapper.copy(dto, entity);
         List<String> chargeIds = dto.getChargeIds();
 
+        //任务分配类型处理
+        if (MathUtil.ZERO.equals(dto.getDistributionType())) {//分配类型为角色
+            List<String> roleIds = dto.getRoleIds();
+            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
+            entity.setRoleId(String.join(",", roleIds));
+            if (CollectionUtils.isNotEmpty(templateRoleList)) {
+                List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
+                entity.setRoleName(String.join(",", roleNames));
+            }
+        } else if (MathUtil.ONE.equals(dto.getDistributionType())) {//分配类型为负责人
+            String chargeNames = commonService.getNameByIds(chargeIds);
+            entity.setChargeId(String.join(",", chargeIds));
+            entity.setChargeName(chargeNames);
+        }
 
         //自定义审核人
         List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
@@ -119,9 +136,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if(isReview){
             entity.setApprovalUserId("");
         }
-        String chargeNames = commonService.getNameByIds(chargeIds);
-        entity.setChargeName(chargeNames);
-        entity.setChargeId(String.join(",", chargeIds));
         if (!Objects.isNull(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
@@ -337,7 +351,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             String approvalUserId = sysEntity.getApprovalUserId();
             List<List<String>> approvalUserIdList = new ArrayList<>();
             if (StringUtils.isNotBlank(approvalUserId)) {
-                List<String> userIdsList = Arrays.asList(approvalUserId.split("|"));
+                List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
                 for (String userId: userIdsList) {
                     List<String> userIdList = Arrays.asList(userId.split(","));
                     approvalUserIdList.add(userIdList);

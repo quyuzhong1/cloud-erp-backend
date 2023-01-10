@@ -61,7 +61,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         bomRefSku.setPid(parentId);
         bomRefSku.setId(id);
         bomRefSku.setQuantity(item.getQuantity());
-        bomRefSku.setSku(item.getSku());
+        bomRefSku.setSku(item.getSkuNo());
         saveBatchList.add(bomRefSku);
         List<BomSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {

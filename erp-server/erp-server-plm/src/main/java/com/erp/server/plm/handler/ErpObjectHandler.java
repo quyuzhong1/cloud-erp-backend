@@ -6,7 +6,7 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * @Classname 处理 TableField  注解
@@ -22,10 +22,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
-        LocalDateTime now = LocalDateTime.now();
         String userId = commonService.getUserInfo().getUid();
-        this.setFieldValByName("createTime", now, metaObject);
-        this.setFieldValByName("updateTime", now, metaObject);
+        this.setFieldValByName("createTime", new Date(), metaObject);
+        this.setFieldValByName("updateTime", new Date(), metaObject);
         this.setFieldValByName("createUserId", userId, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
 
@@ -35,7 +34,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
-        this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
+        this.setFieldValByName("updateTime", new Date(), metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
 
     }

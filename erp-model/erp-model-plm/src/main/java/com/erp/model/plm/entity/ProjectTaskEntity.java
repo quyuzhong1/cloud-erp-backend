@@ -50,19 +50,13 @@ public class ProjectTaskEntity implements Serializable {
     private String chargeName;
 
     /**
-     * 角色id
-     */
-    @TableField("role_id")
-    private String roleId;
-
-    /**
-     * 角色名称
+     * 角色名称，由模板生成时带过来
      */
     @TableField("role_name")
     private String roleName;
 
     /**
-     * 分配类型（0角色，1人员）
+     * 分配类型，由模板生成时带过来（0角色，1人员）
      */
     @TableField("distribution_type")
     private Integer distributionType;
@@ -203,13 +197,13 @@ public class ProjectTaskEntity implements Serializable {
     private Integer isfinish;
 
     /**
-     * 审核角色id 多个以逗号分割
+     * 审核角色id 多个以逗号分割，由模板生成时带过来
      */
-    @TableField("approval_role_id")
-    private String approvalRoleId;
+    @TableField("approval_role_name")
+    private String approvalRoleName;
 
     /**
-     * 审核分配类型（0角色，1人员，2上级人员负责人）
+     * 审核分配类型，由模板生成时带过来（0角色，1人员，2上级人员负责人）
      */
     @TableField("approval_distribution_type")
     private Integer approvalDistributionType;

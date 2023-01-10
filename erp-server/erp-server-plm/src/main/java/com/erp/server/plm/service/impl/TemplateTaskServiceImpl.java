@@ -19,7 +19,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.enums.BusinessProcessEnum;
@@ -77,7 +76,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     private WorkflowFeign workflowFeign;
 
     @Autowired
-    private SysUserFeign sysUserFeign;
+    private TemplateRoleService templateRoleService;
 
     /**
      * 保存模板任务
@@ -221,7 +220,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             String approvalUserId = taskEntity.getApprovalUserId();
             List<List<String>> approvalUserIdList = new ArrayList<>();
             if (StringUtils.isNotBlank(approvalUserId)) {
-                List<String> userIdsList = Arrays.asList(approvalUserId.split("|"));
+                List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
                 for (String userId: userIdsList) {
                     List<String> userIdList = Arrays.asList(userId.split(","));
                     approvalUserIdList.add(userIdList);
@@ -467,9 +466,10 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         //任务分配类型处理
         if (MathUtil.ZERO.equals(dto.getDistributionType())) {//分配类型为角色
             List<String> roleIds = dto.getRoleIds();
-            List<String> roleNames = sysUserFeign.listRoleByIds(roleIds);
+            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
             entity.setRoleId(String.join(",", roleIds));
-            if (CollectionUtils.isNotEmpty(roleNames)) {
+            if (CollectionUtils.isNotEmpty(templateRoleList)) {
+                List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
             }
         } else if (MathUtil.ONE.equals(dto.getDistributionType())) {//分配类型为负责人
