@@ -51,9 +51,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 用户id -->
@@ -120,9 +120,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -215,9 +215,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -304,9 +304,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -393,9 +393,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -515,9 +515,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 用户id -->
@@ -581,9 +581,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- 用户id -->
@@ -642,9 +642,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 权限 -->
@@ -701,9 +701,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- 权限 -->
@@ -768,9 +768,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -855,9 +855,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -944,9 +944,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -1029,9 +1029,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1116,9 +1116,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1232,9 +1232,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1320,9 +1320,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1407,9 +1407,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1496,9 +1496,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1583,9 +1583,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1671,9 +1671,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1779,9 +1779,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1898,9 +1898,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1986,9 +1986,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2059,9 +2059,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -2132,9 +2132,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -2221,9 +2221,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2338,9 +2338,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2425,9 +2425,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2511,9 +2511,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2601,9 +2601,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
