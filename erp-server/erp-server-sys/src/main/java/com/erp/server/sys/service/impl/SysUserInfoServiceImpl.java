@@ -12,6 +12,7 @@ import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
 import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -83,6 +84,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private SysDepartmentService sysDepartmentService;
 
+    @Resource
+    private SysRoleService sysRoleService;
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
@@ -790,11 +793,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<UserDTO> parentList = new ArrayList<>();
         SysUserInfoEntity sysUserInfoEntity = this.getById(id);
         if (ObjectUtils.isEmpty(sysUserInfoEntity)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            return parentList;
         }
         SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getByUserId(id);
         if (ObjectUtils.isEmpty(dto) || StringUtils.isBlank(dto.getDepartmentId())) {
-            throw new ServiceException(ApiError.ERROR_9029);
+            return parentList;
         }
         //上级部门
         List<String> departmentIds = sysDepartmentService.getDepartmentIds(dto.getDepartmentId());
@@ -815,17 +818,33 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (CollectionUtils.isEmpty(sysUserInfoList)) {
             return parentList;
         }
-        return BeanMapperUtils.copyList(UserDTO.class,sysUserInfoList);
+        sysUserInfoList.stream().filter(obj -> MathUtil.ONE.equals(obj.getUserState())).forEach(obj->{
+            UserDTO userDTO = new UserDTO();
+            userDTO.setUserId(obj.getUid());
+            userDTO.setUserName(obj.getUserName());
+            parentList.add(userDTO);
+        });
+        return parentList;
     }
 
     @Override
-    public List<UserDTO> listSuperiorByRoleId(String roleId) {
+    public List<UserDTO> listSuperiorByRoleName(String roleName) {
         List<UserDTO> resultList = new ArrayList<>();
-        List<SysRoleUserEntity> sysRoleUserList = sysRoleUserService.roleUserList(roleId);
-        if (CollectionUtils.isEmpty(sysRoleUserList)) {
+        List<SysRoleDTO> sysRoleDTOList = sysRoleService.getByRoleName(roleName);
+        if (CollectionUtils.isEmpty(sysRoleDTOList)) {
+            return resultList;
+        }
+        List<SysRoleUserEntity> list = new ArrayList<>();
+        for (SysRoleDTO dto: sysRoleDTOList) {
+            List<SysRoleUserEntity> sysRoleUserList = sysRoleUserService.roleUserList(dto.getId());
+            if (CollectionUtils.isNotEmpty(sysRoleUserList)) {
+                list.addAll(sysRoleUserList);
+            }
+        }
+        if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        sysRoleUserList.forEach(obj ->{
+        list.forEach(obj ->{
             List<UserDTO> userDTOS = this.listSuperiorByUserId(obj.getUserId());
             if (CollectionUtils.isNotEmpty(userDTOS)) {
                 resultList.addAll(userDTOS);
@@ -834,7 +853,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         if (CollectionUtils.isEmpty(resultList)) {
             return resultList;
         }
-        List<UserDTO> list = resultList.stream().distinct().collect(Collectors.toList());
-        return list;
+        List<UserDTO> userList = resultList.stream().distinct().collect(Collectors.toList());
+        return userList;
     }
 }

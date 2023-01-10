@@ -44,5 +44,9 @@ public interface SysRoleService extends IService<SysRoleEntity> {
      * @return List<String>
      */
     List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
+    /**
+     * 根据角色名称查询
+     */
+    List<SysRoleDTO> getByRoleName(String roleName);
 }
 

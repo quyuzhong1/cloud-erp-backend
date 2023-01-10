@@ -224,12 +224,12 @@ public class SysUserFeignController extends BaseController {
      * @description: 根据角色id查询所有上级用户
      * @author Will
      * @date: 2023/1/9 10:37
-     * @param roleId
+     * @param roleName
      * @return List<UserDTO>
      */
-    @PostMapping("/listSuperiorByRoleId")
-    public List<UserDTO> listSuperiorByRoleId(@RequestBody String roleId) {
-        return sysUserInfoService.listSuperiorByRoleId(roleId);
+    @PostMapping("/listSuperiorByRoleName")
+    public List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName) {
+        return sysUserInfoService.listSuperiorByRoleName(roleName);
     }
 
     /**

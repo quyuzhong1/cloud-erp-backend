@@ -116,6 +116,17 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
         return BeanMapperUtils.copyList(SysRoleDTO.class,sysRoleList);
     }
 
+    @Override
+    public List<SysRoleDTO> getByRoleName(String roleName) {
+        LambdaQueryWrapper<SysRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysRoleEntity::getRoleName,roleName);
+        List<SysRoleEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return BeanMapperUtils.copyList(SysRoleDTO.class,list);
+    }
+
     /**
      * 检查角色名是否存在
      *

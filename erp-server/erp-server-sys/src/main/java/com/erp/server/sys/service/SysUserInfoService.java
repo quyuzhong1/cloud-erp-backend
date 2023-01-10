@@ -105,9 +105,9 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @description: 根据角色id查询所有用户
      * @author Will
      * @date: 2023/1/9 10:38
-     * @param roleId
+     * @param roleName
      * @return List<UserDTO>
      */
-    List<UserDTO> listSuperiorByRoleId(String roleId);
+    List<UserDTO> listSuperiorByRoleName(String roleName);
 }
 

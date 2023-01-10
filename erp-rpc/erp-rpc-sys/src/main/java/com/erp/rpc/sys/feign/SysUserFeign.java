@@ -98,9 +98,9 @@ public interface SysUserFeign {
     @PostMapping("sys/feign/user/listSuperiorByUserId")
     List<UserDTO> listSuperiorByUserId(@RequestBody String userId);
 
-    //根据角色id查询所有上级用户
-    @PostMapping("sys/feign/user/listSuperiorByRoleId")
-    List<UserDTO> listSuperiorByRoleId(@RequestBody String roleId);
+    //根据角色名称查询所有上级用户
+    @PostMapping("sys/feign/user/listSuperiorByRoleName")
+    List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName);
 
     //根据角色id查用户名称
     @PostMapping("sys/feign/user/listRoleByIds")

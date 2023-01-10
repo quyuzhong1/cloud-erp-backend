@@ -170,9 +170,13 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     @Override
     public List<UserDTO> listSuperior(String id, Integer type) {
         List<UserDTO> userList = new ArrayList<>();
+        //根据模板角色id查询角色名称
         if (MathUtil.ZERO.equals(type)) {
-            //负责人类型为角色
-           userList = sysUserFeign.listSuperiorByRoleId(id);
+            TemplateRoleEntity templateRoleEntity = templateRoleService.getById(id);
+            if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
+                //负责人类型为角色
+                userList = sysUserFeign.listSuperiorByRoleName(templateRoleEntity.getName());
+            }
         } else if (MathUtil.ONE.equals(type)) {
             //负责人类型为人员
            userList = sysUserFeign.listSuperiorByUserId(id);
