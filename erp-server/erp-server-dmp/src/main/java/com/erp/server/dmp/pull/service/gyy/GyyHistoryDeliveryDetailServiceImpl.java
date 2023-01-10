@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.gyy;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
@@ -43,8 +44,8 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET)
-public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
+@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET)
+public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
 
     @Resource
     private MongoService mongoService;
@@ -62,17 +63,17 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
     private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
-        GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.deliverys.get");
+        GyyHistoryDeliveryDetailServiceImpl gyyOrderInfoService = new GyyHistoryDeliveryDetailServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.deliverys.get");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(7);
-        jobTaskDTO.setApiName("管易云查询订单列表");
+        jobTaskDTO.setApiName("管易云查询历史发货订单列表");
         jobTaskDTO.setId(32L);
-        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setIntervalTime(72000);
         jobTaskDTO.setLastTime(null);
         jobTaskDTO.setNextTime(null);
-        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setPlatformId(2);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
@@ -101,10 +102,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                                 dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
                                 dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 管易云修改mongodb出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                                throw new RuntimeException("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                             }
                         }
                     }
@@ -187,8 +188,8 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                         infoArrayList.addAll(dataList);
                     }
                 } else {
-                    log.info(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
-                    throw new RuntimeException(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
+                    log.info(" ===== 管易云拉取历史出库详情失败，错误信息：+" + stringObjectMap + " ====");
+                    throw new RuntimeException(" ===== 管易云拉取历史出库详情失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -219,7 +220,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void analysisDeliveryDetail(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
@@ -245,13 +246,13 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         //店铺名称
         deliveryDetailInfoEntity.setShopName(gyyDeliveryDetailEntity.getShopName());
 
-        String currencyCode = "";
+        String currencyCode = "CNY";
 
         BigDecimal totalCostPrice = BigDecimal.ZERO;
         String BusinessmanName = "";
         for (DeliveryDetailsBean detail : gyyDeliveryDetailEntity.getDetails()) {
             totalCostPrice = totalCostPrice.add(detail.getTotalCostPrice());
-            currencyCode = detail.getCurrencyCode();
+            currencyCode = StrUtil.isNotBlank(detail.getCurrencyCode()) ? detail.getCurrencyCode() : "CNY";
             BusinessmanName = detail.getBusinessmanName();
         }
 
@@ -267,7 +268,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         //国家中文名称
         deliveryDetailInfoEntity.setCountryNameCn("中国");
 
-        if (StringUtils.isNotBlank(gyyDeliveryDetailEntity.getAreaName())) {
+        if (StrUtil.isNotBlank(gyyDeliveryDetailEntity.getAreaName())) {
             String[] split = gyyDeliveryDetailEntity.getAreaName().split("-");
             if (split.length >= 1) {
                 //买家省份
@@ -312,7 +313,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         deliveryDetailInfoEntity.setSalesManName(BusinessmanName);
 
         Integer status = 1;
-        if (gyyDeliveryDetailEntity.getCancel()) {
+        if (null !=gyyDeliveryDetailEntity.getCancel() && gyyDeliveryDetailEntity.getCancel()) {
             status = 2;
         }
 
@@ -368,7 +369,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void analysisReturnOrderItem(GyyDeliveryDetailEntity gyyDeliveryDetailEntity, List<DeliveryDetailsBean> orderItem, String deliveryDetailId) {
         List<DmpDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
         for (DeliveryDetailsBean itemEntity : orderItem) {
