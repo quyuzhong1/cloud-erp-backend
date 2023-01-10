@@ -15,7 +15,7 @@ public class SkuDateFilterDTO extends BiFilterDTO {
     private String skuNo;
 
     /**
-     * 时间类型：日: DAY; 周: WEEK; 月: MONTH; 季度: QUARTER; 年: YEAR
+     * 时间类型：日: DAY; 周: WEEK; 月: MONTH;
      */
     @NotNull(message = "时间类型不能为空")
     private String dateType;

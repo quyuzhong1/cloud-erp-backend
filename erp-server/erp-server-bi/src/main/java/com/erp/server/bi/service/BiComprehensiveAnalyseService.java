@@ -2,7 +2,6 @@ package com.erp.server.bi.service;
 
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.SkuDateFilterDTO;
-import com.erp.model.bi.dto.SkuFilterDTO;
 import com.erp.model.bi.vo.*;
 
 import java.util.List;
@@ -79,7 +78,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
-    List<SaleDetailVO> saleDetailDate(SkuFilterDTO biFilterDTO);
+    List<SaleDetailVO> saleDetailDate(SkuDateFilterDTO biFilterDTO);
 
     /**
      * SKU日期销售额趋势图

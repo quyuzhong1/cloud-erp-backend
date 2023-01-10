@@ -3,6 +3,7 @@ package com.erp.model.bi.vo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -16,10 +17,10 @@ public class DateBarAndLineVO {
     /**
      * 退货率
      */
-    private List<DateRefundOrderRateVO> dateRefundOrderRateVOList;
+    private List<BigDecimal> dateRefundOrderRateVOList;
 
     /**
      * 退款率
      */
-    private List<DateRefundRate> dateRefundRateList;
+    private List<BigDecimal> dateRefundRateList;
 }
