@@ -7,6 +7,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
 import com.erp.server.dmp.task.service.TbTaskTypeService;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -57,7 +58,9 @@ public class PullTaskCreateJob {
     //@Scheduled(cron = "0/10 * * * * ?")
     @XxlJob("addShopTask")
     public ReturnT<String> addShopTask() {
+        XxlJobHelper.log("addShopTask 任务开始执行");
          tbTaskTypeService.addTask();
+        XxlJobHelper.log("addShopTask 任务开始完成");
          return ReturnT.SUCCESS;
     }
 
@@ -71,7 +74,9 @@ public class PullTaskCreateJob {
     //@Scheduled(cron = "0/10 * * * * ?")
     @XxlJob("cleanOrderTask")
     public ReturnT<String>  cleanOrderTask() {
+        XxlJobHelper.log("cleanOrderTask 任务开始执行");
         dmpOrderInfoService.cleanOrder();
+        XxlJobHelper.log("cleanOrderTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
 
@@ -84,7 +89,9 @@ public class PullTaskCreateJob {
     //@Scheduled(cron = "0/10 * * * * ?")
     @XxlJob("cleanReturnOrderTask")
     public ReturnT<String> cleanReturnOrderTask() {
+        XxlJobHelper.log("cleanReturnOrderTask 任务开始执行");
         dmpReturnOrderInfoService.cleanReturnOrderTask();
+        XxlJobHelper.log("cleanReturnOrderTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
 
@@ -98,7 +105,9 @@ public class PullTaskCreateJob {
     //@Scheduled(cron = "0/10 * * * * ?")
     @XxlJob("cleanRefundTask")
     public ReturnT<String> cleanRefundTask() {
+        XxlJobHelper.log("cleanRefundTask 任务开始执行");
         dmpRefundInfoService.cleanRefundTask();
+        XxlJobHelper.log("cleanRefundTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
 }
