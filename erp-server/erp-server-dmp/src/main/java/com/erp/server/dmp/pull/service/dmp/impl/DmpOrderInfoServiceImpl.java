@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -125,7 +126,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public void cleanOrder() {
-        Integer pageSize = 500;
+        Integer pageSize = 200;
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .and(wrapper ->
@@ -143,8 +144,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return;
         }
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+        XxlJobHelper.log("userDeptList==> {}", JSONUtil.toJsonStr(userDeptList));
         AtomicInteger times = new AtomicInteger();
-        list.stream().forEach(dmpOrderInfoEntity -> {
+        list.forEach(dmpOrderInfoEntity -> {
             LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
             updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
             Integer flag = 0;
@@ -212,6 +214,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 updateWrapper.set(times.get() <= flag || 1 == dmpOrderInfoEntity.getCleanState(), DmpOrderInfoEntity::getCleanState, 2);
             }
             this.update(updateWrapper);
+            XxlJobHelper.log("update(updateWrapper)==> {} dmpOrderInfoEntity={}", updateWrapper.getCustomSqlSegment(), JSONUtil.toJsonStr(dmpOrderInfoEntity));
         });
 
     }
