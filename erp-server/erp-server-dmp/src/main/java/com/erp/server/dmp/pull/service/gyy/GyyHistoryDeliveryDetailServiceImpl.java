@@ -18,11 +18,12 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,9 +45,9 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET)
-public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
-
+public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryService {
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
     @Resource
     private MongoService mongoService;
 
@@ -82,6 +83,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
         System.out.println(orderEntities);
     }
 
+
+
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
@@ -115,6 +118,18 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
                 //存储数据到中台
                 analysisDeliveryDetail(gyyDeliveryDetailEntity);
             }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
+        //拉取数据 存库
+        pullDataSave(requestDTO);
+        // 修改任务执行结果信息
+        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+        if (!aBoolean) {
+            throw new RuntimeException("修改任务下次执行时间失败！");
         }
     }
 

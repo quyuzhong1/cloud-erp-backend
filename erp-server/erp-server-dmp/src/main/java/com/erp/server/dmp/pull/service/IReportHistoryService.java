@@ -1,0 +1,12 @@
+package com.erp.server.dmp.pull.service;
+
+
+import com.erp.model.dmp.dto.RequestDTO;
+
+public interface IReportHistoryService {
+
+    void pullDataSave(RequestDTO dto) throws Exception;
+
+    void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception;
+
+}

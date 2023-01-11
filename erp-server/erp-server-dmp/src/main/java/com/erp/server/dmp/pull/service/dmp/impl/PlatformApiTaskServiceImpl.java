@@ -30,9 +30,18 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);
-        lambdaUpdateWrapper.set(PlatformApiTaskEntity::getState, 1);
-        lambdaUpdateWrapper.set(PlatformApiTaskEntity::getUpdateTime, new Date());
+        if(3 != jobTaskDTO.getState()){
+            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getState, 1);
+        }
+        lambdaUpdateWrapper.set(PlatformApiTaskEntity::getUpdateTime, LocalDateTime.now());
         lambdaUpdateWrapper.eq(PlatformApiTaskEntity::getId, jobTaskDTO.getId());
         return this.update(lambdaUpdateWrapper);
+    }
+
+    @Override
+    public PlatformApiTaskEntity getByApiCode(String taskName) {
+        return lambdaQuery().eq(PlatformApiTaskEntity::getApiCode, taskName)
+                .eq(PlatformApiTaskEntity::getState, 3)
+                .oneOpt().orElse(null);
     }
 }
