@@ -99,7 +99,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
 
         //过滤数据
-        if (CollectionUtil.isNotEmpty(gyyOrderEntityList)) {
+        if (CollectionUtil.isEmpty(gyyOrderEntityList)) {
             XxlJobHelper.log("拉去数据列表为空 gyyOrderEntityList.size = 0 ");
             return;
         }

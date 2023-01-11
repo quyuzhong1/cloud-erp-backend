@@ -13,8 +13,8 @@
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
-        <where>
-            <if test="params.timeType == 0">
+        where  ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
+        <if test="params.timeType == 0">
                 <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
@@ -94,8 +94,6 @@
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
             </if>
-
-        </where>
         GROUP BY sku.sku_no,sku.name_cn
     </select>
 
@@ -109,8 +107,7 @@
         LEFT JOIN dmp_order_info doi ON shop.plarform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
-
-        <where>
+        where  (doit.sell_price >0 and doit.quantity > 0)
             <if test="params.timeType == 0">
                 <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
@@ -190,8 +187,6 @@
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
             </if>
-
-        </where>
         GROUP BY shop.plarform_shop_no,shop."name"
         ORDER BY sales
     </select>
@@ -305,8 +300,8 @@
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
-        <where>
-            <if test="params.timeType == 0">
+        where ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
+        <if test="params.timeType == 0">
                 <if test="params.startTime != null">
                     AND doi.platform_create_time >= #{params.startTime}
                 </if>
@@ -387,17 +382,16 @@
                 #{params.param}
             </if>
 
-        </where>
         GROUP BY sku.parent_category_name
     </select>
 
     <select id="saleDetailSku" resultType="com.erp.model.bi.vo.SaleDetailVO">
         SELECT
             sku.sku_no AS name,
-            SUM(doit.quantity) AS salesQuantity,
-            SUM(doit.sell_price*doit.quantity) AS saleAmount,
-            SUM(droi.order_fee) AS returnOrderAmount,
-            SUM(dri.refund_amount) AS refundAmount,
+            COALESCE(SUM(doit.quantity),0) AS salesQuantity,
+            COALESCE(SUM(doit.sell_price*doit.quantity),0) AS saleAmount,
+            COALESCE(SUM(droi.order_fee),0) AS returnOrderAmount,
+            COALESCE(SUM(dri.refund_amount),0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
         FROM dmp_sku_info sku
         LEFT JOIN dmp_order_item doit ON sku.sku_no = doit.sku_no
