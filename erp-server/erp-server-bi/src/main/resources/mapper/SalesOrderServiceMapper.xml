@@ -1730,6 +1730,25 @@
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate}),2) AS sales
         FROM dmp_order_info o
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+        </where>
 	    GROUP BY o.shop_no
     </select>
 

@@ -26,7 +26,7 @@ public class TaskGroupParamDTO extends PermissionsDTO {
      * 2 全部
      */
     @NotNull(message = "任务条件不能为空")
-    @StateEnumValue(intValues = {1,2}, message = "任务条件有误")
+    @StateEnumValue(intValues = {1,2,3}, message = "任务条件有误")
     private Integer taskCondition;
 
 
