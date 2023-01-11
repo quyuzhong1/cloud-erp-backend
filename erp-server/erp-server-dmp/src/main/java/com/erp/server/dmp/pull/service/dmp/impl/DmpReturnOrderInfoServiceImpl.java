@@ -127,9 +127,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
             DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpReturnOrderInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
-                updateWrapper.set(DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
-                updateWrapper.set(DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());
-                updateWrapper.set(DmpReturnOrderInfoEntity::getChargeName, dmpOrderInfoEntity.getChargeName());
+                updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
+                updateWrapper.set(StrUtil.isNotBlank(dmpOrderInfoEntity.getChargeId()), DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());
+                updateWrapper.set(StrUtil.isNotBlank(dmpOrderInfoEntity.getChargeName()), DmpReturnOrderInfoEntity::getChargeName, dmpOrderInfoEntity.getChargeName());
                 if (ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()) && StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeName())){
                     updateWrapper.set(DmpReturnOrderInfoEntity::getCleanState, 2);
                 }
