@@ -366,7 +366,11 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         Integer ing = TaskStateEnum.ING.getCode();
         for (FindUserDTO item : userList) {
-            List<ProjectTaskEntity> taskList = list.stream().filter(t -> t.getChargeId().contains(item.getUserId())).collect(Collectors.toList());
+            List<ProjectTaskEntity> taskList = list.stream().filter(
+                    t -> StringUtils.isNotBlank(t.getChargeId())&&
+                            Arrays.asList(t.getChargeId().split(","))
+                            .contains(item.getUserId())
+            ).collect(Collectors.toList());
             //完成任务数
             int finishTaskCount = taskList.stream().filter(t -> finishState.equals(t.getStatus()) || approvalPass.equals(t.getStatus())).collect(Collectors.toList()).size();
             //进行中

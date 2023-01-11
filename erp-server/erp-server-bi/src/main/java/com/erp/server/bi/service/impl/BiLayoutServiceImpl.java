@@ -174,6 +174,22 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //检查是否是自己创建的专题
         subjectService.checkCanHandle(subject, userId);
 
+        //布局表
+        List<LayoutDetailsDTO> layoutDetailsList = dto.getLayoutDetailsList();
+        if (CollectionUtils.isEmpty(layoutDetailsList)) {
+            throw new ServiceException(ApiError.ERROR_97020);
+        }
+        int layoutModuleCount = 0;
+        for (LayoutDetailsDTO item : layoutDetailsList) {
+            if(CollectionUtils.isNotEmpty(item.getModuleIdList())){
+                layoutModuleCount++;
+            }
+        }
+        if(layoutModuleCount==0){
+            throw new ServiceException(ApiError.ERROR_97020);
+        }
+
+
         boolean flag = true;
 
         //检查名字能否重复
@@ -191,12 +207,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         List<String> userList = dto.getShareUserIdList();
         //添加专题的分享用户
         subjectShareService.addSubjectShare(userList, subjectId);
-        //布局表
-        List<LayoutDetailsDTO> layoutDetailsList = dto.getLayoutDetailsList();
 
-        if (CollectionUtils.isEmpty(layoutDetailsList)) {
-            throw new ServiceException(ApiError.ERROR_97020);
-        }
         //删除布局主题关系
         subjectRefLayoutService.deleteBySubjectId(subjectId);
         //删除 模块与布局关系表
@@ -313,9 +324,9 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Override
     public Boolean addSubject(AddTotalSubjectDTO dto) {
         List<LayoutDTO> layoutList = dto.getLayoutList();
-        if (CollectionUtils.isEmpty(layoutList)) {
-            throw new ServiceException(ApiError.ERROR_97020);
-        }
+        //检查布局模块是否存在
+        checkLayoutModuleExist(layoutList);
+
         SubjectDTO subject = new SubjectDTO();
         String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
@@ -350,6 +361,26 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //保存专题与布局关系表
         subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
         return true;
+    }
+
+
+    /**
+     * 检查布局模块
+     * 是否存在
+     */
+    public void checkLayoutModuleExist(List<LayoutDTO> layoutList) {
+        if (CollectionUtils.isEmpty(layoutList)) {
+            throw new ServiceException(ApiError.ERROR_97020);
+        }
+        int layoutModuleCount = 0;
+        for (LayoutDTO item : layoutList) {
+            if(CollectionUtils.isNotEmpty(item.getModuleIdList())){
+                layoutModuleCount++;
+            }
+        }
+        if(layoutModuleCount==0){
+            throw new ServiceException(ApiError.ERROR_97020);
+        }
     }
 
 
