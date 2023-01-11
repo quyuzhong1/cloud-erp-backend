@@ -48,13 +48,11 @@ public class SysTaskDTO implements Serializable {
     /**
      * 负责人id
      */
-    @Size(min = 1,message = "分配负责人至少有一个")
     private List<String> chargeIds;
 
     /**
      * 角色id
      */
-    @Size(min = 1,message = "分配角色至少有一个")
     private List<String> roleIds;
 
     /**

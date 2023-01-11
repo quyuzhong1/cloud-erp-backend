@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -140,13 +139,11 @@ public class TemplateTaskDTO implements Serializable {
         /**
          * 负责人id
          */
-        @Size(min = 1,message = "分配负责人至少有一个")
         private List<String> chargeIds;
 
         /**
          * 角色id
          */
-        @Size(min = 1,message = "分配角色至少有一个")
         private List<String> roleIds;
 
         /**
