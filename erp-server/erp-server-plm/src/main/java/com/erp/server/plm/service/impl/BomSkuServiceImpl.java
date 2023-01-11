@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * bom 与sku关系表(BomRefSku)表服务实现类
@@ -43,6 +46,62 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
 
     /**
+     * 根据bom id 查询出bom yu sku信息
+     *
+     * @param bomId
+     * @return java.util.List<com.erp.model.plm.dto.BomSkuDTO>
+     * @author yl
+     * @date 2023-01-11 16:51
+     */
+    @Override
+    public List<BomSkuDTO> getByBomId(String bomId) {
+        List<BomSkuEntity> bomSkuEntityList = this.getBomSkuListByBomId(bomId);
+        List<BomSkuDTO> bomSkuList = BeanMapperUtils.copyList(BomSkuDTO.class, bomSkuEntityList);
+        List<BomSkuDTO> treeList = bomSkuList.stream().
+                filter(b -> "0".equals(b.getParentSkuNo())).
+                map(item -> {
+                    item.setChildren(getChildren(item, bomSkuList));
+                    return item;
+                }).collect(Collectors.toList());
+        return treeList;
+    }
+
+    /**
+     * 获取子sku
+     *
+     * @param item
+     * @param bomSkuList
+     * @return java.util.List<com.erp.model.plm.dto.BomSkuDTO>
+     * @author yl
+     * @date 2023-01-11 17:11
+     */
+    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList) {
+        List<BomSkuDTO> collect = bomSkuList.stream().filter(bom -> item.getSkuNo().equals(bom.getParentSkuNo())).
+                map(b -> {
+                    b.setChildren(getChildren(b,bomSkuList));
+                    return b;
+                }).collect(Collectors.toList());
+
+        return CollectionUtils.isEmpty(collect) ? null : collect;
+    }
+
+    /**
+     * 根据bom id  获取列表
+     *
+     * @param bomId
+     * @return java.util.List<com.erp.model.plm.entity.BomSkuEntity>
+     * @author yl
+     * @date 2023-01-11 17:03
+     */
+    private List<BomSkuEntity> getBomSkuListByBomId(String bomId) {
+        LambdaQueryWrapper<BomSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomSkuEntity::getBomId, bomId);
+        queryWrapper.orderByDesc(BomSkuEntity::getCreateTime);
+        return this.list(queryWrapper);
+    }
+
+
+    /**
      * 获取到保存的数据 树结构
      *
      * @param
@@ -63,7 +122,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         List<BomSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {
             for (BomSkuDTO childBomSku : childrenList) {
-                this.getSaveTree(item.getSkuNo(), saveBatchList,childBomSku,bomId);
+                this.getSaveTree(item.getSkuNo(), saveBatchList, childBomSku, bomId);
             }
         }
     }

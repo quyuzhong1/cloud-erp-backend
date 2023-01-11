@@ -6,6 +6,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSearchPagingDTO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.server.plm.service.BomInfoService;
@@ -41,10 +42,9 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<BomSearchPagingDTO> dto) {
-        PagingVO<List<BomPagingVO>> pagingVO=bomInfoService.paging(dto);
+        PagingVO<List<BomPagingVO>> pagingVO = bomInfoService.paging(dto);
         return success(pagingVO);
     }
-
 
 
     /**
@@ -55,8 +55,20 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated AddBomDTO dto) {
-        Boolean flag=this.bomInfoService.insert(dto);
+        Boolean flag = this.bomInfoService.insert(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * bom 信息
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/view")
+    public ApiResult<BomDTO> details(@RequestBody @Validated BaseIdDTO dto) {
+        BomDTO bom = bomInfoService.getBomDetails(dto.getId());
+        return success(bom);
     }
 
     /**
@@ -67,7 +79,7 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult edit() {
-         Boolean flag=true;
+        Boolean flag = true;
         return flag == true ? success() : failure();
     }
 
@@ -77,9 +89,9 @@ public class BomInfoController extends BaseController {
      * @param dto 主键
      * @return 删除是否成功
      */
-     @PostMapping("/delete")
+    @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag=true;
+        Boolean flag = true;
         return flag == true ? success() : failure();
     }
 

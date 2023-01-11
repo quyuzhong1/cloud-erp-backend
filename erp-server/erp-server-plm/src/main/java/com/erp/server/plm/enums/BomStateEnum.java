@@ -34,4 +34,13 @@ public enum BomStateEnum {
         return name;
     }
 
+    public static String getName(Integer state) {
+        for (BomStateEnum item : BomStateEnum.values()) {
+            if (state.equals(item.getState())) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
+
 }

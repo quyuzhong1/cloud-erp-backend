@@ -1,14 +1,8 @@
 package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.server.plm.entity.ProductBomHistory;
-import com.erp.server.plm.service.ProductBomHistoryService;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.Resource;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * bom 历史表(ProductBomHistory)表控制层

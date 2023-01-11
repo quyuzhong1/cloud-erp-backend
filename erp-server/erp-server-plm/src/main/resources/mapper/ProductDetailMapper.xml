@@ -346,4 +346,36 @@
         LEFT JOIN product_detail pd ON pd.product_id = pi.id
         WHERE pd.sku_no = #{sku}
     </select>
+
+    <select id="getSkuBySkuNos" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0
+        <if test="skuList != null and skuList.size>0">
+         AND pd.sku_no IN
+            <foreach collection="skuList" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="searchSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+
+        </if>
+    </select>
 </mapper>

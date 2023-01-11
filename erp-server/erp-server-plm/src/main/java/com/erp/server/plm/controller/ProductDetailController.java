@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.ProductDetailApproverEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
@@ -790,6 +791,20 @@ ProductDetailController extends BaseController {
     public ApiResult productDetailProcessPass(String processId) {
         Boolean result = productDetailService.productDetailProcessPass(processId);
         return result == true ? success() : failure();
+    }
+
+
+
+   /**
+    * 搜索sku
+    * @author yl
+    * @date 2023-01-11 14:58
+    * @return com.erp.common.dto.base.ApiResult
+    */
+    @GetMapping("/search/sku")
+    public ApiResult<List<SkuVO>> searchSku(String searchKeyword) {
+        List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
+        return success(skuList);
     }
 
 }

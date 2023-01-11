@@ -22,6 +22,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
@@ -1513,6 +1514,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return dto;
         }
         return null;
+    }
+
+    @Override
+    public List<SkuVO> getSkuBySkuNos(List<String> skuNoList) {
+        return baseMapper.getSkuBySkuNos(skuNoList);
+    }
+
+    
+    /**
+     * 搜索sku
+     * @author yl
+     * @date 2023-01-11 15:06
+     * @param searchKeyword
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     */
+    @Override
+    public List<SkuVO> searchSku(String searchKeyword) {
+        return baseMapper.searchSku(searchKeyword);
     }
 
 

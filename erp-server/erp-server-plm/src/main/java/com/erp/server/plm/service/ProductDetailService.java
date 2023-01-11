@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.vo.SkuVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -291,4 +292,19 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return ProductDetailDTO
      */
     ProductDetailDTO getSkuByParam(Map<String, String> params);
+
+
+    /**
+     * 根据sku 编号 获取sku 信息以及对应的spu 信息
+     * @param skuNoList
+     * @return
+     */
+    List<SkuVO> getSkuBySkuNos(List<String> skuNoList);
+
+    /**
+     * 搜索sku 信息
+     * @param searchKeyword
+     * @return
+     */
+    List<SkuVO> searchSku(String searchKeyword);
 }
