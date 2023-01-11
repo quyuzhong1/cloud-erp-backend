@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -210,6 +211,9 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      **/
     public void analysisSku(KingdeeSkuEntity skuInfoEntity) throws Exception {
+        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !"唯迹集团".equals(skuInfoEntity.getFUseOrgName())){
+            return;
+        }
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 

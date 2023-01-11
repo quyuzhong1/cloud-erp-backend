@@ -408,10 +408,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setPlatformSign("马帮");
 
         //企业Id
-        dmpOrderInfoEntity.setCompanyId("");
+        dmpOrderInfoEntity.setCompanyId("1");
 
         //企业名称
-        dmpOrderInfoEntity.setCompanyName("");
+        dmpOrderInfoEntity.setCompanyName("唯迹集团");
 
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getTransportTime())) {
