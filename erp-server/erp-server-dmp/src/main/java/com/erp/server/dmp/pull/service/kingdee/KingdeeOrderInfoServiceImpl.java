@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -333,6 +334,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      * @return void
      **/
     public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
+        // 跳过非唯迹订单
+        if (StrUtil.isEmpty(kingdeeOrderEntity.getFSaleOrgName()) || !"唯迹集团".equals(kingdeeOrderEntity.getFSaleOrgName())){
+            return;
+        }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         //平台订单id

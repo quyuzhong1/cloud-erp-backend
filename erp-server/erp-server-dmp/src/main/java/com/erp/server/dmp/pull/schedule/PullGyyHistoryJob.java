@@ -34,6 +34,7 @@ public class PullGyyHistoryJob {
 
     @XxlJob("GyyDeliveryHistory")
     public void gyyDeliveryHistory() throws Exception {
+        XxlJobHelper.log("GyyDeliveryHistory 任务开始执行！");
         // 查询对应任务配置
         PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET.getTaskName());
         if(ObjectUtil.isEmpty(entity)){
@@ -45,10 +46,12 @@ public class PullGyyHistoryJob {
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET);
         historyDeliveryService.pullHistoryOrderInfo(requestDTO);
+        XxlJobHelper.log("GyyDeliveryHistory 任务执行结束！");
     }
 
     @XxlJob("GyyOrderHistory")
     public void gyyOrderHistory() throws Exception {
+        XxlJobHelper.log("GyyOrderHistory 任务开始执行！");
         // 查询对应任务配置
         PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET.getTaskName());
         if(ObjectUtil.isEmpty(entity)){
@@ -60,5 +63,6 @@ public class PullGyyHistoryJob {
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET);
         historyTradeService.pullHistoryOrderInfo(requestDTO);
+        XxlJobHelper.log("GyyOrderHistory 任务执行结束！");
     }
 }

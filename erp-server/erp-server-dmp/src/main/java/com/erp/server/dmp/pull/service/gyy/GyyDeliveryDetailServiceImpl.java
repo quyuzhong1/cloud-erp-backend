@@ -345,10 +345,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
         deliveryDetailInfoEntity.setPlatformSign("管易云");
 
         //企业Id
-        deliveryDetailInfoEntity.setCompanyId("");
+        deliveryDetailInfoEntity.setCompanyId("1");
 
         //企业名称
-        deliveryDetailInfoEntity.setCompanyName("");
+        deliveryDetailInfoEntity.setCompanyName("唯迹集团");
 
         //创建时间
         deliveryDetailInfoEntity.setCreateTime(new Date());
