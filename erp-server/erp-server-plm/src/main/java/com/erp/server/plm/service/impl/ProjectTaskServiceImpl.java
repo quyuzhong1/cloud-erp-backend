@@ -1520,7 +1520,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //不在的 任务状态
         List<Integer> notStateList = new ArrayList<>();
         //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)||TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
             notStateList.add(TaskStateEnum.CLOSE.getCode());
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
@@ -1851,6 +1851,134 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return new PagingVO(pageData);
     }
 
+
+    /**
+     * 分配给我待审核
+     * @author yl
+     * @date 2023-01-10 15:34
+     * @param searchParamDTO
+     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
+     */
+    @Override
+    public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        searchParamDTO.getParams().setParam("");
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        TaskSearchParamDTO params = searchParamDTO.getParams();
+        Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
+        //"assignToMe", "myCreate", "all"
+        String taskProperty = TaskConstant.ASSIGN_TO_ME;
+        //任务条件 1 待完成  2 全部  3 待审核
+        Integer taskCondition = params.getTaskCondition();
+        IPage pageData = new Page();
+        //分组的标示
+        String groupNameFlag = params.getGroupNameFlag();
+        //是否分组
+        Boolean ifGroup = false;
+        if (StringUtils.isNotBlank(groupNameFlag) && !groupNameFlag.equals("no")) {
+            ifGroup = true;
+        }
+        //是否是产品分组
+        Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
+        //不在的 任务状态
+        List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
+        List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
+        List<String> processInstanceIds=workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        //当不分组
+        if (!ifGroup) {
+            params.setGroupFlag("");
+            pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+        } else {
+            //根据产品分组
+            if (ifProductGroup) {
+                //这个就是产品的id
+                pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+            } else {
+                //标示是是计划时间
+                String groupFlag = params.getGroupFlag();
+                //获取到时间
+                Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                //计划时间
+                pageData = baseMapper.toMeWaitAuditPlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"),processInstanceIds);
+            }
+        }
+
+
+        List<TaskPagingShowDTO> records = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(records)) {
+            //完成的状态
+            Integer finishState = TaskStateEnum.FINISH.getCode();
+            //获取到任务id 集合
+            List<String> taskIds = records.stream().map(TaskPagingShowDTO::getId).collect(Collectors.toList());
+            //任务关联字段配置
+            List<TaskRefSkuConfigEntity> refSkuConfigList = taskRefSkuConfigService.getByTaskIds(taskIds);
+            //获取总的任务文档数
+            List<CountDTO> taskDocsCounts = taskDeliveryService.getTaskDocsCount(taskIds);
+            List<TaskDocsFinishEntity> finishTasks = finishService.getByTaskIds(taskIds);
+            List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+            //前置任务
+            List<ProjectTaskEntity> preTaskEntityList = this.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+            //产品id
+            List<String> productIds = records.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
+            List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
+            Integer finish = TaskStateEnum.FINISH.getCode();
+            //根据产品id 获取到所有的 任务信息
+            for (TaskPagingShowDTO item : records) {
+                String taskId = item.getId();
+                Integer state = item.getStatus();
+                item.setStatusName(TaskStateEnum.getName(state));
+                String quoteSysTaskId = item.getQuoteSysTaskId();
+                if (StringUtils.isNotBlank(quoteSysTaskId)) {
+                    item.setIsSysTask(true);
+                }
+
+                String chargeId = item.getChargeId();
+                if (StringUtils.isNotBlank(chargeId)) {
+                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                } else {
+                    item.setChargeIdList(new ArrayList<>());
+                }
+                TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(item.getProcessId())).findFirst().orElse(null);
+                if (workflowTask != null) {
+                    item.setProcessTaskId(workflowTask.getTaskId());
+                }
+                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                item.setWarning(warning);
+                Integer totalDocsCount = 0;
+                CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
+                if (countDTO != null) {
+                    totalDocsCount = countDTO.getCount();
+                }
+                TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
+                if (refSku != null) {
+                    item.setTaskFieldConfigType(refSku.getFieldConfigType());
+                }
+                item.setTotalDocsCount(totalDocsCount);
+                Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).collect(Collectors.toList()).size();
+                item.setFinishDocsCount(finishDocsCount);
+                List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+                int totalPreTaskCount = preTaskIds.size();
+                //前置任务
+                item.setTotalPreTaskCount(totalPreTaskCount);
+                List<String> preTaskNameList = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.toList());
+                int finishPreTaskCount = (int) preTaskEntityList.stream().filter(t -> finishState.equals(t.getStatus()) && preTaskIds.contains(t.getId())).count();
+                item.setPreTaskNameList(preTaskNameList);
+                item.setFinishPreTaskCount(finishPreTaskCount);
+                //获取任务操作项
+                List<Map<String, Object>> operateList = getOperateList(state, totalDocsCount, finishDocsCount);
+                item.setOperateList(operateList);
+                ProductInfoEntity product = productList.stream().filter(p -> p.getId().equals(item.getProductId())).findFirst().orElse(null);
+                if (product != null) {
+                    item.setProductName(product.getName());
+                }
+                Boolean ifEditTask = getIfEditTask(item.getType(), item.getStatus());
+                item.setIfEditTask(ifEditTask);
+
+            }
+        }
+
+        return new PagingVO(pageData);
+    }
     /**
      * 我创造的    任务创建人=当前账号人
      *

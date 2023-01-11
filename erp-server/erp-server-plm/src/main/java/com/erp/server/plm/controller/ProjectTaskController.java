@@ -479,7 +479,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/assignToMe/waitAudit/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMePaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMeWaitAuditPaging(searchParamDTO);
         return success(pagingVO);
     }
 

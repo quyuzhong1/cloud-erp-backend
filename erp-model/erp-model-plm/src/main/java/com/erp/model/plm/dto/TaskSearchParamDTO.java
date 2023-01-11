@@ -5,7 +5,6 @@ import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 /**
  * 以人为 维度 搜素条件
@@ -36,8 +35,9 @@ public class TaskSearchParamDTO  extends PermissionsDTO {
 
     /**
      * 任务条件
-     * 1.待完成，待审核
+     * 1.待完成
      * 2 全部
+     * 3.待审核
      */
     private Integer taskCondition=1;
 
