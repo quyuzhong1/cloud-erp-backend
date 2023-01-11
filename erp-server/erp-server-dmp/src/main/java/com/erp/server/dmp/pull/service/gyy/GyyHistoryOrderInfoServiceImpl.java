@@ -17,11 +17,12 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -43,9 +44,9 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET)
-public class GyyHistoryOrderInfoServiceImpl implements IReportSaveService {
-
+public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
     @Resource
     private MongoService mongoService;
 
@@ -137,6 +138,17 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportSaveService {
                 //存储数据到中台
                 analysisOrder(gyyOrderEntity);
             }
+        }
+    }
+
+    @Override
+    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
+        //拉取数据 存库
+        pullDataSave(requestDTO);
+        // 修改任务执行结果信息
+        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+        if (!aBoolean) {
+            throw new RuntimeException("修改任务下次执行时间失败！");
         }
     }
 

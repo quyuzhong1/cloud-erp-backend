@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,7 +46,7 @@ public class JobTaskDTO {
     private LocalDateTime nextTime;
 
     /**
-     * 任务状态：1：待拉取  2：拉取中
+     * 任务状态：1：待拉取  2：拉取中  3:xxljob直接执行
      */
     private Integer state;
 
@@ -78,4 +79,20 @@ public class JobTaskDTO {
      * 错误次数
      */
     private Integer errorCount;
+
+    public JobTaskDTO(PlatformApiTaskEntity entity) {
+        this.id = Long.parseLong(entity.getId());
+        this.platformId = entity.getPlatformId();
+        this.apiId = entity.getApiId();
+        this.intervalTime = entity.getIntervalTime();
+        this.lastTime = entity.getLastTime();
+        this.nextTime = entity.getNextTime();
+        this.state = entity.getState();
+        this.createTime = entity.getCreateTime();
+        this.apiCode = entity.getApiCode();
+        this.apiName = entity.getApiName();
+        this.taskName = "GYY_PULL_DATA_TASK";
+        this.platformName = "管易云";
+        this.errorCount = 0;
+    }
 }
