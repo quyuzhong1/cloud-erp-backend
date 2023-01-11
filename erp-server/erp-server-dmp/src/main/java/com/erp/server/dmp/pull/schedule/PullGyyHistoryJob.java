@@ -10,6 +10,7 @@ import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.ModelService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.pull.service.gyy.GyyHistoryDeliveryDetailServiceImpl;
+import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -33,13 +34,13 @@ public class PullGyyHistoryJob {
     private IReportHistoryService historyTradeService;
 
     @XxlJob("GyyDeliveryHistory")
-    public void gyyDeliveryHistory() throws Exception {
+    public ReturnT<String> gyyDeliveryHistory() throws Exception {
         XxlJobHelper.log("GyyDeliveryHistory 任务开始执行！");
         // 查询对应任务配置
         PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET.getTaskName());
         if(ObjectUtil.isEmpty(entity)){
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET.getTaskName());
-            return;
+            return ReturnT.SUCCESS;
         }
         JobTaskDTO jobTaskDTO = new JobTaskDTO(entity);
         // 执行拉取任务
@@ -47,16 +48,17 @@ public class PullGyyHistoryJob {
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET);
         historyDeliveryService.pullHistoryOrderInfo(requestDTO);
         XxlJobHelper.log("GyyDeliveryHistory 任务执行结束！");
+        return ReturnT.SUCCESS;
     }
 
     @XxlJob("GyyOrderHistory")
-    public void gyyOrderHistory() throws Exception {
+    public ReturnT<String> gyyOrderHistory() throws Exception {
         XxlJobHelper.log("GyyOrderHistory 任务开始执行！");
         // 查询对应任务配置
         PlatformApiTaskEntity entity = platformApiTaskService.getByApiCode(PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET.getTaskName());
         if(ObjectUtil.isEmpty(entity)){
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET.getTaskName());
-            return;
+            return ReturnT.SUCCESS;
         }
         JobTaskDTO jobTaskDTO = new JobTaskDTO(entity);
         // 执行拉取任务
@@ -64,5 +66,6 @@ public class PullGyyHistoryJob {
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET);
         historyTradeService.pullHistoryOrderInfo(requestDTO);
         XxlJobHelper.log("GyyOrderHistory 任务执行结束！");
+        return ReturnT.SUCCESS;
     }
 }
