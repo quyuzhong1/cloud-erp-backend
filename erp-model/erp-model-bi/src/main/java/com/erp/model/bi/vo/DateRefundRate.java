@@ -16,5 +16,5 @@ public class DateRefundRate {
     /**
      * 退款率
      */
-    private Integer refundQuantity;
+    private BigDecimal refundRate;
 }

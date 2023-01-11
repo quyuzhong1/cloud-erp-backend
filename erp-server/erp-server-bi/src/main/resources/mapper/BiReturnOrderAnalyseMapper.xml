@@ -423,12 +423,14 @@
     <select id="returnOrderAnalByDateYear" resultType="com.erp.model.bi.vo.DateReturnOrderVO">
         SELECT
             to_char(platform_create_time,'yyyy') AS dateTime,
-        COALESCE(round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2),0) AS refundOrderRate,
-        COALESCE(SUM(droit.quantity), 0) AS refundQuantity
+            round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
+            round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
         INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
+        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
@@ -520,12 +522,14 @@
     <select id="returnOrderAnalByDateQuarter" resultType="com.erp.model.bi.vo.DateReturnOrderVO">
         SELECT
         concat(to_char(platform_create_time,'yyyy'),' Q', (cast(to_char(platform_create_time,'MM') as integer) -1) / 3 +1) AS dateTime,
-        COALESCE(round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2),0) AS refundOrderRate,
-        COALESCE(SUM(droit.quantity), 0) AS refundQuantity
+        round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
+        round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
         INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
+        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
@@ -617,12 +621,14 @@
     <select id="returnOrderAnalByDateMonth" resultType="com.erp.model.bi.vo.DateReturnOrderVO">
         SELECT
         to_char(platform_create_time,'yyyy-MM') AS dateTime,
-        COALESCE(round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2),0) AS refundOrderRate,
-        COALESCE(SUM(droit.quantity), 0) AS refundQuantity
+        round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
+        round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
         INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
+        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
@@ -715,12 +721,14 @@
         SELECT
         concat(to_char((doi.platform_create_time::DATE - INTERVAL '1 day' - ( EXTRACT ( dow FROM ( doi.platform_create_time::DATE - INTERVAL '1 day' ) ) - 1 || ' day' ) :: INTERVAL ),'yyyy-mm-dd'),
         '~',to_char(doi.platform_create_time::DATE  +cast(-1*(TO_NUMBER(to_char(doi.platform_create_time::DATE ,'D'),'99')-2) + 6 ||' days' as interval),'yyyy-mm-dd')) as  dateTime,
-        COALESCE(round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2),0) AS refundOrderRate,
-        COALESCE(SUM(droit.quantity), 0) AS refundQuantity
+        round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
+        round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
         INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
+        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
@@ -812,12 +820,14 @@
     <select id="returnOrderAnalByDateDay" resultType="com.erp.model.bi.vo.DateReturnOrderVO">
         SELECT
         to_char(platform_create_time,'yyyy-MM-dd') as dateTime,
-        COALESCE(round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2),0) AS refundOrderRate,
-        COALESCE(SUM(droit.quantity), 0) AS refundQuantity
+        round(round(SUM(droit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundOrderRate,
+        round(round(SUM(drit.quantity)::numeric,2) / round(SUM(doit.quantity)::numeric,2) * 100,2) AS refundRate
         FROM dmp_order_info doi
         INNER JOIN dmp_order_item doit ON doi."id" = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
+        LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
+        LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
