@@ -128,13 +128,13 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
 
             DateRefundRate dateRefundRate = new DateRefundRate();
             dateRefundRate.setDateTime(req.getDateTime());
-            dateRefundRate.setRefundQuantity(null != req.getRefundQuantity() ? req.getRefundQuantity() : 0);
+            dateRefundRate.setRefundRate(null != req.getRefundRate() ? req.getRefundRate() : BigDecimal.ZERO);
             dateRefundRateList.add(dateRefundRate);
 
         });
         barAndLineVO.setDateTime(listDate);
         barAndLineVO.setDateRefundOrderRateVOList(dateRefundOrderRateVOList.stream().map(DateRefundOrderRateVO::getRefundOrderRate).collect(Collectors.toList()));
-        barAndLineVO.setDateRefundQuantityList(dateRefundRateList.stream().map(DateRefundRate::getRefundQuantity).collect(Collectors.toList()));
+        barAndLineVO.setDateRefundRateList(dateRefundRateList.stream().map(DateRefundRate::getRefundRate).collect(Collectors.toList()));
 
         return barAndLineVO;
     }

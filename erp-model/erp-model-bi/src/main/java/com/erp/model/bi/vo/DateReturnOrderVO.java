@@ -19,7 +19,7 @@ public class DateReturnOrderVO {
     private BigDecimal refundOrderRate;
 
     /**
-     * 退货量
+     * 退款率
      */
-    private Integer refundQuantity;
+    private BigDecimal refundRate;
 }

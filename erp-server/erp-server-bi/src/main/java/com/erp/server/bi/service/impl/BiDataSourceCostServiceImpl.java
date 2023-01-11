@@ -667,10 +667,8 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             Set<Integer> year1 = new HashSet<>(profitMap.keySet());
             Set<Integer> year2 = new HashSet<>(salesMap.keySet());
             year1.addAll(year2);
-            if(CollectionUtil.isNotEmpty(year1)){
-                startRange = year1.stream().min(Integer::compareTo).get();
-                endRange = year1.stream().max(Integer::compareTo).get();
-            }
+            startRange = year1.stream().min(Integer::compareTo).get();
+            endRange = year1.stream().max(Integer::compareTo).get();
         }
         List<String> deptNames = IntStream.rangeClosed(startRange, endRange).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
 
