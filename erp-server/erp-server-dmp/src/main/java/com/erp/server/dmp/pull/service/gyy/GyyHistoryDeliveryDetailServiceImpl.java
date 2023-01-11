@@ -91,7 +91,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyDeliveryDetailEntityList)) {
-            XxlJobHelper.log("拉去数据列表为空 gyyDeliveryDetailEntityList.size = 0 ");
+            XxlJobHelper.log("拉取数据列表为空 gyyDeliveryDetailEntityList.size = 0 ");
             return;
         }
         for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
