@@ -41,9 +41,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(SkuMatrixVO::getSales)).forEach(x -> {
             List<Object> tempList = new ArrayList<>();
-            tempList.add(x.getName());
             tempList.add(x.getSales());
             tempList.add(x.getAmount());
+            tempList.add(x.getName());
             skuMatrixList.add(tempList);
         });
         return skuMatrixList;
@@ -62,9 +62,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(MatrixVO::getSales)).forEach(x -> {
             List<Object> tempList = new ArrayList<>();
-            tempList.add(x.getName());
             tempList.add(x.getSales());
             tempList.add(x.getNetProfit());
+            tempList.add(x.getName());
             skuMatrixList.add(tempList);
         });
         return skuMatrixList;
@@ -109,9 +109,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<List<Object>> skuMatrixList = new ArrayList<>();
         skuMatrixVOIPage.stream().sorted(Comparator.comparing(SkuMatrixVO::getSales)).forEach(x -> {
             List<Object> tempList = new ArrayList<>();
-            tempList.add(x.getName());
             tempList.add(x.getSales());
             tempList.add(x.getAmount());
+            tempList.add(x.getName());
             skuMatrixList.add(tempList);
         });
         return skuMatrixList;

@@ -69,7 +69,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list");
+        jobTaskDTO.setApiCode("order-get-order-list-new");
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -186,8 +186,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             Map<String, Object> paramsMap = new HashMap();
             paramsMap.put("updateTimeStart", st);
             paramsMap.put("updateTimeEnd", sd);
-            paramsMap.put("page", pageIndex);
-            paramsMap.put("pageSize", pageSize);
+//            paramsMap.put("page", pageIndex);
+//            paramsMap.put("pageSize", pageSize);
             paramsMap.put("status",status);
 
             // 封装传参数据
@@ -408,10 +408,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setPlatformSign("马帮");
 
         //企业Id
-        dmpOrderInfoEntity.setCompanyId("");
+        dmpOrderInfoEntity.setCompanyId("1");
 
         //企业名称
-        dmpOrderInfoEntity.setCompanyName("");
+        dmpOrderInfoEntity.setCompanyName("唯迹集团");
 
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getTransportTime())) {

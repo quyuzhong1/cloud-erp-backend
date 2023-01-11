@@ -14,4 +14,11 @@ public interface PlatformApiTaskService extends IService<PlatformApiTaskEntity> 
      * @return java.lang.Boolean
      **/
     Boolean updateTaskStateById(JobTaskDTO jobTaskDTO);
+
+    /**
+     * 获取需要执行的任务
+     * @param taskName
+     * @return
+     */
+    PlatformApiTaskEntity getByApiCode(String taskName);
 }

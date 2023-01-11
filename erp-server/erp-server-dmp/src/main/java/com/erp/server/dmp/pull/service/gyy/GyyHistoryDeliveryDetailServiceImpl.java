@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.gyy;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
@@ -18,12 +19,14 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.utils.GyyUtils;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +47,9 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET)
-public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
-
+public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryService {
+    @Resource
+    private PlatformApiTaskService platformApiTaskService;
     @Resource
     private MongoService mongoService;
 
@@ -82,39 +85,56 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
         System.out.println(orderEntities);
     }
 
+
+
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<GyyDeliveryDetailEntity> gyyDeliveryDetailEntityList = pullDate(dto);
-        if (gyyDeliveryDetailEntityList != null && gyyDeliveryDetailEntityList.size() > 0) {
-            for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
-                OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-                orderMongoDTO.setPlatformCode(gyyDeliveryDetailEntity.getPlatformCode());
-                List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyDeliveryDetailEntity), MapUtil.class);
-                            try {
-                                mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
-                            } catch (Exception e) {
-                                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                                dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
-                                dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
-                            }
+        if (CollectionUtil.isEmpty(gyyDeliveryDetailEntityList)) {
+            XxlJobHelper.log("拉去数据列表为空 gyyDeliveryDetailEntityList.size = 0 ");
+            return;
+        }
+        for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
+            OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+            orderMongoDTO.setPlatformCode(gyyDeliveryDetailEntity.getPlatformCode());
+            List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
+            if (CollectionUtil.isNotEmpty(mongoData)) {
+                for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
+                    // 比较数据是否相同
+                    if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
+                        // 修改数据
+                        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyDeliveryDetailEntity), MapUtil.class);
+                        try {
+                            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
+                        } catch (Exception e) {
+                            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                            dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                            dmpErrorLogEntity.setParams("");
+                            XxlJobHelper.log("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
+                            dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                            dmpErrorLogEntity.setReturnMsg("");
+                            dmpErrorLogService.add(dmpErrorLogEntity);
+                            throw new RuntimeException("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                         }
                     }
-                } else {
-                    mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
-                //存储数据到中台
-                analysisDeliveryDetail(gyyDeliveryDetailEntity);
+            } else {
+                mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
             }
+            //存储数据到中台
+            analysisDeliveryDetail(gyyDeliveryDetailEntity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
+        //拉取数据 存库
+        pullDataSave(requestDTO);
+        // 修改任务执行结果信息
+        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+        if (!aBoolean) {
+            throw new RuntimeException("修改任务下次执行时间失败！");
         }
     }
 
@@ -346,10 +366,10 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportSaveService {
         deliveryDetailInfoEntity.setPlatformSign("管易云");
 
         //企业Id
-        deliveryDetailInfoEntity.setCompanyId("");
+        deliveryDetailInfoEntity.setCompanyId("1");
 
         //企业名称
-        deliveryDetailInfoEntity.setCompanyName("");
+        deliveryDetailInfoEntity.setCompanyName("唯迹集团");
 
         //创建时间
         deliveryDetailInfoEntity.setCreateTime(new Date());

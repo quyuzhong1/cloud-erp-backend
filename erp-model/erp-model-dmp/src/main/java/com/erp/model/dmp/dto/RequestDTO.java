@@ -11,4 +11,9 @@ public class RequestDTO {
     private PlatformApiEnum platformApiEnum;
 
     private JobTaskDTO jobTaskDTO;
+
+    public RequestDTO(JobTaskDTO jobTaskDTO, PlatformApiEnum platform) {
+        this.platformApiEnum = platform;
+        this.jobTaskDTO = jobTaskDTO;
+    }
 }
