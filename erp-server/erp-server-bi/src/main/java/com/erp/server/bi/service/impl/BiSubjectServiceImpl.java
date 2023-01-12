@@ -561,7 +561,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public SubjectLayoutDetailsDTO dashboardInfo() {
-        String userId = commonService.getUserInfo().getUid();
+        String userId =commonService.getUserInfo().getUid();
         String type = DictEnum.DASHBOARD.getType();
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
         String subjectId = "";
@@ -594,7 +594,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<BiSubjectEntity> dashboardList = getByCategoryId(categoryId, subjectIdList);
         if (CollectionUtils.isNotEmpty(dashboardList)) {
             BiSubjectEntity myCreate = dashboardList.stream().filter(d -> userId.equals(d.getCreateUserId())).findFirst().orElse(null);
-            if (Objects.isNull(myCreate)) {
+            if (!Objects.isNull(myCreate)) {
                 return layoutService.subjectInfo(myCreate.getId());
             }
 
