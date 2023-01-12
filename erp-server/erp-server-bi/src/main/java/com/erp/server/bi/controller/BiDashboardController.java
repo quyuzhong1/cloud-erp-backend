@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.CopySubjectDTO;
 import com.erp.model.bi.dto.MyDashboardDTO;
 import com.erp.model.bi.dto.SubjectDTO;
@@ -16,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 
 /**
  * 仪表盘
@@ -61,10 +63,10 @@ public class BiDashboardController extends BaseController {
     @GetMapping("/info")
     public ApiResult<SubjectLayoutDetailsDTO> Info() {
         SubjectLayoutDetailsDTO details = subjectService.dashboardInfo();
-        if (details != null) {
-            return success(details);
+        if (Objects.isNull(details)) {
+            throw new ServiceException(ApiError.ERROR_97019);
         }
-        return failure(ApiError.ERROR_97019,null);
+        return success(details);
     }
 
     /**
@@ -96,8 +98,11 @@ public class BiDashboardController extends BaseController {
      */
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
-        Boolean copyResult = subjectService.copyDashboard(dto);
-        return copyResult == true ? success() : failure();
+        String id = subjectService.copyDashboard(dto);
+        if (StringUtils.isBlank(id)) {
+            return failure();
+        }
+        return success(id);
     }
 
 }

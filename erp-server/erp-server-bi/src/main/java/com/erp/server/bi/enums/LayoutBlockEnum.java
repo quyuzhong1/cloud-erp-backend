@@ -11,7 +11,7 @@ public enum LayoutBlockEnum {
     QUARTER("L04", "1/4块", 4),
     HALF("L02", "1/2块",2),
     THIRD("L03", "1/3块",3),
-    SIXTH("L06", "1/6块",6),
+    SIXTH("L05", "1/5块",5),
     SINGLE("L01", "1块",1);
 
     private String blockNo;

@@ -322,7 +322,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      * @date 2022-12-19 17:38
      */
     @Override
-    public Boolean addSubject(AddTotalSubjectDTO dto) {
+    public String addSubject(AddTotalSubjectDTO dto) {
         List<LayoutDTO> layoutList = dto.getLayoutList();
         //检查布局模块是否存在
         checkLayoutModuleExist(layoutList);
@@ -338,7 +338,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //专题id
         String subjectId = subjectService.addSubject(subject);
         if (StringUtils.isBlank(subjectId)) {
-            return false;
+            return subjectId;
         }
 
         List<String> LayoutIds = new ArrayList<>();
@@ -360,7 +360,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         //保存专题与布局关系表
         subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
-        return true;
+        return subjectId;
     }
 
 

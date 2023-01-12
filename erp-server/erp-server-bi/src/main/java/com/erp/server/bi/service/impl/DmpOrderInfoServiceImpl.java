@@ -666,7 +666,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
-            targetSalesMap = salesList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+            targetSalesMap = salesList.stream().filter(x -> null== newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
@@ -674,7 +674,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesVolumeList)){
-            targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+            targetSalesVolumeMap = salesVolumeList.stream().filter(x -> null== newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
 
@@ -692,12 +692,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new ArrayList<>();
         }
         // 根据sku的分组计算销量
-        Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+        Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
         // 根据sku的分组计算销售额
-        Map<String, BigDecimal> saleAmountMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+        Map<String, BigDecimal> saleAmountMap = entityItemList.stream()
+                .filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.reducing(BigDecimal.ZERO,
                         x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)

@@ -41,7 +41,7 @@ public class BiModuleController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "bi:module:paging",
-            tableAlias = "bi_module"
+            tableAlias = "bm1"
     )
     public ApiResult<PagingVO<ModulePagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<ModulePagingDTO> pagingVO = biModuleService.paging(dto);

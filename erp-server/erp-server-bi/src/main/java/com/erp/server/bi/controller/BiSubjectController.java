@@ -109,8 +109,11 @@ public class BiSubjectController extends BaseController {
      */
     @PostMapping("/setShare")
     public ApiResult setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
-        Boolean flag = biSubjectShareService.setShare(dto);
-        return flag == true ? success() : failure();
+        String id = biSubjectShareService.setShare(dto);
+        if(StringUtils.isBlank(id)){
+            return failure();
+        }
+        return success(id);
     }
 
     /**
