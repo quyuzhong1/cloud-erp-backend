@@ -1,9 +1,11 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiDataSourceCostSearchDTO;
@@ -45,7 +47,7 @@ public class BiDataSourceCostController extends BaseController {
      * @return ApiResult<PagingVO<LinkedHashMap<String,Object>>>
      */
     @PostMapping("/paging")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dataSourceCost:paging", tableAlias = "bdsc")
     public ApiResult<PagingVO<LinkedHashMap<String,Object>>> queryByPage(@RequestBody @Validated PagingDTO<BiDataSourceCostSearchDTO> dto) {
         PagingVO<LinkedHashMap<String,Object>> pagingVO = biDataSourceCostService.paging(dto);
         return success(pagingVO);
@@ -59,7 +61,7 @@ public class BiDataSourceCostController extends BaseController {
      * @param response
      */
     @PostMapping(value = "/exportExcel")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:getPersonnelView", tableAlias = "bdsc")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dataSourceCost:exportExcel", tableAlias = "bdsc")
     public ApiResult exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
         biDataSourceCostService.exportExcel(dto, response);
         return success();
@@ -86,6 +88,11 @@ public class BiDataSourceCostController extends BaseController {
      * @param list
      */
     @PostMapping("/updateBiDataSourceCost")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "bi:dataSourceCost:updateBiDataSourceCost",
+            serviceClass =  BiDataSourceCostService.class,
+            keyIdName = "id")
     public ApiResult updateBiDataSourceCost(@RequestBody List<LinkedHashMap<String,Object>> list) {
         biDataSourceCostService.updateBiDataSourceCost(list);
         return success();

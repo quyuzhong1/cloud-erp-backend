@@ -3,10 +3,12 @@ package com.erp.server.bi.controller;
 import com.alibaba.excel.EasyExcel;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.AdvanceSearchDTO;
@@ -60,6 +62,10 @@ public class BiTargetManagementController extends BaseController {
      * @return ApiResult<PagingVO<BiTargetManagementShowDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+                    tableField = "create_user_id",
+                    menuCode = "bi:targetManagement:paging",
+                    tableAlias = "btm")
     public ApiResult<PagingVO<BiTargetManagementShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<AdvanceSearchDTO> dto) {
         PagingVO<BiTargetManagementShowDTO> pagingVO = biTargetManagementService.paging(dto);
         return success(pagingVO);

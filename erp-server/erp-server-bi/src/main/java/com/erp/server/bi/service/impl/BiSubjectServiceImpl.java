@@ -227,13 +227,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         //这个是所有的
         List<DashboardDTO> allList = baseMapper.getDashboardList(type, dashboardFlag, findIdList, searchKeyword);
-        //这个是常用的
-        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> frequentlyFlag.equals(f.getIsFrequently())).collect(Collectors.toList());
-        for (DashboardDTO frequently : frequentlyList) {
-            if (userDefaultSubjectIds.contains(frequently.getId())) {
-                frequently.setIsDefault(true);
+        for (DashboardDTO item : allList) {
+            if (userDefaultSubjectIds.contains(item.getId())) {
+                item.setIsDefault(true);
             }
         }
+
+        //这个是常用的
+        List<DashboardDTO> frequentlyList = allList.stream().filter(f ->
+                frequentlyFlag.equals(f.getIsFrequently()) &&
+                        myCreateIds.contains(f.getId())
+        ).collect(Collectors.toList());
         result.setFrequentlyList(frequentlyList);
         result.setMyCreateList(myCreateList);
         List<DashboardDTO> shareList = allList.stream().filter(d -> shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
@@ -356,17 +360,18 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
 
 
-//        String type = DictEnum.DASHBOARD.getType();
-//        String dashboardFlag = DictEnum.DASHBOARD.getValue();
-//        String dashboardCategoryId = "";
-//        //获取我的仪表盘的专题
-//        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
-//        if (dict != null) {
-//            dashboardCategoryId = dict.getId();
-//        }
+        String type = DictEnum.DASHBOARD.getType();
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String dashboardCategoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+        if (dict != null) {
+            dashboardCategoryId = dict.getId();
+        }
 
         List<SubjectVO> subjectList = baseMapper.getSubjectByIds(subjectIdList, searchKeyword);
-
+        String finalDashboardCategoryId = dashboardCategoryId;
+        pairList = pairList.stream().filter(p -> !p.getKey().equals(finalDashboardCategoryId)).collect(Collectors.toList());
         for (Pair<String, String> pair : pairList) {
             String categoryId = pair.getKey();
             CategorySubjectVO result = new CategorySubjectVO();
@@ -374,14 +379,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             result.setCategoryName(pair.getValue());
             List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
             for (SubjectVO item : subjectResultList) {
-                //我创造的
-                if (userId.equals(item.getCreateUserId())) {
-                    item.setMyCreateVisible(true);
-                }
                 //分享给我
                 if (shareToMeIds.contains(item.getId())) {
                     item.setShareVisible(true);
                 }
+                //我创造的
+                if (userId.equals(item.getCreateUserId())) {
+                    item.setMyCreateVisible(true);
+                    //我创建的 取消掉分享标识
+                    item.setShareVisible(false);
+                }
+
             }
             result.setSubjectList(subjectResultList);
             resultList.add(result);
@@ -430,7 +438,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         String shareFlag = dto.getShareFlag();
-        Integer isFrequently=dto.getIsFrequently();
+        Integer isFrequently = dto.getIsFrequently();
         copySubject.setName(name);
         copySubject.setIsFrequently(isFrequently);
         copySubject.setId(newSubjectId);
@@ -553,7 +561,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public SubjectLayoutDetailsDTO dashboardInfo() {
-        String userId = commonService.getUserInfo().getUid();
+        String userId =commonService.getUserInfo().getUid();
         String type = DictEnum.DASHBOARD.getType();
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
         String subjectId = "";
@@ -586,7 +594,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<BiSubjectEntity> dashboardList = getByCategoryId(categoryId, subjectIdList);
         if (CollectionUtils.isNotEmpty(dashboardList)) {
             BiSubjectEntity myCreate = dashboardList.stream().filter(d -> userId.equals(d.getCreateUserId())).findFirst().orElse(null);
-            if(Objects.isNull(myCreate)){
+            if (!Objects.isNull(myCreate)) {
                 return layoutService.subjectInfo(myCreate.getId());
             }
 
@@ -605,7 +613,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     @Transactional
-    public Boolean copyDashboard(CopySubjectDTO dto) {
+    public String copyDashboard(CopySubjectDTO dto) {
         String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
@@ -633,9 +641,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         copySubject.setCategoryId(subject.getCategoryId());
         copySubject.setCategoryName(subject.getCategoryName());
         copySubject.setIsFrequently(dto.getIsFrequently());
+        String copySubjectId = "";
         boolean flag = this.save(copySubject);
+
         //当复制成功的时候
         if (flag) {
+            copySubjectId = copySubject.getId();
             //如果是分享
             if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
                 List<String> userList = dto.getShareUserIdList();
@@ -644,7 +655,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             }
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
-        return flag;
+        return copySubjectId;
     }
 
     @Override

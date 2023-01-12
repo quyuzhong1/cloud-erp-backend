@@ -36,7 +36,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @PostMapping("/skuMatrix")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:skuMatrix", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<List<Object>>> skuMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<List<Object>> skuMatrixList = biComprehensiveAnalyseService.skuMatrix(biFilterDTO);
         return success(skuMatrixList);
@@ -50,7 +50,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return com.erp.common.vo.PagingVO<com.erp.model.bi.vo.SkuMatrixVO>
      **/
     @PostMapping("/shopMatrix")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:shopMatrix", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<List<Object>>> shopMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<List<Object>> matrixVOPagingVO = biComprehensiveAnalyseService.shopMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
@@ -64,9 +64,9 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @PostMapping("/shopContrastTrend")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:shopContrastTrend", tableAlias = "doi")
-    public ApiResult<List<ShopContrastTrendVO>> shopContrastTrend(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<ShopContrastTrendVO> list = biComprehensiveAnalyseService.shopContrastTrend(biFilterDTO);
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
+    public ApiResult<List<List<Object>>> shopContrastTrend(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<List<Object>> list = biComprehensiveAnalyseService.shopContrastTrend(biFilterDTO);
         return success(list);
     }
 
@@ -78,7 +78,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @PostMapping("/categoryMatrix")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:categoryMatrix", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<List<Object>>> categoryMatrix(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<List<Object>> matrixVOPagingVO = biComprehensiveAnalyseService.categoryMatrix(biFilterDTO);
         return success(matrixVOPagingVO);
@@ -92,7 +92,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @PostMapping("/saleDetailSku")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:saleDetailSku", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailSku(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailSku(biFilterDTO);
         return success(saleDetailVOList);
@@ -106,7 +106,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @PostMapping("/saleDetailShop")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:saleDetailShop", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailShop(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailShop(biFilterDTO);
         return success(saleDetailVOList);
@@ -120,7 +120,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @PostMapping("/saleDetailUser")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:saleDetailUser", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailUser(@RequestBody @Validated BiFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailUser(biFilterDTO);
         return success(saleDetailVOList);
@@ -134,7 +134,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @PostMapping("/saleDetailDate")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:saleDetailDate", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SaleDetailVO>> saleDetailDate(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
         List<SaleDetailVO> saleDetailVOList = biComprehensiveAnalyseService.saleDetailDate(biFilterDTO);
         return success(saleDetailVOList);
@@ -148,7 +148,7 @@ public class BiComprehensiveAnalyseController extends BaseController {
      * @return java.util.List<com.erp.model.bi.vo.SaleDetailVO>
      **/
     @PostMapping("/skuDateSaleTrend")
-    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:comprehensive:skuDateSaleTrend", tableAlias = "doi")
+    //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
     public ApiResult<List<SkuDateSaleTrendVO>> skuDateSaleTrend(@RequestBody @Validated SkuDateFilterDTO biFilterDTO) {
         List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = biComprehensiveAnalyseService.skuDateSaleTrend(biFilterDTO);
         return success(skuDateSaleTrendVOS);

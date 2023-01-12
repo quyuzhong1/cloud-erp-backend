@@ -3,6 +3,7 @@ package com.erp.server.dmp.pull.service.mabang;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.security.HmacSHA256Utils;
+import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -516,7 +517,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-
+            dmpOrderItemEntity.setAmountAfter(dmpOrderItemEntity.getSellPrice().multiply(new BigDecimal(dmpOrderItemEntity.getQuantity())));
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

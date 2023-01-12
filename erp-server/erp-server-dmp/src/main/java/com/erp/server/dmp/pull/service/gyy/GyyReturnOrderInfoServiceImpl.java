@@ -381,6 +381,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService {
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(null);
 
+            //折扣后金额
+            dmpReturnOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getAmountAfter()));
+
             orderItemList.add(dmpReturnOrderItemEntity);
         }
         checkOrderItem(orderItemList, orderId);

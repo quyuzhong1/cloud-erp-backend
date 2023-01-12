@@ -1,9 +1,6 @@
 package com.erp.server.plm.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.ProductCostDTO;
-import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
@@ -51,4 +48,12 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return java.lang.Boolean
      **/
     Boolean removePurchase(String skuId);
+    /**
+     * @description: 根据skuId查询
+     * @author Will
+     * @date: 2023/1/12 18:42
+     * @param skuId
+     * @return ProductPurchaseEntity
+     */
+    ProductPurchaseEntity getBySkuId(String skuId);
 }

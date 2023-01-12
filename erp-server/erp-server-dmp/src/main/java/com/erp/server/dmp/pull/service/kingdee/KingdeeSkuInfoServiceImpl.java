@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
@@ -61,15 +62,15 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
             for (KingdeeSkuEntity skuEntity : skuEntityList) {
                 KingdeeSkuMongoDTO kingdeeSkuMongoDTO = new KingdeeSkuMongoDTO();
                 kingdeeSkuMongoDTO.setMaterialId(skuEntity.getFMaterialId());
-                List<KingdeeOrderEntity> mongoData = mongoService.findMongoData(kingdeeSkuMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeOrderEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (KingdeeOrderEntity mongoDatum : mongoData) {
+                List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(kingdeeSkuMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
+                if (CollectionUtil.isNotEmpty(mongoData)) {
+                    for (KingdeeSkuEntity mongoDatum : mongoData) {
                         // 比较数据是否相同
                         if (!mongoDatum.toString().equals(skuEntity.toString())) {
                             // 修改数据
                             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(skuEntity), MapUtil.class);
                             try {
-                                mongoService.updateMongoData(kingdeeSkuMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeOrderEntity.class);
+                                mongoService.updateMongoData(kingdeeSkuMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
                             } catch (Exception e) {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());

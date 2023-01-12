@@ -190,6 +190,12 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "new_sign")
     private Integer newSign;
 
+    /**
+     * 折扣后订单总金额
+     */
+    @TableField(value = "amount_after")
+    private BigDecimal amountAfter;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -218,6 +224,7 @@ public class DmpOrderItemEntity implements Serializable {
                 ", stockStatus=" + stockStatus +
                 ", stockWarehouseId='" + stockWarehouseId + '\'' +
                 ", erpOrderItemId='" + erpOrderItemId + '\'' +
+                ", amountAfter='" + amountAfter + '\'' +
                 '}';
     }
 }

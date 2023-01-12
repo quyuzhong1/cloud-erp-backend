@@ -1,11 +1,12 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
-import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,8 +33,7 @@ public class BiSalesModuleController extends BaseController {
     @Resource
     private SalesOrderService salesOrderService;
 
-    @Resource
-    private BiComprehensiveAnalyseService biComprehensiveAnalyseService;
+
 
     /**
      * 销售额- 一级模块-月销售额趋势
@@ -41,11 +41,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byMonth")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byMonth",
-//            tableAlias = "dmp_order_info"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> getMonth(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO statistical = salesOrderService.getMonthSales(dto);
         return success(statistical);
@@ -58,11 +58,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/bySku")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:bySku",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesVO>> getBySku(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesVO> resultList = salesOrderService.getBySku(dto);
         return success(resultList);
@@ -75,11 +75,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/bySkuCountry")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<XyAxesResultVO> getByCountry(@RequestBody @Validated BiFilterDTO dto) {
         XyAxesResultVO result = salesOrderService.getByCountry(dto);
         return success(result);
@@ -92,11 +92,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byTobToc")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byTobToc(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result = salesOrderService.byTobToc(dto);
         return success(result);
@@ -104,11 +104,11 @@ public class BiSalesModuleController extends BaseController {
 
 
     @PostMapping("/byPlatformRatio")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byPlatformRatio(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result = salesOrderService.getByPlatformRatio(dto);
         return success(result);
@@ -122,11 +122,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byShop")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ShopSalesVO>> byShop(@RequestBody @Validated BiFilterDTO dto) {
         List<ShopSalesVO> resultList = salesOrderService.getByShop(dto);
         return success(resultList);
@@ -139,11 +139,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byTopShop")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byTopShop(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result = salesOrderService.byTopShop(dto);
         return success(result);
@@ -156,11 +156,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byShopCountry")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<XyAxesResultVO> byShopCountry(@RequestBody @Validated BiFilterDTO dto) {
         XyAxesResultVO resultList = salesOrderService.byShopCountry(dto);
         return success(resultList);
@@ -172,11 +172,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byShopCategory")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<XyAxesResultVO> byShopCategory(@RequestBody @Validated BiFilterDTO dto) {
         XyAxesResultVO result = salesOrderService.byShopCategory(dto);
         return success(result);
@@ -188,11 +188,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byShopNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ShopNewAndOldSalesVO>> byShopNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<ShopNewAndOldSalesVO> resultList=salesOrderService.byShopNewAndOld(dto);
         return success(resultList);
@@ -205,11 +205,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byCountry")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byCountry(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> resultList=salesOrderService.byCountry(dto);
         return success(resultList);
@@ -221,11 +221,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byCategory")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byCategory(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byCategory(dto);
         return success(result);
@@ -238,11 +238,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byBrand")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byBrand(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byBrand(dto);
         return success(result);
@@ -255,11 +255,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPlatform")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byPlatform(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byPlatform(dto);
         return success(result);
@@ -272,11 +272,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byHomeAndAbroad")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byHomeAndAbroad(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byHomeAndAbroad(dto);
         return success(result);
@@ -289,11 +289,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeople")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byPeople(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byPeople(dto);
         return success(result);
@@ -306,11 +306,6 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeopleWeekRank")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
     public ApiResult<List<PeopleSalesRankVO>> byPeopleWeekRank(@RequestBody @Validated BiFilterDTO dto) {
         List<PeopleSalesRankVO> result=salesOrderService.byPeopleWeekRank(dto);
         return success(result);
@@ -323,11 +318,6 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeopleMonthRank")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
     public ApiResult<List<PeopleSalesRankVO>> byPeopleMonthRank(@RequestBody @Validated BiFilterDTO dto) {
         List<PeopleSalesRankVO> result=salesOrderService.byPeopleMonthRank(dto);
         return success(result);
@@ -339,11 +329,6 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeopleQuarterRank")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
     public ApiResult<List<PeopleSalesRankVO>> byPeopleQuarterRank(@RequestBody @Validated BiFilterDTO dto) {
         List<PeopleSalesRankVO> result=salesOrderService.byPeopleQuarterRank(dto);
         return success(result);
@@ -355,11 +340,6 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeopleYearRank")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
     public ApiResult<List<PeopleSalesRankVO>> byPeopleYearRank(@RequestBody @Validated BiFilterDTO dto) {
         List<PeopleSalesRankVO> result=salesOrderService.byPeopleYearRank(dto);
         return success(result);
@@ -372,11 +352,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byDate")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byDate(@RequestBody @Validated DateFilterDTO biFilterDTO) {
         StatisticalDataVO result = salesOrderService.byDate(biFilterDTO);
         return success(result);
@@ -389,11 +369,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byDept")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byDept(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byDept(dto);
         return success(result);
@@ -406,11 +386,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byDeptNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ProductNewAndOldVO>> byDeptNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<ProductNewAndOldVO> result=salesOrderService.byDeptNewAndOld(dto);
         return success(result);
@@ -422,11 +402,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byNewAndOld(dto);
         return success(result);
@@ -438,11 +418,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPlatformNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ProductNewAndOldVO>> byPlatformNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<ProductNewAndOldVO> result=salesOrderService.byPlatformNewAndOld(dto);
         return success(result);
@@ -455,11 +435,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byPeopleNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ProductNewAndOldVO>> byPeopleNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<ProductNewAndOldVO> result=salesOrderService.byPeopleNewAndOld(dto);
         return success(result);
@@ -473,11 +453,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byCategoryNewAndOld")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<ProductNewAndOldVO>> byCategoryNewAndOld(@RequestBody @Validated BiFilterDTO dto) {
         List<ProductNewAndOldVO> result=salesOrderService.byCategoryNewAndOld(dto);
         return success(result);
@@ -490,11 +470,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/bySite")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> bySite(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.bySite(dto);
         return success(result);
@@ -506,11 +486,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byProductType")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byProductType(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byProductType(dto);
         return success(result);
@@ -522,11 +502,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byOldProductTop")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byOldProductTop(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byOldProductTop(dto);
         return success(result);
@@ -539,11 +519,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byNewProductTop")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byNewProductTop(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byNewProductTop(dto);
         return success(result);
@@ -555,11 +535,11 @@ public class BiSalesModuleController extends BaseController {
      * @return
      */
     @PostMapping("/byMarketingCenter")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<List<SalesCountVO>> byMarketingCenter(@RequestBody @Validated BiFilterDTO dto) {
         List<SalesCountVO> result=salesOrderService.byMarketingCenter(dto);
         return success(result);
@@ -571,12 +551,12 @@ public class BiSalesModuleController extends BaseController {
      * @param
      * @return
      */
-    @PostMapping("/byEuropeAndJapanSite")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "charge_id",
-//            menuCode = "bi:sales:byShopCountry",
-//            tableAlias = "o"
-//    )
+   @PostMapping("/byEuropeAndJapanSite")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "bi:module:content",
+            tableAlias = "o"
+    )
     public ApiResult<StatisticalDataVO> byEuropeAndJapanSite(@RequestBody @Validated BiFilterDTO dto) {
         StatisticalDataVO result=salesOrderService.byEuropeAndJapanSite(dto);
         return success(result);

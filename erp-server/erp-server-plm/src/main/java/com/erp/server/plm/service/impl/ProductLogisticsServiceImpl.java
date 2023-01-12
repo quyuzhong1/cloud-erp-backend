@@ -91,6 +91,14 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
+
+    @Override
+    public ProductLogisticsEntity getBySkuId(String skuId) {
+        LambdaQueryWrapper<ProductLogisticsEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 }
 
 

@@ -25,7 +25,7 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * @author yl
      * @date 2022-12-08 17:15
      */
-    Boolean setShare(UpdateSubjectShareDTO dto);
+    String setShare(UpdateSubjectShareDTO dto);
 
 
     /**

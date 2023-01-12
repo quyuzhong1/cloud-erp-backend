@@ -84,6 +84,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
         List<DmpOrderInfoDTO> records = pageData.getRecords();
         dmpOrderInfoHand(records);
@@ -149,10 +150,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
         query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime().plusDays(1))
+                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
                 // 订单时间字段
                 .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime().plusDays(1))
+                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
                 // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
                 .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_id", dto.getDepartment())
@@ -665,7 +666,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesList)){
-            targetSalesMap = salesList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+            targetSalesMap = salesList.stream().filter(x -> null== newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     BigDecimalUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
 
@@ -673,7 +674,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
         if(CollectionUtil.isNotEmpty(salesVolumeList)){
-            targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
+            targetSalesVolumeMap = salesVolumeList.stream().filter(x -> null== newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
 
@@ -691,12 +692,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new ArrayList<>();
         }
         // 根据sku的分组计算销量
-        Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+        Map<String, Integer> salesVolumeMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream().collect(Collectors.toMap(DmpOrderInfoEntity::getId, DmpOrderInfoEntity::getCurrencyRate));
         // 根据sku的分组计算销售额
-        Map<String, BigDecimal> saleAmountMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
+        Map<String, BigDecimal> saleAmountMap = entityItemList.stream()
+                .filter(x -> StringUtils.isNotBlank(x.getSkuNo()))
+                .collect(Collectors.groupingBy(DmpOrderItemEntity::getSkuNo,
                 Collectors.reducing(BigDecimal.ZERO,
                         x -> new BigDecimal(x.getQuantity()).multiply(null == x.getSellPrice() ? BigDecimal.ZERO : x.getSellPrice()).multiply(rateMap.getOrDefault(x.getOrderId(), BigDecimal.ZERO)),
                         BigDecimal::add)
@@ -755,7 +759,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getSkuNo()))));
+                Collectors.summingInt(x -> skuSalesVolumeMap.getOrDefault(x.getSkuNo(),0))));
         
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
@@ -772,7 +776,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         ));
         // 产品定位销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getSkuNo()))));
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(),BigDecimal.ZERO))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -818,7 +822,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getSkuNo()))));
+                Collectors.summingInt(x -> skuSalesVolumeMap.getOrDefault(x.getSkuNo(), 0))));
 
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
@@ -835,7 +839,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 ));
         // 产品类型销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getSkuNo()))));
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(), BigDecimal.ZERO))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -851,7 +855,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -876,7 +880,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -901,7 +905,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -926,7 +930,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -951,7 +955,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -976,7 +980,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -1069,8 +1073,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         keys.addAll(targetSalesVolumeMap.keySet());
         List<SalesCompletionInfoVO> resultList = keys
                 .stream().map(x ->
-                        new SalesCompletionInfoVO(x, targetSalesMap.get(x), targetSalesVolumeMap.get(x),
-                                saleAmountMap.get(x), salesVolumeMap.get(x),  null != skuMap ? skuMap.getOrDefault(x, "") : "")
+                        new SalesCompletionInfoVO(x, targetSalesMap.getOrDefault(x, BigDecimal.ZERO), targetSalesVolumeMap.getOrDefault(x, 0),
+                                saleAmountMap.getOrDefault(x, BigDecimal.ZERO), salesVolumeMap.getOrDefault(x, 0),  null != skuMap ? skuMap.getOrDefault(x, "") : "")
                 ).collect(Collectors.toList());
 
         AtomicInteger rankIndex = new AtomicInteger(1);

@@ -1,11 +1,14 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.CategorySubjectVO;
+import com.erp.server.bi.service.BiLayoutService;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
@@ -44,11 +47,11 @@ public class BiSubjectController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "bi:subject:paging",
-//            tableAlias = "bi_subject"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "bi:subject:paging",
+            tableAlias = "bi_subject"
+    )
     public ApiResult<PagingVO<SubjectPagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SubjectPagingDTO> pagingVO = this.biSubjectService.queryByPage(dto);
         return success(pagingVO);
@@ -106,8 +109,11 @@ public class BiSubjectController extends BaseController {
      */
     @PostMapping("/setShare")
     public ApiResult setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
-        Boolean flag = biSubjectShareService.setShare(dto);
-        return flag == true ? success() : failure();
+        String id = biSubjectShareService.setShare(dto);
+        if(StringUtils.isBlank(id)){
+            return failure();
+        }
+        return success(id);
     }
 
     /**
@@ -127,6 +133,11 @@ public class BiSubjectController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/updateState")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "bi:subject:updateState",
+            serviceClass = BiLayoutService.class
+    )
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean flag = this.biSubjectService.updateState(dto);
         return flag == true ? success() : failure();

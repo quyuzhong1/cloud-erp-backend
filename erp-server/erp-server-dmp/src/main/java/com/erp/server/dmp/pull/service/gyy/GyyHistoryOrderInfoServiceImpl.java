@@ -103,48 +103,49 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
             XxlJobHelper.log("拉去数据列表为空 gyyOrderEntityList.size = 0 ");
             return;
         }
-        for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
+        gyyOrderEntityList.parallelStream().forEach(gyyOrderEntity -> {
             if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
-                continue;
+                return;
             }
 
             if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
                 if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
-                    continue;
+                    return;
                 }
             }
 
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
             orderMongoDTO.setPlatformCode(gyyOrderEntity.getPlatformCode());
             orderMongoDTO.setCode(gyyOrderEntity.getCode());
-            List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-            if (mongoData != null && mongoData.size() > 0) {
-                for (GyyOrderEntity mongoDatum : mongoData) {
-                    // 比较数据是否相同
-                    if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
-                        // 修改数据
-                        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrderEntity), MapUtil.class);
-                        try {
+            List<GyyOrderEntity> mongoData = null;
+            try {
+                mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+                if (mongoData != null && mongoData.size() > 0) {
+                    for (GyyOrderEntity mongoDatum : mongoData) {
+                        // 比较数据是否相同
+                        if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
+                            // 修改数据
+                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrderEntity), MapUtil.class);
                             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-                        } catch (Exception e) {
-                            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                            dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                            dmpErrorLogEntity.setParams("");
-                            dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
-                            XxlJobHelper.log("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyOrderEntity.getPlatformCode(), e.getMessage());
-                            dmpErrorLogEntity.setReturnMsg("");
-                            dmpErrorLogEntity.setCreateTime(new Date());
-                            dmpErrorLogService.add(dmpErrorLogEntity);
-                            throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
                         }
                     }
+                } else {
+                    mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
                 }
-            } else {
-                mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
+                //存储数据到中台
+                analysisOrder(gyyOrderEntity);
+            } catch (Exception e) {
+                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                dmpErrorLogEntity.setParams("");
+                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
+                XxlJobHelper.log("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyOrderEntity.getPlatformCode(), e.getMessage());
+                dmpErrorLogEntity.setReturnMsg("");
+                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogService.add(dmpErrorLogEntity);
+                throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
             }
-            //存储数据到中台
-            analysisOrder(gyyOrderEntity);
-        }
+        });
     }
 
     @Override
@@ -534,6 +535,8 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
 
             //汇率
             dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
+            //折扣后金额
+            dmpOrderItemEntity.setAmountAfter(detailsBean.getAmountAfter());
 
             orderItemList.add(dmpOrderItemEntity);
         }

@@ -1,7 +1,9 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiSalesMonitoringDTO;
 import com.erp.model.bi.dto.BiSalesMonitoringSearchDTO;
 import com.erp.server.bi.service.BiSalesMonitoringService;
@@ -72,6 +74,10 @@ public class BiSalesMonitoringController extends BaseController {
      * @return ApiResult<BiSalesMonitoringViewVO>
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+                    tableField = "charge_id",
+                    menuCode = "bi:module:content",
+                    tableAlias = "doio")
     public ApiResult<LinkedHashMap<String,Object>> listBiSalesMonitoringView(@RequestBody @Validated BiSalesMonitoringSearchDTO dto) {
         LinkedHashMap<String,Object> map =  biSalesMonitoringService.listBiSalesMonitoringView(dto);
         return success(map);

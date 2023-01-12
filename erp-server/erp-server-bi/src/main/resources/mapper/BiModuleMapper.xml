@@ -14,6 +14,9 @@
                      OR bs.name LIKE concat('%',#{params.searchKeyword},'%')
                     )
             </if>
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
         ORDER BY bm1.create_time DESC
     </select>
 

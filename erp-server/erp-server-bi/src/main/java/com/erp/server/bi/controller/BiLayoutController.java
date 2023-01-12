@@ -1,13 +1,16 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.server.bi.service.BiLayoutService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- *
- *
  * @author yl
  * @since 2022-12-08 14:28:26
  */
@@ -31,23 +32,25 @@ public class BiLayoutController extends BaseController {
     private BiLayoutService layoutService;
 
 
-
-
     /**
      * 添加整个专题
+     *
      * @param dto
      * @return
      */
     @PostMapping("/addSubject")
     public ApiResult addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
-        Boolean flag = layoutService.addSubject(dto);
-        return flag == true ? success() : failure();
+        String subjectId = layoutService.addSubject(dto);
+        if (StringUtils.isBlank(subjectId)) {
+            return failure();
+        }
+        return success(subjectId);
     }
-
 
 
     /**
      * 添加专题布局
+     *
      * @param dto
      * @return
      */
@@ -60,6 +63,7 @@ public class BiLayoutController extends BaseController {
 
     /**
      * 修改专题布局
+     *
      * @param dto
      * @return
      */
@@ -79,11 +83,11 @@ public class BiLayoutController extends BaseController {
      * @date 2022-12-13 17:06
      */
     @PostMapping("/subjectInfo")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "bi:layout:subjectInfo",
-//            serviceClass = BiLayoutService.class
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "bi:layout:subjectInfo",
+            serviceClass = BiLayoutService.class
+    )
     public ApiResult<SubjectLayoutDetailsDTO> subjectInfo(@RequestBody @Validated BaseIdDTO dto) {
         SubjectLayoutDetailsDTO details = layoutService.subjectInfo(dto.getId());
         return success(details);
@@ -91,7 +95,8 @@ public class BiLayoutController extends BaseController {
 
 
     /**
-     *  删除布局模块
+     * 删除布局模块
+     *
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
      * @author yl
@@ -100,11 +105,12 @@ public class BiLayoutController extends BaseController {
     @PostMapping("/deleteLayoutModule")
     public ApiResult deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayoutModule(dto);
-        return flag==true?success():failure();
+        return flag == true ? success() : failure();
     }
 
     /**
-     *  删除布局
+     * 删除布局
+     *
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
      * @author yl
@@ -113,7 +119,7 @@ public class BiLayoutController extends BaseController {
     @PostMapping("/deleteLayout")
     public ApiResult deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayout(dto);
-        return flag==true?success():failure();
+        return flag == true ? success() : failure();
     }
 
 

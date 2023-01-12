@@ -104,11 +104,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     public String checkOrder(DmpOrderInfoEntity orderInfoEntity) {
         String orderInfoId = "";
-        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderByPlatformOrderId(orderInfoEntity.getPlatformOrderId());
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
-                this.updateOrderByPlatformOrderId(orderInfoEntity);
+                orderInfoEntity.setId(dmpOrderInfoEntity.getId());
+                this.updateById(orderInfoEntity);
                 orderInfoId = dmpOrderInfoEntity.getId();
             }
 
@@ -126,7 +127,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public void cleanOrder() {
-        Integer pageSize = 200;
+        Integer pageSize = 100;
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .and(wrapper ->
@@ -146,7 +147,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         XxlJobHelper.log("userDeptList==> {}", JSONUtil.toJsonStr(userDeptList));
         AtomicInteger times = new AtomicInteger();
-        list.forEach(dmpOrderInfoEntity -> {
+        for (DmpOrderInfoEntity dmpOrderInfoEntity : list) {
             LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
             updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
             Integer flag = 0;
@@ -215,8 +216,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             this.update(updateWrapper);
             XxlJobHelper.log("update(updateWrapper)==> {} dmpOrderInfoEntity={}", updateWrapper.getCustomSqlSegment(), JSONUtil.toJsonStr(dmpOrderInfoEntity));
-        });
 
+        }
+    }
+
+    @Override
+    public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber) {
+        return lambdaQuery().eq(DmpOrderInfoEntity::getSalesRecordNumber, salesRecordNumber)
+                .last("limit 1")
+                .one();
     }
 
 }

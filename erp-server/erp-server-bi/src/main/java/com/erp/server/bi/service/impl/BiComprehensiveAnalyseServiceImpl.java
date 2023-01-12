@@ -1,5 +1,7 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
@@ -19,6 +21,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensiveAnalyseMapper, DmpOrderInfoEntity> implements BiComprehensiveAnalyseService {
@@ -78,22 +81,37 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
     @Override
-    public List<ShopContrastTrendVO> shopContrastTrend(BiFilterDTO biFilterDTO) {
-        List<ShopContrastTrendVO> list = new ArrayList<>();
+    public List<List<Object>> shopContrastTrend(BiFilterDTO biFilterDTO) {
         List<ContrastTrendVO> contrastTrendVOList = baseMapper.shopContrastTrend(biFilterDTO);
 
         List<DmpShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.shopList();
-        for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
-            ShopContrastTrendVO shopContrastTrendVO = new ShopContrastTrendVO();
-            shopContrastTrendVO.setShopName(dmpShopInfoEntity.getName());
-
-            for (ContrastTrendVO contrastTrendVO : contrastTrendVOList) {
-                if (dmpShopInfoEntity.getPlarformShopNo().equals(contrastTrendVO.getShopNo())) {
-                    shopContrastTrendVO.setContrastTrendVO(contrastTrendVO);
-                }
-            }
+        if (CollectionUtil.isEmpty(dmpShopInfoEntities)) {
+            return Collections.emptyList();
         }
-        return list;
+        List<List<Object>> result = new ArrayList<>();
+        List<Object> shopName = new LinkedList<>();
+        List<Object> lastYearSales = new LinkedList<>();
+        List<Object> thisYearSales = new LinkedList<>();
+        if (CollectionUtil.isEmpty(contrastTrendVOList)) {
+            return Collections.emptyList();
+        }
+        Map<String, Map<String, BigDecimal>> shopNoMap = contrastTrendVOList.stream()
+                .collect(Collectors.groupingBy(ContrastTrendVO::getShopNo, Collectors.toMap(ContrastTrendVO::getYear, ContrastTrendVO::getSales)));
+        String lastYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
+        String thisYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
+        for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
+            Map<String, BigDecimal> yearMap = shopNoMap.get(dmpShopInfoEntity.getPlarformShopNo());
+            if(CollectionUtil.isEmpty(yearMap)){
+                continue;
+            }
+            lastYearSales.add(yearMap.getOrDefault(lastYearKey, BigDecimal.ZERO));
+            thisYearSales.add(yearMap.getOrDefault(thisYearKey, BigDecimal.ZERO));
+            shopName.add(dmpShopInfoEntity.getName());
+        }
+        result.add(shopName);
+        result.add(lastYearSales);
+        result.add(thisYearSales);
+        return result;
     }
 
     /**

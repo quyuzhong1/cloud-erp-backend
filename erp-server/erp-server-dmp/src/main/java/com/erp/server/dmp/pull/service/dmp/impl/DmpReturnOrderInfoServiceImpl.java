@@ -125,7 +125,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
         for (DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity : dmpReturnOrderInfoEntities) {
             LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(dmpReturnOrderInfoEntity.getPlatformOrderId());
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpReturnOrderInfoEntity.getSalesRecordNumber());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
                 updateWrapper.set(StrUtil.isNotBlank(dmpOrderInfoEntity.getChargeId()), DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());

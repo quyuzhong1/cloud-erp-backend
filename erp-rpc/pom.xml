@@ -18,6 +18,7 @@
         <module>erp-rpc-sys</module>
         <module>erp-rpc-workflow</module>
         <module>erp-rpc-plm</module>
+        <module>erp-rpc-dmp</module>
     </modules>
 
    <dependencies>

@@ -201,90 +201,87 @@
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
         LEFT JOIN dmp_shop_info shop ON shop.plarform_shop_no = doi.shop_no
+        WHERE shop."name" IS NOT NULL
+        <if test="params.timeType == 0">
+            <if test="params.startTime != null">
+                AND doi.platform_create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.platform_create_time &lt;= #{params.endTime}
+            </if>
+        </if>
+        <if test="params.timeType == 1">
+            <if test="params.startTime != null">
+                AND doi.delivery_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND doi.delivery_time &lt;= #{params.endTime}
+            </if>
+        </if>
 
-        <where>
-            <if test="params.timeType == 0">
-                <if test="params.startTime != null">
-                    AND doi.platform_create_time >= #{params.startTime}
-                </if>
-                <if test="params.endTime != null">
-                    AND doi.platform_create_time &lt;= #{params.endTime}
-                </if>
-            </if>
-            <if test="params.timeType == 1">
-                <if test="params.startTime != null">
-                    AND doi.delivery_time >= #{params.startTime}
-                </if>
-                <if test="params.endTime != null">
-                    AND doi.delivery_time &lt;= #{params.endTime}
-                </if>
-            </if>
+        <!--部门-->
+        <if test="params.department!=null and params.department.size>0">
+            AND doi.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!--平台-->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND doi.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!--站点-->
+        <if test="params.site!=null and params.site.size>0">
+            AND doi.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
 
-            <!--部门-->
-            <if test="params.department!=null and params.department.size>0">
-                AND doi.dept_id IN
-                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                    #{deptId}
-                </foreach>
-            </if>
-            <!--平台-->
-            <if test="params.platform!=null and params.platform.size>0">
-                AND doi.source_platform IN
-                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                    #{platform}
-                </foreach>
-            </if>
-            <!--站点-->
-            <if test="params.site!=null and params.site.size>0">
-                AND doi.site IN
-                <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                    #{site}
-                </foreach>
-            </if>
+        <!--店铺-->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND doi.shop_no IN
+            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
+                #{shopNo}
+            </foreach>
+        </if>
 
-            <!--店铺-->
-            <if test="params.shopName!=null and params.shopName.size>0">
-                AND doi.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
-                </foreach>
-            </if>
+        <!--sku-->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND doit.sku_no IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!--品类-->
+        <if test="params.category!=null and params.category.size>0">
+            AND dsi.parent_category_name IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!--品牌-->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND dsi.brand_name IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
 
-            <!--sku-->
-            <if test="params.sku!=null and params.sku.size>0">
-                AND doit.sku_no IN
-                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
-                    #{sku}
-                </foreach>
-            </if>
-            <!--品类-->
-            <if test="params.category!=null and params.category.size>0">
-                AND dsi.parent_category_name IN
-                <foreach collection="params.category" item="category" open="(" separator="," close=")">
-                    #{category}
-                </foreach>
-            </if>
-            <!--品牌-->
-            <if test="params.brand!=null and params.brand.size>0">
-                AND dsi.brand_name IN
-                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
-                    #{brand}
-                </foreach>
-            </if>
-
-            <!--用户id-->
-            <if test="params.userId!=null and params.userId.size>0">
-                AND doi.charge_id IN
-                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                    #{userId}
-                </foreach>
-            </if>
-            <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
-            </if>
-
-        </where>
+        <!--用户id-->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND doi.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
         GROUP BY date_part('YEAR', doi.platform_create_time),shop.plarform_shop_no,shop."name"
         ORDER BY shop."name",date_part('YEAR', doi.platform_create_time)
     </select>
@@ -388,6 +385,7 @@
     <select id="saleDetailSku" resultType="com.erp.model.bi.vo.SaleDetailVO">
         SELECT
             sku.sku_no AS name,
+            sku.name_cn as productName,
             COALESCE(SUM(doit.quantity),0) AS salesQuantity,
             COALESCE(SUM(doit.sell_price*doit.quantity),0) AS saleAmount,
             COALESCE(SUM(droi.order_fee),0) AS returnOrderAmount,
@@ -483,8 +481,8 @@
             </if>
 
         </where>
-        GROUP BY sku.sku_no
-        ORDER BY SUM(doit.quantity)
+        GROUP BY sku.sku_no, sku.name_cn
+        ORDER BY salesQuantity
     </select>
 
     <select id="skuYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
