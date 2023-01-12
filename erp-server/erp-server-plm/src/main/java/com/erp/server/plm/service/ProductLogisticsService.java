@@ -1,8 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.ProductCostDTO;
-import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -50,4 +48,12 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return java.lang.Boolean
      **/
     Boolean removeLogistics(String skuId);
+    /**
+     * @description: 根据skuId查询
+     * @author Will
+     * @date: 2023/1/12 18:03
+     * @param skuId
+     * @return ProductLogisticsEntity
+     */
+    ProductLogisticsEntity getBySkuId(String skuId);
 }

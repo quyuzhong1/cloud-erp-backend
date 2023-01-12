@@ -90,6 +90,14 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
         queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
+
+    @Override
+    public ProductCostEntity getBySkuId(String skuId) {
+        LambdaQueryWrapper<ProductCostEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 }
 
 
