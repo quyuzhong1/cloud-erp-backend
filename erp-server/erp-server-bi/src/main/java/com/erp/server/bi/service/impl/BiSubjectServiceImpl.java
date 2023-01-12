@@ -227,13 +227,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
 
         //这个是所有的
         List<DashboardDTO> allList = baseMapper.getDashboardList(type, dashboardFlag, findIdList, searchKeyword);
-        //这个是常用的
-        List<DashboardDTO> frequentlyList = allList.stream().filter(f -> frequentlyFlag.equals(f.getIsFrequently())).collect(Collectors.toList());
-        for (DashboardDTO frequently : frequentlyList) {
-            if (userDefaultSubjectIds.contains(frequently.getId())) {
-                frequently.setIsDefault(true);
+        for (DashboardDTO item : allList) {
+            if (userDefaultSubjectIds.contains(item.getId())) {
+                item.setIsDefault(true);
             }
         }
+
+        //这个是常用的
+        List<DashboardDTO> frequentlyList = allList.stream().filter(f ->
+                frequentlyFlag.equals(f.getIsFrequently()) &&
+                        myCreateIds.contains(f.getId())
+        ).collect(Collectors.toList());
         result.setFrequentlyList(frequentlyList);
         result.setMyCreateList(myCreateList);
         List<DashboardDTO> shareList = allList.stream().filter(d -> shareDashboardIds.contains(d.getId())).collect(Collectors.toList());
@@ -609,7 +613,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     @Transactional
-    public Boolean copyDashboard(CopySubjectDTO dto) {
+    public String copyDashboard(CopySubjectDTO dto) {
         String subjectId = dto.getSubjectId();
         BiSubjectEntity subject = this.getById(subjectId);
         if (Objects.isNull(subject)) {
@@ -637,9 +641,12 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         copySubject.setCategoryId(subject.getCategoryId());
         copySubject.setCategoryName(subject.getCategoryName());
         copySubject.setIsFrequently(dto.getIsFrequently());
+        String copySubjectId = "";
         boolean flag = this.save(copySubject);
+
         //当复制成功的时候
         if (flag) {
+            copySubjectId = copySubject.getId();
             //如果是分享
             if (DashboardEnum.SHARE.getFlag().equals(shareFlag)) {
                 List<String> userList = dto.getShareUserIdList();
@@ -648,7 +655,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             }
             layoutService.copySubjectLayout(newSubjectId, subjectId);
         }
-        return flag;
+        return copySubjectId;
     }
 
     @Override

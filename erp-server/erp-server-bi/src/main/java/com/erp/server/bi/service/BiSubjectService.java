@@ -141,7 +141,7 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @param dto
      * @return
      */
-    Boolean copyDashboard(CopySubjectDTO dto);
+    String copyDashboard(CopySubjectDTO dto);
 
     /**
      * 检查能否编辑
