@@ -65,8 +65,8 @@ public class BiComprehensiveAnalyseController extends BaseController {
      **/
     @PostMapping("/shopContrastTrend")
     //@DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:module:content", tableAlias = "doi")
-    public ApiResult<List<ShopContrastTrendVO>> shopContrastTrend(@RequestBody @Validated BiFilterDTO biFilterDTO) {
-        List<ShopContrastTrendVO> list = biComprehensiveAnalyseService.shopContrastTrend(biFilterDTO);
+    public ApiResult<List<List<Object>>> shopContrastTrend(@RequestBody @Validated BiFilterDTO biFilterDTO) {
+        List<List<Object>> list = biComprehensiveAnalyseService.shopContrastTrend(biFilterDTO);
         return success(list);
     }
 
