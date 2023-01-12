@@ -1,10 +1,16 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.entity.BomOperateLogEntity;
+import com.erp.model.plm.vo.BomOperateVO;
+import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.mapper.BomOperateLogMapper;
 import com.erp.server.plm.service.BomOperateLogService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * bom 操作记录日志表(BomOperateLog)表服务实现类
@@ -33,5 +39,41 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
         operateLog.setContent(content);
         operateLog.setType(operateType);
         this.save(operateLog);
+    }
+
+    /**
+     * 获取bom的操作记录
+     *
+     * @param bomId
+     * @return java.util.List<com.erp.model.plm.vo.BomOperateVO>
+     * @author yl
+     * @date 2023-01-11 17:55
+     */
+    @Override
+    public List<BomOperateVO> getOperateLog(String bomId) {
+        List<BomOperateLogEntity> list = getByBomId(bomId);
+        List<BomOperateVO> resultList = BeanMapper.copyList(list, BomOperateVO.class);
+        for (BomOperateVO item : resultList) {
+            String type = item.getType();
+            String typeName = BomOperationTypeEnum.getName(type);
+            item.setTypeName(typeName);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 根据Bom 表id 获取到 信息
+     *
+     * @param
+     * @return java.util.List<com.erp.model.plm.entity.BomOperateLogEntity>
+     * @author yl
+     * @date 2023-01-11 18:01
+     */
+    public List<BomOperateLogEntity> getByBomId(String bomId) {
+        LambdaQueryWrapper<BomOperateLogEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomOperateLogEntity::getBomId, bomId);
+        queryWrapper.orderByDesc(BomOperateLogEntity::getCreateTime);
+        return this.list(queryWrapper);
     }
 }

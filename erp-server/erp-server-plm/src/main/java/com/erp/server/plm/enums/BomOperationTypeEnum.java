@@ -31,4 +31,13 @@ public enum BomOperationTypeEnum {
     public String getName() {
         return name;
     }
+
+    public static String getName(String type) {
+        for (BomOperationTypeEnum item : BomOperationTypeEnum.values()) {
+            if (type.equals(item.getType())) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
 }

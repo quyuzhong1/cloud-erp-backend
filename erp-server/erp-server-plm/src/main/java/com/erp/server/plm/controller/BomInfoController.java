@@ -8,6 +8,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.server.plm.service.BomInfoService;
 import org.springframework.validation.annotation.Validated;
@@ -71,6 +72,8 @@ public class BomInfoController extends BaseController {
         return success(bom);
     }
 
+
+
     /**
      * 编辑数据
      *
@@ -78,8 +81,8 @@ public class BomInfoController extends BaseController {
      * @return 编辑结果
      */
     @PostMapping("/update")
-    public ApiResult edit() {
-        Boolean flag = true;
+    public ApiResult edit(@RequestBody @Validated UpdateBomDTO dto) {
+        Boolean flag = this.bomInfoService.edit(dto);
         return flag == true ? success() : failure();
     }
 

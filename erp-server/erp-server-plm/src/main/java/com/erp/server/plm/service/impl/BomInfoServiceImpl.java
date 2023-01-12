@@ -11,10 +11,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.AddBomDTO;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
-import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -151,10 +148,39 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
-        BeanMapper.copy(bom,result);
-        List<BomSkuDTO> skuList=bomSkuService.getByBomId(id);
+        BeanMapper.copy(bom, result);
+        List<BomSkuDTO> skuList = bomSkuService.getByBomId(id);
         result.setSkuList(skuList);
         return result;
+    }
+
+
+    /**
+     * 编辑Bom
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-11 18:17
+     */
+    @Override
+    public Boolean edit(UpdateBomDTO dto) {
+        String id = dto.getId();
+        BomInfoEntity bom = this.getById(id);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer bomVersion = bom.getVersion();
+        bom.setVersion(bomVersion + 1);
+        bom.setType(dto.getType());
+        Boolean result = this.updateById(bom);
+        List<BomSkuDTO> bomSkuList = dto.getSkuList();
+        if (result) {
+            //添加 bom 与sku 关系
+            bomSkuService.updateBomSku(id, bomSkuList);
+        }
+
+        return null;
     }
 
 

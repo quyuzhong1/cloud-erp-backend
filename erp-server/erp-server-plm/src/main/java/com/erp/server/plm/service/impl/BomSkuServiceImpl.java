@@ -66,6 +66,20 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return treeList;
     }
 
+    
+    /**
+     * 更改bom sku信息
+     * @author yl
+     * @date 2023-01-11 18:27
+     * @param id
+     * @param bomSkuList
+     * @return void
+     */
+    @Override
+    public void updateBomSku(String id, List<BomSkuDTO> bomSkuList) {
+        
+    }
+
     /**
      * 获取子sku
      *
