@@ -375,7 +375,8 @@ public class GyyRefundServiceImpl implements IReportSaveService {
 
             //是否属于组合sku：0. 否 1. 是
             dmpRefundItemEntity.setIsCombo(0);
-
+            //折扣后金额
+            dmpRefundItemEntity.setAmountAfter(new BigDecimal(refundDetailsBean.getAmount()));
             orderItemList.add(dmpRefundItemEntity);
         }
         checkOrderItem(orderItemList, refundInfoId);

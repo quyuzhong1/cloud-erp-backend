@@ -416,6 +416,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(2);
 
+            dmpReturnOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getFAmount()));
+
             orderItemList.add(dmpReturnOrderItemEntity);
         }
         checkOrderItem(orderItemList, orderId);

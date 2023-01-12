@@ -150,10 +150,10 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     private static QueryWrapper<DmpOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<DmpOrderInfoEntity> query = new QueryWrapper<>();
         query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime().plusDays(1))
+                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
                 // 订单时间字段
                 .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime().plusDays(1))
+                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
                 // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
                 .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_id", dto.getDepartment())
@@ -852,7 +852,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -877,7 +877,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -902,7 +902,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -927,7 +927,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -952,7 +952,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoySumVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
@@ -977,7 +977,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             return new TargetSaleAndYoyCountVO();
         }
         LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime().plusDays(1);
+        LocalDateTime endTime = dto.getEndTime();
         // 查询上一个周期销售额 环比
         Duration duration = Duration.between(startTime,endTime);
         LocalDateTime preStartTime = startTime.minusDays(duration.toDays());
