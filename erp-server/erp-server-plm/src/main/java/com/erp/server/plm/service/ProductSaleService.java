@@ -1,8 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.plm.dto.ProductCostDTO;
-import com.erp.model.plm.dto.ProductCostShowDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -50,4 +48,12 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @return java.lang.Boolean
      **/
     Boolean removeSale(String skuId);
+    /**
+     * @description: 根据skuId查询
+     * @author Will
+     * @date: 2023/1/12 17:58
+     * @param id
+     * @return ProductSaleEntity
+     */
+    ProductSaleEntity getBySkuId(String skuId);
 }
