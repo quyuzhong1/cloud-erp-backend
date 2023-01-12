@@ -48,4 +48,12 @@ public interface ProductCostService extends IService<ProductCostEntity> {
      * @return java.lang.Boolean
      **/
     Boolean removeCost(String skuId);
+    /**
+     * @description: 根据skuId查询
+     * @author Will
+     * @date: 2023/1/12 18:36
+     * @param skuId
+     * @return ProductCostEntity
+     */
+    ProductCostEntity getBySkuId(String skuId);
 }

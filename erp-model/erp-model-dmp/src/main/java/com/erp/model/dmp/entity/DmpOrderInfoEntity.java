@@ -399,7 +399,6 @@ public class DmpOrderInfoEntity implements Serializable {
                 ", platformSign='" + platformSign + '\'' +
                 ", companyId='" + companyId + '\'' +
                 ", companyName='" + companyName + '\'' +
-                ", platformCreateTime=" + platformCreateTime +
                 '}';
     }
 }

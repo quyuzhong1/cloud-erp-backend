@@ -91,6 +91,14 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         queryWrapper.eq(ProductPackEntity::getSkuId, skuId);
         return this.remove(queryWrapper);
     }
+
+    @Override
+    public ProductPackEntity getBySkuId(String skuId) {
+        LambdaQueryWrapper<ProductPackEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(ProductPackEntity::getSkuId, skuId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 }
 
 

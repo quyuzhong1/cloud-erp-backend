@@ -1428,10 +1428,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     private void sendDataToKingdee(ProductDetailEntity entity) {
+        //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        //销售信息
+        ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(entity.getId());
+        //物流信息
+        ProductLogisticsEntity productLogisticsEntity = productLogisticsService.getBySkuId(entity.getId());
+        //包装信息
+        ProductPackEntity productPackEntity = productPackService.getBySkuId(entity.getId());
+        //成本信息
+        ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
+        //采购信息
+        ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(entity.getId());
 
         Map<String,Object> resultMap = new HashMap<>();
         //sku
@@ -1444,15 +1455,104 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         resultMap.put("property",productInfoEntity.getProperty());
         //单位
         resultMap.put("unitName",entity.getUnitName());
-
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-        resultMap.put("skuNo",entity.getSkuNo());
-
+        //一级分类名称
+        resultMap.put("oneLevelCategory","");
+        //二级分类名称
+        resultMap.put("secondLevelCategory",productInfoEntity.getCategory());
+        //产品经理
+        resultMap.put("chargeName",productInfoEntity.getChargeName());
+        //销售信息
+        if (ObjectUtils.isNotEmpty(productSaleEntity)) {
+            //上市时间
+            resultMap.put("listingTime",productSaleEntity.getListingTime());
+        }
+        //物流信息
+        if (ObjectUtils.isNotEmpty(productLogisticsEntity)) {
+            //报关中文名
+            resultMap.put("declareChineseName",productLogisticsEntity.getDeclareChineseName());
+            //报关英文名
+            resultMap.put("declareEnglishName",productLogisticsEntity.getDeclareEnglishName());
+            //产品属性（是否带电）
+            resultMap.put("productProperty_electric",productLogisticsEntity.getDeclarePrice());
+            //产品属性（是否带磁）
+            resultMap.put("productProperty_magnetism",productLogisticsEntity.getDeclarePrice());
+            //海关编码
+            resultMap.put("customsCode",productLogisticsEntity.getCustomsCode());
+            //申报要素
+            resultMap.put("declareElement",productLogisticsEntity.getDeclareElement());
+        }
+        //包装信息
+        if (ObjectUtils.isNotEmpty(productPackEntity)) {
+            //毛重
+            resultMap.put("grossWeight", productPackEntity.getGrossWeight());
+            //净重
+            resultMap.put("netWeight", productPackEntity.getNetWeight());
+            //产品尺寸
+            String productSize = productPackEntity.getProductSize();
+            if (StringUtils.isNotBlank(productSize)) {
+                List<String> productSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
+                if (productSizeList.size() == 1) {
+                    //产品尺寸-长(cm)
+                    resultMap.put("productSize_length", productSizeList.get(0));
+                } else if (productSizeList.size() == 2) {
+                    //产品尺寸-长(cm)
+                    resultMap.put("productSize_length", productSizeList.get(0));
+                    //产品尺寸-宽(cm)
+                    resultMap.put("productSize_width", productSizeList.get(1));
+                } else {
+                    //产品尺寸-长(cm)
+                    resultMap.put("productSize_length", productSizeList.get(0));
+                    //产品尺寸-宽(cm)
+                    resultMap.put("productSize_width", productSizeList.get(1));
+                    //产品尺寸-高(cm)
+                    resultMap.put("productSize_height", productSizeList.get(2));
+                }
+            }
+            //单箱数量
+            resultMap.put("boxQty", productPackEntity.getBoxQty());
+            //单箱重量
+            resultMap.put("boxWeight", productPackEntity.getBoxWeight());
+            //单箱尺寸
+            String boxSize = productPackEntity.getBoxSize();
+            if ( StringUtils.isBlank(boxSize)) {
+                List<String> boxSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
+                if (boxSizeList.size() == 1) {
+                    //产品尺寸-长(cm)
+                    resultMap.put("boxSize_length", boxSizeList.get(0));
+                } else if (boxSizeList.size() == 2) {
+                    //产品尺寸-长(cm)
+                    resultMap.put("boxSize_length", boxSizeList.get(0));
+                    //产品尺寸-宽(cm)
+                    resultMap.put("boxSize_width", boxSizeList.get(1));
+                } else {
+                    //产品尺寸-长(cm)
+                    resultMap.put("boxSize_length", boxSizeList.get(0));
+                    //产品尺寸-宽(cm)
+                    resultMap.put("boxSize_width", boxSizeList.get(1));
+                    //产品尺寸-高(cm)
+                    resultMap.put("boxSize_height", boxSizeList.get(2));
+                }
+            }
+        }
+        //成本信息
+        if (ObjectUtils.isNotEmpty(productCostEntity)) {
+            //实际不含税成本
+            resultMap.put("actualNoTaxCost", productCostEntity.getActualNoTaxCost());
+            //实际含税成本
+            resultMap.put("actualTaxCost", productCostEntity.getActualTaxCost());
+        }
+        //采购信息
+        if (ObjectUtils.isNotEmpty(productPurchaseEntity)) {
+            //MOQ(最小起订量)
+            resultMap.put("moq",productPurchaseEntity.getMoq());
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                //采购员
+                resultMap.put("purchaseUser",findUserDTO.getUserName());
+            }
+            //一级供应商
+            resultMap.put("mainSupplier",productPurchaseEntity.getMainSupplier());
+        }
         dmpTaskFeign.pushProductDetail(resultMap);
     }
 
