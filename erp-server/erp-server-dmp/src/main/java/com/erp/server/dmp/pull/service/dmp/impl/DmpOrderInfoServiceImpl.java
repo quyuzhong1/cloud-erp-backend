@@ -146,7 +146,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
         XxlJobHelper.log("userDeptList==> {}", JSONUtil.toJsonStr(userDeptList));
         AtomicInteger times = new AtomicInteger();
-        list.forEach(dmpOrderInfoEntity -> {
+        for (DmpOrderInfoEntity dmpOrderInfoEntity : list) {
             LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
             updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
             Integer flag = 0;
@@ -215,8 +215,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
             this.update(updateWrapper);
             XxlJobHelper.log("update(updateWrapper)==> {} dmpOrderInfoEntity={}", updateWrapper.getCustomSqlSegment(), JSONUtil.toJsonStr(dmpOrderInfoEntity));
-        });
 
+        }
     }
 
 }
