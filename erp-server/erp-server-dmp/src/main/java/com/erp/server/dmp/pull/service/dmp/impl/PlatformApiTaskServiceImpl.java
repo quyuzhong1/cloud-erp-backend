@@ -40,8 +40,9 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
 
     @Override
     public PlatformApiTaskEntity getByApiCode(String taskName) {
-        return lambdaQuery().eq(PlatformApiTaskEntity::getApiCode, taskName)
+        return lambdaQuery()
+                .eq(PlatformApiTaskEntity::getApiCode, taskName)
                 .eq(PlatformApiTaskEntity::getState, 3)
-                .oneOpt().orElse(null);
+                .one();
     }
 }
