@@ -1,8 +1,5 @@
 package com.erp.server.plm.constant;
 
-import org.apache.commons.math3.stat.descriptive.summary.Product;
-import org.apache.poi.ss.formula.functions.T;
-
 /**
  * @Classname 任务属性
  * @Description TODO
@@ -49,6 +46,13 @@ public interface TaskConstant {
      * 2 全部
      */
     Integer WAIT_HANDLE = 1;
+
+
+    /**
+     * 任务条件
+     * 3.待审核
+     */
+    Integer WAIT_AUDIT = 3;
 
     //全部
     Integer ALL_TASK = 2;

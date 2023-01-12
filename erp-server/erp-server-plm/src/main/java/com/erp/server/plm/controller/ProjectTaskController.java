@@ -452,6 +452,38 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
+     * 分配给 待完成
+     *
+     * @return
+     */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:expert:paging:assignToMe",
+            tableAlias = "project_task"
+    )
+    @PostMapping("/assignToMe/waitFinish/paging")
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMePaging(searchParamDTO);
+        return success(pagingVO);
+    }
+
+    /**
+     * 分配给 我 待审核
+     *
+     * @return
+     */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "approval_user_id",
+            menuCode = "plm:task:expert:paging:assignToMe",
+            tableAlias = "project_task"
+    )
+    @PostMapping("/assignToMe/waitAudit/paging")
+    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMeWaitAuditPaging(searchParamDTO);
+        return success(pagingVO);
+    }
+
+    /**
      * 我创造的任务列表
      *
      * @return

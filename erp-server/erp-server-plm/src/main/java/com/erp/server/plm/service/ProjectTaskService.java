@@ -143,4 +143,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return void
      */
     void skuChangeResult(StateDTO dto);
+
+    /**
+     * 分配给我 待审核
+     * @author yl
+     * @date 2023-01-10 15:33
+     * @param searchParamDTO
+     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
+     */
+    PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 }

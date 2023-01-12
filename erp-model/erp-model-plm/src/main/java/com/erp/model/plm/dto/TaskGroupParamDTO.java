@@ -4,9 +4,7 @@ import com.erp.common.annotation.StateEnumValue;
 import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 
 /**
  * @Classname TaskGroupParamDTO
@@ -26,7 +24,7 @@ public class TaskGroupParamDTO extends PermissionsDTO {
      * 2 全部
      */
     @NotNull(message = "任务条件不能为空")
-    @StateEnumValue(intValues = {1,2}, message = "任务条件有误")
+    @StateEnumValue(intValues = {1,2,3}, message = "任务条件有误")
     private Integer taskCondition;
 
 
