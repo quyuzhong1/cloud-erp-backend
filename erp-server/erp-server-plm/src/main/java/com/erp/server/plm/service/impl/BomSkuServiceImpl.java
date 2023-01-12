@@ -66,18 +66,31 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return treeList;
     }
 
-    
+
     /**
      * 更改bom sku信息
-     * @author yl
-     * @date 2023-01-11 18:27
-     * @param id
+     *
+     * @param bomId
      * @param bomSkuList
      * @return void
+     * @author yl
+     * @date 2023-01-11 18:27
      */
     @Override
-    public void updateBomSku(String id, List<BomSkuDTO> bomSkuList) {
-        
+    public void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
+        //先删除
+        deleteBomSku(bomId);
+    }
+
+    /**
+     * 根据Bomid 删除 bom sku 信息
+     * @author yl
+     * @date 2023-01-12 17:29
+     * @param bomId
+     * @return void
+     */
+    private void deleteBomSku(String bomId) {
+
     }
 
     /**
@@ -92,7 +105,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList) {
         List<BomSkuDTO> collect = bomSkuList.stream().filter(bom -> item.getSkuNo().equals(bom.getParentSkuNo())).
                 map(b -> {
-                    b.setChildren(getChildren(b,bomSkuList));
+                    b.setChildren(getChildren(b, bomSkuList));
                     return b;
                 }).collect(Collectors.toList());
 

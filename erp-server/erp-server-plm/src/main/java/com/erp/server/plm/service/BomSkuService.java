@@ -19,5 +19,5 @@ public interface BomSkuService extends IService<BomSkuEntity> {
 
     List<BomSkuDTO> getByBomId(String bomId);
 
-    void updateBomSku(String id, List<BomSkuDTO> bomSkuList);
+    void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList);
 }
