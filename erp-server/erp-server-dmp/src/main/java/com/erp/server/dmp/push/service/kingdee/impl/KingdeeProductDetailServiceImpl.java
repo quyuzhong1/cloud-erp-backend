@@ -1,21 +1,26 @@
 package com.erp.server.dmp.push.service.kingdee.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiFieldTypeEnum;
 import com.erp.model.dmp.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.enums.ApiStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
+import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.CfgApiFieldMapValueService;
 import com.erp.server.dmp.service.PlatformService;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -31,6 +36,7 @@ import java.util.stream.Collectors;
  * @description: TODO
  * @date 2023/1/11 18:03
  */
+@Slf4j
 @Service
 public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailService {
 
@@ -42,6 +48,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
 
     @Resource
     private CfgApiFieldMapValueService cfgApiFieldMapValueService;
+
+    @Resource
+    private ApiPlmSyncLogService apiPlmSyncLogService;
+
 
 
     @Override
@@ -83,14 +93,27 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 handleResultMap(cfgApiFieldMapDTO,cfgApiFieldMapValueList,map,resultMap,apiFields,i);
             }
         }
-
-
+        //结果集转json字符串
+        String jsonData = JSONObject.toJSONString(resultMap);
         //调用接口
         String resultJson = null;
         try {
-            resultJson = client.save(formId,"jsonData");
+            resultJson = client.save(formId,jsonData);
         } catch (Exception e) {
             e.printStackTrace();
+            log.info("请求接口地址异常 错误信息：" + e.getMessage());
+            //新增日志信息
+            ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
+            apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
+            apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
+            apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+            apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
+            apiPlmSyncLogDTO.setStatus(ApiStatusEnum.FAILURE.getCode());
+            apiPlmSyncLogDTO.setMsg("请求接口地址异常 错误信息：" + e.getMessage());
+            apiPlmSyncLogDTO.setRequestParamJson(jsonData);
+            apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
+
+
         }
     }
 
