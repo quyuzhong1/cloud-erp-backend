@@ -551,7 +551,7 @@ public class BiSalesModuleController extends BaseController {
      * @param
      * @return
      */
-    @PostMapping("/byEuropeAndJapanSite")
+   @PostMapping("/byEuropeAndJapanSite")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "bi:module:content",

@@ -314,6 +314,25 @@ public class DataPermissionAspect {
         List<String> inputIdList = new ArrayList<>();
         if (obj instanceof String) {
             inputIdList.add(String.valueOf(obj));
+        } else if (obj instanceof List) {
+            List<Object> list = (List<Object>) obj;
+            for (Object object: list) {
+                Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(object), Map.class);
+                Object o = null;
+                if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                    Object entity = mapParam.get(dataPermission.entityName());
+                    o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+                } else {
+                    o = mapParam.get(dataPermission.keyIdName());
+                }
+                if (o != null) {
+                    if (o instanceof List) {
+                        inputIdList = (List<String>) o;
+                    } else if (o instanceof String) {
+                        inputIdList.add(String.valueOf(o));
+                    }
+                }
+            }
         } else {
 
             Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);

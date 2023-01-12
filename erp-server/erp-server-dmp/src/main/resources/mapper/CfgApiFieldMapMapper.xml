@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.CfgApiFieldMapMapper">
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.dmp.vo.CfgApiFieldMapVO">
+        select
+            cafm.self_field,
+            cafm.self_field_name,
+            cafm.api_field,
+            cafm.field_type,
+            cafm.create_user_name,
+            cafm.create_time
+        from cfg_api_field_map cafm
+        <where>
+            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+                AND cafm.self_field_name LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+        </where>
+    </select>
+
+</mapper>

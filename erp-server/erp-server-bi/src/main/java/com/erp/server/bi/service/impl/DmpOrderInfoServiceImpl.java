@@ -84,6 +84,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
         List<DmpOrderInfoDTO> records = pageData.getRecords();
         dmpOrderInfoHand(records);
