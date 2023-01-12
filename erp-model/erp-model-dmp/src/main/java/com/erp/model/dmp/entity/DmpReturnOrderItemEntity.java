@@ -76,6 +76,12 @@ public class DmpReturnOrderItemEntity implements Serializable {
     @TableField(value = "status")
     private Integer status;
 
+    /**
+     * 折扣后订单总金额
+     */
+    @TableField(value = "amount_after")
+    private BigDecimal amountAfter;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -91,6 +97,7 @@ public class DmpReturnOrderItemEntity implements Serializable {
                 ", sellPrice=" + sellPrice +
                 ", specifics='" + specifics + '\'' +
                 ", status=" + status +
+                ", amountAfter=" + amountAfter +
                 '}';
     }
 }

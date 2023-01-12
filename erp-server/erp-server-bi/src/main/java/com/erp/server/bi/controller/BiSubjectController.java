@@ -8,6 +8,7 @@ import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.vo.CategorySubjectVO;
+import com.erp.server.bi.service.BiLayoutService;
 import com.erp.server.bi.service.BiSubjectService;
 import com.erp.server.bi.service.BiSubjectShareService;
 import org.apache.commons.lang3.StringUtils;
@@ -129,6 +130,11 @@ public class BiSubjectController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/updateState")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "bi:subject:updateState",
+            serviceClass = BiLayoutService.class
+    )
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean flag = this.biSubjectService.updateState(dto);
         return flag == true ? success() : failure();

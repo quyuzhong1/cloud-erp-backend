@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -352,6 +353,8 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(orderItemBean.getStatus());
+
+            dmpReturnOrderItemEntity.setAmountAfter(orderItemBean.getSellPrice().multiply(new BigDecimal(orderItemBean.getQuantity())));
 
             orderItemList.add(dmpReturnOrderItemEntity);
         }

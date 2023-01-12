@@ -470,7 +470,7 @@
         SELECT a.shop_no,a.sales,a.salesQuantity,s.name AS shopName,s.platform_name,
         a.orderCount
         FROM (
-        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate} ), 2 ) AS Sales,
+        SELECT o.shop_no,round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2 ) AS Sales,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT(DISTINCT ( i.order_id )) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -662,12 +662,11 @@
         SELECT
         o.shop_no,
         COALESCE(( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ),'') AS shopName,
-        country_name_cn AS platformName,
-        round( SUM ( o.order_fee* ${settleRate}) , 2 ) AS sales
+        o.country_name_cn AS platformName,
+        round( SUM ( i.sell_price * i.quantity * i.${settleRate}) , 2 ) AS sales
         FROM
-        dmp_order_info o
+        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         WHERE (o.shop_no!='' OR o.shop_no!=NULL)
-
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">
                 AND o.platform_create_time &gt;= #{params.startTime}
@@ -704,6 +703,34 @@
             AND o.shop_name IN
             <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
                 #{shopName}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
             </foreach>
         </if>
         <!-- 权限 -->
@@ -1071,7 +1098,7 @@
     </select>
 
     <select id="byPlatform" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round(SUM (o.order_fee*o.${settleRate}) ,2) AS sales,
+        SELECT round(SUM (i.sell_price * i.quantity * i.${settleRate}) ,2) AS sales,
         o.source_platform AS NAME,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1187,7 +1214,7 @@
     </select>
 
     <select id="byPeople" resultType="com.erp.model.bi.vo.SalesBaseVO">
-        SELECT round(SUM(o.order_fee*o.${settleRate}),2) AS sales,
+        SELECT round(SUM(i.sell_price * i.quantity * i.${settleRate}),2) AS sales,
         COALESCE(o.charge_id,'无') AS flagNo, SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1362,7 +1389,7 @@
     </select>
 
     <select id="byNewAndOld" resultType="com.erp.model.bi.vo.SalesCountVO">
-        SELECT round( SUM ( o.order_fee *o.${settleRate} ), 2) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales,
         CASE WHEN i.new_sign = 0 THEN '老品' ELSE'新品' END AS name,
         SUM ( i.quantity ) AS salesQuantity,COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
@@ -1449,7 +1476,7 @@
 
     </select>
     <select id="byPlatformNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*o.${settleRate}), 2 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate}), 2 ) AS sales,
         i.new_sign AS flag,o.source_platform AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -1713,22 +1740,178 @@
     </select>
 
     <select id="byOldProductTop" resultType="com.erp.model.bi.vo.SalesBaseVO">
-          SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
-          i.sku_no  AS flagNo FROM 	dmp_order_item i
-          LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-          WHERE new_sign = 0  GROUP BY  i.sku_no
-          ORDER BY sales DESC LIMIT 20
+        SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
+        i.sku_no AS flagNo FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.ID
+        WHERE new_sign = 0
+        <if test="params.timeType!=null and params.timeType==0">
+            <if test="params.startTime !=null">
+                AND  o.platform_create_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime !=null">
+                AND o.platform_create_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <!-- 发货时间 -->
+        <if test="params.timeType!=null and params.timeType==1">
+            <if test="params.startTime !=null">
+                AND o.delivery_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime !=null">
+                AND o.delivery_time &lt; #{params.endTime}
+            </if>
+        </if>
+        <!-- 部门 -->
+        <if test="params.department!=null and params.department.size>0">
+            AND o.dept_id IN
+            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                #{deptId}
+            </foreach>
+        </if>
+        <!-- 平台 -->
+        <if test="params.platform!=null and params.platform.size>0">
+            AND o.source_platform IN
+            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                #{platform}
+            </foreach>
+        </if>
+        <!-- 站点 -->
+        <if test="params.site!=null and params.site.size>0">
+            AND o.site IN
+            <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                #{site}
+            </foreach>
+        </if>
+        <!-- 店铺 -->
+        <if test="params.shopName!=null and params.shopName.size>0">
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
+            </foreach>
+        </if>
+        <!-- sku -->
+        <if test="params.sku!=null and params.sku.size>0">
+            AND i.platform_sku IN
+            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <!-- 品类 -->
+        <if test="params.category!=null and params.category.size>0">
+            AND i.category_id IN
+            <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                #{category}
+            </foreach>
+        </if>
+        <!-- 品牌 -->
+        <if test="params.brand!=null and params.brand.size>0">
+            AND i.brand_id IN
+            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                #{brand}
+            </foreach>
+        </if>
+        <!-- 用户id -->
+        <if test="params.userId!=null and params.userId.size>0">
+            AND o.charge_id IN
+            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
+        <!-- 权限 -->
+        <if test="params.param!=null and params.param!=''">
+            #{params.param}
+        </if>
+        GROUP BY i.sku_no
+        ORDER BY sales DESC LIMIT 20
     </select>
     <select id="byNewProductTop" resultType="com.erp.model.bi.vo.SalesBaseVO">
           SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate}), 2) AS sales,
           i.sku_no  AS flagNo FROM 	dmp_order_item i
           LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-          WHERE new_sign = 1  GROUP BY  i.sku_no
+          WHERE new_sign = 1
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                   AND o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
+            </if>
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
+            </if>
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.param!=null and params.param!=''">
+                #{params.param}
+            </if>
+          GROUP BY  i.sku_no
           ORDER BY sales DESC LIMIT 20
     </select>
 
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate}),2) AS sales
+        SELECT o.shop_no,round( SUM ( o.order_fee  * o.${settleRate}),2) AS sales
         FROM dmp_order_info o
         <where>
             <if test="params.timeType!=null and params.timeType==0">
@@ -1749,7 +1932,7 @@
                 </if>
             </if>
         </where>
-	    GROUP BY o.shop_no
+        GROUP BY o.shop_no
     </select>
 
     <select id="byBrand" resultType="com.erp.model.bi.vo.SalesCountVO">
@@ -1861,16 +2044,12 @@
                     AND delivery_time &lt; #{params.endTime}
                 </if>
             </if>
-            <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
-            </if>
         </where>
         GROUP BY charge_id ORDER BY sales desc
     </select>
 
     <select id="byPeopleNewAndOld" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee*o.${settleRate} ) , 2 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
         i.new_sign AS flag,COALESCE(o.charge_id,'无') AS name,
         SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount
@@ -2047,7 +2226,7 @@
     </select>
 
     <select id="byMarketingCenter" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round(SUM ( o.order_fee * o.${settleRate} ) , 2) AS sales,
+        SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2) AS sales,
         EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
@@ -2121,7 +2300,7 @@
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round(SUM ( o.order_fee * o.${settleRate} ),2) AS sales,
+        SELECT round(SUM ( i.sell_price * i.quantity * i.${settleRate} ),2) AS sales,
         EXTRACT(MONTH FROM o.${timeFlag}) flag,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
@@ -2194,7 +2373,7 @@
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.${settleRate} ) , 2 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
         COUNT ( DISTINCT ( i.order_id ) ) AS orderCount,SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2282,40 +2461,49 @@
     </select>
 
     <select id="byTobToc" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT source_platform AS name,
-        round (SUM ( order_fee *${settleRate}),2) AS sales
-        FROM dmp_order_info
+        SELECT o.source_platform AS name,
+        round (SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    platform_create_time &gt;= #{params.startTime}
+                    o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND platform_create_time &lt; #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
             <if test="params.timeType!=null and params.timeType==1">
                 <if test="params.startTime !=null">
-                    AND delivery_time &gt;= #{params.startTime}
+                    AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND delivery_time &lt; #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
+            </if>
+
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
             </if>
         </where>
-        GROUP BY source_platform
+        GROUP BY o.source_platform
     </select>
 
     <select id="getByDay" resultType="com.erp.model.bi.vo.SalesFlagVO">
-         SELECT round( SUM ( o.order_fee * o.${settleRate} ),2) AS sales,
-         to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
-         SUM ( i.quantity ) AS salesQuantity
-         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ),2) AS sales,
+        to_char(o.${timeFlag},'yyyy-mm-dd') AS name,
+        SUM ( i.quantity ) AS salesQuantity
+        FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -2395,11 +2583,11 @@
                 #{params.param}
             </if>
         </where>
-        group by name  order by  name  asc
+        group by name order by name asc
     </select>
 
     <select id="getByMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.${settleRate} ), 2) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales,
         to_char(o.${timeFlag},'yyyy-mm') AS name,
         SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
@@ -2486,7 +2674,7 @@
     </select>
 
     <select id="getByQuarter" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT 	round( SUM ( o.order_fee * o.${settleRate} ), 2) AS sales,
+        SELECT round( SUM (i.sell_price * i.quantity * i.${settleRate} ), 2) AS sales,
         date_trunc('QUARTER',o.${timeFlag}) AS name,SUM ( i.quantity ) AS salesQuantity
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
@@ -2573,12 +2761,11 @@
     </select>
 
 
-
     <select id="getByYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
-        SELECT round( SUM ( o.order_fee * o.${settleRate} ) , 2 ) AS sales,
+        SELECT round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales,
         to_char(o.${timeFlag},'yyyy') as name,
         SUM ( i.quantity ) AS salesQuantity FROM
-	    dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">

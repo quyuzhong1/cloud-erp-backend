@@ -82,6 +82,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public PagingVO<ModulePagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+
         IPage pageData = baseMapper.paging(query, params);
         List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
         List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());

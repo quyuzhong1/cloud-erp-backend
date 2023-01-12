@@ -98,6 +98,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     }
                 }
             }
+            list.add(shopContrastTrendVO);
         }
         return list;
     }
