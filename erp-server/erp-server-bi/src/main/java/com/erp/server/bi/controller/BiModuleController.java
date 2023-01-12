@@ -119,7 +119,7 @@ public class BiModuleController extends BaseController {
      * 布局添加模块
      * 模块列表
      *
-     * @return 删除是否成功
+     * @return
      */
     @PostMapping("/category/list")
     public ApiResult<List<CategoryModuleDTO>> categoryList(@RequestBody @Validated BaseSearchDTO dto) {

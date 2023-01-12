@@ -112,9 +112,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     @Override
     public List<SalesVO> getBySku(BiFilterDTO dto) {
-
         LocalDate nowDate = LocalDate.now();
-
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         if (StringUtils.isBlank(settleRate)) {
