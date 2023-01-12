@@ -10,6 +10,7 @@ import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
 import com.erp.model.bi.dto.SubjectLayoutDetailsDTO;
 import com.erp.server.bi.service.BiLayoutService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- *
- *
  * @author yl
  * @since 2022-12-08 14:28:26
  */
@@ -33,23 +32,25 @@ public class BiLayoutController extends BaseController {
     private BiLayoutService layoutService;
 
 
-
-
     /**
      * 添加整个专题
+     *
      * @param dto
      * @return
      */
     @PostMapping("/addSubject")
     public ApiResult addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
-        Boolean flag = layoutService.addSubject(dto);
-        return flag == true ? success() : failure();
+        String subjectId = layoutService.addSubject(dto);
+        if (StringUtils.isBlank(subjectId)) {
+            return failure();
+        }
+        return success(subjectId);
     }
-
 
 
     /**
      * 添加专题布局
+     *
      * @param dto
      * @return
      */
@@ -62,6 +63,7 @@ public class BiLayoutController extends BaseController {
 
     /**
      * 修改专题布局
+     *
      * @param dto
      * @return
      */
@@ -93,7 +95,8 @@ public class BiLayoutController extends BaseController {
 
 
     /**
-     *  删除布局模块
+     * 删除布局模块
+     *
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
      * @author yl
@@ -102,11 +105,12 @@ public class BiLayoutController extends BaseController {
     @PostMapping("/deleteLayoutModule")
     public ApiResult deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayoutModule(dto);
-        return flag==true?success():failure();
+        return flag == true ? success() : failure();
     }
 
     /**
-     *  删除布局
+     * 删除布局
+     *
      * @param dto
      * @return com.erp.common.dto.base.ApiResult
      * @author yl
@@ -115,7 +119,7 @@ public class BiLayoutController extends BaseController {
     @PostMapping("/deleteLayout")
     public ApiResult deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         Boolean flag = layoutService.deleteLayout(dto);
-        return flag==true?success():failure();
+        return flag == true ? success() : failure();
     }
 
 

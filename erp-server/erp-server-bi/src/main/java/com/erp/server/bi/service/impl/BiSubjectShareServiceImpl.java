@@ -47,7 +47,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
      * @date 2022-12-08 17:19
      */
     @Override
-    public Boolean setShare(UpdateSubjectShareDTO dto) {
+    public String setShare(UpdateSubjectShareDTO dto) {
         //主题id
         String subjectId = dto.getId();
         BiSubjectEntity subject = subjectService.getById(subjectId);
@@ -69,10 +69,10 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         subject.setIsFrequently(dto.getIsFrequently());
         Boolean flag = subjectService.updateById(subject);
         //如果是分享
-        if (DashboardEnum.SHARE.getFlag().equals(shareFlag)&&flag) {
-            return addSubjectShare(dto.getShareUserIdList(), subjectId);
+        if (DashboardEnum.SHARE.getFlag().equals(shareFlag) && flag) {
+            addSubjectShare(dto.getShareUserIdList(), subjectId);
         }
-        return flag;
+        return subjectId;
     }
 
 

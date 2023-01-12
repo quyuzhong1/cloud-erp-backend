@@ -65,7 +65,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY MONTH ORDER BY MONTH ASC
@@ -155,7 +155,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY sku_no
@@ -250,7 +250,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.sku_no,o.${findTime}
@@ -339,7 +339,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY sku_no
@@ -428,7 +428,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.sku_no ,o.country_name_cn
@@ -460,7 +460,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY source_platform
@@ -529,7 +529,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.shop_no
@@ -595,7 +595,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         GROUP BY o.shop_no,o.${findTime}
@@ -649,7 +649,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.shop_no ORDER BY sales desc limit 20
@@ -735,7 +735,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
         GROUP BY
         o.shop_no,
@@ -830,7 +830,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         GROUP BY o.shop_no,i.new_sign
@@ -917,7 +917,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.country_name_cn
@@ -1006,7 +1006,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
         GROUP BY i.sku_no,o.shop_no
     </select>
@@ -1091,7 +1091,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.sku_no
@@ -1178,7 +1178,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.source_platform
@@ -1207,7 +1207,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         GROUP BY country_name_cn
@@ -1294,7 +1294,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.charge_id
@@ -1382,7 +1382,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.dept_id
@@ -1469,7 +1469,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.new_sign
@@ -1558,7 +1558,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.new_sign,o.source_platform
@@ -1645,7 +1645,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.new_sign,i.sku_no
@@ -1733,7 +1733,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.shop_no
@@ -1819,7 +1819,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
         GROUP BY i.sku_no
         ORDER BY sales DESC LIMIT 20
@@ -1904,7 +1904,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
           GROUP BY  i.sku_no
           ORDER BY sales DESC LIMIT 20
@@ -2016,7 +2016,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.brand_name
@@ -2131,7 +2131,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.new_sign,o.charge_id
@@ -2219,7 +2219,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY i.new_sign,o.dept_id
@@ -2292,7 +2292,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         GROUP BY
@@ -2365,7 +2365,7 @@
         </if>
         <!-- 权限 -->
         <if test="params.param!=null and params.param!=''">
-            #{params.param}
+            ${params.param}
         </if>
 
         GROUP BY
@@ -2454,7 +2454,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         LIMIT 1
@@ -2493,7 +2493,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         GROUP BY o.source_platform
@@ -2580,7 +2580,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         group by name order by name asc
@@ -2667,7 +2667,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         group by name order by name asc
@@ -2753,7 +2753,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         group by name order by name asc
@@ -2842,7 +2842,7 @@
             </if>
             <!-- 权限 -->
             <if test="params.param!=null and params.param!=''">
-                #{params.param}
+                ${params.param}
             </if>
         </where>
         group by name order by name asc

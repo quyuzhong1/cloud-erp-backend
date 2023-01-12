@@ -57,5 +57,5 @@ public interface BiLayoutService  extends IService<BiLayoutEntity> {
 
     void copySubjectLayout(String newSubjectId, String subjectId);
 
-    Boolean addSubject(AddTotalSubjectDTO dto);
+    String addSubject(AddTotalSubjectDTO dto);
 }

@@ -83,27 +83,30 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setParam(dto.getParam());
-
         IPage pageData = baseMapper.paging(query, params);
-        List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
-        List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());
-        List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
-        LocalDate localDate = LocalDate.now();
-        LocalDateTime monthStart = LocalDateUtil.getThisMonthStart(localDate);
-        LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(localDate);
-        List<String> monthLayoutIdList = layoutList.stream().filter(
-                l -> l.getSubjectCreateTime().compareTo(monthStart) >= 0 &&
-                        l.getSubjectCreateTime().compareTo(monthEnd) <= 0
-        ).map(LayoutVO::getLayoutId).collect(Collectors.toList());
         List<ModulePagingDTO> list = pageData.getRecords();
+        if(CollectionUtils.isNotEmpty(list)){
+            List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
+            List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());
+            List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
+            LocalDate localDate = LocalDate.now();
+            LocalDateTime monthStart = LocalDateUtil.getThisMonthStart(localDate);
+            LocalDateTime monthEnd = LocalDateUtil.getThisMonthEnd(localDate);
+            List<String> monthLayoutIdList = layoutList.stream().filter(
+                    l -> l.getSubjectCreateTime().compareTo(monthStart) >= 0 &&
+                            l.getSubjectCreateTime().compareTo(monthEnd) <= 0
+            ).map(LayoutVO::getLayoutId).collect(Collectors.toList());
 
-        for (ModulePagingDTO item : list) {
-            String moduleId = item.getId();
-            long monthUsageCount = layoutRefModuleList.stream().filter(m -> monthLayoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
-            long usageCount = layoutRefModuleList.stream().filter(m -> layoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
-            item.setMonthUsageCount((int) monthUsageCount);
-            item.setUsageCount((int) usageCount);
+            for (ModulePagingDTO item : list) {
+                String moduleId = item.getId();
+                long monthUsageCount = layoutRefModuleList.stream().filter(m -> monthLayoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
+                long usageCount = layoutRefModuleList.stream().filter(m -> layoutIdList.contains(m.getLayoutId()) && m.getModuleId().equals(moduleId)).count();
+                item.setMonthUsageCount((int) monthUsageCount);
+                item.setUsageCount((int) usageCount);
+            }
         }
+
+
 
         return new PagingVO(pageData);
     }
