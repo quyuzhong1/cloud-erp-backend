@@ -21,9 +21,14 @@ public class ModulePagingDTO implements Serializable {
     private String id;
 
     /**
-     * 备注说明
+     * 模块名
      */
     private String name;
+
+    /**
+     * 系统模块名
+     */
+    private String sysModuleName;
 
     /**
      * 备注说明
@@ -45,15 +50,13 @@ public class ModulePagingDTO implements Serializable {
     /**
      * 本月使用次数
      */
-    private Integer monthUsageCount=0;
-
-
+    private Integer monthUsageCount = 0;
 
 
     /**
      * 使用次数
      */
-    private Integer usageCount=0;
+    private Integer usageCount = 0;
 
 
 }

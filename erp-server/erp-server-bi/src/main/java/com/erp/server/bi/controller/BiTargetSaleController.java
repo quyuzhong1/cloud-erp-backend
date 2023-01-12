@@ -39,7 +39,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countSales(@RequestBody @Validated BiFilterDTO dto){
@@ -55,7 +55,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/sales/volume")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:sales:volume",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countSalesVolume(@RequestBody @Validated BiFilterDTO dto){
@@ -71,7 +71,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/order/quantity")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:order:quantity",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countOrderQuantity(@RequestBody @Validated BiFilterDTO dto){
@@ -87,7 +87,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/refund/rate")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:refund:rate",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countRefundRate(@RequestBody @Validated BiFilterDTO dto){
@@ -103,7 +103,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/refund/amount")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:refund:amount",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoySumVO> countRefundAmount(@RequestBody @Validated BiFilterDTO dto){
@@ -119,7 +119,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/refund/order/number")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:refund:order:number",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleAndYoyCountVO> countRefundOrderNumber(@RequestBody @Validated BiFilterDTO dto){
@@ -135,7 +135,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/customer/price")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:customer:price",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> calculateCustomerPrice(@RequestBody @Validated BiFilterDTO dto){
@@ -156,7 +156,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/domestic/sales/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:domestic:ratio",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> domesticSalesRatio(@RequestBody @Validated BiFilterDTO dto){
@@ -172,7 +172,7 @@ public class BiTargetSaleController extends BaseController {
     @PostMapping("/new/product/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:indicator:new:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "dmp_order_info"
 //    )
     public ApiResult<TargetSaleSumVO> sumNewProductSales(@RequestBody @Validated BiFilterDTO dto){

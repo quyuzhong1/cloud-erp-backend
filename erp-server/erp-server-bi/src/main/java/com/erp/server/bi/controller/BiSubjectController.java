@@ -1,7 +1,9 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.*;
@@ -44,11 +46,11 @@ public class BiSubjectController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "bi:subject:paging",
-//            tableAlias = "bi_subject"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "bi:subject:paging",
+            tableAlias = "bi_subject"
+    )
     public ApiResult<PagingVO<SubjectPagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<SubjectPagingDTO> pagingVO = this.biSubjectService.queryByPage(dto);
         return success(pagingVO);

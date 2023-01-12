@@ -97,7 +97,7 @@ public class OperationLogUtil {
                 typeName = typeName.replace("java.util.List<", "");
                 typeName = typeName.replace(">","");
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new ServiceException(ApiError.Default);
             }
             List<Object> list = TransitionUtil.transitionType(value, List.class);
             List<String> stringList = new ArrayList<>();

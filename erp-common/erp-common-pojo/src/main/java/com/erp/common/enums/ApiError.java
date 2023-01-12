@@ -212,6 +212,7 @@ public enum ApiError implements Serializable {
     ERROR_97017(97017,"不是仪表盘"),
     ERROR_97018(97018,"销售监控类型不能重复选择"),
     ERROR_97019(97019,"暂无仪表盘，请先创建仪表盘"),
+    ERROR_97020(97020,"至少需要一个布局"),
 
 
     ERROR_end(1000000, "系统错误");

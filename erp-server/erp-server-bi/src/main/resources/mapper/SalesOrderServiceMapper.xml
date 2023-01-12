@@ -16,7 +16,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt;; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -25,7 +25,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -51,9 +51,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 用户id -->
@@ -85,7 +85,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -94,7 +94,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -120,9 +120,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -180,7 +180,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -189,7 +189,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -215,9 +215,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -269,7 +269,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -278,7 +278,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -304,9 +304,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -358,7 +358,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -367,7 +367,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -393,9 +393,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -446,7 +446,7 @@
                     platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND platform_create_time &lt;= #{params.endTime}
+                    AND platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -455,7 +455,7 @@
                     AND delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND delivery_time &lt;= #{params.endTime}
+                    AND delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 权限 -->
@@ -480,7 +480,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -489,7 +489,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -515,9 +515,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 用户id -->
@@ -546,7 +546,7 @@
                 AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.platform_create_time &lt;= #{params.endTime}
+                AND o.platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
@@ -555,7 +555,7 @@
                 AND o.delivery_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.delivery_time &lt;= #{params.endTime}
+                AND o.delivery_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 部门 -->
@@ -581,9 +581,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- 用户id -->
@@ -614,7 +614,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -623,7 +623,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -642,9 +642,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- 权限 -->
@@ -673,7 +673,7 @@
                 AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.platform_create_time &lt;= #{params.endTime}
+                AND o.platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
@@ -682,7 +682,7 @@
                 AND o.delivery_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.delivery_time &lt;= #{params.endTime}
+                AND o.delivery_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 部门 -->
@@ -701,9 +701,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- 权限 -->
@@ -733,7 +733,7 @@
                 AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.platform_create_time &lt;= #{params.endTime}
+                AND o.platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
@@ -742,7 +742,7 @@
                 AND o.delivery_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.delivery_time &lt;= #{params.endTime}
+                AND o.delivery_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 部门 -->
@@ -768,9 +768,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -820,7 +820,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -829,7 +829,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -855,9 +855,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -909,7 +909,7 @@
                 AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.platform_create_time &lt;= #{params.endTime}
+                AND o.platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
@@ -918,7 +918,7 @@
                 AND o.delivery_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND o.delivery_time &lt;= #{params.endTime}
+                AND o.delivery_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 部门 -->
@@ -944,9 +944,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -994,7 +994,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1003,7 +1003,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1029,9 +1029,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1081,7 +1081,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1090,7 +1090,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1116,9 +1116,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1166,7 +1166,7 @@
                 AND platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND platform_create_time &lt;= #{params.endTime}
+                AND platform_create_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 发货时间 -->
@@ -1175,7 +1175,7 @@
                 AND delivery_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
-                AND delivery_time &lt;= #{params.endTime}
+                AND delivery_time &lt; #{params.endTime}
             </if>
         </if>
         <!-- 权限 -->
@@ -1197,7 +1197,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1206,7 +1206,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1232,9 +1232,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1285,7 +1285,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1294,7 +1294,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1320,9 +1320,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1372,7 +1372,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1381,7 +1381,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1407,9 +1407,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1461,7 +1461,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1470,7 +1470,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1496,9 +1496,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1548,7 +1548,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1557,7 +1557,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1583,9 +1583,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1636,7 +1636,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1645,7 +1645,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1671,9 +1671,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1730,6 +1730,25 @@
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT o.shop_no,round( SUM ( o.order_fee * o.${settleRate}),2) AS sales
         FROM dmp_order_info o
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
+            </if>
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
+            </if>
+        </where>
 	    GROUP BY o.shop_no
     </select>
 
@@ -1744,7 +1763,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1753,7 +1772,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1779,9 +1798,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1830,7 +1849,7 @@
                     platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND platform_create_time &lt;= #{params.endTime}
+                    AND platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1839,7 +1858,7 @@
                     AND delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND delivery_time &lt;= #{params.endTime}
+                    AND delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 权限 -->
@@ -1863,7 +1882,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1872,7 +1891,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1898,9 +1917,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -1951,7 +1970,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -1960,7 +1979,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -1986,9 +2005,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2059,9 +2078,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -2132,9 +2151,9 @@
         </if>
         <!-- 店铺 -->
         <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_no IN
-            <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                #{shopNo}
+            AND o.shop_name IN
+            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                #{shopName}
             </foreach>
         </if>
         <!-- sku -->
@@ -2186,7 +2205,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2195,7 +2214,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -2221,9 +2240,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2272,7 +2291,7 @@
                     platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND platform_create_time &lt;= #{params.endTime}
+                    AND platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2281,7 +2300,7 @@
                     AND delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND delivery_time &lt;= #{params.endTime}
+                    AND delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 权限 -->
@@ -2303,7 +2322,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2312,7 +2331,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -2338,9 +2357,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2390,7 +2409,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2399,7 +2418,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -2425,9 +2444,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2476,7 +2495,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2485,7 +2504,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -2511,9 +2530,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
@@ -2566,7 +2585,7 @@
                     o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.platform_create_time &lt;= #{params.endTime}
+                    AND o.platform_create_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 发货时间 -->
@@ -2575,7 +2594,7 @@
                     AND o.delivery_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
-                    AND o.delivery_time &lt;= #{params.endTime}
+                    AND o.delivery_time &lt; #{params.endTime}
                 </if>
             </if>
             <!-- 部门 -->
@@ -2601,9 +2620,9 @@
             </if>
             <!-- 店铺 -->
             <if test="params.shopName!=null and params.shopName.size>0">
-                AND o.shop_no IN
-                <foreach collection="params.shopName" item="shopNo" open="(" separator="," close=")">
-                    #{shopNo}
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
                 </foreach>
             </if>
             <!-- sku -->
