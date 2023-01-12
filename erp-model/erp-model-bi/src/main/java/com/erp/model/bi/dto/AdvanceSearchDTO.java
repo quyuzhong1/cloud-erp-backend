@@ -1,9 +1,8 @@
 package com.erp.model.bi.dto;
 
+import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
 
 /**
  * @Classname AdvanceSearchDTO
@@ -13,7 +12,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class AdvanceSearchDTO  implements Serializable {
+public class AdvanceSearchDTO  extends PermissionsDTO {
 
 
     /**
