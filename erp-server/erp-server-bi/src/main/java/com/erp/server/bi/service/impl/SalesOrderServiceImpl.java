@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -122,7 +123,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime,30);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         String findTime = "delivery_time";
@@ -132,7 +133,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime,7);;
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
@@ -382,12 +383,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         List<ShopSalesVO> resultList = baseMapper.getByShop(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = nowTime.minus(30, ChronoUnit.DAYS);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime,30);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = nowTime.minus(7, ChronoUnit.DAYS);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime,7);
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
@@ -637,9 +638,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byBrand(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime =LocalDateUtil.getStartTime(startTime.minusYears(1)) ;
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -695,9 +696,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byPlatform(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime =  LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -812,9 +813,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -939,9 +940,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byCountry(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime =LocalDateTime.of(startTime.minusYears(1).toLocalDate(), LocalTime.MIN) ;
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MAX);
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -1347,9 +1348,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesBaseVO> chainList = baseMapper.byDept(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime =LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -1486,9 +1487,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //这个是环比的查询出来的
         List<SalesCountVO> chainList = baseMapper.byNewAndOld(dto, settleRate);
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime =LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -1728,9 +1729,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<ShopSalesVO> chainList = baseMapper.bySite(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime = startTime.minusYears(1);
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime = endTime.minusYears(1);
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的

@@ -92,7 +92,7 @@ public class LocalDateUtil {
     public static LocalDateTime getRingRatioDate(LocalDateTime startDate, LocalDateTime endDate) {
         if (endDate != null && startDate != null) {
             long diff = Duration.between(startDate, endDate).toDays();
-            return startDate.minusDays(diff);
+            return LocalDateTime.of(startDate.minusDays(diff).toLocalDate(),LocalTime.MIN) ;
         }
         return null;
     }
@@ -266,5 +266,35 @@ public class LocalDateUtil {
         return LocalDateTime.of(date.minus(1L, ChronoUnit.YEARS).with(TemporalAdjusters.lastDayOfYear()), LocalTime.MAX);
     }
 
+    /**
+     * 获取多少天前 开始时
+     *
+     * @param nowTime
+     * @param days
+     * @return
+     */
+    public static LocalDateTime getBeforeStartTime(LocalDateTime nowTime, int days) {
+        return LocalDateTime.of(nowTime.minus(days, ChronoUnit.DAYS).toLocalDate(), LocalTime.MIN);
+    }
+
+    /**
+     * 获取开始时间
+     * @param localDateTime
+     * @return
+     */
+
+    public static LocalDateTime getStartTime(LocalDateTime localDateTime) {
+        if(localDateTime!=null){
+            return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MIN);
+        }
+        return LocalDateTime.of(LocalDate.now(),LocalTime.MIN);
+    }
+
+    public static LocalDateTime getEndTime(LocalDateTime localDateTime) {
+        if(localDateTime!=null){
+            return LocalDateTime.of(localDateTime.toLocalDate(), LocalTime.MAX);
+        }
+        return LocalDateTime.of(LocalDate.now(),LocalTime.MAX);
+    }
 }
 

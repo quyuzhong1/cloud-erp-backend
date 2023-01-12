@@ -356,17 +356,18 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
 
 
-//        String type = DictEnum.DASHBOARD.getType();
-//        String dashboardFlag = DictEnum.DASHBOARD.getValue();
-//        String dashboardCategoryId = "";
-//        //获取我的仪表盘的专题
-//        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
-//        if (dict != null) {
-//            dashboardCategoryId = dict.getId();
-//        }
+        String type = DictEnum.DASHBOARD.getType();
+        String dashboardFlag = DictEnum.DASHBOARD.getValue();
+        String dashboardCategoryId = "";
+        //获取我的仪表盘的专题
+        BiDictEntity dict = dictService.getByTypeValue(type, dashboardFlag);
+        if (dict != null) {
+            dashboardCategoryId = dict.getId();
+        }
 
         List<SubjectVO> subjectList = baseMapper.getSubjectByIds(subjectIdList, searchKeyword);
-
+        String finalDashboardCategoryId = dashboardCategoryId;
+        pairList = pairList.stream().filter(p -> !p.getKey().equals(finalDashboardCategoryId)).collect(Collectors.toList());
         for (Pair<String, String> pair : pairList) {
             String categoryId = pair.getKey();
             CategorySubjectVO result = new CategorySubjectVO();
@@ -374,14 +375,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
             result.setCategoryName(pair.getValue());
             List<SubjectVO> subjectResultList = subjectList.stream().filter(m -> categoryId.equals(m.getCategoryId())).collect(Collectors.toList());
             for (SubjectVO item : subjectResultList) {
-                //我创造的
-                if (userId.equals(item.getCreateUserId())) {
-                    item.setMyCreateVisible(true);
-                }
                 //分享给我
                 if (shareToMeIds.contains(item.getId())) {
                     item.setShareVisible(true);
                 }
+                //我创造的
+                if (userId.equals(item.getCreateUserId())) {
+                    item.setMyCreateVisible(true);
+                    //我创建的 取消掉分享标识
+                    item.setShareVisible(false);
+                }
+
             }
             result.setSubjectList(subjectResultList);
             resultList.add(result);
@@ -430,7 +434,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         String shareFlag = dto.getShareFlag();
+        Integer isFrequently = dto.getIsFrequently();
         copySubject.setName(name);
+        copySubject.setIsFrequently(isFrequently);
         copySubject.setId(newSubjectId);
         copySubject.setShareFlag(shareFlag);
         copySubject.setCreateUserId(userId);
@@ -584,7 +590,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         List<BiSubjectEntity> dashboardList = getByCategoryId(categoryId, subjectIdList);
         if (CollectionUtils.isNotEmpty(dashboardList)) {
             BiSubjectEntity myCreate = dashboardList.stream().filter(d -> userId.equals(d.getCreateUserId())).findFirst().orElse(null);
-            if(Objects.isNull(myCreate)){
+            if (Objects.isNull(myCreate)) {
                 return layoutService.subjectInfo(myCreate.getId());
             }
 

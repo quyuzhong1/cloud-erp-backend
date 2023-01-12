@@ -4,13 +4,17 @@
 
 
     <select id="paging" resultType="com.erp.model.bi.dto.ModulePagingDTO">
-        SELECT id,name,remark,image_url,state,view_code
+        SELECT bm1.id, bm1.name, bm1.remark, bm1.image_url,
+        bm1.state, bm1.view_code,bs.name AS sysModuleName
         FROM bi_module AS bm1
+        INNER JOIN bi_sys_module bs ON  bs.id=bm1.sys_module_id
         WHERE NOT EXISTS(SELECT 1 FROM bi_module AS bm2 WHERE code LIKE 'bi:indicator:%' AND bm1."id" = bm2."id")
             <if test="params.searchKeyword!=null and params.searchKeyword!=''">
-               AND name LIKE concat('%',#{params.searchKeyword},'%')
+               AND (bm1.name LIKE concat('%',#{params.searchKeyword},'%')
+                     OR bs.name LIKE concat('%',#{params.searchKeyword},'%')
+                    )
             </if>
-        ORDER BY create_time DESC
+        ORDER BY bm1.create_time DESC
     </select>
 
     <select id="getUserVisibleModuleIds" resultType="java.lang.String">

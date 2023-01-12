@@ -5,7 +5,6 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.model.bi.dto.BiFilterDTO;
 import com.erp.model.bi.dto.DateFilterDTO;
 import com.erp.model.bi.vo.*;
-import com.erp.server.bi.service.BiComprehensiveAnalyseService;
 import com.erp.server.bi.service.SalesOrderService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,8 +31,7 @@ public class BiSalesModuleController extends BaseController {
     @Resource
     private SalesOrderService salesOrderService;
 
-    @Resource
-    private BiComprehensiveAnalyseService biComprehensiveAnalyseService;
+
 
     /**
      * 销售额- 一级模块-月销售额趋势

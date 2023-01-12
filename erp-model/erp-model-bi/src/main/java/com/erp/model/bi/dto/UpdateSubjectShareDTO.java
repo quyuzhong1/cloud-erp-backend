@@ -29,6 +29,8 @@ public class UpdateSubjectShareDTO implements Serializable {
     @Size(max = 20,message = "最大20字符")
     private String name;
 
+
+    private Integer isFrequently=0;
     @NotBlank(message = "分享标识")
     @StateEnumValue(strValues = {"personal", "share"}, message = "分享标识有误")
     private String shareFlag;
