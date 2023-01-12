@@ -65,7 +65,6 @@ public class BiDashboardController extends BaseController {
         SubjectLayoutDetailsDTO details = subjectService.dashboardInfo();
         if (Objects.isNull(details)) {
             throw new ServiceException(ApiError.ERROR_97019);
-
         }
         return success(details);
     }
