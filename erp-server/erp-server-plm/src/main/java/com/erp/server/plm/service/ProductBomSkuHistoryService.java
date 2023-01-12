@@ -2,7 +2,10 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
+
+import java.util.List;
 
 /**
  * bom历史表与sku关系表(ProductBomSkuHistory)表服务接口
@@ -13,4 +16,5 @@ import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 public interface ProductBomSkuHistoryService  extends IService<ProductBomSkuHistoryEntity> {
 
 
+    void saveBomSku(String id, List<BomSkuDTO> bomSkuList);
 }

@@ -54,6 +54,10 @@ public class ProductBomHistoryEntity implements Serializable {
      */
     private Integer version;
 
+    /**
+     * bom 表id
+     */
+    private String bomId;
 
 
 }

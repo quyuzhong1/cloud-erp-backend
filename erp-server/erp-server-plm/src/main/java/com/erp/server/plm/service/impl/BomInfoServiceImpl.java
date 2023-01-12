@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -52,6 +53,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private ProductBomHistoryService productBomHistoryService;
 
     /**
      * 添加bom
@@ -88,6 +92,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean saveResult = this.save(bom);
         //保存成功
         if (saveResult) {
+            //保存历史bom信息
+            productBomHistoryService.insert(bom,bomSkuList);
+
             //但是待审核的时候
             if (isSubmitAudit) {
                 //这里要发起一个流程
@@ -100,6 +107,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
 
         }
+
 
         return saveResult;
     }
@@ -170,17 +178,47 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
+        checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
         Integer bomVersion = bom.getVersion();
         bom.setVersion(bomVersion + 1);
-        bom.setType(dto.getType());
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
         }
+        return result;
+    }
 
-        return null;
+
+    /**
+     * 检查bom 能否修改
+     *
+     * @param state
+     * @param updateFlag
+     * @return void
+     * @author yl
+     * @date 2023-01-12 18:20
+     */
+    private void checkBomCanUpdate(Integer state, String updateFlag) {
+        //如果是编辑  在待提交审核/待审核状态/审核不通过 可点击编辑
+        if (BomConstant.EDIT.equals(updateFlag)) {
+            List<Integer> stateList = new ArrayList<>(5);
+            stateList.add(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
+            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+            stateList.add(BomStateEnum.AUDIT_NO_PASS.getState());
+            if (!stateList.contains(state)) {
+                throw new ServiceException(ApiError.ERROR_95096);
+            }
+        }
+        //如果是变更申请 只有审核通过 就是归档 才能申请
+        if (BomConstant.CHANGE_REQUEST.equals(updateFlag)) {
+            List<Integer> stateList = new ArrayList<>(2);
+            stateList.add(BomStateEnum.AUDIT_PASS.getState());
+            if (!stateList.contains(state)) {
+                throw new ServiceException(ApiError.ERROR_95096);
+            }
+        }
     }
 
 

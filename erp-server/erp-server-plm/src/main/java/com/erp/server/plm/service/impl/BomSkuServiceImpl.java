@@ -9,6 +9,7 @@ import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -77,19 +78,26 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
      * @date 2023-01-11 18:27
      */
     @Override
+    @Transactional
     public void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
         //先删除
         deleteBomSku(bomId);
+        saveBomSku(bomId,bomSkuList);
+
     }
 
     /**
      * 根据Bomid 删除 bom sku 信息
-     * @author yl
-     * @date 2023-01-12 17:29
+     *
      * @param bomId
      * @return void
+     * @author yl
+     * @date 2023-01-12 17:29
      */
     private void deleteBomSku(String bomId) {
+        LambdaQueryWrapper<BomSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomSkuEntity::getBomId, bomId);
+        this.remove(queryWrapper);
 
     }
 

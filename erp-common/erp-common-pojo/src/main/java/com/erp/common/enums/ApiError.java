@@ -191,6 +191,7 @@ public enum ApiError implements Serializable {
     ERROR_95093(95093,"非一二级分类不能添加代号"),
     ERROR_95094(95094,"sku必须选择一个"),
     ERROR_95095(95095,"bom不能为空"),
+    ERROR_95096(95096,"在待提交审核/待审核状态/审核不通过的状态下才能编辑"),
 
     /**
      * bi 错误

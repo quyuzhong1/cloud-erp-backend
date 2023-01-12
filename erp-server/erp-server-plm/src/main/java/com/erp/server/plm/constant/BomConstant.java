@@ -20,4 +20,15 @@ public interface BomConstant {
 
 
     String BOM = "BOM";
+
+
+    /**
+     * 编辑
+     */
+    String EDIT = "edit";
+
+    /**
+     * 变更
+     */
+    String CHANGE_REQUEST = "changeRequest";
 }
