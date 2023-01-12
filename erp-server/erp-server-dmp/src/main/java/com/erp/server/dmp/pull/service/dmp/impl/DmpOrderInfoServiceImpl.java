@@ -104,11 +104,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     public String checkOrder(DmpOrderInfoEntity orderInfoEntity) {
         String orderInfoId = "";
-        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderByPlatformOrderId(orderInfoEntity.getPlatformOrderId());
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
-                this.updateOrderByPlatformOrderId(orderInfoEntity);
+                orderInfoEntity.setId(dmpOrderInfoEntity.getId());
+                this.updateById(orderInfoEntity);
                 orderInfoId = dmpOrderInfoEntity.getId();
             }
 
@@ -217,6 +218,13 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             XxlJobHelper.log("update(updateWrapper)==> {} dmpOrderInfoEntity={}", updateWrapper.getCustomSqlSegment(), JSONUtil.toJsonStr(dmpOrderInfoEntity));
 
         }
+    }
+
+    @Override
+    public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber) {
+        return lambdaQuery().eq(DmpOrderInfoEntity::getSalesRecordNumber, salesRecordNumber)
+                .last("limit 1")
+                .oneOpt().orElse(null);
     }
 
 }

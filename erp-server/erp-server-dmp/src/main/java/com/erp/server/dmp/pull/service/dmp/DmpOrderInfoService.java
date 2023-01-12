@@ -49,4 +49,14 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return void
      **/
     void cleanOrder();
+
+    /**
+     * 根据平台订单id查询订单信息
+     * @Author Luo_WG
+     * @Date 2022/11/14 21:28
+     * @param salesRecordNumber 销售订单号
+     * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
+     **/
+    DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber);
+
 }
