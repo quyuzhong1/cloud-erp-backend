@@ -37,7 +37,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/quarter/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:target:quarter",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> quarterSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -52,7 +52,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/quarter/sales/volume")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:target:volume",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> quarterSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -66,7 +66,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/month/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:target:month",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVO>> monthSales(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -80,7 +80,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/month/sales/volume")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:month:volume",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<TargetAnalysisVO<QuarterMonthSalesVolumeVO>> monthSalesVolume(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -100,7 +100,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/platform/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:platform:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> platformSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -123,7 +123,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/category/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:category:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> categorySalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -137,7 +137,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/new/product/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:new:product:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> newProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -151,7 +151,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/old/product/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:old:product:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> oldProductSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -165,7 +165,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/product/position/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:product:position",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> positionSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -182,7 +182,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/product/type/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:product:type",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> productTypeSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
@@ -196,7 +196,7 @@ public class BiTargetModuleController extends BaseController {
     @PostMapping("/sku/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:sku:sales",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult<List<SalesCompletionInfoVO>> skuSalesCompletion(@RequestBody @Validated(BiFilterDTO.SelectTargetModule.class) BiFilterDTO dto) {
