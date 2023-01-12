@@ -60,6 +60,11 @@ public class BiTargetManagementController extends BaseController {
      * @return ApiResult<PagingVO<BiTargetManagementShowDTO>>
      */
     @PostMapping("/paging")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "bi:module:paging",
+//            tableAlias = "bi_module"
+//    )
     public ApiResult<PagingVO<BiTargetManagementShowDTO>> queryByPage(@RequestBody @Validated PagingDTO<AdvanceSearchDTO> dto) {
         PagingVO<BiTargetManagementShowDTO> pagingVO = biTargetManagementService.paging(dto);
         return success(pagingVO);

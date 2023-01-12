@@ -1,8 +1,10 @@
 package com.erp.server.bi.controller;
 
+import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.AddTotalSubjectDTO;
 import com.erp.model.bi.dto.DeleteLayoutModuleDTO;
 import com.erp.model.bi.dto.SubjectLayoutDTO;
@@ -79,11 +81,11 @@ public class BiLayoutController extends BaseController {
      * @date 2022-12-13 17:06
      */
     @PostMapping("/subjectInfo")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "bi:layout:subjectInfo",
-//            serviceClass = BiLayoutService.class
-//    )
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "bi:layout:subjectInfo",
+            serviceClass = BiLayoutService.class
+    )
     public ApiResult<SubjectLayoutDetailsDTO> subjectInfo(@RequestBody @Validated BaseIdDTO dto) {
         SubjectLayoutDetailsDTO details = layoutService.subjectInfo(dto.getId());
         return success(details);
