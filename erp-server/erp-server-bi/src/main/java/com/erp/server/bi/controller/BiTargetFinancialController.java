@@ -38,7 +38,7 @@ public class BiTargetFinancialController extends BaseController {
     @PostMapping("/sales/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:financial:profit",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult countSales(@RequestBody BiFilterDTO dto){
@@ -57,7 +57,7 @@ public class BiTargetFinancialController extends BaseController {
     @PostMapping("/main/revenue")
     //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:financial:revenue",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult countMainRevenue(@RequestBody BiFilterDTO dto){
@@ -74,7 +74,7 @@ public class BiTargetFinancialController extends BaseController {
     @PostMapping("/sales/cost")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:financial:cost",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult countSalesCost(@RequestBody BiFilterDTO dto){
@@ -92,7 +92,7 @@ public class BiTargetFinancialController extends BaseController {
     @PostMapping("/sales/ratio")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:financial:ratio",
+//            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
     public ApiResult count(@RequestBody BiFilterDTO dto){

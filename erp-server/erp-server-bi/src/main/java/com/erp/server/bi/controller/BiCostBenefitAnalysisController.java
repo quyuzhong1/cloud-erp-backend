@@ -37,7 +37,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/dept/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:dept",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getDeptProfitChart(@RequestBody BiFilterDTO dto) {
@@ -51,7 +51,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/shop/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:shop",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getShopProfitChart(@RequestBody BiFilterDTO dto) {
@@ -64,7 +64,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/month/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:month",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getMonthProfitChart(@RequestBody BiFilterDTO dto) {
@@ -77,7 +77,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/quarter/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:quarter",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getQuarterProfitChart(@RequestBody BiFilterDTO dto) {
@@ -90,7 +90,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/year/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:year",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getYearProfitChart(@RequestBody BiFilterDTO dto) {
@@ -103,7 +103,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/platform/percent")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:percent:platform",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<PieChartVO>> getPlatformPercentChart(@RequestBody BiFilterDTO dto) {
@@ -116,7 +116,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/platform/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:profit:platform",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<SeriesVO>> getPlatformProfitChart(@RequestBody BiFilterDTO dto) {
@@ -130,7 +130,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/dept/cost/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:profit:dept",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<CostProfitAnalyzeRankVO>> getDeptCostProfitSheet(@RequestBody BiFilterDTO dto) {
@@ -144,7 +144,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/platform/cost/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:cost:platform",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<CostProfitAnalyzeRankVO>> getPlatformCostProfitSheet(@RequestBody BiFilterDTO dto) {
@@ -157,7 +157,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/shop/cost/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:profit:shop",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<CostProfitAnalyzeRankVO>> getShopCostProfitSheet(@RequestBody BiFilterDTO dto) {
@@ -171,7 +171,7 @@ public class BiCostBenefitAnalysisController extends BaseController {
     @PostMapping("/user/cost/profit")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,
 //            tableField = "charge_id",
-//            menuCode = "bi:profit:user",
+//            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
     public ApiResult<List<CostProfitAnalyzeRankVO>> getUserCostProfitSheet(@RequestBody BiFilterDTO dto) {
