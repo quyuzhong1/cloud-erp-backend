@@ -224,7 +224,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber) {
         return lambdaQuery().eq(DmpOrderInfoEntity::getSalesRecordNumber, salesRecordNumber)
                 .last("limit 1")
-                .oneOpt().orElse(null);
+                .one();
     }
 
 }
