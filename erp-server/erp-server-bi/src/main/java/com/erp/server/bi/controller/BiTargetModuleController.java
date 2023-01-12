@@ -160,7 +160,7 @@ public class BiTargetModuleController extends BaseController {
     }
 
     /**
-     * 产品定位销售额/销量完成情况
+     * 产品品类销售额/销量完成情况
      */
     @PostMapping("/product/position/sales")
 //    @DataPermission(operationType = DataAttributeEnum.LIST,

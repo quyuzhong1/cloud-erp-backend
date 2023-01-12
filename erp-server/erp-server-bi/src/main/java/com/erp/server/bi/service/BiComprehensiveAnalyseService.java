@@ -33,7 +33,7 @@ public interface BiComprehensiveAnalyseService {
      * @param biFilterDTO biFilterDTO
      * @return java.util.List<com.erp.model.bi.vo.ShopContrastTrendVO>
      **/
-    List<ShopContrastTrendVO> shopContrastTrend(BiFilterDTO biFilterDTO);
+    List<List<Object>> shopContrastTrend(BiFilterDTO biFilterDTO);
 
     /**
      * 品类矩阵

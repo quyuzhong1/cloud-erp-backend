@@ -13,6 +13,8 @@ public class SaleDetailVO {
      */
     private String name;
 
+    private String productName;
+
     /**
      * 销量
      */
