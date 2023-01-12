@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -38,4 +40,12 @@ public interface ApiSyncTaskService extends IService<ApiSyncTaskEntity> {
      * @return ApiSyncTaskEntity
      */
     ApiSyncTaskEntity getByApiSyncTask(ApiSyncTaskDTO dto);
+    /**
+     * @description: 根据平台id、模块类型
+     * @author Will
+     * @date: 2023/1/12 16:25
+     * @param apiSyncTaskDTO
+     * @return List<ApiSyncTaskEntity>
+     */
+    List<ApiSyncTaskEntity> listByApiSyncTask(ApiSyncTaskDTO apiSyncTaskDTO);
 }

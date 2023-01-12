@@ -32,4 +32,5 @@ public class DmpKingdeeFeignController extends BaseController {
     public void pushProductDetail(@RequestBody Map<String,Object> map) {
         kingdeeProductDetailService.pushProductDetail(map);
     }
+
 }

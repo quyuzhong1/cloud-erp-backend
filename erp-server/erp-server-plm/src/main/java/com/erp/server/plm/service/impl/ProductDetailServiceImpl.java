@@ -26,6 +26,7 @@ import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
@@ -126,7 +127,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductDetailApproverService productDetailApproverService;
 
     @Resource
-    private ProductVariantPropertyService productVariantPropertyService;
+    private ProductUnitService productUnitService;
 
     @Resource
     private ProductVariantService productVariantService;
@@ -137,6 +138,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProjectTaskService projectTaskService;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
     private static final  String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
@@ -1419,7 +1422,38 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU["+entity.getSkuNo()+"],操作["+statusName+"]为["+ProductDetailStatusEnum.APPROVAL_PASS.getName()+"]"));
+        //审核通过后发送到金蝶系统
+        //sendDataToKingdee(entity);
         return this.updateById(entity);
+    }
+
+    private void sendDataToKingdee(ProductDetailEntity entity) {
+        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+        if (ObjectUtils.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        Map<String,Object> resultMap = new HashMap<>();
+        //sku
+        resultMap.put("skuNo",entity.getSkuNo());
+        //spu
+        resultMap.put("spuNo",productInfoEntity.getSpuNo());
+        //产品功能描述
+        resultMap.put("functionDesc",productInfoEntity.getFunctionDesc());
+        //属性
+        resultMap.put("property",productInfoEntity.getProperty());
+        //单位
+        resultMap.put("unitName",entity.getUnitName());
+
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+        resultMap.put("skuNo",entity.getSkuNo());
+
+        dmpTaskFeign.pushProductDetail(resultMap);
     }
 
     @Override

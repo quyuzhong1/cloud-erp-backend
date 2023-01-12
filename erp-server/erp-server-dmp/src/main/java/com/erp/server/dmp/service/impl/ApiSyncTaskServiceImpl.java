@@ -9,6 +9,8 @@ import com.erp.server.dmp.mapper.ApiSyncTaskMapper;
 import com.erp.server.dmp.service.ApiSyncTaskService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -49,4 +51,15 @@ public class ApiSyncTaskServiceImpl extends ServiceImpl<ApiSyncTaskMapper, ApiSy
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
+
+    @Override
+    public List<ApiSyncTaskEntity> listByApiSyncTask(ApiSyncTaskDTO dto) {
+        LambdaQueryWrapper<ApiSyncTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ApiSyncTaskEntity::getApiPlatformId,dto.getApiPlatformId());
+        queryWrapper.eq(ApiSyncTaskEntity::getModuleType,dto.getModuleType());
+        queryWrapper.orderByAsc(ApiSyncTaskEntity::getRetryCount);
+        queryWrapper.last("limit 100");
+        return this.list(queryWrapper);
+    }
+
 }
