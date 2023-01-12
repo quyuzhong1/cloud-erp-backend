@@ -880,8 +880,8 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             dto.setStartTime(startTime);
             dto.setEndTime(endTime);
         }else {
-            dto.setStartTime(null);
-            dto.setEndTime(null);
+            dto.setStartTime(LocalDateTime.MIN);
+            dto.setEndTime(LocalDateTime.now().plusYears(10));
         }
 
         List<DateCostVO> vo = baseMapper.sumByDateAndCostType(dto, dictValues);

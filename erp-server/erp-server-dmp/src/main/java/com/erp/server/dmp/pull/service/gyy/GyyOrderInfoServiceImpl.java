@@ -518,7 +518,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
             //汇率
             dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
-
+            //折扣后金额
+            dmpOrderItemEntity.setAmountAfter(detailsBean.getAmountAfter());
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 退款商品明细表
@@ -51,6 +52,13 @@ public class DmpRefundItemEntity implements Serializable {
     @TableField(value = "is_combo")
     private Integer isCombo;
 
+    /**
+     * 折扣后订单总金额
+     */
+    @TableField(value = "amount_after")
+    private BigDecimal amountAfter;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -62,6 +70,7 @@ public class DmpRefundItemEntity implements Serializable {
                 ", quantity=" + quantity +
                 ", refundNum=" + refundNum +
                 ", isCombo=" + isCombo +
+                ", amountAfter=" + amountAfter +
                 '}';
     }
 }

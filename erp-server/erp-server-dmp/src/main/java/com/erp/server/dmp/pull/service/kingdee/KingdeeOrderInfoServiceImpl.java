@@ -605,6 +605,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
             }
+            dmpOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getFAmount()));
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

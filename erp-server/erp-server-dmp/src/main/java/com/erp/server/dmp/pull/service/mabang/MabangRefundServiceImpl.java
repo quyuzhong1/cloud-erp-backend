@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -194,7 +195,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                     pageCount = (totalCount + pageSize - 1) / pageSize;
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
+                    log.info(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + System.currentTimeMillis() + "");
                     throw new RuntimeException(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
@@ -360,6 +361,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
 
             //是否属于组合sku：0. 否 1. 是
             dmpRefundItemEntity.setIsCombo(refundOrderItemEntity.getIsCombo());
+            dmpRefundItemEntity.setAmountAfter(BigDecimal.ZERO);
 
             orderItemList.add(dmpRefundItemEntity);
         }
