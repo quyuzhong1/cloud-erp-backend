@@ -1,5 +1,7 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
@@ -83,13 +85,17 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<ContrastTrendVO> contrastTrendVOList = baseMapper.shopContrastTrend(biFilterDTO);
 
         List<DmpShopInfoEntity> dmpShopInfoEntities = dmpShopInfoService.shopList();
+        if (CollectionUtil.isEmpty(dmpShopInfoEntities)) {
+            return Collections.emptyList();
+        }
         for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
             ShopContrastTrendVO shopContrastTrendVO = new ShopContrastTrendVO();
             shopContrastTrendVO.setShopName(dmpShopInfoEntity.getName());
-
-            for (ContrastTrendVO contrastTrendVO : contrastTrendVOList) {
-                if (dmpShopInfoEntity.getPlarformShopNo().equals(contrastTrendVO.getShopNo())) {
-                    shopContrastTrendVO.setContrastTrendVO(contrastTrendVO);
+            if (CollectionUtil.isNotEmpty(contrastTrendVOList)) {
+                for (ContrastTrendVO contrastTrendVO : contrastTrendVOList) {
+                    if (ObjectUtil.equal(dmpShopInfoEntity.getPlarformShopNo(), contrastTrendVO.getShopNo())) {
+                        shopContrastTrendVO.setContrastTrendVO(contrastTrendVO);
+                    }
                 }
             }
         }

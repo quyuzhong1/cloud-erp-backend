@@ -755,7 +755,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 Collectors.summingInt(DmpOrderItemEntity::getQuantity)));
         // 产品定位销量map
         Map<String, Integer> salesVolumeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                Collectors.summingInt(x -> skuSalesVolumeMap.get(x.getSkuNo()))));
+                Collectors.summingInt(x -> skuSalesVolumeMap.getOrDefault(x.getSkuNo(),0))));
         
         // 汇率map
         Map<String, BigDecimal> rateMap = orderInfoEntities.stream()
@@ -772,7 +772,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         ));
         // 产品定位销售额map
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
-                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.get(x.getSkuNo()))));
+                BigDecimalUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(),BigDecimal.ZERO))));
 
         List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
         return rankResult;
@@ -1069,8 +1069,8 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         keys.addAll(targetSalesVolumeMap.keySet());
         List<SalesCompletionInfoVO> resultList = keys
                 .stream().map(x ->
-                        new SalesCompletionInfoVO(x, targetSalesMap.get(x), targetSalesVolumeMap.get(x),
-                                saleAmountMap.get(x), salesVolumeMap.get(x),  null != skuMap ? skuMap.getOrDefault(x, "") : "")
+                        new SalesCompletionInfoVO(x, targetSalesMap.getOrDefault(x, BigDecimal.ZERO), targetSalesVolumeMap.getOrDefault(x, 0),
+                                saleAmountMap.getOrDefault(x, BigDecimal.ZERO), salesVolumeMap.getOrDefault(x, 0),  null != skuMap ? skuMap.getOrDefault(x, "") : "")
                 ).collect(Collectors.toList());
 
         AtomicInteger rankIndex = new AtomicInteger(1);
