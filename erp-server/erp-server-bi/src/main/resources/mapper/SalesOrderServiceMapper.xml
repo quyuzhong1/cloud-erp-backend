@@ -663,7 +663,7 @@
         o.shop_no,
         COALESCE(( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ),'') AS shopName,
         o.country_name_cn AS platformName,
-        round( SUM ( o.order_fee* ${settleRate}) , 2 ) AS sales
+        round( SUM ( i.sell_price * i.quantity * i.${settleRate}) , 2 ) AS sales
         FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
         WHERE (o.shop_no!='' OR o.shop_no!=NULL)
@@ -1831,7 +1831,7 @@
           WHERE new_sign = 1
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.platform_create_time &gt;= #{params.startTime}
+                   AND o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
                     AND o.platform_create_time &lt; #{params.endTime}
@@ -1911,7 +1911,7 @@
     </select>
 
     <select id="byShop" resultType="com.erp.model.bi.vo.ShopSalesVO">
-        SELECT o.shop_no,round( SUM ( i.sell_price * i.quantity * i.${settleRate}),2) AS sales
+        SELECT o.shop_no,round( SUM ( o.order_fee  * o.${settleRate}),2) AS sales
         FROM dmp_order_info o
         <where>
             <if test="params.timeType!=null and params.timeType==0">
