@@ -97,12 +97,12 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
     public void pullDataSave(RequestDTO dto) throws Exception {
         //请求api
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
-
         //过滤数据
         if (CollectionUtil.isEmpty(gyyOrderEntityList)) {
             XxlJobHelper.log("拉去数据列表为空 gyyOrderEntityList.size = 0 ");
             return;
         }
+        XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyOrderEntityList.size());
         gyyOrderEntityList.parallelStream().forEach(gyyOrderEntity -> {
             if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
                 return;
