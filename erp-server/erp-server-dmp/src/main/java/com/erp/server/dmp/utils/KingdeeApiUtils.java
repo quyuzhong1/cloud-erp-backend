@@ -1,0 +1,336 @@
+package com.erp.server.dmp.utils;
+
+import com.alibaba.fastjson.JSONObject;
+import com.kingdee.bos.webapi.entity.*;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 金蝶API 处理类
+ */
+public class KingdeeApiUtils {
+    private K3CloudApi client;
+    private String formId;
+
+    public KingdeeApiUtils(String formId){
+        this.client = new K3CloudApi();
+        this.formId=formId;
+    }
+
+    /**
+     * 查询列表(分页查询)
+     * @param filterStr 过滤条件, 如 FModifyDate>"2022-01-01" and FCreatorId="1"
+     * @param fieldKeys 要显示的字段, 如:FBillNo,FCreatorId,
+     * @param pageSize  每页数据行数, 如:100，最大<10000
+     * @param pageIndex 页码（第几页)
+     * @return List<Map<String,Object>>
+     */
+    public List<Map<String,Object>> queryList(String filterStr, String fieldKeys,Integer pageSize,Integer pageIndex) {
+        List<Map<String,Object>> dataList=new ArrayList<>();
+        if(0 >= pageIndex){
+            pageIndex=1;
+        }
+        if(0 >= pageSize){
+            pageSize=1000;
+        }
+        Integer startRow=(pageIndex-1) * pageSize;
+
+        QueryParam param = new QueryParam();
+        param.setFormId(formId);
+        param.setFieldKeys(fieldKeys);
+        param.setFilterString(filterStr);
+        param.setLimit(pageSize);
+        param.setStartRow(startRow);
+
+        String paramJson = JSONObject.toJSONString(param);
+        try {
+            List<List<Object>> apiResult = client.executeBillQuery(paramJson);
+            if (apiResult.isEmpty()){
+                return dataList;
+            }
+            if (apiResult.size() == 1 && apiResult.get(0).get(0).toString().contains("IsSuccess=false")) {
+                throw new RuntimeException(" ===== 金蝶云星空解析出库详情信息数据失败 ===== " + apiResult);
+            }
+
+            List<String> numberList=new ArrayList<>();
+            for (List<Object> objects : apiResult) {
+                Map<String, Object> rowData = KingdeeUtils.getApiDataForMap(fieldKeys, objects);
+                dataList.add(rowData);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return dataList;
+    }
+
+    /**
+     * 查询列表(分页查询)
+     * @param filterStr 过滤条件, 如 FModifyDate>"2022-01-01" and FCreatorId="1"
+     * @param fieldKeys 要显示的字段, 如:FBillNo,FCreatorId,
+     * @param pageSize  每页数据行数, 如:100，最大<10000
+     * @param pageIndex 页码（第几页)
+     * @return 返回数据集(转实体类)
+     */
+    public List<?> queryList(String filterStr, String fieldKeys,Class entityClass,Integer pageSize,Integer pageIndex) {
+        List<?> dataList=null;
+        if(0>=pageIndex){
+            pageIndex=1;
+        }
+        if(0<=pageSize){
+            pageSize=1000;
+        }
+        Integer startRow=(pageIndex-1) * pageSize +1;
+
+        QueryParam param = new QueryParam();
+        param.setFormId(formId);
+        param.setFieldKeys(fieldKeys);
+        param.setFilterString(filterStr);
+        param.setLimit(pageSize);
+        param.setStartRow(startRow);
+
+        try {
+            dataList=client.executeBillQuery(param,entityClass);
+        } catch (Exception e) {
+            throw new RuntimeException("金蝶查询列表数据失败[queryList]转Class:"+ null==e.getMessage()?e.toString():e.getMessage());
+        }
+        return dataList;
+    }
+
+    /**
+     * 查看单据数据（按ID）
+     * @param id    单据Id
+     * @return  返回操作结果
+     */
+    public OperatorResult view(String id){
+        OperatorResult result=null;
+        OperateParam param = new OperateParam();
+        param.setId(id);
+        try {
+            result = client.view(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 查看单据数据（按单据编号）
+     * @param number    单据编号
+     * @return  返回操作结果
+     */
+    public OperatorResult viewByNumber(String number){
+        OperatorResult result=null;
+        OperateParam param = new OperateParam();
+        param.setNumber(number);
+        try {
+            result = client.view(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 反审核 单据(按ID）
+     * @param idList    ID列表
+     * @return
+     */
+    public OperatorResult auditById(List<String> idList){
+        OperatorResult result;
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",",idList));
+        try {
+            result = client.audit(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 审核单据(按单据编号)
+     * @param numberList 单据编号列表
+     * @return
+     */
+    public OperatorResult auditByNumber(List<String> numberList){
+        OperatorResult result=null;
+        OperateParam param = new OperateParam();
+        param.setNumbers(numberList);
+        try {
+            result = client.audit(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 反审核单据（按Id）
+     * @param idList ID列表
+     * @return
+     */
+    public OperatorResult unAuditById(List<String> idList){
+        OperatorResult result;
+
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",",idList));
+        try {
+            result = client.unAudit(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【反审核单据】出错:"+ joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    private String joinErrors(String joinStr, ArrayList<RepoError> errors) {
+        StringBuffer result=new StringBuffer();
+        if(errors.isEmpty()){
+            return "";
+        }
+
+        for(RepoError error:errors){
+            result.append(error.getDIndex()+",");
+            result.append(error.getFieldName()+",");
+            result.append(error.getMessage());
+            result.append(joinStr);
+        }
+        return result.replace(1,1,joinStr).toString();
+    }
+
+    /**
+     * 反审核单据(按单据编号)
+     * @param numberList    单据编号列表
+     * @return
+     */
+    public OperatorResult unAuditByNumber(List<String> numberList){
+        OperatorResult result;
+        OperateParam param = new OperateParam();
+        param.setNumbers(numberList);
+        try {
+            result = client.unAudit(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【反审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    public OperatorResult deleteById(List<String> idList){
+        OperatorResult result;
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",",idList));
+        try {
+            result = client.delete(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【删除单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+    public OperatorResult deleteByNumber(List<String> numberList){
+        OperatorResult result;
+        OperateParam param = new OperateParam();
+        param.setNumbers(numberList);
+        try {
+            result = client.delete(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【删除单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 提交单据
+     * @param idList    ID列表
+     * @return
+     */
+    public OperatorResult submit(List<String> idList){
+        OperatorResult result;
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",",idList));
+        try {
+            result = client.submit(this.formId,param);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    public OperatorResult CancelAssign(List<String> numberList){
+        // TODO
+        return null;
+    }
+
+    /**
+     * 下推单据
+     * @param idList    ID列表
+     * @return
+     */
+    public String push(List<String> idList){
+        // TODO 待测试
+        String result;
+        OperateParam param = new OperateParam();
+        param.setIds(String.join(",",idList));
+        String paramJson=JSONObject.toJSONString(param);
+        try {
+            result = client.push(this.formId,paramJson);
+            System.out.println(result);
+//            if(!result.isSuccessfully()){
+//                throw new RuntimeException("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+//            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    /**
+     * 保存单据
+     * @param data  单据数据
+     * @return
+     */
+    public SaveResult save(SaveParam<?> data){
+        SaveResult result;
+        try {
+            result=client.save(this.formId,data);
+            if(!result.isSuccessfully()){
+                throw new RuntimeException("【保存】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+
+}

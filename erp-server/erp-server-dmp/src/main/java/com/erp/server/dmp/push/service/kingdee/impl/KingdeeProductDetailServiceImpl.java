@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.kingdee.impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -13,12 +14,13 @@ import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiFieldTypeEnum;
-import com.erp.model.dmp.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.enums.ApiStatusEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.RepoError;
+import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -67,7 +69,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         try {
             resultJson = client.save(formId, jsonData);
             System.out.println(resultJson);
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.info("请求接口地址异常 错误信息：" + e.getMessage());
             e.printStackTrace();
         }
@@ -91,7 +93,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         if (CollectionUtils.isNotEmpty(mapList)) {
             log.info(ApiError.ERROR_97025.msg);
             //新增定时同步任务
-            insertApiSyncTask(platformEntity,map);
+            insertApiSyncTask(platformEntity, map);
             return;
         }
         List<String> fieldMapIds = mapList.stream().map(CfgApiFieldMapDTO::getId).collect(Collectors.toList());
@@ -99,29 +101,45 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
         //读取配置，初始化SDK
-        K3CloudApi client = new K3CloudApi();
-        //用于记录结果
-        StringBuilder info = new StringBuilder();
-        //业务对象标识
-        String formId = "BD_MATERIAL";
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
 
-        Map<String,Object> resultMap = new LinkedHashMap<>();
+        Map<String, Object> resultMap = new LinkedHashMap<>();
 
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
             //第三方系统逗号分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
             List<String> apiFields = Arrays.stream(apiField.split(",")).collect(Collectors.toList());
-            for (int i = 0; i < apiFields.size() ; i++ ) {
+            for (int i = 0; i < apiFields.size(); i++) {
                 //给不同结构的外部字段赋值
-                handleResultMap(cfgApiFieldMapDTO,cfgApiFieldMapValueList,map,resultMap,apiFields,i);
+                handleResultMap(cfgApiFieldMapDTO, cfgApiFieldMapValueList, map, resultMap, apiFields, i);
             }
         }
+        //判断金蝶系统是否已存在该数据
+        String filterStr = "";
+        String fieldKeys = "";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 0, 100);
+        //如果未查询到数据则直接新增
+        if (CollectionUtils.isEmpty(queryList)) {
+            insert(platformEntity,map,resultMap,apiUtils);
+        } else {
+            Map<String, Object> queryMap = queryList.stream().filter(obj -> "".equals(obj.get("FCreateOrgId_FNumber"))).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(queryMap) || queryMap.size() == 0) {
+                insert(platformEntity,map,resultMap,apiUtils);
+            }
+        }
+    }
+
+    /**
+     * 新增数据到金蝶
+     */
+    private void insert(PlatformEntity platformEntity,Map<String, Object> map,Map<String,Object> resultMap,KingdeeApiUtils apiUtils) {
         //结果集转json字符串
         String jsonData = JSONObject.toJSONString(resultMap);
         //调用接口
-        String resultJson = null;
-        try {
-            resultJson = client.save(formId,jsonData);
+        SaveParam param = new SaveParam(jsonData);
+        SaveResult resultJson = apiUtils.save(param);
+        boolean successfully = resultJson.isSuccessfully();
+        if (successfully) {
             //新增日志信息
             ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
             apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
@@ -133,14 +151,13 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             apiPlmSyncLogDTO.setRequestParamJson(jsonData);
             apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
             //发送成功后删除任务表数据
-            Map<String,Object> removeMap = new HashMap<>();
-            removeMap.put("apiPlatformId",platformEntity.getId());
-            removeMap.put("moduleType",ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
-            removeMap.put("businessId",String.valueOf(map.get("id")));
+            Map<String, Object> removeMap = new HashMap<>();
+            removeMap.put("apiPlatformId", platformEntity.getId());
+            removeMap.put("moduleType", ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+            removeMap.put("businessId", String.valueOf(map.get("id")));
             apiPlmSyncLogService.removeByMap(removeMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.info("请求接口地址异常 错误信息：" + e.getMessage());
+        } else {
+            ArrayList<RepoError> errors = resultJson.getResult().getResponseStatus().getErrors();
             //新增日志信息
             ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
             apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
@@ -148,11 +165,11 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
             apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
             apiPlmSyncLogDTO.setStatus(ApiStatusEnum.FAILURE.getCode());
-            apiPlmSyncLogDTO.setMsg("请求接口地址异常 错误信息：" + e.getMessage());
+            apiPlmSyncLogDTO.setMsg(JSONArray.toJSONString(errors));
             apiPlmSyncLogDTO.setRequestParamJson(jsonData);
             apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
             //新增定时同步任务
-            insertApiSyncTask(platformEntity,map);
+            insertApiSyncTask(platformEntity, map);
         }
     }
 
