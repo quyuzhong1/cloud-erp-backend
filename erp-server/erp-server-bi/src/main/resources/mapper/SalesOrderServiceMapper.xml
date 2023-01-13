@@ -5,15 +5,16 @@
 
 <mapper namespace="com.erp.server.bi.mapper.SalesOrderServiceMapper">
 
-    <select id="getMonthSales" resultType="map">
+    <select id="getMonthSales" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
-        to_char( platform_create_time, 'yyyy-mm' ) AS MONTH,
-        round( SUM ( order_fee * ${settleRate} ) , 2 ) AS "orderSales"
-        FROM dmp_order_info o
-        <where>
+        EXTRACT( MONTH FROM o.${timeFlag}) AS flag,
+        round( SUM ( i.sell_price * i.quantity * i.${settleRate} ) , 2 ) AS sales
+        FROM dmp_order_item i
+        LEFT JOIN dmp_order_info o ON i.order_id = o.id
+        WHERE EXTRACT (YEAR FROM o.${timeFlag}  ) = EXTRACT ( YEAR FROM NOW( ) )
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
-                    o.platform_create_time &gt;= #{params.startTime}
+                   AND  o.platform_create_time &gt;= #{params.startTime}
                 </if>
                 <if test="params.endTime !=null">
                     AND o.platform_create_time &lt; #{params.endTime}
@@ -56,6 +57,27 @@
                     #{shopName}
                 </foreach>
             </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.platform_sku IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.category_id IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.brand_id IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+            </if>
             <!-- 用户id -->
             <if test="params.userId!=null and params.userId.size>0">
                 AND o.charge_id IN
@@ -67,8 +89,7 @@
             <if test="params.param!=null and params.param!=''">
                 ${params.param}
             </if>
-        </where>
-        GROUP BY MONTH ORDER BY MONTH ASC
+        GROUP BY  EXTRACT ( MONTH FROM o.${timeFlag} )
     </select>
 
     <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">

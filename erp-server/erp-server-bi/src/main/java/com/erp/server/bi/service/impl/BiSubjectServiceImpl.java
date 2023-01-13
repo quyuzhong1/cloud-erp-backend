@@ -146,20 +146,27 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
     /**
      * 通过主键删除数据
      *
-     * @param id 主键
+     * @param subjectId 主键
      * @return 是否成功
      */
     @Override
-    public Boolean deleteById(String id) {
+    public Boolean deleteById(String subjectId) {
 
-        boolean flag = this.removeById(id);
+        String userId = commonService.getUserInfo().getUid();
+
+        BiSubjectEntity subject = this.getById(subjectId);
+        if (Objects.isNull(subject)) {
+            throw new ServiceException(ApiError.ERROR_97000);
+        }
+        checkCanHandle(subject,userId);
+        boolean flag = this.removeById(subjectId);
         if (flag) {
             //默认的专题删除
-            subjectDefaultService.deleteBySubjectId(id);
+            subjectDefaultService.deleteBySubjectId(subjectId);
             //分享的专题删除
-            subjectShareService.deleteBySubjectId(id);
+            subjectShareService.deleteBySubjectId(subjectId);
 
-            subjectRefLayoutService.deleteBySubjectId(id);
+            subjectRefLayoutService.deleteBySubjectId(subjectId);
         }
         return flag;
     }
