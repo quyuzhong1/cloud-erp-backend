@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -53,6 +52,12 @@ public class TemplateTaskDTO implements Serializable {
          * 负责人名
          */
         private String chargeName;
+
+        /**
+         * 分配类型（0角色，1人员）
+         */
+        @NotNull(message = "分配类型不能为空")
+        private Integer distributionType;
 
         /**
          * 计划开始时间
@@ -119,14 +124,27 @@ public class TemplateTaskDTO implements Serializable {
         /**
          * 审核人集合
          */
-        private List<UserInfoDTO> approvalUserIds;
+        private List<List<String>> approvalUserIds;
+
+        /**
+         * 审核角色集合
+         */
+        private List<List<String>> approvalRoleIds;
+
+        /**
+         * 审核分配类型（0角色，1人员，2上级人员负责人）
+         */
+        private Integer approvalDistributionType;
 
         /**
          * 负责人id
          */
-        @NotNull(message = "任务负责人集合不能为空")
-        @Size(min = 1,message = "负责人至少有一个")
         private List<String> chargeIds;
+
+        /**
+         * 角色id
+         */
+        private List<String> roleIds;
 
         /**
          * 设置里程碑(0否，1是)

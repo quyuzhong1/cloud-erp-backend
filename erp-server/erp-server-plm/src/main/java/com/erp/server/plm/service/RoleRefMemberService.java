@@ -21,4 +21,6 @@ public interface RoleRefMemberService extends IService<RoleRefMemberEntity> {
     List<RoleRefMemberEntity> getByProductId(String productId);
 
     List<String> getUserRole(String userId,String productId);
+
+    List<RoleRefMemberEntity> listByMembersIds(List<String> membersIds);
 }

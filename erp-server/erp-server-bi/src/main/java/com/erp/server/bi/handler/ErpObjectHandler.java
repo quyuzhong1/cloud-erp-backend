@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * @Classname ErpObjectHandler
@@ -25,7 +26,7 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        LocalDateTime nowDate = LocalDateTime.now();
+        Date nowDate = new Date();
         this.setFieldValByName("createTime", nowDate, metaObject);
         this.setFieldValByName("updateTime", nowDate, metaObject);
         this.setFieldValByName("createUserId", userId, metaObject);

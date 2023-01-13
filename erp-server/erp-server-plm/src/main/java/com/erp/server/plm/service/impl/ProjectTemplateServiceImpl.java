@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -14,19 +15,22 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProjectTemplateDTO;
-import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
-import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.plm.entity.TemplateRoleEntity;
+import com.erp.model.sys.dto.UserDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.ProjectTemplateService;
+import com.erp.server.plm.service.TemplateRoleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,6 +44,11 @@ import java.util.List;
 @Service
 public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMapper, ProjectTemplateEntity> implements ProjectTemplateService {
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private TemplateRoleService templateRoleService;
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -156,6 +165,36 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         entity.setUpdateUserId(uid);
         entity.setUpdateUserName(userName);
         return this.updateById(entity);
+    }
+
+    @Override
+    public List<UserDTO> listSuperior(String id, Integer type) {
+        List<UserDTO> userList = new ArrayList<>();
+        //根据模板角色id查询角色名称
+        if (MathUtil.ZERO.equals(type)) {
+            TemplateRoleEntity templateRoleEntity = templateRoleService.getById(id);
+            if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
+                //负责人类型为角色
+                userList = sysUserFeign.listSuperiorByRoleName(templateRoleEntity.getName());
+            }
+        } else if (MathUtil.ONE.equals(type)) {
+            //负责人类型为人员
+           userList = sysUserFeign.listSuperiorByUserId(id);
+        }
+        return userList;
+    }
+
+    @Override
+    public List<SysRoleDTO> listTemplateRole(String templateId) {
+        List<TemplateRoleEntity> list = templateRoleService.getByTemplateId(templateId);
+        List<SysRoleDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return  new ArrayList<>();
+        }
+        list.forEach(obj->{
+            resultList.add(new SysRoleDTO().setId(obj.getId()).setRoleName(obj.getName()));
+        });
+        return resultList;
     }
 
     /**

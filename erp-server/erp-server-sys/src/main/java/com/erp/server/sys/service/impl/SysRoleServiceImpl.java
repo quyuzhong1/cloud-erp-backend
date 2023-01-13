@@ -1,12 +1,15 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.sys.dto.SysRoleDTO;
 import com.erp.model.sys.entity.SysRoleEntity;
+import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.server.sys.mapper.SysRoleMapper;
 import com.erp.server.sys.service.SysRoleMenuService;
 import com.erp.server.sys.service.SysRoleService;
@@ -15,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -87,6 +92,39 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
     public boolean saveRoleEntity(SysRoleEntity sysRole) {
         checkRoleName(sysRole.getRoleName());
         return this.save(sysRole);
+    }
+
+    @Override
+    public List<String> listRoleByIds(List<String> roleIds) {
+        LambdaQueryWrapper<SysRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysRoleEntity::getId,roleIds);
+        queryWrapper.select(SysRoleEntity::getRoleName);
+        return this.listObjs(queryWrapper,Object::toString);
+    }
+
+    @Override
+    public List<SysRoleDTO> listRoleByUserIds(List<String> userIds) {
+        List<SysRoleUserEntity> list = sysRoleUserService.findRoleIdsByUidList(userIds);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> roleIds = list.stream().map(SysRoleUserEntity::getRoleId).distinct().collect(Collectors.toList());
+        List<SysRoleEntity> sysRoleList = this.listByIds(roleIds);
+        if (CollectionUtils.isEmpty(sysRoleList)) {
+            return new ArrayList<>();
+        }
+        return BeanMapperUtils.copyList(SysRoleDTO.class,sysRoleList);
+    }
+
+    @Override
+    public List<SysRoleDTO> getByRoleName(String roleName) {
+        LambdaQueryWrapper<SysRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysRoleEntity::getRoleName,roleName);
+        List<SysRoleEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        return BeanMapperUtils.copyList(SysRoleDTO.class,list);
     }
 
     /**

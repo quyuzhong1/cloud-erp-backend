@@ -1,9 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSaveRoleUserDTO;
@@ -161,7 +159,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
 
     }
 
-
+    @Override
     public List<SysRoleUserEntity> roleUserList(String roleId){
         LambdaQueryWrapper<SysRoleUserEntity> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(SysRoleUserEntity::getRoleId,roleId);

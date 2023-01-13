@@ -2,11 +2,10 @@ package com.erp.rpc.sys.feign;
 
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.modules.sys.dto.SysCodeSkuDTO;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -95,6 +94,19 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
+    //根据用户id查询所有上级用户
+    @PostMapping("sys/feign/user/listSuperiorByUserId")
+    List<UserDTO> listSuperiorByUserId(@RequestBody String userId);
 
+    //根据角色名称查询所有上级用户
+    @PostMapping("sys/feign/user/listSuperiorByRoleName")
+    List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName);
 
+    //根据角色id查用户名称
+    @PostMapping("sys/feign/user/listRoleByIds")
+    List<String> listRoleByIds(@RequestBody List<String> roleIds);
+
+    //根据用户ids查询角色
+    @PostMapping("sys/feign/user/listRoleByUserIds")
+    List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
 }

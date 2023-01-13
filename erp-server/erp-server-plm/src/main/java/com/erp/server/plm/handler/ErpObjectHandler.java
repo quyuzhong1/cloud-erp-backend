@@ -22,9 +22,10 @@ public class ErpObjectHandler implements MetaObjectHandler {
     //插入时的填充数据
     @Override
     public void insertFill(MetaObject metaObject) {
+        Date now = new Date();
         String userId = commonService.getUserInfo().getUid();
-        this.setFieldValByName("createTime", new Date(), metaObject);
-        this.setFieldValByName("updateTime", new Date(), metaObject);
+        this.setFieldValByName("createTime", now, metaObject);
+        this.setFieldValByName("updateTime", now, metaObject);
         this.setFieldValByName("createUserId", userId, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
 

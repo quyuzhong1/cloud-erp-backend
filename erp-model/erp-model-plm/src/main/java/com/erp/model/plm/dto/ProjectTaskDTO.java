@@ -133,9 +133,9 @@ public class ProjectTaskDTO  implements Serializable {
     private Integer status;
     
     /**
-     * 审核人集合
+     * 审核人集合,审核流程存在逐级审核和会签
      */
-    private List<UserInfoDTO> approvalUserIds;
+    private List<List<String>> approvalUserIds;
 
     /**
      * 交付文档
@@ -190,5 +190,15 @@ public class ProjectTaskDTO  implements Serializable {
      * 前置任务名称（逗号分隔，用于操作 日志）
      */
     private String preTaskNames;
+
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    private Integer distributionType;
+
+    /**
+     * 审核分配类型，由模板生成时带过来（0角色，1人员，2上级人员负责人）
+     */
+    private Integer approvalDistributionType;
 
 }

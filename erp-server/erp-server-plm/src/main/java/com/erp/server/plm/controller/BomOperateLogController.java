@@ -1,0 +1,47 @@
+package com.erp.server.plm.controller;
+
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.model.plm.vo.BomOperateVO;
+import com.erp.server.plm.service.BomOperateLogService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * bom 操作记录日志表(BomOperateLog)表控制层
+ *
+ * @author yl
+ * @since 2023-01-09 11:42:04
+ */
+@RestController
+@RequestMapping("plm/bom/operate")
+public class BomOperateLogController extends BaseController {
+    /**
+     * 服务对象
+     */
+    @Resource
+    private BomOperateLogService bomOperateLogService;
+
+
+    /**
+     * 获取bom 的操作记录
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/list")
+    public ApiResult<List<BomOperateVO>> getOperateLog(@RequestBody @Validated BaseIdDTO dto) {
+        List<BomOperateVO> list = bomOperateLogService.getOperateLog(dto.getId());
+        return success(list);
+    }
+
+
+}
+

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,6 +12,7 @@ import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
 import com.common.core.constant.UserStateConstants;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.RedisKeyUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -77,8 +79,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     private MailService mailService;
 
     @Resource
-    private SysMenuService sysMenuService;
+    private SysDepartmentUserService sysDepartmentUserService;
 
+    @Resource
+    private SysDepartmentService sysDepartmentService;
+
+    @Resource
+    private SysRoleService sysRoleService;
 
     @Resource
     private SysDepartmentMapper sysDepartmentMapper;
@@ -778,5 +785,75 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<SysUserDeptDTO> getUserDeptList(){
         return baseMapper.getUserDeptList();
+    }
+
+
+    @Override
+    public List<UserDTO> listSuperiorByUserId(String id) {
+        List<UserDTO> parentList = new ArrayList<>();
+        SysUserInfoEntity sysUserInfoEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(sysUserInfoEntity)) {
+            return parentList;
+        }
+        SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getByUserId(id);
+        if (ObjectUtils.isEmpty(dto) || StringUtils.isBlank(dto.getDepartmentId())) {
+            return parentList;
+        }
+        //上级部门
+        List<String> departmentIds = sysDepartmentService.getDepartmentIds(dto.getDepartmentId());
+        if (CollectionUtils.isEmpty(departmentIds)) {
+            return parentList;
+        }
+        //去除负责人本身部门
+        List<String> departmentIdList = departmentIds.stream().filter(obj -> !obj.equals(dto.getDepartmentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(departmentIdList)) {
+            return parentList;
+        }
+        List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listByDepartmentIds(departmentIdList);
+        if (CollectionUtils.isEmpty(sysDepartmentUserNumberDTOS)) {
+            return parentList;
+        }
+        List<String> userIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserNumberDTO::getUserId).collect(Collectors.toList());
+        List<SysUserInfoEntity> sysUserInfoList = this.listByIds(userIds);
+        if (CollectionUtils.isEmpty(sysUserInfoList)) {
+            return parentList;
+        }
+        sysUserInfoList.stream().filter(obj -> MathUtil.ONE.equals(obj.getUserState())).forEach(obj->{
+            UserDTO userDTO = new UserDTO();
+            userDTO.setUserId(obj.getUid());
+            userDTO.setUserName(obj.getUserName());
+            parentList.add(userDTO);
+        });
+        return parentList;
+    }
+
+    @Override
+    public List<UserDTO> listSuperiorByRoleName(String roleName) {
+        List<UserDTO> resultList = new ArrayList<>();
+        List<SysRoleDTO> sysRoleDTOList = sysRoleService.getByRoleName(roleName);
+        if (CollectionUtils.isEmpty(sysRoleDTOList)) {
+            return resultList;
+        }
+        List<SysRoleUserEntity> list = new ArrayList<>();
+        for (SysRoleDTO dto: sysRoleDTOList) {
+            List<SysRoleUserEntity> sysRoleUserList = sysRoleUserService.roleUserList(dto.getId());
+            if (CollectionUtils.isNotEmpty(sysRoleUserList)) {
+                list.addAll(sysRoleUserList);
+            }
+        }
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        list.forEach(obj ->{
+            List<UserDTO> userDTOS = this.listSuperiorByUserId(obj.getUserId());
+            if (CollectionUtils.isNotEmpty(userDTOS)) {
+                resultList.addAll(userDTOS);
+            }
+        });
+        if (CollectionUtils.isEmpty(resultList)) {
+            return resultList;
+        }
+        List<UserDTO> userList = resultList.stream().distinct().collect(Collectors.toList());
+        return userList;
     }
 }
