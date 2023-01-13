@@ -47,15 +47,17 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
             List<BiLayoutRefModuleEntity> addList = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 LayoutRefModuleDTO ref = moduleIdList.get(i);
+                BiLayoutRefModuleEntity refModule = new BiLayoutRefModuleEntity();
+                refModule.setBlockNo(blockNo);
+                refModule.setSubjectId(subjectId);
+                refModule.setLayoutId(layoutId);
+                refModule.setSerialNo(i + 1);
                 if(ref!=null){
-                    BiLayoutRefModuleEntity refModule = new BiLayoutRefModuleEntity();
-                    refModule.setBlockNo(blockNo);
-                    refModule.setSubjectId(subjectId);
-                    refModule.setLayoutId(layoutId);
-                    refModule.setSerialNo(i + 1);
                     refModule.setModuleId(ref.getId());
-                    addList.add(refModule);
+                }else {
+                    refModule.setModuleId("");
                 }
+                addList.add(refModule);
             }
             this.saveBatch(addList);
         }

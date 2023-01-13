@@ -19,7 +19,7 @@ import java.util.Map;
  */
 @Mapper
 public interface SalesOrderServiceMapper  extends BaseMapper<DmpOrderInfoEntity> {
-    List<Map<String, Object>> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
+    List<SalesFlagVO> getMonthSales(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate,@Param("timeFlag")String timeFlag);
 
     List<SalesVO> getBySku(@Param("params") BiFilterDTO dto,@Param("settleRate") String settleRate);
 

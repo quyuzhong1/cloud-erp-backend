@@ -60,28 +60,68 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         statistical.setChartType(ChartType.BAR);
         statistical.setName("月销售额趋势");
         ChartVO chart = new ChartVO();
-        LocalDateTime now = LocalDateTime.now();
-        dto.setStartTime(now.minusYears(3));
-        dto.setEndTime(now);
+        LocalDate now = LocalDate.now();
+
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         if (StringUtils.isBlank(settleRate)) {
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
-        List<Map<String, Object>> resultList = baseMapper.getMonthSales(dto, settleRate);
-        int initSize = CollectionUtils.isNotEmpty(resultList) ? resultList.size() : 10;
-        List<Object> xAxisList = new ArrayList<>(initSize);
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
-        //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO();
-        series.setName("销售额");
-        List<Object> dataList = new ArrayList<>(initSize);
-        for (Map<String, Object> map : resultList) {
-            dataList.add(map.get("orderSales"));
-            xAxisList.add(map.get("month"));
+        String timeFlag = "delivery_time";
+        if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
+            timeFlag = "platform_create_time";
         }
-        series.setData(dataList);
-        seriesList.add(series);
+
+        dto.setStartTime(LocalDateUtil.getThisYearStart(now));
+        dto.setEndTime(LocalDateUtil.getThisYearEnd(now));
+        List<SalesFlagVO> thisYearList = baseMapper.getMonthSales(dto, settleRate, timeFlag);
+
+        //去年
+        dto.setStartTime(LocalDateUtil.getLastYearStart(now));
+        dto.setEndTime(LocalDateUtil.getLastYearEnd(now));
+        List<SalesFlagVO> lastYearList=baseMapper.byLastYear(dto,timeFlag, settleRate);
+
+        int initSize = 12;
+        List<String> xAxisList = new ArrayList<>(initSize);
+        //有两个柱子
+        List<SeriesVO<Object>> seriesList = new ArrayList<>(2);
+
+        //去年的
+        SeriesVO<Object> thisYearSeries = new SeriesVO();
+        thisYearSeries.setName("销售额");
+        List<Object> thisYearDataList = new ArrayList<>(initSize);
+        for (int m = 1; m <= 12; m++) {
+            int finalM = m;
+            SalesFlagVO salesFlag = thisYearList.stream().filter(s -> s.getFlag().equals(finalM)).
+                    findFirst().orElse(null);
+            if (salesFlag != null) {
+                thisYearDataList.add(salesFlag.getSales());
+            } else {
+                thisYearDataList.add(BigDecimal.ZERO);
+            }
+        }
+        thisYearSeries.setData(thisYearDataList);
+        seriesList.add(thisYearSeries);
+
+        //去年的
+        SeriesVO<Object> lastYearSeries = new SeriesVO();
+        lastYearSeries.setName("销售额");
+        List<Object> lastYearDataList = new ArrayList<>(initSize);
+        for (int m = 1; m <= 12; m++) {
+            xAxisList.add(m + "月份");
+            int finalM = m;
+            SalesFlagVO salesFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
+                    findFirst().orElse(null);
+            if (salesFlag != null) {
+                lastYearDataList.add(salesFlag.getSales());
+            } else {
+                lastYearDataList.add(BigDecimal.ZERO);
+            }
+        }
+
+
+        lastYearSeries.setData(lastYearDataList);
+        seriesList.add(lastYearSeries);
         chart.setXAxis(xAxisList);
         chart.setSeries(seriesList);
         statistical.setData(chart);
@@ -120,7 +160,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         List<SalesVO> resultList = baseMapper.getBySku(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime,30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         String findTime = "delivery_time";
@@ -130,7 +170,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime,7);;
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
+        ;
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
@@ -380,12 +421,12 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         List<ShopSalesVO> resultList = baseMapper.getByShop(dto, settleRate);
         LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime,30);
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 30);
         dto.setStartTime(beforeThirtyDays);
         dto.setEndTime(nowTime);
         //查询进三十天信息
         List<SalesBaseVO> lastThirtyList = baseMapper.getShopLastDays(dto, settleRate, findTime);
-        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime,7);
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 7);
 
         dto.setStartTime(beforeSevenDays);
         dto.setEndTime(nowTime);
@@ -635,7 +676,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byBrand(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime =LocalDateUtil.getStartTime(startTime.minusYears(1)) ;
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
@@ -693,7 +734,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byPlatform(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime =  LocalDateUtil.getStartTime(startTime.minusYears(1));
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
@@ -937,7 +978,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesCountVO> chainList = baseMapper.byCountry(dto, settleRate);
 
         //同比开始时间
-        LocalDateTime yearBasisStartTime =LocalDateTime.of(startTime.minusYears(1).toLocalDate(), LocalTime.MIN) ;
+        LocalDateTime yearBasisStartTime = LocalDateTime.of(startTime.minusYears(1).toLocalDate(), LocalTime.MIN);
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateTime.of(endTime.minusYears(1).toLocalDate(), LocalTime.MAX);
         dto.setStartTime(yearBasisStartTime);
@@ -1347,7 +1388,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //同比开始时间
         LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
-        LocalDateTime yearBasisEndTime =LocalDateUtil.getEndTime(endTime.minusYears(1));
+        LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
         dto.setEndTime(yearBasisEndTime);
         //这是同比查询出来的
@@ -1484,7 +1525,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //这个是环比的查询出来的
         List<SalesCountVO> chainList = baseMapper.byNewAndOld(dto, settleRate);
         //同比开始时间
-        LocalDateTime yearBasisStartTime =LocalDateUtil.getStartTime(startTime.minusYears(1));
+        LocalDateTime yearBasisStartTime = LocalDateUtil.getStartTime(startTime.minusYears(1));
         //同比开始时间
         LocalDateTime yearBasisEndTime = LocalDateUtil.getEndTime(endTime.minusYears(1));
         dto.setStartTime(yearBasisStartTime);
