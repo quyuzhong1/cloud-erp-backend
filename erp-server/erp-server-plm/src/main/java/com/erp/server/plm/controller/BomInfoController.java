@@ -79,7 +79,52 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/submitAudit")
     public ApiResult<BomDTO> submitAudit(@RequestBody @Validated BaseIdDTO dto) {
-        boolean result = bomInfoService.submitAudit(dto.getId());
+        Boolean result = bomInfoService.submitAudit(dto.getId());
+        return result==true?success():failure();
+    }
+
+
+    /**
+     * 重启流程
+     * @param dto
+     * @return
+     */
+    @PostMapping("/restartAudit")
+    public ApiResult<BomDTO> restartAudit(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.restartAudit(dto.getId());
+        return result==true?success():failure();
+    }
+
+    /**
+     * 冻结bom
+     * @param dto
+     * @return
+     */
+    @PostMapping("/freeze")
+    public ApiResult<BomDTO> freeze(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.freeze(dto.getId());
+        return result==true?success():failure();
+    }
+
+    /**
+     * 解冻bom
+     * @param dto
+     * @return
+     */
+    @PostMapping("/defrost")
+    public ApiResult<BomDTO> defrost(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.defrost(dto.getId());
+        return result==true?success():failure();
+    }
+
+    /**
+     * 报废bom
+     * @param dto
+     * @return
+     */
+    @PostMapping("/scrap")
+    public ApiResult<BomDTO> scrap(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.scrap(dto.getId());
         return result==true?success():failure();
     }
 
