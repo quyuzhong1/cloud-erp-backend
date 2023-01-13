@@ -41,4 +41,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     Boolean defrost(String bomId);
 
     Boolean scrap(String bomId);
+
+    Boolean recover(String id);
 }

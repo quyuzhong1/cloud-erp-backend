@@ -127,6 +127,16 @@ public class BomInfoController extends BaseController {
         Boolean result = bomInfoService.scrap(dto.getId());
         return result==true?success():failure();
     }
+    /**
+     * 恢复bom
+     * @param dto
+     * @return
+     */
+    @PostMapping("/recover")
+    public ApiResult<BomDTO> recover(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.recover(dto.getId());
+        return result==true?success():failure();
+    }
 
 
 

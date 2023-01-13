@@ -334,6 +334,26 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return this.updateById(bom);
     }
 
+    /**
+     * 恢复bom
+     * @author yl
+     * @date 2023-01-13 17:05
+     * @param bomId
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean recover(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95103);
+        }
+        return null;
+    }
+
 
     /**
      * 检查bom 能否修改
