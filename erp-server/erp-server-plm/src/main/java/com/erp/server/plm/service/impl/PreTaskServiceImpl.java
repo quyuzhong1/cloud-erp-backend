@@ -15,13 +15,11 @@ import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -81,9 +79,6 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     private void removePreTaskByTaskId(String taskId, List<String> preTaskIdList) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
-        if (CollectionUtils.isNotEmpty(preTaskIdList)) {
-            queryWrapper.in(PreTaskEntity::getPreTaskId, preTaskIdList);
-        }
         this.remove(queryWrapper);
     }
 
