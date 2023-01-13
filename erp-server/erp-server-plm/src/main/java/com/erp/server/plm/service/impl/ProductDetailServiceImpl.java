@@ -1472,6 +1472,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             resultMap.put("declareChineseName",productLogisticsEntity.getDeclareChineseName());
             //报关英文名
             resultMap.put("declareEnglishName",productLogisticsEntity.getDeclareEnglishName());
+            //报关申报价
+            resultMap.put("declarePrice",productLogisticsEntity.getDeclarePrice());
             //产品属性（是否带电）
             resultMap.put("productProperty_electric",productLogisticsEntity.getDeclarePrice());
             //产品属性（是否带磁）
