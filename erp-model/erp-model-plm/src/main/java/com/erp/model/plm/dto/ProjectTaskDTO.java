@@ -191,4 +191,14 @@ public class ProjectTaskDTO  implements Serializable {
      */
     private String preTaskNames;
 
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    private Integer distributionType;
+
+    /**
+     * 审核分配类型，由模板生成时带过来（0角色，1人员，2上级人员负责人）
+     */
+    private Integer approvalDistributionType;
+
 }

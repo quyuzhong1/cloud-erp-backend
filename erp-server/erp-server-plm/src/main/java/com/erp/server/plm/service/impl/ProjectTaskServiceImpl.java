@@ -538,11 +538,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
                     item.setIsSysTask(true);
                 }
-                if (StringUtils.isNotBlank(chargeId)) {
-                    item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
+                    //负责人为角色
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(Arrays.asList(item.getRoleName().split(",")));
+                    }
                 } else {
-                    item.setChargeIdList(new ArrayList<>());
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(new ArrayList<>());
+                    }
                 }
+
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
                 Integer totalDocsCount = 0;
@@ -690,8 +700,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             phaseName = phaseEntity.getName();
         }
 
+
+
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
+
+        /**
+         *  如果是立项阶段
+         *  自动完成一步
+         */
+        Boolean isProjectApprovalPhase = false;
+        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
+            isProjectApprovalPhase = true;
+            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
+        }
 
         List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
         if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
@@ -703,15 +725,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String join = StringUtils.join(userIdsList, "|");
             taskEntity.setApprovalUserId(join);
         }
-        /**
-         *  如果是立项阶段
-         *  自动完成一步
-         */
-        Boolean isProjectApprovalPhase = false;
-        if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
-            isProjectApprovalPhase = true;
-            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
-        }
+
 
         //是否是一般任务 true 是
         Boolean isGeneralTask = generalTask.equals(dto.getType());
@@ -1192,21 +1206,28 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setApprovalUserId("");
         }
         List<String> chargeIds = dto.getChargeIds();
+
+        taskEntity.setPhaseName(phaseName);
+        //如果分配类型为角色，则需要更新底层角色名称字段
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
+            if (CollectionUtils.isNotEmpty(chargeIds)) {
+                //如果传入负责人和角色一致则无需插入
+              if (String.join(",", chargeIds).equals(taskEntity.getRoleName())) {
+                  chargeIds = null;
+              } else {
+                  //否则查询对应角色存入RoleName
+                  List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
+                  if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                      String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                      taskEntity.setRoleName(roleNames);
+                  }
+              }
+            }
+        }
         if (CollectionUtils.isNotEmpty(chargeIds)) {
             String chargeName = commonService.getNameByIds(chargeIds);
             taskEntity.setChargeId(String.join(",", chargeIds));
             taskEntity.setChargeName(chargeName);
-        }
-        taskEntity.setPhaseName(phaseName);
-        //如果分配类型为角色，则需要更新底层角色名称字段
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && CollectionUtils.isNotEmpty(chargeIds)) {
-            List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
-            if (CollectionUtils.isNotEmpty(sysRoleList)) {
-                String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
-                taskEntity.setRoleName(roleNames);
-            } else {
-                taskEntity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
-            }
         }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
@@ -1318,20 +1339,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             checkTaskName(taskEntity.getId(), taskEntity.getProductId(), name);
             taskEntity.setName(name);
         }
+        //如果分配类型为角色，则需要更新底层角色名称字段
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
+            if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                //如果传入负责人和角色一致则无需插入
+                if (String.join(",", chargeIdList).equals(taskEntity.getRoleName())) {
+                    chargeIdList = null;
+                } else {
+                    //否则查询对应角色存入RoleName
+                    List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIdList);
+                    if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                        String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                        taskEntity.setRoleName(roleNames);
+                    }
+                }
+            }
+        }
         if (CollectionUtils.isNotEmpty(chargeIdList)) {
             taskEntity.setChargeId(String.join(",", chargeIdList));
             String chargeName = commonService.getNameByIds(chargeIdList);
             taskEntity.setChargeName(chargeName);
-        }
-        //如果分配类型为角色，则需要更新底层角色字段
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && CollectionUtils.isNotEmpty(chargeIdList)) {
-            List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIdList);
-            if (CollectionUtils.isNotEmpty(sysRoleList)) {
-                String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
-                taskEntity.setRoleName(roleNames);
-            } else {
-                taskEntity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
-            }
         }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         //添加操作日志
@@ -1357,19 +1384,42 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskDTO resultDTO = new ProjectTaskDTO();
         BeanMapper.copy(taskEntity, resultDTO);
         String chargeId = taskEntity.getChargeId();
-        if (StringUtils.isNotBlank(chargeId)) {
-            resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
+            //负责人为角色
+            if (StringUtils.isNotBlank(chargeId)) {
+                resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+            } else {
+                resultDTO.setChargeIds(Arrays.asList(taskEntity.getRoleName().split(",")));
+            }
+        } else {
+            if (StringUtils.isNotBlank(chargeId)) {
+                resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
+            }
         }
         String approvalUserId = taskEntity.getApprovalUserId();
-        List<List<String>> approvalUserIdList = new ArrayList<>();
-        if (StringUtils.isNotBlank(approvalUserId)) {
-            List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
-            for (String userId: userIdsList) {
-                List<String> userIdList = Arrays.asList(userId.split(","));
-                approvalUserIdList.add(userIdList);
+        String approvalRoleName = taskEntity.getApprovalRoleName();
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && StringUtils.isBlank(approvalUserId)) {
+            List<List<String>> approvalUserIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(approvalRoleName)) {
+                List<String> approvalRoleNamesList = Arrays.asList(approvalRoleName.split("\\|"));
+                for (String approvalRoleNames: approvalRoleNamesList) {
+                    List<String> approvalRoleNameList = Arrays.asList(approvalRoleNames.split(","));
+                    approvalUserIdList.add(approvalRoleNameList);
+                }
+                resultDTO.setApprovalUserIds(approvalUserIdList);
             }
-        resultDTO.setApprovalUserIds(approvalUserIdList);
+        } else {
+            List<List<String>> approvalUserIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(approvalUserId)) {
+                List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
+                for (String userId: userIdsList) {
+                    List<String> userIdList = Arrays.asList(userId.split(","));
+                    approvalUserIdList.add(userIdList);
+                }
+                resultDTO.setApprovalUserIds(approvalUserIdList);
+            }
         }
+
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());

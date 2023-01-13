@@ -185,7 +185,15 @@ public class TaskPagingShowDTO implements Serializable {
      */
     private  Boolean ifEditTask;
 
+    /**
+     * 角色名称，由模板生成时带过来
+     */
+    private String roleName;
 
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    private Integer distributionType;
 
 
 }
