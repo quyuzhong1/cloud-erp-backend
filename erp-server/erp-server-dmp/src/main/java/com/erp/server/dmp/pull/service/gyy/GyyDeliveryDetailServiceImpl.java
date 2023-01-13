@@ -103,6 +103,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
+                                dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                             }
@@ -203,6 +204,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                    dmpErrorLogEntity.setCreateTime(new Date());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 break;

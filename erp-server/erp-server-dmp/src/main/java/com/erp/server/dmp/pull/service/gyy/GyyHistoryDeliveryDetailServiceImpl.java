@@ -76,8 +76,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         jobTaskDTO.setApiName("管易云查询历史发货订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(72000);
-        jobTaskDTO.setLastTime(null);
-        jobTaskDTO.setNextTime(null);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-04-15 18:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-04-15 19:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(2);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -114,15 +114,19 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 } else {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
+                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", mongoData.size());
                 //存储数据到中台
                 analysisDeliveryDetail(gyyDeliveryDetailEntity);
+                XxlJobHelper.log("pgsql数据处理完成 gyyDeliveryDetailEntity.size={} ", JSONUtil.toJsonStr(gyyDeliveryDetailEntity));
             }catch (Exception e) {
                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                dmpErrorLogEntity.setParams("");
+                dmpErrorLogEntity.setParams(JSONUtil.toJsonStr(dto));
                 XxlJobHelper.log("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
+                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
+                dmpErrorLogEntity.setCreateTime(new Date());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 new ServiceException(500, StrUtil.format("保存管易数据异常gyyDeliveryDetailEntity ={} e ={}", JSONUtil.toJsonStr(gyyDeliveryDetailEntity), e.getMessage()));
             }
@@ -142,7 +146,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
     }
 
     /**
-     * 请求管易云退款信息接口
+     * 请求管易云发货历史订单
      *
      * @param dto
      * @return
@@ -162,7 +166,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         } else {
             LocalDateTime date = LocalDateTime.now();
             DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(30);
+            LocalDateTime localDateTime = date.minusDays(1);
             st = sdf.format(localDateTime);
             sd = sdf.format(date);
             dto.getJobTaskDTO().setLastTime(date);
@@ -215,21 +219,14 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                     throw new RuntimeException(" ===== 管易云拉取历史出库详情失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
-                break;
+                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                dmpErrorLogEntity.setParams(jsonData);
+                dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
+                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogService.add(dmpErrorLogEntity);
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getMessage()));
             }
             pageIndex++;
         }
