@@ -142,7 +142,7 @@ public class KingdeeApiUtils {
     }
 
     /**
-     * 反审核 单据(按ID）
+     * 审核 单据(按ID）
      * @param idList    ID列表
      * @return
      */
