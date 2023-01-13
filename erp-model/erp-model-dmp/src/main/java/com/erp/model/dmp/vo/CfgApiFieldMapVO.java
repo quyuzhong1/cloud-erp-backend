@@ -1,5 +1,6 @@
 package com.erp.model.dmp.vo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,11 @@ import java.time.LocalDateTime;
 public class CfgApiFieldMapVO {
 
     /**
+     * 平台名称
+     */
+    private String apiPlatform;
+
+    /**
      * 本系统的字段
      */
     private String selfField;
@@ -32,6 +38,16 @@ public class CfgApiFieldMapVO {
      * 外部系统的字段（多层结构可逗号分割）
      */
     private String apiField;
+
+    /**
+     * 外部系统的字段中文描述
+     */
+    private String apiFieldName;
+
+    /**
+     * 默认值
+     */
+    private String defaultValue;
 
     /**
      * 取值方式 ApiFieldType枚举

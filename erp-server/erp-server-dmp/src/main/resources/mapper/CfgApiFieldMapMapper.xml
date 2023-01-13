@@ -7,10 +7,13 @@
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.dmp.vo.CfgApiFieldMapVO">
         select
+            cafm.api_platform,
             cafm.self_field,
             cafm.self_field_name,
             cafm.api_field,
+            cafm.api_field_name,
             cafm.field_type,
+            cafm.default_value,
             cafm.create_user_name,
             cafm.create_time
         from cfg_api_field_map cafm

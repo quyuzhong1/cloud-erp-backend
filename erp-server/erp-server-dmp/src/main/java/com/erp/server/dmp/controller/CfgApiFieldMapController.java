@@ -51,8 +51,22 @@ public class CfgApiFieldMapController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/add")
-    public ApiResult add(@ModelAttribute @Validated CfgApiFieldMapDTO dto) {
+    public ApiResult add(@RequestBody @Validated CfgApiFieldMapDTO dto) {
         Boolean flag = this.cfgApiFieldMapService.insert(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 批量新增
+     * @author Will
+     * @date: 2023/1/11 12:13
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping("/batchAdd")
+    public ApiResult batchAdd(@RequestBody @Validated List<CfgApiFieldMapDTO> list) {
+        Boolean flag = this.cfgApiFieldMapService.batchAdd(list);
         return flag == true ? success() : failure();
     }
 
@@ -65,7 +79,7 @@ public class CfgApiFieldMapController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@ModelAttribute @Validated CfgApiFieldMapDTO dto) {
+    public ApiResult update(@RequestBody @Validated CfgApiFieldMapDTO dto) {
         this.cfgApiFieldMapService.update(dto);
         return success();
     }
