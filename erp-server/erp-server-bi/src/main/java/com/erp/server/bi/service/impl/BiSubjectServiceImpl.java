@@ -158,7 +158,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (Objects.isNull(subject)) {
             throw new ServiceException(ApiError.ERROR_97000);
         }
-        checkCanHandle(subject,userId);
+        checkCanHandle(subject, userId);
         boolean flag = this.removeById(subjectId);
         if (flag) {
             //默认的专题删除
