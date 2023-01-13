@@ -1915,6 +1915,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
         List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
         List<String> processInstanceIds=workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(processInstanceIds)){
+            return new PagingVO(pageData);
+        }
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
