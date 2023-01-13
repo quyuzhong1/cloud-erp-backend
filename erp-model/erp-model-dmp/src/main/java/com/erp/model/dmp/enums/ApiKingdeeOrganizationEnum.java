@@ -6,10 +6,9 @@ package com.erp.model.dmp.enums;
  * @description: 发送状态
  * @date 2023/1/12 15:33
  */
-public enum ApiStatusEnum {
+public enum ApiKingdeeOrganizationEnum {
 
-    FAILURE(0, "failure", "发送失败"),
-    SUCCESS(1, "success", "发送成功");
+    ORGANIZATION_WEIJI(0, "唯迹集团", "唯迹集团");
 
     private Integer code;
 
@@ -29,15 +28,15 @@ public enum ApiStatusEnum {
         return desc;
     }
 
-    ApiStatusEnum(Integer code, String name, String desc) {
+    ApiKingdeeOrganizationEnum(Integer code, String name, String desc) {
         this.code = code;
         this.name = name;
         this.desc = desc;
     }
 
-    public static ApiStatusEnum getByCode(Integer code) {
-        ApiStatusEnum[] values = values();
-        for (ApiStatusEnum value : values) {
+    public static ApiKingdeeOrganizationEnum getByCode(Integer code) {
+        ApiKingdeeOrganizationEnum[] values = values();
+        for (ApiKingdeeOrganizationEnum value : values) {
             if (value.code.equals(code)) {
                 return value;
             }
@@ -45,9 +44,9 @@ public enum ApiStatusEnum {
         return null;
     }
 
-    public static ApiStatusEnum getByName(String name) {
-        ApiStatusEnum[] values = values();
-        for (ApiStatusEnum value : values) {
+    public static ApiKingdeeOrganizationEnum getByName(String name) {
+        ApiKingdeeOrganizationEnum[] values = values();
+        for (ApiKingdeeOrganizationEnum value : values) {
             if (value.name.equals(name)) {
                 return value;
             }
