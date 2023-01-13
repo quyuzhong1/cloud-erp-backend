@@ -421,7 +421,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      * @date 2022-12-15 9:27
      */
     @Override
-    public Boolean copy(CopySubjectDTO dto) {
+    public String copy(CopySubjectDTO dto) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
         LocalDateTime nowDate = LocalDateTime.now();
@@ -459,8 +459,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
                 subjectShareService.addSubjectShare(userList, newSubjectId);
             }
             layoutService.copySubjectLayout(newSubjectId, subjectId);
+            return newSubjectId;
         }
-        return flag;
+        return "";
     }
 
 
@@ -561,7 +562,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public SubjectLayoutDetailsDTO dashboardInfo() {
-        String userId =commonService.getUserInfo().getUid();
+        String userId = commonService.getUserInfo().getUid();
         String type = DictEnum.DASHBOARD.getType();
         String dashboardFlag = DictEnum.DASHBOARD.getValue();
         String subjectId = "";

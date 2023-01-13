@@ -42,7 +42,7 @@ public interface BiLayoutService  extends IService<BiLayoutEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateSubjectLayout(SubjectLayoutDetailsDTO dto);
+    String updateSubjectLayout(SubjectLayoutDetailsDTO dto);
 
     /**
      *

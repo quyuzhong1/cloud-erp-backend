@@ -101,4 +101,16 @@ public class CfgApiFieldMapEntity implements Serializable {
     @TableField(value = "api_field")
     private String apiField;
 
+    /**
+     * 外部系统的字段中文描述
+     */
+    @TableField(value = "api_field_name")
+    private String apiFieldName;
+
+    /**
+     * 默认值
+     */
+    @TableField(value = "default_value")
+    private String defaultValue;
+
 }
