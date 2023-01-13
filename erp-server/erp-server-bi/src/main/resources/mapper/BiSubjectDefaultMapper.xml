@@ -6,6 +6,6 @@
     <select id="getDefaultSubject" resultType="com.erp.model.bi.entity.BiSubjectEntity">
          SELECT bs.* FROM bi_subject bs
          LEFT JOIN bi_subject_default bd on  bs.id=bd.subject_id
-         WHERE bd.user_id=#{userId} AND bs.is_deleted=0
+         WHERE bd.user_id=#{userId} AND bs.is_deleted=0 AND bs.state=1
     </select>
 </mapper>
