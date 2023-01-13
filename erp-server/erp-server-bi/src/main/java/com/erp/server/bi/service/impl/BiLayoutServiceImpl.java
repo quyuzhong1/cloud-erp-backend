@@ -332,7 +332,11 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         String categoryId = dto.getCategoryId();
         subject.setName(dto.getName());
         subject.setCategoryId(categoryId);
-        String shareFlag = dto.getShareFlag();
+        List<String> userIdList = dto.getShareUserIdList();
+        String shareFlag = DashboardEnum.SHARE.getFlag();
+        if (CollectionUtils.isEmpty(userIdList)) {
+            shareFlag = DashboardEnum.PERSONAL.getFlag();
+        }
         subject.setShareFlag(shareFlag);
         subject.setIsFrequently(dto.getIsFrequently());
         subject.setShareUserIdList(dto.getShareUserIdList());
