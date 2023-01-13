@@ -93,5 +93,21 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
     List<SysUserDeptDTO> getUserDeptList();
+    /**
+     * @description: 查询人员所有上级
+     * @author Will
+     * @date: 2023/1/9 9:24
+     * @param id
+     * @return List<UserDTO>
+     */
+    List<UserDTO> listSuperiorByUserId(String id);
+    /**
+     * @description: 根据角色id查询所有用户
+     * @author Will
+     * @date: 2023/1/9 10:38
+     * @param roleName
+     * @return List<UserDTO>
+     */
+    List<UserDTO> listSuperiorByRoleName(String roleName);
 }
 

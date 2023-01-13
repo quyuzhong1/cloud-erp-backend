@@ -15,7 +15,6 @@ import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -24,6 +23,7 @@ import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -125,6 +125,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private SysLogService sysLogService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProjectRoleService projectRoleService;
+
+
 
     /**
      * 添加系统的产品任务
@@ -661,14 +669,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         //自定义审核人
-        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
         Integer type = dto.getType();
         //一般任务
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         //如果是一般任务 必须要有审核流程
         if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalUserIds)) {
+                if (CollectionUtils.isEmpty(dto.getApprovalUserIds())) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
@@ -686,9 +693,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
 
-        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
-            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
-            taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
+        List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
+        if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
+            List<String> userIdsList = new ArrayList<>();
+            for (List<String> userIdList: approvalUserIdList) {
+                String approvalUserIds = StringUtils.join(userIdList, ",");
+                userIdsList.add(approvalUserIds);
+            }
+            String join = StringUtils.join(userIdsList, "|");
+            taskEntity.setApprovalUserId(join);
         }
         /**
          *  如果是立项阶段
@@ -1146,20 +1159,55 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //自定义审核人
-        List<UserInfoDTO> approvalUserIds = dto.getApprovalUserIds();
-        if (CollectionUtils.isNotEmpty(approvalUserIds)) {
-            List<String> approvalUserIdList = approvalUserIds.stream().map(UserInfoDTO::getUserId).collect(Collectors.toList());
-            taskEntity.setApprovalUserId(String.join(",", approvalUserIdList));
+        List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
+        //审核人员逐级审核及会签
+        if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
+            List<String> userIdsList = new ArrayList<>();
+            List<String> roleNamesList = new ArrayList<>();
+            for (List<String> userIdList: approvalUserIdList) {
+                String approvalUserIds = StringUtils.join(userIdList, ",");
+                //判断如果审核人分配类型为角色时，重新设置角色名称
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getApprovalDistributionType())) {
+                    List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(userIdList);
+                    if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                        String approvalRoleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                        roleNamesList.add(approvalRoleNames);
+                    }
+                }
+                userIdsList.add(approvalUserIds);
+            }
+            if (CollectionUtils.isNotEmpty(userIdsList)) {
+                String join = StringUtils.join(userIdsList, "|");
+                taskEntity.setApprovalUserId(join);
+            }
+            if (CollectionUtils.isNotEmpty(roleNamesList)) {
+                String join = StringUtils.join(roleNamesList, "|");
+                taskEntity.setApprovalRoleName(join);
+            } else {
+                taskEntity.setApprovalDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+            }
         }
         //当是评审任务的时候
         if (!isGeneral) {
             taskEntity.setApprovalUserId("");
         }
-        List<String> chargeId = dto.getChargeIds();
-        String chargeName = commonService.getNameByIds(chargeId);
-        taskEntity.setChargeId(String.join(",", chargeId));
-        taskEntity.setChargeName(chargeName);
+        List<String> chargeIds = dto.getChargeIds();
+        if (CollectionUtils.isNotEmpty(chargeIds)) {
+            String chargeName = commonService.getNameByIds(chargeIds);
+            taskEntity.setChargeId(String.join(",", chargeIds));
+            taskEntity.setChargeName(chargeName);
+        }
         taskEntity.setPhaseName(phaseName);
+        //如果分配类型为角色，则需要更新底层角色名称字段
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && CollectionUtils.isNotEmpty(chargeIds)) {
+            List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
+            if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                taskEntity.setRoleName(roleNames);
+            } else {
+                taskEntity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+            }
+        }
         //交付文档
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
 
@@ -1275,6 +1323,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             String chargeName = commonService.getNameByIds(chargeIdList);
             taskEntity.setChargeName(chargeName);
         }
+        //如果分配类型为角色，则需要更新底层角色字段
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && CollectionUtils.isNotEmpty(chargeIdList)) {
+            List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIdList);
+            if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                taskEntity.setRoleName(roleNames);
+            } else {
+                taskEntity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+            }
+        }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         //添加操作日志
         addUpdateTaskDTOLog(taskEntity,oldEntity,oldEntity.getId());
@@ -1303,25 +1361,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
         }
         String approvalUserId = taskEntity.getApprovalUserId();
-        List<String> approvalUserIdList = new ArrayList<>();
+        List<List<String>> approvalUserIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(approvalUserId)) {
-            approvalUserIdList = Arrays.asList(approvalUserId.split(","));
-        }
-        List<UserInfoDTO> approvalUserList = new ArrayList<>();
-        List<FindUserDTO> userList = commonService.getAllUser();
-        for (String userId : approvalUserIdList) {
-            UserInfoDTO u = new UserInfoDTO();
-            u.setUserId(userId);
-            FindUserDTO user = userList.stream().filter(s -> s.getUserId().
-                    equals(userId)).findFirst().orElse(null);
-            if (!Objects.isNull(user)) {
-                u.setUserName(user.getUserName());
-            } else {
-                u.setUserName("");
+            List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
+            for (String userId: userIdsList) {
+                List<String> userIdList = Arrays.asList(userId.split(","));
+                approvalUserIdList.add(userIdList);
             }
-            approvalUserList.add(u);
+        resultDTO.setApprovalUserIds(approvalUserIdList);
         }
-
         TaskRefSkuConfigEntity refSku = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
@@ -1350,8 +1398,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> skuNoList = productDetailList.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
         resultDTO.setRefSkuNoList(skuNoList);
 
-
-        resultDTO.setApprovalUserIds(approvalUserList);
         resultDTO.setDeliveryDocsList(taskDeliveryService.getDocsByTaskId(taskId));
         String businessProcessId = resultDTO.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
@@ -1600,6 +1646,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setIsSkuChange(dto.getState());
             this.updateById(taskEntity);
         }
+    }
+
+    @Override
+    public List<ProjectTaskEntity> listByProductId(String productId) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getProjectId,productId);
+        return this.list(queryWrapper);
     }
 
     @Override
@@ -2704,43 +2757,44 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ProjectTaskEntity> noticeList = new ArrayList<>();
                 for (ProjectTaskEntity review : reviewList) {
                     String chargeId = review.getChargeId();
-                    if (StringUtils.isNotBlank(chargeId)) {
-                        StartProcessDTO startProcess = new StartProcessDTO();
-                        startProcess.setBusinessKey(processEntity.getBusinessKey());
-                        startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
-                        startProcess.setUserId(loginUser.getUid());
-                        Map<String, Object> parameterMap = new HashMap<>();
-                        String params = processEntity.getParam();
-                        if (StringUtils.isNotBlank(params)) {
-                            String[] paramList = params.split(",");
-                            if (paramList.length == 1) {
-                                parameterMap.put(paramList[0], Arrays.asList(chargeId.split(",")));
-                            }
+                    if (StringUtils.isBlank(chargeId)) {
+                        throw new ServiceException(ApiError.ERROR_95027);
+                    }
+                    StartProcessDTO startProcess = new StartProcessDTO();
+                    startProcess.setBusinessKey(processEntity.getBusinessKey());
+                    startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
+                    startProcess.setUserId(loginUser.getUid());
+                    Map<String, Object> parameterMap = new HashMap<>();
+                    String params = processEntity.getParam();
+                    if (StringUtils.isNotBlank(params)) {
+                        String[] paramList = params.split(",");
+                        if (paramList.length == 1) {
+                            parameterMap.put(paramList[0], Arrays.asList(chargeId.split(",")));
                         }
-                        //taskChargeIds
-                        startProcess.setParameterMap(parameterMap);
-                        //启动一个流程
-                        ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
-                        //这个是流程Id
-                        String processId = process.getProcessId();
-                        //流程id 不为空 表示成功
-                        if (StringUtils.isNotBlank(processId)) {
-                            review.setProcessId(processId);
-                            review.setRealityStartTime(nowDate);
-                            review.setStatus(waitConfirmCode);
-                            //保存操作记录
-                            TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
-                            recordEntity.setTaskId(review.getId());
-                            recordEntity.setBeforeState(review.getStatus());
-                            recordEntity.setAfterState(waitConfirmCode);
-                            recordEntity.setOperatorId(loginUser.getUid());
-                            recordEntity.setOperatorName(loginUser.getUserName());
-                            recordEntityList.add(recordEntity);
+                    }
+                    //taskChargeIds
+                    startProcess.setParameterMap(parameterMap);
+                    //启动一个流程
+                    ProcessNodeDTO process = workflowFeign.startProcess(startProcess);
+                    //这个是流程Id
+                    String processId = process.getProcessId();
+                    //流程id 不为空 表示成功
+                    if (StringUtils.isNotBlank(processId)) {
+                        review.setProcessId(processId);
+                        review.setRealityStartTime(nowDate);
+                        review.setStatus(waitConfirmCode);
+                        //保存操作记录
+                        TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
+                        recordEntity.setTaskId(review.getId());
+                        recordEntity.setBeforeState(review.getStatus());
+                        recordEntity.setAfterState(waitConfirmCode);
+                        recordEntity.setOperatorId(loginUser.getUid());
+                        recordEntity.setOperatorName(loginUser.getUserName());
+                        recordEntityList.add(recordEntity);
 
-                            //更改 时间 很流程id
-                            this.updateById(review);
-                            noticeList.add(review);
-                        }
+                        //更改 时间 很流程id
+                        this.updateById(review);
+                        noticeList.add(review);
                     }
                 }
                 //发送通知
@@ -2977,7 +3031,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (StringUtils.isBlank(approvalUserId)) {
                     throw new ServiceException(ApiError.ERROR_95045);
                 }
-                List<String> membersIds = Arrays.asList(approvalUserId.split(","));
+                List<List<String>> membersIds = new ArrayList<>();
+                List<String> approvalUserIdList = Arrays.stream(approvalUserId.split("|")).collect(Collectors.toList());
+                for (String userIds:approvalUserIdList) {
+                    List<String> userIdList = Arrays.stream(userIds.split(",")).collect(Collectors.toList());
+                    membersIds.add(userIdList);
+                }
                 String businessProcessId = processTask.getBusinessProcessId();
                 //当不是审核不通过 就启动一个流程
                 if (!state.equals(TaskStateEnum.APPROVAL_NO_PASS.getCode())) {
@@ -3037,12 +3096,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author yl
      * @date 2022-11-22 14:36
      */
-    private Map<String, Object> getProcessParameter(BusinessProcessEntity processEntity, List<String> approvalUserIds) {
+    private Map<String, Object> getProcessParameter(BusinessProcessEntity processEntity, List<List<String>> approvalUserIds) {
         String param = processEntity.getParam();
         Map<String, Object> map = new HashMap<>();
         if (StringUtils.isNotBlank(param)) {
             String[] paramList = param.split(",");
-            String businessKey = processEntity.getBusinessKey();
+ /*           String businessKey = processEntity.getBusinessKey();
             String generalTask = BusinessProcessEnum.GENERAL_TASK.getBusinessKey();
             String docsChange = BusinessProcessEnum.DOCS_CHANGE.getBusinessKey();
             String reviewTask = BusinessProcessEnum.REVIEW_TASK.getBusinessKey();
@@ -3055,8 +3114,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     map.put(paramList[i], approvalUserIds.get(i));
                 }
             } else {
-                map.put(paramList[0], approvalUserIds);
+                map.put(paramList[0], approvalUserIds.get(0));
+            }*/
+            for (int i = 0; i < approvalUserIds.size(); i++) {
+                map.put(paramList[i], approvalUserIds.get(i));
             }
+
         }
         return map;
     }

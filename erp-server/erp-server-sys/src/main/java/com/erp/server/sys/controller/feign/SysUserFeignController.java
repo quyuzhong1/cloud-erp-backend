@@ -8,13 +8,12 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysRoleDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.UserDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
-import com.erp.server.sys.service.SysDepartmentService;
-import com.erp.server.sys.service.SysRoleUserService;
-import com.erp.server.sys.service.SysUserInfoService;
-import com.erp.server.sys.service.SysUserThirdService;
+import com.erp.server.sys.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +42,10 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysDepartmentService sysDepartmentService;
+
+    @Autowired
+    private SysRoleService sysRoleService;
+
 
 
     @PostMapping("/accountLogin")
@@ -203,5 +206,53 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getUserDeptById")
     public SysDepartmentDTO getUserDeptById(@RequestBody String deptId) {
         return sysDepartmentService.getDepartmentById(deptId);
+    }
+
+    /**
+     * @description: 根据用户id查询所有上级用户
+     * @author Will
+     * @date: 2023/1/9 10:24
+     * @param userId
+     * @return List<UserDTO>
+     */
+    @PostMapping("/listSuperiorByUserId")
+    public List<UserDTO> listSuperiorByUserId(@RequestBody String userId) {
+        return sysUserInfoService.listSuperiorByUserId(userId);
+    }
+
+    /**
+     * @description: 根据角色id查询所有上级用户
+     * @author Will
+     * @date: 2023/1/9 10:37
+     * @param roleName
+     * @return List<UserDTO>
+     */
+    @PostMapping("/listSuperiorByRoleName")
+    public List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName) {
+        return sysUserInfoService.listSuperiorByRoleName(roleName);
+    }
+
+    /**
+     * @description: 根据角色ids查询名称
+     * @author Will
+     * @date: 2023/1/9 11:36
+     * @param roleIds
+     * @return List<String>
+     */
+    @PostMapping("/listRoleByIds")
+    public List<String> listRoleByIds(@RequestBody List<String> roleIds) {
+        return sysRoleService.listRoleByIds(roleIds);
+    }
+
+    /**
+     * @description: 根据用户ids查询角色
+     * @author Will
+     * @date: 2023/1/9 11:36
+     * @param userIds
+     * @return List<String>
+     */
+    @PostMapping("/listRoleByUserIds")
+    public List<SysRoleDTO> listRoleByUserIds(@RequestBody List<String> userIds) {
+        return sysRoleService.listRoleByUserIds(userIds);
     }
 }

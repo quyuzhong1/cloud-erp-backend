@@ -192,7 +192,7 @@ public enum ApiError implements Serializable {
     ERROR_95094(95094,"sku必须选择一个"),
     ERROR_95095(95095,"bom不能为空"),
     ERROR_95096(95096,"在待提交审核/待审核状态/审核不通过的状态下才能编辑"),
-
+    ERROR_95097(95097,"任务负责人不能为空"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

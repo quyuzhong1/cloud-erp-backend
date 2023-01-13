@@ -36,5 +36,13 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
 
     boolean saveBatchDepartmentUser(BatchSysDepartUserDTO list);
 
-
+    SysDepartmentUserNumberDTO getByUserId(String id);
+    /**
+     * @description: 根据部门ids查询
+     * @author Will
+     * @date: 2023/1/9 10:03
+     * @param departmentIdList
+     * @return List<SysDepartmentUserNumberDTO>
+     */
+    List<SysDepartmentUserNumberDTO> listByDepartmentIds(List<String> departmentIdList);
 }

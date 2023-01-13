@@ -133,9 +133,9 @@ public class ProjectTaskDTO  implements Serializable {
     private Integer status;
     
     /**
-     * 审核人集合
+     * 审核人集合,审核流程存在逐级审核和会签
      */
-    private List<UserInfoDTO> approvalUserIds;
+    private List<List<String>> approvalUserIds;
 
     /**
      * 交付文档
