@@ -82,7 +82,7 @@ public class ProjectTemplateController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listTemplateRole")
-    public ApiResult listTemplateRole(@Param("templateId") String templateId) {
+    public ApiResult<List<SysRoleDTO>> listTemplateRole(@Param("templateId") String templateId) {
         List<SysRoleDTO> list =  projectTemplateService.listTemplateRole(templateId);
         return success(list);
     }
@@ -96,7 +96,7 @@ public class ProjectTemplateController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listSuperior")
-    public ApiResult listSuperior(@Param("id") String id,@Param("type") Integer type) {
+    public ApiResult<List<UserDTO>> listSuperior(@Param("id") String id,@Param("type") Integer type) {
         List<UserDTO> list =  projectTemplateService.listSuperior(id,type);
         return success(list);
     }
