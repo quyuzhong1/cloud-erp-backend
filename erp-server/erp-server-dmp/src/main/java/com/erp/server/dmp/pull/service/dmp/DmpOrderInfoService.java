@@ -2,6 +2,10 @@ package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.sys.dto.SysUserDeptDTO;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 订单服务类
@@ -48,7 +52,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @Date 2022/11/14 21:25
      * @return void
      **/
-    void cleanOrder();
+    void cleanOrder(Integer pageSize);
 
     /**
      * 根据平台订单id查询订单信息
@@ -58,5 +62,13 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
     DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber);
+
+    /**
+     * 更新清洗数据
+     * @param userDeptList
+     * @param times
+     * @param dmpOrderInfoEntity
+     */
+    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, AtomicInteger times, DmpOrderInfoEntity dmpOrderInfoEntity);
 
 }

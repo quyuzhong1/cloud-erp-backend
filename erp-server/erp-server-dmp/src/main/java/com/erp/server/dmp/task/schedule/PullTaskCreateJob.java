@@ -1,5 +1,6 @@
 package com.erp.server.dmp.task.schedule;
 
+import cn.hutool.core.util.StrUtil;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
@@ -75,7 +76,9 @@ public class PullTaskCreateJob {
     @XxlJob("cleanOrderTask")
     public ReturnT<String>  cleanOrderTask() {
         XxlJobHelper.log("cleanOrderTask 任务开始执行");
-        dmpOrderInfoService.cleanOrder();
+        String jobParam = XxlJobHelper.getJobParam();
+        Integer pageSize = StrUtil.isNotBlank(jobParam) ? Integer.valueOf(jobParam) : 100;
+        dmpOrderInfoService.cleanOrder(pageSize);
         XxlJobHelper.log("cleanOrderTask 任务开始完成");
         return ReturnT.SUCCESS;
     }
