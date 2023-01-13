@@ -227,10 +227,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         Integer state = bom.getState();
         if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(state)) {
-            throw new ServiceException();
-
+            throw new ServiceException(ApiError.ERROR_95098);
         }
-        return false;
+        bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+
+        /**
+         * 这里要发起一个流程
+         */
+        return this.updateById(bom);
     }
 
 
