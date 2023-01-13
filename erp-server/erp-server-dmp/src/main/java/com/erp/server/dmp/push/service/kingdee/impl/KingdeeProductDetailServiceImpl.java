@@ -108,15 +108,15 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
             //第三方系统逗号分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
-            List<String> apiFields = Arrays.stream(apiField.split(",")).collect(Collectors.toList());
+            List<String> apiFields = Arrays.stream(apiField.split("_")).collect(Collectors.toList());
             for (int i = 0; i < apiFields.size(); i++) {
                 //给不同结构的外部字段赋值
                 handleResultMap(cfgApiFieldMapDTO, cfgApiFieldMapValueList, map, resultMap, apiFields, i);
             }
         }
         //判断金蝶系统是否已存在该数据
-        String filterStr = "";
-        String fieldKeys = "";
+        String filterStr = "FNumber";
+        String fieldKeys = "FCreatorId,FCreateOrgId_FNumber,";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 0, 100);
         //如果未查询到数据则直接新增
         if (CollectionUtils.isEmpty(queryList)) {
@@ -124,7 +124,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         } else {
             Map<String, Object> queryMap = queryList.stream().filter(obj -> "".equals(obj.get("FCreateOrgId_FNumber"))).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(queryMap) || queryMap.size() == 0) {
+                //未发现相同组织数据则新增
                 insert(platformEntity,map,resultMap,apiUtils);
+            } else {
+
             }
         }
     }
