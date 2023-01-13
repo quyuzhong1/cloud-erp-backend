@@ -204,7 +204,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public Boolean deleteById(String id) {
         boolean flag = this.removeById(id);
-        if(flag){
+        if (flag) {
             bomSkuService.deleteByBomId(id);
             productBomHistoryService.deleteByBomId(id);
         }
@@ -213,13 +213,23 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     /**
      * 提交审核
-     * @author yl
-     * @date 2023-01-13 9:58
+     *
      * @param bomId
      * @return boolean
+     * @author yl
+     * @date 2023-01-13 9:58
      */
     @Override
     public boolean submitAudit(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(state)) {
+            throw new ServiceException();
+
+        }
         return false;
     }
 
