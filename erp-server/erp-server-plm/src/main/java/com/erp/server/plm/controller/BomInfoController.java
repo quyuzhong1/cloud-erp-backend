@@ -72,6 +72,17 @@ public class BomInfoController extends BaseController {
         return success(bom);
     }
 
+    /**
+     * 提交审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/submitAudit")
+    public ApiResult<BomDTO> submitAudit(@RequestBody @Validated BaseIdDTO dto) {
+        boolean result = bomInfoService.submitAudit(dto.getId());
+        return result==true?success():failure();
+    }
+
 
 
     /**

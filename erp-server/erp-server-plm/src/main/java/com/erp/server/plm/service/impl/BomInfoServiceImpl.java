@@ -211,6 +211,18 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return flag;
     }
 
+    /**
+     * 提交审核
+     * @author yl
+     * @date 2023-01-13 9:58
+     * @param bomId
+     * @return boolean
+     */
+    @Override
+    public boolean submitAudit(String bomId) {
+        return false;
+    }
+
 
     /**
      * 检查bom 能否修改
