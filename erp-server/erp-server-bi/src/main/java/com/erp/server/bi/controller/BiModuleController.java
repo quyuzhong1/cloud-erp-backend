@@ -38,11 +38,6 @@ public class BiModuleController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "bi:module:paging",
-            tableAlias = "bm1"
-    )
     public ApiResult<PagingVO<ModulePagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<ModulePagingDTO> pagingVO = biModuleService.paging(dto);
         return success(pagingVO);

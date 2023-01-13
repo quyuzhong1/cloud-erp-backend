@@ -110,7 +110,7 @@ public class BiSubjectController extends BaseController {
     @PostMapping("/setShare")
     public ApiResult setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
         String id = biSubjectShareService.setShare(dto);
-        if(StringUtils.isBlank(id)){
+        if (StringUtils.isBlank(id)) {
             return failure();
         }
         return success(id);
@@ -161,8 +161,11 @@ public class BiSubjectController extends BaseController {
      */
     @PostMapping("/copy")
     public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
-        Boolean copyResult = biSubjectService.copy(dto);
-        return copyResult == true ? success() : failure();
+        String copySubjectId = biSubjectService.copy(dto);
+        if (StringUtils.isBlank(copySubjectId)) {
+            return failure();
+        }
+        return success(copySubjectId);
     }
 
 
