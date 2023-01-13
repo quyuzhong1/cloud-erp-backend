@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -77,15 +76,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<String> chargeIds = dto.getChargeIds();
 
         //任务分配类型处理
-        if (MathUtil.ZERO.equals(dto.getDistributionType())) {//分配类型为角色
-            List<String> roleIds = dto.getRoleIds();
-            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
-            entity.setRoleId(String.join(",", roleIds));
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {//分配类型为角色
+            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(chargeIds);
+            entity.setRoleId(String.join(",", chargeIds));
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
                 List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
             }
-        } else if (MathUtil.ONE.equals(dto.getDistributionType())) {//分配类型为负责人
+        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {//分配类型为负责人
             String chargeNames = commonService.getNameByIds(chargeIds);
             entity.setChargeId(String.join(",", chargeIds));
             entity.setChargeName(chargeNames);
@@ -93,8 +91,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
         //自定义审核人
         List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
-        //自定义角色
-        List<List<String>> approvalRoleIdList = dto.getApprovalRoleIds();
         //配置表单属性
         String fieldConfigType = dto.getFieldConfigType();
         Integer type = dto.getType();
@@ -103,7 +99,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalUserIdList) && CollectionUtils.isEmpty(dto.getApprovalRoleIds())) {
+                if (CollectionUtils.isEmpty(approvalUserIdList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
@@ -111,10 +107,11 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         Boolean isReview=TaskTypeEnum.REVIEW_TASK.getCode().equals(type);
         //目标交付文档分配类型
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getApprovalDistributionType())) {
+            //按角色分配
             //审核角色逐级审核及会签,逐级任何人用'|'分割，会签审核人用','分割
-            if (CollectionUtils.isNotEmpty(approvalRoleIdList)) {
+            if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
                 List<String> roleIdsList = new ArrayList<>();
-                for (List<String> list: approvalRoleIdList) {
+                for (List<String> list: approvalUserIdList) {
                     String approvalRoleIds = StringUtils.join(list, ",");
                     roleIdsList.add(approvalRoleIds);
                 }
@@ -122,6 +119,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 entity.setApprovalRoleId(join);
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getApprovalDistributionType())){
+            //按负责人分配
             //审核人员逐级审核及会签
             if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
                 List<String> userIdsList = new ArrayList<>();
@@ -132,7 +130,19 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 String join = StringUtils.join(userIdsList, "|");
                 entity.setApprovalUserId(join);
             }
+        } else {
+            //按上级人员负责人分配
+            if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
+                List<String> userIdsList = new ArrayList<>();
+                for (List<String> userIdList : approvalUserIdList) {
+                    String approvalUserIds = StringUtils.join(userIdList, ",");
+                    userIdsList.add(approvalUserIds);
+                }
+                String join = StringUtils.join(userIdsList, "|");
+                entity.setSuperiorType(join);
+            }
         }
+
         if(isReview){
             entity.setApprovalUserId("");
         }
@@ -327,7 +337,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(sysEntity.getDistributionType())) {
             String roleId = sysEntity.getRoleId();
             if (StringUtils.isNotBlank(roleId)) {
-                sysTaskDTO.setRoleIds(Arrays.asList(roleId.split(",")));
+                sysTaskDTO.setChargeIds(Arrays.asList(roleId.split(",")));
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(sysEntity.getDistributionType())){
             String chargeId = sysEntity.getChargeId();
@@ -340,13 +350,13 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             String approvalRoleId = sysEntity.getApprovalRoleId();
             List<List<String>> approvalRoleIdList = new ArrayList<>();
             if (StringUtils.isNotBlank(approvalRoleId)) {
-                List<String> roleIdsList = Arrays.asList(approvalRoleId.split("|"));
-                for (String roleId: roleIdsList) {
-                    List<String> roleIdList = Arrays.asList(roleId.split(","));
-                    approvalRoleIdList.add(roleIdList);
+                List<String> userIdsList = Arrays.asList(approvalRoleId.split("\\|"));
+                for (String userId: userIdsList) {
+                    List<String> userIdList = Arrays.asList(userId.split(","));
+                    approvalRoleIdList.add(userIdList);
                 }
             }
-            sysTaskDTO.setApprovalRoleIds(approvalRoleIdList);
+            sysTaskDTO.setApprovalUserIds(approvalRoleIdList);
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(sysEntity.getApprovalDistributionType())){
             String approvalUserId = sysEntity.getApprovalUserId();
             List<List<String>> approvalUserIdList = new ArrayList<>();
@@ -358,7 +368,20 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 }
             }
             sysTaskDTO.setApprovalUserIds(approvalUserIdList);
+        } else {
+            String superiorType = sysEntity.getSuperiorType();
+            List<List<String>> approvalUserIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(superiorType)) {
+                List<String> userIdsList = Arrays.asList(superiorType.split("\\|"));
+                for (String userId: userIdsList) {
+                    List<String> userIdList = Arrays.asList(userId.split(","));
+                    approvalUserIdList.add(userIdList);
+                }
+            }
+            sysTaskDTO.setApprovalUserIds(approvalUserIdList);
         }
+
+
         String businessProcessId = sysEntity.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);

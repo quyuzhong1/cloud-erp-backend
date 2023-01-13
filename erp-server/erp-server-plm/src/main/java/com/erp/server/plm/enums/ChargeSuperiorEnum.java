@@ -8,21 +8,23 @@ package com.erp.server.plm.enums;
  */
 public enum ChargeSuperiorEnum {
 
-    DIRECT_SUPERIOR(0,"直属上级"),
-    DIRECT_DEPARTMENT_CHARGE(1,"直接部门负责人"),
-    SECOND_DEPARTMENT_CHARGE(2,"二级部门负责人"),
-    THREE_DEPARTMENT_CHARGE(3,"三级部门负责人"),
-    FOUR_DEPARTMENT_CHARGE(4,"四级部门负责人"),
-    FIVE_DEPARTMENT_CHARGE(5,"五级部门负责人");
+    DIRECT_SUPERIOR(0,"direct_superior","直属上级"),
+    DIRECT_DEPARTMENT_CHARGE(1,"direct_department_charge","直接部门负责人"),
+    SECOND_DEPARTMENT_CHARGE(2,"second_department_charge","二级部门负责人"),
+    THREE_DEPARTMENT_CHARGE(3,"three_department_charge","三级部门负责人"),
+    FOUR_DEPARTMENT_CHARGE(4,"four_department_charge","四级部门负责人"),
+    FIVE_DEPARTMENT_CHARGE(5,"five_department_charge","五级部门负责人");
 
     private Integer code;
 
     private String name;
 
+    private String desc;
 
-    ChargeSuperiorEnum(Integer code, String name) {
+    ChargeSuperiorEnum(Integer code, String name ,String desc) {
         this.code = code;
         this.name = name;
+        this.desc = desc;
     }
 
     public Integer getCode() {
@@ -31,6 +33,10 @@ public enum ChargeSuperiorEnum {
 
     public String getName() {
         return name;
+    }
+
+    public String getDesc() {
+        return desc;
     }
 
     public static String getName(Integer code) {

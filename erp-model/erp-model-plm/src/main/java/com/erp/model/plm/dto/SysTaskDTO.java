@@ -51,11 +51,6 @@ public class SysTaskDTO implements Serializable {
     private List<String> chargeIds;
 
     /**
-     * 角色id
-     */
-    private List<String> roleIds;
-
-    /**
      * 前置任务id
      */
     private List<String> preTaskIdList;
@@ -102,11 +97,6 @@ public class SysTaskDTO implements Serializable {
      * 审核人集合
      */
     private List<List<String>> approvalUserIds;
-
-    /**
-     * 审核角色集合
-     */
-    private List<List<String>> approvalRoleIds;
 
     /**
      * 审核分配类型（0角色，1人员，2上级人员负责人）
