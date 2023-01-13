@@ -351,7 +351,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (!BomStateEnum.FREEZE.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95103);
         }
-        return null;
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+        return this.updateById(bom);
     }
 
 
