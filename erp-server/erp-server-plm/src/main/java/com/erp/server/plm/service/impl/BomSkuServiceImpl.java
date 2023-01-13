@@ -82,8 +82,15 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     public void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
         //先删除
         deleteBomSku(bomId);
-        saveBomSku(bomId,bomSkuList);
+        saveBomSku(bomId, bomSkuList);
 
+    }
+
+    @Override
+    public void deleteByBomId(String bomId) {
+        LambdaQueryWrapper<BomSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomSkuEntity::getBomId, bomId);
+        this.remove(queryWrapper);
     }
 
     /**

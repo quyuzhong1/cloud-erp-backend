@@ -93,7 +93,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //保存成功
         if (saveResult) {
             //保存历史bom信息
-            productBomHistoryService.insert(bom,bomSkuList);
+            productBomHistoryService.insert(bom, bomSkuList);
 
             //但是待审核的时候
             if (isSubmitAudit) {
@@ -184,10 +184,31 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
+            //保存历史bom信息
+            productBomHistoryService.insert(bom, bomSkuList);
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
         }
         return result;
+    }
+
+
+    /**
+     * 删除bom
+     *
+     * @param id
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 8:56
+     */
+    @Override
+    public Boolean deleteById(String id) {
+        boolean flag = this.removeById(id);
+        if(flag){
+            bomSkuService.deleteByBomId(id);
+            productBomHistoryService.deleteByBomId(id);
+        }
+        return flag;
     }
 
 

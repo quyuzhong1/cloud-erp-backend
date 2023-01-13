@@ -94,7 +94,7 @@ public class BomInfoController extends BaseController {
      */
     @PostMapping("/delete")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = true;
+        Boolean flag = bomInfoService.deleteById(dto.getId());
         return flag == true ? success() : failure();
     }
 

@@ -29,4 +29,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     BomDTO getBomDetails(String id);
 
     Boolean edit(UpdateBomDTO dto);
+
+    Boolean deleteById(String id);
 }

@@ -17,4 +17,6 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
 
 
     void insert(BomInfoEntity bom, List<BomSkuDTO> bomSkuList);
+
+    void deleteByBomId(String id);
 }
