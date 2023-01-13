@@ -68,9 +68,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list-new");
+        jobTaskDTO.setApiCode(PlatformApiEnum.ORDER_GET_ORDER_LIST.getTaskName());
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -80,7 +79,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
         requestDTO.setJobTaskDTO(jobTaskDTO);
         List<OrderEntity> orderEntities = getOrderInfoService.pullDate(requestDTO);
         orderEntities.stream().peek(x -> System.out.println(StrUtil.format("{},{},{}",x.getSalesRecordNumber(),getOrderString(x.getOrderStatus()),  x.getPlatformId()))).collect(Collectors.toList());
@@ -187,8 +186,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             Map<String, Object> paramsMap = new HashMap();
             paramsMap.put("updateTimeStart", st);
             paramsMap.put("updateTimeEnd", sd);
-//            paramsMap.put("page", pageIndex);
-//            paramsMap.put("pageSize", pageSize);
+            paramsMap.put("page", pageIndex);
+            paramsMap.put("pageSize", pageSize);
             paramsMap.put("status",status);
 
             // 封装传参数据
