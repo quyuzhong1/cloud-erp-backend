@@ -96,6 +96,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
             XxlJobHelper.log("拉取数据列表为空 gyyDeliveryDetailEntityList.size = 0 ");
             return;
         }
+        XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyDeliveryDetailEntityList.size());
         gyyDeliveryDetailEntityList.parallelStream().forEach( gyyDeliveryDetailEntity -> {
             try {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
