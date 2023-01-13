@@ -69,8 +69,11 @@ public class BiLayoutController extends BaseController {
      */
     @PostMapping("/updateSubjectLayout")
     public ApiResult updateSubjectLayout(@RequestBody @Validated SubjectLayoutDetailsDTO dto) {
-        Boolean flag = layoutService.updateSubjectLayout(dto);
-        return flag == true ? success() : failure();
+        String subjectId = layoutService.updateSubjectLayout(dto);
+        if(StringUtils.isBlank(subjectId)){
+           return  failure();
+        }
+        return success(subjectId);
     }
 
 

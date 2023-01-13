@@ -107,7 +107,7 @@ public interface BiSubjectService  extends IService<BiSubjectEntity> {
      * @param dto
      * @return
      */
-    Boolean copy(CopySubjectDTO dto);
+    String copy(CopySubjectDTO dto);
 
     /**
      * 添加仪表盘

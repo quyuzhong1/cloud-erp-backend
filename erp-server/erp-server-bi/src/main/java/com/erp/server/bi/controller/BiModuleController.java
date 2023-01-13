@@ -1,15 +1,12 @@
 package com.erp.server.bi.controller;
 
-import com.erp.common.business.annotation.DataPermission;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.*;
-import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.CategoryModuleDTO;
 import com.erp.model.bi.dto.ModuleDTO;
 import com.erp.model.bi.dto.ModulePagingDTO;
-import com.erp.server.bi.service.BiLayoutService;
 import com.erp.server.bi.service.BiModuleService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,11 +35,6 @@ public class BiModuleController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "bi:module:paging",
-            tableAlias = "bm1"
-    )
     public ApiResult<PagingVO<ModulePagingDTO>> queryByPage(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
         PagingVO<ModulePagingDTO> pagingVO = biModuleService.paging(dto);
         return success(pagingVO);
@@ -104,11 +96,6 @@ public class BiModuleController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/updateState")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "bi:module:updateState",
-            serviceClass = BiLayoutService.class
-    )
     public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean flag = this.biModuleService.updateState(dto);
         return flag == true ? success() : failure();

@@ -35,6 +35,14 @@ public interface CfgApiFieldMapService extends IService<CfgApiFieldMapEntity> {
      */
     Boolean insert(CfgApiFieldMapDTO dto);
     /**
+     * @description:批量新增
+     * @author Will
+     * @date: 2023/1/12 19:10
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchAdd(List<CfgApiFieldMapDTO> list);
+    /**
      * @description: 编辑
      * @author Will
      * @date: 2023/1/11 12:15
@@ -74,4 +82,5 @@ public interface CfgApiFieldMapService extends IService<CfgApiFieldMapEntity> {
      * @return List<CfgApiFieldMapDTO>
      */
     List<CfgApiFieldMapDTO> getByParams(CfgApiFieldMapDTO dto);
+
 }

@@ -61,6 +61,16 @@ public class CfgApiFieldMapDTO {
     private String apiField;
 
     /**
+     * 外部系统的字段中文描述
+     */
+    private String apiFieldName;
+
+    /**
+     * 默认值
+     */
+    private String defaultValue;
+
+    /**
      * 选项值集合
      */
     @Valid

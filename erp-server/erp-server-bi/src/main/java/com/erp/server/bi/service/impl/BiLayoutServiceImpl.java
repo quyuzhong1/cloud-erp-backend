@@ -163,7 +163,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
      */
     @Override
     @Transactional
-    public Boolean updateSubjectLayout(SubjectLayoutDetailsDTO dto) {
+    public String updateSubjectLayout(SubjectLayoutDetailsDTO dto) {
         String userId = commonService.getUserInfo().getUid();
         String subjectId = dto.getSubjectId();
         String name = dto.getName();
@@ -181,16 +181,14 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         int layoutModuleCount = 0;
         for (LayoutDetailsDTO item : layoutDetailsList) {
-            if(CollectionUtils.isNotEmpty(item.getModuleIdList())){
+            if (CollectionUtils.isNotEmpty(item.getModuleIdList())) {
                 layoutModuleCount++;
             }
         }
-        if(layoutModuleCount==0){
+        if (layoutModuleCount == 0) {
             throw new ServiceException(ApiError.ERROR_97020);
         }
 
-
-        boolean flag = true;
 
         //检查名字能否重复
         subjectService.checkName(subjectId, name);
@@ -203,7 +201,10 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         subject.setCategoryId(categoryId);
         subject.setCategoryName(categoryName);
-        flag = subjectService.updateById(subject);
+        boolean updateResult = subjectService.updateById(subject);
+        if (!updateResult) {
+            return "";
+        }
         List<String> userList = dto.getShareUserIdList();
         //添加专题的分享用户
         subjectShareService.addSubjectShare(userList, subjectId);
@@ -238,7 +239,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
 
 
-        return flag;
+        return subjectId;
     }
 
 
@@ -374,11 +375,11 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         int layoutModuleCount = 0;
         for (LayoutDTO item : layoutList) {
-            if(CollectionUtils.isNotEmpty(item.getModuleIdList())){
+            if (CollectionUtils.isNotEmpty(item.getModuleIdList())) {
                 layoutModuleCount++;
             }
         }
-        if(layoutModuleCount==0){
+        if (layoutModuleCount == 0) {
             throw new ServiceException(ApiError.ERROR_97020);
         }
     }
