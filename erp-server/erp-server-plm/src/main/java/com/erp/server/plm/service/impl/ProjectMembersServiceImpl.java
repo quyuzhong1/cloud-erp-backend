@@ -195,6 +195,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                             }
                         }
                         obj.setChargeId(StringUtils.join(chargetIds,","));
+                    } else {
+                        obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
                     }
                 });
                 projectTaskService.updateBatchById(list);

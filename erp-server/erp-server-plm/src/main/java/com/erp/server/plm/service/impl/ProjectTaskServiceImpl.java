@@ -1197,8 +1197,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isNotEmpty(roleNamesList)) {
                 String join = StringUtils.join(roleNamesList, "|");
                 taskEntity.setApprovalRoleName(join);
-            } else {
-                taskEntity.setApprovalDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
             }
         }
         //当是评审任务的时候
@@ -1220,6 +1218,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                   if (CollectionUtils.isNotEmpty(sysRoleList)) {
                       String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
                       taskEntity.setRoleName(roleNames);
+                  } else {
+                      taskEntity.setRoleName("");
                   }
               }
             }
@@ -1351,6 +1351,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (CollectionUtils.isNotEmpty(sysRoleList)) {
                         String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
                         taskEntity.setRoleName(roleNames);
+                    } else {
+                        taskEntity.setRoleName("");
                     }
                 }
             }
@@ -1398,6 +1400,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         String approvalUserId = taskEntity.getApprovalUserId();
         String approvalRoleName = taskEntity.getApprovalRoleName();
+        String superiorType = taskEntity.getSuperiorType();
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType()) && StringUtils.isBlank(approvalUserId)) {
             List<List<String>> approvalUserIdList = new ArrayList<>();
             if (StringUtils.isNotBlank(approvalRoleName)) {
@@ -1408,12 +1411,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 resultDTO.setApprovalUserIds(approvalUserIdList);
             }
-        } else {
+        } else  if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskEntity.getDistributionType()) && StringUtils.isBlank(approvalUserId)) {
             List<List<String>> approvalUserIdList = new ArrayList<>();
-            if (StringUtils.isNotBlank(approvalUserId)) {
-                List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
+            if (StringUtils.isNotBlank(superiorType)) {
+                List<String> userIdsList = Arrays.asList(superiorType.split("\\|"));
                 for (String userId: userIdsList) {
-                    List<String> userIdList = Arrays.asList(userId.split(","));
+                    String[] split = userId.split(",");
+                    List<String> userIdList = new ArrayList<>();
+                    Arrays.stream(split).forEach(obj->{
+                        String desc = ChargeSuperiorEnum.getDesc(obj);
+                        userIdList.add(desc);
+                    });
                     approvalUserIdList.add(userIdList);
                 }
                 resultDTO.setApprovalUserIds(approvalUserIdList);

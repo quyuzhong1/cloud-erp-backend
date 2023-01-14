@@ -40,9 +40,17 @@ public enum ChargeSuperiorEnum {
     }
 
     public static String getName(Integer code) {
-        for (ChargeSuperiorEnum state : ChargeSuperiorEnum.values()) {
-            if (code.equals(state.getCode())) {
-                return state.getName();
+        for (ChargeSuperiorEnum chargeSuperiorEnum : ChargeSuperiorEnum.values()) {
+            if (chargeSuperiorEnum.getCode().equals(code)) {
+                return chargeSuperiorEnum.getName();
+            }
+        }
+        return "";
+    }
+    public static String getDesc(String name) {
+        for (ChargeSuperiorEnum chargeSuperiorEnum : ChargeSuperiorEnum.values()) {
+            if (chargeSuperiorEnum.getName().equals(name)) {
+                return chargeSuperiorEnum.getDesc();
             }
         }
         return "";

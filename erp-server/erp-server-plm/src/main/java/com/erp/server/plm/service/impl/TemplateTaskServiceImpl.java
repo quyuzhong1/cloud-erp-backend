@@ -96,6 +96,20 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 TemplateTaskEntity entity = new TemplateTaskEntity();
                 BeanMapper.copy(item, entity);
                 entity.setTemplateId(templateId);
+                if (ObjectUtils.isEmpty(item.getDistributionType())) {
+                    entity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+                }
+                if (ObjectUtils.isEmpty(item.getApprovalDistributionType())) {
+                    entity.setApprovalDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+                }
+                //如果分配方式为角色时角色为空则自动转为人员分配
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType()) && StringUtils.isBlank(item.getRoleName())) {
+                    entity.setDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+                }
+                //如果分配方式为角色时角色为空则自动转为人员分配
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getApprovalDistributionType()) && StringUtils.isBlank(item.getRoleName())) {
+                    entity.setApprovalDistributionType(DistributionTypeEnum.DISTRIBUTION_USER.getCode());
+                }
                 saveList.add(entity);
             }
             this.saveBatch(saveList);
@@ -215,7 +229,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     approvalUserIdList.add(userIdList);
                 }
             }
-            resultDTO.setApprovalUserIds(approvalUserIdList);
+            resultDTO.setApprovalRoleIds(approvalUserIdList);
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskEntity.getApprovalDistributionType())){
             //按人员分配
             String approvalUserId = taskEntity.getApprovalUserId();
@@ -239,7 +253,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                     approvalUserIdList.add(userIdList);
                 }
             }
-            resultDTO.setApprovalUserIds(approvalUserIdList);
+            resultDTO.setSuperiorTypes(approvalUserIdList);
 
         }
         resultDTO.setDeliveryDocsList(templateDeliveryDocsService.getDocsByTaskIdAndTemplateId(dto.getId(), dto.getTemplateId()));
@@ -435,30 +449,42 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (StringUtils.isNotBlank(fieldConfigType)) {
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(dto.getApprovalUserIds())) {
+                if (CollectionUtils.isEmpty(dto.getApprovalUserIds()) && CollectionUtils.isEmpty(dto.getApprovalRoleIds()) && CollectionUtils.isEmpty(dto.getSuperiorTypes())) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
         }
         List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
-        if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
+        List<List<String>> ApprovalRoleIdList = dto.getApprovalRoleIds();
+        List<List<String>> superiorTypeList = dto.getSuperiorTypes();
+        //目标交付文档分配类型
+        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getApprovalDistributionType())) {
+            //按角色分配
+            //审核角色逐级审核及会签,逐级任何人用'|'分割，会签审核人用','分割
             List<String> userIdsList = new ArrayList<>();
             for (List<String> userIdList : approvalUserIdList) {
                 String approvalUserIds = StringUtils.join(userIdList, ",");
                 userIdsList.add(approvalUserIds);
             }
             String join = StringUtils.join(userIdsList, "|");
-            //目标交付文档分配类型
-            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getApprovalDistributionType())) {
-                //按角色分配
-                //审核角色逐级审核及会签,逐级任何人用'|'分割，会签审核人用','分割
-                entity.setApprovalRoleId(join);
-            } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getApprovalDistributionType())) {
-                //按人员分配
-                entity.setApprovalUserId(join);
-            } else {
-                entity.setApprovalUserId(join);
+            entity.setApprovalRoleId(join);
+        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getApprovalDistributionType())) {
+            //按人员分配
+            List<String> userIdsList = new ArrayList<>();
+            for (List<String> userIdList : ApprovalRoleIdList) {
+                String approvalUserIds = StringUtils.join(userIdList, ",");
+                userIdsList.add(approvalUserIds);
             }
+            String join = StringUtils.join(userIdsList, "|");
+            entity.setApprovalUserId(join);
+        } else {
+            List<String> userIdsList = new ArrayList<>();
+            for (List<String> userIdList : superiorTypeList) {
+                String approvalUserIds = StringUtils.join(userIdList, ",");
+                userIdsList.add(approvalUserIds);
+            }
+            String join = StringUtils.join(userIdsList, "|");
+            entity.setSuperiorType(join);
         }
 
         String uid = loginUser.getUid();
@@ -471,10 +497,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             entity.setUpdateUserName(userName);
         }
         List<String> chargeIds = dto.getChargeIds();
+        List<String> roleIds = dto.getRoleIds();
         //任务分配类型处理
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {//分配类型为角色
-            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(chargeIds);
-            entity.setRoleId(String.join(",", chargeIds));
+            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
+            entity.setRoleId(String.join(",", roleIds));
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
                 List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
