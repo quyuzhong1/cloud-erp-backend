@@ -18,8 +18,8 @@ public enum DistributionTypeEnum implements EnumMessage {
     private String name;
 
 
-    DistributionTypeEnum(Integer colourState, String name) {
-        this.code = colourState;
+    DistributionTypeEnum(Integer code, String name) {
+        this.code = code;
         this.name = name;
     }
 

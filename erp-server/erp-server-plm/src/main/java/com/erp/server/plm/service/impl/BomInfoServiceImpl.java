@@ -204,7 +204,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public Boolean deleteById(String id) {
         boolean flag = this.removeById(id);
-        if(flag){
+        if (flag) {
             bomSkuService.deleteByBomId(id);
             productBomHistoryService.deleteByBomId(id);
         }
@@ -213,14 +213,146 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     /**
      * 提交审核
-     * @author yl
-     * @date 2023-01-13 9:58
+     *
      * @param bomId
      * @return boolean
+     * @author yl
+     * @date 2023-01-13 9:58
      */
     @Override
-    public boolean submitAudit(String bomId) {
-        return false;
+    public Boolean submitAudit(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95098);
+        }
+        bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+
+        /**
+         * 这里要发起一个流程
+         */
+        return this.updateById(bom);
+    }
+
+
+    /**
+     * 重启流程
+     *
+     * @param bomId
+     * @return boolean
+     * @author yl
+     * @date 2023-01-13 16:16
+     */
+    @Override
+    public Boolean restartAudit(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95099);
+        }
+        bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+
+        /**
+         * 这里要发起一个流程
+         */
+        return this.updateById(bom);
+    }
+
+    /**
+     * 冻结boom
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:22
+     */
+    @Override
+    public Boolean freeze(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95100);
+        }
+        bom.setState(BomStateEnum.FREEZE.getState());
+
+        return this.updateById(bom);
+    }
+
+    /**
+     * 解冻
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:29
+     */
+    @Override
+    public Boolean defrost(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95101);
+        }
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+        return this.updateById(bom);
+    }
+
+    /**
+     * 报废boom
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:33
+     */
+    @Override
+    public Boolean scrap(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        List<Integer> stateList = new ArrayList<>(2);
+        stateList.add(BomStateEnum.AUDIT_PASS.getState());
+        stateList.add(BomStateEnum.FREEZE.getState());
+        if (stateList.contains(state)) {
+            throw new ServiceException(ApiError.ERROR_95102);
+        }
+        bom.setState(BomStateEnum.SCRAP.getState());
+        return this.updateById(bom);
+    }
+
+    /**
+     * 恢复bom
+     * @author yl
+     * @date 2023-01-13 17:05
+     * @param bomId
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean recover(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95103);
+        }
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+        return this.updateById(bom);
     }
 
 

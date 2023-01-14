@@ -26,11 +26,21 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto);
 
-    BomDTO getBomDetails(String id);
+    BomDTO getBomDetails(String bomId);
 
     Boolean edit(UpdateBomDTO dto);
 
-    Boolean deleteById(String id);
+    Boolean deleteById(String bomId);
 
-    boolean submitAudit(String id);
+    Boolean submitAudit(String bomId);
+
+    Boolean restartAudit(String bomId);
+
+    Boolean freeze(String bomId);
+
+    Boolean defrost(String bomId);
+
+    Boolean scrap(String bomId);
+
+    Boolean recover(String id);
 }

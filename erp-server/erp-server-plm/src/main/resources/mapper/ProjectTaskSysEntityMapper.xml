@@ -7,8 +7,9 @@
                pts.id,
                pts.name,
                pts.type,
-               pts.charge_id,
-               pts.charge_name,
+                case when pts.distribution_type = 0 then pts.role_name
+                when pts.distribution_type = 1 then pts.charge_name
+                else '' end as charge_name,
                COALESCE((SELECT name FROM project_task_sys t WHERE t.id=pts.pre_task_id ),'') preTaskName,
                pts.pre_task_id,
                pts.plan_start_time,
