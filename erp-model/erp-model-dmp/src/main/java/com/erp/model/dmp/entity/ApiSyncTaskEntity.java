@@ -75,7 +75,7 @@ public class ApiSyncTaskEntity implements Serializable {
      * 模块类型 ApiModuleTypeEnum枚举,（0产品信息，1BOM管理）
      */
     @TableField(value = "module_type")
-    private String moduleType;
+    private Integer moduleType;
 
     /**
      * 业务id(模块数据对应主键id)

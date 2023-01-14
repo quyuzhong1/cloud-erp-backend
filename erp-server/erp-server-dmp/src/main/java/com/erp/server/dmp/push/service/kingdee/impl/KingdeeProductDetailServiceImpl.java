@@ -56,12 +56,13 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     private ApiSyncTaskService apiSyncTaskService;
 
     public static void main(String[] args) {
+        Map<String, Object> resultMap = new LinkedHashMap<>();
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
-
-        OperatorResult operatorResult = apiUtils.viewByNumber("0130");
-        System.out.println(operatorResult);
+        SaveParam param = new SaveParam(resultMap);
+        SaveResult saveResult = apiUtils.save(param);
+        System.out.println(saveResult);
     }
 
     @Override
@@ -71,7 +72,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             throw new ServiceException(ApiError.Default);
         }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getName());
+        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             throw new ServiceException(ApiError.Default);
         }
@@ -79,7 +80,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         dto.setApiPlatformId(platformEntity.getId());
         dto.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
-        if (CollectionUtils.isNotEmpty(mapList)) {
+        if (CollectionUtils.isEmpty(mapList)) {
             log.info(ApiError.ERROR_97025.msg);
             //新增定时同步任务
             insertApiSyncTask(platformEntity, map);
@@ -218,7 +219,9 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //给非底层结构添加Map
             Object obj = resultMap.get(apiFields.get(i));
             if (ObjectUtils.isNull(obj)) {
-                resultMap.put(apiFields.get(i),new LinkedHashMap<>());
+                //获取上一级Map对象
+                Map<String, Object> parentMap = getParentMap(resultMap, apiFields, i);
+                parentMap.put(apiFields.get(i),new LinkedHashMap<>());
             }
         }
     }
