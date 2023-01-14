@@ -300,8 +300,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 } else {
                     rowMap.put(country, BigDecimal.ZERO);
                 }
-                rowAxesList.add(rowMap);
             }
+            rowAxesList.add(rowMap);
         }
         result.setColumnList(columnList);
         result.setRowList(rowAxesList);
