@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
+import com.erp.model.plm.vo.BomVO;
 import com.erp.server.plm.mapper.ProductBomHistoryMapper;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
@@ -64,5 +65,10 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
     public void deleteByBomId(String id) {
 
         
+    }
+
+    @Override
+    public List<BomVO> getVersionList(String id) {
+        return null;
     }
 }

@@ -10,7 +10,9 @@ import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.BomSearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.vo.BomPagingVO;
+import com.erp.model.plm.vo.BomVO;
 import com.erp.server.plm.service.BomInfoService;
+import com.erp.server.plm.service.ProductBomHistoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +37,9 @@ public class BomInfoController extends BaseController {
     @Resource
     private BomInfoService bomInfoService;
 
+
+    @Resource
+    private ProductBomHistoryService productBomHistoryService;
     /**
      * 分页查询
      *
@@ -78,7 +83,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/submitAudit")
-    public ApiResult<BomDTO> submitAudit(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult submitAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.submitAudit(dto.getId());
         return result==true?success():failure();
     }
@@ -90,7 +95,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/restartAudit")
-    public ApiResult<BomDTO> restartAudit(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult restartAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.restartAudit(dto.getId());
         return result==true?success():failure();
     }
@@ -101,7 +106,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/freeze")
-    public ApiResult<BomDTO> freeze(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult freeze(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.freeze(dto.getId());
         return result==true?success():failure();
     }
@@ -112,7 +117,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/defrost")
-    public ApiResult<BomDTO> defrost(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult defrost(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.defrost(dto.getId());
         return result==true?success():failure();
     }
@@ -123,7 +128,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/scrap")
-    public ApiResult<BomDTO> scrap(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult scrap(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.scrap(dto.getId());
         return result==true?success():failure();
     }
@@ -133,7 +138,7 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/recover")
-    public ApiResult<BomDTO> recover(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult recover(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.recover(dto.getId());
         return result==true?success():failure();
     }
@@ -162,6 +167,18 @@ public class BomInfoController extends BaseController {
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = bomInfoService.deleteById(dto.getId());
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 删除数据
+     *
+     * @param dto 主键
+     * @return 删除是否成功
+     */
+    @PostMapping("/version/list")
+    public ApiResult<List<BomVO>> versionList(@RequestBody @Validated BaseIdDTO dto) {
+        List<BomVO> list = productBomHistoryService.getVersionList(dto.getId());
+        return  success(list);
     }
 
 }
