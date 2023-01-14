@@ -80,7 +80,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         dto.setApiPlatformId(platformEntity.getId());
         dto.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
-        if (CollectionUtils.isNotEmpty(mapList)) {
+        if (CollectionUtils.isEmpty(mapList)) {
             log.info(ApiError.ERROR_97025.msg);
             //新增定时同步任务
             insertApiSyncTask(platformEntity, map);
@@ -219,7 +219,9 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //给非底层结构添加Map
             Object obj = resultMap.get(apiFields.get(i));
             if (ObjectUtils.isNull(obj)) {
-                resultMap.put(apiFields.get(i),new LinkedHashMap<>());
+                //获取上一级Map对象
+                Map<String, Object> parentMap = getParentMap(resultMap, apiFields, i);
+                parentMap.put(apiFields.get(i),new LinkedHashMap<>());
             }
         }
     }

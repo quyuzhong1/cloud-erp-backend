@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * @date: 2023/1/11 11:27
  */
 @Data
-@TableName(value ="cfg_api_field_map_value")
+@TableName(value ="cfg_api_field_value_map")
 public class CfgApiFieldMapValueEntity implements Serializable {
 
     @TableField(exist = false)
