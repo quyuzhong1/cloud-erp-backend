@@ -18,10 +18,10 @@ import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.RepoError;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,21 +58,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     public static void main(String[] args) {
 
         //读取配置，初始化SDK
-        K3CloudApi client = new K3CloudApi();
-        //用于记录结果
-        StringBuilder info = new StringBuilder();
-        //业务对象标识
-        String formId = "BD_MATERIAL";
-        String jsonData = "{\"NeedUpDateFields\":[],\"NeedReturnFields\":[],\"IsDeleteEntry\":\"true\",\"SubSystemId\":\"\",\"IsVerifyBaseDataField\":\"false\",\"IsEntryBatchFill\":\"true\",\"ValidateFlag\":\"true\",\"NumberSearch\":\"true\",\"IsAutoAdjustField\":\"false\",\"InterationFlags\":\"\",\"IgnoreInterationFlag\":\"\",\"IsControlPrecision\":\"false\",\"ValidateRepeatJson\":\"false\",\"Model\":{\"FMATERIALID\":0,\"FCreateOrgId\":{\"FNumber\":\"\"},\"FUseOrgId\":{\"FNumber\":\"\"},\"FNumber\":\"\",\"FName\":\"\",\"FSpecification\":\"\",\"FMnemonicCode\":\"\",\"FOldNumber\":\"\",\"FDescription\":\"\",\"FMaterialGroup\":{\"FNumber\":\"\"},\"FDSMatchByLot\":\"false\",\"FImgStorageType\":\"\",\"FIsSalseByNet\":\"false\",\"FSPUID\":{\"FNUMBER\":\"\"},\"FPinYin\":\"\",\"FForbidReson\":\"\",\"FExtVar\":\"\",\"FSubHeadEntity\":{\"FEntryId\":0,\"FComTypeId_CMK\":{\"FNUMBER\":\"\"},\"FBarCodeHeader_CMK\":\"\",\"FComBrandId_CMK\":{\"FNUMBER\":\"\"},\"FBusinessType_CMK\":{\"FNumber\":\"\"},\"FShoppeID_CMK\":{\"FNUMBER\":\"\"},\"FSellMethod_CMK\":{\"FNumber\":\"\"},\"FCurrencyId_CMK\":{\"FNUMBER\":\"\"},\"FSalePrice_CMK\":0,\"FVIPPrice_CMK\":0,\"FGoodBarCode_CMK\":\"\",\"FPointsRate_CMK\":0,\"FPurPrice_CMK\":0,\"FLSProPrice\":0,\"FMaterialSource\":{\"FNUMBER\":\"\"},\"FIsControlSal\":\"false\",\"FLowerPercent\":0,\"FUpPercent\":0,\"FCalculateBase\":\"\",\"FMaxSalPrice_CMK\":0,\"FMinSalPrice_CMK\":0,\"FIsAutoRemove\":\"false\",\"FIsMailVirtual\":\"false\",\"FIsFreeSend\":\"\",\"FTimeUnit\":\"\",\"FRentFreeDura\":0,\"FPricingStep\":0,\"FMinRentDura\":0,\"FRentBeginPrice\":0,\"FPriceType\":\"\",\"FRentStepPrice\":0,\"FDepositAmount\":0,\"FLogisticsCount\":0,\"FRequestMinPackQty\":0,\"FMinRequestQty\":0,\"FRetailUnitID\":{\"FNUMBER\":\"\"},\"FIsPrinttAg\":\"false\",\"FIsAccessory\":\"false\"},\"SubHeadEntity\":{\"FEntryId\":0,\"FBARCODE\":\"\",\"FErpClsID\":\"\",\"FFeatureItem\":\"\",\"FCONFIGTYPE\":\"\",\"FCategoryID\":{\"FNumber\":\"\"},\"FTaxType\":{\"FNumber\":\"\"},\"FTaxRateId\":{\"FNUMBER\":\"\"},\"FBaseUnitId\":{\"FNumber\":\"\"},\"FIsPurchase\":\"false\",\"FIsInventory\":\"false\",\"FIsSubContract\":\"false\",\"FIsSale\":\"false\",\"FIsProduce\":\"false\",\"FIsAsset\":\"false\",\"FGROSSWEIGHT\":0,\"FNETWEIGHT\":0,\"FWEIGHTUNITID\":{\"FNUMBER\":\"\"},\"FLENGTH\":0,\"FWIDTH\":0,\"FHEIGHT\":0,\"FVOLUME\":0,\"FVOLUMEUNITID\":{\"FNUMBER\":\"\"},\"FSuite\":\"\",\"FCostPriceRate\":0,\"FColor\":\"\",\"FSpreadName\":\"\",\"FNameEn\":\"\",\"FSysModel\":\"\",\"FUseOrgId1\":{\"FNumber\":\"\"}},\"SubHeadEntity1\":{\"FEntryId\":0,\"FStoreUnitID\":{\"FNumber\":\"\"},\"FAuxUnitID\":{\"FNumber\":\"\"},\"FUnitConvertDir\":\"\",\"FStockId\":{\"FNumber\":\"\"},\"FStockPlaceId\":{},\"FIsLockStock\":\"false\",\"FIsCycleCounting\":\"false\",\"FCountCycle\":\"\",\"FCountDay\":0,\"FIsMustCounting\":\"false\",\"FIsBatchManage\":\"false\",\"FBatchRuleID\":{\"FNumber\":\"\"},\"FIsKFPeriod\":\"false\",\"FIsExpParToFlot\":\"false\",\"FExpUnit\":\"\",\"FExpPeriod\":0,\"FOnlineLife\":0,\"FRefCost\":0,\"FCurrencyId\":{\"FNumber\":\"\"},\"FIsEnableMinStock\":\"false\",\"FIsEnableMaxStock\":\"false\",\"FIsEnableSafeStock\":\"false\",\"FIsEnableReOrder\":\"false\",\"FMinStock\":0,\"FSafeStock\":0,\"FReOrderGood\":0,\"FEconReOrderQty\":0,\"FMaxStock\":0,\"FIsSNManage\":\"false\",\"FIsSNPRDTracy\":\"false\",\"FSNCodeRule\":{\"FNumber\":\"\"},\"FSNUnit\":{\"FNumber\":\"\"},\"FSNManageType\":\"\",\"FSNGenerateTime\":\"\",\"FBoxStandardQty\":0,\"FUseOrgId2\":{\"FNumber\":\"\"}},\"SubHeadEntity2\":{\"FEntryId\":0,\"FSaleUnitId\":{\"FNumber\":\"\"},\"FSalePriceUnitId\":{\"FNumber\":\"\"},\"FOrderQty\":0,\"FMinQty\":0,\"FMaxQty\":0,\"FOutStockLmtH\":0,\"FOutStockLmtL\":0,\"FAgentSalReduceRate\":0,\"FIsATPCheck\":\"false\",\"FIsReturnPart\":\"false\",\"FIsInvoice\":\"false\",\"FIsReturn\":\"false\",\"FAllowPublish\":\"false\",\"FISAFTERSALE\":\"false\",\"FISPRODUCTFILES\":\"false\",\"FISWARRANTED\":\"false\",\"FWARRANTY\":0,\"FWARRANTYUNITID\":\"\",\"FOutLmtUnit\":\"\",\"FTaxCategoryCodeId\":{\"FNUMBER\":\"\"},\"FSalGroup\":{\"FNumber\":\"\"},\"FIsTaxEnjoy\":\"false\",\"FTaxDiscountsType\":\"\",\"FUseOrgId3\":{\"FNumber\":\"\"},\"FUnValidateExpQty\":\"false\"},\"SubHeadEntity3\":{\"FEntryId\":0,\"FBaseMinSplitQty\":0,\"FPurchaseUnitId\":{\"FNumber\":\"\"},\"FPurchasePriceUnitId\":{\"FNumber\":\"\"},\"FPurchaseOrgId\":{\"FNumber\":\"\"},\"FPurchaseGroupId\":{\"FNumber\":\"\"},\"FPurchaserId\":{\"FNumber\":\"\"},\"FDefaultVendor\":{\"FNumber\":\"\"},\"FChargeID\":{\"FNumber\":\"\"},\"FIsQuota\":\"false\",\"FQuotaType\":\"\",\"FMinSplitQty\":0,\"FIsVmiBusiness\":\"false\",\"FEnableSL\":\"false\",\"FIsPR\":\"false\",\"FIsReturnMaterial\":\"false\",\"FIsSourceControl\":\"false\",\"FReceiveMaxScale\":0,\"FReceiveMinScale\":0,\"FReceiveAdvanceDays\":0,\"FReceiveDelayDays\":0,\"FPOBillTypeId\":{\"FNUMBER\":\"\"},\"FAgentPurPlusRate\":0,\"FDefBarCodeRuleId\":{\"FNUMBER\":\"\"},\"FPrintCount\":0,\"FMinPackCount\":0,\"FUseOrgId4\":{\"FNumber\":\"\"},\"FDailyOutQtySub\":0,\"FDefaultLineIdSub\":{\"FNUMBER\":\"\"},\"FIsEnableScheduleSub\":\"false\"},\"SubHeadEntity4\":{\"FEntryId\":0,\"FPlanMode\":\"\",\"FBaseVarLeadTimeLotSize\":0,\"FPlanningStrategy\":\"\",\"FMfgPolicyId\":{\"FNumber\":\"\"},\"FOrderPolicy\":\"\",\"FPlanWorkshop\":{\"FNumber\":\"\"},\"FFixLeadTime\":0,\"FFixLeadTimeType\":\"\",\"FVarLeadTime\":0,\"FVarLeadTimeType\":\"\",\"FCheckLeadTime\":0,\"FCheckLeadTimeType\":\"\",\"FOrderIntervalTimeType\":\"\",\"FOrderIntervalTime\":0,\"FMaxPOQty\":0,\"FMinPOQty\":0,\"FIncreaseQty\":0,\"FEOQ\":0,\"FVarLeadTimeLotSize\":0,\"FPlanIntervalsDays\":0,\"FPlanBatchSplitQty\":0,\"FRequestTimeZone\":0,\"FPlanTimeZone\":0,\"FPlanGroupId\":{\"FNumber\":\"\"},\"FATOSchemeId\":{\"FNUMBER\":\"\"},\"FPlanerID\":{\"FNumber\":\"\"},\"FIsMrpComBill\":\"false\",\"FCanLeadDays\":0,\"FIsMrpComReq\":\"false\",\"FLeadExtendDay\":0,\"FReserveType\":\"\",\"FPlanSafeStockQty\":0,\"FAllowPartAhead\":\"false\",\"FCanDelayDays\":0,\"FDelayExtendDay\":0,\"FAllowPartDelay\":\"false\",\"FPlanOffsetTimeType\":\"\",\"FPlanOffsetTime\":0,\"FSupplySourceId\":{\"FNumber\":\"\"},\"FTimeFactorId\":{\"FNumber\":\"\"},\"FQtyFactorId\":{\"FNumber\":\"\"},\"FProductLine\":{\"FNUMBER\":\"\"},\"FWriteOffQty\":0,\"FPlanIdent\":{\"FNumber\":\"\"},\"FProScheTrackId\":{\"FNumber\":\"\"},\"FDailyOutQty\":0,\"FUseOrgId7\":{\"FNumber\":\"\"}},\"SubHeadEntity5\":{\"FEntryId\":0,\"FWorkShopId\":{\"FNumber\":\"\"},\"FProduceUnitId\":{\"FNumber\":\"\"},\"FFinishReceiptOverRate\":0,\"FFinishReceiptShortRate\":0,\"FProduceBillType\":{\"FNUMBER\":\"\"},\"FOrgTrustBillType\":{\"FNUMBER\":\"\"},\"FIsSNCarryToParent\":\"false\",\"FIsProductLine\":\"false\",\"FBOMUnitId\":{\"FNumber\":\"\"},\"FLOSSPERCENT\":0,\"FConsumVolatility\":0,\"FIsMainPrd\":\"false\",\"FIsCoby\":\"false\",\"FIsECN\":\"false\",\"FIssueType\":\"\",\"FBKFLTime\":\"\",\"FPickStockId\":{\"FNumber\":\"\"},\"FPickBinId\":{},\"FOverControlMode\":\"\",\"FMinIssueQty\":0,\"FISMinIssueQty\":\"false\",\"FIsKitting\":\"false\",\"FIsCompleteSet\":\"false\",\"FDefaultRouting\":{\"FNumber\":\"\"},\"FStdLaborPrePareTime\":0,\"FStdLaborProcessTime\":0,\"FStdMachinePrepareTime\":0,\"FStdMachineProcessTime\":0,\"FMinIssueUnitId\":{\"FNUMBER\":\"\"},\"FMdlId\":{\"FNUMBER\":\"\"},\"FMdlMaterialId\":{\"FNUMBER\":\"\"},\"FStandHourUnitId\":\"\",\"FBackFlushType\":\"\",\"FFIXLOSS\":0,\"FUseOrgId6\":{\"FNumber\":\"\"},\"FIsEnableSchedule\":\"false\",\"FDefaultLineId\":{\"FNUMBER\":\"\"}},\"SubHeadEntity7\":{\"FEntryId\":0,\"FSubconUnitId\":{\"FNumber\":\"\"},\"FSubconPriceUnitId\":{\"FNumber\":\"\"},\"FSubBillType\":{\"FNUMBER\":\"\"},\"FUseOrgId8\":{\"FNumber\":\"\"}},\"SubHeadEntity6\":{\"FEntryId\":0,\"FCheckIncoming\":\"false\",\"FCheckProduct\":\"false\",\"FCheckStock\":\"false\",\"FCheckReturn\":\"false\",\"FCheckDelivery\":\"false\",\"FEnableCyclistQCSTK\":\"false\",\"FStockCycle\":0,\"FEnableCyclistQCSTKEW\":\"false\",\"FEWLeadDay\":0,\"FIncSampSchemeId\":{\"FNUMBER\":\"\"},\"FIncQcSchemeId\":{\"FNUMBER\":\"\"},\"FInspectGroupId\":{\"FNUMBER\":\"\"},\"FInspectorId\":{\"FNUMBER\":\"\"},\"FCheckEntrusted\":\"false\",\"FCheckOther\":\"false\",\"FIsFirstInspect\":\"false\",\"FUseOrgId5\":{\"FNumber\":\"\"},\"FCheckReturnMtrl\":\"false\",\"FCheckSubRtnMtrl\":\"false\",\"FFirstQCControlType\":\"\"},\"FBarCodeEntity_CMK\":[{\"FEntryID\":0,\"FCodeType_CMK\":\"\",\"FBarCode_CMK\":\"\",\"FUnitId_CMK\":{\"FNUMBER\":\"\"},\"FPrice_CMK\":0,\"FVIPPrice\":0,\"FProPrice\":0,\"FVIPCardLevel_CMK\":{\"FNUMBER\":\"\"},\"FRemarks_CMK\":\"\"}],\"FSpecialAttributeEntity\":[{\"FEntryID\":0,\"FSpecAttrCategoryID\":{\"FNUMBER\":\"\"},\"FSpecialAttributeID\":{\"FNUMBER\":\"\"}}],\"FEntityAuxPty\":[{\"FEntryID\":0,\"FAuxPropertyId\":{\"FNumber\":\"\"},\"FIsEnable1\":\"false\",\"FIsComControl\":\"false\",\"FIsAffectPrice1\":\"false\",\"FIsAffectPlan1\":\"false\",\"FIsAffectCost1\":\"false\",\"FIsMustInput\":\"false\",\"FUseOrgId11\":{\"FNumber\":\"\"},\"FValueType\":\"\"}],\"FEntityInvPty\":[{\"FEntryID\":0,\"FUseOrgId10\":{\"FNumber\":\"\"},\"FInvPtyId\":{\"FNumber\":\"\"},\"FIsEnable\":\"false\",\"FIsAffectPrice\":\"false\",\"FIsAffectPlan\":\"false\",\"FIsAffectCost\":\"false\"}]}}";
-        //调用接口
-        String resultJson = null;
-        try {
-            resultJson = client.save(formId, jsonData);
-            System.out.println(resultJson);
-        } catch (Exception e) {
-            log.info("请求接口地址异常 错误信息：" + e.getMessage());
-            e.printStackTrace();
-        }
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
+
+        OperatorResult operatorResult = apiUtils.viewByNumber("0130");
+        System.out.println(operatorResult);
     }
 
     @Override
@@ -108,24 +97,20 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
             //第三方系统逗号分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
-            List<String> apiFields = Arrays.stream(apiField.split(",")).collect(Collectors.toList());
+            List<String> apiFields = Arrays.stream(apiField.split("_")).collect(Collectors.toList());
             for (int i = 0; i < apiFields.size(); i++) {
                 //给不同结构的外部字段赋值
                 handleResultMap(cfgApiFieldMapDTO, cfgApiFieldMapValueList, map, resultMap, apiFields, i);
             }
         }
         //判断金蝶系统是否已存在该数据
-        String filterStr = "";
-        String fieldKeys = "";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 0, 100);
+        String skuNo = (String)resultMap.get("Model_FNumber");
+        OperatorResult operatorResult = apiUtils.viewByNumber(skuNo);
         //如果未查询到数据则直接新增
-        if (CollectionUtils.isEmpty(queryList)) {
+        if (ObjectUtils.isEmpty(operatorResult.getResult())) {
             insert(platformEntity,map,resultMap,apiUtils);
         } else {
-            Map<String, Object> queryMap = queryList.stream().filter(obj -> "".equals(obj.get("FCreateOrgId_FNumber"))).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(queryMap) || queryMap.size() == 0) {
-                insert(platformEntity,map,resultMap,apiUtils);
-            }
+
         }
     }
 
@@ -146,7 +131,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
             apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
             apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
-            apiPlmSyncLogDTO.setStatus(ApiStatusEnum.SUCCESS.getCode());
+            apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
             apiPlmSyncLogDTO.setMsg("发送成功");
             apiPlmSyncLogDTO.setRequestParamJson(jsonData);
             apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
@@ -164,7 +149,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
             apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
             apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
-            apiPlmSyncLogDTO.setStatus(ApiStatusEnum.FAILURE.getCode());
+            apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
             apiPlmSyncLogDTO.setMsg(JSONArray.toJSONString(errors));
             apiPlmSyncLogDTO.setRequestParamJson(jsonData);
             apiPlmSyncLogService.insert(apiPlmSyncLogDTO);

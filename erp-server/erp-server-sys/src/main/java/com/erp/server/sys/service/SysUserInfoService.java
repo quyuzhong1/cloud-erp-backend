@@ -93,5 +93,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
     List<SysUserDeptDTO> getUserDeptList();
+
+    SysUserDTO getSysUserById(String userId);
 }
 

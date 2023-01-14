@@ -22,6 +22,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("bi/module")
+@Validated
 public class BiModuleController extends BaseController {
     /**
      * 服务对象
@@ -41,6 +42,7 @@ public class BiModuleController extends BaseController {
     }
 
 
+
     /**
      * 新增模块
      *
@@ -48,7 +50,7 @@ public class BiModuleController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/add")
-    public ApiResult add(@ModelAttribute @Validated ModuleDTO dto) {
+    public ApiResult add(@Validated @ModelAttribute  ModuleDTO dto) {
         Boolean flag = this.biModuleService.insert(dto);
         return flag == true ? success() : failure();
     }

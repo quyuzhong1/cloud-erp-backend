@@ -90,5 +90,6 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
-
+    @PostMapping("sys/feign/user/getSysUserById")
+    SysUserDTO getSysUserById(@RequestBody String uid);
 }

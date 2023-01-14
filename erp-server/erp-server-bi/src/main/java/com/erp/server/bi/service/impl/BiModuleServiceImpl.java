@@ -85,7 +85,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         params.setParam(dto.getParam());
         IPage pageData = baseMapper.paging(query, params);
         List<ModulePagingDTO> list = pageData.getRecords();
-        if(CollectionUtils.isNotEmpty(list)){
+        if (CollectionUtils.isNotEmpty(list)) {
             List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
             List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());
             List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
@@ -105,7 +105,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 item.setUsageCount((int) usageCount);
             }
         }
-
 
 
         return new PagingVO(pageData);
@@ -210,6 +209,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         checkName(null, name);
         String sysModuleId = biModule.getSysModuleId();
         Object imageObject = biModule.getImageFile();
+        String moduleName = biModule.getName();
+        if (moduleName.length() > 30) {
+            throw new ServiceException(ApiError.ERROR_97026);
+        }
+        String remark = biModule.getRemark();
+        if (remark.length() > 200) {
+            throw new ServiceException(ApiError.ERROR_97027);
+        }
         String fileUrl = "";
         if (imageObject != null && !imageObject.equals("null")) {
             MultipartFile imageFile = (MultipartFile) imageObject;
@@ -293,6 +300,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             throw new ServiceException(ApiError.ERROR_97004);
         }
         String name = biModule.getName();
+        if (name.length() > 30) {
+            throw new ServiceException(ApiError.ERROR_97026);
+        }
+        String remark = biModule.getRemark();
+        if (remark.length() > 200) {
+            throw new ServiceException(ApiError.ERROR_97027);
+        }
+
         checkName(biModule.getId(), name);
         Boolean uploadFlag = biModule.getUploadFlag();
         Object imageObject = biModule.getImageFile();

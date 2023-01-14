@@ -1551,7 +1551,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //不在的 任务状态
         List<Integer> notStateList = new ArrayList<>();
         //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)||TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition) || TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
             notStateList.add(TaskStateEnum.CLOSE.getCode());
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
@@ -1882,13 +1882,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return new PagingVO(pageData);
     }
 
-    
+
     /**
      * 分配给我待审核
+     *
+     * @param searchParamDTO
+     * @return com.erp.common.vo.PagingVO<java.util.List < com.erp.model.plm.dto.TaskPagingShowDTO>>
      * @author yl
      * @date 2023-01-10 15:34
-     * @param searchParamDTO
-     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -1914,26 +1915,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //不在的 任务状态
         List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
         List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
-        List<String> processInstanceIds=workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(processInstanceIds)){
+        List<String> processInstanceIds = workflowList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(processInstanceIds)) {
             return new PagingVO(pageData);
         }
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
-            pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+            pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params, processInstanceIds);
         } else {
             //根据产品分组
             if (ifProductGroup) {
                 //这个就是产品的id
-                pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+                pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params, processInstanceIds);
             } else {
                 //标示是是计划时间
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 //计划时间
-                pageData = baseMapper.toMeWaitAuditPlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"),processInstanceIds);
+                pageData = baseMapper.toMeWaitAuditPlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"), processInstanceIds);
             }
         }
 
@@ -2013,6 +2014,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return new PagingVO(pageData);
     }
+
     /**
      * 我创造的    任务创建人=当前账号人
      *
@@ -2500,8 +2502,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             noExistStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
             noExistStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
         }
-       // 待审核 待审核，审核中
-        if(TaskConstant.WAIT_AUDIT.equals(taskCondition)){
+        // 待审核 待审核，审核中
+        if (TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
             noExistStateList.add(TaskStateEnum.CLOSE.getCode());
             noExistStateList.add(TaskStateEnum.ING.getCode());
             noExistStateList.add(TaskStateEnum.NOT_START.getCode());
@@ -3119,8 +3121,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer portionFinishCode = TaskStateEnum.PORTION_FINISH.getCode();
         // 只有待审核 和 完成待审核 的状态 才可以审核通过
         if (!waitConfirmCode.equals(state) &&
-                !approvalIngCode.equals(state)&&
-             !portionFinishCode.equals(state)) {
+                !approvalIngCode.equals(state) &&
+                !portionFinishCode.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95038);
         }
 
@@ -3319,7 +3321,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Integer reviewTask = TaskTypeEnum.REVIEW_TASK.getCode();
                 //当是评审任务的时候就 并且是部分完成的时候就要启动评审流程
                 if (reviewTask.equals(taskType)) {
-                    taskEntity = startReviewTaskProcess(taskEntity,loginUser.getUid(),BusinessProcessEnum.REVIEW_TASK.getBusinessKey());
+                    taskEntity = startReviewTaskProcess(taskEntity, loginUser.getUid(), BusinessProcessEnum.REVIEW_TASK.getBusinessKey());
                 }
             } else {
                 taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
