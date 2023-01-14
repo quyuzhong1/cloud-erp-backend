@@ -59,7 +59,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -148,7 +148,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -243,7 +243,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -332,7 +332,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -421,7 +421,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -728,7 +728,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -823,7 +823,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -910,7 +910,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -999,7 +999,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -1084,7 +1084,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1171,7 +1171,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1287,7 +1287,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1375,7 +1375,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1462,7 +1462,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1551,7 +1551,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1638,7 +1638,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1726,7 +1726,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -1812,7 +1812,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -1897,7 +1897,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2009,7 +2009,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2124,7 +2124,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2212,7 +2212,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2285,7 +2285,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -2358,7 +2358,7 @@
         </if>
         <!-- sku -->
         <if test="params.sku!=null and params.sku.size>0">
-            AND i.platform_sku IN
+            AND i.sku_no IN
             <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                 #{sku}
             </foreach>
@@ -2447,7 +2447,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2573,7 +2573,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2660,7 +2660,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2746,7 +2746,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
@@ -2835,7 +2835,7 @@
             </if>
             <!-- sku -->
             <if test="params.sku!=null and params.sku.size>0">
-                AND i.platform_sku IN
+                AND i.sku_no IN
                 <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
                     #{sku}
                 </foreach>
