@@ -99,8 +99,10 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
                 if (ObjectUtils.isEmpty(productInfoDTO)) {
                     errorMsgList.add("系统中未找的此sku编号对应的spu");
                 } else {
-                    if (!dto.getCategory().equals(productInfoDTO.getCategory())) {
-                        errorMsgList.add("导入品类与产品品类不一致");
+                    if (StringUtils.isNotBlank(dto.getCategory())) {
+                        if (!dto.getCategory().equals(productInfoDTO.getCategory())) {
+                            errorMsgList.add("导入品类与产品品类不一致");
+                        }
                     }
                     entity.setSpuId(productInfoDTO.getId());
                     entity.setSpuNo(productInfoDTO.getSpuNo());
