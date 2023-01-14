@@ -76,8 +76,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         jobTaskDTO.setApiName("管易云查询历史发货订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(72000);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-04-15 18:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-04-15 19:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-07-22 23:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-07-23 22:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(2);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -226,7 +226,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                 dmpErrorLogEntity.setCreateTime(new Date());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getMessage()));
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace()));
             }
             pageIndex++;
         }
