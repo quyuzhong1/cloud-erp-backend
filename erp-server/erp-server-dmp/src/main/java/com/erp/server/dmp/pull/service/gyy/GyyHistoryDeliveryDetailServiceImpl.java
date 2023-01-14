@@ -114,7 +114,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 } else {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
-                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", mongoData.size());
+                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", CollectionUtil.isNotEmpty(mongoData) ? mongoData.size() : 0);
                 //存储数据到中台
                 analysisDeliveryDetail(gyyDeliveryDetailEntity);
                 XxlJobHelper.log("pgsql数据处理完成 gyyDeliveryDetailEntity.size={} ", JSONUtil.toJsonStr(gyyDeliveryDetailEntity));
@@ -123,7 +123,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                 dmpErrorLogEntity.setParams(JSONUtil.toJsonStr(dto));
                 XxlJobHelper.log("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
-                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
+                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e);
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
                 dmpErrorLogEntity.setCreateTime(new Date());
@@ -139,10 +139,10 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         //拉取数据 存库
         pullDataSave(requestDTO);
         // 修改任务执行结果信息
-        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
-        if (!aBoolean) {
-            throw new RuntimeException("修改任务下次执行时间失败！");
-        }
+//        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+//        if (!aBoolean) {
+//            throw new RuntimeException("修改任务下次执行时间失败！");
+//        }
     }
 
     /**
