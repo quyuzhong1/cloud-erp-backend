@@ -109,5 +109,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return List<UserDTO>
      */
     List<UserDTO> listSuperiorByRoleName(String roleName);
+
+    SysUserDTO getSysUserById(String userId);
 }
 

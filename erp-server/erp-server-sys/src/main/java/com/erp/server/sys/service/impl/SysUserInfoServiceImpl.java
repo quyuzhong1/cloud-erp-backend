@@ -856,4 +856,56 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<UserDTO> userList = resultList.stream().distinct().collect(Collectors.toList());
         return userList;
     }
+
+
+    /**
+     * 根据用户id 获取用户登录的信息
+     * 用于 token 获取用户信息内容
+     * @author yl
+     * @date 2023-01-14 9:45
+     * @param userId
+     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     */
+    @Override
+    public SysUserDTO getSysUserById(String userId) {
+        SysUserInfoEntity entity = this.getById(userId);
+        if (Objects.isNull(entity)) {
+            return null;
+        }
+        Integer userState = entity.getUserState();
+        //表示禁用
+        if (UserStateConstants.USER_DISABLE == userState) {
+            throw new ServiceException(ApiError.ERROR_1011);
+        }
+        SysUserDTO vo = new SysUserDTO();
+        BeanMapperUtils.copy(entity, vo);
+
+        //判断是否是超级管理员登录
+        SysUserDTO sysUserDTO = adminLogin(vo);
+        if (sysUserDTO != null) {
+            return sysUserDTO;
+        }
+
+        //后面还有编写 1580852739573813249
+        String uid = entity.getUid();
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        vo.setPermissionList(permissionList);
+        vo.setOverallMenuList(overallMenuList);
+        vo.setLeftMenuList(leftMenuList);
+        SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
+        Integer bindingState = 0;
+        String bindingPlatform = "";
+        if (!Objects.isNull(thirdEntity)) {
+            bindingPlatform = thirdEntity.getThirdPartyType();
+            bindingState = 1;
+        }
+        vo.setBindingPlatform(bindingPlatform);
+        vo.setBindingState(bindingState);
+        return vo;
+    }
+
+
 }

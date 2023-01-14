@@ -255,4 +255,10 @@ public class SysUserFeignController extends BaseController {
     public List<SysRoleDTO> listRoleByUserIds(@RequestBody List<String> userIds) {
         return sysRoleService.listRoleByUserIds(userIds);
     }
+
+
+    @PostMapping("/getSysUserById")
+    public SysUserDTO getSysUserById(@RequestBody String userId) {
+        return sysUserInfoService.getSysUserById(userId);
+    }
 }

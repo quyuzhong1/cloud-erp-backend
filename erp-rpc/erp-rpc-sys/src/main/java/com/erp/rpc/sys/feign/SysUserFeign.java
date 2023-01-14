@@ -94,6 +94,8 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
+    @PostMapping("sys/feign/user/getSysUserById")
+    SysUserDTO getSysUserById(@RequestBody String uid);
     //根据用户id查询所有上级用户
     @PostMapping("sys/feign/user/listSuperiorByUserId")
     List<UserDTO> listSuperiorByUserId(@RequestBody String userId);
