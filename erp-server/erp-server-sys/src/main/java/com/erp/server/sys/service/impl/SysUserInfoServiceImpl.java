@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.RedisCacheConstants;
 import com.common.core.constant.ThirdConstants;
@@ -31,13 +30,18 @@ import com.erp.common.modules.sys.vo.SysMenuVO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.SysRoleUserEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
-import com.erp.server.sys.service.*;
+import com.erp.server.sys.service.SysRoleMenuService;
+import com.erp.server.sys.service.SysRoleUserService;
+import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.SysUserThirdService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -76,8 +80,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private MailService mailService;
 
-    @Resource
-    private SysMenuService sysMenuService;
+
 
 
     @Resource
@@ -779,4 +782,56 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     public List<SysUserDeptDTO> getUserDeptList(){
         return baseMapper.getUserDeptList();
     }
+    
+    
+    /**
+     * 根据用户id 获取用户登录的信息
+     * 用于 token 获取用户信息内容
+     * @author yl
+     * @date 2023-01-14 9:45
+     * @param userId
+     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     */
+    @Override
+    public SysUserDTO getSysUserById(String userId) {
+        SysUserInfoEntity entity = this.getById(userId);
+        if (Objects.isNull(entity)) {
+            return null;
+        }
+        Integer userState = entity.getUserState();
+        //表示禁用
+        if (UserStateConstants.USER_DISABLE == userState) {
+            throw new ServiceException(ApiError.ERROR_1011);
+        }
+        SysUserDTO vo = new SysUserDTO();
+        BeanMapperUtils.copy(entity, vo);
+
+        //判断是否是超级管理员登录
+        SysUserDTO sysUserDTO = adminLogin(vo);
+        if (sysUserDTO != null) {
+            return sysUserDTO;
+        }
+
+        //后面还有编写 1580852739573813249
+        String uid = entity.getUid();
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
+        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds);
+        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds);
+        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE);
+        vo.setPermissionList(permissionList);
+        vo.setOverallMenuList(overallMenuList);
+        vo.setLeftMenuList(leftMenuList);
+        SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
+        Integer bindingState = 0;
+        String bindingPlatform = "";
+        if (!Objects.isNull(thirdEntity)) {
+            bindingPlatform = thirdEntity.getThirdPartyType();
+            bindingState = 1;
+        }
+        vo.setBindingPlatform(bindingPlatform);
+        vo.setBindingState(bindingState);
+        return vo;
+    }
+
+
 }

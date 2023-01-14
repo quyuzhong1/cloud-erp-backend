@@ -204,4 +204,10 @@ public class SysUserFeignController extends BaseController {
     public SysDepartmentDTO getUserDeptById(@RequestBody String deptId) {
         return sysDepartmentService.getDepartmentById(deptId);
     }
+
+
+    @PostMapping("/getSysUserById")
+    public SysUserDTO getSysUserById(@RequestBody String userId) {
+        return sysUserInfoService.getSysUserById(userId);
+    }
 }
