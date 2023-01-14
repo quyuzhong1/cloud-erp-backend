@@ -108,7 +108,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private NoticeMessageService noticeMessageService;
 
     @Autowired
-    private ProductArchiveService productArchiveService;
+    private SysUserFeign sysUserFeign;
 
     @Autowired
     private RedisService redisService;
@@ -127,12 +127,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private SysLogService sysLogService;
 
     @Autowired
-    private SysUserFeign sysUserFeign;
+    private ProjectTemplateService projectTemplateService;
 
     @Autowired
     private ProjectRoleService projectRoleService;
 
-
+    @Autowired
+    private TemplateMembersService templateMembersService;
 
     /**
      * 添加系统的产品任务
@@ -151,6 +152,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //添加前置任务
         //添加立项阶段
         String taskPhaseId = projectPhaseService.saveTaskPhase(productId, TaskConstant.APPROVAL_TASK_NAME, IsConstant.YES);
+        // 查询立项模板
+        ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getByType(ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
         List<ProjectTaskEntity> addTaskList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sysTaskList)) {
             List<CopySourceDTO> sourceList = new ArrayList<>();
@@ -182,6 +185,42 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 sourceList.add(source);
                 if (IsConstant.NO.equals(item.getType())) {
                     entity.setStatus(TaskStateEnum.NOT_START.getCode());
+                }
+                if (ObjectUtils.isNotEmpty(projectTemplateEntity)) {
+                    //判断负责人分配方式是否是角色
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
+                        List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
+                        List<TemplateMembersEntity> templateMembersList= templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
+                        if (CollectionUtils.isNotEmpty(templateMembersList)) {
+                            List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
+                            List<String> memberNames = templateMembersList.stream().map(TemplateMembersEntity::getMemberName).collect(Collectors.toList());
+                            entity.setChargeId(StringUtils.join(memberIds,","));
+                            entity.setChargeName(StringUtils.join(memberNames,","));
+                        }
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getApprovalDistributionType())) {
+                        String approvalRoleId = item.getApprovalRoleId();
+                        if (StringUtils.isNotBlank(approvalRoleId)) {
+                            List<String> roleIdsList = Arrays.asList(approvalRoleId.split("\\|"));
+                            for (String roleId: roleIdsList) {
+                                List<String> roleIds = Arrays.asList(roleId.split(","));
+                                List<TemplateMembersEntity> templateMembersList= templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
+                                if (CollectionUtils.isNotEmpty(templateMembersList)) {
+                                    List<String> memberIds = templateMembersList.stream().distinct().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
+                                    String join = StringUtils.join(memberIds, ",");
+                                    approvalRoleId = approvalRoleId.replace(roleId,join);
+                                }
+                            }
+                            entity.setApprovalUserId(approvalRoleId);
+                        }
+                    } /*else if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(entity.getApprovalDistributionType())) {
+                        //上级负责人审核
+                        if (StringUtils.isNotBlank(entity.getChargeId())) {
+                            List<String> ids = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
+                            List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                            String superiorType = item.getSuperiorType();
+                        }
+                    }*/
                 }
                 boolean flag = this.save(entity);
                 if (flag) {

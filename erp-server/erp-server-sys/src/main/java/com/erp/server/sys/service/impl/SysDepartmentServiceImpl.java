@@ -235,6 +235,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return treeList;
     }
 
+    @Override
+    public SysDepartmentEntity getParentDepartmentById(String departmentId) {
+        SysDepartmentEntity sysDepartmentEntity = this.getById(departmentId);
+        if (ObjectUtils.isEmpty(sysDepartmentEntity)) {
+                return sysDepartmentEntity;
+        }
+        return this.getById(sysDepartmentEntity.getParentId());
+    }
+
     /**
      * 递归获取批量保存的是数据
      *

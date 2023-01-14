@@ -42,7 +42,15 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @author Will
      * @date: 2023/1/9 10:03
      * @param departmentIdList
-     * @return List<SysDepartmentUserNumberDTO>
+     * @return List<SysDepartmentUserEntity>
      */
-    List<SysDepartmentUserNumberDTO> listByDepartmentIds(List<String> departmentIdList);
+    List<SysDepartmentUserEntity> listByDepartmentIds(List<String> departmentIdList);
+    /**
+     * @description: 查询部门上级
+     * @author Will
+     * @date: 2023/1/14 11:10
+     * @param id
+     * @return List<SysDepartmentUserEntity>
+     */
+    List<SysDepartmentUserEntity> listSuperiorById(String id);
 }
