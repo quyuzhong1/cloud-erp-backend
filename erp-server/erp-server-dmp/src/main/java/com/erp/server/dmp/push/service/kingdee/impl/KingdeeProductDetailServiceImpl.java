@@ -56,12 +56,13 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     private ApiSyncTaskService apiSyncTaskService;
 
     public static void main(String[] args) {
+        Map<String, Object> resultMap = new LinkedHashMap<>();
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
-
-        OperatorResult operatorResult = apiUtils.viewByNumber("0130");
-        System.out.println(operatorResult);
+        SaveParam param = new SaveParam(resultMap);
+        SaveResult saveResult = apiUtils.save(param);
+        System.out.println(saveResult);
     }
 
     @Override
@@ -71,7 +72,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         if (ObjectUtils.isEmpty(map) || map.size() == 0) {
             throw new ServiceException(ApiError.Default);
         }
-        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getName());
+        PlatformEntity platformEntity = platformService.getByName(PlatformEnum.KINGDEE.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
             throw new ServiceException(ApiError.Default);
         }
