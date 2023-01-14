@@ -391,6 +391,22 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     /**
+     * bom 发起变更
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-14 15:06
+     */
+    @Override
+    public Boolean startChange(UpdateBomDTO dto) {
+        AddChangeDTO change = new AddChangeDTO();
+
+        return null;
+    }
+
+
+    /**
      * 检查bom 能否修改
      *
      * @param state

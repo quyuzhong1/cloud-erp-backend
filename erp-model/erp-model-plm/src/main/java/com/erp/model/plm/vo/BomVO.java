@@ -20,7 +20,7 @@ public class BomVO  implements Serializable {
     /**
      * 表Id
      */
-    private String id;
+    private String bomId;
 
     /**
      * 版本

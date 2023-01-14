@@ -40,6 +40,7 @@ public class BomInfoController extends BaseController {
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
     /**
      * 分页查询
      *
@@ -79,70 +80,76 @@ public class BomInfoController extends BaseController {
 
     /**
      * 提交审核
+     *
      * @param dto
      * @return
      */
     @PostMapping("/submitAudit")
     public ApiResult submitAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.submitAudit(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
 
 
     /**
      * 重启流程
+     *
      * @param dto
      * @return
      */
     @PostMapping("/restartAudit")
     public ApiResult restartAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.restartAudit(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
 
     /**
      * 冻结bom
+     *
      * @param dto
      * @return
      */
     @PostMapping("/freeze")
     public ApiResult freeze(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.freeze(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
 
     /**
      * 解冻bom
+     *
      * @param dto
      * @return
      */
     @PostMapping("/defrost")
     public ApiResult defrost(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.defrost(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
 
     /**
      * 报废bom
+     *
      * @param dto
      * @return
      */
     @PostMapping("/scrap")
     public ApiResult scrap(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.scrap(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
+
     /**
      * 恢复bom
+     *
      * @param dto
      * @return
      */
     @PostMapping("/recover")
     public ApiResult recover(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.recover(dto.getId());
-        return result==true?success():failure();
+        return result == true ? success() : failure();
     }
-
 
 
     /**
@@ -170,15 +177,22 @@ public class BomInfoController extends BaseController {
     }
 
     /**
-     * 删除数据
-     *
-     * @param dto 主键
-     * @return 删除是否成功
+     * 历史版本信息
      */
     @PostMapping("/version/list")
     public ApiResult<List<BomVO>> versionList(@RequestBody @Validated BaseIdDTO dto) {
         List<BomVO> list = productBomHistoryService.getVersionList(dto.getId());
-        return  success(list);
+        return success(list);
+    }
+
+
+    /**
+     * 发起变更
+     */
+    @PostMapping("/startChange")
+    public ApiResult startChange(@RequestBody @Validated UpdateBomDTO dto) {
+        Boolean result = bomInfoService.startChange(dto);
+        return result == true ? success() : failure();
     }
 
 }

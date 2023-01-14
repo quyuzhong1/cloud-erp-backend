@@ -62,13 +62,13 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
      * @return void
      */
     @Override
-    public void deleteByBomId(String id) {
+    public void deleteByBomId(String bomId) {
 
         
     }
 
     @Override
-    public List<BomVO> getVersionList(String id) {
-        return null;
+    public List<BomVO> getVersionList(String bomId) {
+        return baseMapper.getVersionList(bomId);
     }
 }
