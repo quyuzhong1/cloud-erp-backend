@@ -76,8 +76,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         jobTaskDTO.setApiName("管易云查询历史发货订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(72000);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-04-15 18:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-04-15 19:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-07-22 23:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-07-23 22:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(2);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -114,7 +114,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 } else {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
-                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", mongoData.size());
+                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", CollectionUtil.isNotEmpty(mongoData) ? mongoData.size() : 0);
                 //存储数据到中台
                 analysisDeliveryDetail(gyyDeliveryDetailEntity);
                 XxlJobHelper.log("pgsql数据处理完成 gyyDeliveryDetailEntity.size={} ", JSONUtil.toJsonStr(gyyDeliveryDetailEntity));
@@ -123,7 +123,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                 dmpErrorLogEntity.setParams(JSONUtil.toJsonStr(dto));
                 XxlJobHelper.log("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
-                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
+                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e);
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
                 dmpErrorLogEntity.setCreateTime(new Date());
@@ -139,10 +139,10 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         //拉取数据 存库
         pullDataSave(requestDTO);
         // 修改任务执行结果信息
-        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
-        if (!aBoolean) {
-            throw new RuntimeException("修改任务下次执行时间失败！");
-        }
+//        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+//        if (!aBoolean) {
+//            throw new RuntimeException("修改任务下次执行时间失败！");
+//        }
     }
 
     /**
@@ -226,7 +226,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                 dmpErrorLogEntity.setCreateTime(new Date());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getMessage()));
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace()));
             }
             pageIndex++;
         }

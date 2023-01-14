@@ -50,7 +50,11 @@ public enum PlatformApiEnum {
     //获取退款数据
     AR_REFUNDBILL(14,"AR_REFUNDBILL"),
     //销售出库详情
-    SAL_OUTSTOCK(17,"SAL_OUTSTOCK");
+    SAL_OUTSTOCK(17,"SAL_OUTSTOCK"),
+
+    //查询客户
+    BD_CUSTOMER(21, "BD_Customer"),
+    ;
 
     /** 状态码 */
     private Integer id;
