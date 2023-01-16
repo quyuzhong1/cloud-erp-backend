@@ -52,6 +52,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     @Override
     public DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity) {
         LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getSalesRecordNumber, returnOrderInfoEntity.getSalesRecordNumber());
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundId, returnOrderInfoEntity.getRefundId());
         return this.getOne(lambdaQueryWrapper);
