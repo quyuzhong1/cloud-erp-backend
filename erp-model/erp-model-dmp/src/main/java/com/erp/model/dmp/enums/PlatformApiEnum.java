@@ -54,6 +54,10 @@ public enum PlatformApiEnum {
 
     //查询客户
     BD_CUSTOMER(21, "BD_Customer"),
+
+    //网店管理
+    ECC_SHOP(21, "ECC_Shop"),
+
     ;
 
     /** 状态码 */

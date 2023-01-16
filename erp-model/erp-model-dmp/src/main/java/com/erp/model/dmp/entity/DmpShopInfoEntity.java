@@ -135,6 +135,35 @@ public class DmpShopInfoEntity implements Serializable {
     @TableField(value = "enable_time")
     private LocalDate enableTime;
 
+    /**
+     * 客户id
+     */
+    @TableField(value = "customer_id")
+    private String  customerId;
+
+    /**
+     * 客户名
+     */
+    @TableField(value = "customer_name")
+    private String customerName;
+    /**
+     * 用户组织ID
+     */
+    @TableField(value = "use_org_id")
+    private Integer  useOrgId;
+    /**
+     * 用户组织名称
+     */
+    @TableField(value = "use_org_name")
+    private String  useOrgName;
+
+    /**
+     * 国家
+     */
+    @TableField(value = "country")
+    private String country;
+
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
@@ -151,6 +180,11 @@ public class DmpShopInfoEntity implements Serializable {
                 ", platformName='" + platformName + '\'' +
                 ", financeCode='" + financeCode + '\'' +
                 ", platformSign='" + platformSign + '\'' +
+                ", customerId='" + customerId + '\'' +
+                ", customerName='" + customerName + '\'' +
+                ", useOrgId='" + useOrgId + '\'' +
+                ", useOrgName='" + useOrgName + '\'' +
+                ", country='" + country + '\'' +
                 '}';
     }
 }

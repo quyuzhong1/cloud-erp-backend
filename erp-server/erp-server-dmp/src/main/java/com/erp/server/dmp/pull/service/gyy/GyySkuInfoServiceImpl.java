@@ -104,7 +104,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setReturnMsg("");
                                 dmpErrorLogEntity.setCreateTime(new Date());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
+                                throw new RuntimeException("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " , e);
                             }
                         }
                     }

@@ -302,7 +302,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
+                    log.error("请求接口地址异常 错误信息：", e);
                     Integer errorCount = dto.getJobTaskDTO().getErrorCount();
                     if (errorCount < 3) {
                         dto.getJobTaskDTO().setErrorCount(errorCount + 1);
@@ -321,8 +321,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                 pageIndex++;
             }
         } catch (Exception e) {
-            log.info(" ===== 获取金蝶云星空订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-            throw new RuntimeException(" ===== 获取金蝶云星空订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
+            log.error(" ===== 获取金蝶云星空订单列表数据失败， 错误信息 =", e);
+            throw new RuntimeException(" ===== 获取金蝶云星空订单列表数据失败， 错误信息 = ", e);
         }
         return infoArrayList;
     }

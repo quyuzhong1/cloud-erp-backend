@@ -18,6 +18,7 @@ import com.erp.model.bi.vo.ShopSiteVO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.BiStateEnum;
 import com.erp.server.bi.mapper.DmpShopInfoMapper;
@@ -131,7 +132,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         }
         if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
             if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
-                throw new ServiceException(ApiError.ERROR_9013);
+                throw new ServiceException(ApiError.ERROR_97013);
             }
         }
         dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
@@ -144,12 +145,20 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         //新增变更记录
         boolean flag = dmpShopChangeLogService.save(logEntity);
         if (flag) {
+            List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+            SysUserDeptDTO sysUserDeptDTO = new SysUserDeptDTO();
+            if (CollectionUtils.isNotEmpty(userDeptList)){
+                 sysUserDeptDTO = userDeptList.stream().filter(obj -> dto.getChargeId().equals(obj.getUid())).findFirst().orElse(null);
+            }
             //更新销售数据中的启用日期后的店铺业务负责人
-            updateSaleCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+            updateSaleCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getSite(),
+                    dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName(),sysUserDeptDTO);
             //更新退款数据中的启用日期后的店铺业务负责人
-            updateRefundCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+            updateRefundCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),
+                    dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
             //更新退货数据中启用日期后的店铺业务负责人
-            updateReturnOrderCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
+            updateReturnOrderCharge(dmpShopInfoEntity.getPlatformName(),dmpShopInfoEntity.getName(),
+                    dto.getEnableTime(),findUserDTO.getUserId(),findUserDTO.getUserName());
         }
         return this.updateById(dmpShopInfoEntity);
     }
@@ -165,7 +174,6 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         updateWrapper.set(DmpOrderInfoEntity::getDeptId,sysDepartmentDTO.getId());
         updateWrapper.set(DmpOrderInfoEntity::getDeptName,sysDepartmentDTO.getName());
         updateWrapper.eq(DmpOrderInfoEntity::getChargeId,dto.getChargeId());
-        updateWrapper.eq(DmpOrderInfoEntity::getDeptId,dto.getDeptId());
         updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime());
         dmpOrderInfoService.update(updateWrapper);
         return true;
@@ -235,10 +243,14 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     /**
      * 更新订单负责人
      */
-    private void updateSaleCharge(String platformName, String site, String shopName, LocalDate enableTime, String userId, String userName) {
+    private void updateSaleCharge(String platformName, String site, String shopName, LocalDate enableTime, String userId, String userName,SysUserDeptDTO sysUserDeptDTO) {
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(DmpOrderInfoEntity::getChargeId,userId);
         updateWrapper.set(DmpOrderInfoEntity::getChargeName,userName);
+        if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
+            updateWrapper.set(DmpOrderInfoEntity::getDeptId,sysUserDeptDTO.getDeptId());
+            updateWrapper.set(DmpOrderInfoEntity::getDeptName,sysUserDeptDTO.getDeptName());
+        }
         updateWrapper.eq(DmpOrderInfoEntity::getSourcePlatform,platformName);
         updateWrapper.eq(DmpOrderInfoEntity::getSite,site);
         updateWrapper.eq(DmpOrderInfoEntity::getShopName,shopName);
