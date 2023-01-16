@@ -165,7 +165,6 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         updateWrapper.set(DmpOrderInfoEntity::getDeptId,sysDepartmentDTO.getId());
         updateWrapper.set(DmpOrderInfoEntity::getDeptName,sysDepartmentDTO.getName());
         updateWrapper.eq(DmpOrderInfoEntity::getChargeId,dto.getChargeId());
-        updateWrapper.eq(DmpOrderInfoEntity::getDeptId,dto.getDeptId());
         updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, dto.getEnableTime());
         dmpOrderInfoService.update(updateWrapper);
         return true;

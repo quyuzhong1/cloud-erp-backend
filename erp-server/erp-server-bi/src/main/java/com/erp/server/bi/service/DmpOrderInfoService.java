@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.model.dmp.dto.DmpOrderStateDTO;
@@ -253,4 +254,11 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName);
 
     List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName);
+    /**
+     * @description: 更新订单表结算汇率
+     * @author Will
+     * @date: 2023/1/16 10:12
+     * @param entityList
+     */
+    void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList);
 }

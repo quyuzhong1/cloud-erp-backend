@@ -10,10 +10,14 @@ import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
+import com.erp.server.bi.service.DmpOrderInfoService;
+import com.erp.server.bi.service.DmpRefundInfoService;
+import com.erp.server.bi.service.DmpReturnOrderInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -29,6 +33,14 @@ import java.util.stream.Collectors;
 public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlementExchangeRateMapper, BiSettlementExchangeRateEntity>
         implements BiSettlementExchangeRateService {
 
+    @Resource
+    private DmpOrderInfoService  dmpOrderInfoService;
+
+    @Resource
+    private DmpRefundInfoService dmpRefundInfoService;
+
+    @Resource
+    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
 
     @Override
     @Transactional
@@ -87,7 +99,16 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
                 }
             }
         }
-        return  this.saveBatch(entityList);
+        boolean flag = this.saveBatch(entityList);
+        if (flag) {
+            //将汇率更新到订单表
+            dmpOrderInfoService.updateSettlementExchangeRate(entityList);
+            //将汇率更新到退款表
+            dmpRefundInfoService.updateSettlementExchangeRate(entityList);
+            //将汇率更新到退货表
+            dmpReturnOrderInfoService.updateSettlementExchangeRate(entityList);
+        }
+        return  true;
     }
 
     @Override

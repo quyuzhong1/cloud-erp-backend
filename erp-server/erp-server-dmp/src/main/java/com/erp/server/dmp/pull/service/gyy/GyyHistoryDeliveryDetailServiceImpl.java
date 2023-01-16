@@ -139,10 +139,10 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         //拉取数据 存库
         pullDataSave(requestDTO);
         // 修改任务执行结果信息
-//        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
-//        if (!aBoolean) {
-//            throw new RuntimeException("修改任务下次执行时间失败！");
-//        }
+        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+        if (!aBoolean) {
+            throw new RuntimeException("修改任务下次执行时间失败！");
+        }
     }
 
     /**

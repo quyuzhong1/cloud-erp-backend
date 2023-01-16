@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,6 +23,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.bi.entity.BiTargetManagementEntity;
 import com.erp.model.bi.vo.*;
 import com.erp.model.dmp.dto.*;
@@ -1065,6 +1067,28 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<DimensionSalesVO> list = baseMapper.sumByDeptAndCostType(dto, groupName);
         return list;
     }
+
+    @Override
+    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        entityList.forEach(obj->{
+             //根据日期查询订单
+            LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+             //大于等于开始日期
+            updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin());
+             //小于等于开始日期
+            updateWrapper.le(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateEnd());
+             //原币种
+            updateWrapper.eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
+            //设置汇率
+            updateWrapper.set(DmpOrderInfoEntity::getCnySettleRate,obj.getExchangeRate());
+            this.update(updateWrapper);
+        });
+
+    }
+
     private static List<SalesCompletionInfoVO> assemblyResult(BiFilterDTO dto, Map<String, BigDecimal> targetSalesMap, Map<String, Integer> targetSalesVolumeMap,
                                                               Map<String, String> skuMap, Map<String, Integer> salesVolumeMap, Map<String, BigDecimal> saleAmountMap) {
         // 组合数据计算目标达成率
