@@ -107,6 +107,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                                 dmpErrorLogEntity.setParams("");
+                                log.error("==== 马帮修改mongodb退款数据失败，[ 订单号 = " + refundOrderEntity.getPlatformOrderId() + "], 错误信息 = ", e);
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb退款数据失败，[ 订单号 = " + refundOrderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
                                 dmpErrorLogEntity.setCreateTime(new Date());
