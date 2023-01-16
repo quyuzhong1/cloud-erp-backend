@@ -555,6 +555,9 @@
         </where>
         GROUP BY o.shop_no
         ) a LEFT JOIN dmp_shop_info s ON A.shop_no = s.plarform_shop_no
+        ORDER BY sales DESC
+
+
 
     </select>
     <select id="getShopLastDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
