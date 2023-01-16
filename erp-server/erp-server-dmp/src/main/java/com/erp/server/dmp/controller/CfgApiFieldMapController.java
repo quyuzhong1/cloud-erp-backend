@@ -140,14 +140,16 @@ public class CfgApiFieldMapController extends BaseController {
         Map<String,Object> map = new HashMap<>();
         //sku
         map.put("skuNo","23");
+        //sku
+        map.put("name","77");
         //spu
-        map.put("spuNo","23");
+        map.put("spuNo","777");
         //产品功能描述
-        map.put("functionDesc","23");
+        map.put("functionDesc","777");
         //属性
         map.put("property","23");
         //单位
-        map.put("unitName","23");
+        map.put("unitName","Pcs");
         //一级分类名称
         map.put("oneLevelCategory","");
         //二级分类名称
