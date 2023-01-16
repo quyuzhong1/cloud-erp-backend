@@ -1,7 +1,7 @@
 package com.erp.server.dmp.push.service.kingdee.impl;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -18,10 +18,12 @@ import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.server.dmp.utils.KingdeeDocStatusEnum;
+import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
-import com.kingdee.bos.webapi.entity.RepoError;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +62,24 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
-        SaveParam param = new SaveParam(resultMap);
-        SaveResult saveResult = apiUtils.save(param);
-        System.out.println(saveResult);
+        /*   String filterStr = "FNumber='23'";
+        String fieldKeys = "Number,Name";
+
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 0, 100);*/
+       /* String number = "23";
+        OperatorResult operatorResult = apiUtils.viewByNumber(number);*/
+        K3CloudApi client = new K3CloudApi();
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("number","23");
+        String view = null;
+        try {
+            view = client.view(PlatformApiEnum.BD_MATERIAL.taskName, JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //查找到数据后，判断其审核状态
+        JSONObject parse = (JSONObject) JSONObject.parse(view);
+        System.out.println(parse);
     }
 
     @Override
@@ -81,7 +98,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         dto.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);
         if (CollectionUtils.isEmpty(mapList)) {
-            log.info(ApiError.ERROR_97025.msg);
+            log.error(ApiError.ERROR_97025.msg);
             //新增定时同步任务
             insertApiSyncTask(platformEntity, map);
             return;
@@ -93,70 +110,216 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
 
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-
+        JSONObject json = new JSONObject();
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
-            //第三方系统逗号分割多层结构
+            //第三方系统下划线分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
-            List<String> apiFields = Arrays.stream(apiField.split("_")).collect(Collectors.toList());
-            for (int i = 0; i < apiFields.size(); i++) {
-                //给不同结构的外部字段赋值
-                handleResultMap(cfgApiFieldMapDTO, cfgApiFieldMapValueList, map, resultMap, apiFields, i);
+            if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
+                KingdeeUtils.makeFieldJson(json,apiField,cfgApiFieldMapDTO.getDefaultValue());
+            } else {
+                if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
+                    KingdeeUtils.makeFieldJson(json,apiField,map.get(cfgApiFieldMapDTO.getSelfField()));
+                } else {
+                    //根据值映射转换
+                    String apiValue = cfgApiFieldMapValueList.stream()
+                            .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(map.get(cfgApiFieldMapDTO.getSelfField())))
+                            .map(CfgApiFieldMapValueEntity::getApiValue)
+                            .findFirst()
+                            .orElse(null);
+                    KingdeeUtils.makeFieldJson(json,apiField,apiValue);
+                }
             }
         }
         //判断金蝶系统是否已存在该数据
-        String skuNo = (String)resultMap.get("Model_FNumber");
-        OperatorResult operatorResult = apiUtils.viewByNumber(skuNo);
-        //如果未查询到数据则直接新增
-        if (ObjectUtils.isEmpty(operatorResult.getResult())) {
-            insert(platformEntity,map,resultMap,apiUtils);
-        } else {
-
+        String skuNo = (String)map.get("skuNo");
+        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("number",skuNo);
+        viewMap.put("CreateOrgId",1);
+        JSONObject model = new JSONObject();
+        SaveParam param = new SaveParam(json);
+        try {
+             model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        } catch (Exception e) {
+            //未查找到数据，新增数据
+            SaveResult save;
+            try {
+                save = apiUtils.save(param);
+            } catch (Exception ex) {
+                //新增失败时添加日志及定时任务
+                insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),JSONObject.toJSONString(ex));
+                return;
+            }
+            if (save.isSuccessfully()) {
+                //新增成功操作日志
+                insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),"新增成功");
+                //提交
+                submit(platformEntity, map,apiUtils,viewMap,save);
+            } else {
+                //添加失败操作日志及定时任务
+                insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
+                return;
+            }
+        }
+       //查找到数据后，判断其审核状态
+        String documentStatus = (String)model.get("DocumentStatus");//单据状态
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //审核中或已审核则要先反审
+            documentStatus = unAudit(platformEntity, map,apiUtils, viewMap);
+        }
+        //创建状态则直接修改
+        if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
+            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("name").stream().collect(Collectors.toList());
+            param.setNeedUpDateFields(needUpDateFields);
+            KingdeeUtils.makeFieldJson(json,"FMATERIALID",model.get("Id"));
+            SaveResult save = apiUtils.save(param);
+           if (save.isSuccessfully()) {
+               //修改成功操作日志
+               insertSuccessLog( platformEntity, map, JSONObject.toJSONString(json),"修改成功");
+               //提交
+               submit(platformEntity, map,apiUtils,viewMap,save);
+           } else {
+               //修改失败操作日志及定时任务
+               insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
+               return;
+           }
         }
     }
 
     /**
-     * 新增数据到金蝶
+     * @description: 提交
+     * @author Will
+     * @date: 2023/1/16 16:39
+     * @param apiUtils
+     * @param viewMap
+     * @param save
      */
-    private void insert(PlatformEntity platformEntity,Map<String, Object> map,Map<String,Object> resultMap,KingdeeApiUtils apiUtils) {
-        //结果集转json字符串
-        String jsonData = JSONObject.toJSONString(resultMap);
-        //调用接口
-        SaveParam param = new SaveParam(jsonData);
-        SaveResult resultJson = apiUtils.save(param);
-        boolean successfully = resultJson.isSuccessfully();
-        if (successfully) {
-            //新增日志信息
-            ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
-            apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
-            apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-            apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
-            apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
-            apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
-            apiPlmSyncLogDTO.setMsg("发送成功");
-            apiPlmSyncLogDTO.setRequestParamJson(jsonData);
-            apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-            //发送成功后删除任务表数据
-            Map<String, Object> removeMap = new HashMap<>();
-            removeMap.put("apiPlatformId", platformEntity.getId());
-            removeMap.put("moduleType", ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
-            removeMap.put("businessId", String.valueOf(map.get("id")));
-            apiPlmSyncLogService.removeByMap(removeMap);
+    private void submit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,LinkedHashMap<String,Object> viewMap,SaveResult save) {
+        String id = save.getResult().getResponseStatus().getSuccessEntitys().get(0).getId();
+        //提交
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add(id);
+        OperatorResult submit = apiUtils.submit(ids);
+        if (submit.isSuccessfully()) {
+            //提交成功后继续审核直至已审核
+            audit(platformEntity, map,apiUtils,viewMap);
+            //提交成功操作日志
+            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"提交成功");
         } else {
-            ArrayList<RepoError> errors = resultJson.getResult().getResponseStatus().getErrors();
-            //新增日志信息
-            ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
-            apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
-            apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
-            apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
-            apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
-            apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
-            apiPlmSyncLogDTO.setMsg(JSONArray.toJSONString(errors));
-            apiPlmSyncLogDTO.setRequestParamJson(jsonData);
-            apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
-            //新增定时同步任务
-            insertApiSyncTask(platformEntity, map);
+            //提交失败操作日志及定时任务
+            insertFailureLog(platformEntity,map,"提交失败",JSONObject.toJSONString(save));
         }
+    }
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/1/16 16:39
+     * @param apiUtils
+     * @param viewMap
+     * @return String 返回审核状态
+     */
+    private void audit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,LinkedHashMap<String,Object> viewMap) {
+        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        String documentStatus = (String)model.get("DocumentStatus");//单据状态
+        String id = String.valueOf(model.get("Id"));//单据id
+        if (!KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //非已审核继续审核
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add(id);
+            OperatorResult operatorResult = apiUtils.auditById(ids);
+            if (operatorResult.isSuccessfully()) {
+                //审核成功操作日志
+                insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"审核成功");
+            } else {
+                //审核失败操作日志及定时任务
+                insertFailureLog(platformEntity,map,"审核失败",JSONArray.toJSONString(ids));
+            }
+            audit(platformEntity, map,apiUtils,viewMap);
+        }
+    }
+
+
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/1/16 16:29
+     * @param apiUtils
+     * @param viewMap
+     * @return String 返回审核状态
+     */
+    private String unAudit(PlatformEntity platformEntity,Map<String, Object> map,KingdeeApiUtils apiUtils,LinkedHashMap<String,Object> viewMap) {
+        JSONObject model = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        String documentStatus = (String) model.get("DocumentStatus");//单据状态
+        String id = String.valueOf(model.get("Id"));//单据id
+        if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //审核中或已审核则要先反审
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add(id);
+            OperatorResult operatorResult = apiUtils.unAuditById(ids);
+            if (operatorResult.isSuccessfully()) {
+                //反审核成功操作日志
+                insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"反审核成功");
+            } else {
+                //反审核失败操作日志及定时任务
+                insertFailureLog(platformEntity,map,"反审核失败",JSONArray.toJSONString(ids));
+            }
+            String status = unAudit(platformEntity, map,apiUtils, viewMap);
+            documentStatus = status;
+        }
+        return  documentStatus;
+    }
+
+
+    /**
+     * @description: 操作成功添加日志
+     * @author Will
+     * @date: 2023/1/16 18:34
+     * @param platformEntity
+     * @param map
+     * @param jsonData
+     * @param msg
+     */
+    private void insertSuccessLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg) {
+        //新增日志信息
+        ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
+        apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
+        apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
+        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
+        apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.SUCCESS.getCode());
+        apiPlmSyncLogDTO.setMsg(msg);
+        apiPlmSyncLogDTO.setRequestParamJson(jsonData);
+        apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
+        //发送成功后删除任务表数据
+        Map<String, Object> removeMap = new HashMap<>();
+        removeMap.put("api_platform_id", platformEntity.getId());
+        removeMap.put("module_type", ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        removeMap.put("business_id", String.valueOf(map.get("id")));
+        apiSyncTaskService.removeByMap(removeMap);
+    }
+
+    /**
+     * @description: 操作失败添加日志
+     * @author Will
+     * @date: 2023/1/16 18:34
+     * @param platformEntity
+     * @param map
+     * @param jsonData
+     * @param msg
+     */
+    private void insertFailureLog(PlatformEntity platformEntity,Map<String, Object> map,String jsonData,String msg) {
+        //新增日志信息
+        ApiPlmSyncLogDTO apiPlmSyncLogDTO = new ApiPlmSyncLogDTO();
+        apiPlmSyncLogDTO.setApiPlatformId(platformEntity.getId());
+        apiPlmSyncLogDTO.setApiPlatform(platformEntity.getName());
+        apiPlmSyncLogDTO.setModuleType(ApiModuleTypeEnum.PRODUCTDETAIL.getCode());
+        apiPlmSyncLogDTO.setBusinessId(String.valueOf(map.get("id")));
+        apiPlmSyncLogDTO.setStatus(ApiSendStatusEnum.FAILURE.getCode());
+        apiPlmSyncLogDTO.setMsg(msg);
+        apiPlmSyncLogDTO.setRequestParamJson(jsonData);
+        apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
+        //新增定时同步任务
+        insertApiSyncTask(platformEntity, map);
     }
 
     /**
@@ -186,98 +349,4 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             apiSyncTaskService.update(apiSyncTaskDTO);
         }
     }
-
-    /**
-     * @description: 处理结果集Map
-     * @author Will
-     * @date: 2023/1/12 12:05
-     * @param cfgApiFieldMapDTO
-     * @param cfgApiFieldMapValueList
-     * @param map
-     * @param resultMap
-     * @param apiFields
-     * @param i
-     */
-    private void handleResultMap(CfgApiFieldMapDTO cfgApiFieldMapDTO,List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList,Map<String,Object> map,Map<String,Object> resultMap,List<String> apiFields,int i) {
-        if (i == 0) {
-            //第一层结构时
-            if (apiFields.size() == 1 ) {
-                //如果只有一层结构则直接插入resultMap
-                putValueResultMap(cfgApiFieldMapDTO,cfgApiFieldMapValueList,map,resultMap,apiFields,i);
-            } else {
-                Object obj = resultMap.get(apiFields.get(i));
-                if (ObjectUtils.isNull(obj)) {
-                    resultMap.put(apiFields.get(i),new LinkedHashMap<>());
-                }
-            }
-        } else if (i == apiFields.size() - 1){
-            //获取上一级Map对象
-            Map<String, Object> parentMap = getParentMap(resultMap, apiFields, i);
-            //如果时最后一层结构则插入值到上一层Map中
-            putValueResultMap(cfgApiFieldMapDTO,cfgApiFieldMapValueList,map,parentMap,apiFields,i);
-        } else {
-            //给非底层结构添加Map
-            Object obj = resultMap.get(apiFields.get(i));
-            if (ObjectUtils.isNull(obj)) {
-                //获取上一级Map对象
-                Map<String, Object> parentMap = getParentMap(resultMap, apiFields, i);
-                parentMap.put(apiFields.get(i),new LinkedHashMap<>());
-            }
-        }
-    }
-
-    /**
-     * @description: 获取上一级Map对象
-     * @author Will
-     * @date: 2023/1/12 12:03
-     * @param map
-     * @param apiFields
-     * @param i
-     * @return Map<Object>
-     */
-    private Map<String,Object> getParentMap (Map<String,Object> map,List<String> apiFields,int i) {
-        Map<String ,Object> resultMap = map;
-        for (int j = 0; j < apiFields.size() ; j++ ) {
-            //当传入i和j相等时返回map
-            if (j == i) {
-                return resultMap;
-            } else {
-                resultMap = (LinkedHashMap) resultMap.get(apiFields.get(j));
-            }
-        }
-        return resultMap;
-    }
-
-    /**
-     * @description: 给最底层字段赋值
-     * @author Will
-     * @date: 2023/1/12 12:03
-     * @param cfgApiFieldMapDTO
-     * @param cfgApiFieldMapValueList
-     * @param map
-     * @param resultMap
-     * @param apiFields
-     * @param i
-     */
-    private void putValueResultMap (CfgApiFieldMapDTO cfgApiFieldMapDTO,List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList,Map<String,Object> map,Map<String,Object> resultMap,List<String> apiFields,int i) {
-
-        if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-            resultMap.put(apiFields.get(i),map.get(apiFields.get(i)));
-        } else {
-            if (CollectionUtils.isEmpty(cfgApiFieldMapValueList)) {
-                throw new ServiceException(ApiError.ERROR_97025);
-            }
-            //根据值映射转换
-            String apiValue = cfgApiFieldMapValueList.stream()
-                    .filter(obj -> obj.getFieldMapId().equals(cfgApiFieldMapDTO.getId()) && obj.getSelfValue().equals(map.get(apiFields.get(i))))
-                    .map(CfgApiFieldMapValueEntity::getApiValue)
-                    .findFirst()
-                    .orElse(null);
-            if (StringUtils.isBlank(apiValue)) {
-                throw new ServiceException(ApiError.ERROR_97025);
-            }
-            resultMap.put(apiFields.get(i),apiValue);
-        }
-    }
-
 }
