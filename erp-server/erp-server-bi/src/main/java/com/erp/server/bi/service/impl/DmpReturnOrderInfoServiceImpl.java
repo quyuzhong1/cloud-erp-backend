@@ -18,6 +18,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.bi.dto.BiFilterDTO;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
@@ -166,6 +167,26 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
             updateWrapper.eq(DmpReturnOrderInfoEntity::getId,returnOrderId);
             this.update(updateWrapper);
         }
+    }
+
+    @Override
+    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        entityList.forEach(obj->{
+            //根据日期查询订单
+            LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            //大于等于开始日期
+            updateWrapper.ge(DmpReturnOrderInfoEntity::getOrderTime, obj.getSettlementDateBegin());
+            //小于等于开始日期
+            updateWrapper.le(DmpReturnOrderInfoEntity::getOrderTime, obj.getSettlementDateEnd());
+            //原币种
+            updateWrapper.eq(DmpReturnOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
+            //设置汇率
+            updateWrapper.set(DmpReturnOrderInfoEntity::getCnySettleRate,obj.getExchangeRate());
+            this.update(updateWrapper);
+        });
     }
 
 

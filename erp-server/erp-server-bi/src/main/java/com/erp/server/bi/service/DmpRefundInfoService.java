@@ -3,12 +3,14 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoSearchDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 退款列表服务类
@@ -50,4 +52,11 @@ public interface DmpRefundInfoService extends IService<DmpRefundInfoEntity> {
      * @return Boolean
      */
     Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    /**
+     * @description: 更新退款表结算汇率
+     * @author Will
+     * @date: 2023/1/16 10:12
+     * @param entityList
+     */
+    void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList);
 }
