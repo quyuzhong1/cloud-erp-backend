@@ -22,7 +22,6 @@ import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
@@ -31,8 +30,6 @@ import com.erp.server.dmp.utils.GyyUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -63,9 +60,6 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
 
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
 
     public static void main(String[] args) {
         GyyHistoryDeliveryDetailServiceImpl gyyOrderInfoService = new GyyHistoryDeliveryDetailServiceImpl();
@@ -226,7 +220,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                 dmpErrorLogEntity.setCreateTime(new Date());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace()));
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace().toString()));
             }
             pageIndex++;
         }
