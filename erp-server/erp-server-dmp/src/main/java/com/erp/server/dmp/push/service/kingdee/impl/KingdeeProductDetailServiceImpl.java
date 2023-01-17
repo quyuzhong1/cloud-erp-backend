@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -23,8 +22,8 @@ import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,24 +61,14 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
-        /*   String filterStr = "FNumber='23'";
-        String fieldKeys = "Number,Name";
-
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 0, 100);*/
-       /* String number = "23";
-        OperatorResult operatorResult = apiUtils.viewByNumber(number);*/
-        K3CloudApi client = new K3CloudApi();
-        LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("number","23");
-        String view = null;
-        try {
-            view = client.view(PlatformApiEnum.BD_MATERIAL.taskName, JSONArray.toJSONString(viewMap));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //查找到数据后，判断其审核状态
-        JSONObject parse = (JSONObject) JSONObject.parse(view);
-        System.out.println(parse);
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FNumber = '%s'", "OJOHNFIDJFI"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
+                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
+                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH,FWIDTH";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1);
+        System.out.println(queryList);
     }
 
     @Override
@@ -168,9 +157,28 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("Name").stream().collect(Collectors.toList());
-            param.setNeedUpDateFields(needUpDateFields);
+
+            LinkedList<String> queryFilters = new LinkedList<>();
+            // 客户类型为店铺
+            queryFilters.add(String.format("FMATERIALID = '%s'", model.get("Id")));
+            String filterStr = String.join(" and ", queryFilters);
+            //查询子单据id
+            String fieldKeys = "FSubHeadEntity_FEntryId,SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
+                    "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId";
+            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1);
+            if (CollectionUtils.isEmpty(queryList)) {
+                return;
+            }
+            Map<String, Object> queryMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"FMATERIALID","_",model.get("Id"));
+            Iterator iter = queryMap.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),"_",entry.getValue());
+            }
+            //需要更新的字段
+            ArrayList<String> needUpDateFields = (ArrayList<String>) mapList.stream().map(CfgApiFieldMapDTO::getApiField).distinct().collect(Collectors.toList());
+            param.setNeedUpDateFields(needUpDateFields);
             SaveResult save = apiUtils.save(param);
            if (save.isSuccessfully()) {
                //修改成功操作日志
