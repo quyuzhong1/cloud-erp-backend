@@ -3,6 +3,7 @@ package com.erp.server.dmp.pull.service.dmp;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 
 import java.util.List;
@@ -57,4 +58,6 @@ public interface DmpShopInfoService extends IService<DmpShopInfoEntity> {
      * @Date 2022/12/13 17:48
      **/
     DmpShopInfoDTO queryShopByPlatformList(String shopNo, String platformSign, List<SysUserDeptDTO> userDeptList) ;
+
+    void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity);
 }

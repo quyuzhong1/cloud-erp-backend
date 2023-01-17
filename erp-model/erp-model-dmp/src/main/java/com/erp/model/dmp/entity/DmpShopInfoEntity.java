@@ -140,12 +140,6 @@ public class DmpShopInfoEntity implements Serializable {
      */
     @TableField(value = "customer_id")
     private String  customerId;
-
-    /**
-     * 客户名
-     */
-    @TableField(value = "customer_name")
-    private String customerName;
     /**
      * 用户组织ID
      */
@@ -180,11 +174,6 @@ public class DmpShopInfoEntity implements Serializable {
                 ", platformName='" + platformName + '\'' +
                 ", financeCode='" + financeCode + '\'' +
                 ", platformSign='" + platformSign + '\'' +
-                ", customerId='" + customerId + '\'' +
-                ", customerName='" + customerName + '\'' +
-                ", useOrgId='" + useOrgId + '\'' +
-                ", useOrgName='" + useOrgName + '\'' +
-                ", country='" + country + '\'' +
                 '}';
     }
 }

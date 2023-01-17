@@ -2,7 +2,10 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -11,16 +14,18 @@ import com.erp.model.dmp.dto.KingdeeShopMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -81,29 +86,31 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
         }
         for (KingdeeShopEntity shopEntity : skuEntityList) {
             KingdeeShopMongoDTO shopMongoDTO = new KingdeeShopMongoDTO();
-            List<KingdeeShopEntity> mongoDataList = mongoService.findMongoData(shopMongoDTO, 1, 1, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
-            if (CollectionUtil.isNotEmpty(mongoDataList)) {
+            shopMongoDTO.setCustId(shopEntity.getFCustId());
+            List<KingdeeShopEntity> mongoDataList = mongoService.findMongoData(shopMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
+            if (CollectionUtil.isEmpty(mongoDataList)) {
                 mongoService.saveMongoData(shopEntity, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP);
-            }
-            KingdeeShopEntity mongoShopEntity = mongoDataList.get(0);
-            if (mongoShopEntity.toString().equals(shopEntity.toString())){
-                continue;
-            }
-            // 比较数据是否相同
-            // 修改数据
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopEntity), MapUtil.class);
-            try {
-                mongoService.updateMongoData(shopMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
-            } catch (Exception e) {
-                log.error("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 ={}, 错误信息]", shopMongoDTO.getFCustId(), e);
-                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                dmpErrorLogEntity.setParams("");
-                dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getFCustId() + "], 错误信息 = " + e.getMessage());
-                dmpErrorLogEntity.setReturnMsg("");
-                dmpErrorLogEntity.setCreateTime(new Date());
-                dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new RuntimeException("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getFCustId() + "], 错误信息 ={} " , e);
+            }else {
+                KingdeeShopEntity mongoShopEntity = mongoDataList.get(0);
+                if (mongoShopEntity.toString().equals(shopEntity.toString())){
+                    continue;
+                }
+                // 比较数据是否相同
+                // 修改数据
+                MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopEntity), MapUtil.class);
+                try {
+                    mongoService.updateMongoData(shopMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeSkuEntity.class);
+                } catch (Exception e) {
+                    log.error("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 ={}, 错误信息]", shopMongoDTO.getCustId(), e);
+                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
+                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                    dmpErrorLogEntity.setParams("");
+                    dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 = " + e.getMessage());
+                    dmpErrorLogEntity.setReturnMsg("");
+                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogService.add(dmpErrorLogEntity);
+                    throw new RuntimeException("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 ={} " , e);
+                }
             }
             //存储数据到中台
             saveShopEntity(shopEntity);
@@ -122,43 +129,49 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
     }
 
     private void saveShopEntity(KingdeeShopEntity shopEntity) {
+//        if (!"1".equals(shopEntity.getFUseOrgId())) {
+//            return;
+//        }
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
+//        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
 
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
+//        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
 
         //平台店铺标识
-        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
+//        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
 
         //店铺名称
         dmpShopInfoEntity.setName(shopEntity.getFName());
 
         //店铺站点
-        dmpShopInfoEntity.setSite("");
+//        String site = "";
+//        if (StrUtil.isNotEmpty(shopEntity.getFCOUNTRY_FNumber())) {
+//            CountrySiteEnum countrySite = CountrySiteEnum.getByKingDeeCode(shopEntity.getFCOUNTRY_FNumber());
+//            site = ObjectUtil.isNotEmpty(countrySite) ? countrySite.getKingDeeCode() : "";
+//        }
+//        dmpShopInfoEntity.setSite(site);
         //店铺状态:1启用 2停用
-        dmpShopInfoEntity.setStatus(2);
-        if ("A".equals(shopEntity.getFForbidStatus())){
-            dmpShopInfoEntity.setStatus(1);
-        }
+//        dmpShopInfoEntity.setStatus(2);
+//        if ("A".equals(shopEntity.getFForbidStatus())){
+//            dmpShopInfoEntity.setStatus(1);
+//        }
 
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
+//        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
 
         dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
         dmpShopInfoEntity.setUseOrgName(shopEntity.getFUseOrgId_FName());
         //财务编码
-        dmpShopInfoEntity.setFinanceCode("");
+//        dmpShopInfoEntity.setFinanceCode("");
 
         //平台标识
-        dmpShopInfoEntity.setPlatformSign("管易云");
-
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
+//        dmpShopInfoEntity.setPlatformSign("金蝶云星空");
 
         dmpShopInfoEntity.setCountry(shopEntity.getFCOUNTRY_FNumber());
-
-        dmpShopInfoService.checkOrder(dmpShopInfoEntity);
+        dmpShopInfoEntity.setCustomerId(shopEntity.getFCustId());
+        dmpShopInfoService.checkShopByKingDee(dmpShopInfoEntity);
     }
 
     /**
@@ -195,6 +208,10 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
         String fieldKeys = "FCUSTID,FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FShortName,FCOUNTRY.FNumber,FWEBSITE," +
                 "FGroup,FGroup.FNumber,FGroup.FName,FDescription,FInvoiceType,FCustTypeId.FDataValue,FCustTypeId.FNumber,F_ulz_Assistant.FNumber,F_ulz_Assistant.FDataValue,FDocumentStatus,FForbidStatus," +
                 "FCreateDate,FModifyDate";
+
+//        String jsonData = "{\"CreateOrgId\":1,\"Number\":\"\",\"Id\":\"331875\",\"IsSortBySeq\":\"false\"}";
+//        K3CloudApi client = new K3CloudApi();
+//        String view = client.view(PlatformApiEnum.BD_CUSTOMER.taskName, jsonData);
         Boolean dataSign = true;
         List<Map<String, Object>> result = new ArrayList<>();
         while (dataSign) {

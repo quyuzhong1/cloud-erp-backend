@@ -56,7 +56,7 @@ public enum PlatformApiEnum {
     BD_CUSTOMER(21, "BD_Customer"),
 
     //网店管理
-    ECC_SHOP(21, "ECC_Shop"),
+    ECC_SHOP(22, "ECC_Shop"),
 
     ;
 
