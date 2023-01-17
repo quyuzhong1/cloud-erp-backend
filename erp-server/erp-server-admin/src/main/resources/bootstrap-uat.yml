@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.10
         namespace: uat
         file-extension: yml
-        shared-configs: common.yml,db-sys.yml
+        shared-configs: common.yml,db-sys.yml,druid-common.yml
 #  mail:
 #    host: smtp.feishu.cn
 #    nickname: erp
