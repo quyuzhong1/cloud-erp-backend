@@ -49,12 +49,12 @@ public class KingdeeUtils {
         return map;
     }
 
-    public static JSONObject makeFieldJson(JSONObject jsonRoot, String kingdeeFieldStr,Object value){
+    public static JSONObject makeFieldJson(JSONObject jsonRoot, String pathStr,String splitStr,Object value){
         if(null==jsonRoot){
             jsonRoot = new JSONObject();
         }
 
-        String[] fieldArr = kingdeeFieldStr.split("_");
+        String[] fieldArr = pathStr.replace(splitStr,"_").split("_");
         JSONObject curNode=jsonRoot;
         for(int i=0;i<fieldArr.length;i++){
             String field=fieldArr[i];
@@ -80,7 +80,11 @@ public class KingdeeUtils {
 //        Map<String, String> stringStringMap = keySetValByLinked(fieldKeys, list);
 //        System.out.println(stringStringMap);
 
-        System.out.println(makeFieldJson(null,"a_b_c","kk").toJSONString());
+        JSONObject json=new JSONObject();
+        json.putIfAbsent("root",new JSONObject());
+        System.out.println(makeFieldJson(null,"a_b_c","_","kk").toJSONString());
+        System.out.println(makeFieldJson(null,"A.B.C",".","UUU").toJSONString());
+        System.out.println(makeFieldJson(json,"E.F.G",".","UUU").toJSONString());
 
 
     }
