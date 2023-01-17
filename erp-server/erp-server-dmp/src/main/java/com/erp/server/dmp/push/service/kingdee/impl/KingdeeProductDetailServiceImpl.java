@@ -168,7 +168,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("name").stream().collect(Collectors.toList());
+            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("Name").stream().collect(Collectors.toList());
             param.setNeedUpDateFields(needUpDateFields);
             KingdeeUtils.makeFieldJson(json,"FMATERIALID",model.get("Id"));
             SaveResult save = apiUtils.save(param);

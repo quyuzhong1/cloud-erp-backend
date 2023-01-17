@@ -111,4 +111,8 @@ public interface SysUserFeign {
     //根据用户ids查询角色
     @PostMapping("sys/feign/user/listRoleByUserIds")
     List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
+
+    //根据部门名称查询部门负责人
+    @PostMapping("sys/feign/dept/getByDeptNames")
+    List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 }

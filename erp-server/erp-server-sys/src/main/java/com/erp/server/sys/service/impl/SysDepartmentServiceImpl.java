@@ -235,6 +235,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return treeList;
     }
 
+    @Override
+    public List<SysUserDeptDTO> getByDeptNames(List<String> deptNames) {
+        return this.baseMapper.getByDeptNames(deptNames);
+    }
+
     /**
      * 递归获取批量保存的是数据
      *
