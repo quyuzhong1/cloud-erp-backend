@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.mabang;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.security.HmacSHA256Utils;
@@ -516,7 +517,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-            dmpOrderItemEntity.setAmountAfter(dmpOrderItemEntity.getSellPrice().multiply(new BigDecimal(dmpOrderItemEntity.getQuantity())));
+            BigDecimal sellPrice = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPrice()) ? dmpOrderItemEntity.getSellPrice() : BigDecimal.ZERO;
+            Integer quantity = null != dmpOrderItemEntity.getQuantity() ? dmpOrderItemEntity.getQuantity() : 0;
+            dmpOrderItemEntity.setAmountAfter(sellPrice.multiply(new BigDecimal(quantity)));
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);
