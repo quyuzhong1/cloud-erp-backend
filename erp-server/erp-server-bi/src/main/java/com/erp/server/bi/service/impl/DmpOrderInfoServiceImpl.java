@@ -1079,7 +1079,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
              //大于等于开始日期
             updateWrapper.ge(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateBegin());
              //小于等于开始日期
-            updateWrapper.le(DmpOrderInfoEntity::getPlatformCreateTime, obj.getSettlementDateEnd());
+            updateWrapper.le(DmpOrderInfoEntity::getPlatformCreateTime,LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()));
              //原币种
             updateWrapper.eq(DmpOrderInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
             //设置汇率
