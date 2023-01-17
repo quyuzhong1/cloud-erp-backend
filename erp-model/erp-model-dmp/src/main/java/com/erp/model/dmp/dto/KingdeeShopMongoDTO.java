@@ -8,5 +8,5 @@ import lombok.Data;
 public class KingdeeShopMongoDTO {
 
     @Panno(findType = PannoEnum.EQ,field = "fCustId")
-    private String fCustId;
+    private String custId;
 }
