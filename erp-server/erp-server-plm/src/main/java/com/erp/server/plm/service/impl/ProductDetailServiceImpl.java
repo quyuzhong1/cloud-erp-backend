@@ -22,6 +22,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.workflow.dto.ApproveProcessDTO;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
@@ -1680,11 +1681,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     private void productDetailStartProcess(ProductDetailEntity productDetailEntity) {
         //sku启动审核流程
-        ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
+        //ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
         //验证是否设置审核人
-        if (ObjectUtils.isEmpty(approverEntity)) {
+        /*if (ObjectUtils.isEmpty(approverEntity)) {
             throw new ServiceException(ApiError.ERROR_95082);
-        }
+        }*/
         String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
         //初始状态为待审核
         Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
@@ -1696,15 +1697,34 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             startProcess.setProcessDefinitionKey(processEntity.getProcessDefinitionKey());
             startProcess.setUserId(loginUser.getUid());
             //审核人1
-            List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
+            //List<String> firstApproveIdList = Arrays.stream(approverEntity.getFirstApproveId().split(",")).collect(Collectors.toList());
             //审核人2
-            List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
+            //List<String> secondApproveIdList = Arrays.stream(approverEntity.getSecondApproveId().split(",")).collect(Collectors.toList());
             //审核人3
-            List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
+            //List<String> thirdApproveIdList = Arrays.stream(approverEntity.getThirdApproveId().split(",")).collect(Collectors.toList());
+            //审核人1
+            List<String> firstApproveIdList = new ArrayList<>();
+            if (StringUtils.isBlank(productDetailEntity.getChargeId())) {
+                throw new ServiceException(ApiError.ERROR_95082);
+            }
+            List<String> firstApproveIds = Arrays.stream(productDetailEntity.getChargeId().split(",")).collect(Collectors.toList());
+            firstApproveIdList.addAll(firstApproveIds);
+            //审核人2
+            String secondDeptName = SkuApproveConfigureEnum.SECOND_APPROVE.getDesc();
+            List<String> secondApproveIdList = setApproveLead(secondDeptName);
+            //审核人3
+            String thirdDeptName = SkuApproveConfigureEnum.THIRD_APPROVE.getDesc();
+            List<String> thirdApproveIdList = setApproveLead(thirdDeptName);
+            //审核人4
+            String fourthDeptName = SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc();
+            List<String> fourthApproveIdList = setApproveLead(fourthDeptName);
+
             Map<String, Object> parameterMap = new HashMap<>();
+
             parameterMap.put("firstApproveIdList",firstApproveIdList);
             parameterMap.put("secondApproveIdList",secondApproveIdList);
             parameterMap.put("thirdApproveIdList",thirdApproveIdList);
+            parameterMap.put("fourthApproveIdList",fourthApproveIdList);
             startProcess.setParameterMap(parameterMap);
             //启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
@@ -1716,6 +1736,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
     }
+
+    private List<String> setApproveLead (String deptName) {
+        List<String> deptNames = Arrays.stream(deptName.split(",")).distinct().collect(Collectors.toList());
+        List<SysUserDeptDTO> list = sysUserFeign.getByDeptNames(deptNames);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95082);
+        }
+        List<String> leadIds = list.stream().map(SysUserDeptDTO::getUid).distinct().collect(Collectors.toList());
+        return leadIds;
+    }
+
 
     /**
      * 产品信息修改日志

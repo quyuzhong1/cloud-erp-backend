@@ -16,4 +16,24 @@
     <select id="getDeptList" resultType="com.erp.model.sys.dto.SysDepartmentDTO">
          SELECT id,name,type FROM sys_department
     </select>
+
+    <select id="getByDeptNames" resultType="com.erp.model.sys.dto.SysUserDeptDTO">
+        select
+            sdu.user_id as uid,
+            sui.user_name as userName,
+            sd.id as deptId,
+            sd.name as deptName
+        from sys_department sd
+        inner join sys_department_user sdu on sd.id = sdu.department_id
+        inner join sys_user_info sui on sdu.user_id = sui.uid
+        where sdu.lead_state = 1
+        <if test="deptNames != null and deptNames.size() > 0">
+            and sd.name in
+            <foreach collection="deptNames" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
 </mapper>

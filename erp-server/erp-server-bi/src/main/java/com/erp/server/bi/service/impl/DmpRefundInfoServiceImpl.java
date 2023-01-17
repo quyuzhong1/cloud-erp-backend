@@ -10,6 +10,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -131,7 +132,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             //大于等于开始日期
             updateWrapper.ge(DmpRefundInfoEntity::getOrderTime, obj.getSettlementDateBegin());
             //小于等于开始日期
-            updateWrapper.le(DmpRefundInfoEntity::getOrderTime, obj.getSettlementDateEnd());
+            updateWrapper.le(DmpRefundInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()));
             //原币种
             updateWrapper.eq(DmpRefundInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
             //设置汇率

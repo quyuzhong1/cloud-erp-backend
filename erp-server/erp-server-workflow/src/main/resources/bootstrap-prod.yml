@@ -8,7 +8,7 @@ spring:
         server-addr: 172.16.100.10
         namespace: prod
         file-extension: yml
-        shared-configs: common.yml,db-workflow.yml
+        shared-configs: common.yml,db-workflow.yml,druid-common.yml
 
 
 

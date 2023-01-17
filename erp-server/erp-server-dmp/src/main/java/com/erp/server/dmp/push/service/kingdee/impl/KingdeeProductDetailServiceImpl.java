@@ -115,10 +115,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //第三方系统下划线分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
             if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
-                KingdeeUtils.makeFieldJson(json,apiField,cfgApiFieldMapDTO.getDefaultValue());
+                KingdeeUtils.makeFieldJson(json,apiField,"_",cfgApiFieldMapDTO.getDefaultValue());
             } else {
                 if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-                    KingdeeUtils.makeFieldJson(json,apiField,map.get(cfgApiFieldMapDTO.getSelfField()));
+                    KingdeeUtils.makeFieldJson(json,apiField,"_",map.get(cfgApiFieldMapDTO.getSelfField()));
                 } else {
                     //根据值映射转换
                     String apiValue = cfgApiFieldMapValueList.stream()
@@ -126,7 +126,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                             .map(CfgApiFieldMapValueEntity::getApiValue)
                             .findFirst()
                             .orElse(null);
-                    KingdeeUtils.makeFieldJson(json,apiField,apiValue);
+                    KingdeeUtils.makeFieldJson(json,apiField,"_",apiValue);
                 }
             }
         }
@@ -168,9 +168,9 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
-            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("name").stream().collect(Collectors.toList());
+            ArrayList<String> needUpDateFields = (ArrayList<String>) Arrays.asList("Name").stream().collect(Collectors.toList());
             param.setNeedUpDateFields(needUpDateFields);
-            KingdeeUtils.makeFieldJson(json,"FMATERIALID",model.get("Id"));
+            KingdeeUtils.makeFieldJson(json,"FMATERIALID","_",model.get("Id"));
             SaveResult save = apiUtils.save(param);
            if (save.isSuccessfully()) {
                //修改成功操作日志
