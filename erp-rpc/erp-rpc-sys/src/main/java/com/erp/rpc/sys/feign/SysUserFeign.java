@@ -92,4 +92,8 @@ public interface SysUserFeign {
 
     @PostMapping("sys/feign/user/getSysUserById")
     SysUserDTO getSysUserById(@RequestBody String uid);
+
+    //根据部门名称查询部门负责人
+    @PostMapping("sys/feign/dept/getByDeptNames")
+    List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 }
