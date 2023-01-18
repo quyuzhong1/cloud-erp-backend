@@ -156,7 +156,11 @@ public class DmpShopInfoEntity implements Serializable {
      */
     @TableField(value = "country")
     private String country;
-
+    /**
+     * 是否属于唯迹集团
+     */
+    @TableField(value = "is_vijim")
+    private Boolean isVijim;
 
 
     @TableField(exist = false)
