@@ -543,7 +543,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 collect(Collectors.groupingBy(ShopSalesVO::getPlatformName));
         int countryMapSize = groupCountryMap.size();
         //列名
-        List<XAxesVO> columnList = new ArrayList<>(countryMapSize + 1);
+        List<XAxesVO> columnList = new LinkedList<>();
         XAxesVO shopAxes = new XAxesVO();
         shopAxes.setProp("name");
         shopAxes.setLabel("店铺名称");
@@ -558,10 +558,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             countryNameList.add(country);
         }
 
-        List<Map<String, Object>> rowAxesList = new ArrayList<>(groupShopMap.size());
+        List<Map<String, Object>> rowAxesList = new LinkedList<>();
 
         for (Map.Entry<String, List<ShopSalesVO>> item : groupShopMap.entrySet()) {
-            Map<String, Object> rowAxes = new HashMap<>();
+            Map<String, Object> rowAxes = new LinkedHashMap<>();
             List<ShopSalesVO> shopSalesList = item.getValue();
             String shopName = shopSalesList.get(0).getShopName();
             rowAxes.put("name", shopName);
