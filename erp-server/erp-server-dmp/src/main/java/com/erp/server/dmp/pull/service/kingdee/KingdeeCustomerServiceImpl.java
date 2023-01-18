@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
@@ -160,9 +161,16 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
 
         //平台名称
 //        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
-
+        String orgName = shopEntity.getFUseOrgId_FName();
+        if(StrUtil.isNotBlank(shopEntity.getFUseOrgId_FName())){
+            dmpShopInfoEntity.setIsVijim(Boolean.TRUE);
+            if (orgName.contains("优至胜") || orgName.contains("小隼")) {
+                dmpShopInfoEntity.setIsVijim(Boolean.FALSE);
+            }
+        }
         dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
         dmpShopInfoEntity.setUseOrgName(shopEntity.getFUseOrgId_FName());
+
         //财务编码
 //        dmpShopInfoEntity.setFinanceCode("");
 
@@ -218,8 +226,8 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
             try {
                 KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_CUSTOMER.taskName);
                 result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex);
+                XxlJobHelper.log("获取金蝶店铺数据第[{}]页 有{}条记录", pageIndex, pageSize);
                 if (CollectionUtil.isEmpty(result)) {
-                    XxlJobHelper.log("获取金蝶店铺数据第[{}]页", pageSize);
                     return Collections.emptyList();
                 }
                 if (result.size() < pageSize){

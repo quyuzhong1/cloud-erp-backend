@@ -72,6 +72,12 @@ public class ApiSyncTaskEntity implements Serializable {
     private String apiPlatformId;
 
     /**
+     * 授权id
+     */
+    @TableField(value = "api_auth_id")
+    private String apiAuthId;
+
+    /**
      * 模块类型 ApiModuleTypeEnum枚举,（0产品信息，1BOM管理）
      */
     @TableField(value = "module_type")

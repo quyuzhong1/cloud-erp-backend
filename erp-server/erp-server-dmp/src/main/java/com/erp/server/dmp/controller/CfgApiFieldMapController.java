@@ -138,16 +138,18 @@ public class CfgApiFieldMapController extends BaseController {
     @GetMapping("/pushProductDetail")
     public ApiResult pushProductDetail() {
         Map<String,Object> map = new HashMap<>();
+        //id
+        map.put("id","444");
         //sku
-        map.put("skuNo","23");
+        map.put("skuNo","OJOHNFIDJFI");
         //sku
-        map.put("name","77");
+        map.put("name","00000000");
         //spu
-        map.put("spuNo","777");
+        map.put("spuNo","000000000");
         //产品功能描述
-        map.put("functionDesc","777");
+        map.put("functionDesc","000000000");
         //属性
-        map.put("property","23");
+        map.put("property","55");
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
@@ -175,34 +177,34 @@ public class CfgApiFieldMapController extends BaseController {
         //申报要素
         map.put("declareElement","23");
         //毛重
-        map.put("grossWeight", "23");
+        map.put("grossWeight", 99);
         //净重
-        map.put("netWeight", "23");
+        map.put("netWeight", 99);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  "23");
+        map.put("productSize_length",  99);
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  "23");
+        map.put("productSize_width",  99);
         //产品尺寸-高(cm)
-        map.put("productSize_height",  "23");
+        map.put("productSize_height",  99);
         //单箱数量
-        map.put("boxQty", "23");
+        map.put("boxQty", 99);
         //单箱重量
-        map.put("boxWeight", "23");
+        map.put("boxWeight", "55555");
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", "23");
+        map.put("boxSize_length", "99");
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", "23");
+        map.put("boxSize_width", "99");
         //产品尺寸-高(cm)
-        map.put("boxSize_height", "23");
+        map.put("boxSize_height", "99");
         //实际不含税成本
-        map.put("actualNoTaxCost","23");
+        map.put("actualNoTaxCost","88");
         //实际含税成本
-        map.put("actualTaxCost", "23");
-        map.put("moq","23");
+        map.put("actualTaxCost", "99");
+        map.put("moq","99");
         //采购员
-        map.put("purchaseUser","23");
+        map.put("purchaseUser","99");
         map.put("mainSupplier","23");
         this.kingdeeProductDetailService.pushProductDetail(map);
         return success();
