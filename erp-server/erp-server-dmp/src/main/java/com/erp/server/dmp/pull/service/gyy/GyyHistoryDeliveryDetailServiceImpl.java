@@ -91,10 +91,11 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
             return;
         }
         XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyDeliveryDetailEntityList.size());
-        gyyDeliveryDetailEntityList.parallelStream().forEach( gyyDeliveryDetailEntity -> {
+        for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
             try {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyDeliveryDetailEntity.getPlatformCode());
+                orderMongoDTO.setCode(gyyDeliveryDetailEntity.getCode());
                 List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
                 if (CollectionUtil.isNotEmpty(mongoData)) {
                     for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
@@ -124,7 +125,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 new ServiceException(500, StrUtil.format("保存管易数据异常gyyDeliveryDetailEntity ={} e ={}", JSONUtil.toJsonStr(gyyDeliveryDetailEntity), e.getMessage()));
             }
-        });
+        }
     }
 
     @Override

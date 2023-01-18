@@ -83,4 +83,6 @@ public interface BiDictService  extends IService<BiDictEntity> {
     BiDictEntity getByTypeValue(String type, String dashboardFlag);
 
     List<BiDictEntity> getByType(String type);
+
+    BiDictEntity getByTypeName(String type, String name);
 }

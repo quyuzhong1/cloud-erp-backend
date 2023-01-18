@@ -1,11 +1,13 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
 import com.erp.common.business.aspect.DataPermissionAspect;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
@@ -269,12 +271,17 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String categoryId = dto.getCategoryId();
         //检查名字是否重复
         checkName(null, name);
-        BiDictEntity dict = dictService.getById(categoryId);
-        String categoryName = "";
-        if (dict != null) {
-            categoryName = dict.getName();
+        BiDictEntity dict;
+        if (StrUtil.isNotBlank(dto.getCategoryId())){
+            dict = dictService.getById(categoryId);
+        }else {
+            dict = dictService.getByTypeName("subjectCategory","销售专题");
         }
-
+        if (null == dict) {
+           throw new ServiceException(500,"专题类型不存在，请确认！");
+        }
+        String categoryName = dict.getName();
+        categoryId = dict.getId();
         BiSubjectEntity subject = new BiSubjectEntity();
         //专题id
         String subjectId = IdWorker.getIdStr();
