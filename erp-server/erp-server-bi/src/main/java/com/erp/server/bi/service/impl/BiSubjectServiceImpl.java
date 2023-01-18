@@ -272,7 +272,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         BiDictEntity dict;
-        if (StrUtil.isBlank(dto.getCategoryId())){
+        if (StrUtil.isNotBlank(dto.getCategoryId())){
             dict = dictService.getById(categoryId);
         }else {
             dict = dictService.getByTypeName("subjectCategory","销售专题");
