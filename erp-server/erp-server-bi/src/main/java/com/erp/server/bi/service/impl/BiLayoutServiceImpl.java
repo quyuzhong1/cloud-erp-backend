@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
@@ -10,6 +11,7 @@ import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.LayoutBlockEnum;
 import com.erp.server.bi.mapper.BiLayoutMapper;
 import com.erp.server.bi.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
  * @since 2022-12-08 14:28:27
  */
 @Service
+@Slf4j
 public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEntity> implements BiLayoutService {
 
 
@@ -133,8 +136,10 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     @Override
     public SubjectLayoutDetailsDTO subjectInfo(String subjectId) {
         String userId = commonService.getUserInfo().getUid();
+        log.info("subjectId={}", subjectId);
         BiSubjectEntity subject = subjectService.getById(subjectId);
         if (Objects.isNull(subject)) {
+            log.info("subject result ={}", JSONUtil.toJsonStr(subject));
             throw new ServiceException(ApiError.ERROR_97000);
         }
         subjectShareService.checkPermission(userId, subject);

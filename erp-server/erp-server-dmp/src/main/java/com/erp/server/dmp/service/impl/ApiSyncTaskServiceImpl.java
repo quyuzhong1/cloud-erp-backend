@@ -7,6 +7,7 @@ import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.server.dmp.mapper.ApiSyncTaskMapper;
 import com.erp.server.dmp.service.ApiSyncTaskService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,9 @@ public class ApiSyncTaskServiceImpl extends ServiceImpl<ApiSyncTaskMapper, ApiSy
     public Boolean insert(ApiSyncTaskDTO dto) {
         ApiSyncTaskEntity entity = new ApiSyncTaskEntity();
         BeanMapperUtils.copy(dto,entity);
+        if (StringUtils.isBlank(entity.getApiAuthId())) {
+            entity.setApiAuthId("");
+        }
         return this.save(entity);
     }
 
@@ -31,6 +35,9 @@ public class ApiSyncTaskServiceImpl extends ServiceImpl<ApiSyncTaskMapper, ApiSy
     public void update(ApiSyncTaskDTO dto) {
         ApiSyncTaskEntity entity = new ApiSyncTaskEntity();
         BeanMapperUtils.copy(dto,entity);
+        if (StringUtils.isBlank(entity.getApiAuthId())) {
+            entity.setApiAuthId("");
+        }
         this.updateById(entity);
     }
 
