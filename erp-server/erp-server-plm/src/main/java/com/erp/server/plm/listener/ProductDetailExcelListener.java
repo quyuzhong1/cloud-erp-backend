@@ -64,8 +64,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (StringUtils.isBlank(dto.getName())) {
             errorMsgList.add("产品名称不能为空");
         }
-        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 50) {
-            errorMsgList.add("产品名称不能超过50个字节");
+        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 250) {
+            errorMsgList.add("产品名称不能超过250个字节");
         }
         if (StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("产品负责人不能为空");
