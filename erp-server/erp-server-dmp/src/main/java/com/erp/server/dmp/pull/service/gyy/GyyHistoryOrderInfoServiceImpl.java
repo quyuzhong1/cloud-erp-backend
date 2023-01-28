@@ -120,14 +120,14 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
             List<GyyOrderEntity> mongoData = null;
             try {
                 mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (GyyOrderEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrderEntity), MapUtil.class);
-                            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-                        }
+                if (CollectionUtil.isNotEmpty(mongoData)) {
+                    GyyOrderEntity mongoDatum = mongoData.get(0);
+                    if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
+                        // 根据id 修改数据
+                        OrderMongoDTO updateMongoDTO = new OrderMongoDTO();
+                        updateMongoDTO.setId(mongoDatum.get_id());
+                        MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(gyyOrderEntity), MapUtil.class);
+                        mongoService.updateMongoData(updateMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
                     }
                 } else {
                     mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);

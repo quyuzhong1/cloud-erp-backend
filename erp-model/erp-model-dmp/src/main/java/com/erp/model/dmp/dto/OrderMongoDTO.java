@@ -19,7 +19,7 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "platformOrderId")
     private String platformOrderId;
 
-    @Panno(findType = PannoEnum.EQ,field = "id")
+    @Panno(findType = PannoEnum.EQ,field = "_id")
     private String id;
 
     @Panno(findType = PannoEnum.EQ,field = "stockSku")

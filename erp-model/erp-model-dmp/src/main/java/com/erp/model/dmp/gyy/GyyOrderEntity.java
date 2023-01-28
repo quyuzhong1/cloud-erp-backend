@@ -11,7 +11,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class GyyOrderEntity {
 
     /**
@@ -102,7 +101,7 @@ public class GyyOrderEntity {
      * refund_state : 0
      * distribution_channel : null
      */
-
+    private String _id;
     @SerializedName("code")
     private String code;
     @SerializedName("qty")
@@ -279,22 +278,87 @@ public class GyyOrderEntity {
     @Override
     public String toString() {
         return "GyyOrderEntity{" +
-                "amount=" + amount +
+                ", code='" + code + '\'' +
+                ", qty=" + qty +
+                ", amount=" + amount +
+                ", payment=" + payment +
+                ", approve=" + approve +
+                ", cod=" + cod +
+                ", cancle=" + cancle +
+                ", msg='" + msg + '\'' +
+                ", vipIdCard='" + vipIdCard + '\'' +
+                ", vipEmail='" + vipEmail + '\'' +
+                ", vipRealName='" + vipRealName + '\'' +
+                ", accountStatus='" + accountStatus + '\'' +
                 ", accountAmount=" + accountAmount +
                 ", assignState=" + assignState +
                 ", refund=" + refund +
+                ", platformCode='" + platformCode + '\'' +
                 ", createtime='" + createtime + '\'' +
                 ", modifytime='" + modifytime + '\'' +
+                ", dealtime='" + dealtime + '\'' +
                 ", paytime='" + paytime + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", shopCode='" + shopCode + '\'' +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", warehouseCode='" + warehouseCode + '\'' +
+                ", expressName='" + expressName + '\'' +
+                ", expressCode='" + expressCode + '\'' +
+                ", vipName='" + vipName + '\'' +
+                ", vipCode='" + vipCode + '\'' +
+                ", receiverName='" + receiverName + '\'' +
+                ", receiverPhone='" + receiverPhone + '\'' +
                 ", receiverMobile='" + receiverMobile + '\'' +
+                ", receiverZip='" + receiverZip + '\'' +
                 ", receiverAddress='" + receiverAddress + '\'' +
+                ", receiverArea='" + receiverArea + '\'' +
+                ", buyerMemo='" + buyerMemo + '\'' +
+                ", sellerMemo='" + sellerMemo + '\'' +
+                ", sellerMemoLate='" + sellerMemoLate + '\'' +
+                ", postFee=" + postFee +
+                ", codFee=" + codFee +
+                ", discountFee=" + discountFee +
+                ", postCost=" + postCost +
+                ", weightOrigin=" + weightOrigin +
                 ", paymentAmount=" + paymentAmount +
                 ", deliveryState=" + deliveryState +
+                ", orderTypeName='" + orderTypeName + '\'' +
+                ", businessMan='" + businessMan + '\'' +
+                ", createName='" + createName + '\'' +
+                ", holdInfo='" + holdInfo + '\'' +
+                ", platformFlag=" + platformFlag +
+                ", errorMsg='" + errorMsg + '\'' +
+                ", extendMemo='" + extendMemo + '\'' +
                 ", taxAmount=" + taxAmount +
                 ", tradeOrderStatusInfo=" + tradeOrderStatusInfo +
+                ", approveDate='" + approveDate + '\'' +
+                ", accountDate='" + accountDate + '\'' +
+                ", tradeTagCode='" + tradeTagCode + '\'' +
+                ", tradeTagName='" + tradeTagName + '\'' +
+                ", planDeliveryDate='" + planDeliveryDate + '\'' +
+                ", invoices='" + invoices + '\'' +
+                ", platformTradingState='" + platformTradingState + '\'' +
                 ", substitutOrder=" + substitutOrder +
+                ", otherServiceFee=" + otherServiceFee +
+                ", drpTenantName='" + drpTenantName + '\'' +
+                ", tariffTotal=" + tariffTotal +
                 ", refundFee=" + refundFee +
+                ", tradePrint='" + tradePrint + '\'' +
+                ", currencyCode='" + currencyCode + '\'' +
+                ", currencyName='" + currencyName + '\'' +
+                ", fromTypeName='" + fromTypeName + '\'' +
+                ", humenExpressCode='" + humenExpressCode + '\'' +
+                ", humenExpressName='" + humenExpressName + '\'' +
+                ", preSale=" + preSale +
+                ", subTypeName='" + subTypeName + '\'' +
+                ", distributionOrder=" + distributionOrder +
+                ", distributionPostFee='" + distributionPostFee + '\'' +
+                ", timelinessTypeName='" + timelinessTypeName + '\'' +
+                ", estimatedArrivalTime='" + estimatedArrivalTime + '\'' +
+                ", storeName='" + storeName + '\'' +
+                ", storeCode='" + storeCode + '\'' +
                 ", refundState=" + refundState +
+                ", distributionChannel='" + distributionChannel + '\'' +
                 ", details=" + details +
                 ", payments=" + payments +
                 ", deliverys=" + deliverys +
