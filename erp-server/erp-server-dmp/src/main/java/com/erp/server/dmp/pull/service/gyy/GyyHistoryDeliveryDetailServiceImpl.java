@@ -91,19 +91,21 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
             return;
         }
         XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyDeliveryDetailEntityList.size());
-        gyyDeliveryDetailEntityList.parallelStream().forEach( gyyDeliveryDetailEntity -> {
+        for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
             try {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyDeliveryDetailEntity.getPlatformCode());
+                orderMongoDTO.setCode(gyyDeliveryDetailEntity.getCode());
                 List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
                 if (CollectionUtil.isNotEmpty(mongoData)) {
-                    for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
                         // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyDeliveryDetailEntity), MapUtil.class);
-                            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
-                        }
+                    GyyDeliveryDetailEntity mongoDatum = mongoData.get(0);
+                    if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
+                        // 修改数据
+                        OrderMongoDTO updateMongoDTO = new OrderMongoDTO();
+                        updateMongoDTO.setId(mongoDatum.get_id());
+                        MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(gyyDeliveryDetailEntity), MapUtil.class);
+                        mongoService.updateMongoData(updateMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
                     }
                 } else {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
@@ -124,7 +126,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 new ServiceException(500, StrUtil.format("保存管易数据异常gyyDeliveryDetailEntity ={} e ={}", JSONUtil.toJsonStr(gyyDeliveryDetailEntity), e.getMessage()));
             }
-        });
+        }
     }
 
     @Override
