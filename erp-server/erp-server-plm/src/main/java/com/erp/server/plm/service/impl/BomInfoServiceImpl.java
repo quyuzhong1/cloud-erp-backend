@@ -1,11 +1,13 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BusinessNoCreateUtil;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -14,6 +16,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
+import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -56,6 +59,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
+    @Resource
+    private ProductChangeService productChangeService;
 
     /**
      * 添加bom
@@ -400,9 +406,48 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public Boolean startChange(UpdateBomDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        //只有归档才能申请变更
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95104);
+        }
         AddChangeDTO change = new AddChangeDTO();
+        change.setSourceId(dto.getId());
+        change.setType(dto.getType());
+        change.setDetailsJson(JSONObject.toJSONString(dto.getSkuList()));
+        Boolean changeResult = productChangeService.add(change);
+        //当成功后改变bom 的状态为待审核
+        if (changeResult) {
+            bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+            return this.updateById(bom);
+        }
+        return false;
+    }
 
-        return null;
+    @Override
+    public List<BomVO> getByIds(List<String> bomIdList) {
+        if (CollectionUtils.isEmpty(bomIdList)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.getByIds(bomIdList);
+    }
+
+    
+    /**
+     * 这个是在变更申请的时候 获取到bom 列表
+     * 只要审核通过的
+     * @author yl
+     * @date 2023-01-28 17:08
+     * @param
+     * @return java.util.List<com.erp.common.dto.base.BaseIdDTO>
+     */
+    @Override
+    public List<BaseIdDTO> getBomInfo(String searchKeyword) {
+        return baseMapper.getBomInfo(BomStateEnum.AUDIT_PASS.getState(),searchKeyword);
     }
 
 

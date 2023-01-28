@@ -58,7 +58,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
      * 删除bom 信息
      * @author yl
      * @date 2023-01-13 9:00
-     * @param id
+     * @param bomId
      * @return void
      */
     @Override

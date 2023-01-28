@@ -307,4 +307,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<SkuVO> searchSku(String searchKeyword);
+
+    /**
+     *  获取 审核通过 的sku 信息
+     * @param searchKeyword
+     * @return
+     */
+    List<BaseIdDTO> getSku(String searchKeyword);
 }

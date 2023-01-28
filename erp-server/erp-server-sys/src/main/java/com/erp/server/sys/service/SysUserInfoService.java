@@ -100,17 +100,6 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param userIds
      * @return List<UserSuperiorDTO>
      */
-    List<UserDTO> listSuperiorByUserId(String id);
-    /**
-     * @description: 根据角色id查询所有用户
-     * @author Will
-     * @date: 2023/1/9 10:38
-     * @param roleName
-     * @return List<UserDTO>
-     */
-    List<UserDTO> listSuperiorByRoleName(String roleName);
-
-    SysUserDTO getSysUserById(String userId);
     List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds);
 
 }

@@ -15,12 +15,8 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class BomSearchPagingDTO  implements Serializable {
-    /**
-     * 任务类型
-     * 0 全部
-     * 1 待我审核
-     */
-    @StateEnumValue(intValues = {0,1}, message = "bom搜索类型有误")
+
+    @StateEnumValue(intValues = {0,1}, message = "搜索类型有误")
     private Integer bomSearchType;
 
 

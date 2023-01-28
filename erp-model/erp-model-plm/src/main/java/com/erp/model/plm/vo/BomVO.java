@@ -29,6 +29,8 @@ public class BomVO  implements Serializable {
     private Integer version;
 
 
+    private String serialNumber;
+
 
     /**
      * 类型

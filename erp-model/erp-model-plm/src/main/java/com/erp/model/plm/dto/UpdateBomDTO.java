@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,11 +23,11 @@ public class UpdateBomDTO implements Serializable {
     @NotBlank(message = "id不能为空")
     private String id;
 
-//    /**
-//     * 类型
-//     */
-//    @StateEnumValue(strValues = {"combination", "single"}, message = "类型有误")
-//    private String type;
+    /**
+     * 类型
+     */
+    @StateEnumValue(strValues = {"combination", "single"}, message = "类型有误")
+    private String type;
 
 
     @Valid

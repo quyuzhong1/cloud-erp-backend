@@ -6,15 +6,27 @@ import com.erp.server.plm.mapper.ProductChangeDetailsMapper;
 import com.erp.server.plm.service.ProductChangeDetailsService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-
 /**
  * 变更管理变更实体的信息表(ProductChangeDetails)表服务实现类
  *
  * @author yl
  * @since 2023-01-11 14:05:03
  */
-@Service()
+@Service
 public class ProductChangeDetailsServiceImpl extends ServiceImpl<ProductChangeDetailsMapper, ProductChangeDetailsEntity> implements ProductChangeDetailsService {
 
+
+    /**
+     * 保存变更信息 表
+     *
+     * @param changeInfoId
+     * @param detailsJson
+     */
+    @Override
+    public void saveChangeDetails(String changeInfoId, String detailsJson) {
+        ProductChangeDetailsEntity changeDetailsEntity = new ProductChangeDetailsEntity();
+        changeDetailsEntity.setChangeInfoId(changeInfoId);
+        changeDetailsEntity.setDetailsJson(detailsJson);
+        this.save(changeDetailsEntity);
+    }
 }

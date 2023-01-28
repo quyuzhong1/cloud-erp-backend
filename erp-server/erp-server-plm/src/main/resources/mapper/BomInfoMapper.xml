@@ -29,4 +29,25 @@
 
 
     </select>
+    <select id="getByIds" resultType="com.erp.model.plm.vo.BomVO">
+        SELECT serial_number,id AS bomId
+        FROM  product_bom_info
+        <where>
+          <if test="bomIdList !=null and bomIdList.size>0">
+                id IN
+                <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+          </if>
+
+        </where>
+    </select>
+
+    <select id="getBomInfo" resultType="com.erp.common.dto.base.BaseIdDTO">
+        SELECT id,serial_number FROM product_bom_info
+        WHERE state=#{state}
+        <if test="searchKeyword!=null and searchKeyword !=''">
+            AND serial_number LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
 </mapper>

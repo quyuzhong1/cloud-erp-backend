@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
@@ -10,6 +11,7 @@ import com.erp.model.plm.dto.BomSearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
+import com.erp.model.plm.vo.BomVO;
 
 import java.util.List;
 
@@ -45,4 +47,8 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     Boolean recover(String id);
 
     Boolean startChange(UpdateBomDTO dto);
+
+    List<BomVO> getByIds(List<String> bomIdList);
+
+    List<BaseIdDTO> getBomInfo(String  searchKeyword);
 }
