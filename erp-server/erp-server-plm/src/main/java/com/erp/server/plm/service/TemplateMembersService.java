@@ -66,4 +66,13 @@ public interface TemplateMembersService extends IService<TemplateMembersEntity> 
      * @return List<TemplateMembersEntity>
      */
     List<TemplateMembersEntity> getByTemplateId(String templateId);
+    /**
+     * @description: 根据角色ids和模板id查询人员
+     * @author Will
+     * @date: 2023/1/14 9:56
+     * @param roleIds
+     * @param templateId
+     * @return List<TemplateMembersEntity>
+     */
+    List<TemplateMembersEntity> listByRoleIds(List<String> roleIds,String templateId);
 }

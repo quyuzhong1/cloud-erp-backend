@@ -43,4 +43,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     Boolean scrap(String bomId);
 
     Boolean recover(String id);
+
+    Boolean startChange(UpdateBomDTO dto);
 }

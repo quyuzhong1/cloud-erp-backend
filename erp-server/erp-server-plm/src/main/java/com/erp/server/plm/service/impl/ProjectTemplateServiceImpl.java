@@ -197,6 +197,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         return resultList;
     }
 
+    @Override
+    public ProjectTemplateEntity getByType(Integer type) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType,type);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
     /**
      * 保存模板 返回模板id
      *

@@ -64,4 +64,12 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return List<SysRoleDTO>
      */
     List<SysRoleDTO> listTemplateRole(String templateId);
+    /**
+     * @description: 根据类型查询第一条模板
+     * @author Will
+     * @date: 2023/1/14 10:01
+     * @param code
+     * @return ProjectTemplateEntity
+     */
+    ProjectTemplateEntity getByType(Integer code);
 }

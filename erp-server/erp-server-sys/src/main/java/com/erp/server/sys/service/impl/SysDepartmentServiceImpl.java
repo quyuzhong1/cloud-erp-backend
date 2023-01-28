@@ -236,6 +236,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    public SysDepartmentEntity getParentDepartmentById(String departmentId) {
+        SysDepartmentEntity sysDepartmentEntity = this.getById(departmentId);
+        if (ObjectUtils.isEmpty(sysDepartmentEntity)) {
+                return sysDepartmentEntity;
+        }
+        return this.getById(sysDepartmentEntity.getParentId());
+    }
+
+    @Override
     public List<SysUserDeptDTO> getByDeptNames(List<String> deptNames) {
         return this.baseMapper.getByDeptNames(deptNames);
     }

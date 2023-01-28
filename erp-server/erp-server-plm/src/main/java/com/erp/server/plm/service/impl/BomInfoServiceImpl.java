@@ -196,17 +196,19 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     /**
      * 删除bom
      *
-     * @param id
+     * @param bomId
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-01-13 8:56
      */
     @Override
-    public Boolean deleteById(String id) {
-        boolean flag = this.removeById(id);
+    public Boolean deleteById(String bomId) {
+        boolean flag = this.removeById(bomId);
         if (flag) {
-            bomSkuService.deleteByBomId(id);
-            productBomHistoryService.deleteByBomId(id);
+            bomSkuService.deleteByBomId(bomId);
+            productBomHistoryService.deleteByBomId(bomId);
+            String operateContent = BomOperateContent.DELETE;
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
         }
         return flag;
     }
@@ -230,11 +232,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95098);
         }
         bom.setState(BomStateEnum.WAIT_AUDIT.getState());
-
         /**
          * 这里要发起一个流程
          */
-        return this.updateById(bom);
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
     }
 
 
@@ -261,7 +267,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         /**
          * 这里要发起一个流程
          */
-        return this.updateById(bom);
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_NO_PASS.getName(), BomStateEnum.WAIT_AUDIT.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+
     }
 
     /**
@@ -283,8 +295,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95100);
         }
         bom.setState(BomStateEnum.FREEZE.getState());
-
-        return this.updateById(bom);
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.FREEZE.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
     }
 
     /**
@@ -306,7 +322,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95101);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
-        return this.updateById(bom);
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
     }
 
     /**
@@ -331,15 +352,21 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95102);
         }
         bom.setState(BomStateEnum.SCRAP.getState());
-        return this.updateById(bom);
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.getName(state), BomStateEnum.SCRAP.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
     }
 
     /**
      * 恢复bom
-     * @author yl
-     * @date 2023-01-13 17:05
+     *
      * @param bomId
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 17:05
      */
     @Override
     public Boolean recover(String bomId) {
@@ -352,7 +379,30 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95103);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
-        return this.updateById(bom);
+
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+
+    }
+
+
+    /**
+     * bom 发起变更
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-14 15:06
+     */
+    @Override
+    public Boolean startChange(UpdateBomDTO dto) {
+        AddChangeDTO change = new AddChangeDTO();
+
+        return null;
     }
 
 

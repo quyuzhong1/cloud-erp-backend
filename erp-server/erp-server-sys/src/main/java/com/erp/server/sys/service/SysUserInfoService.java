@@ -97,8 +97,8 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @description: 查询人员所有上级
      * @author Will
      * @date: 2023/1/9 9:24
-     * @param id
-     * @return List<UserDTO>
+     * @param userIds
+     * @return List<UserSuperiorDTO>
      */
     List<UserDTO> listSuperiorByUserId(String id);
     /**
@@ -111,5 +111,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<UserDTO> listSuperiorByRoleName(String roleName);
 
     SysUserDTO getSysUserById(String userId);
+    List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds);
+
 }
 
