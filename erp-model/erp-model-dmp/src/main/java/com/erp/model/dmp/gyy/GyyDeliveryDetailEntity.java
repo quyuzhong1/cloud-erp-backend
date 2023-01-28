@@ -5,6 +5,7 @@ import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.model.dmp.gyy.bean.DeliveryStatusInfoBean;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
@@ -12,8 +13,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
+@EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 public class GyyDeliveryDetailEntity {
     /**
      * create_date : 2022-09-14 08:54:06
@@ -79,6 +81,8 @@ public class GyyDeliveryDetailEntity {
      * distribution_channel : null -
      * tax_amount_total : 0
      */
+
+    private String _id;
 
     @SerializedName("create_date")
     private String createDate;
@@ -199,7 +203,72 @@ public class GyyDeliveryDetailEntity {
     @SerializedName("details")
     private List<DeliveryDetailsBean> details;
     @SerializedName("invoices")
-    private List<?> invoices;
+    private List<Object> invoices;
     @SerializedName("stock_location")
-    private List<?> stockLocation;
+    private List<Object> stockLocation;
+
+    @Override
+    public String toString() {
+        return "GyyDeliveryDetailEntity{" +
+                "createDate='" + createDate + '\'' +
+                ", modifyDate='" + modifyDate + '\'' +
+                ", code='" + code + '\'' +
+                ", qty=" + qty +
+                ", payTime='" + payTime + '\'' +
+                ", cod=" + cod +
+                ", refund=" + refund +
+                ", invoiceDate='" + invoiceDate + '\'' +
+                ", bigchar='" + bigchar + '\'' +
+                ", cancel=" + cancel +
+                ", postFee=" + postFee +
+                ", codFee='" + codFee + '\'' +
+                ", discountFee='" + discountFee + '\'' +
+                ", postCost='" + postCost + '\'' +
+                ", unpaidAmount='" + unpaidAmount + '\'' +
+                ", pictureBill=" + pictureBill +
+                ", platformCode='" + platformCode + '\'' +
+                ", planDeliveryDate='" + planDeliveryDate + '\'' +
+                ", buyerMemo='" + buyerMemo + '\'' +
+                ", sellerMemo='" + sellerMemo + '\'' +
+                ", receiverName='" + receiverName + '\'' +
+                ", receiverPhone='" + receiverPhone + '\'' +
+                ", receiverMobile='" + receiverMobile + '\'' +
+                ", receiverZip='" + receiverZip + '\'' +
+                ", receiverAddress='" + receiverAddress + '\'' +
+                ", createName='" + createName + '\'' +
+                ", expressNo='" + expressNo + '\'' +
+                ", vipName='" + vipName + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", areaName='" + areaName + '\'' +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", expressCode='" + expressCode + '\'' +
+                ", expressName='" + expressName + '\'' +
+                ", tagName='" + tagName + '\'' +
+                ", sellerMemoLate='" + sellerMemoLate + '\'' +
+                ", shelfNo='" + shelfNo + '\'' +
+                ", deliveryStatusInfo=" + deliveryStatusInfo +
+                ", vipCode='" + vipCode + '\'' +
+                ", warehouseCode='" + warehouseCode + '\'' +
+                ", shopCode='" + shopCode + '\'' +
+                ", vipRealName='" + vipRealName + '\'' +
+                ", vipIdCard='" + vipIdCard + '\'' +
+                ", packageCenterCode='" + packageCenterCode + '\'' +
+                ", packageCenterName='" + packageCenterName + '\'' +
+                ", syncStatus=" + syncStatus +
+                ", syncMemo='" + syncMemo + '\'' +
+                ", drpTenantName='" + drpTenantName + '\'' +
+                ", drpTenantMobile='" + drpTenantMobile + '\'' +
+                ", payment='" + payment + '\'' +
+                ", amount=" + amount +
+                ", storeName='" + storeName + '\'' +
+                ", storeCode='" + storeCode + '\'' +
+                ", financeApprover='" + financeApprover + '\'' +
+                ", appointmentNo='" + appointmentNo + '\'' +
+                ", insureAmount=" + insureAmount +
+                ", subTypeName='" + subTypeName + '\'' +
+                ", distributionChannel='" + distributionChannel + '\'' +
+                ", taxAmountTotal='" + taxAmountTotal + '\'' +
+                ", details=" + details +
+                '}';
+    }
 }

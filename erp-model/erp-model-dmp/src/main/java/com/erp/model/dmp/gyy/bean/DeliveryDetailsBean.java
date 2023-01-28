@@ -68,9 +68,9 @@ public class DeliveryDetailsBean {
      */
 
     @SerializedName("qty")
-    private Double qty;
+    private BigDecimal qty;
     @SerializedName("discount")
-    private Double discount;
+    private BigDecimal discount;
     @SerializedName("refund")
     private Integer refund;
     @SerializedName("itemCategoryName")
@@ -80,7 +80,7 @@ public class DeliveryDetailsBean {
     @SerializedName("barcode")
     private String barcode;
     @SerializedName("tariff")
-    private Double tariff;
+    private BigDecimal tariff;
     @SerializedName("memo")
     private String memo;
     @SerializedName("picUrl")
@@ -96,9 +96,9 @@ public class DeliveryDetailsBean {
     @SerializedName("trade_code")
     private String tradeCode;
     @SerializedName("origin_price")
-    private Double originPrice;
+    private BigDecimal originPrice;
     @SerializedName("origin_amount")
-    private Double originAmount;
+    private BigDecimal originAmount;
     @SerializedName("platform_item_name")
     private String platformItemName;
     @SerializedName("platform_sku_name")
@@ -124,9 +124,9 @@ public class DeliveryDetailsBean {
     @SerializedName("platform_code")
     private String platformCode;
     @SerializedName("tax_rate")
-    private Double taxRate;
+    private BigDecimal taxRate;
     @SerializedName("tax_amount")
-    private Double taxAmount;
+    private BigDecimal taxAmount;
     @SerializedName("order_type")
     private String orderType;
     @SerializedName("platform_flag")
@@ -170,7 +170,7 @@ public class DeliveryDetailsBean {
     @SerializedName("exchange_rate")
     private String exchangeRate;
     @SerializedName("lack_qty")
-    private Double lackQty;
+    private BigDecimal lackQty;
     @SerializedName("lack_reason")
     private String lackReason;
 }
