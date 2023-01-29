@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.StrUtils;
 import com.erp.common.business.aspect.DataPermissionAspect;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
@@ -23,7 +23,6 @@ import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.vo.CategorySubjectVO;
 import com.erp.model.bi.vo.SubjectVO;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiSubjectMapper;
@@ -323,9 +322,9 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
         if (stateFlag) {
-            subject.setState(IsDeleted.YES);
+            subject.setState(BaseStateConstants.OPEN_STATE);
         } else {
-            subject.setState(IsDeleted.NO);
+            subject.setState(BaseStateConstants.CLOSE_STATE);
         }
         return this.updateById(subject);
     }

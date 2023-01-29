@@ -3,12 +3,12 @@ package com.erp.server.bi.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.BaseStateConstants;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.bi.dto.UpdateSubjectShareDTO;
 import com.erp.model.bi.entity.BiSubjectEntity;
 import com.erp.model.bi.entity.BiSubjectShareEntity;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DashboardEnum;
 import com.erp.server.bi.mapper.BiSubjectShareMapper;
 import com.erp.server.bi.service.BiSubjectService;
@@ -131,7 +131,7 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
     @Override
     public void deleteBySubjectId(String subjectId) {
         LambdaUpdateWrapper<BiSubjectShareEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(BiSubjectShareEntity::getIsDeleted, IsDeleted.YES);
+        updateWrapper.set(BiSubjectShareEntity::getIsDeleted, BaseStateConstants.DELETED_YES);
         updateWrapper.eq(BiSubjectShareEntity::getSubjectId, subjectId);
         this.update(updateWrapper);
     }

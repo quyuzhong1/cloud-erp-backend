@@ -398,7 +398,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
             dmpReturnOrderItemEntity.setSellPrice(itemEntity.getPrice());
 
             //商品数量
-            dmpReturnOrderItemEntity.setQuantity(Double.valueOf(itemEntity.getQty()).intValue());
+            dmpReturnOrderItemEntity.setQuantity(itemEntity.getQty().intValue());
 
             //商品总价
             dmpReturnOrderItemEntity.setAmount(itemEntity.getAmount());

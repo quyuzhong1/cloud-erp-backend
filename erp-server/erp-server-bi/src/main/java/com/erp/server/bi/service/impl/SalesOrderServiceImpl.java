@@ -11,7 +11,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
@@ -925,9 +924,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, List<ShopSalesVO>> groupMap = shopSalesList.parallelStream().
                 collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
         for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
             ShopNewAndOldSalesVO vo = new ShopNewAndOldSalesVO();
             List<ShopSalesVO> salesList = item.getValue();
@@ -1573,9 +1572,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
 
         List<SalesFlagVO> list = baseMapper.byPlatformNewAndOld(dto, settleRate);
 
@@ -1693,9 +1692,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto) {
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
 
 
         //获取到结算汇率

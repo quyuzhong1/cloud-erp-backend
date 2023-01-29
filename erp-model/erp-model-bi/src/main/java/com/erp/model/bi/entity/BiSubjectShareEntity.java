@@ -61,7 +61,7 @@ public class BiSubjectShareEntity implements Serializable {
      */
 
     @TableLogic
-    private Integer isDeleted=0;
+    private Boolean isDeleted=false;
 
 
 
