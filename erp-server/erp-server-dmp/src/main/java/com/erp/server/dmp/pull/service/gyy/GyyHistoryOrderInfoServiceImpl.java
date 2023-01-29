@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -104,7 +105,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
         }
         XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyOrderEntityList.size());
         gyyOrderEntityList.parallelStream().forEach(gyyOrderEntity -> {
-            if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !gyyOrderEntity.getOrderTypeName().equals("销售订单")) {
+            if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
                 return;
             }
 
@@ -137,13 +138,16 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
             } catch (Exception e) {
                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                if (ObjectUtil.isNotNull(dto) && ObjectUtil.isNotNull(dto.getJobTaskDTO())) {
+                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
+                }
                 dmpErrorLogEntity.setParams("");
-                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
-                XxlJobHelper.log("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyOrderEntity.getPlatformCode(), e.getMessage());
+                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getStackTrace().toString());
+                XxlJobHelper.log("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyOrderEntity.getPlatformCode(), e);
                 dmpErrorLogEntity.setReturnMsg("");
                 dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
+                throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " , e);
             }
         });
     }
