@@ -77,7 +77,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb退款数据失败，[ 单号 = " + refundOrderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 金蝶云星空修改mongodb退款数据失败，[ 单号 = " + refundOrderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                             }
@@ -207,7 +207,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 dataSign = false;

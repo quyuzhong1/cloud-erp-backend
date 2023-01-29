@@ -129,7 +129,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             }
         }
         if (StringUtils.isNotBlank(dto.getSecondPhone())) {
-            if (!ValidatorUtil.isMobile(dto.getManPhone())) {
+            if (!ValidatorUtil.isMobile(dto.getSecondPhone())) {
                 errorMsgList.add("下单电话2不正确");
             }
         }

@@ -132,7 +132,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -233,7 +233,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====详情请看错误表");

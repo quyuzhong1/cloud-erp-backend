@@ -122,7 +122,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e);
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 new ServiceException(500, StrUtil.format("保存管易数据异常gyyDeliveryDetailEntity ={} e ={}", JSONUtil.toJsonStr(gyyDeliveryDetailEntity), e.getMessage()));
             }
@@ -220,7 +220,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setParams(jsonData);
                 dmpErrorLogEntity.setErrorMsg(e.getMessage());
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace().toString()));
             }

@@ -106,7 +106,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 金蝶云星空修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getFBillNo() + "], 错误信息 = " + e.getMessage());
                             }
@@ -313,7 +313,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                         dmpErrorLogEntity.setParams("");
                         dmpErrorLogEntity.setErrorMsg(e.getMessage());
                         dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                        dmpErrorLogEntity.setCreateTime(new Date());
+                        dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                         dmpErrorLogService.add(dmpErrorLogEntity);
                     }
                     dataSign = false;
