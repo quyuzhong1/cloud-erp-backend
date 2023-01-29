@@ -143,21 +143,21 @@ public class CfgApiFieldMapController extends BaseController {
         //sku
         map.put("skuNo","OJOHNFIDJFI");
         //sku
-        map.put("name","00000000");
+        map.put("name","pppp");
         //spu
-        map.put("spuNo","000000000");
+        map.put("spuNo","pppp");
         //产品功能描述
-        map.put("functionDesc","000000000");
+        map.put("functionDesc","pppp");
         //属性
-        map.put("property","55");
+        map.put("property","7777");
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
         map.put("oneLevelCategory","");
         //二级分类名称
-        map.put("secondLevelCategory","23");
+        map.put("secondLevelCategory","7777");
         //产品经理
-        map.put("chargeName","23");
+        map.put("chargeName","777");
         //销售信息
         //上市时间
         map.put("listingTime","23");
@@ -177,35 +177,35 @@ public class CfgApiFieldMapController extends BaseController {
         //申报要素
         map.put("declareElement","23");
         //毛重
-        map.put("grossWeight", 99);
+        map.put("grossWeight", 22);
         //净重
-        map.put("netWeight", 99);
+        map.put("netWeight", 22);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  99);
+        map.put("productSize_length",  333333333);
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  99);
+        map.put("productSize_width",  2233333);
         //产品尺寸-高(cm)
-        map.put("productSize_height",  99);
+        map.put("productSize_height",  224444);
         //单箱数量
-        map.put("boxQty", 99);
+        map.put("boxQty", 22);
         //单箱重量
-        map.put("boxWeight", "55555");
+        map.put("boxWeight", "22");
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", "99");
+        map.put("boxSize_length", "22");
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", "99");
+        map.put("boxSize_width", "22");
         //产品尺寸-高(cm)
-        map.put("boxSize_height", "99");
+        map.put("boxSize_height", "22");
         //实际不含税成本
-        map.put("actualNoTaxCost","88");
+        map.put("actualNoTaxCost","22");
         //实际含税成本
-        map.put("actualTaxCost", "99");
-        map.put("moq","99");
+        map.put("actualTaxCost", "22");
+        map.put("moq","22");
         //采购员
-        map.put("purchaseUser","99");
-        map.put("mainSupplier","23");
+        map.put("purchaseUser","7777");
+        map.put("mainSupplier","7777");
         this.kingdeeProductDetailService.pushProductDetail(map);
         return success();
     }
