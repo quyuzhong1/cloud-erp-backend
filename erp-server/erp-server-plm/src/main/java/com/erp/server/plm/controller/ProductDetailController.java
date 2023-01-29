@@ -7,6 +7,8 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
@@ -607,7 +609,7 @@ ProductDetailController extends BaseController {
      **/
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public void importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -621,16 +623,12 @@ ProductDetailController extends BaseController {
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
 
-                /*response.setContentType("application/vnd.ms-excel;charset=UTF-8");
-                response.setCharacterEncoding("utf-8");
-                String fileName = URLEncoder.encode("测试", "UTF-8");
-                String s = new String("测试".getBytes("UTF-8"), "ISO-8859-1");
-                response.setHeader("Content-disposition", "attachment;filename=" + s + ".xlsx");
-                EasyExcel.write(response.getOutputStream(), ProductDetailExcelDTO.class).sheet().doWrite(list);*/
+             return failure();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(ApiError.Default);
         }
+        return success();
     }
 
     /**

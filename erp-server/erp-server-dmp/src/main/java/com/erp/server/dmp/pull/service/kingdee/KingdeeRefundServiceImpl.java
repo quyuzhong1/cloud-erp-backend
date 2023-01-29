@@ -238,7 +238,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
         dmpRefundInfoEntity.setCurrencyCode(refundOrderEntity.getFSETTLECURCode());
 
         //退货金额
-        dmpRefundInfoEntity.setRefundAmount(BigDecimal.valueOf(Double.valueOf(refundOrderEntity.getFREFUNDAMOUNTFOR_H())));
+        dmpRefundInfoEntity.setRefundAmount(new BigDecimal(refundOrderEntity.getFREFUNDAMOUNTFOR_H()));
 
         //退款类型：1、未收到货部分退款 2、未收到货全额退款 3、已收到货部分退款 4、已收到货全额退款
         dmpRefundInfoEntity.setRefundType(0);
@@ -270,7 +270,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
         dmpRefundInfoEntity.setRefundTime(null);
 
         //汇率
-        dmpRefundInfoEntity.setCurrencyRate(BigDecimal.valueOf(Double.valueOf(refundOrderEntity.getFSETTLERATE())));
+        dmpRefundInfoEntity.setCurrencyRate(new BigDecimal(refundOrderEntity.getFSETTLERATE()));
 
         //国家二字码 例如：US
         dmpRefundInfoEntity.setCountryCode("");
@@ -291,7 +291,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
         dmpRefundInfoEntity.setBuyerName(refundOrderEntity.getFRECTUNITName());
 
         //原始订单金额
-        dmpRefundInfoEntity.setItemTotalOrigin(BigDecimal.valueOf(Double.valueOf(refundOrderEntity.getFREFUNDAMOUNTFOR_H())));
+        dmpRefundInfoEntity.setItemTotalOrigin(new BigDecimal(refundOrderEntity.getFREFUNDAMOUNTFOR_H()));
 
         //原始订单运费金额
         dmpRefundInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);

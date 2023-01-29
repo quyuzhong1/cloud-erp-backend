@@ -80,6 +80,12 @@ public class PlatformApiTaskEntity implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
+    /**
+     * 逻辑删除 FALSE 未删除 TRUE 已删除
+     */
+    @TableField(value = "is_deleted")
+    private Boolean isDeleted;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -311,8 +311,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
         BigDecimal orderTotalCost = BigDecimal.ZERO;
         BigDecimal itemTotalCost = BigDecimal.ZERO;
         for (KingdeeDeliveryDetailItemEntity itemEntity : kingdeeOutStockItemEntityList) {
-            orderTotalCost = orderTotalCost.add(BigDecimal.valueOf(Double.valueOf(itemEntity.getFAmount())));
-            itemTotalCost = itemTotalCost.add(BigDecimal.valueOf(Double.valueOf(itemEntity.getFEntryCostAmount())));
+            orderTotalCost = orderTotalCost.add(new BigDecimal(itemEntity.getFAmount()));
+            itemTotalCost = itemTotalCost.add(new BigDecimal(itemEntity.getFEntryCostAmount()));
         }
 
         //订单成本价
@@ -346,7 +346,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
         deliveryDetailInfoEntity.setCurrencyCode(kingdeeOutStockEntity.getFSettleCurrCode());
 
         //汇率
-        deliveryDetailInfoEntity.setCurrencyRate(BigDecimal.valueOf(Double.valueOf(kingdeeOutStockEntity.getFExchangeRate())));
+        deliveryDetailInfoEntity.setCurrencyRate(new BigDecimal(kingdeeOutStockEntity.getFExchangeRate()));
 
         //运费
         deliveryDetailInfoEntity.setShippingFee(BigDecimal.ZERO);
@@ -447,15 +447,15 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
             dmpReturnOrderItemEntity.setItemName(itemEntity.getFMaterialName());
 
             //商品成本价
-            dmpReturnOrderItemEntity.setCostPrice(BigDecimal.valueOf(Double.valueOf(itemEntity.getFEntryCostAmount())));
+            dmpReturnOrderItemEntity.setCostPrice(new BigDecimal(itemEntity.getFEntryCostAmount()));
 
             //商品售价
-            dmpReturnOrderItemEntity.setSellPrice(BigDecimal.valueOf(Double.valueOf(itemEntity.getFPrice())));
+            dmpReturnOrderItemEntity.setSellPrice(new BigDecimal(itemEntity.getFPrice()));
 
             //商品数量
             dmpReturnOrderItemEntity.setQuantity(Double.valueOf(itemEntity.getFRealQty()).intValue());
 
-            dmpReturnOrderItemEntity.setAmount((BigDecimal.valueOf(Double.valueOf(itemEntity.getFAmount()))));
+            dmpReturnOrderItemEntity.setAmount((new BigDecimal(itemEntity.getFAmount())));
 
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(itemEntity.getFUnitName());

@@ -56,21 +56,6 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     @Resource
     private ApiSyncTaskService apiSyncTaskService;
 
-    public static void main(String[] args) {
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "OJOHNFIDJFI"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
-                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
-                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH,FWIDTH";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1);
-        System.out.println(queryList);
-    }
-
     @Override
     @Transactional
     public void pushProductDetail(Map<String, Object> map) {
@@ -143,6 +128,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),"新增成功");
                 //提交
                 submit(platformEntity, map,apiUtils,viewMap,save);
+                return;
             } else {
                 //添加失败操作日志及定时任务
                 insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
@@ -154,12 +140,15 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             //审核中或已审核则要先反审
             documentStatus = unAudit(platformEntity, map,apiUtils, viewMap);
+            //反审核不通过直接返回
+            if (StringUtils.isBlank(documentStatus)) {
+                return;
+            }
         }
         //创建状态则直接修改
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus)) {
 
             LinkedList<String> queryFilters = new LinkedList<>();
-            // 客户类型为店铺
             queryFilters.add(String.format("FMATERIALID = '%s'", model.get("Id")));
             String filterStr = String.join(" and ", queryFilters);
             //查询子单据id
@@ -170,6 +159,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 return;
             }
             Map<String, Object> queryMap = queryList.get(0);
+            //主单据id
             KingdeeUtils.makeFieldJson(json,"FMATERIALID","_",model.get("Id"));
             Iterator iter = queryMap.entrySet().iterator();
             while (iter.hasNext()) {
@@ -177,14 +167,26 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),"_",entry.getValue());
             }
             //需要更新的字段
-            ArrayList<String> needUpDateFields = (ArrayList<String>) mapList.stream().map(CfgApiFieldMapDTO::getApiField).distinct().collect(Collectors.toList());
+            List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
+            ArrayList<String> needUpDateFields = new ArrayList<>();
+            for (String field:apiFieldList) {
+                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("_")).collect(Collectors.toList());
+                needUpDateFields.addAll(splitFields);
+            }
             param.setNeedUpDateFields(needUpDateFields);
-            SaveResult save = apiUtils.save(param);
+            SaveResult save = new SaveResult();
+            try {
+                 save = apiUtils.save(param);
+            } catch (Exception e) {
+                insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),e.getMessage());
+                return;
+            }
            if (save.isSuccessfully()) {
                //修改成功操作日志
                insertSuccessLog( platformEntity, map, JSONObject.toJSONString(json),"修改成功");
                //提交
                submit(platformEntity, map,apiUtils,viewMap,save);
+               return;
            } else {
                //修改失败操作日志及定时任务
                insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
@@ -206,12 +208,19 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         //提交
         ArrayList<String> ids = new ArrayList<>();
         ids.add(id);
-        OperatorResult submit = apiUtils.submit(ids);
+        OperatorResult submit = new OperatorResult();
+        try {
+             submit = apiUtils.submit(ids);
+        } catch (Exception e) {
+            //提交失败操作日志及定时任务
+            insertFailureLog(platformEntity,map,"提交失败",e.getMessage());
+            return;
+        }
         if (submit.isSuccessfully()) {
-            //提交成功后继续审核直至已审核
-            audit(platformEntity, map,apiUtils,viewMap);
             //提交成功操作日志
             insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"提交成功");
+            //提交成功后继续审核直至已审核
+            audit(platformEntity, map,apiUtils,viewMap);
         } else {
             //提交失败操作日志及定时任务
             insertFailureLog(platformEntity,map,"提交失败",JSONObject.toJSONString(save));
@@ -234,14 +243,23 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //非已审核继续审核
             ArrayList<String> ids = new ArrayList<>();
             ids.add(id);
-            OperatorResult operatorResult = apiUtils.auditById(ids);
+            OperatorResult operatorResult = new OperatorResult();
+            try {
+                operatorResult = apiUtils.auditById(ids);
+            } catch (Exception e) {
+                //审核失败操作日志及定时任务
+                insertFailureLog(platformEntity,map,"审核失败",e.getMessage());
+                return;
+            }
             if (operatorResult.isSuccessfully()) {
                 //审核成功操作日志
                 insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"审核成功");
             } else {
                 //审核失败操作日志及定时任务
                 insertFailureLog(platformEntity,map,"审核失败",JSONArray.toJSONString(ids));
+                return;
             }
+            //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,viewMap);
         }
     }
@@ -263,15 +281,28 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //审核中或已审核则要先反审
             ArrayList<String> ids = new ArrayList<>();
             ids.add(id);
-            OperatorResult operatorResult = apiUtils.unAuditById(ids);
+            OperatorResult operatorResult = new OperatorResult();
+            try {
+                operatorResult = apiUtils.unAuditById(ids);
+            } catch (Exception e) {
+                //反审核失败操作日志及定时任务
+                insertFailureLog(platformEntity,map,"反审核失败",e.getMessage());
+                return "";
+            }
             if (operatorResult.isSuccessfully()) {
                 //反审核成功操作日志
                 insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"反审核成功");
             } else {
                 //反审核失败操作日志及定时任务
                 insertFailureLog(platformEntity,map,"反审核失败",JSONArray.toJSONString(ids));
+                return "";
             }
+            //当审核是已审核或者审核中时继续反审核
             String status = unAudit(platformEntity, map,apiUtils, viewMap);
+            //当状态为空时直接返回
+            if (StringUtils.isBlank(status)) {
+                return status;
+            }
             documentStatus = status;
         }
         return  documentStatus;

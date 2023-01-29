@@ -309,7 +309,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
         List<KingdeeReturnOrderItemEntity> itemEntityList = returnOrderEntity.getItemEntityList();
         BigDecimal amount = BigDecimal.ZERO;
         for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : itemEntityList) {
-            amount = amount.add(BigDecimal.valueOf(Double.valueOf(kingdeeReturnOrderItemEntity.getFAmount())));
+            amount = amount.add(new BigDecimal(kingdeeReturnOrderItemEntity.getFAmount()));
         }
 
         //订单金额
@@ -358,7 +358,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
         dmpReturnOrderInfoEntity.setCurrencyCode(returnOrderEntity.getFSettleCurrCode());
 
         //汇率
-        dmpReturnOrderInfoEntity.setCurrencyRate(BigDecimal.valueOf(Double.valueOf(returnOrderEntity.getFExchangeRate())));
+        dmpReturnOrderInfoEntity.setCurrencyRate(new BigDecimal(returnOrderEntity.getFExchangeRate()));
 
         //平台标识
         dmpReturnOrderInfoEntity.setPlatformSign("金蝶云星空");
@@ -408,7 +408,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
             dmpReturnOrderItemEntity.setPictureUrl("");
 
             //售价
-            dmpReturnOrderItemEntity.setSellPrice(BigDecimal.valueOf(Double.valueOf(orderItemBean.getFPrice())));
+            dmpReturnOrderItemEntity.setSellPrice(new BigDecimal(orderItemBean.getFPrice()));
 
             //物品属性
             dmpReturnOrderItemEntity.setSpecifics(orderItemBean.getFMaterialModel());
