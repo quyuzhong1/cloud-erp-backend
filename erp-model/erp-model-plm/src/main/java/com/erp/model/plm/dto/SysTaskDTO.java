@@ -92,16 +92,10 @@ public class SysTaskDTO implements Serializable {
      */
     private String description;
 
-
     /**
-     * 审核人集合
+     * 交付文档审核分配人集合
      */
-    private List<List<String>> approvalUserIds;
-
-    /**
-     * 审核分配类型（0角色，1人员，2上级人员负责人）
-     */
-    private Integer approvalDistributionType;
+    private List<TaskChargeDistributionDTO> approvalList;
 
     /**
      * 业务流程表id

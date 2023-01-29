@@ -5,15 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.DocsDTO;
-import com.erp.model.plm.dto.SysTaskDTO;
-import com.erp.model.plm.dto.SysTaskPagingDTO;
-import com.erp.model.plm.dto.SysTaskPagingSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -63,6 +62,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private TemplateRoleService templateRoleService;
 
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
+
+
     @Override
     @Transactional
     public Boolean saveOrUpdateSysTask(SysTaskDTO dto) {
@@ -90,7 +93,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
 
         //自定义审核人
-        List<List<String>> approvalUserIdList = dto.getApprovalUserIds();
+        List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         //配置表单属性
         String fieldConfigType = dto.getFieldConfigType();
         Integer type = dto.getType();
@@ -99,52 +102,10 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
             //如果是一般任务 必须要有审核流程
             if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalUserIdList)) {
+                if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
                 }
             }
-        }
-        Boolean isReview=TaskTypeEnum.REVIEW_TASK.getCode().equals(type);
-        //目标交付文档分配类型
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getApprovalDistributionType())) {
-            //按角色分配
-            //审核角色逐级审核及会签,逐级任何人用'|'分割，会签审核人用','分割
-            if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
-                List<String> roleIdsList = new ArrayList<>();
-                for (List<String> list: approvalUserIdList) {
-                    String approvalRoleIds = StringUtils.join(list, ",");
-                    roleIdsList.add(approvalRoleIds);
-                }
-                String join = StringUtils.join(roleIdsList, "|");
-                entity.setApprovalRoleId(join);
-            }
-        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getApprovalDistributionType())){
-            //按负责人分配
-            //审核人员逐级审核及会签
-            if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
-                List<String> userIdsList = new ArrayList<>();
-                for (List<String> userIdList : approvalUserIdList) {
-                    String approvalUserIds = StringUtils.join(userIdList, ",");
-                    userIdsList.add(approvalUserIds);
-                }
-                String join = StringUtils.join(userIdsList, "|");
-                entity.setApprovalUserId(join);
-            }
-        } else {
-            //按上级人员负责人分配
-            if (CollectionUtils.isNotEmpty(approvalUserIdList)) {
-                List<String> userIdsList = new ArrayList<>();
-                for (List<String> userIdList : approvalUserIdList) {
-                    String approvalUserIds = StringUtils.join(userIdList, ",");
-                    userIdsList.add(approvalUserIds);
-                }
-                String join = StringUtils.join(userIdsList, "|");
-                entity.setSuperiorType(join);
-            }
-        }
-
-        if(isReview){
-            entity.setApprovalUserId("");
         }
         if (!Objects.isNull(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
@@ -168,6 +129,14 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         boolean flag = this.saveOrUpdate(entity);
         //表示保存成功
         if (flag) {
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(dto.getApprovalList())) {
+                dto.getApprovalList().forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
+                taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, dto.getApprovalList());
+            }
+            //保存交付文档的审核人
+            taskChargeDistributionService.removeAndSave(entity.getId(),taskChargeDistributionList,MathUtil.ONE);
+
             taskDeliveryService.saveSysDeliveryDocs(entity.getId(), docsList);
             //保存前置任务
             preTaskService.savePreTask(entity.getId(), dto.getPreTaskIdList(), "");
@@ -345,43 +314,13 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                 sysTaskDTO.setChargeIds(Arrays.asList(chargeId.split(",")));
             }
         }
-        //判断输出物审核分配类型
-        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(sysEntity.getApprovalDistributionType())) {
-            String approvalRoleId = sysEntity.getApprovalRoleId();
-            List<List<String>> approvalRoleIdList = new ArrayList<>();
-            if (StringUtils.isNotBlank(approvalRoleId)) {
-                List<String> userIdsList = Arrays.asList(approvalRoleId.split("\\|"));
-                for (String userId: userIdsList) {
-                    List<String> userIdList = Arrays.asList(userId.split(","));
-                    approvalRoleIdList.add(userIdList);
-                }
-            }
-            sysTaskDTO.setApprovalUserIds(approvalRoleIdList);
-        } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(sysEntity.getApprovalDistributionType())){
-            String approvalUserId = sysEntity.getApprovalUserId();
-            List<List<String>> approvalUserIdList = new ArrayList<>();
-            if (StringUtils.isNotBlank(approvalUserId)) {
-                List<String> userIdsList = Arrays.asList(approvalUserId.split("\\|"));
-                for (String userId: userIdsList) {
-                    List<String> userIdList = Arrays.asList(userId.split(","));
-                    approvalUserIdList.add(userIdList);
-                }
-            }
-            sysTaskDTO.setApprovalUserIds(approvalUserIdList);
-        } else {
-            String superiorType = sysEntity.getSuperiorType();
-            List<List<String>> approvalUserIdList = new ArrayList<>();
-            if (StringUtils.isNotBlank(superiorType)) {
-                List<String> userIdsList = Arrays.asList(superiorType.split("\\|"));
-                for (String userId: userIdsList) {
-                    List<String> userIdList = Arrays.asList(userId.split(","));
-                    approvalUserIdList.add(userIdList);
-                }
-            }
-            sysTaskDTO.setApprovalUserIds(approvalUserIdList);
+        //查询任务下审核人
+        List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, sysEntity.getId());
+        if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+            List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class,taskChargeDistributionList);
+            list.forEach(obj->obj.setChargeList(Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList())));
+            sysTaskDTO.setApprovalList(list);
         }
-
-
         String businessProcessId = sysEntity.getBusinessProcessId();
         if (StringUtils.isNotBlank(businessProcessId)) {
             BusinessProcessEntity processEntity = businessProcessService.getById(businessProcessId);
