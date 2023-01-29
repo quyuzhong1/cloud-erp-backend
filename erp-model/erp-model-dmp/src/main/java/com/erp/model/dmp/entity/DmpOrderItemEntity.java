@@ -228,6 +228,7 @@ public class DmpOrderItemEntity implements Serializable {
                 ", stockWarehouseId='" + stockWarehouseId + '\'' +
                 ", erpOrderItemId='" + erpOrderItemId + '\'' +
                 ", amountAfter='" + amountAfter + '\'' +
+                ", shippingFee='" + shippingFee + '\'' +
                 '}';
     }
 }
