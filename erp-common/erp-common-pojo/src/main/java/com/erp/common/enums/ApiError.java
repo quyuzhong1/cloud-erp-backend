@@ -201,6 +201,8 @@ public enum ApiError implements Serializable {
     ERROR_95104(95104,"只有归档才能申请变更"),
     ERROR_95105(95105,"变更信息不能为空"),
     ERROR_95106(95106,"变更状态为待审核/审核不通过时,才可以作废"),
+    ERROR_95107(95107,"SKU不存在"),
+
     /**
      * bi 错误
      * 从97000 开始  以端口号

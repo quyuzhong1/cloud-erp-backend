@@ -1,8 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.entity.BomOperateLogEntity;
 import com.erp.model.plm.vo.BomOperateVO;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
@@ -59,6 +64,23 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
             item.setTypeName(typeName);
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<List<BomOperateVO>> paging(PagingDTO<BaseIdDTO> dto) {
+        BaseIdDTO params = dto.getParams();
+        Page page = new Page(dto.getCurrPage(), dto.getPageSize());
+        LambdaQueryWrapper<BomOperateLogEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BomOperateLogEntity::getBomId, params.getId());
+        queryWrapper.orderByDesc(BomOperateLogEntity::getCreateTime);
+        IPage pageData = page(page, queryWrapper);
+        List<BomOperateVO> resultList = pageData.getRecords();
+        for (BomOperateVO item : resultList) {
+            String type = item.getType();
+            String typeName = BomOperationTypeEnum.getName(type);
+            item.setTypeName(typeName);
+        }
+        return new PagingVO(pageData);
     }
 
 

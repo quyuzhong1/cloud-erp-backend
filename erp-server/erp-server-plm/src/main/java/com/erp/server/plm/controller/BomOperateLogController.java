@@ -3,6 +3,8 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.vo.BomOperateVO;
 import com.erp.server.plm.service.BomOperateLogService;
 import org.springframework.validation.annotation.Validated;
@@ -37,9 +39,9 @@ public class BomOperateLogController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/log")
-    public ApiResult<List<BomOperateVO>> getOperateLog(@RequestBody @Validated BaseIdDTO dto) {
-        List<BomOperateVO> list = bomOperateLogService.getOperateLog(dto.getId());
-        return success(list);
+    public ApiResult<PagingVO<List<BomOperateVO>>> getOperateLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<List<BomOperateVO>> pagingVO = bomOperateLogService.paging(dto);
+        return success(pagingVO);
     }
 
 

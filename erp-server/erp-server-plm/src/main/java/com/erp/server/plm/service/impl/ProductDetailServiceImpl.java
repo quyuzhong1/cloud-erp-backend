@@ -1681,8 +1681,118 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public List<BaseIdDTO> getSku(String searchKeyword) {
-        Integer state=ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        return baseMapper.searchStateSku(state,searchKeyword);
+        Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        return baseMapper.searchStateSku(state, searchKeyword);
+    }
+
+
+    /**
+     * 在根据sku id 获取到产品信息
+     * 在bom 和变更那边用到
+     *
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductSmallestUnitDTO
+     * @author yl
+     * @date 2023-01-29 14:14
+     */
+    @Override
+    public ProductSmallestUnitDTO getSkuBySkuId(String skuId) {
+        ProductSmallestUnitDTO result = new ProductSmallestUnitDTO();
+        ProductDetailEntity productDetail = this.getById(skuId);
+        if (Objects.isNull(productDetail)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        String productId = productDetail.getProductId();
+        List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByProductId(productId);
+        //任务与配置字段 关系
+        List<TaskRefSkuConfigEntity> refSkuFiledConfigList = taskRefSkuConfigService.getDisableFieldByProductId(productId);
+
+        List<TaskRefSkuConfigEntity> skuFiledConfigList = getSkuFiledConfigList(taskRefSkuList, skuId, refSkuFiledConfigList);
+        //基础信息 禁用字段
+        List<String> disableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SKU_DETAIL_LIST, skuFiledConfigList);
+        productDetail.setDisableFieldList(disableFields);
+
+        result.setProductManySkuDetail(productDetail);
+
+        //多规格产品基础信息
+        ProductManySpecBaseDTO manySpecDetail = productDetailMapper.getManySpecDetailById(productId);
+        if(manySpecDetail!=null){
+            manySpecDetail.setDisableFieldList(disableFields);
+            //获取多级分类
+            List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetail.getCategoryId());
+            manySpecDetail.setCategoryIdList(categoryIdList);
+        }
+
+        result.setProductManySpecBaseDTO(manySpecDetail);
+
+        //产品成本信息查询列表
+        List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
+        ProductCostShowDTO costShowDTO = costShowDTOList.stream().
+                filter(c -> c.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (costShowDTO != null) {
+            costShowDTO.setDisableFieldList(disableFields);
+            result.setProductCostShowDTO(costShowDTO);
+        }
+        //产品采购信息查询列表
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        ProductPurchaseShowDTO purchaseShowDTO = purchaseShowDTOList.stream().
+                filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (purchaseShowDTO != null) {
+            purchaseShowDTO.setDisableFieldList(disableFields);
+            FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(purchaseShowDTO.getPurchaseUserId())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                purchaseShowDTO.setCreateUserName(findUserDTO.getUserName());
+            }
+            result.setProductPurchaseShowDTO(purchaseShowDTO);
+        }
+        //产品采购备注信息查询列表
+        List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
+        result.setRemarkEntityList(remarkEntityList);
+
+        //产品销售信息查询列表
+        List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(productId);
+        ProductSaleShowDTO saleShowDTO = saleShowDTOList.stream().
+                filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (saleShowDTO != null) {
+            saleShowDTO.setDisableFieldList(disableFields);
+            String saleCountry = saleShowDTO.getSaleCountry();
+            if (StringUtils.isNotBlank(saleCountry)) {
+                String[] split = saleCountry.split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                saleShowDTO.setSaleCountryName(StringUtils.join(nameList, ","));
+            }
+            result.setProductSaleShowDTO(saleShowDTO);
+        }
+        //产品包装信息查询列表
+        List<ProductPackShowDTO> packShowDTOList = productPackService.list(productId);
+        ProductPackShowDTO packShowDTO = packShowDTOList.stream().
+                filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (packShowDTO != null) {
+            packShowDTO.setDisableFieldList(disableFields);
+            result.setProductPackShowDTO(packShowDTO);
+        }
+
+        //产品物流信息查询列表
+        List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
+        ProductLogisticsShowDTO logisticsShowDTO = logisticsShowDTOList.stream().
+                filter(l -> l.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (logisticsShowDTO != null) {
+            logisticsShowDTO.setDisableFieldList(disableFields);
+            result.setProductLogisticsShowDTO(logisticsShowDTO);
+        }
+
+        //产品证书信息查询列表
+        List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
+        ProductCertificateShowDTO certificateShowDTO = certificateShowDTOList.stream().
+                filter(c -> c.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if(certificateShowDTO!=null){
+            certificateShowDTO.setDisableFieldList(disableFields);
+            result.setProductCertificateShowDTO(certificateShowDTO);
+        }
+
+        return result;
     }
 
 

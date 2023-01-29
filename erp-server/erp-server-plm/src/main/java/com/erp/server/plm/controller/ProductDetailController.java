@@ -624,7 +624,7 @@ ProductDetailController extends BaseController {
                 sb.append(name);
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
 
-             return failure();
+                return failure();
             }
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
@@ -688,10 +688,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-设置审批人
-     * @author Will
-     * @date: 2022/11/28 16:43
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:43
      */
     @PostMapping("/updateApprover")
     public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
@@ -701,9 +702,10 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-设置审批人回显
+     *
+     * @return ApiResult
      * @author Will
      * @date: 2022/11/28 16:43
-     * @return ApiResult
      */
     @GetMapping("/getProductDetailApprover")
     public ApiResult<ProductDetailApproverEntity> getProductDetailApprover() {
@@ -711,26 +713,28 @@ ProductDetailController extends BaseController {
         return success(entity);
     }
 
-   /**
-    * 产品信息-状态操作-审核通过
-    * @author Will
-    * @date: 2022/11/28 16:37
-    * @param dto
-    * @return ApiResult
-    */
+    /**
+     * 产品信息-状态操作-审核通过
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:37
+     */
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalPass(dto);
         return result == true ? success() : failure();
     }
 
-   /**
-    * 产品信息-状态操作-审核不通过
-    * @author Will
-    * @date: 2022/11/28 16:37
-    * @param dto
-    * @return ApiResult
-    */
+    /**
+     * 产品信息-状态操作-审核不通过
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:37
+     */
     @PostMapping("/approvalReject")
     public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalReject(dto);
@@ -739,10 +743,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-反审核
-     * @author Will
-     * @date: 2022/12/1 16:56
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 16:56
      */
     @PostMapping("/deApprove")
     public ApiResult deApprove(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -753,10 +758,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-申请变更
-     * @author Will
-     * @date: 2022/12/1 15:41
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:41
      */
     @PostMapping("/applyChange")
     public ApiResult applyChange(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -767,10 +773,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-重启审核流程
-     * @author Will
-     * @date: 2022/12/1 15:55
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:55
      */
     @PostMapping("/restartProcessPass")
     public ApiResult restartProcessPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -780,10 +787,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-审核完成监听调用
-     * @author Will
-     * @date: 2022/12/1 15:21
+     *
      * @param processId
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:21
      */
     @PostMapping("/productDetailProcessPass")
     public ApiResult productDetailProcessPass(String processId) {
@@ -792,17 +800,33 @@ ProductDetailController extends BaseController {
     }
 
 
-
-   /**
-    * 搜索sku
-    * @author yl
-    * @date 2023-01-11 14:58
-    * @return com.erp.common.dto.base.ApiResult
-    */
+    /**
+     * 搜索sku
+     *
+     * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2023-01-11 14:58
+     */
     @GetMapping("/search/sku")
     public ApiResult<List<SkuVO>> searchSku(String searchKeyword) {
         List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
         return success(skuList);
+    }
+
+
+    /**
+     * 在bom 管理 或者变更管理  获取到sku 信息
+     * 根据sku id
+     *
+     * @param
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductSmallestUnitDTO>
+     * @author yl
+     * @date 2023-01-29 14:03
+     */
+    @GetMapping("/skuInfo")
+    public ApiResult<ProductSmallestUnitDTO> getSkuInfo(String skuId) {
+        ProductSmallestUnitDTO sku = productDetailService.getSkuBySkuId(skuId);
+        return success(sku);
     }
 
 }

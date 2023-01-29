@@ -314,4 +314,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<BaseIdDTO> getSku(String searchKeyword);
+
+    /**
+     * 根据skuId 获取到sku 单位最小的信息 在bom 和变更那边会用到
+     * @author yl
+     * @date 2023-01-29 14:11
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductSmallestUnitDTO
+     */
+    ProductSmallestUnitDTO getSkuBySkuId(String skuId);
 }

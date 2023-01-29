@@ -35,36 +35,36 @@ public class ProductSmallestUnitDTO implements Serializable {
     /**
      * 产品成本信息
      */
-    private List<ProductCostShowDTO> productCostShowDTOList;
+    private ProductCostShowDTO productCostShowDTO;
 
     /**
      * 产品采购信息
      */
-    private List<ProductPurchaseShowDTO> productPurchaseShowDTOList;
+    private ProductPurchaseShowDTO productPurchaseShowDTO;
 
     /**
-     * 产品采购信息
+     * 产品采购备注信息
      */
     private List<ProductPurchaseRemarkEntity> remarkEntityList;
 
     /**
      * 产品包装信息
      */
-    private List<ProductSaleShowDTO> productSaleShowDTOList;
+    private ProductSaleShowDTO productSaleShowDTO;
 
     /**
      * 产品包装信息
      */
-    private List<ProductPackShowDTO> productPackShowDTOS;
+    private ProductPackShowDTO productPackShowDTO;
 
     /**
      * 产品物流信息
      */
-    private List<ProductLogisticsShowDTO> productLogisticsShowDTOList;
+    private ProductLogisticsShowDTO productLogisticsShowDTO;
 
     /**
      * 产品证书信息
      */
-    private List<ProductCertificateShowDTO> productCertificateShowDTOList;
+    private ProductCertificateShowDTO productCertificateShowDTO;
 
 }
