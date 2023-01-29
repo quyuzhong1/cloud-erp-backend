@@ -102,7 +102,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb商品数据失败，[ 订单号 = " + gyySkuInfoEntity.getCode() + "], 错误信息 = " , e);
                             }
@@ -195,7 +195,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }

@@ -108,7 +108,7 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 = " + e.getMessage());
                     dmpErrorLogEntity.setReturnMsg("");
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                     throw new RuntimeException("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 ={} " , e);
                 }
@@ -243,7 +243,7 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
                 dmpErrorLogEntity.setParams(filterStr);
                 dmpErrorLogEntity.setErrorMsg(e.getMessage());
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(result));
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 throw new RuntimeException("金蝶客户列表接口异常", e);
             }

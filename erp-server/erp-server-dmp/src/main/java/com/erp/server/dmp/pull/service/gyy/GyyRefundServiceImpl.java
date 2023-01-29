@@ -104,7 +104,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb退款数据失败，[ 订单号 = " + gyyRefundEntity.getPlatfromCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb退款数据失败，[ 订单号 = " + gyyRefundEntity.getPlatfromCode() + "], 错误信息 = " + e.getMessage());
                             }
@@ -203,7 +203,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                         dmpErrorLogEntity.setParams(jsonData);
                         dmpErrorLogEntity.setErrorMsg(e.getMessage());
                         dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                        dmpErrorLogEntity.setCreateTime(new Date());
+                        dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                         dmpErrorLogService.add(dmpErrorLogEntity);
                     }
                     break;

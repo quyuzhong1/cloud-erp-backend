@@ -77,7 +77,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -194,7 +194,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 dataSign = false;
