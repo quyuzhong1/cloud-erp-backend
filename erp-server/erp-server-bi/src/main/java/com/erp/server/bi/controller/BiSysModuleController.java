@@ -6,7 +6,6 @@ import com.erp.common.modules.validator.UpdateGroup;
 import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.server.bi.constant.BiConstant;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.service.BiSysModuleService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -76,7 +75,7 @@ public class BiSysModuleController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult list() {
-        List<Map<String, Object>> list = this.sysModuleService.getSysModuleList(IsDeleted.NO);
+        List<Map<String, Object>> list = this.sysModuleService.getSysModuleList(0);
         return success(list);
     }
 

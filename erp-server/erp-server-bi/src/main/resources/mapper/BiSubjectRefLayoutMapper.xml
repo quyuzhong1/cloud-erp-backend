@@ -7,6 +7,6 @@
         SELECT srl.layout_id,bs.create_time AS  subjectCreateTime
         FROM bi_subject_ref_layout srl
         INNER JOIN bi_subject bs ON bs.id=srl.subject_id
-        WHERE  bs.state=1 AND srl.is_deleted=0
+        WHERE  bs.state=1 AND srl.is_deleted=false
     </select>
 </mapper>

@@ -72,7 +72,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb商品数据失败，[ sku = " + skuInfoEntity.getStockSku() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb商品数据失败，[ sku = " + skuInfoEntity.getStockSku() + "], 错误信息 = " + e.getMessage());
                             }
@@ -159,7 +159,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
             }
