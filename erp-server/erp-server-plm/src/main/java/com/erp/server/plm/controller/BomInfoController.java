@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * bom 信息表(BomInfo)表控制层
+ * BOM 管理
  *
  * @author yl
  * @since 2023-01-09 11:45:28
@@ -55,7 +55,7 @@ public class BomInfoController extends BaseController {
 
 
     /**
-     * 新增数据
+     * 新增BOM
      *
      * @param
      * @return 新增结果
@@ -67,7 +67,7 @@ public class BomInfoController extends BaseController {
     }
 
     /**
-     * bom 信息
+     * bom 详情
      *
      * @param
      * @return 新增结果
@@ -153,7 +153,7 @@ public class BomInfoController extends BaseController {
 
 
     /**
-     * 编辑数据
+     * 编辑bom
      *
      * @param
      * @return 编辑结果
@@ -165,7 +165,7 @@ public class BomInfoController extends BaseController {
     }
 
     /**
-     * 删除数据
+     * 删除bom
      *
      * @param dto 主键
      * @return 删除是否成功

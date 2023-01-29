@@ -37,7 +37,7 @@ public class BomSkuDTO implements Serializable {
     /**
      * 层级
      */
-    private String level;
+    private Integer level;
 
 
     /**

@@ -61,7 +61,8 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         List<BomSkuDTO> treeList = bomSkuList.stream().
                 filter(b -> "0".equals(b.getParentSkuNo())).
                 map(item -> {
-                    item.setChildren(getChildren(item, bomSkuList));
+                    item.setLevel(1);
+                    item.setChildren(getChildren(item, bomSkuList,1));
                     return item;
                 }).collect(Collectors.toList());
         return treeList;
@@ -117,10 +118,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
      * @author yl
      * @date 2023-01-11 17:11
      */
-    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList) {
+    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList,Integer level) {
         List<BomSkuDTO> collect = bomSkuList.stream().filter(bom -> item.getSkuNo().equals(bom.getParentSkuNo())).
                 map(b -> {
-                    b.setChildren(getChildren(b, bomSkuList));
+                    b.setLevel(level+1);
+                    b.setChildren(getChildren(b, bomSkuList,level+1));
+
                     return b;
                 }).collect(Collectors.toList());
 

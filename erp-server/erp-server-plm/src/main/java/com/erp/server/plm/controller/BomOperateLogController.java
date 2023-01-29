@@ -36,7 +36,7 @@ public class BomOperateLogController extends BaseController {
      * @param
      * @return 新增结果
      */
-    @PostMapping("/list")
+    @PostMapping("/log")
     public ApiResult<List<BomOperateVO>> getOperateLog(@RequestBody @Validated BaseIdDTO dto) {
         List<BomOperateVO> list = bomOperateLogService.getOperateLog(dto.getId());
         return success(list);
