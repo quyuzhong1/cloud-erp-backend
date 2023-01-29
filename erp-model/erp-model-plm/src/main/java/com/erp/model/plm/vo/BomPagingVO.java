@@ -102,6 +102,11 @@ public class BomPagingVO implements Serializable {
      */
     private String type;
 
+    /**
+     * 类型
+     */
+    private String typeName;
+
 
 
 

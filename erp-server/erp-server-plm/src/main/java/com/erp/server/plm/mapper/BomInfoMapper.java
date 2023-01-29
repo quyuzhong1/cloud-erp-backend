@@ -30,5 +30,7 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
     List<BomVO> getByIds(@Param("bomIdList") List<String> bomIdList);
 
     List<BaseIdDTO> getBomInfo(@Param("state")Integer state,@Param("searchKeyword") String searchKeyword);
+
+    List<BomPagingVO> getAllBom(@Param("param") SearchPagingDTO params);
 }
 

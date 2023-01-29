@@ -17,6 +17,7 @@ import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.BomInfoService;
@@ -66,12 +67,24 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Transactional
     public Boolean add(AddChangeDTO dto) {
         ProductChangeEntity change = new ProductChangeEntity();
+        String type = dto.getType();
+        String changeBom = BomConstant.CHANGE_BOM;
+        Boolean isBom = changeBom.equals(type);
+        String sourceId = dto.getSourceId();
+        if (isBom) {
+            //检查能否变更 只有归档才可以
+            bomInfoService.checkIfChange(sourceId);
+        }
         BeanMapper.copy(dto, change);
         String id = IdWorker.getIdStr();
         change.setId(id);
         Boolean saveResult = this.save(change);
         if (saveResult) {
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
+            //如果变更成功 如果是bom 要改状态
+            if (isBom) {
+                bomInfoService.updateState(sourceId, BomStateEnum.ARCHIVE_CHANGE_ING.getState());
+            }
         }
         return saveResult;
     }
@@ -181,13 +194,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-28 17:02
      */
     @Override
-    public List<BaseIdDTO> getChangeByType(String type,String searchKeyword) {
+    public List<BaseIdDTO> getChangeByType(String type, String searchKeyword) {
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
         if (changeBom.equals(type)) {
             return bomInfoService.getBomInfo(searchKeyword);
         }
-        if(changeSku.equals(type)){
+        if (changeSku.equals(type)) {
             return productDetailService.getSku(searchKeyword);
         }
         return null;

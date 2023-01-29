@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -151,6 +152,17 @@ public class BomInfoController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 解除归档
+     * @param dto
+     * @return
+     */
+    @PostMapping("/removeArchive")
+    public ApiResult removeArchive(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = bomInfoService.removeArchive(dto.getId());
+        return result == true ? success() : failure();
+    }
+
 
     /**
      * 编辑bom
@@ -193,6 +205,17 @@ public class BomInfoController extends BaseController {
     public ApiResult startChange(@RequestBody @Validated UpdateBomDTO dto) {
         Boolean result = bomInfoService.startChange(dto);
         return result == true ? success() : failure();
+    }
+
+
+
+    /**
+     * 导出bom 数据
+     */
+    @PostMapping("/exportExcel")
+    public ApiResult exportExcel(@RequestBody @Validated SearchPagingDTO dto, HttpServletResponse response) {
+        bomInfoService.exportExcel(dto,response);
+        return success();
     }
 
 }

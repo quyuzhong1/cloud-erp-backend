@@ -52,4 +52,26 @@
             AND serial_number LIKE concat('%',#{searchKeyword},'%')
         </if>
     </select>
+
+    <select id="getAllBom" resultType="com.erp.model.plm.vo.BomPagingVO">
+        SELECT
+        b.id,
+        b.type,
+        b.serial_number,
+        b.version,
+        b.STATE,
+        b.remark,
+        b.create_time,
+        b.create_user_id,
+        b.update_time,
+        bs.sku_no,
+        bs.quantity
+        FROM product_bom_sku bs LEFT JOIN product_bom_info b
+        ON bs.bom_id = b.id
+        <where>
+            <if test="param.searchKeyword!=null and param.searchKeyword!=''">
+                b.serial_number LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+        </where>
+    </select>
 </mapper>

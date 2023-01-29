@@ -13,6 +13,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -51,4 +52,12 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     List<BomVO> getByIds(List<String> bomIdList);
 
     List<BaseIdDTO> getBomInfo(String  searchKeyword);
+
+    Boolean removeArchive(String id);
+
+    void checkIfChange(String sourceId);
+
+    void updateState(String sourceId, Integer state);
+
+    void exportExcel(SearchPagingDTO dto, HttpServletResponse response);
 }
