@@ -366,6 +366,7 @@
     </select>
     <select id="searchSku" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
+        pd.id AS skuId,
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,

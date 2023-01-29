@@ -1,11 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.server.plm.mapper.ProductBomHistoryMapper;
+import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
 
     @Resource
     private ProductBomSkuHistoryService productBomSkuHistoryService;
+
+    @Resource
+    private CommonService commonService;
 
     /**
      * 保存bom的历史信息
@@ -69,6 +74,14 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
 
     @Override
     public List<BomVO> getVersionList(String bomId) {
-        return baseMapper.getVersionList(bomId);
+        List<BomVO> list=baseMapper.getVersionList(bomId);
+        List<FindUserDTO> userList = commonService.getAllUser();
+        for(BomVO item:list){
+            FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                item.setCreateUserName(findUserDTO.getUserName());
+            }
+        }
+        return list;
     }
 }

@@ -41,7 +41,10 @@ public class BomVO  implements Serializable {
     private Date updateTime;
 
 
+    private Date createTime;
+
+
     private String createUserId;
 
-    private String createUserName;
+    private String createUserName="";
 }
