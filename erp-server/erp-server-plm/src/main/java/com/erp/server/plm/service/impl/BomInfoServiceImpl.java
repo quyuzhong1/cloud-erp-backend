@@ -24,6 +24,7 @@ import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
+import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.BomTypeEnum;
@@ -511,6 +512,49 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     }
+
+    /**
+     * 审核通过
+     * @author yl
+     * @date 2023-01-29 18:55
+     * @param dto
+     * @return void
+     */
+    @Override
+    public void approvalPass(AuditParamDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        bom.setState(BomStateEnum.AUDIT_ING.getState());
+        bom.setRemark(dto.getComment());
+        this.updateById(bom);
+
+    }
+
+    /**
+     * bom 审核不通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 18:53
+     */
+    @Override
+    public void approvalNoPass(AuditParamDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
+        bom.setRemark(dto.getComment());
+        //流程需要关闭吗
+        this.updateById(bom);
+
+
+    }
+
+
 
     /**
      * bom 发起变更

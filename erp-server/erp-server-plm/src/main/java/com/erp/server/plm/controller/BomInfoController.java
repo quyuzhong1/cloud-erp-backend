@@ -80,6 +80,32 @@ public class BomInfoController extends BaseController {
     }
 
     /**
+     * bom  审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
+        bomInfoService.approvalPass(dto);
+        return success();
+    }
+
+
+    /**
+     * bom  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalNoPass")
+    public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        bomInfoService.approvalNoPass(dto);
+        return success();
+    }
+
+
+    /**
      * 提交审核
      *
      * @param dto
@@ -154,6 +180,7 @@ public class BomInfoController extends BaseController {
 
     /**
      * 解除归档
+     *
      * @param dto
      * @return
      */
@@ -208,13 +235,12 @@ public class BomInfoController extends BaseController {
     }
 
 
-
     /**
      * 导出bom 数据
      */
     @PostMapping("/exportExcel")
     public ApiResult exportExcel(@RequestBody @Validated SearchPagingDTO dto, HttpServletResponse response) {
-        bomInfoService.exportExcel(dto,response);
+        bomInfoService.exportExcel(dto, response);
         return success();
     }
 

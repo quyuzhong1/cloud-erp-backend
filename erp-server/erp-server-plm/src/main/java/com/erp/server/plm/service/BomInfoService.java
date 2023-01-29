@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
+import com.erp.server.plm.controller.AuditParamDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -60,4 +61,8 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     void updateState(String sourceId, Integer state);
 
     void exportExcel(SearchPagingDTO dto, HttpServletResponse response);
+
+    void approvalNoPass(AuditParamDTO dto);
+
+    void approvalPass(AuditParamDTO dto);
 }
