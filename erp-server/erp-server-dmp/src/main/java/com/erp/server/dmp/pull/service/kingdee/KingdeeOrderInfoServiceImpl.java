@@ -65,9 +65,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
     public static void main(String[] args) {
         KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list");
+        jobTaskDTO.setApiCode(PlatformApiEnum.SAL_SALEORDER.taskName);
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -77,7 +76,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setPlatformApiEnum(platformApiEnum);
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.SAL_SALEORDER);
         requestDTO.setJobTaskDTO(jobTaskDTO);
         List<KingdeeOrderEntity> kingdeeOrderEntities = kingdeeOrderInfoService.pullDate(requestDTO);
         System.out.println(kingdeeOrderEntities);
@@ -155,6 +154,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             LinkedList<String> queryfilters = new LinkedList<>();
             queryfilters.add(String.format("FModifyDate >= '%s'", st));
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
+//            queryfilters.add(String.format("fCreateDate >= '%s'", "2023-01-05 00:00:00"));
+//            queryfilters.add(String.format("fCreateDate <= '%s'", "2023-01-06 00:00:00"));
             queryfilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
             queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
             String filterStr = String.join(" and ",  queryfilters );
@@ -228,15 +229,18 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             orderEntity.setFSOFrom(stringStringMap.get("FSOFrom"));
                             orderEntity.setF_SK_Date(stringStringMap.get("F_SK_Date"));
                             orderEntity.setFSHGJ1(stringStringMap.get("F_SHGJ1"));
-                            orderEntity.setFExchangeRate(BigDecimal.valueOf(Double.valueOf(stringStringMap.get("FExchangeRate"))));
+                            orderEntity.setFExchangeRate(new BigDecimal(stringStringMap.get("FExchangeRate")));
                             orderEntity.setFSettleCurrId(stringStringMap.get("FSettleCurrId.FCode"));
 
                             LinkedList<String> queryfilterst = new LinkedList<>();
-                            queryfilterst.add(String.format("FBillNo = '%s'", orderEntity.getFBillNo()));
-                            queryfilterst.add(String.format("FID = '%s'", orderEntity.getFID()));
+                            queryfilterst.add(String.format("FBillNo = '%s'", "XSD-20221229-33712"));
+                            queryfilterst.add(String.format("FID = '%s'", "141982"));
                             String filterStrt = String.join(" and ", queryfilterst);
-                            String fieldKeyst = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty,FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId,FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus,F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName";
-                            param.setFormId(formId);
+                            String fieldKeyst = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty," +
+                                    "FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId," +
+                                    "FBaseUnitId,FOldQty,FTaxNetPrice,FDiscount,FPriceDiscount,FBranchId,FEntryNote,FSrcType,FSrcBillNo,FMinPlanDeliveryDate,FDeliveryStatus," +
+                                    "F_ulz_Decimal,F_ulz_CGCB,FSOStockId.FName,FAllAmount";
+                            param.setFormId(dto.getJobTaskDTO().getApiCode());
                             param.setFieldKeys(fieldKeyst);
                             param.setFilterString(filterStrt);
                             param.setLimit(10000);
@@ -261,11 +265,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setFMaterialId(mapItem.get("FMaterialId"));
                                     orderItemEntity.setFMaterialNumber(mapItem.get("FMaterialId.FNumber"));
                                     orderItemEntity.setFMaterialModel(mapItem.get("FMaterialModel"));
-                                    orderItemEntity.setFQty(BigDecimal.valueOf(Double.valueOf(mapItem.get("FQty"))));
+                                    orderItemEntity.setFQty(new BigDecimal(mapItem.get("FQty")));
                                     orderItemEntity.setFPriceUnitQty(mapItem.get("FPriceUnitQty"));
                                     orderItemEntity.setFUnitID(mapItem.get("FUnitID"));
                                     orderItemEntity.setFAuxPropId(mapItem.get("FAuxPropId"));
-                                    orderItemEntity.setFPrice(BigDecimal.valueOf(Double.valueOf(mapItem.get("FPrice"))));
+                                    orderItemEntity.setFPrice(new BigDecimal(mapItem.get("FPrice")));
                                     orderItemEntity.setFEntryTaxRate(mapItem.get("FEntryTaxRate"));
                                     orderItemEntity.setFTaxPrice(mapItem.get("FTaxPrice"));
                                     orderItemEntity.setFIsFree(mapItem.get("FIsFree"));
@@ -277,7 +281,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setF_ulz_BaseProperty(mapItem.get("F_ulz_BaseProperty"));
                                     orderItemEntity.setFMapId(mapItem.get("FMapId"));
                                     orderItemEntity.setFBaseUnitId(mapItem.get("FBaseUnitId"));
-                                    orderItemEntity.setFOldQty(Double.valueOf(mapItem.get("FOldQty")).intValue());
+                                    orderItemEntity.setFOldQty(new BigDecimal(mapItem.get("FOldQty")).intValue());
                                     orderItemEntity.setFTaxNetPrice(mapItem.get("FTaxNetPrice"));
                                     orderItemEntity.setFDiscount(mapItem.get("FDiscount"));
                                     orderItemEntity.setFPriceDiscount(mapItem.get("FPriceDiscount"));
@@ -287,9 +291,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                                     orderItemEntity.setFSrcBillNo(mapItem.get("FSrcBillNo"));
                                     orderItemEntity.setFMinPlanDeliveryDate(mapItem.get("FMinPlanDeliveryDate"));
                                     orderItemEntity.setFDeliveryStatus(mapItem.get("FDeliveryStatus"));
-                                    orderItemEntity.setF_ulz_Decimal(BigDecimal.valueOf(Double.valueOf(mapItem.get("F_ulz_Decimal"))));
-                                    orderItemEntity.setF_ulz_CGCB(BigDecimal.valueOf(Double.valueOf(mapItem.get("F_ulz_CGCB"))));
+                                    orderItemEntity.setF_ulz_Decimal(new BigDecimal(mapItem.get("F_ulz_Decimal")));
+                                    orderItemEntity.setF_ulz_CGCB(new BigDecimal(mapItem.get("F_ulz_CGCB")));
                                     orderItemEntity.setFSOStockId(mapItem.get("FSOStockId.FName"));
+                                    orderItemEntity.setFAllAmount(new BigDecimal(mapItem.get("FAllAmount")));
                                    orderItemEntityList.add(orderItemEntity);
                                 }
                             }
@@ -360,17 +365,19 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal orderFee = BigDecimal.ZERO;
         List<KingdeeOrderItemEntity> orderItemEntityList = kingdeeOrderEntity.getOrderItemEntityList();
         for (KingdeeOrderItemEntity orderItemEntity : orderItemEntityList) {
-            totalPrice = orderItemEntity.getFPrice().multiply(orderItemEntity.getFQty());
-            totalCost = orderItemEntity.getF_ulz_CGCB().multiply(orderItemEntity.getFQty());
+            orderFee = orderFee.add(orderItemEntity.getFAllAmount());
+            totalCost = totalCost.add(orderItemEntity.getF_ulz_Decimal());
+            totalPrice = totalPrice.add(new BigDecimal(orderItemEntity.getFAmount()));
         }
 
-        //商品总售价
+        //商品总售价 订单金额+ 税费
         dmpOrderInfoEntity.setItemTotal(totalPrice);
 
         //订单金额
-        dmpOrderInfoEntity.setOrderFee(totalPrice);
+        dmpOrderInfoEntity.setOrderFee(orderFee);
 
         //订单成本价
         dmpOrderInfoEntity.setOrderCost(totalCost);
@@ -535,13 +542,13 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setCostPrice(orderItemBean.getF_ulz_CGCB());
 
             //商品原始售价
-            dmpOrderItemEntity.setSellPriceOrigin(BigDecimal.valueOf(Double.valueOf(orderItemBean.getFAmount())));
+            dmpOrderItemEntity.setSellPriceOrigin(new BigDecimal(orderItemBean.getFAmount()));
 
             //商品售价
-            dmpOrderItemEntity.setSellPrice(BigDecimal.valueOf(Double.valueOf(orderItemBean.getFAmount())));
+            dmpOrderItemEntity.setSellPrice(orderItemBean.getFPrice());
 
             //商品数量
-            dmpOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFQty()+"").intValue());
+            dmpOrderItemEntity.setQuantity(orderItemBean.getFQty().intValue());
 
             //商品单位
             dmpOrderItemEntity.setProductUnit("");
@@ -605,7 +612,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(kingdeeOrderEntity.getFExchangeRate());
             }
-            dmpOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getFAmount()));
+            dmpOrderItemEntity.setAmountAfter(orderItemBean.getFAllAmount());
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

@@ -196,6 +196,9 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "amount_after")
     private BigDecimal amountAfter;
 
+    @TableField(value = "shipping_fee")
+    private BigDecimal shippingFee;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

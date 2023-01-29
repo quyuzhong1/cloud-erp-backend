@@ -230,7 +230,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         dmpSkuInfoEntity.setNameEn("");
 
         //统一成本价
-        dmpSkuInfoEntity.setDefaultCost(BigDecimal.valueOf(Double.valueOf(skuInfoEntity.getFPurPrice_CMK())));
+        dmpSkuInfoEntity.setDefaultCost(new BigDecimal(skuInfoEntity.getFPurPrice_CMK()));
 
         Integer status = 3;
         if (skuInfoEntity.getFForbidStatus().equals("C")) {
@@ -267,7 +267,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         }
 
         //售价
-        dmpSkuInfoEntity.setSalePrice(BigDecimal.valueOf(Double.valueOf(skuInfoEntity.getFSalePrice_CMK())));
+        dmpSkuInfoEntity.setSalePrice(new BigDecimal(skuInfoEntity.getFSalePrice_CMK()));
 
         //申报价格
         dmpSkuInfoEntity.setDeclarePrice(BigDecimal.ZERO);

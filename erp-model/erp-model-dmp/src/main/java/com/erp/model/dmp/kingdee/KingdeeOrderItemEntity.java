@@ -22,12 +22,28 @@ public class KingdeeOrderItemEntity {
     private String fPriceUnitQty;
     private String fUnitID;
     private String fAuxPropId;
+    /**
+     * 销售单价
+     */
     private BigDecimal fPrice;
+    /**
+     * 税率
+     */
     private String fEntryTaxRate;
+
+    /**
+     * 含税单价
+     */
     private String fTaxPrice;
     private String fIsFree;
+    /**
+     * 税额
+     */
     private String fEntryTaxAmount;
     private String fMaterialType;
+    /**
+     * 销售金额
+     */
     private String fAmount;
     private String fBarcode;
     private String fMapName;
@@ -44,7 +60,15 @@ public class KingdeeOrderItemEntity {
     private String fSrcBillNo;
     private String fMinPlanDeliveryDate;
     private String fDeliveryStatus;
+    /**
+     * 销售总成本
+     */
     private BigDecimal f_ulz_Decimal;
+    /**
+     * 采购单价
+     */
     private BigDecimal f_ulz_CGCB;
     private String FSOStockId;
+
+    private BigDecimal FAllAmount;
 }
