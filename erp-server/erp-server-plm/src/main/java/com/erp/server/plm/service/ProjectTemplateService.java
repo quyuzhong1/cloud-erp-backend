@@ -48,15 +48,6 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      */
     Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto);
     /**
-     * @description: 根据负责人类型及id查询所有上级
-     * @author Will
-     * @date: 2023/1/9 10:31
-     * @param id
-     * @param type
-     * @return List<UserDTO>
-     */
-    List<UserDTO> listSuperior(String id, Integer type);
-    /**
      * @description: 根据模板id查询模板成员角色
      * @author Will
      * @date: 2023/1/9 15:33
