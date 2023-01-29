@@ -1,12 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -16,7 +16,6 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.third.dto.FsBatchSendMessageDTO;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
@@ -31,10 +30,8 @@ import com.erp.server.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;
-import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tools.ant.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -42,7 +39,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,6 +76,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
+
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -770,10 +770,15 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             for (ProjectTaskEntity task : taskList) {
                 List<String> allNoticeUserIds = new ArrayList<>();
                 //所有的通知用户人
-                String approvalUserId = task.getApprovalUserId();
-                if (StringUtils.isNotBlank(approvalUserId)) {
-                    List<String> approvalUserIdList = Arrays.asList(approvalUserId.split(","));
-                    allNoticeUserIds.addAll(approvalUserIdList);
+                //查询任务下审核人
+                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, task.getId());
+                if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                    for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+                        if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                            List<String> approvalUserIdList = Arrays.asList(taskChargeDistributionEntity.getChargeIds().split(","));
+                            allNoticeUserIds.addAll(approvalUserIdList);
+                        }
+                    }
                 }
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);

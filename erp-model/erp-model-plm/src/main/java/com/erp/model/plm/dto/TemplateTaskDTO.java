@@ -121,25 +121,11 @@ public class TemplateTaskDTO implements Serializable {
          * 业务流程名
          */
         private String businessName="";
-        /**
-         * 审核人集合
-         */
-        private List<List<String>> approvalUserIds;
 
         /**
-         * 审核角色集合
+         * 交付文档审核分配人集合
          */
-        private List<List<String>> approvalRoleIds;
-
-        /**
-         * 上级人员负责人类型集合
-         */
-        private List<List<String>> superiorTypes;
-
-        /**
-         * 审核分配类型（0角色，1人员，2上级人员负责人）
-         */
-        private Integer approvalDistributionType;
+        private List<TaskChargeDistributionDTO> approvalList;
 
         /**
          * 负责人id

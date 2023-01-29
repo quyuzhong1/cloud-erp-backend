@@ -116,13 +116,6 @@ public class ProjectTaskEntity implements Serializable {
     private String projectId;
 
     /**
-     * 审核人id 多个以逗号分割
-     */
-    @TableField("approval_user_id")
-    private String approvalUserId;
-
-
-    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
@@ -195,22 +188,4 @@ public class ProjectTaskEntity implements Serializable {
      */
     @TableField(exist=false)
     private Integer isfinish;
-
-    /**
-     * 审核角色id 多个以逗号分割，由模板生成时带过来
-     */
-    @TableField("approval_role_name")
-    private String approvalRoleName;
-
-    /**
-     * 审核角色id 多个以逗号分割，由模板生成时带过来
-     */
-    @TableField("superior_type")
-    private String superiorType;
-
-    /**
-     * 审核分配类型，由模板生成时带过来（0角色，1人员，2上级人员负责人）
-     */
-    @TableField("approval_distribution_type")
-    private Integer approvalDistributionType;
 }

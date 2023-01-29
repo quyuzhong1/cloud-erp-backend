@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -16,6 +17,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.DistributionTypeEnum;
@@ -72,6 +74,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
 
     /**
      * 启动项目 添加成员
@@ -184,19 +188,64 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         //成员新增成功后，需要更新产品下面的待审核任务
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
-            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType()) && projectRoleEntity.getName().equals(obj.getRoleName()) && !TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_ING.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(obj.getStatus())).collect(Collectors.toList());
+            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> projectRoleEntity.getName().equals(obj.getRoleName()) && !TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_ING.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(obj.getStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(list)) {
                 list.forEach(obj -> {
-                    if (StringUtils.isNotBlank(obj.getChargeId())) {
-                        List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
-                        for (String userId :dto.getUserIdList()) {
-                            if (!chargetIds.contains(userId)) {
-                                chargetIds.add(userId);
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                        //更新任务负责人
+                        if (StringUtils.isNotBlank(obj.getChargeId())) {
+                            List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                            for (String userId :dto.getUserIdList()) {
+                                if (!chargetIds.contains(userId)) {
+                                    chargetIds.add(userId);
+                                }
+                            }
+                            obj.setChargeId(StringUtils.join(chargetIds,","));
+                        } else {
+                            obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
+                        }
+                    }
+                    //查询任务下审核人
+                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, obj.getId());
+                    if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                        //根据分配类型查询模板中的数据
+                        for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+                            if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
+                                throw new ServiceException(ApiError.ERROR_95097);
+                            }
+                            List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                            //按角色分配
+                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                                if (chargeList.contains(projectRoleEntity.getName())) {
+                                    //更新任务审核人
+                                    if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                                        List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                                        for (String userId :dto.getUserIdList()) {
+                                            if (!chargetIds.contains(userId)) {
+                                                chargetIds.add(userId);
+                                            }
+                                        }
+                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds,","));
+                                    } else {
+                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(),","));
+                                    }
+                                }
+                            }
+                            //按上级分配
+                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && StringUtils.isNotBlank(obj.getChargeId())) {
+                                //查询对应负责人的上级
+                                List<String> ids = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                                    for (String superiorType: chargeList) {
+                                        String userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
+                                        if (StringUtils.isNotBlank(userIds)) {
+                                            taskChargeDistributionEntity.setChargeIds(userIds);
+                                        }
+                                    }
+                                }
                             }
                         }
-                        obj.setChargeId(StringUtils.join(chargetIds,","));
-                    } else {
-                        obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
                     }
                 });
                 projectTaskService.updateBatchById(list);
