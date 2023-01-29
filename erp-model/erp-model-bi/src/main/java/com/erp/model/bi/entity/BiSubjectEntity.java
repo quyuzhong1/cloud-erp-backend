@@ -87,10 +87,10 @@ public class BiSubjectEntity implements Serializable {
     private LocalDateTime updateTime;
 
     /**
-     * 删除标示0未删除  1 被删除
+     * 删除标示 FALSE未删除  TRUE 被删除
      */
     @TableLogic
-    private Integer isDeleted=0;
+    private Boolean isDeleted=false;
 
 
 
