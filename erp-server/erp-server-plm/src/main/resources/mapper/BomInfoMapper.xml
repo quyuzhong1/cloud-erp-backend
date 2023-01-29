@@ -9,6 +9,8 @@
 
     <select id="paging" resultType="com.erp.model.plm.vo.BomPagingVO">
            SELECT
+               b.id,
+               b.type,
                b.serial_number,
                b.version,
                b.STATE,
