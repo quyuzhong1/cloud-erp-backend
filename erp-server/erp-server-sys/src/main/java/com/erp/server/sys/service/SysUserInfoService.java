@@ -102,5 +102,14 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      */
     List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds);
 
+    /**
+     * 根据用户id 获取用户信息
+     * @author yl
+     * @date 2023-01-29 10:25
+     * @param userId
+     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     */
+    SysUserDTO getSysUserById(String userId);
+
 }
 
