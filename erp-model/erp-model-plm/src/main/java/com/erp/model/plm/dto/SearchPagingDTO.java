@@ -14,10 +14,10 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class BomSearchPagingDTO  implements Serializable {
+public class SearchPagingDTO implements Serializable {
 
-    @StateEnumValue(intValues = {0,1}, message = "搜索类型有误")
-    private Integer bomSearchType;
+    @StateEnumValue(strValues = {"all","waitAudit"}, message = "搜索类型有误")
+    private String searchType;
 
 
     /**

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
@@ -25,7 +25,7 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
     Integer getMaxSequence();
 
-    IPage<BomPagingVO> paging(Page query, @Param("param") BomSearchPagingDTO params);
+    IPage<BomPagingVO> paging(Page query, @Param("param") SearchPagingDTO params);
 
     List<BomVO> getByIds(@Param("bomIdList") List<String> bomIdList);
 

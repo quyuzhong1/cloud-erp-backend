@@ -11,7 +11,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
@@ -86,9 +86,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-28 11:50
      */
     @Override
-    public PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto) {
+    public PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        BomSearchPagingDTO params = dto.getParams();
+        SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> changeSearch = new ArrayList<>();

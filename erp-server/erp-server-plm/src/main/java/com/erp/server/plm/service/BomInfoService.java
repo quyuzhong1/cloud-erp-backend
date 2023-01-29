@@ -7,7 +7,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
@@ -26,7 +26,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean insert(AddBomDTO dto);
 
-    PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto);
+    PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 
     BomDTO getBomDetails(String bomId);
 

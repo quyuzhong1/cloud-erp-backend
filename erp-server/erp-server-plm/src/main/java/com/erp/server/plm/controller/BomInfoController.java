@@ -7,7 +7,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
@@ -48,7 +48,7 @@ public class BomInfoController extends BaseController {
      * @return 查询结果
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<BomSearchPagingDTO> dto) {
+    public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<BomPagingVO>> pagingVO = bomInfoService.paging(dto);
         return success(pagingVO);
     }

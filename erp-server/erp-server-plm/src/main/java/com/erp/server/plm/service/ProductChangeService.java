@@ -5,7 +5,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 
@@ -22,7 +22,7 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
 
     Boolean add(AddChangeDTO dto);
 
-    PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto);
+    PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 
     Boolean cancellation(String id);
 

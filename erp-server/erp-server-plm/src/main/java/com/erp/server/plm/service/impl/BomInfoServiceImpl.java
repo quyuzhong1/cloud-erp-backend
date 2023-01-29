@@ -128,8 +128,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-10 17:30
      */
     @Override
-    public PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto) {
-        BomSearchPagingDTO params = dto.getParams();
+    public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
+        SearchPagingDTO params = dto.getParams();
         List<FindUserDTO> userList = commonService.getAllUser();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);

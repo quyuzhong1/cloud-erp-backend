@@ -6,7 +6,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.ProductChangeListSearchDTO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.server.plm.service.ProductChangeService;
@@ -41,7 +41,7 @@ public class ProductChangeController extends BaseController {
     }
 
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<BomSearchPagingDTO> dto) {
+    public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
         return success(pagingVO);
     }
