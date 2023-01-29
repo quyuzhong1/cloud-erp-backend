@@ -34,7 +34,8 @@ public class BomDTO  implements Serializable {
 
 
     /**
-     * 类型
+     * combination 组合
+     * single 单品
      */
     @StateEnumValue(strValues = {"combination", "single"}, message = "类型有误")
     private String type;

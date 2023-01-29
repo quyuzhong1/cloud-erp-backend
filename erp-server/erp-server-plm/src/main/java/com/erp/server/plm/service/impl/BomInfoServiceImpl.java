@@ -187,6 +187,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
         Integer bomVersion = bom.getVersion();
         bom.setVersion(bomVersion + 1);
+        bom.setType(dto.getType());
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
