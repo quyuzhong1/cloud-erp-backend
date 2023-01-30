@@ -52,8 +52,8 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
     @Override
     public void removeBySourceAndTaskId(Integer source, String taskId) {
         LambdaUpdateWrapper<TaskChargeDistributionEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(TaskChargeDistributionEntity::getTaskId,taskId);
-        updateWrapper.set(TaskChargeDistributionEntity::getSource,source);
+        updateWrapper.eq(TaskChargeDistributionEntity::getTaskId,taskId);
+        updateWrapper.eq(TaskChargeDistributionEntity::getSource,source);
         //删除
         this.remove(updateWrapper);
     }

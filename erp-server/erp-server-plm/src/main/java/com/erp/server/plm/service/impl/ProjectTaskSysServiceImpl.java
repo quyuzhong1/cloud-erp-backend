@@ -10,12 +10,15 @@ import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.enums.ChargeSuperiorEnum;
 import com.erp.server.plm.enums.DistributionTypeEnum;
 import com.erp.server.plm.enums.TaskTypeEnum;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
@@ -65,6 +68,8 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
 
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @Override
     @Transactional
@@ -318,7 +323,29 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, sysEntity.getId());
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
             List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class,taskChargeDistributionList);
-            list.forEach(obj->obj.setChargeList(Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList())));
+            list.forEach(obj->{
+                List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
+                obj.setChargeList(collect);
+                //回显名称
+                if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {
+                    //用户分配查询名称
+                    List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
+                    if (CollectionUtils.isNotEmpty(userList)) {
+                        List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                        obj.setChargeNames(String.join(",",usrNameList));
+                    }
+                }
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                    //角色分配直接取名称
+                    obj.setChargeNames(obj.getCharges());
+                }
+                if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
+                    //上级分配取枚举
+                    List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
+                    obj.setChargeNames(String.join(",",superiors));
+                }
+
+            });
             sysTaskDTO.setApprovalList(list);
         }
         String businessProcessId = sysEntity.getBusinessProcessId();
