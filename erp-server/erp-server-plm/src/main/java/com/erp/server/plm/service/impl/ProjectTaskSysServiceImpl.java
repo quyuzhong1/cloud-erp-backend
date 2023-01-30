@@ -81,12 +81,15 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         //获取到任务阶段
         SysTaskPhaseEntity phaseEntity = sysTaskPhaseService.getById(dto.getPhaseId());
         BeanMapper.copy(dto, entity);
+        //负责人
         List<String> chargeIds = dto.getChargeIds();
+        //角色
+        List<String> roleIds = dto.getRoleIds();
 
         //任务分配类型处理
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(dto.getDistributionType())) {//分配类型为角色
-            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(chargeIds);
-            entity.setRoleId(String.join(",", chargeIds));
+            List<TemplateRoleEntity> templateRoleList = templateRoleService.listByIds(roleIds);
+            entity.setRoleId(String.join(",", roleIds));
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
                 List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
@@ -311,7 +314,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(sysEntity.getDistributionType())) {
             String roleId = sysEntity.getRoleId();
             if (StringUtils.isNotBlank(roleId)) {
-                sysTaskDTO.setChargeIds(Arrays.asList(roleId.split(",")));
+                sysTaskDTO.setRoleIds(Arrays.asList(roleId.split(",")));
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(sysEntity.getDistributionType())){
             String chargeId = sysEntity.getChargeId();
