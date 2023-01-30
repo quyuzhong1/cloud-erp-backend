@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id=#{productId}
         <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
@@ -60,7 +60,7 @@
 
 
     <select id="allPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id=#{productId}
         <if test="phaseId !=null and phaseId !='' and phaseId !=0 ">
@@ -138,7 +138,7 @@
 
 
     <select id="myApprovalPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id=#{productId} <!--AND pid='0'--> AND process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
