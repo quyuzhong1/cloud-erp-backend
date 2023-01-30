@@ -28,8 +28,13 @@ public class TaskChargeDistributionDTO {
     private List<String> chargeList;
 
     /**
-     * 分配人员，逗号分隔
+     * 分配人，逗号分隔
      */
     private String charges;
+
+    /**
+     * 分配人名称,逗号分割
+     */
+    private String chargeNames;
 
 }

@@ -1,9 +1,6 @@
 package com.erp.rpc.workflow;
 
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.model.workflow.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,4 +41,8 @@ public interface WorkflowFeign {
     //根据审核任务id获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDoByTaskId")
     List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam(value="taskId") String taskId);
+
+    //获取审核记录
+    @PostMapping("workflow/feign/process/queryProcessApprove")
+    List<ApproveRecordShowDTO> queryProcessApprove(@RequestBody ProcessBaseDTO dto);
 }

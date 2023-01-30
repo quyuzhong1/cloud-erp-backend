@@ -1,10 +1,7 @@
 package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -83,4 +80,10 @@ public class ProcessFeignController extends BaseController {
         return list;
     }
 
+    //查看流程审批情况
+    @PostMapping("/queryProcessApprove")
+    public List<ApproveRecordShowDTO> queryProcessApprove(@RequestBody ProcessBaseDTO dto) {
+        List<ApproveRecordShowDTO> resultList = workflowService.queryApproveRecord(dto);
+        return resultList;
+    }
 }
