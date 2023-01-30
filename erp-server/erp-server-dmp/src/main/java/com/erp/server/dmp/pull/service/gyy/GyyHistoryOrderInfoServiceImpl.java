@@ -289,7 +289,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
 
         //0:未退款 1:部分退款 2:全部退款
         Integer refundState = gyyOrderEntity.getRefundState();
-        if (refundState.equals(1) || refundState.equals(2)) {
+        if (null != refundState && (refundState.equals(1) || refundState.equals(2))) {
             orderState = 7;
         }
         dmpOrderInfoEntity.setOrderState(orderState);

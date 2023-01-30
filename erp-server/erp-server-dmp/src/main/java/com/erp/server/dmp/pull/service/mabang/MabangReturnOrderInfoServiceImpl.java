@@ -308,12 +308,15 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
         dmpReturnOrderInfoEntity.setPlatformSign("马帮");
 
         dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
+        if(5 == returnOrderEntity.getStatus()){
+            dmpReturnOrderInfoEntity.setIsDeleted(Boolean.TRUE);
+        }
 
         //新增订单信息
         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
         if (StringUtils.isNotBlank(orderInfoId)) {
             //新增订单商品信息
-            analysisReturnOrderItem(returnOrderEntity.getItem(), orderInfoId);
+            analysisReturnOrderItem(returnOrderEntity.getItem(), orderInfoId, 5 == returnOrderEntity.getStatus());
         }
     }
 
@@ -323,7 +326,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisReturnOrderItem(List<ReturnOrderItemEntity> orderItem, String orderId) {
+    public void analysisReturnOrderItem(List<ReturnOrderItemEntity> orderItem, String orderId, boolean isDeleted) {
         List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
         for (ReturnOrderItemEntity orderItemBean : orderItem) {
             DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
@@ -358,9 +361,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
             orderItemList.add(dmpReturnOrderItemEntity);
         }
-        checkOrderItem(orderItemList, orderId);
-//        dmpOrderItemService.batchAdd(orderItemList);
-//        return orderItemList;
+        checkOrderItem(orderItemList, orderId, isDeleted);
     }
 
     /**
@@ -369,8 +370,10 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 21:25
      * @return void
      **/
-    public void checkOrderItem(List<DmpReturnOrderItemEntity> orderItem, String returnOrderId) {
+    public void checkOrderItem(List<DmpReturnOrderItemEntity> orderItem, String returnOrderId, boolean isDeleted) {
         dmpReturnOrderItemService.deleteOrderByReturnOrderId(returnOrderId);
-        dmpReturnOrderItemService.batchAdd(orderItem);
+        if (!isDeleted){
+            dmpReturnOrderItemService.batchAdd(orderItem);
+        }
     }
 }

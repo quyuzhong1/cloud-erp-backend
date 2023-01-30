@@ -213,6 +213,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "retry_count")
     private Integer retryCount;
 
+    /**
+     * 逻辑删除 FALSE 未删除 TRUE 已删除
+     */
+    @TableField(value = "is_deleted")
+    private Boolean isDeleted;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -242,6 +248,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", currencyCode='" + currencyCode + '\'' +
                 ", currencyRate=" + currencyRate +
                 ", platformSign='" + platformSign + '\'' +
+                ", isDeleted='" + isDeleted + '\'' +
                 '}';
     }
 }
