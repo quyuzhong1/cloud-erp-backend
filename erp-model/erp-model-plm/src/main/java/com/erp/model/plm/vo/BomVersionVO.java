@@ -8,16 +8,18 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * @Classname BomVO
+ * @Classname BomVersionVO
  * @Description TODO
- * @Date 2023-01-14 11:05
+ * @Date 2023-01-30 10:14
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class BomVO implements Serializable {
-
-
+public class BomVersionVO implements Serializable {
+    /**
+     * bom 历史表id
+     */
+    private String bomHistoryId;
 
 
     /**
@@ -41,13 +43,13 @@ public class BomVO implements Serializable {
     private String type;
 
 
-    private Date updateTime;
-
-
     private Date createTime;
 
 
     private String createUserId;
 
     private String createUserName = "";
+
+
+    private String refSku;
 }

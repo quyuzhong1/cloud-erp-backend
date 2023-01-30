@@ -10,7 +10,7 @@ import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.vo.BomPagingVO;
-import com.erp.model.plm.vo.BomVO;
+import com.erp.model.plm.vo.BomVersionVO;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import org.springframework.validation.annotation.Validated;
@@ -219,8 +219,8 @@ public class BomInfoController extends BaseController {
      * 历史版本信息
      */
     @PostMapping("/version/list")
-    public ApiResult<List<BomVO>> versionList(@RequestBody @Validated BaseIdDTO dto) {
-        List<BomVO> list = productBomHistoryService.getVersionList(dto.getId());
+    public ApiResult<List<BomVersionVO>> versionList(@RequestBody @Validated BaseIdDTO dto) {
+        List<BomVersionVO> list = productBomHistoryService.getVersionList(dto.getId());
         return success(list);
     }
 

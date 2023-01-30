@@ -17,4 +17,6 @@ public interface ProductBomSkuHistoryService  extends IService<ProductBomSkuHist
 
 
     void saveBomSku(String id, List<BomSkuDTO> bomSkuList);
+
+    List<ProductBomSkuHistoryEntity> getSkuByHistoryIds(List<String> bomHistoryIds);
 }

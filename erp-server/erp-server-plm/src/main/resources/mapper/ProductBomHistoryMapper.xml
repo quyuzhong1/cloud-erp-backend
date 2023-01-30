@@ -3,9 +3,9 @@
 <mapper namespace="com.erp.server.plm.mapper.ProductBomHistoryMapper">
 
 
-    <select id="getVersionList" resultType="com.erp.model.plm.vo.BomVO">
+    <select id="getVersionList" resultType="com.erp.model.plm.vo.BomVersionVO">
           SELECT create_time,create_user_id,type,serial_number,
-          version,bom_id FROM product_bom_history
+          version,bom_id,id AS bomHistoryId  FROM product_bom_history
           WHERE bom_id=#{bomId} ORDER BY version DESC
     </select>
 </mapper>

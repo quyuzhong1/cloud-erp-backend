@@ -2,7 +2,7 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
-import com.erp.model.plm.vo.BomVO;
+import com.erp.model.plm.vo.BomVersionVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,6 +18,6 @@ import java.util.List;
 public interface ProductBomHistoryMapper extends BaseMapper<ProductBomHistoryEntity> {
 
 
-    List<BomVO> getVersionList(@Param("bomId") String bomId);
+    List<BomVersionVO> getVersionList(@Param("bomId") String bomId);
 }
 

@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
-import com.erp.model.plm.vo.BomVO;
+import com.erp.model.plm.vo.BomVersionVO;
 
 import java.util.List;
 
@@ -21,5 +21,5 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
 
     void deleteByBomId(String id);
 
-    List<BomVO> getVersionList(String id);
+    List<BomVersionVO> getVersionList(String id);
 }
