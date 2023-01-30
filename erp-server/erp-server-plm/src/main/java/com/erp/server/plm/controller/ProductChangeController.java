@@ -5,9 +5,7 @@ import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
-import com.erp.model.plm.dto.ProductChangeListSearchDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.server.plm.service.ProductChangeService;
 import org.springframework.validation.annotation.Validated;
@@ -20,7 +18,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 变更信息表(ProductChange)表控制层
+ *  变更管理
  *
  * @author yl
  * @since 2023-01-11 14:05:03
@@ -34,26 +32,55 @@ public class ProductChangeController extends BaseController {
     private ProductChangeService productChangeService;
 
 
+    /**
+     * 添加变更
+     * @param dto
+     * @return
+     */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated AddChangeDTO dto) {
         Boolean result = productChangeService.add(dto);
         return result == true ? success() : failure();
     }
 
+
+    /**
+     * 编辑变更
+     * @param dto
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated UpdateChangeDTO dto) {
+        Boolean result = productChangeService.edit(dto);
+      return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 变更分页展示
+     * @param dto
+     * @return
+     */
     @PostMapping("/paging")
     public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
         return success(pagingVO);
     }
 
+
+
     /**
-     * 详情
+     * 变更详情
      *
      * @param dto
      * @return
      */
     @PostMapping("/view")
-    public ApiResult details(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<ProductChangeDTO> details(@RequestBody @Validated BaseIdDTO dto) {
+        ProductChangeDTO result = productChangeService.details(dto.getId());
+        if (result != null) {
+            return success(result);
+        }
         return success();
     }
 
@@ -76,10 +103,35 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    public ApiResult<List<BaseIdDTO>> list(ProductChangeListSearchDTO  dto) {
-        List<BaseIdDTO> list = productChangeService.getChangeByType(dto.getType(),dto.getSearchKeyword());
+    public ApiResult<List<BaseIdDTO>> list(ProductChangeListSearchDTO dto) {
+        List<BaseIdDTO> list = productChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
         return success(list);
     }
+
+
+    /**
+     * change 审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
+        productChangeService.approvalPass(dto);
+        return success();
+    }
+
+    /**
+     * change  审核 不通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalNoPass")
+    public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        productChangeService.approvalNoPass(dto);
+        return success();
+    }
+
 
 }
 

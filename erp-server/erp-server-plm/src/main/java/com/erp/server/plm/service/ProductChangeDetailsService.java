@@ -14,4 +14,6 @@ public interface ProductChangeDetailsService  extends IService<ProductChangeDeta
 
 
     void saveChangeDetails(String id, String detailsJson);
+
+    String getDetailsJson(String changeId);
 }

@@ -5,9 +5,12 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddChangeDTO;
+import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.dto.UpdateChangeDTO;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.server.plm.controller.AuditParamDTO;
 
 import java.util.List;
 
@@ -27,4 +30,12 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     Boolean cancellation(String id);
 
     List<BaseIdDTO> getChangeByType(String type,String searchKeyword);
+
+    ProductChangeDTO details(String id);
+
+    Boolean edit(UpdateChangeDTO dto);
+
+    void approvalPass(AuditParamDTO dto);
+
+    void approvalNoPass(AuditParamDTO dto);
 }

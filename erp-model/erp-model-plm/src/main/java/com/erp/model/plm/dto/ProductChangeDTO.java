@@ -6,8 +6,8 @@ import org.apache.poi.ss.formula.functions.T;
 
 import java.io.Serializable;
 
-/**
- * @Classname ProductChangeDTO
+/**  变更详情
+ * @Classname
  * @Description TODO
  * @Date 2023-01-28 16:10
  * @Created by yl

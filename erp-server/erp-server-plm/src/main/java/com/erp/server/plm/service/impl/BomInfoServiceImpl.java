@@ -515,10 +515,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     /**
      * 审核通过
-     * @author yl
-     * @date 2023-01-29 18:55
+     *
      * @param dto
      * @return void
+     * @author yl
+     * @date 2023-01-29 18:55
      */
     @Override
     public void approvalPass(AuditParamDTO dto) {
@@ -532,18 +533,25 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     }
 
-    
+
     /**
      * 当bom 流程审核通过后
-     *  改变bom 状态
-     * @author yl
-     * @date 2023-01-30 8:54
+     * 改变bom 状态
+     *
      * @param processId workflow 的流程id
      * @return void
+     * @author yl
+     * @date 2023-01-30 8:54
      */
     @Override
     public void bomProcessPass(String processId) {
-        
+        String bomId = "";
+        BomInfoEntity bom = this.getById(bomId);
+        if (bom != null) {
+            bom.setState(BomStateEnum.AUDIT_PASS.getState());
+            this.updateById(bom);
+        }
+
     }
 
     /**
@@ -567,7 +575,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     }
-
 
 
     /**

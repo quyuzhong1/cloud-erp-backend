@@ -203,6 +203,7 @@ public enum ApiError implements Serializable {
     ERROR_95106(95106,"变更状态为待审核/审核不通过时,才可以作废"),
     ERROR_95107(95107,"SKU不存在"),
     ERROR_95108(95108,"只有归档才能解除归档"),
+    ERROR_95109(95109,"只有待审核才能编辑"),
 
     /**
      * bi 错误

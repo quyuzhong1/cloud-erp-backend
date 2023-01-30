@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,13 +11,13 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
@@ -26,10 +27,12 @@ import com.erp.server.plm.service.ProductChangeService;
 import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -204,5 +207,152 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             return productDetailService.getSku(searchKeyword);
         }
         return null;
+    }
+
+
+    /**
+     * 变更详情
+     *
+     * @param id
+     * @return com.erp.model.plm.dto.ProductChangeDTO
+     * @author yl
+     * @date 2023-01-30 10:50
+     */
+    @Override
+    public ProductChangeDTO details(String id) {
+        try {
+            ProductChangeDTO result = new ProductChangeDTO();
+            //获取到变更信息
+            ProductChangeEntity changeEntity = this.getById(id);
+            if (Objects.isNull(changeEntity)) {
+                throw new ServiceException(ApiError.ERROR_95105);
+            }
+            //获取到对应的 json
+            String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
+            result.setSourceId(result.getSourceId());
+            String type = result.getType();
+            result.setType(type);
+            //对应就是bom
+            if (BomConstant.CHANGE_BOM.equals(type)) {
+                T bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
+                result.setInfo(bom);
+            }
+
+            //对应就是sku
+            if (BomConstant.CHANGE_SKU.equals(type)) {
+                T sku = JSONObject.parseObject(detailsJson, (Type) ProductSmallestUnitDTO.class);
+                result.setInfo(sku);
+            }
+            return result;
+        } catch (Exception e) {
+
+        }
+
+        return null;
+
+    }
+
+
+    /**
+     * 编辑 变更信息
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-30 11:54
+     */
+    @Override
+    public Boolean edit(UpdateChangeDTO dto) {
+        String id = dto.getId();
+        //获取到变更信息
+        ProductChangeEntity changeEntity = this.getById(id);
+        if (Objects.isNull(changeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95105);
+        }
+        Integer state = changeEntity.getState();
+        Integer waitAudit = ProductChangeStateEnum.WAIT_AUDIT.getState();
+        //只有待审核才能编辑
+        if (!waitAudit.equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95109);
+        }
+        String type = dto.getType();
+        String changeBom = BomConstant.CHANGE_BOM;
+        Boolean isBom = changeBom.equals(type);
+        //数据库的类型
+        String dbType = changeEntity.getType();
+        //数据库的bom 表id
+        String dbSourceId = changeEntity.getSourceId();
+        Boolean dbIsBom = changeBom.equals(dbType);
+        //新的
+        String sourceId = dto.getSourceId();
+        changeEntity.setSourceId(sourceId);
+        changeEntity.setType(dto.getType());
+        Boolean result = this.updateById(changeEntity);
+        if (result) {
+            /**
+             * 如果变更成功 如果是bom
+             * 那么原来老的 bom 状态要改回来
+             * bom 要改状态
+             *
+             */
+            changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
+
+            if (isBom) {
+                bomInfoService.updateState(sourceId, BomStateEnum.ARCHIVE_CHANGE_ING.getState());
+            }
+            //老的bom 状态要改回来
+            if (dbIsBom) {
+                bomInfoService.updateState(dbSourceId, BomStateEnum.AUDIT_PASS.getState());
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * 变更审核通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-30 14:03
+     */
+    @Override
+    public void approvalPass(AuditParamDTO dto) {
+        String id = dto.getId();
+        //获取到变更信息
+        ProductChangeEntity changeEntity = this.getById(id);
+        if (Objects.isNull(changeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95105);
+        }
+        changeEntity.setState(ProductChangeStateEnum.AUDIT_ING.getState());
+        if (StringUtils.isNotBlank(dto.getComment())) {
+            changeEntity.setRemark(dto.getComment());
+        }
+        this.updateById(changeEntity);
+    }
+
+    
+    /**
+     * 变更审核不通过
+     *  不通过要停止流程吗
+     * @author yl
+     * @date 2023-01-30 14:10
+     * @param dto
+     * @return void
+     */
+    @Override
+    public void approvalNoPass(AuditParamDTO dto) {
+        String id = dto.getId();
+        //获取到变更信息
+        ProductChangeEntity changeEntity = this.getById(id);
+        if (Objects.isNull(changeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95105);
+        }
+        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
+        if (StringUtils.isNotBlank(dto.getComment())) {
+            changeEntity.setRemark(dto.getComment());
+        }
+        this.updateById(changeEntity);
     }
 }
