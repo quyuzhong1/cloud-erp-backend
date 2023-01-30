@@ -67,10 +67,9 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
     /**
      * 更新清洗数据
      * @param userDeptList
-     * @param times
      * @param dmpOrderInfoEntity
      */
-    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, AtomicInteger times, DmpOrderInfoEntity dmpOrderInfoEntity);
+    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity);
 
     /**
      * 获取需要清理订单列表
