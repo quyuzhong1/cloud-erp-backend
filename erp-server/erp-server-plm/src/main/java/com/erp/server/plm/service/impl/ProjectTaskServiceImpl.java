@@ -3595,8 +3595,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ApproveRecordShowDTO> approveRecordShowList = null;
         if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
             ProcessBaseDTO processBaseDTO = new ProcessBaseDTO();
-            processBaseDTO.setProcessInstanceId(taskEntity.getProcessId());
-            approveRecordShowList = workflowFeign.queryProcessApprove(processBaseDTO);
+            approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
+            if (CollectionUtils.isNotEmpty(approveRecordShowList)) {
+                List<String> userIds = approveRecordShowList.stream().map(ApproveRecordShowDTO::getHandleUserName).collect(Collectors.toList());
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIds);
+                if (CollectionUtils.isNotEmpty(userList)) {
+                    approveRecordShowList.forEach(obj->{
+                        String userName = userList.stream().filter(e -> e.getUserId().equals(obj.getHandleUserName())).map(FindUserDTO::getUserName).findFirst().orElse("");
+                        obj.setHandleUserName(userName);
+                    });
+                }
+            }
         }
 
         //一般任务
@@ -3676,7 +3685,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //查询流程
             for (ApproveRecordShowDTO approveRecordShowDTO : approveRecordShowList) {
                 TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityName());
+                taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
                 taskProcessNodeDTO.setOperateUserName(approveRecordShowDTO.getHandleUserName());
                 try {
                     Date date = DateUtils.parseDate(approveRecordShowDTO.getStartTime(), DateUtils.DATE_FORMAT_19);
@@ -3687,6 +3696,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 list.add(taskProcessNodeDTO);
             }
             waitReleasedDTO.setList(list);
+            long count = approveRecordShowList.stream().count();
+            waitReleasedDTO.setOperateUserName("审核人【".concat(String.valueOf(count)).concat("】人"));
         }
         return waitReleasedDTO;
     }

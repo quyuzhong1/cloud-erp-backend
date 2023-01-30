@@ -43,6 +43,6 @@ public interface WorkflowFeign {
     List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam(value="taskId") String taskId);
 
     //获取审核记录
-    @PostMapping("workflow/feign/process/queryProcessApprove")
-    List<ApproveRecordShowDTO> queryProcessApprove(@RequestBody ProcessBaseDTO dto);
+    @PostMapping("workflow/feign/process/getHistoryTaskByProcessId")
+    List<ApproveRecordShowDTO> getHistoryTaskByProcessId(@RequestParam(value="processId") String processId);
 }
