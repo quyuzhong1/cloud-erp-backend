@@ -244,5 +244,14 @@ public class BomInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * bom审核通过后改变 bom 状态
+     */
+    @PostMapping("/workflow/pass")
+    public ApiResult processPass(String processId) {
+        bomInfoService.bomProcessPass(processId);
+        return success();
+    }
+
 }
 

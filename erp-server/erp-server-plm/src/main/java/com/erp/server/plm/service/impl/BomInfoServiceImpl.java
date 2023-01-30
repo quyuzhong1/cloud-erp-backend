@@ -532,6 +532,20 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     }
 
+    
+    /**
+     * 当bom 流程审核通过后
+     *  改变bom 状态
+     * @author yl
+     * @date 2023-01-30 8:54
+     * @param processId workflow 的流程id
+     * @return void
+     */
+    @Override
+    public void bomProcessPass(String processId) {
+        
+    }
+
     /**
      * bom 审核不通过
      *

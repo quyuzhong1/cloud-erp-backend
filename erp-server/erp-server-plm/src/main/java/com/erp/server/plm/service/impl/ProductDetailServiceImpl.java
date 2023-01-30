@@ -1785,13 +1785,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
-        ProductCertificateShowDTO certificateShowDTO = certificateShowDTOList.stream().
-                filter(c -> c.getSkuId().equals(skuId)).findFirst().orElse(null);
-        if(certificateShowDTO!=null){
-            certificateShowDTO.setDisableFieldList(disableFields);
-            result.setProductCertificateShowDTO(certificateShowDTO);
+        List<ProductCertificateShowDTO>  certificateShowList = certificateShowDTOList.stream().
+                filter(c -> c.getSkuId().equals(skuId)).collect(Collectors.toList());
+        for(ProductCertificateShowDTO item:certificateShowList){
+            item.setDisableFieldList(disableFields);
         }
-
+        result.setProductCertificateShowDTOList(certificateShowList);
         return result;
     }
 

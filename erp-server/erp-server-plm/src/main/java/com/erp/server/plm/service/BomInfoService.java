@@ -65,4 +65,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     void approvalNoPass(AuditParamDTO dto);
 
     void approvalPass(AuditParamDTO dto);
+
+    void bomProcessPass(String processId);
 }

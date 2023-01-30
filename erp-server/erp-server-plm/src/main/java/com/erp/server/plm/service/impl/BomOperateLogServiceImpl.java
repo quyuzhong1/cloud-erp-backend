@@ -75,11 +75,8 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
     @Override
     public PagingVO<List<BomOperateVO>> paging(PagingDTO<BaseIdDTO> dto) {
         BaseIdDTO params = dto.getParams();
-        Page page = new Page(dto.getCurrPage(), dto.getPageSize());
-        LambdaQueryWrapper<BomOperateLogEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BomOperateLogEntity::getBomId, params.getId());
-        queryWrapper.orderByDesc(BomOperateLogEntity::getCreateTime);
-        IPage pageData = page(page, queryWrapper);
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params.getId());
         List<FindUserDTO> userList = commonService.getAllUser();
         List<BomOperateVO> resultList = pageData.getRecords();
         for (BomOperateVO item : resultList) {
