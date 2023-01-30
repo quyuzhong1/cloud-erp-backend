@@ -81,9 +81,9 @@ public class ProcessFeignController extends BaseController {
     }
 
     //查看流程审批情况
-    @PostMapping("/queryProcessApprove")
-    public List<ApproveRecordShowDTO> queryProcessApprove(@RequestBody ProcessBaseDTO dto) {
-        List<ApproveRecordShowDTO> resultList = workflowService.queryApproveRecord(dto);
+    @PostMapping("/getHistoryTaskByProcessId")
+    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId) {
+        List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
         return resultList;
     }
 }

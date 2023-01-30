@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import com.alibaba.excel.util.DateUtils;
 import com.erp.model.workflow.dto.*;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
@@ -179,5 +180,33 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         return resultList;
     }
 
+    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId){
+        List<HistoricTaskInstance> list = historyService // 历史相关Service
+                .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
+                .processInstanceId(processId) // 用流程实例id查询
+                .orderByDeleteReason()
+                .desc()
+                .list();
+            List<ApproveRecordShowDTO> resultList = new ArrayList<>();
+            ApproveRecordShowDTO approveRecordShowDTO = null;
+            String approvalSuggestion = "";
+            List<Comment> commentList = null;
+            for(HistoricTaskInstance item : list){
+                approveRecordShowDTO = new ApproveRecordShowDTO();
+                commentList = taskService.getTaskComments(item.getId());
+                if(commentList != null && !commentList.isEmpty()) {
+                    approvalSuggestion = commentList.get(0).getFullMessage();
+                }else{
+                    approvalSuggestion = "";
+                }
+                approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(),DateUtils.DATE_FORMAT_19));
+                approveRecordShowDTO.setHandleUserName(item.getAssignee());
+                approveRecordShowDTO.setActivityName(item.getName());
+                approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核" );
+                approveRecordShowDTO.setComment(approvalSuggestion);
+                resultList.add(approveRecordShowDTO);
+            }
+            return resultList;
+    }
 
 }

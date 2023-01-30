@@ -111,7 +111,9 @@ public class OperationLogUtil {
                         Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
                         String k =  entry.getKey().toString();
                         Object v = entry.getValue();
-                        newKey = newKey.concat(".").concat(k).concat(String.valueOf(i));
+                        if (!( v instanceof List)) {
+                            newKey = newKey.concat(".").concat(k).concat(String.valueOf(i));
+                        }
                         doOpValue(newKey,v,resultMap,object,typeName,k);
                     }
                 } else if (objectType == 10) {//判断是否是日期

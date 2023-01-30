@@ -1,10 +1,7 @@
 package com.erp.server.workflow.service;
 
 
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.QueryProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.model.workflow.dto.*;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 
 import java.util.List;
@@ -37,4 +34,13 @@ public interface ProcessTaskService {
      * @return List<TaskShowDTO>
      */
     List<TaskShowDTO> queryMyToDoByTaskId(String processId);
+
+   /**
+    * @description: 查询流程下所有审核记录
+    * @author Will
+    * @date: 2023/1/30 11:36
+    * @param processId
+    * @return List<ApproveRecordShowDTO>
+    */
+    List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId);
 }
