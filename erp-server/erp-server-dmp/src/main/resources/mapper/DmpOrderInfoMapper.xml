@@ -28,4 +28,17 @@
         ORDER BY retry_count
         limit #{pageSize} offset (#{pageIndex}-1) * #{pageSize}
     </select>
+
+    <select id="getCleanList" resultType="com.erp.model.dmp.vo.CleanAmountAfterVO">
+        SELECT doi.platform_order_id, doi.sales_record_number, doi.platform_sign, doit.id, doit.order_id, doit.item_id,
+               doit.item_name, doit.specifics, doit.sku_no, doit.erp_order_item_id, doit.amount_after
+        FROM "dmp_order_item" doit
+        LEFT JOIN dmp_order_info doi on doit.order_id = doi."id"
+        where doit.amount_after = 0
+          and doit.is_gift = 2
+          and doi.platform_sign = '管易云'
+          and doit.refresh_status = false
+        order by doit.id ASC
+        limit 10000
+    </select>
 </mapper>

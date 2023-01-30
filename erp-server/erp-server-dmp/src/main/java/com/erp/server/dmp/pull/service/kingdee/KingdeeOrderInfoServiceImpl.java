@@ -45,6 +45,15 @@ import java.util.*;
 @SaveData(method = PlatformApiEnum.SAL_SALEORDER)
 public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
+    /**
+     * 唯迹集团组织ID
+     */
+    private static final String ORG_CODE = "1";
+    /**
+     * 可用销售订单CODE
+     */
+    private static final List<String> ORDER_TYPES = new ArrayList<>(Arrays.asList("B2BXSDD","XSDD01_SYS"));
+
     @Resource
     private MongoService mongoService;
 
@@ -56,9 +65,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
-    @Resource
-    private DmpShopInfoService dmpShopInfoService;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -156,10 +162,12 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             queryfilters.add(String.format("FModifyDate <= '%s'", sd));
 //            queryfilters.add(String.format("fCreateDate >= '%s'", "2023-01-05 00:00:00"));
 //            queryfilters.add(String.format("fCreateDate <= '%s'", "2023-01-06 00:00:00"));
-            queryfilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
+//            queryfilters.add(StrUtil.format("FBillNo ='{}'", "XSD-20230105-33831"));
+            // 移除 订单类型过滤
+//            queryfilters.add(String.format("fBillTypeID = '%s'", "eacb50844fc84a10b03d7b841f3a6278"));
             queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
             String filterStr = String.join(" and ",  queryfilters );
-            String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode";
+            String fieldKeys = "FID,FBillNo,FDate,FBillTypeId.FName,FBillTypeId.FNumber,FBillTypeId,FDocumentStatus,FCustId.FName,FSaleDeptId.FName,FSalerId.FName,FReceiveAddress,FLinkMan,FLinkPhone,FApproverId.FName,FApproveDate,FCloseStatus,FCloseDate,FCancelStatus,FChangerId,FReceiveId.FName,FNote,FHeadDeliveryWay,FHEADLOCID,FCorrespondOrgId,FSaleGroupId,FChangeReason,FBusinessType,FReceiveContact,FChargeId,FCreatorId,FCreateDate,FModifierId,FModifyDate,FSaleOrgId,FSaleOrgId.FName,FVersionNo,FSignStatus,FSOFrom,F_SK_Date,F_SHGJ1,FExchangeRate,FSettleCurrId.FCode";
 
             Boolean dataSign = true;
             //当前页数
@@ -195,6 +203,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             orderEntity.setFBillNo(stringStringMap.get("FBillNo"));
                             orderEntity.setFDate(stringStringMap.get("FDate"));
                             orderEntity.setFBillTypeID(stringStringMap.get("FBillTypeId.FName"));
+                            orderEntity.setFBillTypeCode(stringStringMap.get("FBillTypeId.FNumber"));
                             orderEntity.setFDocumentStatus(stringStringMap.get("FDocumentStatus"));
                             orderEntity.setFCustId(stringStringMap.get("FCustId.FName"));
                             orderEntity.setFSaleDeptId(stringStringMap.get("FSaleDeptId.FName"));
@@ -340,7 +349,11 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      **/
     public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
         // 跳过非唯迹订单
-        if (StrUtil.isEmpty(kingdeeOrderEntity.getFSaleOrgName()) || !"唯迹集团".equals(kingdeeOrderEntity.getFSaleOrgName())){
+        if (StrUtil.isEmpty(kingdeeOrderEntity.getFSaleOrgName()) || !ORG_CODE.equals(kingdeeOrderEntity.getFSaleOrgId())){
+            return;
+        }
+        // 跳过非销售订单
+        if (StrUtil.isBlank(kingdeeOrderEntity.getFBillTypeCode()) || !ORDER_TYPES.contains(kingdeeOrderEntity.getFBillTypeCode())){
             return;
         }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();

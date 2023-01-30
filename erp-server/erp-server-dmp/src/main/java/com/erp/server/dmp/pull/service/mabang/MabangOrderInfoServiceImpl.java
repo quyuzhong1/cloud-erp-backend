@@ -388,7 +388,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setShippingFee(orderEntity.getShippingFee());
 
         //平台费
-        dmpOrderInfoEntity.setPlatformFee(orderEntity.getShippingFee());
+        dmpOrderInfoEntity.setPlatformFee(orderEntity.getPlatformFee());
 
         //原始运费收入
         dmpOrderInfoEntity.setShippingTotalOrigin(orderEntity.getShippingTotalOrigin());
