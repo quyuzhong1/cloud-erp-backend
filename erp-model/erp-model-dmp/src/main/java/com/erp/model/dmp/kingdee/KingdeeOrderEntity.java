@@ -28,6 +28,8 @@ public class KingdeeOrderEntity {
      */
     private String fBillTypeID;
 
+    private String fBillTypeCode;
+
     /**
      * 单据状态
      */

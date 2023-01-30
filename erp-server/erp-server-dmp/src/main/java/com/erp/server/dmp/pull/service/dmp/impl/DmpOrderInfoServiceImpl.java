@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.pull.mapper.DmpOrderInfoMapper;
@@ -222,6 +223,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             updateWrapper.set(times.get() <= flag || 1 == dmpOrderInfoEntity.getCleanState(), DmpOrderInfoEntity::getCleanState, 2);
         }
         this.update(updateWrapper);
+    }
+
+    @Override
+    public List<CleanAmountAfterVO> getCleanOrderList() {
+        List<CleanAmountAfterVO> vo = baseMapper.getCleanList();
+        return vo;
     }
 
     @Override
