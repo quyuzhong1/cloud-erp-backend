@@ -23,8 +23,10 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
+import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.enums.BomStateEnum;
@@ -57,6 +59,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private BomOperateLogService bomOperateLogService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
 
     @Resource
@@ -140,6 +145,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         SearchPagingDTO params = dto.getParams();
         List<FindUserDTO> userList = commonService.getAllUser();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        String searchType = params.getSearchType();
+        //待审核
+        if(SearchType.WAIT_AUDIT.equals(searchType)){
+            String userId = commonService.getUserInfo().getUid();
+        }
+        // workflowFeign.queryMyToDo(userId);
+
         IPage pageData = baseMapper.paging(query, params);
         List<BomPagingVO> list = pageData.getRecords();
         //对应sku集合
@@ -545,7 +557,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-30 8:54
      */
     @Override
-    public void bomProcessPass(ProcessPassDTO  dto) {
+    public void bomProcessPass(ProcessPassDTO dto) {
         String bomId = dto.getBusinessTableId();
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
@@ -568,13 +580,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public void changeBom(BomDTO bom) {
         String bomId = bom.getId();
         BomInfoEntity bomEntity = this.getById(bomId);
-        if(bomEntity!=null){
+        if (bomEntity != null) {
             Integer bomVersion = bomEntity.getVersion();
             bomEntity.setVersion(bomVersion + 1);
             bomEntity.setType(bom.getType());
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
             Boolean result = this.updateById(bomEntity);
-            if(result){
+            if (result) {
                 //保存历史bom信息
                 productBomHistoryService.insert(bomEntity, bomSkuList);
                 //添加 bom 与sku 关系
