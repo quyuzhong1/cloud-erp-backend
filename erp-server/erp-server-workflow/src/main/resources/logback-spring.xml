@@ -142,13 +142,13 @@
 	<!--TRACE, DEBUG, INFO, WARN, ERROR, ALL and OFF -->
 	<!-- spring配置文件值：spring.profiles.active=dev -->
 	<springProfile name="dev">
-		<root level="DEBUG">
+		<root level="INFO">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_DEBUG"/>
 		</root>
 	</springProfile>
 	<springProfile name="test">
-		<root level="DEBUG">
+		<root level="INFO">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_DEBUG" />
 		</root>

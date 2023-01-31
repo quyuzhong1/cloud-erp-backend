@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -147,12 +146,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             bomList = bomInfoService.getByIds(bomIdList);
         }
         //获取到类型是sku 的 源 id
-        List<String> skuNoList = list.stream().filter(c -> changeSku.equals(c.getType())).
+        List<String> skuIdList = list.stream().filter(c -> changeSku.equals(c.getType())).
                 map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
 
         List<SkuVO> skuList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(skuNoList)) {
-            skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            skuList = productDetailService.getSkuBySkuIds(skuIdList);
         }
 
         for (ProductChangePagingVO item : list) {
@@ -219,7 +218,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-28 17:02
      */
     @Override
-    public List<BaseIdDTO> getChangeByType(String type, String searchKeyword) {
+    public List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword) {
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
         if (changeBom.equals(type)) {

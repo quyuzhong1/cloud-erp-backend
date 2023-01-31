@@ -106,8 +106,8 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/list")
-    public ApiResult<List<BaseIdDTO>> list(@RequestBody @Validated ProductChangeListSearchDTO dto) {
-        List<BaseIdDTO> list = productChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
+    public ApiResult<List<ChangeInfoDTO>> list(@RequestBody @Validated ProductChangeListSearchDTO dto) {
+        List<ChangeInfoDTO> list = productChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
         return success(list);
     }
 

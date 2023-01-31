@@ -14,33 +14,43 @@ public enum WorkflowBusinessEnum {
     CONCEPT_DESIGN("conceptDesign", "产品概念设计申请流程","plm"),
     ID_CONFIRM("idConfirm", "ID确认书流程","plm"),
     PROJECT_APPROVAL("projectApproval", "立项会议流程","plm"),
-    PRODUCT_DETAIL("productDetail", "SKU审核","plm");
+    PRODUCT_DETAIL("productDetail", "SKU审核","plm"),
+    BOM_AUDIT("bom","bom审核","plm");
 
 
-    private String businessKey;
+    private String businessType;
 
     private String businessName;
 
     private String platform;
 
     public void setBusinessType(String businessType) {
-        this.businessKey = businessType;
+        this.businessType = businessType;
     }
 
     public void setBusinessName(String businessName) {
         this.businessName = businessName;
     }
 
-    public String getBusinessKey() {
-        return businessKey;
+    public void setPlatform(String platform) {
+        this.platform = platform;
+    }
+
+
+    public String getBusinessType() {
+        return businessType;
     }
 
     public String getBusinessName() {
         return businessName;
     }
 
+    public String getPlatform() {
+        return platform;
+    }
+
     WorkflowBusinessEnum(String businessType, String businessName,String platform) {
-        this.businessKey = businessType;
+        this.businessType = businessType;
         this.businessName = businessName;
         this.platform = platform;
     }

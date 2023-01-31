@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.WorkflowBusinessEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BusinessNoCreateUtil;
@@ -23,6 +24,7 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -118,6 +120,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //但是待审核的时候
             if (isSubmitAudit) {
                 //这里要发起一个流程
+
+
             }
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
@@ -132,6 +136,32 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return saveResult;
     }
 
+
+    /**
+     * 启动一个流程
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-01-31 14:44
+     */
+    public void startBomProcess() {
+        FindProcessDTO findProcess = new FindProcessDTO();
+        String userId = commonService.getUserInfo().getUid();
+        String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
+        String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
+        findProcess.setBusinessType(businessType);
+        findProcess.setPlatform(platform);
+//        WorkflowBusinessDTO business = workflowFeign.getBusiness();
+//        StartProcessDTO startProcess = new StartProcessDTO();
+//        startProcess.setUserId(userId);
+//        startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
+//        startProcess.setBusinessKey(businessProcess.getBusinessType());
+//        Map<String, Object> parameterMap = new HashMap<>();
+
+//        startProcess.setParameterMap(parameterMap);
+//        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+    }
 
     /**
      * 分页获取bom 列表
@@ -161,7 +191,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         }
 
-        IPage pageData = baseMapper.paging(query, params,bomIdList);
+        IPage pageData = baseMapper.paging(query, params, bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -677,7 +707,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-28 17:08
      */
     @Override
-    public List<BaseIdDTO> getBomInfo(String searchKeyword) {
+    public List<ChangeInfoDTO> getBomInfo(String searchKeyword) {
         return baseMapper.getBomInfo(BomStateEnum.AUDIT_PASS.getState(), searchKeyword);
     }
 
