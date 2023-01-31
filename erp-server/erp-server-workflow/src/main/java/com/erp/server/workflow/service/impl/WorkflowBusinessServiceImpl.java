@@ -70,16 +70,19 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
         queryWrapper.eq(WorkflowBusinessEntity::getParam, dto.getPlatform());
         queryWrapper.last("LIMIT 1");
         WorkflowBusinessEntity businessEntity = this.getOne(queryWrapper);
-        result.setBusinessKey(businessEntity.getBusinessKey());
-        result.setBusinessName(businessEntity.getBusinessName());
-        result.setProcessDefinitionKey(businessEntity.getProcessDefinitionKey());
-        String param = businessEntity.getParam();
-        result.setParam(param);
-        if (StringUtils.isNotBlank(param)) {
-            List<String> paramList = Arrays.asList(param.split(","));
-            result.setParamList(paramList);
+        if (businessEntity != null) {
+            result.setBusinessKey(businessEntity.getBusinessKey());
+            result.setBusinessName(businessEntity.getBusinessName());
+            result.setProcessDefinitionKey(businessEntity.getProcessDefinitionKey());
+            String param = businessEntity.getParam();
+            result.setParam(param);
+            if (StringUtils.isNotBlank(param)) {
+                List<String> paramList = Arrays.asList(param.split(","));
+                result.setParamList(paramList);
+            }
+            return result;
         }
+        return null;
 
-        return result;
     }
 }

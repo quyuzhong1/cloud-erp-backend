@@ -154,15 +154,25 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         findProcess.setPlatform(platform);
         //获取到业务的信息
         BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
-        StartProcessDTO startProcess = new StartProcessDTO();
-        startProcess.setUserId(userId);
-        startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
-        startProcess.setBusinessKey(business.getBusinessKey());
+        if(business!=null){
+            StartProcessDTO startProcess = new StartProcessDTO();
+            startProcess.setUserId(userId);
+            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
+            startProcess.setBusinessKey(business.getBusinessKey());
+            Map<String, Object> parameterMap = new HashMap<>();
+            List<String> paramList=business.getParamList();
+            if(CollectionUtils.isNotEmpty(paramList)){
+                parameterMap.put(paramList.get(0),"1612400984472948738");
+                parameterMap.put(paramList.get(1),"1597846207349260290");
+                startProcess.setParameterMap(parameterMap);
+                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
 
-        Map<String, Object> parameterMap = new HashMap<>();
+            }
 
-        startProcess.setParameterMap(parameterMap);
-        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+
+
+        }
+
     }
 
     /**

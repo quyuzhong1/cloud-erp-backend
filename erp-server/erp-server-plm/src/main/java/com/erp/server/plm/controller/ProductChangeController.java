@@ -84,7 +84,7 @@ public class ProductChangeController extends BaseController {
         if (result != null) {
             return success(result);
         }
-        return success();
+        return failure();
     }
 
     /**

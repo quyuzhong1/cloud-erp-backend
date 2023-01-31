@@ -18,6 +18,8 @@ import java.util.Date;
 @NoArgsConstructor
 public class ProductChangePagingVO implements Serializable {
 
+    private String id;
+
     /**
      * 变更类型
      */
@@ -27,14 +29,14 @@ public class ProductChangePagingVO implements Serializable {
     /**
      * 变更来源sku 或者bom
      */
-    private String changeSourceNo="";
+    private String changeSourceNo = "";
 
 
     /**
      * 变更来源sku 或者bom 名称
      * bom 没有
      */
-    private String changeSourceName="-";
+    private String changeSourceName = "-";
 
 
     /**
@@ -68,7 +70,7 @@ public class ProductChangePagingVO implements Serializable {
     /**
      * 审核人
      */
-    private String  personApproving;
+    private String personApproving;
 
 
 }

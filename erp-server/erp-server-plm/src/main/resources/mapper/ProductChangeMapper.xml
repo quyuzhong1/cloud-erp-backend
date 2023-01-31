@@ -6,6 +6,7 @@
 
     <select id="paging" resultType="com.erp.model.plm.vo.ProductChangePagingVO">
         SELECT
+        id,
         type,source_id,state,
         create_time,
         approval_finish_time,

@@ -27,7 +27,6 @@ import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -242,7 +241,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     public ProductChangeDTO details(String id) {
         try {
-            ProductChangeDTO result = new ProductChangeDTO();
             //获取到变更信息
             ProductChangeEntity changeEntity = this.getById(id);
             if (Objects.isNull(changeEntity)) {
@@ -250,23 +248,30 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             //获取到对应的 json
             String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
-            result.setSourceId(result.getSourceId());
-            String type = result.getType();
-            result.setType(type);
+            String type = changeEntity.getType();
             //对应就是bom
             if (BomConstant.CHANGE_BOM.equals(type)) {
-                T bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
+                ProductBomChangeDTO result = new ProductBomChangeDTO();
+                result.setId(id);
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(type);
+                BomDTO bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
                 result.setInfo(bom);
             }
 
             //对应就是sku
             if (BomConstant.CHANGE_SKU.equals(type)) {
-                T sku = JSONObject.parseObject(detailsJson, (Type) ProductSmallestUnitDTO.class);
+                ProductChangeDTO result = new ProductChangeDTO();
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(type);
+                result.setId(id);
+                ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
                 result.setInfo(sku);
+                return result;
             }
-            return result;
-        } catch (Exception e) {
 
+        } catch (Exception e) {
+            log.error("details",e);
         }
 
         return null;
