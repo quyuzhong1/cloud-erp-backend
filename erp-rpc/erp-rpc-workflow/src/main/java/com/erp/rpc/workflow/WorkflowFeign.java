@@ -1,6 +1,7 @@
 package com.erp.rpc.workflow;
 
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +26,18 @@ public interface WorkflowFeign {
     //根据人员获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDo")
     List<TaskShowDTO> queryMyToDo(@RequestParam(value="userId") String userId);
+
+    /**
+     * 根据用户id 获取用用户所需要的待办的任务列表
+     * @author yl
+     * @date 2023-01-31 10:59
+     * @param userId
+     * @return java.util.List<com.erp.model.workflow.vo.MyToDoTaskVO>
+     */
+    @PostMapping("workflow/feign/process/getMyToDoTasks")
+    List<MyToDoTaskVO> getMyToDoTasks(@RequestParam(value="userId") String userId);
+
+
 
     //审核任务通过
     @PostMapping("workflow/feign/process/taskPass")

@@ -23,6 +23,7 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -146,13 +147,21 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<FindUserDTO> userList = commonService.getAllUser();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
+        List<String> bomIdList = new ArrayList<>();
         //待审核
-        if(SearchType.WAIT_AUDIT.equals(searchType)){
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
             String userId = commonService.getUserInfo().getUid();
-        }
-        // workflowFeign.queryMyToDo(userId);
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
 
-        IPage pageData = baseMapper.paging(query, params);
+        }
+
+        IPage pageData = baseMapper.paging(query, params,bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());

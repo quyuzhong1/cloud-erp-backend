@@ -26,6 +26,13 @@
                 <if test="param.searchKeyword!=null and param.searchKeyword!=''">
                     b.serial_number LIKE concat('%',#{params.searchKeyword},'%')
                 </if>
+                <if test="bomIdList !=null and bomIdList.size>0">
+                    AND
+                    b.id IN
+                    <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                         #{id}
+                    </foreach>
+                </if>
             </where>
 
 

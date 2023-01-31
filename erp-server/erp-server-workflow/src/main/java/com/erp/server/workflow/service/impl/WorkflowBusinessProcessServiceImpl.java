@@ -5,7 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.server.workflow.mapper.WorkflowBusinessProcessMapper;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Classname WorkflowBusinessProcessServiceImpl
@@ -30,5 +34,15 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         queryWrapper.eq(WorkflowBusinessProcessEntity::getProcessId, processId);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<WorkflowBusinessProcessEntity> getByProcessIds(List<String> processIds) {
+        if (CollectionUtils.isNotEmpty(processIds)) {
+            LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(WorkflowBusinessProcessEntity::getProcessId, processIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 }

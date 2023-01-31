@@ -1,4 +1,4 @@
-package com.erp.model.workflow.dto;
+package com.erp.model.workflow.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -8,14 +8,14 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @Classname TaskVO
+ * @Classname MyToDoTaskVO
  * @Description TODO
- * @Date 2022-08-12 11:16
+ * @Date 2023-01-31 10:53
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class TaskShowDTO implements Serializable {
+public class MyToDoTaskVO implements Serializable {
 
     private String taskId;
 
@@ -27,8 +27,13 @@ public class TaskShowDTO implements Serializable {
     //节点id
     private String nodeId;
 
-    //意见
-    @JsonInclude(value= JsonInclude.Include.NON_NULL)
-    private List<String> comments;
+    /**
+     * 业务表id
+     */
+    private String businessTableId;
 
+
+    //意见
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
+    private List<String> comments;
 }

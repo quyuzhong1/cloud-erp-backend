@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 
 import java.util.List;
@@ -43,4 +44,14 @@ public interface ProcessTaskService {
     * @return List<ApproveRecordShowDTO>
     */
     List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId);
+
+    
+    /**
+     * 根据用户id
+     * @author yl
+     * @date 2023-01-31 11:03
+     * @param userId
+     * @return java.util.List<com.erp.model.workflow.vo.MyToDoTaskVO>
+     */
+    List<MyToDoTaskVO> getMyToDoTasks(String userId);
 }

@@ -3,6 +3,8 @@ package com.erp.server.workflow.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 
+import java.util.List;
+
 /**
  * @Classname WorkflowBusinessProcessService
  * @Description TODO
@@ -11,4 +13,6 @@ import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
  */
 public interface WorkflowBusinessProcessService extends IService<WorkflowBusinessProcessEntity> {
     WorkflowBusinessProcessEntity getByProcessId(String processId);
+
+    List<WorkflowBusinessProcessEntity> getByProcessIds(List<String> processIds);
 }

@@ -2,6 +2,7 @@ package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,13 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/queryMyToDo")
     public List<TaskShowDTO> queryMyToDo(String userId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDo(userId);
+        return list;
+    }
+
+    //根据人员查看任务
+    @PostMapping("/getMyToDoTasks")
+    public List<MyToDoTaskVO> getMyToDoTasks(String userId) {
+        List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(userId);
         return list;
     }
 
