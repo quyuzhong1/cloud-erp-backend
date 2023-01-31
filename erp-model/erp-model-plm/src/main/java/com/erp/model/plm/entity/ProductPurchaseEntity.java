@@ -21,6 +21,42 @@ public class ProductPurchaseEntity implements Serializable {
     private String id;
 
     /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id")
+    private String createUserId;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id")
+    private String updateUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name")
+    private String createUserName;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    private String updateUserName;
+
+    /**
      * 产品sku表id
      */
     @TableField(value = "sku_id")
@@ -93,46 +129,30 @@ public class ProductPurchaseEntity implements Serializable {
     private String secondSupplier;
 
     /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id")
-    private String createUserId;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-    /**
      * 实际首批到货量
      */
     @TableField(value = "actual_arrival_qty")
     private Long actualArrivalQty;
 
     /**
-     * 创建人名称
+     * 试产/产量
      */
-    @TableField(value = "create_user_name")
-    private String createUserName;
+    @TableField(value = "trial_production_output")
+    private Long trialProductionOutput;
 
     /**
-     * 修改人名称
+     * 试产数量
      */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
+    @TableField(value = "trial_production_qty")
+    private Long trialProductionQty;
+
+    /**
+     * 首批量产数量
+     */
+    @TableField(value = "first_mass_qty")
+    private Long firstMassQty;
+
+
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

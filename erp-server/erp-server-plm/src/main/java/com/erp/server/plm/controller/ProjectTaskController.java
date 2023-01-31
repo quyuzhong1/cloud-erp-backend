@@ -192,9 +192,8 @@ public class ProjectTaskController extends BaseController {
         return success(dto);
     }
 
-
     /**
-     * 项目任务-全部任务/带我完成的任务/待我审核的任务全部数量
+     * 项目任务-2全部任务/0待我完成的任务/1待我审核的任务全部数量
      *
      * @return
      */

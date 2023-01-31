@@ -123,6 +123,14 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         queryWrapper.in(RoleRefMemberEntity::getMembersId,membersIds);
         return this.list(queryWrapper);
     }
+
+    @Override
+    public List<RoleRefMemberEntity> getByRoleIdsAndProductId(List<String> roleIdList, String productId) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(RoleRefMemberEntity::getRoleId,roleIdList);
+        queryWrapper.eq(RoleRefMemberEntity::getProductId,productId);
+        return this.list(queryWrapper);
+    }
 }
 
 

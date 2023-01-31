@@ -570,5 +570,15 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         return new ArrayList<>();
     }
 
+    @Override
+    public List<ProjectMembersEntity> listByRoleIds(List<String> roleIdList, String productId) {
+        List<RoleRefMemberEntity> list = roleRefMemberService.getByRoleIdsAndProductId(roleIdList, productId);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> membersIds = list.stream().map(RoleRefMemberEntity::getMembersId).collect(Collectors.toList());
+        return this.listByIds(membersIds);
+    }
+
 
 }
