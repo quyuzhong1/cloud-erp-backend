@@ -147,7 +147,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
             QueryParam param = new QueryParam();
             param.setFormId(formId);
             param.setFieldKeys(fieldKeys);
-            if (StringUtils.isNotBlank(st)) {
+            if (StringUtils.isBlank(st)) {
                 param.setFilterString(filterStr);
             }
             param.setLimit(pageSize);
