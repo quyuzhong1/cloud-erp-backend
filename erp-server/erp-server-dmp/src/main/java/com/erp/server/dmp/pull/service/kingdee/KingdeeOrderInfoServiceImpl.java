@@ -242,8 +242,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                             orderEntity.setFSettleCurrId(stringStringMap.get("FSettleCurrId.FCode"));
 
                             LinkedList<String> queryfilterst = new LinkedList<>();
-                            queryfilterst.add(String.format("FBillNo = '%s'", "XSD-20221229-33712"));
-                            queryfilterst.add(String.format("FID = '%s'", "141982"));
+                            queryfilterst.add(String.format("FBillNo = '%s'", orderEntity.getFBillNo()));
+                            queryfilterst.add(String.format("FID = '%s'", orderEntity.getFID()));
                             String filterStrt = String.join(" and ", queryfilterst);
                             String fieldKeyst = "FBillNo,FReturnType,FRowType,FMaterialName,FMaterialGroup,FMaterialId,FMaterialId.FNumber,FMaterialModel,FQty,FPriceUnitQty," +
                                     "FUnitID,FAuxPropId,FPrice,FEntryTaxRate,FTaxPrice,FIsFree,FEntryTaxAmount,FMaterialType,FAmount,FBarcode,FMapName,F_ulz_BaseProperty,FMapId," +
