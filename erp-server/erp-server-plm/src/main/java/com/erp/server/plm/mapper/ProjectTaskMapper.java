@@ -28,12 +28,21 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
                  @Param("statusList") List<Integer> statusList, @Param("param") String param
                  );
 
+    Integer pagingCount(@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+                                    @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
+                                    @Param("statusList") List<Integer> statusList, @Param("param") String param
+    );
+
 
     /**
      *产品的全部任务列表
      * @return
      */
     IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId ,
+                                       @Param("searchKeyword")  String searchKeyword,
+                                       @Param("statusList") List<Integer> statusList,@Param("param") String param);
+
+    Integer allPagingCount( @Param("productId") String productId, @Param("phaseId") String phaseId ,
                                        @Param("searchKeyword")  String searchKeyword,
                                        @Param("statusList") List<Integer> statusList,@Param("param") String param);
 
@@ -54,6 +63,10 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
                           @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
                           @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
+
+    Integer myApprovalPagingCount(@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+                                              @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
+                                              @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
 

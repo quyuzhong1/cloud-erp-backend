@@ -200,8 +200,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                     approvalSuggestion = "";
                 }
                 approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(),DateUtils.DATE_FORMAT_19));
+                approveRecordShowDTO.setEndTime(DateUtils.format(item.getEndTime(),DateUtils.DATE_FORMAT_19));
                 approveRecordShowDTO.setHandleUserName(item.getAssignee());
-                approveRecordShowDTO.setActivityName(item.getName());
+                approveRecordShowDTO.setActivityName(item.getTaskDefinitionKey());
                 approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核" );
                 approveRecordShowDTO.setComment(approvalSuggestion);
                 resultList.add(approveRecordShowDTO);
