@@ -384,7 +384,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setOrderFee(gyyOrderEntity.getPayment());
 
         //运费收入
-        dmpOrderInfoEntity.setShippingFee(gyyOrderEntity.getPostFee());
+        dmpOrderInfoEntity.setShippingFee(BigDecimal.ZERO);
 
         //平台费
         dmpOrderInfoEntity.setPlatformFee(BigDecimal.ZERO);
