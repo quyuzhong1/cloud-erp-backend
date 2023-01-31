@@ -81,10 +81,11 @@ public class KingdeeUtils {
 //        System.out.println(stringStringMap);
 
         JSONObject json=new JSONObject();
-        json.putIfAbsent("root",new JSONObject());
-        System.out.println(makeFieldJson(null,"a_b_c","_","kk").toJSONString());
-        System.out.println(makeFieldJson(null,"A.B.C",".","UUU").toJSONString());
-        System.out.println(makeFieldJson(json,"E.F.G",".","UUU").toJSONString());
+//        json.putIfAbsent("root",new JSONObject());
+//        System.out.println(makeFieldJson(null,"a_b_c","_","kk").toJSONString());
+        System.out.println(makeFieldJson(json,"A.B.C",".","c").toJSONString());
+        System.out.println(makeFieldJson(json,"A.B.D",".","d").toJSONString());
+        System.out.println(makeFieldJson(json,"E.F.G",".","g").toJSONString());
 
 
     }

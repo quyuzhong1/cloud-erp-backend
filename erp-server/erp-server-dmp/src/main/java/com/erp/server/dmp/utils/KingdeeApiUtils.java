@@ -3,6 +3,7 @@ package com.erp.server.dmp.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,36 +105,39 @@ public class KingdeeApiUtils {
     /**
      * 查看单据数据（按ID）
      * @param id    单据Id
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return  返回操作结果
      */
-    public OperatorResult view(String id){
+    public OperatorResult viewById(String id,boolean... ignoreError){
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setId(id);
-        try {
-            result = client.view(this.formId,param);
-            if(!result.isSuccessfully()){
-                throw new RuntimeException("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
+        return view(param,(null == ignoreError? false: ignoreError[0]));
     }
 
     /**
      * 查看单据数据（按单据编号）
      * @param number    单据编号
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return  返回操作结果
      */
-    public OperatorResult viewByNumber(String number){
+    public OperatorResult viewByNumber(String number,boolean... ignoreError){
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setNumber(number);
+        return view(param,(null == ignoreError? false: ignoreError[0]));
+    }
+
+    public OperatorResult view(OperateParam param,boolean ignoreError){
+        OperatorResult result=null;
         try {
             result = client.view(this.formId,param);
             if(!result.isSuccessfully()){
-                throw new RuntimeException("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                if(!ignoreError){
+                    throw new RuntimeException("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                } else {
+                    System.err.println("【查看单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -144,36 +148,39 @@ public class KingdeeApiUtils {
     /**
      * 审核 单据(按ID）
      * @param idList    ID列表
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return
      */
-    public OperatorResult auditById(List<String> idList){
+    public OperatorResult auditById(List<String> idList,boolean... ignoreError){
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        try {
-            result = client.audit(this.formId,param);
-            if(!result.isSuccessfully()){
-                throw new RuntimeException("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
+        return audit(param, (null == ignoreError? false: ignoreError[0]));
     }
 
     /**
      * 审核单据(按单据编号)
      * @param numberList 单据编号列表
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return
      */
-    public OperatorResult auditByNumber(List<String> numberList){
+    public OperatorResult auditByNumber(List<String> numberList,boolean... ignoreError){
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
+        return audit(param, (null == ignoreError? false: ignoreError[0]));
+    }
+
+    public OperatorResult audit(OperateParam param,boolean ignoreError){
+        OperatorResult result=null;
         try {
             result = client.audit(this.formId,param);
             if(!result.isSuccessfully()){
-                throw new RuntimeException("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                if(!ignoreError){
+                    throw new RuntimeException("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }else{
+                    System.err.println("【审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -184,52 +191,40 @@ public class KingdeeApiUtils {
     /**
      * 反审核单据（按Id）
      * @param idList ID列表
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return
      */
-    public OperatorResult unAuditById(List<String> idList){
+    public OperatorResult unAuditById(List<String> idList, boolean... ignoreError){
         OperatorResult result;
 
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        try {
-            result = client.unAudit(this.formId,param);
-            if(!result.isSuccessfully()){
-                throw new RuntimeException("【反审核单据】出错:"+ joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
-
-    private String joinErrors(String joinStr, ArrayList<RepoError> errors) {
-        StringBuffer result=new StringBuffer();
-        if(errors.isEmpty()){
-            return "";
-        }
-
-        for(RepoError error:errors){
-            result.append(error.getDIndex()+",");
-            result.append(error.getFieldName()+",");
-            result.append(error.getMessage());
-            result.append(joinStr);
-        }
-        return result.replace(1,1,joinStr).toString();
+        return unAudit(param,(null == ignoreError? false: ignoreError[0]));
     }
 
     /**
      * 反审核单据(按单据编号)
      * @param numberList    单据编号列表
+     * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
      * @return
      */
-    public OperatorResult unAuditByNumber(List<String> numberList){
+    public OperatorResult unAuditByNumber(List<String> numberList, boolean... ignoreError){
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
+        return unAudit(param,(null == ignoreError? false: ignoreError[0]));
+    }
+
+    public OperatorResult unAudit(OperateParam param, boolean ignoreError){
+        OperatorResult result;
         try {
             result = client.unAudit(this.formId,param);
             if(!result.isSuccessfully()){
-                throw new RuntimeException("【反审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                if(!ignoreError){
+                    throw new RuntimeException("【反审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                } else {
+                    System.err.println("【反审核单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -237,28 +232,28 @@ public class KingdeeApiUtils {
         return result;
     }
 
-    public OperatorResult deleteById(List<String> idList){
+    public OperatorResult deleteById(List<String> idList, boolean... ignoreError){
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        try {
-            result = client.delete(this.formId,param);
-            if(!result.isSuccessfully()){
-                throw new RuntimeException("【删除单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
+        return delete(param,(null == ignoreError? false: ignoreError[0]));
     }
-    public OperatorResult deleteByNumber(List<String> numberList){
-        OperatorResult result;
+    public OperatorResult deleteByNumber(List<String> numberList, boolean... ignoreError){
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
+        return delete(param,(null == ignoreError? false: ignoreError[0]));
+    }
+
+    private OperatorResult delete(OperateParam param, boolean ignoreError){
+        OperatorResult result;
         try {
             result = client.delete(this.formId,param);
             if(!result.isSuccessfully()){
-                throw new RuntimeException("【删除单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                if(!ignoreError){
+                    throw new RuntimeException("【删除单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }else{
+                    System.err.println(joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -271,14 +266,18 @@ public class KingdeeApiUtils {
      * @param idList    ID列表
      * @return
      */
-    public OperatorResult submit(List<String> idList){
+    public OperatorResult submit(List<String> idList,boolean ignoreError){
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
         try {
             result = client.submit(this.formId,param);
             if(!result.isSuccessfully()){
-                throw new RuntimeException("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                if(!ignoreError){
+                    throw new RuntimeException("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                } else {
+                    System.err.println("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -332,5 +331,18 @@ public class KingdeeApiUtils {
         return result;
     }
 
+    private String joinErrors(String joinStr, ArrayList<RepoError> errors) {
+        StringBuffer result=new StringBuffer();
+        if(errors.isEmpty()){
+            return "";
+        }
 
+        for(RepoError error:errors){
+            result.append(error.getDIndex()+",");
+            result.append(error.getFieldName()+",");
+            result.append(error.getMessage());
+            result.append(joinStr);
+        }
+        return result.replace(1,1,joinStr).toString();
+    }
 }

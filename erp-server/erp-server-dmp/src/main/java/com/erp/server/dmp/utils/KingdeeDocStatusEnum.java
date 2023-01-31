@@ -1,6 +1,7 @@
 package com.erp.server.dmp.utils;
 
 public enum KingdeeDocStatusEnum {
+    SAVED("Z","暂存"),
     CREATED("A","创建"),
     APPROVING("B","审核中"),
     APPROVED("C","已审核"),
