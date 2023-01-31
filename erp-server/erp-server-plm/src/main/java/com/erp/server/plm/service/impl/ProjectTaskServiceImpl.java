@@ -2119,6 +2119,47 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return new PagingVO(pageData);
     }
+
+    @Override
+    public List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO params) {
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        String phaseId = params.getPhaseId();
+        String productId = params.getProductId();
+        String searchKeyword = params.getSearchKeyword();
+        List<TaskSearchDTO> searchList = params.getSearchList();
+        String param = params.getParam();
+
+        List<ProductTaskCategoryCountDTO> list = new ArrayList<>();
+        //这个是我完成的任务
+        ProductTaskCategoryCountDTO taskDTO1 = new ProductTaskCategoryCountDTO();
+        List<Integer> statusList1 = Arrays.asList(TaskStateEnum.NOT_START.getCode(), TaskStateEnum.ING.getCode(), TaskStateEnum.PORTION_FINISH.getCode());
+        Integer count1 = baseMapper.pagingCount(productId, phaseId, searchList, userId, searchKeyword, statusList1, null);
+        taskDTO1.setCount(count1);
+        taskDTO1.setType(TaskConstant.MY_FINISH_TASK);
+        list.add(taskDTO1);
+        //这个待我审核的任务
+        ProductTaskCategoryCountDTO taskDTO2 = new ProductTaskCategoryCountDTO();
+        List<Integer> statusList2 = Arrays.asList(TaskStateEnum.WAIT_CONFIRM.getCode(), TaskStateEnum.APPROVAL_ING.getCode());
+        List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+        taskDTO2.setType(TaskConstant.MY_APPROVAL_TASK);
+        taskDTO2.setCount(MathUtil.ZERO);
+        //获取流程集合
+        List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(processIds)) {
+            Integer count2 = baseMapper.myApprovalPagingCount( productId, phaseId, searchList, userId, searchKeyword, statusList2, processIds);
+            taskDTO2.setCount(count2);
+        }
+        list.add(taskDTO2);
+        //这个是全部
+        ProductTaskCategoryCountDTO taskDTO3 = new ProductTaskCategoryCountDTO();
+        Integer count3 = baseMapper.allPagingCount( productId, phaseId, searchKeyword, new ArrayList<>(), param);
+        taskDTO3.setCount(count3);
+        taskDTO3.setType(TaskConstant.ALL_FINISH_TASK);
+        list.add(taskDTO3);
+        return list;
+    }
+
     /**
      * 我创造的    任务创建人=当前账号人
      *
@@ -3594,7 +3635,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         // 根据流程id查询所有审核信息
         List<ApproveRecordShowDTO> approveRecordShowList = null;
         if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
-            ProcessBaseDTO processBaseDTO = new ProcessBaseDTO();
             approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
             if (CollectionUtils.isNotEmpty(approveRecordShowList)) {
                 List<String> userIds = approveRecordShowList.stream().map(ApproveRecordShowDTO::getHandleUserName).collect(Collectors.toList());
@@ -3678,24 +3718,34 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (CollectionUtils.isEmpty(approveRecordShowList)) {
             return waitReleasedDTO;
         }
+        List<TaskProcessNodeDetailDTO> detailList = new ArrayList<>();
         //当状态为待审核、审核中、审核通过、审核不通过时添加详情
         if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state) || TaskStateEnum.APPROVAL_ING.getCode().equals(state)
                 || TaskStateEnum.APPROVAL_PASS.getCode().equals(state) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
-            List<TaskProcessNodeDTO> list = new ArrayList<>();
-            //查询流程
-            for (ApproveRecordShowDTO approveRecordShowDTO : approveRecordShowList) {
-                TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
-                taskProcessNodeDTO.setOperateUserName(approveRecordShowDTO.getHandleUserName());
-                try {
-                    Date date = DateUtils.parseDate(approveRecordShowDTO.getStartTime(), DateUtils.DATE_FORMAT_19);
-                    taskProcessNodeDTO.setOperateTime(date);
-                } catch (ParseException e) {
-                    throw new ServiceException(ApiError.Default);
+
+            //根据节点名称分组，将不同节点审核人分隔
+            Map<String, List<ApproveRecordShowDTO>> map = approveRecordShowList.stream().collect(Collectors.groupingBy(ApproveRecordShowDTO::getActivityName));
+            for (Map.Entry<String, List<ApproveRecordShowDTO>> entry: map.entrySet()) {
+                List<ApproveRecordShowDTO> value = entry.getValue();
+                List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
+                TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
+                //查询流程
+                for (ApproveRecordShowDTO approveRecordShowDTO : value) {
+                    TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
+                    taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
+                    taskProcessNodeDTO.setOperateUserName(approveRecordShowDTO.getHandleUserName());
+                    try {
+                        Date date = DateUtils.parseDate(approveRecordShowDTO.getStartTime(), DateUtils.DATE_FORMAT_19);
+                        taskProcessNodeDTO.setOperateTime(date);
+                    } catch (ParseException e) {
+                        throw new ServiceException(ApiError.Default);
+                    }
+                    taskProcessNodeList.add(taskProcessNodeDTO);
                 }
-                list.add(taskProcessNodeDTO);
+                taskProcessNodeDetailDTO.setList(taskProcessNodeList);
+                detailList.add(taskProcessNodeDetailDTO);
             }
-            waitReleasedDTO.setList(list);
+            waitReleasedDTO.setDetailList(detailList);
             long count = approveRecordShowList.stream().count();
             waitReleasedDTO.setOperateUserName("审核人【".concat(String.valueOf(count)).concat("】人"));
         }

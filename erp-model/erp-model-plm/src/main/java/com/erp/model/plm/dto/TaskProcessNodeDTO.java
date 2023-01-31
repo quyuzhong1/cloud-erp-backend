@@ -45,6 +45,6 @@ public class TaskProcessNodeDTO  implements Serializable {
     /**
      * 节点明细
      */
-    private List<TaskProcessNodeDTO> list;
+    private List<TaskProcessNodeDetailDTO> detailList;
 
 }

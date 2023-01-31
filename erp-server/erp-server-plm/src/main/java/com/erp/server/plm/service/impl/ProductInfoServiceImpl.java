@@ -233,6 +233,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:06
      */
     @Override
+    @Transactional
     public Boolean saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());

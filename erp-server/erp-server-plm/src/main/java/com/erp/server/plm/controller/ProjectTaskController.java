@@ -192,6 +192,23 @@ public class ProjectTaskController extends BaseController {
         return success(dto);
     }
 
+
+    /**
+     * 项目任务-全部任务/带我完成的任务/待我审核的任务全部数量
+     *
+     * @return
+     */
+    @PostMapping("/listProductTaskCategoryCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:paging",
+            tableAlias = "project_task"
+    )
+    public ApiResult<List<ProductTaskCategoryCountDTO>> listProductTaskCategoryCount(@RequestBody TaskPagingDTO dto) {
+        List<ProductTaskCategoryCountDTO> list = taskService.listProductTaskCategoryCount(dto);
+        return success(list);
+    }
+
     /**
      * 项目任务-获取新建产品 -所属产品列表
      *

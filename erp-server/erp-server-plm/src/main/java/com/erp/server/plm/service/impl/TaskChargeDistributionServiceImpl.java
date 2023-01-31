@@ -43,6 +43,7 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
                 obj.setTaskId(taskId);
                 obj.setSource(source);
                 obj.setSeq(seq);
+                obj.setId(null);
                 seq++;
             };
            this.saveBatch(approvalList);
