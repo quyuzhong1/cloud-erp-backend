@@ -51,7 +51,7 @@ public class ProductTaskInWarehouseTimeChildDTO implements Serializable {
     private String skuNo;
 
     /**
-     * 首批量产入库时间(计划上市时间)
+     * 计划上市时间
      */
     private String planListingTime;
 

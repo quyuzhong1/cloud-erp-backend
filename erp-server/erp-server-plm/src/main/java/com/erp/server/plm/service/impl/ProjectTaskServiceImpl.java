@@ -764,12 +764,48 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                                             .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
                 sysLogService.addSysLogByOther(sysLogEntity);
             }
-            if (CollectionUtils.isNotEmpty(approvalList)) {
-                approvalList.forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
-                List<TaskChargeDistributionEntity> taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
-                //保存交付文档的审核人
-                taskChargeDistributionService.removeAndSave(taskEntity.getId(), taskChargeDistributionList,MathUtil.THREE);
-            }
+                List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(approvalList)) {
+                    approvalList.forEach(obj->{
+                        obj.setCharges(String.join(",",obj.getChargeList()));
+                        obj.setDistributionType(ObjectUtils.isEmpty(obj.getDistributionType()) ? DistributionTypeEnum.DISTRIBUTION_USER.getCode() : obj.getDistributionType());
+                    });
+                    taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
+                    //根据分配类型查询模板中的数据
+                    for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+                        if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
+                            throw new ServiceException(ApiError.ERROR_95097);
+                        }
+                        if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                            taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
+                        }
+                        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                            List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                            //查询对应产品角色下的人员
+                            List<ProjectMembersEntity> templateMembersList= projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
+                            if (CollectionUtils.isNotEmpty(templateMembersList)) {
+                                String approverIds = templateMembersList.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
+                                taskChargeDistributionEntity.setChargeIds(approverIds);
+                            }
+                        }
+                        if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
+                            //查询对应负责人的上级
+                            List<String> ids = dto.getChargeIds();
+                            List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                            if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                                List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                                for (String superiorType: superiorTypeList) {
+                                    String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
+                                    if (StringUtils.isNotBlank(userIds)) {
+                                        taskChargeDistributionEntity.setChargeIds(userIds);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            //保存交付文档的审核人
+            taskChargeDistributionService.removeAndSave(taskEntity.getId(),taskChargeDistributionList,MathUtil.THREE);
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务

@@ -22,6 +22,42 @@ public class ProductCostEntity implements Serializable {
     private String id;
 
     /**
+     * 创建时间
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 创建人id
+     */
+    @TableField(value = "create_user_id")
+    private String createUserId;
+
+    /**
+     * 创建人名称
+     */
+    @TableField(value = "create_user_name")
+    private String createUserName;
+
+    /**
+     * 修改时间
+     */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 修改人id
+     */
+    @TableField(value = "update_user_id")
+    private String updateUserId;
+
+    /**
+     * 修改人名称
+     */
+    @TableField(value = "update_user_name")
+    private String updateUserName;
+
+    /**
      * 产品sku表id
      */
     @TableField(value = "sku_id")
@@ -76,40 +112,23 @@ public class ProductCostEntity implements Serializable {
     private BigDecimal actualGpmUsd;
 
     /**
-     * 创建时间
+     * 立项成本
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Date createTime;
+    @TableField(value = "project_approval_cost")
+    private BigDecimal ProjectApprovalCost;
 
     /**
-     * 创建人id
+     * 量产成本
      */
-    @TableField(value = "create_user_id")
-    private String createUserId;
+    @TableField(value = "mass_cost")
+    private BigDecimal massCost;
 
     /**
-     * 创建人名称
+     * 项目成本
      */
-    @TableField(value = "create_user_name")
-    private String createUserName;
+    @TableField(value = "project_cost")
+    private BigDecimal projectCost;
 
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 修改人id
-     */
-    @TableField(value = "update_user_id")
-    private String updateUserId;
-
-    /**
-     * 修改人名称
-     */
-    @TableField(value = "update_user_name")
-    private String updateUserName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

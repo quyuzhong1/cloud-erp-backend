@@ -614,12 +614,14 @@
                     else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id) t
+        left join project_info pi2 on pi.id = pi2.product_id
+        where  pi.is_finished_product_dev = 1
+            ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id like concat('%',#{item},'%')
+                    t.charge_id = #{item}
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -678,12 +680,14 @@
                 else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
-        left join project_info pi2 on pi.id = pi2.product_id) t
+        left join project_info pi2 on pi.id = pi2.product_id
+        where  pi.is_finished_product_dev = 1
+            ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id like concat('%',#{item},'%')
+                    t.charge_id = #{item}
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -746,12 +750,13 @@
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
         left join project_phase pp on pt.phase_id = pp.id
+        where  pi.is_finished_product_dev = 1
         ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id like concat('%',#{item},'%')
+                    t.charge_id = #{item}
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -806,12 +811,14 @@
             else 1 end as isProjectStatus
         from product_info pi
         inner join product_detail pd on pi.id = pd.product_id
-        left join project_info pi2 on pi.id = pi2.product_id) t
+        left join project_info pi2 on pi.id = pi2.product_id
+        where pi.is_finished_product_dev = 1
+            ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id like concat('%',#{item},'%')
+                    t.charge_id = #{item}
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
