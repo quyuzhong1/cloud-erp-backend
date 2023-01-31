@@ -4,6 +4,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
@@ -66,5 +67,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     void approvalPass(AuditParamDTO dto);
 
-    void bomProcessPass(String processId);
+    void bomProcessPass(ProcessPassDTO dto);
+
+    void changeBom(BomDTO bom);
 }

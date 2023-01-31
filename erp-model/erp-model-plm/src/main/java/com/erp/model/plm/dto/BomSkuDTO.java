@@ -34,6 +34,9 @@ public class BomSkuDTO implements Serializable {
 
     private String skuId;
 
+
+    private String productId;
+
     /**
      * 层级
      */

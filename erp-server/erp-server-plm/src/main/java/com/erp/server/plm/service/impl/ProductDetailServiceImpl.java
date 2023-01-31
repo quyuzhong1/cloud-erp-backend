@@ -1658,6 +1658,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.getSkuBySkuNos(skuNoList);
     }
 
+    /**
+     * 根据sku id 获取
+     * @author yl
+     * @date 2023-01-31 10:13
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     */
+    @Override
+    public List<SkuVO> getSkuBySkuIds(List<String> skuIdList) {
+        return baseMapper.getSkuBySkuIds(skuIdList);
+    }
+
 
     /**
      * 搜索sku
@@ -1716,7 +1728,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetail = productDetailMapper.getManySpecDetailById(productId);
-        if(manySpecDetail!=null){
+        if (manySpecDetail != null) {
             manySpecDetail.setDisableFieldList(disableFields);
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetail.getCategoryId());
@@ -1785,13 +1797,108 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
-        List<ProductCertificateShowDTO>  certificateShowList = certificateShowDTOList.stream().
+        List<ProductCertificateShowDTO> certificateShowList = certificateShowDTOList.stream().
                 filter(c -> c.getSkuId().equals(skuId)).collect(Collectors.toList());
-        for(ProductCertificateShowDTO item:certificateShowList){
+        for (ProductCertificateShowDTO item : certificateShowList) {
             item.setDisableFieldList(disableFields);
         }
         result.setProductCertificateShowDTOList(certificateShowList);
         return result;
+    }
+
+
+    /**
+     * 变更管理 审核通过后
+     * 变更sku
+     *
+     * @param skuDTO
+     * @return void
+     * @author yl
+     * @date 2023-01-30 17:12
+     */
+    @Override
+    public void changeSku(ProductSmallestUnitDTO skuDTO) {
+
+        String id = "";
+
+
+        //2.修改/新增 sku信息
+//        ProductDetailEntity detailEntity = skuDTO.getProductManySkuDetail();
+//        if (detailEntity != null) {
+//            this.updateById(detailEntity);
+//        }
+        //3.修改/新增 成本信息
+        ProductCostShowDTO costShowDTO = skuDTO.getProductCostShowDTO();
+        if (costShowDTO != null) {
+            ProductCostDTO productCostDTO = new ProductCostDTO();
+            BeanMapper.copy(costShowDTO, productCostDTO);
+            //SKU操作日志
+            addProductCostLog(productCostDTO, id);
+            productCostService.saveOrUpdate(productCostDTO);
+        }
+
+        //4.修改/新增 采购信息
+        ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
+        if (purchaseShowDTO != null) {
+            ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
+            BeanMapper.copy(costShowDTO, productPurchaseDTO);
+
+            //SKU操作日志
+            addProductPurchaseLog(productPurchaseDTO, id);
+            productPurchaseService.saveOrUpdate(productPurchaseDTO);
+        }
+        //新增/修改采购备注信息
+        List<ProductPurchaseRemarkEntity> remarkEntityList = skuDTO.getRemarkEntityList();
+        if (CollectionUtils.isNotEmpty(remarkEntityList)) {
+            List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = BeanMapper.copyList(remarkEntityList, ProductPurchaseRemarkDTO.class);
+            List<SysLogEntity> list = new LinkedList<>();
+            remarkEntityList.forEach(req -> {
+                list.add(new SysLogEntity().setContent("更新采购备注信息：" + req.getRemark()).setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id));
+            });
+            //SKU操作日志
+            sysLogService.addSysLogByBatchSave(list);
+            productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
+        }
+
+
+        //5.修改/新增 销售信息
+        ProductSaleShowDTO productSaleShowDTO = skuDTO.getProductSaleShowDTO();
+        if (productSaleShowDTO != null) {
+            ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+            BeanMapper.copy(productSaleShowDTO, productSaleDTO);
+            //SKU操作日志
+            addProductSaleLog(productSaleDTO, id);
+            productSaleService.saveOrUpdate(productSaleDTO);
+        }
+
+        //6.修改/新增 物流信息
+        ProductLogisticsShowDTO productLogisticsShowDTO = skuDTO.getProductLogisticsShowDTO();
+        if (productLogisticsShowDTO != null) {
+            ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
+            BeanMapper.copy(productLogisticsShowDTO, productLogisticsDTO);
+            //SKU操作日志
+            addProductLogisticsLog(productLogisticsDTO, id);
+            productLogisticsService.saveOrUpdate(productLogisticsDTO);
+        }
+
+        //7.修改/新增 包装信息
+        ProductPackShowDTO productPackShowDTO = skuDTO.getProductPackShowDTO();
+        if (productPackShowDTO != null) {
+            ProductPackDTO productPackDTO = new ProductPackDTO();
+            BeanMapper.copy(productPackShowDTO, productPackDTO);
+            //SKU操作日志
+            addProductPackLog(productPackDTO, id);
+            productPackService.saveOrUpdate(productPackDTO);
+        }
+        //8.修改/新增 证书信息
+        List<ProductCertificateShowDTO> productCertificateShowList = skuDTO.getProductCertificateShowDTOList();
+        if (CollectionUtils.isNotEmpty(productCertificateShowList)) {
+            List<ProductCertificateDTO> productCertificateList = BeanMapper.copyList(productCertificateShowList, ProductCertificateDTO.class);
+            //SKU操作日志
+            addProductCertificateLog(productCertificateList, id);
+            productCertificateService.saveOrUpdateBatch(productCertificateList);
+        }
+
     }
 
 

@@ -10,4 +10,5 @@ import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
  * @Created by yl
  */
 public interface WorkflowBusinessProcessService extends IService<WorkflowBusinessProcessEntity> {
+    WorkflowBusinessProcessEntity getByProcessId(String processId);
 }

@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductChangePagingVO;
@@ -18,7 +19,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- *  变更管理
+ * 变更管理
  *
  * @author yl
  * @since 2023-01-11 14:05:03
@@ -34,6 +35,7 @@ public class ProductChangeController extends BaseController {
 
     /**
      * 添加变更
+     *
      * @param dto
      * @return
      */
@@ -46,18 +48,20 @@ public class ProductChangeController extends BaseController {
 
     /**
      * 编辑变更
+     *
      * @param dto
      * @return
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated UpdateChangeDTO dto) {
         Boolean result = productChangeService.edit(dto);
-      return result == true ? success() : failure();
+        return result == true ? success() : failure();
     }
 
 
     /**
      * 变更分页展示
+     *
      * @param dto
      * @return
      */
@@ -66,7 +70,6 @@ public class ProductChangeController extends BaseController {
         PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
         return success(pagingVO);
     }
-
 
 
     /**
@@ -123,12 +126,26 @@ public class ProductChangeController extends BaseController {
 
     /**
      * change  审核 不通过
+     *
      * @param
      * @return 新增结果
      */
     @PostMapping("/approvalNoPass")
     public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         productChangeService.approvalNoPass(dto);
+        return success();
+    }
+
+
+    /**
+     * 变更流程
+     * 监听后 最后通过
+     *
+     * @return
+     */
+    @PostMapping("/workflow/pass")
+    public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
+        productChangeService.processPass(dto);
         return success();
     }
 

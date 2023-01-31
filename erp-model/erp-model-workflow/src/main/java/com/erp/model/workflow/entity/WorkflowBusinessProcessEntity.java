@@ -33,7 +33,7 @@ public class WorkflowBusinessProcessEntity  implements Serializable {
     /**
      * 创建人
      */
-    private String create_user_id;
+    private String createUserId;
 
     /**
      * 流程id

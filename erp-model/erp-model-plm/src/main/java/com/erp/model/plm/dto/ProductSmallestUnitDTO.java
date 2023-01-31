@@ -48,7 +48,7 @@ public class ProductSmallestUnitDTO implements Serializable {
     private List<ProductPurchaseRemarkEntity> remarkEntityList;
 
     /**
-     * 产品包装信息
+     * 产品销售信息
      */
     private ProductSaleShowDTO productSaleShowDTO;
 

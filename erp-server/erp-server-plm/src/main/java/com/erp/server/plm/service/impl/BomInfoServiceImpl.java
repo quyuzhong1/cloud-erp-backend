@@ -15,6 +15,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -538,20 +539,48 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * 当bom 流程审核通过后
      * 改变bom 状态
      *
-     * @param processId workflow 的流程id
+     * @param
      * @return void
      * @author yl
      * @date 2023-01-30 8:54
      */
     @Override
-    public void bomProcessPass(String processId) {
-        String bomId = "";
+    public void bomProcessPass(ProcessPassDTO  dto) {
+        String bomId = dto.getBusinessTableId();
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
             this.updateById(bom);
         }
 
+    }
+
+
+    /**
+     * 变更bom
+     *
+     * @param bom
+     * @return void
+     * @author yl
+     * @date 2023-01-30 16:52
+     */
+    @Override
+    public void changeBom(BomDTO bom) {
+        String bomId = bom.getId();
+        BomInfoEntity bomEntity = this.getById(bomId);
+        if(bomEntity!=null){
+            Integer bomVersion = bomEntity.getVersion();
+            bomEntity.setVersion(bomVersion + 1);
+            bomEntity.setType(bom.getType());
+            List<BomSkuDTO> bomSkuList = bom.getSkuList();
+            Boolean result = this.updateById(bomEntity);
+            if(result){
+                //保存历史bom信息
+                productBomHistoryService.insert(bomEntity, bomSkuList);
+                //添加 bom 与sku 关系
+                bomSkuService.updateBomSku(bomId, bomSkuList);
+            }
+        }
     }
 
     /**

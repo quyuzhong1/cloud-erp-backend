@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
@@ -248,8 +249,8 @@ public class BomInfoController extends BaseController {
      * bom审核通过后改变 bom 状态
      */
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(String processId) {
-        bomInfoService.bomProcessPass(processId);
+    public ApiResult processPass(ProcessPassDTO dto) {
+        bomInfoService.bomProcessPass(dto);
         return success();
     }
 

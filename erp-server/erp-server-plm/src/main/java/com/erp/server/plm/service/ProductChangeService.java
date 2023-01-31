@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddChangeDTO;
 import com.erp.model.plm.dto.ProductChangeDTO;
@@ -38,4 +39,6 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     void approvalPass(AuditParamDTO dto);
 
     void approvalNoPass(AuditParamDTO dto);
+
+    void processPass(ProcessPassDTO dto);
 }

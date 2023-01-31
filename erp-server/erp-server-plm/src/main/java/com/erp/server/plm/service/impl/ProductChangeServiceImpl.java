@@ -10,6 +10,7 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
@@ -332,14 +333,15 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         this.updateById(changeEntity);
     }
 
-    
+
     /**
      * 变更审核不通过
-     *  不通过要停止流程吗
-     * @author yl
-     * @date 2023-01-30 14:10
+     * 不通过要停止流程吗
+     *
      * @param dto
      * @return void
+     * @author yl
+     * @date 2023-01-30 14:10
      */
     @Override
     public void approvalNoPass(AuditParamDTO dto) {
@@ -354,5 +356,46 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             changeEntity.setRemark(dto.getComment());
         }
         this.updateById(changeEntity);
+    }
+
+
+    /**
+     * 流程最终通过后的
+     * 操作
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-30 16:41
+     */
+    @Override
+    @Transactional
+    public void processPass(ProcessPassDTO dto) {
+        //从流程那边获取到具体业务表id
+        String id = dto.getBusinessTableId();
+        if (StringUtils.isNotBlank(id)) {
+            //获取到变更信息
+            ProductChangeEntity change = this.getById(id);
+            String type = change.getType();
+            if (change != null) {
+                //获取到对应的 json
+                String detailsJson = changeDetailsService.getDetailsJson(change.getId());
+                if (StringUtils.isNotBlank(detailsJson)) {
+                    //对应就是bom
+                    if (BomConstant.CHANGE_BOM.equals(type)) {
+                        BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
+                        //变更bom
+                        bomInfoService.changeBom(bom);
+                    }
+
+                    //对应就是sku
+                    if (BomConstant.CHANGE_SKU.equals(type)) {
+                        ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
+                        productDetailService.changeSku(sku);
+                    }
+                }
+            }
+
+        }
     }
 }

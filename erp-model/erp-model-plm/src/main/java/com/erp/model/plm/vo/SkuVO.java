@@ -18,6 +18,8 @@ public class SkuVO implements Serializable {
 
     private String skuId;
 
+    private String productId;
+
     /**
      * sku no
      */

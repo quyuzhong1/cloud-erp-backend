@@ -367,6 +367,7 @@
     <select id="searchSku" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
         pd.id AS skuId,
+        pi.id AS productId,
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
@@ -376,7 +377,6 @@
         WHERE pi.delete_state = 0
         <if test="searchKeyword != null and searchKeyword!=''">
             AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
-
         </if>
     </select>
     <select id="searchStateSku" resultType="com.erp.common.dto.base.BaseIdDTO">
@@ -388,6 +388,26 @@
         WHERE pi.delete_state = 0 AND pd.status=#{state}
         <if test="searchKeyword != null and searchKeyword!=''">
             AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+
+    <select id="getSkuBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0
+        <if test="skuIdList != null and skuIdList.size>0">
+            AND pd.id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
         </if>
     </select>
 </mapper>
