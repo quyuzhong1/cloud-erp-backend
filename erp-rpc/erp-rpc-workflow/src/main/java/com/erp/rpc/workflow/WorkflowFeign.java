@@ -58,4 +58,14 @@ public interface WorkflowFeign {
     //获取审核记录
     @PostMapping("workflow/feign/process/getHistoryTaskByProcessId")
     List<ApproveRecordShowDTO> getHistoryTaskByProcessId(@RequestParam(value="processId") String processId);
+
+    /**
+     * 获取 业务信息
+     * @author yl
+     * @date 2023-01-31 15:31
+     * @param findProcess
+     * @return com.erp.model.workflow.dto.WorkflowBusinessDTO
+     */
+    @PostMapping("workflow/feign/process/getBusiness")
+    BusinessInfoDTO getBusiness(@RequestBody FindProcessDTO findProcess);
 }

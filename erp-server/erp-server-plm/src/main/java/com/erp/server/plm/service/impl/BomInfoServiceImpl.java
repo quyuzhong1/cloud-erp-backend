@@ -11,7 +11,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BusinessNoCreateUtil;
 import com.common.core.utils.ExcelUtil;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -24,7 +23,10 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.BusinessInfoDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -42,9 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -152,15 +152,17 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
         findProcess.setBusinessType(businessType);
         findProcess.setPlatform(platform);
-//        WorkflowBusinessDTO business = workflowFeign.getBusiness();
-//        StartProcessDTO startProcess = new StartProcessDTO();
-//        startProcess.setUserId(userId);
-//        startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
-//        startProcess.setBusinessKey(businessProcess.getBusinessType());
-//        Map<String, Object> parameterMap = new HashMap<>();
+        //获取到业务的信息
+        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
+        StartProcessDTO startProcess = new StartProcessDTO();
+        startProcess.setUserId(userId);
+        startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
+        startProcess.setBusinessKey(business.getBusinessKey());
 
-//        startProcess.setParameterMap(parameterMap);
-//        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+        Map<String, Object> parameterMap = new HashMap<>();
+
+        startProcess.setParameterMap(parameterMap);
+        ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.workflow.dto.BusinessInfoDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessEntity;
@@ -15,7 +16,12 @@ import java.util.List;
  * @Created by yl
  */
 public interface WorkflowBusinessService  extends IService<WorkflowBusinessEntity> {
+
+
     List<WorkflowBusinessVO> getBusinessList(FindProcessDTO  dto);
 
     Boolean saveBusiness(WorkflowBusinessDTO dto);
+
+
+    BusinessInfoDTO getBusiness(FindProcessDTO  dto);
 }

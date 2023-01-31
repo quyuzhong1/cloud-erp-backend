@@ -167,7 +167,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             //如果是sku
             if (changeSku.equals(type)) {
-                SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(sourceId))
+                SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(sourceId))
                         .findFirst().orElse(null);
                 if (sku != null) {
                     item.setChangeSourceNo(sku.getSkuNo());

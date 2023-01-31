@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkflowBusinessService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class ProcessFeignController extends BaseController {
 
     @Autowired
     private ProcessTaskService processTaskService;
+
+    @Autowired
+    private WorkflowBusinessService businessService;
 
 
     //启动流程
@@ -94,4 +98,19 @@ public class ProcessFeignController extends BaseController {
         List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
         return resultList;
     }
+
+    /**
+     * 查看业务流程具体信息
+     *
+     * @param
+     * @return
+     * @author yl
+     * @date 2023-01-31 15:32
+     */
+    @PostMapping("/getBusiness")
+    public BusinessInfoDTO getWorkflowBusiness(@RequestBody FindProcessDTO findProcess) {
+        BusinessInfoDTO business = businessService.getBusiness(findProcess);
+        return business;
+    }
+
 }
