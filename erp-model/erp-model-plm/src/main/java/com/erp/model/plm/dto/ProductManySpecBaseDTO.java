@@ -26,6 +26,11 @@ public class ProductManySpecBaseDTO {
     private String name;
 
     /**
+     * 产品名称（英文）
+     */
+    private String nameEn;
+
+    /**
      * 产品经理
      */
     private String chargeName;

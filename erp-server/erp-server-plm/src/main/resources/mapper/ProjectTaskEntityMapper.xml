@@ -428,7 +428,7 @@
 
 
     <select id="toMeProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
@@ -453,7 +453,7 @@
     </select>
 
     <select id="toMePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
@@ -480,7 +480,7 @@
     </select>
 
     <select id="myCreateProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
@@ -506,7 +506,7 @@
     </select>
 
     <select id="myCreatePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
@@ -533,7 +533,7 @@
     </select>
 
     <select id="allProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
@@ -554,7 +554,7 @@
     </select>
 
     <select id="allPlanTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
@@ -578,12 +578,12 @@
 
 
     <select id="getExpireWarnTaskList" resultType="com.erp.model.plm.entity.ProjectTaskEntity">
-           SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+           SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
            charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
            WHERE  status!=#{state}
            AND plan_end_time &gt;= #{startTime}  AND plan_end_time &lt;= #{endTime}
            UNION ALL
-           SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
+           SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
            charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
            WHERE   status!=#{state} AND plan_end_time &lt; #{startTime}
     </select>

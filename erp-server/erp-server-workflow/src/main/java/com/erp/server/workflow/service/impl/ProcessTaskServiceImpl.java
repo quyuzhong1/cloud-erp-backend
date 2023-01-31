@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
@@ -187,7 +188,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                 .orderByDeleteReason()
                 .desc()
                 .list();
-            List<ApproveRecordShowDTO> resultList = new ArrayList<>();
+        List<ApproveRecordShowDTO> resultList = new ArrayList<>();
             ApproveRecordShowDTO approveRecordShowDTO = null;
             String approvalSuggestion = "";
             List<Comment> commentList = null;

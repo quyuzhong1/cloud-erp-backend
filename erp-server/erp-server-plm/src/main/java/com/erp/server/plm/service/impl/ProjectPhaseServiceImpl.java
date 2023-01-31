@@ -1,9 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicProductIdDTO;
@@ -17,18 +18,18 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.SysTaskPhaseService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -89,19 +90,32 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
             chekPhaseName(list, productId);
-            List<ProjectPhaseEntity> updateList = new LinkedList<>();
+            //删除阶段后重新新增
+            removeByProductId(productId);
+            List<ProjectPhaseEntity> saveList = new LinkedList<>();
             for (TaskPhaseDTO item : list) {
                 if (StringUtils.isBlank(item.getName())) {
                     throw new ServiceException(ApiError.ERROR_95002);
                 }
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
-                entity.setId(item.getId());
                 entity.setName(item.getName());
                 entity.setProductId(productId);
-                updateList.add(entity);
+                saveList.add(entity);
             }
-            this.saveOrUpdateBatch(updateList);
+            this.saveBatch(saveList);
         }
+    }
+
+    /**
+     * @description: 根据产品id删除阶段
+     * @author Will
+     * @date: 2023/1/31 17:02
+     * @param productId
+     */
+    private void removeByProductId(String productId) {
+        LambdaUpdateWrapper<ProjectPhaseEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProjectPhaseEntity::getProductId,productId);
+        this.remove(updateWrapper);
     }
 
     private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {

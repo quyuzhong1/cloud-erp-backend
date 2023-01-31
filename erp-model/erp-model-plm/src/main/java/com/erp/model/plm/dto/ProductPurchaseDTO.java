@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -102,6 +101,21 @@ public class ProductPurchaseDTO implements Serializable {
      * 实际首批到货量
      */
     private Long actualArrivalQty;
+
+    /**
+     * 试产/产量
+     */
+    private Long trialProductionOutput;
+
+    /**
+     * 试产数量
+     */
+    private Long trialProductionQty;
+
+    /**
+     * 首批量产数量
+     */
+    private Long firstMassQty;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

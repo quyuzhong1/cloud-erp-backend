@@ -4,32 +4,13 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProductCostMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductCostEntity">
-        <id property="id" column="id" jdbcType="VARCHAR"/>
-        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="targetTaxCost" column="target_tax_cost" jdbcType="NUMERIC"/>
-        <result property="targetNoTaxCost" column="target_no_tax_cost" jdbcType="NUMERIC"/>
-        <result property="actualTaxCost" column="actual_tax_cost" jdbcType="NUMERIC"/>
-        <result property="actualNoTaxCost" column="actual_no_tax_cost" jdbcType="NUMERIC"/>
-        <result property="retailPrice" column="retail_price" jdbcType="NUMERIC"/>
-        <result property="targetGpm" column="target_gpm" jdbcType="NUMERIC"/>
-        <result property="actualGpmCny" column="actual_gpm_cny" jdbcType="NUMERIC"/>
-        <result property="actualGpmUsd" column="actual_gpm_usd" jdbcType="NUMERIC"/>
-        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
-        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
-        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
-        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
-    </resultMap>
-
     <sql id="Base_Column_List">
         target_tax_cost,
         target_no_tax_cost,actual_tax_cost,actual_no_tax_cost,
         retail_price,target_gpm,actual_gpm_cny,
         actual_gpm_usd,pd.create_time,pd.create_user_id,
         pd.create_user_name,pd.update_time,pd.update_user_id,
-        pd.update_user_name
+        pd.update_user_name,project_approval_cost,mass_cost,project_cost
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductCostShowDTO">

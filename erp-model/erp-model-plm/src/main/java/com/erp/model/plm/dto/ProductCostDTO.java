@@ -2,7 +2,7 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import javax.validation.constraints.NotNull;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -64,4 +64,19 @@ public class ProductCostDTO implements Serializable {
      * 实际毛利率（美元）
      */
     private BigDecimal actualGpmUsd;
+
+    /**
+     * 立项成本
+     */
+    private BigDecimal ProjectApprovalCost;
+
+    /**
+     * 量产成本
+     */
+    private BigDecimal massCost;
+
+    /**
+     * 项目成本
+     */
+    private BigDecimal projectCost;
 }
