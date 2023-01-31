@@ -491,7 +491,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
         dmpOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
 
         //商品原始总售价
-        dmpOrderInfoEntity.setItemTotalOrigin(BigDecimal.ZERO);
+        dmpOrderInfoEntity.setItemTotalOrigin(orderFee);
 
         //补贴金额
         dmpOrderInfoEntity.setSubsidyAmount(BigDecimal.ZERO);
@@ -555,7 +555,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
             dmpOrderItemEntity.setCostPrice(orderItemBean.getF_ulz_CGCB());
 
             //商品原始售价
-            dmpOrderItemEntity.setSellPriceOrigin(new BigDecimal(orderItemBean.getFAmount()));
+            dmpOrderItemEntity.setSellPriceOrigin(orderItemBean.getFPrice());
 
             //商品售价
             dmpOrderItemEntity.setSellPrice(orderItemBean.getFPrice());

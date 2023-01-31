@@ -444,8 +444,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
         // 运费
-        BigDecimal shippingFee = null != orderEntity.getShippingFee() ? orderEntity.getShippingFee() : BigDecimal.ZERO;
-        BigDecimal itemTotal = orderEntity.getItemTotal();
+        BigDecimal shippingFee = null != orderEntity.getShippingTotalOrigin() ? orderEntity.getShippingTotalOrigin() : BigDecimal.ZERO;
+        BigDecimal itemTotal = orderEntity.getItemTotalOrigin();
         BigDecimal shareFeeAmount = BigDecimal.ZERO;
         for (int i = 0; i < orderItems.size(); i++) {
             OrderItemEntity orderItemBean = orderItems.get(i);
@@ -525,9 +525,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-            BigDecimal sellPrice = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPrice()) ? dmpOrderItemEntity.getSellPrice() : BigDecimal.ZERO;
+            BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPriceOrigin()) ? dmpOrderItemEntity.getSellPriceOrigin() : BigDecimal.ZERO;
             Integer quantity = null != dmpOrderItemEntity.getQuantity() ? dmpOrderItemEntity.getQuantity() : 0;
-            BigDecimal amountAfter = sellPrice.multiply(new BigDecimal(quantity));
+            BigDecimal amountAfter = sellPriceOrigin.multiply(new BigDecimal(quantity));
             // 运费分摊
             // 最后一笔订单 分摊剩余运费
             BigDecimal fee = BigDecimal.ZERO;
