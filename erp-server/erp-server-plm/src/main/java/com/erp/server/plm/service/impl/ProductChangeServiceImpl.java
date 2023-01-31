@@ -17,15 +17,15 @@ import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
-import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.ProductChangeDetailsService;
-import com.erp.server.plm.service.ProductChangeService;
-import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
@@ -58,6 +58,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     /**
      * 添加变更
@@ -107,13 +113,28 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
+        String searchType = params.getSearchType();
+        List<String>  changeIdList = new ArrayList<>();
+
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> changeSearch = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             changeSearch = baseMapper.getChangeSearchCondition(searchKeyword);
         }
+        //待审核
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = commonService.getUserInfo().getUid();
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            changeIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(changeIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
 
-        IPage pageData = baseMapper.paging(query, changeSearch);
+        }
+
+        IPage pageData = baseMapper.paging(query, changeSearch,changeIdList);
         List<ProductChangePagingVO> list = pageData.getRecords();
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
@@ -207,7 +228,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (changeSku.equals(type)) {
             return productDetailService.getSku(searchKeyword);
         }
-        return null;
+        return new ArrayList<>();
     }
 
 

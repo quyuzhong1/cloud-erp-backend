@@ -16,7 +16,12 @@
                <foreach collection="searchList" item="sourceId" open="(" separator="," close=")">
                    #{sourceId}
                </foreach>
-
+            </if>
+            <if test="changeIdList !=null and changeIdList.size>0">
+               AND id IN
+               <foreach collection="changeIdList" item="id" open="(" separator="," close=")">
+                #{id}
+               </foreach>
             </if>
         </where>
     </select>
