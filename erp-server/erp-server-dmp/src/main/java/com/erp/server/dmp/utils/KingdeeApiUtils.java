@@ -146,6 +146,30 @@ public class KingdeeApiUtils {
     }
 
     /**
+     * 查看单据数据（按单据编号）
+     * @param number    单据编号
+     * @return  返回操作结果
+     */
+    public JSONObject getViewJson(String number){
+        JSONObject json;
+        OperateParam param = new OperateParam();
+        param.setNumber(number);
+        try {
+            String view = client.view(this.formId, number);
+            JSONObject parse = (JSONObject) JSONObject.parse(view);
+            JSONObject result = (JSONObject)parse.get("Result");
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+result.get("errors").toString());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
+
+    /**
      * 审核 单据(按ID）
      * @param idList    ID列表
      * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
@@ -259,6 +283,15 @@ public class KingdeeApiUtils {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    /**
+     * 提交单据
+     * @param idList    ID列表
+     * @return
+     */
+    public OperatorResult submit(List<String> idList){
+        return submit(idList,false);
     }
 
     /**
