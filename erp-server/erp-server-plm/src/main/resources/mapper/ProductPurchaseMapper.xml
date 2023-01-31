@@ -4,35 +4,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProductPurchaseMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductPurchaseEntity">
-        <id property="id" column="id" jdbcType="VARCHAR"/>
-        <result property="skuId" column="sku_id" jdbcType="VARCHAR"/>
-        <result property="ean" column="ean" jdbcType="VARCHAR"/>
-        <result property="planOrderQty" column="plan_order_qty" jdbcType="INTEGER"/>
-        <result property="placeOrderTime" column="place_order_time" jdbcType="DATE"/>
-        <result property="planArrivalTime" column="plan_arrival_time" jdbcType="DATE"/>
-        <result property="moq" column="moq" jdbcType="INTEGER"/>
-        <result property="deliveryCycle" column="delivery_cycle" jdbcType="NUMERIC"/>
-        <result property="actualArrivalTime" column="actual_arrival_time" jdbcType="DATE"/>
-        <result property="arrivalState" column="arrival_state" jdbcType="INTEGER"/>
-        <result property="purchaseUserId" column="purchase_user_id" jdbcType="VARCHAR"/>
-        <result property="mainSupplier" column="main_supplier" jdbcType="VARCHAR"/>
-        <result property="secondSupplier" column="second_supplier" jdbcType="VARCHAR"/>
-        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-        <result property="createUserId" column="create_user_id" jdbcType="VARCHAR"/>
-        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-        <result property="updateUserId" column="update_user_id" jdbcType="VARCHAR"/>
-        <result property="actualArrivalQty" column="actual_arrival_qty" jdbcType="INTEGER"/>
-        <result property="createUserName" column="create_user_name" jdbcType="VARCHAR"/>
-        <result property="updateUserName" column="update_user_name" jdbcType="VARCHAR"/>
-    </resultMap>
 
     <sql id="Base_Column_List">
         ean,plan_order_qty,place_order_time,plan_arrival_time,
         moq,delivery_cycle,actual_arrival_time,
         arrival_state,purchase_user_id,main_supplier,
         second_supplier,pp.create_time,pp.create_user_id,
-        pp.update_time,pp.update_user_id,actual_arrival_qty
+        pp.update_time,pp.update_user_id,actual_arrival_qty,
+        trial_production_output,trial_production_qty,first_mass_qty
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductPurchaseShowDTO">
