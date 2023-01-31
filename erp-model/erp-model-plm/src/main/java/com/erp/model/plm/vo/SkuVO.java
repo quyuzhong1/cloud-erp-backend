@@ -15,6 +15,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SkuVO implements Serializable {
 
+
+    private String skuId;
+
+    private String productId;
+
     /**
      * sku no
      */
@@ -24,17 +29,17 @@ public class SkuVO implements Serializable {
     /**
      * sku 名称
      */
-    private String skuName="";
+    private String skuName = "";
 
 
     /**
      * spu no
      */
-    private String spuNo="";
+    private String spuNo = "";
 
 
     /**
      * spu 名称
      */
-    private String spuName="";
+    private String spuName = "";
 }

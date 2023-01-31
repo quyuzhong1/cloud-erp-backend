@@ -1,24 +1,37 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BusinessNoCreateUtil;
+import com.common.core.utils.ExcelUtil;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
+import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
+import com.erp.server.plm.constant.SearchType;
+import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.enums.BomStateEnum;
+import com.erp.server.plm.enums.BomTypeEnum;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -26,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +61,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private BomOperateLogService bomOperateLogService;
 
+    @Resource
+    private WorkflowFeign workflowFeign;
+
 
     @Resource
     private ProductDetailService productDetailService;
@@ -56,6 +73,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
+    @Resource
+    private ProductChangeService productChangeService;
 
     /**
      * 添加bom
@@ -122,11 +142,26 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-10 17:30
      */
     @Override
-    public PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto) {
-        BomSearchPagingDTO params = dto.getParams();
+    public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
+        SearchPagingDTO params = dto.getParams();
         List<FindUserDTO> userList = commonService.getAllUser();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        String searchType = params.getSearchType();
+        List<String> bomIdList = new ArrayList<>();
+        //待审核
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = commonService.getUserInfo().getUid();
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
+
+        }
+
+        IPage pageData = baseMapper.paging(query, params,bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -140,6 +175,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
             Integer state = item.getState();
             item.setStateName(BomStateEnum.getName(state));
+            String type = item.getType();
+            item.setTypeName(BomTypeEnum.getName(type));
             if (skuVO != null) {
                 item.setSkuName(skuVO.getSkuName());
                 item.setSpuNo(skuVO.getSpuNo());
@@ -196,31 +233,452 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     /**
      * 删除bom
      *
-     * @param id
+     * @param bomId
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-01-13 8:56
      */
     @Override
-    public Boolean deleteById(String id) {
-        boolean flag = this.removeById(id);
-        if(flag){
-            bomSkuService.deleteByBomId(id);
-            productBomHistoryService.deleteByBomId(id);
+    public Boolean deleteById(String bomId) {
+        boolean flag = this.removeById(bomId);
+        if (flag) {
+            bomSkuService.deleteByBomId(bomId);
+            productBomHistoryService.deleteByBomId(bomId);
+            String operateContent = BomOperateContent.DELETE;
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
         }
         return flag;
     }
 
     /**
      * 提交审核
-     * @author yl
-     * @date 2023-01-13 9:58
+     *
      * @param bomId
      * @return boolean
+     * @author yl
+     * @date 2023-01-13 9:58
      */
     @Override
-    public boolean submitAudit(String bomId) {
+    public Boolean submitAudit(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95098);
+        }
+        bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+        /**
+         * 这里要发起一个流程
+         */
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+    }
+
+
+    /**
+     * 重启流程
+     *
+     * @param bomId
+     * @return boolean
+     * @author yl
+     * @date 2023-01-13 16:16
+     */
+    @Override
+    public Boolean restartAudit(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95099);
+        }
+        bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+
+        /**
+         * 这里要发起一个流程
+         */
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_NO_PASS.getName(), BomStateEnum.WAIT_AUDIT.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+
+    }
+
+    /**
+     * 冻结boom
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:22
+     */
+    @Override
+    public Boolean freeze(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95100);
+        }
+        bom.setState(BomStateEnum.FREEZE.getState());
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.FREEZE.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+    }
+
+    /**
+     * 解冻
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:29
+     */
+    @Override
+    public Boolean defrost(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95101);
+        }
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+    }
+
+    /**
+     * 报废boom
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 16:33
+     */
+    @Override
+    public Boolean scrap(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        List<Integer> stateList = new ArrayList<>(2);
+        stateList.add(BomStateEnum.AUDIT_PASS.getState());
+        stateList.add(BomStateEnum.FREEZE.getState());
+        if (stateList.contains(state)) {
+            throw new ServiceException(ApiError.ERROR_95102);
+        }
+        bom.setState(BomStateEnum.SCRAP.getState());
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.getName(state), BomStateEnum.SCRAP.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+    }
+
+    /**
+     * 恢复bom
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-13 17:05
+     */
+    @Override
+    public Boolean recover(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95103);
+        }
+        bom.setState(BomStateEnum.AUDIT_PASS.getState());
+
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+
+    }
+
+
+    /**
+     * 解除归档
+     *
+     * @param bomId
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-29 16:43
+     */
+    @Override
+    public Boolean removeArchive(String bomId) {
+        BomInfoEntity bom = this.getById(bomId);
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95108);
+        }
+        bom.setState(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
+        Boolean result = this.updateById(bom);
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_PASS.getName(), BomStateEnum.WAIT_SUBMIT_AUDIT.getName());
+            bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        }
+        return result;
+    }
+
+
+    /**
+     * 检查bom 能否变更
+     *
+     * @param sourceId
+     * @return void
+     * @author yl
+     * @date 2023-01-29 17:04
+     */
+    @Override
+    public void checkIfChange(String sourceId) {
+        BomInfoEntity infoEntity = this.getById(sourceId);
+        if (Objects.isNull(infoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = infoEntity.getState();
+        //只有归档才能变更
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95104);
+        }
+
+    }
+
+
+    /**
+     * 修改状态
+     *
+     * @param sourceId
+     * @param state
+     * @return void
+     * @author yl
+     * @date 2023-01-29 17:13
+     */
+    @Override
+    public void updateState(String sourceId, Integer state) {
+        LambdaUpdateWrapper<BomInfoEntity> updateWrapper = new LambdaUpdateWrapper();
+        updateWrapper.set(BomInfoEntity::getState, state);
+        updateWrapper.eq(BomInfoEntity::getId, sourceId);
+        this.update(updateWrapper);
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 17:32
+     */
+    @Override
+    public void exportExcel(SearchPagingDTO dto, HttpServletResponse response) {
+        List<BomPagingVO> list = baseMapper.getAllBom(dto);
+        List<FindUserDTO> userList = commonService.getAllUser();
+        //对应sku集合
+        List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        for (BomPagingVO item : list) {
+            String skuNo = item.getSkuNo();
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+            FindUserDTO createUser = userList.stream().filter(u -> u.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
+            if (createUser != null) {
+                item.setCreateUserName(createUser.getUserName());
+            }
+            Integer state = item.getState();
+            item.setStateName(BomStateEnum.getName(state));
+            String type = item.getType();
+            item.setTypeName(BomTypeEnum.getName(type));
+            if (skuVO != null) {
+                item.setSkuName(skuVO.getSkuName());
+                item.setSpuNo(skuVO.getSpuNo());
+                item.setSpuName(skuVO.getSpuName());
+            }
+        }
+        List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
+        String fileName = "BOM数据";
+        ExcelUtil.export(fileName, "BOM", excelList, BomExportExcelVO.class, response);
+
+
+    }
+
+    /**
+     * 审核通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 18:55
+     */
+    @Override
+    public void approvalPass(AuditParamDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        bom.setState(BomStateEnum.AUDIT_ING.getState());
+        bom.setRemark(dto.getComment());
+        this.updateById(bom);
+
+    }
+
+
+    /**
+     * 当bom 流程审核通过后
+     * 改变bom 状态
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-01-30 8:54
+     */
+    @Override
+    public void bomProcessPass(ProcessPassDTO dto) {
+        String bomId = dto.getBusinessTableId();
+        BomInfoEntity bom = this.getById(bomId);
+        if (bom != null) {
+            bom.setState(BomStateEnum.AUDIT_PASS.getState());
+            this.updateById(bom);
+        }
+
+    }
+
+
+    /**
+     * 变更bom
+     *
+     * @param bom
+     * @return void
+     * @author yl
+     * @date 2023-01-30 16:52
+     */
+    @Override
+    public void changeBom(BomDTO bom) {
+        String bomId = bom.getId();
+        BomInfoEntity bomEntity = this.getById(bomId);
+        if (bomEntity != null) {
+            Integer bomVersion = bomEntity.getVersion();
+            bomEntity.setVersion(bomVersion + 1);
+            bomEntity.setType(bom.getType());
+            List<BomSkuDTO> bomSkuList = bom.getSkuList();
+            Boolean result = this.updateById(bomEntity);
+            if (result) {
+                //保存历史bom信息
+                productBomHistoryService.insert(bomEntity, bomSkuList);
+                //添加 bom 与sku 关系
+                bomSkuService.updateBomSku(bomId, bomSkuList);
+            }
+        }
+    }
+
+    /**
+     * bom 审核不通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 18:53
+     */
+    @Override
+    public void approvalNoPass(AuditParamDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
+        bom.setRemark(dto.getComment());
+        //流程需要关闭吗
+        this.updateById(bom);
+
+
+    }
+
+
+    /**
+     * bom 发起变更
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-14 15:06
+     */
+    @Override
+    public Boolean startChange(UpdateBomDTO dto) {
+        BomInfoEntity bom = this.getById(dto.getId());
+        if (Objects.isNull(bom)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        Integer state = bom.getState();
+        //只有归档才能申请变更
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
+            throw new ServiceException(ApiError.ERROR_95104);
+        }
+        AddChangeDTO change = new AddChangeDTO();
+        change.setSourceId(dto.getId());
+        change.setDetailsJson(JSONObject.toJSONString(dto.getSkuList()));
+        Boolean changeResult = productChangeService.add(change);
+        //当成功后改变bom 的状态为待审核
+        if (changeResult) {
+            bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+            return this.updateById(bom);
+        }
         return false;
+    }
+
+    @Override
+    public List<BomVO> getByIds(List<String> bomIdList) {
+        if (CollectionUtils.isEmpty(bomIdList)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.getByIds(bomIdList);
+    }
+
+
+    /**
+     * 这个是在变更申请的时候 获取到bom 列表
+     * 只要审核通过的
+     *
+     * @param
+     * @return java.util.List<com.erp.common.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-01-28 17:08
+     */
+    @Override
+    public List<BaseIdDTO> getBomInfo(String searchKeyword) {
+        return baseMapper.getBomInfo(BomStateEnum.AUDIT_PASS.getState(), searchKeyword);
     }
 
 

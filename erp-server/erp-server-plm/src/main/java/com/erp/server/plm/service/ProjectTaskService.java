@@ -161,5 +161,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
      */
     PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    /**
+     * @description: 查询各个分类任务的数量
+     * @author Will
+     * @date: 2023/1/30 16:05
+     * @param dto
+     * @return List<ProductTaskCategoryCountDTO>
+     */
+    List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO dto);
 
 }

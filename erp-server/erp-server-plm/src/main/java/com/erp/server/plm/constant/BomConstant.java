@@ -31,4 +31,17 @@ public interface BomConstant {
      * 变更
      */
     String CHANGE_REQUEST = "changeRequest";
+
+
+    /**
+     *sku
+     */
+    String CHANGE_SKU="sku";
+
+    /**
+     *bom
+     */
+    String CHANGE_BOM="bom";
+
+
 }

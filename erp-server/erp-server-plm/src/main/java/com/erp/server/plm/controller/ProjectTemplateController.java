@@ -10,14 +10,17 @@ import com.erp.model.plm.dto.ProjectTemplateDTO;
 import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
 import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
 import com.erp.model.plm.dto.SysRoleDTO;
-import com.erp.model.sys.dto.UserDTO;
+import com.erp.model.plm.vo.DropdownEnumVO;
+import com.erp.server.plm.enums.ChargeSuperiorEnum;
 import com.erp.server.plm.service.ProjectTemplateService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 模板管理
@@ -82,23 +85,24 @@ public class ProjectTemplateController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listTemplateRole")
-    public ApiResult listTemplateRole(@Param("templateId") String templateId) {
+    public ApiResult<List<SysRoleDTO>> listTemplateRole(@Param("templateId") String templateId) {
         List<SysRoleDTO> list =  projectTemplateService.listTemplateRole(templateId);
         return success(list);
     }
 
+
     /**
-     * 模板管理-查询上级负责人（负责人类型type,0角色，1人员）
+     * 模板管理-查询上级负责人
      * @author Will
      * @date: 2023/1/9 10:29
-     * @param id
-     * @param type
      * @return ApiResult
      */
     @GetMapping("/listSuperior")
-    public ApiResult listSuperior(@Param("id") String id,@Param("type") Integer type) {
-        List<UserDTO> list =  projectTemplateService.listSuperior(id,type);
-        return success(list);
+    public ApiResult<List<DropdownEnumVO>> listSuperior() {
+        List<DropdownEnumVO> result = Arrays.stream(ChargeSuperiorEnum.values())
+                .map(x -> new DropdownEnumVO(x.getCode(),x.getName(),x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
     }
 
 

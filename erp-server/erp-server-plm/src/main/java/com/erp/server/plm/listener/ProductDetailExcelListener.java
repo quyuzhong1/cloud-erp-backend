@@ -9,18 +9,25 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.enums.BasicDictTypeEnum;
 import com.erp.server.plm.enums.PurchaseStateEnum;
 import com.erp.server.plm.enums.SaleMethodEnum;
 import com.erp.server.plm.enums.SaleStateEnum;
-import com.erp.server.plm.service.*;
+import com.erp.server.plm.service.BasicCategoryService;
+import com.erp.server.plm.service.BasicDictService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.ProductUnitService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
     private Integer importType;
@@ -64,8 +71,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (StringUtils.isBlank(dto.getName())) {
             errorMsgList.add("产品名称不能为空");
         }
-        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 50) {
-            errorMsgList.add("产品名称不能超过50个字节");
+        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 250) {
+            errorMsgList.add("产品名称不能超过250个字节");
         }
         if (StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("产品负责人不能为空");
@@ -229,7 +236,35 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("视频是否完成：是 或者 否");
             }
         }
+        //产品分类
+        String category = dto.getCategory();
+        if (StringUtils.isBlank(category)) {
+            errorMsgList.add("产品分类不能为空");
+        } else {
+            BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
+            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                errorMsgList.add("产品分类不存在");
+            } else {
+                //父级品类
+                List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
+                if (CollectionUtils.isEmpty(categoryList)) {
+                    errorMsgList.add("产品分类不存在");
+                }
+                //一级品类
+                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                }
+                //二级品类
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95092.msg);
+                }
+                productInfoDTO.setCategory(category);
+                productInfoDTO.setCategoryId(basicCategoryEntity.getId());
+            }
 
+        }
         String errStr = "";
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
@@ -268,7 +303,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
-
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         productSkuBaseInfoDTO.setPlanListingTime(dto.getPlanListingTime());

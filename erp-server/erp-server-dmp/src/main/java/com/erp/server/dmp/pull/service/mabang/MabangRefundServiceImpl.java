@@ -107,9 +107,10 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                                 dmpErrorLogEntity.setParams("");
+                                log.error("==== 马帮修改mongodb退款数据失败，[ 订单号 = " + refundOrderEntity.getPlatformOrderId() + "], 错误信息 = ", e);
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb退款数据失败，[ 订单号 = " + refundOrderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb退款数据失败，[ 订单号 = " + refundOrderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -211,7 +212,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
             }

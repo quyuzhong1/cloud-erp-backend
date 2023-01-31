@@ -18,6 +18,11 @@ public class BomPagingVO implements Serializable {
 
 
     /**
+     * 表id
+     */
+    private String id;
+
+    /**
      * bom 编号
      */
     private String serialNumber;
@@ -35,7 +40,7 @@ public class BomPagingVO implements Serializable {
     /**
      * sku 名称
      */
-    private String skuName="";
+    private String skuName = "";
 
     /**
      * 数量
@@ -46,12 +51,12 @@ public class BomPagingVO implements Serializable {
     /**
      * spu 编号
      */
-    private String spuNo="";
+    private String spuNo = "";
 
     /**
      * spu 名称
      */
-    private String spuName="";
+    private String spuName = "";
 
     /**
      * 状态值
@@ -79,7 +84,7 @@ public class BomPagingVO implements Serializable {
     /**
      * 创建人 名
      */
-    private String createUserName="";
+    private String createUserName = "";
 
     /**
      * 创建时间
@@ -90,4 +95,20 @@ public class BomPagingVO implements Serializable {
      * 更新时间
      */
     private Date updateTime;
+
+
+    /**
+     * 类型
+     */
+    private String type;
+
+    /**
+     * 类型
+     */
+    private String typeName;
+
+
+
+
+
 }

@@ -22,7 +22,6 @@ import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
@@ -31,8 +30,6 @@ import com.erp.server.dmp.utils.GyyUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -64,9 +61,6 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-
     public static void main(String[] args) {
         GyyHistoryDeliveryDetailServiceImpl gyyOrderInfoService = new GyyHistoryDeliveryDetailServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET;
@@ -76,8 +70,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
         jobTaskDTO.setApiName("管易云查询历史发货订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(72000);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-04-15 18:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-04-15 19:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-07-22 23:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-07-23 22:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(2);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
@@ -97,24 +91,26 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
             return;
         }
         XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyDeliveryDetailEntityList.size());
-        gyyDeliveryDetailEntityList.parallelStream().forEach( gyyDeliveryDetailEntity -> {
+        for (GyyDeliveryDetailEntity gyyDeliveryDetailEntity : gyyDeliveryDetailEntityList) {
             try {
                 OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
                 orderMongoDTO.setPlatformCode(gyyDeliveryDetailEntity.getPlatformCode());
+                orderMongoDTO.setCode(gyyDeliveryDetailEntity.getCode());
                 List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
                 if (CollectionUtil.isNotEmpty(mongoData)) {
-                    for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
                         // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyDeliveryDetailEntity), MapUtil.class);
-                            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
-                        }
+                    GyyDeliveryDetailEntity mongoDatum = mongoData.get(0);
+                    if (!mongoDatum.toString().equals(gyyDeliveryDetailEntity.toString())) {
+                        // 修改数据
+                        OrderMongoDTO updateMongoDTO = new OrderMongoDTO();
+                        updateMongoDTO.setId(mongoDatum.get_id());
+                        MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(gyyDeliveryDetailEntity), MapUtil.class);
+                        mongoService.updateMongoData(updateMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
                     }
                 } else {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
-                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", mongoData.size());
+                XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", CollectionUtil.isNotEmpty(mongoData) ? mongoData.size() : 0);
                 //存储数据到中台
                 analysisDeliveryDetail(gyyDeliveryDetailEntity);
                 XxlJobHelper.log("pgsql数据处理完成 gyyDeliveryDetailEntity.size={} ", JSONUtil.toJsonStr(gyyDeliveryDetailEntity));
@@ -123,14 +119,14 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                 dmpErrorLogEntity.setParams(JSONUtil.toJsonStr(dto));
                 XxlJobHelper.log("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
-                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e.getMessage());
+                log.error("==== 管易云修改mongodb订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyDeliveryDetailEntity.getPlatformCode(), e);
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史出库详情失败，[ 订单号 = " + gyyDeliveryDetailEntity.getCode() + "], 错误信息 = " + e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 new ServiceException(500, StrUtil.format("保存管易数据异常gyyDeliveryDetailEntity ={} e ={}", JSONUtil.toJsonStr(gyyDeliveryDetailEntity), e.getMessage()));
             }
-        });
+        }
     }
 
     @Override
@@ -224,9 +220,9 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setParams(jsonData);
                 dmpErrorLogEntity.setErrorMsg(e.getMessage());
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getMessage()));
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace().toString()));
             }
             pageIndex++;
         }
@@ -417,7 +413,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
             dmpReturnOrderItemEntity.setSellPrice(itemEntity.getPrice());
 
             //商品数量
-            dmpReturnOrderItemEntity.setQuantity(Double.valueOf(itemEntity.getQty()).intValue());
+            dmpReturnOrderItemEntity.setQuantity(itemEntity.getQty().intValue());
 
             //商品总价
             dmpReturnOrderItemEntity.setAmount(itemEntity.getAmount());

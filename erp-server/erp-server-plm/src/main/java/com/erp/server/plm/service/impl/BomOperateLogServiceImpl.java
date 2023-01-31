@@ -1,15 +1,23 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.entity.BomOperateLogEntity;
 import com.erp.model.plm.vo.BomOperateVO;
 import com.erp.server.plm.enums.BomOperationTypeEnum;
 import com.erp.server.plm.mapper.BomOperateLogMapper;
 import com.erp.server.plm.service.BomOperateLogService;
+import com.erp.server.plm.service.CommonService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -21,6 +29,9 @@ import java.util.List;
 @Service
 public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, BomOperateLogEntity> implements BomOperateLogService {
 
+
+    @Resource
+    private CommonService commonService;
 
     /**
      * 保存 bom 的操作记录
@@ -59,6 +70,25 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
             item.setTypeName(typeName);
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<List<BomOperateVO>> paging(PagingDTO<BaseIdDTO> dto) {
+        BaseIdDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params.getId());
+        List<FindUserDTO> userList = commonService.getAllUser();
+        List<BomOperateVO> resultList = pageData.getRecords();
+        for (BomOperateVO item : resultList) {
+            String type = item.getType();
+            String typeName = BomOperationTypeEnum.getName(type);
+            item.setTypeName(typeName);
+            FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
+            if (findUserDTO != null) {
+                item.setCreateUserName(findUserDTO.getUserName());
+            }
+        }
+        return new PagingVO(pageData);
     }
 
 

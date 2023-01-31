@@ -5,12 +5,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
+import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +27,9 @@ import java.util.stream.Collectors;
 @Service
 public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity> implements BomSkuService {
 
+
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 保存bom 与sku 关系
@@ -61,9 +67,20 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         List<BomSkuDTO> treeList = bomSkuList.stream().
                 filter(b -> "0".equals(b.getParentSkuNo())).
                 map(item -> {
-                    item.setChildren(getChildren(item, bomSkuList));
+                    item.setLevel(1);
+                    item.setChildren(getChildren(item, bomSkuList, 1));
                     return item;
                 }).collect(Collectors.toList());
+        List<String> skuIdList = bomSkuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(skuIdList);
+        for (BomSkuDTO item : bomSkuList) {
+            String skuId = item.getSkuId();
+            SkuVO sku = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(null);
+            if(sku!=null){
+                item.setProductId(sku.getProductId());
+            }
+        }
         return treeList;
     }
 
@@ -117,10 +134,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
      * @author yl
      * @date 2023-01-11 17:11
      */
-    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList) {
+    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList, Integer level) {
         List<BomSkuDTO> collect = bomSkuList.stream().filter(bom -> item.getSkuNo().equals(bom.getParentSkuNo())).
                 map(b -> {
-                    b.setChildren(getChildren(b, bomSkuList));
+                    b.setLevel(level + 1);
+                    b.setChildren(getChildren(b, bomSkuList, level + 1));
+
                     return b;
                 }).collect(Collectors.toList());
 
@@ -160,6 +179,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         bomRefSku.setParentSkuNo(parentSkuNo);
         bomRefSku.setQuantity(item.getQuantity());
         bomRefSku.setSkuNo(item.getSkuNo());
+        bomRefSku.setSkuId(item.getSkuId());
         saveBatchList.add(bomRefSku);
         List<BomSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {

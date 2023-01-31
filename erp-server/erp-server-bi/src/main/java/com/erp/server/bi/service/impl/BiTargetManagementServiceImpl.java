@@ -63,6 +63,7 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
     @Override
     public BiTargetManagementEntity getTargetByExcelData(BiTargetManagementEntity entity) {
         LambdaQueryWrapper<BiTargetManagementEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(BiTargetManagementEntity::getYear,entity.getYear());
         queryWrapper.eq(BiTargetManagementEntity::getPlatformName,entity.getPlatformName());
         queryWrapper.eq(BiTargetManagementEntity::getCategoryId,entity.getCategoryId());
         queryWrapper.eq(BiTargetManagementEntity::getTargetType,entity.getTargetType());

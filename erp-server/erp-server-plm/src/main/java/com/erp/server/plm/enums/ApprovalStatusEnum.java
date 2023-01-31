@@ -21,8 +21,8 @@ public enum ApprovalStatusEnum implements EnumMessage {
     private String name;
 
 
-    ApprovalStatusEnum(Integer colourState, String name) {
-        this.code = colourState;
+    ApprovalStatusEnum(Integer code, String name) {
+        this.code = code;
         this.name = name;
     }
 

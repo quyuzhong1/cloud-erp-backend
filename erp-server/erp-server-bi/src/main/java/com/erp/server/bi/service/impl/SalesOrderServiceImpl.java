@@ -11,7 +11,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
@@ -255,7 +254,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 collect(Collectors.groupingBy(SalesByCountryVO::getSku));
 
         //列名
-        List<XAxesVO> columnList = new ArrayList<>(countryMap.size() + 1);
+        List<XAxesVO> columnList = new LinkedList<>();
         XAxesVO shopAxes = new XAxesVO();
         shopAxes.setProp("sku");
         shopAxes.setLabel("SKU");
@@ -268,7 +267,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         columnList.add(productNameAxes);
 
         //国家
-        List<String> countryList = new ArrayList<>(countryMap.size());
+        List<String> countryList = new LinkedList<>();
         for (Map.Entry<String, List<SalesByCountryVO>> item : countryMap.entrySet()) {
             String country = item.getKey();
             countryList.add(country);
@@ -278,14 +277,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             columnList.add(axes);
         }
         //sku
-        List<String> skuList = new ArrayList<>(skuMap.size());
+        List<String> skuList = new LinkedList<>();
         for (Map.Entry<String, List<SalesByCountryVO>> item : skuMap.entrySet()) {
             skuList.add(item.getKey());
         }
-        List<Map<String, Object>> rowAxesList = new ArrayList<>(skuMap.size());
+        List<Map<String, Object>> rowAxesList = new LinkedList<>();
 
         for (String sku : skuList) {
-            Map<String, Object> rowMap = new HashMap<>();
+            Map<String, Object> rowMap = new LinkedHashMap<>();
             rowMap.put("sku", sku);
             for (String country : countryList) {
                 String productName = "";
@@ -300,8 +299,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 } else {
                     rowMap.put(country, BigDecimal.ZERO);
                 }
-                rowAxesList.add(rowMap);
             }
+            rowAxesList.add(rowMap);
         }
         result.setColumnList(columnList);
         result.setRowList(rowAxesList);
@@ -543,7 +542,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 collect(Collectors.groupingBy(ShopSalesVO::getPlatformName));
         int countryMapSize = groupCountryMap.size();
         //列名
-        List<XAxesVO> columnList = new ArrayList<>(countryMapSize + 1);
+        List<XAxesVO> columnList = new LinkedList<>();
         XAxesVO shopAxes = new XAxesVO();
         shopAxes.setProp("name");
         shopAxes.setLabel("店铺名称");
@@ -558,10 +557,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             countryNameList.add(country);
         }
 
-        List<Map<String, Object>> rowAxesList = new ArrayList<>(groupShopMap.size());
+        List<Map<String, Object>> rowAxesList = new LinkedList<>();
 
         for (Map.Entry<String, List<ShopSalesVO>> item : groupShopMap.entrySet()) {
-            Map<String, Object> rowAxes = new HashMap<>();
+            Map<String, Object> rowAxes = new LinkedHashMap<>();
             List<ShopSalesVO> shopSalesList = item.getValue();
             String shopName = shopSalesList.get(0).getShopName();
             rowAxes.put("name", shopName);
@@ -925,9 +924,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         Map<String, List<ShopSalesVO>> groupMap = shopSalesList.parallelStream().
                 collect(Collectors.groupingBy(ShopSalesVO::getShopNo));
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
         for (Map.Entry<String, List<ShopSalesVO>> item : groupMap.entrySet()) {
             ShopNewAndOldSalesVO vo = new ShopNewAndOldSalesVO();
             List<ShopSalesVO> salesList = item.getValue();
@@ -1573,9 +1572,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             settleRate = SettleMethodEnum.CNY_SETTLE.getField();
         }
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
 
         List<SalesFlagVO> list = baseMapper.byPlatformNewAndOld(dto, settleRate);
 
@@ -1693,9 +1692,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     @Override
     public List<ProductNewAndOldVO> byCategoryNewAndOld(BiFilterDTO dto) {
         //新品
-        Integer newFlag = IsDeleted.YES;
+        Integer newFlag = BiConstant.NEW;
         //老品
-        Integer oldFlag = IsDeleted.NO;
+        Integer oldFlag = BiConstant.OLD;
 
 
         //获取到结算汇率

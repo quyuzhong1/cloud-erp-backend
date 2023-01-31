@@ -1,20 +1,24 @@
 package com.erp.server.auth.controller.api;
 
 
-
 import com.common.core.constant.TokenConstants;
 import com.common.core.utils.IpUtils;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.AccountLoginDTO;
 import com.erp.common.modules.sys.dto.SysLoginIpDTO;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.modules.sys.dto.SysUserThirdDTO;
 import com.erp.common.modules.sys.vo.SysLoginUserVO;
+import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.Objects;
 
 
 /**
@@ -59,7 +64,7 @@ public class SysLoginAuthController extends BaseController {
             sysUserFeign.setLoginIp(ipDTO);
             //创建token
             String accessToken = authTokenService.createToken(info);
-            SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
+            SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
             sysLoginUserVO.setAccessToken(accessToken);
             sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
             sysLoginUserVO.setPermissionList(info.getPermissionList());
@@ -92,7 +97,7 @@ public class SysLoginAuthController extends BaseController {
             sysUserFeign.setLoginIp(ipDTO);
             //创建token
             String accessToken = authTokenService.createToken(info);
-            SysLoginUserVO sysLoginUserVO=new SysLoginUserVO();
+            SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
             sysLoginUserVO.setAccessToken(accessToken);
             sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
             sysLoginUserVO.setPermissionList(info.getPermissionList());
@@ -106,8 +111,6 @@ public class SysLoginAuthController extends BaseController {
     }
 
 
-
-
     //退出登录
     @RequestMapping("/logout")
     public ApiResult Logout(HttpServletRequest request) {
@@ -116,5 +119,36 @@ public class SysLoginAuthController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 根据token 获取 用户信息
+     *
+     * @return com.erp.common.dto.base.ApiResult<com.erp.common.modules.sys.vo.SysLoginUserVO>
+     * @author yl
+     * @date 2023-01-14 9:21
+     */
+    @GetMapping("/getUserByToken")
+    public ApiResult<SysLoginUserVO> getByToken( HttpServletRequest request) {
+        String token= request.getHeader(TokenConstants.AUTHENTICATION);
+        if(StringUtils.isBlank(token)){
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+        SysLoginUserVO result = new SysLoginUserVO();
+        LoginUser loginUser = authTokenService.getLoginUser(token);
+        if (Objects.isNull(loginUser)) {
+            throw new ServiceException(ApiError.ERROR_403);
+        }
+        SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
+        result.setAccessToken(token);
+        result.setOverallMenuList(sysUser.getOverallMenuList());
+        result.setPermissionList(sysUser.getPermissionList());
+        result.setUserName(sysUser.getUserName());
+        result.setLeftMenuList(sysUser.getLeftMenuList());
+        result.setHeadIcon(sysUser.getHeadIcon());
+        result.setBindingPlatform(sysUser.getBindingPlatform());
+        result.setBindingState(sysUser.getBindingState());
+
+        return success(result);
+    }
 
 }

@@ -24,12 +24,24 @@ public class BomSkuDTO implements Serializable {
     /**
      * 父级 sku
      */
-    private String parentSkuNo="0";
+    private String parentSkuNo = "0";
     /**
      * sku
      */
     @NotBlank(message = "sku不能为空")
     private String skuNo;
+
+
+    private String skuId;
+
+
+    private String productId;
+
+    /**
+     * 层级
+     */
+    private Integer level;
+
 
     /**
      * 数量

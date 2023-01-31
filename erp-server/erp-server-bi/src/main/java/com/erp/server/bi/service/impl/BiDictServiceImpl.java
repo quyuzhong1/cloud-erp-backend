@@ -139,6 +139,13 @@ public class BiDictServiceImpl extends ServiceImpl<BiDictMapper, BiDictEntity> i
     }
 
     @Override
+    public BiDictEntity getByTypeName(String type, String name) {
+        return lambdaQuery().eq(BiDictEntity::getType, type)
+                .eq(BiDictEntity::getName, name)
+                .oneOpt().orElse(null);
+    }
+
+    @Override
     public Map<String, BiDictEntity> listByValues(List<String> dictValues) {
         if (CollectionUtils.isEmpty(dictValues)) {
             return new HashMap<>(0);

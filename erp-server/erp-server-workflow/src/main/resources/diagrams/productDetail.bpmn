@@ -13,22 +13,28 @@
     <bpmn:sequenceFlow id="Flow_1ryvlj0" sourceRef="Activity_0irqou7" targetRef="Activity_0f186mw" />
     <bpmn:userTask id="Activity_0vhwatd" name="第三审核人" camunda:assignee="${thirdApproveId}">
       <bpmn:incoming>Flow_0c5f0i4</bpmn:incoming>
-      <bpmn:outgoing>Flow_0wlwtr4</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0dihihh</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics camunda:collection="thirdApproveIdList" camunda:elementVariable="thirdApproveId" />
     </bpmn:userTask>
     <bpmn:endEvent id="Event_1ca8q09" name="结束">
       <bpmn:extensionElements>
         <camunda:executionListener class="com.erp.server.workflow.listeners.ProductDetailResultListener" event="end" />
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0wlwtr4</bpmn:incoming>
+      <bpmn:incoming>Flow_0bu2fj6</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0wlwtr4" sourceRef="Activity_0vhwatd" targetRef="Event_1ca8q09" />
     <bpmn:userTask id="Activity_0f186mw" name="第二审核人" camunda:assignee="${secondApproveId}">
       <bpmn:incoming>Flow_1ryvlj0</bpmn:incoming>
       <bpmn:outgoing>Flow_0c5f0i4</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics camunda:collection="secondApproveIdList" camunda:elementVariable="secondApproveId" />
     </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_0c5f0i4" sourceRef="Activity_0f186mw" targetRef="Activity_0vhwatd" />
+    <bpmn:sequenceFlow id="Flow_0dihihh" sourceRef="Activity_0vhwatd" targetRef="Activity_0eh2d5o" />
+    <bpmn:sequenceFlow id="Flow_0bu2fj6" sourceRef="Activity_0eh2d5o" targetRef="Event_1ca8q09" />
+    <bpmn:userTask id="Activity_0eh2d5o" name="第四审核人" camunda:assignee="${fourthApproveId}">
+      <bpmn:incoming>Flow_0dihihh</bpmn:incoming>
+      <bpmn:outgoing>Flow_0bu2fj6</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="fourthApproveIdList" camunda:elementVariable="fourthApproveId" />
+    </bpmn:userTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_product_detail">
@@ -42,19 +48,22 @@
         <dc:Bounds x="270" y="77" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0axo8xd" bpmnElement="Activity_0f186mw">
-        <dc:Bounds x="450" y="77" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_0v54a5o" bpmnElement="Activity_0vhwatd">
         <dc:Bounds x="620" y="77" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0axo8xd" bpmnElement="Activity_0f186mw">
+        <dc:Bounds x="450" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1ca8q09_di" bpmnElement="Event_1ca8q09">
-        <dc:Bounds x="792" y="99" width="36" height="36" />
+        <dc:Bounds x="962" y="99" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="799" y="142" width="22" height="14" />
+          <dc:Bounds x="969" y="142" width="22" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_031g0pb_di" bpmnElement="Activity_0eh2d5o">
+        <dc:Bounds x="800" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1l4l6h4_di" bpmnElement="Flow_1l4l6h4">
         <di:waypoint x="215" y="117" />
@@ -68,9 +77,13 @@
         <di:waypoint x="550" y="117" />
         <di:waypoint x="620" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0wlwtr4_di" bpmnElement="Flow_0wlwtr4">
+      <bpmndi:BPMNEdge id="Flow_0dihihh_di" bpmnElement="Flow_0dihihh">
         <di:waypoint x="720" y="117" />
-        <di:waypoint x="792" y="117" />
+        <di:waypoint x="800" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bu2fj6_di" bpmnElement="Flow_0bu2fj6">
+        <di:waypoint x="900" y="117" />
+        <di:waypoint x="962" y="117" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

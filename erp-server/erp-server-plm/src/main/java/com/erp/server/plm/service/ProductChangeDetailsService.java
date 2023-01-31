@@ -13,5 +13,7 @@ import com.erp.model.plm.entity.ProductChangeDetailsEntity;
 public interface ProductChangeDetailsService  extends IService<ProductChangeDetailsEntity> {
 
 
+    void saveChangeDetails(String id, String detailsJson);
 
+    String getDetailsJson(String changeId);
 }

@@ -94,24 +94,6 @@ public class ProjectTaskSysEntity implements Serializable {
     private Integer isFixed;
 
     /**
-     * 审核人id（存在逐级会签审核，后续加公共审核模块后可用审核人表） 先以|分隔，再以,分割
-     */
-    @TableField("approval_user_id")
-    private String approvalUserId;
-
-    /**
-     * 审核角色id （存在逐级会签审核，后续加公共审核模块后可用审核人表） 先以|分隔，再以,分割
-     */
-    @TableField("approval_role_id")
-    private String approvalRoleId;
-
-    /**
-     * 审核分配类型（0角色，1人员，2上级人员负责人）
-     */
-    @TableField("approval_distribution_type")
-    private Integer approvalDistributionType;
-
-    /**
      * 任务描述
      */
     @TableField("description")

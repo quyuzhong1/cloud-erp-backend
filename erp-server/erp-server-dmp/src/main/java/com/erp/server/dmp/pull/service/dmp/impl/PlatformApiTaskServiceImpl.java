@@ -27,6 +27,9 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
         Integer interval = jobTaskDTO.getIntervalTime();
         LocalDateTime lastTime = jobTaskDTO.getLastTime();
         LocalDateTime nextTime = lastTime.plusSeconds(interval);
+        if (nextTime.isAfter(LocalDateTime.now())){
+            nextTime = LocalDateTime.now();
+        }
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);

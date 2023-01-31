@@ -1,9 +1,9 @@
 package com.erp.server.dmp.pull.service.mabang;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.BigDecimalUtil;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -25,7 +25,6 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,10 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -131,7 +133,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb订单数据失败，[ 订单号 = " + orderEntity.getPlatformOrderId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -186,6 +188,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             Map<String, Object> paramsMap = new HashMap();
             paramsMap.put("updateTimeStart", st);
             paramsMap.put("updateTimeEnd", sd);
+//            paramsMap.put("paidtimeStart", "2022-10-01 00:00:00");
+//            paramsMap.put("paidtimeEnd", "2022-10-02 00:00:00");
             paramsMap.put("page", pageIndex);
             paramsMap.put("pageSize", pageSize);
             paramsMap.put("status",status);
@@ -216,7 +220,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
+                    log.info(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + System.currentTimeMillis() + "");
                     throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
@@ -232,7 +236,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====详情请看错误表");
@@ -439,7 +443,12 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
     public void analysisOrderItem(OrderEntity orderEntity, String orderId, String platformOrderId) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
-        for (OrderItemEntity orderItemBean : orderItems) {
+        // 运费
+        BigDecimal shippingFee = null != orderEntity.getShippingFee() ? orderEntity.getShippingFee() : BigDecimal.ZERO;
+        BigDecimal itemTotal = orderEntity.getItemTotal();
+        BigDecimal shareFeeAmount = BigDecimal.ZERO;
+        for (int i = 0; i < orderItems.size(); i++) {
+            OrderItemEntity orderItemBean = orderItems.get(i);
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
 
             //订单表id
@@ -516,7 +525,21 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
             } else {
                 dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
-            dmpOrderItemEntity.setAmountAfter(dmpOrderItemEntity.getSellPrice().multiply(new BigDecimal(dmpOrderItemEntity.getQuantity())));
+            BigDecimal sellPrice = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPrice()) ? dmpOrderItemEntity.getSellPrice() : BigDecimal.ZERO;
+            Integer quantity = null != dmpOrderItemEntity.getQuantity() ? dmpOrderItemEntity.getQuantity() : 0;
+            BigDecimal amountAfter = sellPrice.multiply(new BigDecimal(quantity));
+            // 运费分摊
+            // 最后一笔订单 分摊剩余运费
+            BigDecimal fee = BigDecimal.ZERO;
+            if(i == orderItems.size() - 1){
+                fee = shippingFee.subtract(shareFeeAmount);
+            }else if (BigDecimal.ZERO.compareTo(shippingFee) < 0 && BigDecimal.ZERO.compareTo(amountAfter) < 0 && BigDecimal.ZERO.compareTo(itemTotal) < 0){
+                // 其他订单按照订单金额比例分摊运费 保留4位小数向上取整
+                fee = shippingFee.multiply(amountAfter).divide(itemTotal, 4, BigDecimal.ROUND_DOWN);
+                shareFeeAmount = shareFeeAmount.add(fee);
+            }
+            dmpOrderItemEntity.setShippingFee(fee);
+            dmpOrderItemEntity.setAmountAfter(amountAfter.add(fee));
             orderItemList.add(dmpOrderItemEntity);
         }
         dmpOrderItemService.checkOrderItem(orderItemList);

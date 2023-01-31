@@ -18,7 +18,8 @@ public interface BiConstant {
     Integer OLD = 0;
 
 
-    String  HOMEMADE="自制";
 
-    String PURCHASE="外购";
+    String HOMEMADE = "自制";
+
+    String PURCHASE = "外购";
 }

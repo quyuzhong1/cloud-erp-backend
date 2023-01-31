@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.MabangAppEntity;
+import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -73,7 +74,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb店铺数据失败，[ 店铺名称 = " + shopEntity.getName() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 马帮修改mongodb店铺数据失败，[ 店铺名称 = " + shopEntity.getName() + "], 错误信息 = " + e.getMessage());
                             }
@@ -150,7 +151,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
                 dmpErrorLogEntity.setParams(jsonData);
                 dmpErrorLogEntity.setErrorMsg(e.getMessage());
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
             }
         }
@@ -164,9 +165,8 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisShop(ShopEntity shopEntity) throws Exception {
+    public void analysisShop(ShopEntity shopEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //平台店铺编号
         dmpShopInfoEntity.setPlarformShopNo(shopEntity.getId());
@@ -180,7 +180,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
         //店铺名称
         dmpShopInfoEntity.setName(shopEntity.getName());
 
-        //店铺站点
+        // 店铺站点
         if(StrUtil.isNotBlank(shopEntity.getAmazonsite())){
             dmpShopInfoEntity.setSite(shopEntity.getAmazonsite());
         }
@@ -191,13 +191,11 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
         //平台名称
         dmpShopInfoEntity.setPlatformName(shopEntity.getPlatformName());
 
-        //财务编码
+        // 财务编码
         dmpShopInfoEntity.setFinanceCode(shopEntity.getFinanceCode());
 
         //平台标识
         dmpShopInfoEntity.setPlatformSign("马帮");
-
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
 
         dmpShopInfoService.checkOrder(dmpShopInfoEntity);
     }

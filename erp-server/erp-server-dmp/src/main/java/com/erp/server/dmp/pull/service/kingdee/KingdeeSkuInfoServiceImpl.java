@@ -77,7 +77,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
                             }
@@ -194,7 +194,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams("");
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 dataSign = false;
@@ -230,7 +230,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         dmpSkuInfoEntity.setNameEn("");
 
         //统一成本价
-        dmpSkuInfoEntity.setDefaultCost(BigDecimal.valueOf(Double.valueOf(skuInfoEntity.getFPurPrice_CMK())));
+        dmpSkuInfoEntity.setDefaultCost(new BigDecimal(skuInfoEntity.getFPurPrice_CMK()));
 
         Integer status = 3;
         if (skuInfoEntity.getFForbidStatus().equals("C")) {
@@ -267,7 +267,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
         }
 
         //售价
-        dmpSkuInfoEntity.setSalePrice(BigDecimal.valueOf(Double.valueOf(skuInfoEntity.getFSalePrice_CMK())));
+        dmpSkuInfoEntity.setSalePrice(new BigDecimal(skuInfoEntity.getFSalePrice_CMK()));
 
         //申报价格
         dmpSkuInfoEntity.setDeclarePrice(BigDecimal.ZERO);

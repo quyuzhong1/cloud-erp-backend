@@ -53,6 +53,12 @@ public class BomSkuEntity implements Serializable {
      * sku
      */
     private String skuNo;
+
+
+    /**
+     * skuId
+     */
+    private String skuId;
     /**
      * bom 表id
      */

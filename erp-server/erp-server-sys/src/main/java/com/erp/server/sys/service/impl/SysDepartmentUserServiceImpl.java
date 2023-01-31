@@ -9,7 +9,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.sys.dto.*;
+import com.erp.model.sys.dto.BatchSysDepartUserDTO;
+import com.erp.model.sys.dto.DepartmentSearchDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
@@ -19,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -139,14 +141,18 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     }
 
     @Override
-    public List<SysDepartmentUserNumberDTO> listByDepartmentIds(List<String> departmentIdList) {
+    public List<SysDepartmentUserEntity> listByDepartmentIds(List<String> departmentIdList) {
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIdList);
-        List<SysDepartmentUserEntity> list = this.list(queryWrapper);
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
-        }
-        return BeanMapperUtils.copyList(SysDepartmentUserNumberDTO.class, list);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<SysDepartmentUserEntity> listSuperiorById(String id) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentUserEntity::getDepartmentId,id);
+        queryWrapper.eq(SysDepartmentUserEntity::getLeadState,1);
+        return this.list(queryWrapper);
     }
 
 

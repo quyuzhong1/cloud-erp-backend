@@ -301,10 +301,45 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuVO> getSkuBySkuNos(List<String> skuNoList);
 
+
+    /**
+     * 根据sku 编号 获取sku 信息以及对应的spu 信息
+     * @param skuIdList
+     * @return
+     */
+    List<SkuVO> getSkuBySkuIds(List<String> skuIdList);
+
     /**
      * 搜索sku 信息
      * @param searchKeyword
      * @return
      */
     List<SkuVO> searchSku(String searchKeyword);
+
+    /**
+     *  获取 审核通过 的sku 信息
+     * @param searchKeyword
+     * @return
+     */
+    List<BaseIdDTO> getSku(String searchKeyword);
+
+    /**
+     * 根据skuId 获取到sku 单位最小的信息 在bom 和变更那边会用到
+     * @author yl
+     * @date 2023-01-29 14:11
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductSmallestUnitDTO
+     */
+    ProductSmallestUnitDTO getSkuBySkuId(String skuId);
+
+    
+    /**
+     * 变更管理 审核通过后
+     * 变更sku
+     * @author yl
+     * @date 2023-01-30 17:10
+     * @param sku
+     * @return void
+     */
+    void changeSku(ProductSmallestUnitDTO sku);
 }

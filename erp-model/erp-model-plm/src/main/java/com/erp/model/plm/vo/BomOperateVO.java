@@ -26,6 +26,9 @@ public class BomOperateVO implements Serializable {
      */
     private String createUserId;
 
+
+    private String createUserName="";
+
     /**
      * 创建时间
      */

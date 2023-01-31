@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
@@ -8,6 +9,7 @@ import com.erp.server.plm.service.ProductBomSkuHistoryService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,14 +22,15 @@ import java.util.List;
 @Service
 public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHistoryMapper, ProductBomSkuHistoryEntity> implements ProductBomSkuHistoryService {
 
-    
+
     /**
      * 方法说明
-     * @author yl
-     * @date 2023-01-12 18:58
+     *
      * @param bomHistoryId
      * @param bomSkuList
      * @return void
+     * @author yl
+     * @date 2023-01-12 18:58
      */
     @Override
     public void saveBomSku(String bomHistoryId, List<BomSkuDTO> bomSkuList) {
@@ -38,7 +41,17 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
             }
             this.saveBatch(saveBatchList);
         }
-        
+
+    }
+
+    @Override
+    public List<ProductBomSkuHistoryEntity> getSkuByHistoryIds(List<String> bomHistoryIds) {
+        if (CollectionUtils.isNotEmpty(bomHistoryIds)) {
+            LambdaQueryWrapper<ProductBomSkuHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProductBomSkuHistoryEntity::getBomHistoryId, bomHistoryIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
     private void getSaveTree(String parentSkuNo, List<ProductBomSkuHistoryEntity> saveBatchList, BomSkuDTO item, String bomHistoryId) {

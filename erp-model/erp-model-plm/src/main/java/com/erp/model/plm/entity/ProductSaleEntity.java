@@ -1,11 +1,14 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -77,25 +80,25 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 图片是否完成 1.是 2.否
      */
-    @TableField(value = "is_finished_img", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "is_finished_img")
     private Integer isFinishedImg;
 
     /**
      * 视频是否完成 1.是 2.否
      */
-    @TableField(value = "is_finished_video", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "is_finished_video")
     private Integer isFinishedVideo;
 
     /**
      * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
      */
-    @TableField(value = "sale_state", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "sale_state")
     private Integer saleState;
 
     /**
      * 首季度目标销量
      */
-    @TableField(value = "target_sales_qty", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "target_sales_qty")
     private BigDecimal targetSalesQty;
 
     /**
@@ -107,7 +110,7 @@ public class ProductSaleEntity implements Serializable {
     /**
      * 是否可销售(0否，1是)
      */
-    @TableField(value = "is_marketable", fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "is_marketable",update = "0")
     private Integer isMarketable;
 
     /**

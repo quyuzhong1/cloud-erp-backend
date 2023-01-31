@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -18,7 +17,6 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
-import com.erp.model.sys.dto.UserDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ProjectTemplateShowTypeEnum;
@@ -168,23 +166,6 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
     }
 
     @Override
-    public List<UserDTO> listSuperior(String id, Integer type) {
-        List<UserDTO> userList = new ArrayList<>();
-        //根据模板角色id查询角色名称
-        if (MathUtil.ZERO.equals(type)) {
-            TemplateRoleEntity templateRoleEntity = templateRoleService.getById(id);
-            if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
-                //负责人类型为角色
-                userList = sysUserFeign.listSuperiorByRoleName(templateRoleEntity.getName());
-            }
-        } else if (MathUtil.ONE.equals(type)) {
-            //负责人类型为人员
-           userList = sysUserFeign.listSuperiorByUserId(id);
-        }
-        return userList;
-    }
-
-    @Override
     public List<SysRoleDTO> listTemplateRole(String templateId) {
         List<TemplateRoleEntity> list = templateRoleService.getByTemplateId(templateId);
         List<SysRoleDTO> resultList = new ArrayList<>();
@@ -195,6 +176,14 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             resultList.add(new SysRoleDTO().setId(obj.getId()).setRoleName(obj.getName()));
         });
         return resultList;
+    }
+
+    @Override
+    public ProjectTemplateEntity getByType(Integer type) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType,type);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 
     /**

@@ -29,8 +29,7 @@ public class PullMabangDateThread {
         try {
             modelService.pullDataSave(dto);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.info(" ===== 马帮拉取数据错误 ===== { " + e.getMessage() + " }");
+            log.error(" ===== 马帮拉取数据错误 ===== ", e);
             return;
         }
         // 修改任务信息

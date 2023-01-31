@@ -94,13 +94,11 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/dept/getDeptList")
     List<SysDepartmentDTO> getDeptList();
 
+    @PostMapping("sys/feign/user/getSysUserById")
+    SysUserDTO getSysUserById(@RequestBody String uid);
     //根据用户id查询所有上级用户
-    @PostMapping("sys/feign/user/listSuperiorByUserId")
-    List<UserDTO> listSuperiorByUserId(@RequestBody String userId);
-
-    //根据角色名称查询所有上级用户
-    @PostMapping("sys/feign/user/listSuperiorByRoleName")
-    List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName);
+    @PostMapping("sys/feign/user/listSuperiorByUserIds")
+    List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
 
     //根据角色id查用户名称
     @PostMapping("sys/feign/user/listRoleByIds")
@@ -109,4 +107,8 @@ public interface SysUserFeign {
     //根据用户ids查询角色
     @PostMapping("sys/feign/user/listRoleByUserIds")
     List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
+
+    //根据部门名称查询部门负责人
+    @PostMapping("sys/feign/dept/getByDeptNames")
+    List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
 }

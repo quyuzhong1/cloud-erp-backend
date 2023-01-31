@@ -7,10 +7,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysRoleDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
-import com.erp.model.sys.dto.UserDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.service.*;
@@ -212,24 +209,12 @@ public class SysUserFeignController extends BaseController {
      * @description: 根据用户id查询所有上级用户
      * @author Will
      * @date: 2023/1/9 10:24
-     * @param userId
+     * @param userIds
      * @return List<UserDTO>
      */
-    @PostMapping("/listSuperiorByUserId")
-    public List<UserDTO> listSuperiorByUserId(@RequestBody String userId) {
-        return sysUserInfoService.listSuperiorByUserId(userId);
-    }
-
-    /**
-     * @description: 根据角色id查询所有上级用户
-     * @author Will
-     * @date: 2023/1/9 10:37
-     * @param roleName
-     * @return List<UserDTO>
-     */
-    @PostMapping("/listSuperiorByRoleName")
-    public List<UserDTO> listSuperiorByRoleName(@RequestBody String roleName) {
-        return sysUserInfoService.listSuperiorByRoleName(roleName);
+    @PostMapping("/listSuperiorByUserIds")
+    public List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds) {
+        return sysUserInfoService.listSuperiorByUserIds(userIds);
     }
 
     /**
@@ -254,5 +239,11 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/listRoleByUserIds")
     public List<SysRoleDTO> listRoleByUserIds(@RequestBody List<String> userIds) {
         return sysRoleService.listRoleByUserIds(userIds);
+    }
+
+
+    @PostMapping("/getSysUserById")
+    public SysUserDTO getSysUserById(@RequestBody String userId) {
+        return sysUserInfoService.getSysUserById(userId);
     }
 }

@@ -120,14 +120,14 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
             List<GyyOrderEntity> mongoData = null;
             try {
                 mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (GyyOrderEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrderEntity), MapUtil.class);
-                            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
-                        }
+                if (CollectionUtil.isNotEmpty(mongoData)) {
+                    GyyOrderEntity mongoDatum = mongoData.get(0);
+                    if (!mongoDatum.toString().equals(gyyOrderEntity.toString())) {
+                        // 根据id 修改数据
+                        OrderMongoDTO updateMongoDTO = new OrderMongoDTO();
+                        updateMongoDTO.setId(mongoDatum.get_id());
+                        MapUtil mapUtil = JSONUtil.toBean(JSONUtil.toJsonStr(gyyOrderEntity), MapUtil.class);
+                        mongoService.updateMongoData(updateMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
                     }
                 } else {
                     mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
@@ -141,7 +141,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
                 XxlJobHelper.log("==== 管易云修改mongodb历史订单数据失败，[ 订单号 = {}  ] 错误信息 ={}", gyyOrderEntity.getPlatformCode(), e.getMessage());
                 dmpErrorLogEntity.setReturnMsg("");
-                dmpErrorLogEntity.setCreateTime(new Date());
+                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
                 throw new RuntimeException("==== 管易云修改mongodb订单数据失败，[ 订单号 = " + gyyOrderEntity.getPlatformCode() + "], 错误信息 = " + e.getMessage());
             }
@@ -245,7 +245,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 throw new ServiceException(500, StrUtil.format("请求管易历史订单接口异常 url =  {}  param = {}",UrlContant.GYY_HOST, jsonData));

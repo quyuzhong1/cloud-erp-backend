@@ -12,6 +12,7 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.GyyAppEntity;
+import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -94,7 +95,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
                                 dmpErrorLogEntity.setParams("");
                                 dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb店铺数据失败，[ 店铺编号 = " + gyyShopInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                                 dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(new Date());
+                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                                 dmpErrorLogService.add(dmpErrorLogEntity);
                                 throw new RuntimeException("==== 管易云修改mongodb店铺数据失败，[ 店铺编号 = " + gyyShopInfoEntity.getCode() + "], 错误信息 = " + e.getMessage());
                             }
@@ -181,7 +182,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
                     dmpErrorLogEntity.setParams(jsonData);
                     dmpErrorLogEntity.setErrorMsg(e.getMessage());
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(new Date());
+                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
                 }
                 break;
@@ -200,7 +201,6 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
      **/
     public void analysisShop(GyyShopInfoEntity shopInfoEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //平台店铺编号
         dmpShopInfoEntity.setPlarformShopNo(shopInfoEntity.getCode());
@@ -228,8 +228,6 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
 
         //平台标识
         dmpShopInfoEntity.setPlatformSign("管易云");
-
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
 
         dmpShopInfoService.checkOrder(dmpShopInfoEntity);
     }

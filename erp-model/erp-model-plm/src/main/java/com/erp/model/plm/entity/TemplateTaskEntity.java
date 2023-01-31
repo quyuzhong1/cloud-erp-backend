@@ -56,24 +56,6 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("plan_start_time")
     private Date planStartTime;
 
-    /**·
-     * 审核人id 多个以逗号分割
-     */
-    @TableField("approval_user_id")
-    private String approvalUserId;
-
-    /**
-     * 审核角色id 多个以逗号分割
-     */
-    @TableField("approval_role_id")
-    private String approvalRoleId;
-
-    /**
-     * 审核分配类型（0角色，1人员，2上级人员负责人）
-     */
-    @TableField("approval_distribution_type")
-    private Integer approvalDistributionType;
-
     /**
      * j计划结束时间
      */

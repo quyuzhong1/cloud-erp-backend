@@ -2,15 +2,20 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.AddBomDTO;
 import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.BomSearchPagingDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
+import com.erp.model.plm.vo.BomVO;
+import com.erp.server.plm.controller.AuditParamDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -24,13 +29,45 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean insert(AddBomDTO dto);
 
-    PagingVO<List<BomPagingVO>> paging(PagingDTO<BomSearchPagingDTO> dto);
+    PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
 
-    BomDTO getBomDetails(String id);
+    BomDTO getBomDetails(String bomId);
 
     Boolean edit(UpdateBomDTO dto);
 
-    Boolean deleteById(String id);
+    Boolean deleteById(String bomId);
 
-    boolean submitAudit(String id);
+    Boolean submitAudit(String bomId);
+
+    Boolean restartAudit(String bomId);
+
+    Boolean freeze(String bomId);
+
+    Boolean defrost(String bomId);
+
+    Boolean scrap(String bomId);
+
+    Boolean recover(String id);
+
+    Boolean startChange(UpdateBomDTO dto);
+
+    List<BomVO> getByIds(List<String> bomIdList);
+
+    List<BaseIdDTO> getBomInfo(String  searchKeyword);
+
+    Boolean removeArchive(String id);
+
+    void checkIfChange(String sourceId);
+
+    void updateState(String sourceId, Integer state);
+
+    void exportExcel(SearchPagingDTO dto, HttpServletResponse response);
+
+    void approvalNoPass(AuditParamDTO dto);
+
+    void approvalPass(AuditParamDTO dto);
+
+    void bomProcessPass(ProcessPassDTO dto);
+
+    void changeBom(BomDTO bom);
 }

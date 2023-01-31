@@ -1,10 +1,8 @@
 package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
-import com.erp.model.workflow.dto.ApproveProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
-import com.erp.model.workflow.dto.TaskShowDTO;
+import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +49,13 @@ public class ProcessFeignController extends BaseController {
         return list;
     }
 
+    //根据人员查看任务
+    @PostMapping("/getMyToDoTasks")
+    public List<MyToDoTaskVO> getMyToDoTasks(String userId) {
+        List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(userId);
+        return list;
+    }
+
     //审核通过任务
     @PostMapping("/taskPass")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
@@ -83,4 +88,10 @@ public class ProcessFeignController extends BaseController {
         return list;
     }
 
+    //查看流程审批情况
+    @PostMapping("/getHistoryTaskByProcessId")
+    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId) {
+        List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
+        return resultList;
+    }
 }

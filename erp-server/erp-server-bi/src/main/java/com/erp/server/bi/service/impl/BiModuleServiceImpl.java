@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.BaseStateConstants;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
@@ -20,7 +21,6 @@ import com.erp.model.bi.dto.ModulePagingDTO;
 import com.erp.model.bi.entity.BiLayoutRefModuleEntity;
 import com.erp.model.bi.entity.BiModuleEntity;
 import com.erp.model.bi.vo.LayoutVO;
-import com.erp.server.bi.constant.IsDeleted;
 import com.erp.server.bi.enums.DictEnum;
 import com.erp.server.bi.mapper.BiModuleMapper;
 import com.erp.server.bi.service.*;
@@ -85,7 +85,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         params.setParam(dto.getParam());
         IPage pageData = baseMapper.paging(query, params);
         List<ModulePagingDTO> list = pageData.getRecords();
-        if(CollectionUtils.isNotEmpty(list)){
+        if (CollectionUtils.isNotEmpty(list)) {
             List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
             List<String> layoutIdList = layoutList.stream().map(LayoutVO::getLayoutId).collect(Collectors.toList());
             List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
@@ -105,7 +105,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 item.setUsageCount((int) usageCount);
             }
         }
-
 
 
         return new PagingVO(pageData);
@@ -128,9 +127,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         Boolean stateFlag = dto.getState();
         if (stateFlag) {
-            entity.setState(IsDeleted.YES);
+            entity.setState(BaseStateConstants.OPEN_STATE);
         } else {
-            entity.setState(IsDeleted.NO);
+            entity.setState(BaseStateConstants.CLOSE_STATE);
         }
         return this.updateById(entity);
     }
@@ -210,6 +209,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         checkName(null, name);
         String sysModuleId = biModule.getSysModuleId();
         Object imageObject = biModule.getImageFile();
+        String moduleName = biModule.getName();
+        if (moduleName.length() > 30) {
+            throw new ServiceException(ApiError.ERROR_97026);
+        }
+        String remark = biModule.getRemark();
+        if (remark.length() > 200) {
+            throw new ServiceException(ApiError.ERROR_97027);
+        }
         String fileUrl = "";
         if (imageObject != null && !imageObject.equals("null")) {
             MultipartFile imageFile = (MultipartFile) imageObject;
@@ -233,7 +240,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         boolean flag = this.save(module);
         if (flag) {
             //修改系统模块的状态
-            sysModuleService.updateAddState(sysModuleId, IsDeleted.YES);
+            sysModuleService.updateAddState(sysModuleId, BaseStateConstants.OPEN_STATE);
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);
             }
@@ -293,6 +300,14 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             throw new ServiceException(ApiError.ERROR_97004);
         }
         String name = biModule.getName();
+        if (name.length() > 30) {
+            throw new ServiceException(ApiError.ERROR_97026);
+        }
+        String remark = biModule.getRemark();
+        if (remark.length() > 200) {
+            throw new ServiceException(ApiError.ERROR_97027);
+        }
+
         checkName(biModule.getId(), name);
         Boolean uploadFlag = biModule.getUploadFlag();
         Object imageObject = biModule.getImageFile();
@@ -324,8 +339,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
              * 那么原来的
              */
             if (!sysModuleId.equals(dbSysModuleId)) {
-                sysModuleService.updateAddState(sysModuleId, IsDeleted.YES);
-                sysModuleService.updateAddState(dbSysModuleId, IsDeleted.NO);
+                sysModuleService.updateAddState(sysModuleId, BaseStateConstants.OPEN_STATE);
+                sysModuleService.updateAddState(dbSysModuleId, BaseStateConstants.CLOSE_STATE);
             }
             if (CollectionUtils.isNotEmpty(permissionUserIdList)) {
                 modulePermissionService.addModulePermission(module.getId(), permissionUserIdList);

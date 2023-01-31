@@ -56,7 +56,7 @@ public class BiSubjectRefLayoutEntity implements Serializable {
      */
 
     @TableLogic
-    private Integer isDeleted=0;
+    private Boolean isDeleted=false;
 
 
 

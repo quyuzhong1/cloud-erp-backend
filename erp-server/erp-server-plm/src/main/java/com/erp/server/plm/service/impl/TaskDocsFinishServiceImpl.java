@@ -5,15 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.BusinessProcessEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.SysLogEntity;
-import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -76,6 +74,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     
     @Autowired
     private SysLogService sysLogService;
+
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
 
     /**
      * 根据任务id 集合获取对应数据
@@ -342,14 +343,17 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         BusinessProcessEntity businessProcess ;
         //这里需要启动一个变更流程,如果是评审任务则调用文档变更流程，一般任务采用原有流程
         if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
-            String approvalUserId = taskEntity.getApprovalUserId();
-            if (StringUtils.isEmpty(approvalUserId)) {
+            //查询任务下审核人
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, taskEntity.getId());
+            if (CollectionUtils.isEmpty(taskChargeDistributionList)) {
                 throw new ServiceException(ApiError.ERROR_95045);
             }
-            List<String> approvalUserIdList = Arrays.stream(approvalUserId.split("|")).collect(Collectors.toList());
-            for (String userIds:approvalUserIdList) {
-                List<String> userIdList = Arrays.stream(userIds.split(",")).collect(Collectors.toList());
-                membersIds.add(userIdList);
+            for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                String chargeIds = taskChargeDistributionEntity.getChargeIds();
+                if (StringUtils.isNotBlank(chargeIds)) {
+                    List<String> userIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                    membersIds.add(userIdList);
+                }
             }
             businessProcess = businessProcessService.getById(taskEntity.getBusinessProcessId());
         } else {

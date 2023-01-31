@@ -283,6 +283,16 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         return this.list(queryWrapper);
     }
 
+    @Override
+    public List<TemplateMembersEntity> listByRoleIds(List<String> roleIds,String templateId) {
+        List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdsAndTemplateId(roleIds, templateId);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> membersIds = list.stream().map(TemplateRoleRefMembersEntity::getMembersId).collect(Collectors.toList());
+        return this.listByIds(membersIds);
+    }
+
     /**
      * @description: 根据id和模板id修改
      * @author Will

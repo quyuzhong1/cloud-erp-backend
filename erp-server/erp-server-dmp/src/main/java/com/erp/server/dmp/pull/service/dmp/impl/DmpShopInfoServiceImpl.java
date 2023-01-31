@@ -2,24 +2,31 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
  * 店铺信息服务类
  */
 @Service
+@Slf4j
 public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpShopInfoEntity>
     implements DmpShopInfoService {
 
@@ -50,7 +57,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign){
         LambdaQueryWrapper<DmpShopInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlarformShopNo, shopNo);
-        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformSign, platformSign);
+        lambdaQueryWrapper.eq(StrUtil.isNotBlank(platformSign), DmpShopInfoEntity::getPlatformSign, platformSign);
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -115,6 +122,25 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             dmpShopInfoDTO.setDeptId(collect.get(0).getDeptId());
         }
         return dmpShopInfoDTO;
+    }
+
+    @Override
+    public void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity) {
+        List<DmpShopInfoEntity> shopInfoEntity = lambdaQuery()
+                .eq(DmpShopInfoEntity::getName, dmpShopInfoEntity.getName())
+                .list();
+        if (CollectionUtil.isEmpty(shopInfoEntity)) {
+            return;
+        }
+        shopInfoEntity.forEach(entity -> {
+            //如果数据有变动需要更新数据库订单信息
+            if (Objects.equals(dmpShopInfoEntity.getUseOrgId(), entity.getUseOrgId())
+                    && Objects.equals(dmpShopInfoEntity.getUseOrgName(), entity.getUseOrgName())) {
+                return;
+            }
+            dmpShopInfoEntity.setId(entity.getId());
+            updateById(dmpShopInfoEntity);
+        });
     }
 }
 

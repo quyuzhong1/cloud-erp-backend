@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,10 +10,12 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.dto.DmpRefundInfoDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoExcelDTO;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
@@ -116,6 +119,26 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
             throw new ServiceException(ApiError.Default);
         }
         return  true;
+    }
+
+    @Override
+    public void updateSettlementExchangeRate(List<BiSettlementExchangeRateEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        entityList.forEach(obj->{
+            //根据日期查询订单
+            LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            //大于等于开始日期
+            updateWrapper.ge(DmpRefundInfoEntity::getOrderTime, obj.getSettlementDateBegin());
+            //小于等于开始日期
+            updateWrapper.le(DmpRefundInfoEntity::getOrderTime, LocalDateUtil.endLocalDateTime(obj.getSettlementDateEnd()));
+            //原币种
+            updateWrapper.eq(DmpRefundInfoEntity::getCurrencyCode,obj.getSourceCurrencyCode());
+            //设置汇率
+            updateWrapper.set(DmpRefundInfoEntity::getCnySettleRate,obj.getExchangeRate());
+            this.update(updateWrapper);
+        });
     }
 
 

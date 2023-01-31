@@ -1,9 +1,13 @@
 package com.erp.server.workflow.service.impl;
 
 
+import com.alibaba.excel.util.DateUtils;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -18,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Classname 任务服务
@@ -37,6 +42,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     @Autowired
     private ActHistoryActivityService actHistoryActivityService;
+
+    @Autowired
+    private WorkflowBusinessProcessService businessProcessService;
 
 
     @Autowired
@@ -179,5 +187,70 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         return resultList;
     }
 
+    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId) {
+        List<HistoricTaskInstance> list = historyService // 历史相关Service
+                .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
+                .processInstanceId(processId) // 用流程实例id查询
+                .orderByDeleteReason()
+                .desc()
+                .list();
+        List<ApproveRecordShowDTO> resultList = new ArrayList<>();
+        ApproveRecordShowDTO approveRecordShowDTO = null;
+        String approvalSuggestion = "";
+        List<Comment> commentList = null;
+        for (HistoricTaskInstance item : list) {
+            approveRecordShowDTO = new ApproveRecordShowDTO();
+            commentList = taskService.getTaskComments(item.getId());
+            if (commentList != null && !commentList.isEmpty()) {
+                approvalSuggestion = commentList.get(0).getFullMessage();
+            } else {
+                approvalSuggestion = "";
+            }
+            approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
+            approveRecordShowDTO.setHandleUserName(item.getAssignee());
+            approveRecordShowDTO.setActivityName(item.getName());
+            approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+            approveRecordShowDTO.setComment(approvalSuggestion);
+            resultList.add(approveRecordShowDTO);
+        }
+        return resultList;
+    }
+
+    /**
+     * 根据用户id 获取用户待办的任务
+     *
+     * @param userId
+     * @return java.util.List<com.erp.model.workflow.vo.MyToDoTaskVO>
+     * @author yl
+     * @date 2023-01-31 11:06
+     */
+    @Override
+    public List<MyToDoTaskVO> getMyToDoTasks(String userId) {
+        List<MyToDoTaskVO> resultList = new ArrayList<>();
+        if (StringUtils.isNotBlank(userId)) {
+            List<Task> tasks = taskService.createTaskQuery().taskAssignee(userId).list();
+            for (Task task : tasks) {
+                MyToDoTaskVO vo = new MyToDoTaskVO();
+                vo.setAssignee(task.getAssignee());
+                vo.setProcessInstanceId(task.getProcessInstanceId());
+                vo.setTaskId(task.getId());
+                vo.setNodeId(task.getTaskDefinitionKey());
+                resultList.add(vo);
+            }
+        }
+        List<String> processIds = resultList.stream().map(MyToDoTaskVO::getProcessInstanceId).collect(Collectors.toList());
+        List<WorkflowBusinessProcessEntity> businessProcessList = businessProcessService.getByProcessIds(processIds);
+        for (MyToDoTaskVO item : resultList) {
+            String processId = item.getProcessInstanceId();
+            WorkflowBusinessProcessEntity businessProcess= businessProcessList.stream().
+                    filter(b -> b.getProcessId().equals(processId)).
+                    findFirst().orElse(null);
+            if(businessProcess!=null){
+                item.setBusinessTableId(businessProcess.getBusinessTableId());
+            }
+
+        }
+        return resultList;
+    }
 
 }
