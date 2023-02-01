@@ -342,4 +342,24 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return void
      */
     void changeSku(ProductSmallestUnitDTO sku);
+
+    
+    /**
+     * 根据sku ids 获取到产品经理
+     * @author yl
+     * @date 2023-02-01 17:24
+     * @param skuIdList
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> getManagerBySkuIds(List<String> skuIdList);
+
+
+    /**
+     * 根据部门名称获取到对应的领导
+     * @author yl
+     * @date 2023-02-01 17:49
+     * @param secondDeptName
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> getApproveLead(String secondDeptName);
 }

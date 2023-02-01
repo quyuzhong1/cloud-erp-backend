@@ -15,7 +15,9 @@ public enum WorkflowBusinessEnum {
     ID_CONFIRM("idConfirm", "ID确认书流程","plm"),
     PROJECT_APPROVAL("projectApproval", "立项会议流程","plm"),
     PRODUCT_DETAIL("productDetail", "SKU审核","plm"),
-    BOM_AUDIT("bom","bom审核","plm");
+    BOM_AUDIT("bom","bom审核","plm"),
+    BOM_CHANGE("bomChange","bom变更审核","plm"),
+    SKU_CHANGE("skuChange","sku变更审核","plm");
 
 
     private String businessType;

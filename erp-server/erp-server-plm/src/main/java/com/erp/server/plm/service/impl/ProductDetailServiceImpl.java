@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.SkuApproveConfigureEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
@@ -1660,10 +1661,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 根据sku id 获取
-     * @author yl
-     * @date 2023-01-31 10:13
+     *
      * @param skuIdList
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author yl
+     * @date 2023-01-31 10:13
      */
     @Override
     public List<SkuVO> getSkuBySkuIds(List<String> skuIdList) {
@@ -1899,6 +1901,59 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
 
+    }
+
+
+    /**
+     * 根据skuId 获取产品经理
+     *
+     * @param skuIdList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-02-01 17:25
+     */
+    @Override
+    public List<String> getManagerBySkuIds(List<String> skuIdList) {
+        List<String> resultList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(ProductDetailEntity::getChargeId);
+            queryWrapper.ne(ProductDetailEntity::getChargeId, "");
+            queryWrapper.ne(ProductDetailEntity::getChargeId, null);
+            queryWrapper.in(ProductDetailEntity::getId, skuIdList);
+            List<String> chargeIds = this.listObjs(queryWrapper, Object::toString);
+            //有逗号
+            for (String chargeId : chargeIds) {
+                if (chargeId.contains(",")) {
+                    String chargeIdList[] = chargeId.split(",");
+                    for (String item : chargeIdList) {
+                        resultList.add(item);
+                    }
+
+                } else {
+                    resultList.add(chargeId);
+                }
+
+            }
+        }
+
+        return resultList;
+    }
+
+    
+    /**
+     * 根据部门获取对应的人员
+     * @author yl
+     * @date 2023-02-01 17:50
+     * @param secondDeptName
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> getApproveLead(String secondDeptName) {
+        List<String> deptNames = Arrays.stream(secondDeptName.split(",")).distinct().collect(Collectors.toList());
+        List<SysUserDeptDTO> list = sysUserFeign.getByDeptNames(deptNames);
+        List<String> leadIds = list.stream().map(SysUserDeptDTO::getUid).distinct().collect(Collectors.toList());
+        return leadIds;
     }
 
 

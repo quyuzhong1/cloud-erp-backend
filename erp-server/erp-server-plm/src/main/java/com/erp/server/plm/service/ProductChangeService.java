@@ -37,4 +37,6 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     void approvalNoPass(AuditParamDTO dto);
 
     void processPass(ProcessPassDTO dto);
+
+    Boolean restartAudit(String id);
 }

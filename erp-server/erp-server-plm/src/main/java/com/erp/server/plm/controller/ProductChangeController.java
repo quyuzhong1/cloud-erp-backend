@@ -136,6 +136,17 @@ public class ProductChangeController extends BaseController {
         return success();
     }
 
+    /**
+     * 重启流程
+     * @param dto
+     * @return
+     */
+    @PostMapping("/restartAudit")
+    public ApiResult restartAudit(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productChangeService.restartAudit(dto.getId());
+        return result == true ? success() : failure();
+    }
+
 
     /**
      * 变更流程

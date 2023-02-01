@@ -1,4 +1,4 @@
-package com.erp.server.plm.enums;
+package com.common.core.enums;
 
 /**
  * @author Will
@@ -11,7 +11,8 @@ public enum SkuApproveConfigureEnum {
     FIRST_APPROVE(1, "firstApproveIdList",""),
     SECOND_APPROVE(2, "secondApproveIdList","产品部"),
     THIRD_APPROVE(3, "thirdApproveIdList","品质部,采购开发组,采购执行组,物流部"),
-    FOURTH_APPROVE(4, "secondApproveIdList","产品研发中心,供应链中心");
+    FOURTH_APPROVE(4, "fourthApproveIdList","产品研发中心,供应链中心"),
+    FIVE_APPROVE(5, "fiveApproveIdList","产品研发中心");
 
     private Integer code;
     private String name;

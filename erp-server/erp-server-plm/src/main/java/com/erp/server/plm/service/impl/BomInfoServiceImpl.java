@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.SkuApproveConfigureEnum;
 import com.common.core.enums.WorkflowBusinessEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -117,6 +118,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             productBomHistoryService.insert(bom, bomSkuList);
             //但是待审核的时候
             if (isSubmitAudit) {
+                checkAuditor(bomId);
                 //这里要发起一个bom流程
                 startBomProcess(bomId);
             }
@@ -158,10 +160,30 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             startProcess.setBusinessKey(business.getBusinessKey());
             Map<String, Object> parameterMap = new HashMap<>();
 
+            List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
+            //skuId
+            List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+
             //产品经理
-            parameterMap.put("productManagerList", Arrays.asList("1612400984472948738"));
+            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
+            if (CollectionUtils.isNotEmpty(productManagerList)) {
+                throw new ServiceException(ApiError.ERROR_9030);
+            }
+            //产品经理
+            parameterMap.put("productManagerList", productManagerList);
+
+            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
+            if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+                throw new ServiceException(ApiError.ERROR_9031);
+            }
             //产品经理上级
-            parameterMap.put("productManagerSupervisor", "1597846207349260290");
+            parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
+            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+            if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+                throw new ServiceException(ApiError.ERROR_9032);
+            }
+            //产品部负责人
+            parameterMap.put("departmentHead", departmentHeadList.get(0));
             startProcess.setParameterMap(parameterMap);
             //启动流程
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
@@ -180,6 +202,37 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         }
 
+    }
+
+
+    /**
+     * 检查审核人不能为空
+     * @author yl
+     * @date 2023-02-01 18:20
+     * @param
+     * @return void
+     */
+    public void checkAuditor(String bomId){
+
+        List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
+        //skuId
+        List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+
+        //产品经理
+        List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
+        if (CollectionUtils.isNotEmpty(productManagerList)) {
+            throw new ServiceException(ApiError.ERROR_9030);
+        }
+        //产品部负责人
+        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
+        if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+            throw new ServiceException(ApiError.ERROR_9031);
+        }
+        //研发中心负责人
+        List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+        if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+            throw new ServiceException(ApiError.ERROR_9032);
+        }
     }
 
     /**
@@ -210,7 +263,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         IPage pageData = baseMapper.paging(query, params, bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
-        if(CollectionUtils.isEmpty(list)){
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
         List<FindUserDTO> userList = commonService.getAllUser();
@@ -343,6 +396,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-13 16:16
      */
     @Override
+    @Transactional
     public Boolean restartAudit(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
@@ -361,6 +415,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_NO_PASS.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            checkAuditor(bomId);
             //发起bom 流程
             startBomProcess(bomId);
         }
@@ -701,7 +756,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if(processTask!=null){
+        if (processTask != null) {
             ApproveProcessDTO process = new ApproveProcessDTO();
             process.setComment(dto.getComment());
             process.setProcessInstanceId(processTask.getProcessInstanceId());
