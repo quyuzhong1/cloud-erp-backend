@@ -2211,28 +2211,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     @Override
+    @Transactional
     public void flyingBookReminder(FlyingBookReminderDTO dto) {
         //飞书提醒
-        Boolean flag = noticeMessageService.flyingBookReminder(dto);
+        noticeMessageService.flyingBookReminder(dto);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         //操作日志
-        if (flag) {
-            List<String> taskIds = dto.getTaskIds();
-            List<SysLogEntity> logList = new ArrayList<>();
-            taskIds.forEach(obj->{
-                SysLogEntity sysLogEntity = new SysLogEntity();
-                sysLogEntity.setOperation("飞书提醒");
-                sysLogEntity.setBusinessId(obj);
-                sysLogEntity.setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-                sysLogEntity.setContent(dto.getContent());
-                if (ObjectUtils.isNotEmpty(loginUser)) {
-                    sysLogEntity.setCreateUserId(loginUser.getUid());
-                    sysLogEntity.setCreateUserName(loginUser.getUserName());
-                }
-                logList.add(sysLogEntity);
-            });
-            sysLogService.saveBatch(logList);
-        }
+        List<String> taskIds = dto.getTaskIds();
+        List<SysLogEntity> logList = new ArrayList<>();
+        taskIds.forEach(obj->{
+            SysLogEntity sysLogEntity = new SysLogEntity();
+            sysLogEntity.setOperation("飞书提醒");
+            sysLogEntity.setBusinessId(obj);
+            sysLogEntity.setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+            sysLogEntity.setContent(dto.getContent());
+            if (ObjectUtils.isNotEmpty(loginUser)) {
+                sysLogEntity.setCreateUserId(loginUser.getUid());
+                sysLogEntity.setCreateUserName(loginUser.getUserName());
+            }
+            logList.add(sysLogEntity);
+        });
+        sysLogService.saveBatch(logList);
     }
 
     /**
