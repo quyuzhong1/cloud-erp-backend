@@ -108,6 +108,21 @@ public class ProductCostShowDTO implements Serializable {
     private String updateUserName;
 
     /**
+     * 立项成本
+     */
+    private BigDecimal ProjectApprovalCost;
+
+    /**
+     * 量产成本
+     */
+    private BigDecimal massCost;
+
+    /**
+     * 项目成本
+     */
+    private BigDecimal projectCost;
+
+    /**
      *禁止修改的字段
      */
     private List<String> disableFieldList;
