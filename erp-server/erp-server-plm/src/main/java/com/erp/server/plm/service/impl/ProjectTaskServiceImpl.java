@@ -14,6 +14,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -2193,6 +2194,31 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return list;
     }
 
+    @Override
+    public void flyingBookReminder(FlyingBookReminderDTO dto) {
+        //飞书提醒
+        Boolean flag = noticeMessageService.flyingBookReminder(dto);
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        //操作日志
+        if (flag) {
+            List<String> taskIds = dto.getTaskIds();
+            List<SysLogEntity> logList = new ArrayList<>();
+            taskIds.forEach(obj->{
+                SysLogEntity sysLogEntity = new SysLogEntity();
+                sysLogEntity.setOperation("飞书提醒");
+                sysLogEntity.setBusinessId(obj);
+                sysLogEntity.setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                sysLogEntity.setContent(dto.getContent());
+                if (ObjectUtils.isNotEmpty(loginUser)) {
+                    sysLogEntity.setCreateUserId(loginUser.getUid());
+                    sysLogEntity.setCreateUserName(loginUser.getUserName());
+                }
+                logList.add(sysLogEntity);
+            });
+            sysLogService.saveBatch(logList);
+        }
+    }
+
     /**
      * 我创造的    任务创建人=当前账号人
      *
@@ -3774,6 +3800,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
                     String userName = userList.stream().filter(e -> e.getUserId().equals(approveRecordShowDTO.getHandleUserName())).map(FindUserDTO::getUserName).findFirst().orElse("");
                     taskProcessNodeDTO.setOperateUserName(userName);
+                    taskProcessNodeDTO.setIfFinishNode(Boolean.TRUE);
                     if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName)) {
                         //审核不通过时将对应数据状态变更为审核不通过
                         taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());

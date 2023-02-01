@@ -17,6 +17,7 @@ import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.third.dto.FsBatchSendMessageDTO;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.FlyingBookReminderDTO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
@@ -818,6 +819,63 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
 
 
+    }
+
+    @Override
+    @Async("customExecutor")
+    public Boolean flyingBookReminder(FlyingBookReminderDTO dto) {
+        //提醒人id
+        List<String> userIds = dto.getUserIds();
+        //提醒内容
+        String content = dto.getContent();
+        //任务id
+        List<String> taskIds = dto.getTaskIds();
+        //产品id
+        String productId = dto.getProductId();
+        //产品信息
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+        //任务信息
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(taskIds);
+        if (CollectionUtils.isEmpty(projectTaskList)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        //消息记录
+        List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+        for (ProjectTaskEntity task : projectTaskList) {
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, userIds);
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            String projectContent = getTaskProjectContent(task.getName(), productInfoEntity.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            Map contentMap = getCardMessageMap(content, projectContent, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            //当发送成功后
+            if (sendResult) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(task.getChargeId());
+                    recordEntity.setMessageContent(content);
+                    recordEntity.setNoticeMessageId(null);
+                    recordEntity.setNoticeNode(null);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setPlanEndTime(task.getPlanEndTime());
+                    recordEntity.setProductId(productId);
+                    recordEntity.setProductName(productInfoEntity.getName());
+                    recordEntity.setTaskId(task.getId());
+                    recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+            }
+        }
+        //保存发送消息通知记录
+        noticeMessageRecordService.saveBatch(messageRecordList);
+        return Boolean.TRUE;
     }
 
 
