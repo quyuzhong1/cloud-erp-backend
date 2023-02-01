@@ -1,7 +1,6 @@
 package com.erp.server.workflow.listeners;
 
 import com.common.core.utils.OkHttpUtils;
-import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -33,12 +32,9 @@ public class BomResultListener implements ExecutionListener {
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
         String processId = delegateExecution.getParentActivityInstanceId();
-        ProcessPassDTO processPass = new ProcessPassDTO();
-        processPass.setProcessId(processId);
         //业务流程表
         WorkflowBusinessProcessEntity businessProcess = workflowBusinessProcessService.getByProcessId(processId);
         if (businessProcess != null) {
-            processPass.setBusinessTableId(businessProcess.getBusinessTableId());
             Map<String, Object> params = new HashMap<>();
             params.put("processId", processId);
             params.put("businessTableId", businessProcess.getBusinessTableId());

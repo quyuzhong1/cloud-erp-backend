@@ -51,6 +51,17 @@ public interface WorkflowFeign {
     @PostMapping("workflow/feign/process/fetchBack")
     void fetchBack(@RequestBody ApproveProcessDTO dto);
 
+
+    //取回起始点
+    @PostMapping("workflow/feign/process/rejectOrigin")
+    void rejectOrigin(@RequestBody ApproveProcessDTO dto);
+
+    //终止流程
+    @PostMapping("workflow/feign/process/terminate")
+    void terminate(@RequestBody ApproveProcessDTO dto);
+
+
+
     //根据审核任务id获取我待办的任务列表
     @PostMapping("workflow/feign/process/queryMyToDoByTaskId")
     List<TaskShowDTO> queryMyToDoByTaskId(@RequestParam(value="taskId") String taskId);
@@ -68,4 +79,17 @@ public interface WorkflowFeign {
      */
     @PostMapping("workflow/feign/process/getBusiness")
     BusinessInfoDTO getBusiness(@RequestBody FindProcessDTO findProcess);
+
+    /**
+     * 保存 业务流程关系表
+     * @author yl
+     * @date 2023-01-31 17:13
+     * @param businessProcess
+     * @return void
+     */
+    @PostMapping("workflow/feign/process/saveBusinessProcess")
+    Boolean saveBusinessProcess(@RequestBody WorkflowBusinessProcessDTO businessProcess);
+
+    @PostMapping("workflow/feign/process/getProcessByBusinessTable")
+    MyToDoTaskVO getByBusinessTableId(@RequestBody BusinessTableDTO  dto);
 }

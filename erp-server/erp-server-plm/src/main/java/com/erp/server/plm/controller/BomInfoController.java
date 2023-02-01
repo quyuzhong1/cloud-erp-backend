@@ -249,7 +249,7 @@ public class BomInfoController extends BaseController {
      * bom审核通过后改变 bom 状态
      */
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(ProcessPassDTO dto) {
+    public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
         bomInfoService.bomProcessPass(dto);
         return success();
     }

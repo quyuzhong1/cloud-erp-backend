@@ -16,6 +16,9 @@ import java.util.List;
 @NoArgsConstructor
 public class BusinessInfoDTO implements Serializable {
 
+
+    private String id;
+
     /**
      * 业务名称
      */

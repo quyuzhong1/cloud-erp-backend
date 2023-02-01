@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import com.erp.server.workflow.service.WorkflowBusinessService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,9 @@ public class ProcessFeignController extends BaseController {
 
     @Autowired
     private WorkflowBusinessService businessService;
+
+    @Autowired
+    private WorkflowBusinessProcessService businessProcessService;
 
 
     //启动流程
@@ -85,6 +89,20 @@ public class ProcessFeignController extends BaseController {
         workflowService.fetchBackProcess(dto);
     }
 
+    //终止流程
+    @PostMapping("/terminate")
+    public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
+        workflowService.terminateProcess(dto);
+    }
+
+    //驳回到源点
+    @PostMapping("/rejectOrigin")
+    public void rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
+        workflowService.rejectOriginProcess(dto);
+    }
+
+
+
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")
     public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
@@ -112,5 +130,28 @@ public class ProcessFeignController extends BaseController {
         BusinessInfoDTO business = businessService.getBusiness(findProcess);
         return business;
     }
+
+    /**
+     * 保存业务与流程的信息
+     *
+     * @param
+     * @return
+     * @author yl
+     * @date 2023-01-31 15:32
+     */
+    @PostMapping("/saveBusinessProcess")
+    public Boolean saveBusinessProcess(@RequestBody WorkflowBusinessProcessDTO dto) {
+        Boolean result = businessProcessService.saveBusinessProcess(dto);
+        return result;
+    }
+
+
+    @PostMapping("/getProcessByBusinessTable")
+    public MyToDoTaskVO getProcessByBusinessTable(@RequestBody BusinessTableDTO dto) {
+        MyToDoTaskVO result = businessProcessService.getProcessByBusinessTable(dto);
+        return result;
+
+    }
+
 
 }

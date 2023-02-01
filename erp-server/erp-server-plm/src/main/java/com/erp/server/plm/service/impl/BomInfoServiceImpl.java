@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.WorkflowBusinessEnum;
@@ -23,10 +24,7 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.workflow.dto.BusinessInfoDTO;
-import com.erp.model.workflow.dto.FindProcessDTO;
-import com.erp.model.workflow.dto.ProcessNodeDTO;
-import com.erp.model.workflow.dto.StartProcessDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -44,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -116,12 +115,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (saveResult) {
             //保存历史bom信息
             productBomHistoryService.insert(bom, bomSkuList);
-
             //但是待审核的时候
             if (isSubmitAudit) {
-                //这里要发起一个流程
-
-
+                //这里要发起一个bom流程
+                startBomProcess(bomId);
             }
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
@@ -145,7 +142,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-01-31 14:44
      */
-    public void startBomProcess() {
+    public void startBomProcess(String bomId) {
         FindProcessDTO findProcess = new FindProcessDTO();
         String userId = commonService.getUserInfo().getUid();
         String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
@@ -154,22 +151,32 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         findProcess.setPlatform(platform);
         //获取到业务的信息
         BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
-        if(business!=null){
+        if (business != null) {
             StartProcessDTO startProcess = new StartProcessDTO();
             startProcess.setUserId(userId);
             startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
             startProcess.setBusinessKey(business.getBusinessKey());
             Map<String, Object> parameterMap = new HashMap<>();
-            List<String> paramList=business.getParamList();
-            if(CollectionUtils.isNotEmpty(paramList)){
-                parameterMap.put(paramList.get(0),"1612400984472948738");
-                parameterMap.put(paramList.get(1),"1597846207349260290");
-                startProcess.setParameterMap(parameterMap);
-                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
 
+            //产品经理
+            parameterMap.put("productManagerList", Arrays.asList("1612400984472948738"));
+            //产品经理上级
+            parameterMap.put("productManagerSupervisor", "1597846207349260290");
+            startProcess.setParameterMap(parameterMap);
+            //启动流程
+            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+            //流程id
+            String processId = processResult.getProcessId();
+            if (StringUtils.isNotBlank(processId)) {
+                WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
+                businessProcess.setBusinessId(business.getId());
+                businessProcess.setCreateTime(LocalDateTime.now());
+                businessProcess.setBusinessTableId(bomId);
+                businessProcess.setCreateUserId(userId);
+                businessProcess.setProcessId(processId);
+                //保存业务与流程的信息
+                workflowFeign.saveBusinessProcess(businessProcess);
             }
-
-
 
         }
 
@@ -186,7 +193,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         SearchPagingDTO params = dto.getParams();
-        List<FindUserDTO> userList = commonService.getAllUser();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
         List<String> bomIdList = new ArrayList<>();
@@ -202,9 +208,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
 
         }
-
         IPage pageData = baseMapper.paging(query, params, bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
+        if(CollectionUtils.isEmpty(list)){
+            return new PagingVO(pageData);
+        }
+        List<FindUserDTO> userList = commonService.getAllUser();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
@@ -318,6 +327,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            //发起bom 流程
+            startBomProcess(bomId);
         }
         return result;
     }
@@ -350,6 +361,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_NO_PASS.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            //发起bom 流程
+            startBomProcess(bomId);
         }
         return result;
 
@@ -588,12 +601,31 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public void approvalPass(AuditParamDTO dto) {
         BomInfoEntity bom = this.getById(dto.getId());
+        //意见
+        String comment = dto.getComment();
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setRemark(dto.getComment());
         this.updateById(bom);
+
+        String userId = commonService.getUserInfo().getUid();
+        BusinessTableDTO tableDTO = new BusinessTableDTO();
+        tableDTO.setBusinessTableId(bom.getId());
+        tableDTO.setUserId(userId);
+        //获取到用户该业务表的待办任务
+        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        if (processTask != null) {
+            //审核
+            ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+            approveProcess.setTaskId(processTask.getTaskId());
+            approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
+            approveProcess.setUserId(userId);
+            approveProcess.setComment(comment);
+            workflowFeign.taskPass(approveProcess);
+        }
+
 
     }
 
@@ -615,7 +647,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
             this.updateById(bom);
         }
-
     }
 
 
@@ -664,6 +695,21 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setRemark(dto.getComment());
         //流程需要关闭吗
         this.updateById(bom);
+        String userId = commonService.getUserInfo().getUid();
+        BusinessTableDTO tableDTO = new BusinessTableDTO();
+        tableDTO.setBusinessTableId(bom.getId());
+        tableDTO.setUserId(userId);
+        //获取到用户该业务表的待办任务
+        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        if(processTask!=null){
+            ApproveProcessDTO process = new ApproveProcessDTO();
+            process.setComment(dto.getComment());
+            process.setProcessInstanceId(processTask.getProcessInstanceId());
+            process.setUserId(userId);
+            process.setTaskId(processTask.getTaskId());
+            //终止流程
+            workflowFeign.terminate(process);
+        }
 
 
     }

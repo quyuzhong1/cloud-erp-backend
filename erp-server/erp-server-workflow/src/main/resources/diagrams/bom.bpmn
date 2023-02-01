@@ -4,11 +4,11 @@
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_1m87172</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:userTask id="Activity_155lgg1" name="产品经理审核" camunda:assignee="${productManagerList}">
+        <bpmn:userTask id="Activity_155lgg1" name="产品经理审核" camunda:assignee="${productManagers}">
             <bpmn:extensionElements />
             <bpmn:incoming>Flow_1m87172</bpmn:incoming>
             <bpmn:outgoing>Flow_1cqil2m</bpmn:outgoing>
-            <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerList" camunda:elementVariable="productManagerList" />
+            <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerList" camunda:elementVariable="productManagers" />
         </bpmn:userTask>
         <bpmn:userTask id="Activity_1g5j07k" name="产品经理上一级审核" camunda:assignee="${productManagerSupervisor}">
             <bpmn:incoming>Flow_1cqil2m</bpmn:incoming>

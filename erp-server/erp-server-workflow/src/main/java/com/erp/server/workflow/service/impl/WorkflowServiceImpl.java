@@ -370,6 +370,49 @@ public class WorkflowServiceImpl implements WorkflowService {
         return resultList;
     }
 
+    /**
+     * 终止流程
+     * @author yl
+     * @date 2023-02-01 11:12
+     * @param dto
+     * @return void
+     */
+    @Override
+    public void terminateProcess(ApproveProcessDTO dto) {
+        String procId = dto.getProcessInstanceId();
+        //获取流程状态
+        int state = checkProcessInstanceState(procId);
+        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
+            throw new ServiceException(ApiError.ERROR_94000);
+        }
+
+        //判断是否有任务
+        List<Task> taskList = taskService.createTaskQuery().processInstanceId(procId).list();
+        if (CollectionUtils.isEmpty(taskList)) {
+            throw new ServiceException(ApiError.ERROR_94001);
+        }
+
+        //获取到流程的节点
+        ActivityInstance activityInstance = runtimeService.getActivityInstance(procId);
+        if (ObjectUtils.isNull(activityInstance) || ObjectUtils.isEmpty(activityInstance.getChildActivityInstances())) {
+            throw new ServiceException(ApiError.ERROR_94002);
+        }
+
+        // 删除任务表其它任务
+        List<String> taskIdList = new ArrayList<>();
+        List<String> actIdList = new ArrayList<>();
+        for (int i = 0; i < taskList.size(); i++) {
+            taskIdList.add(taskList.get(i).getId());
+            actIdList.add(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()));
+        }
+
+        // 对于并行的任务，只能取消其中一个，另外的任务取消不了，所以只能自己操作表，去删除、更新数据状态
+        if (CollectionUtils.isNotEmpty(taskIdList) && CollectionUtils.isNotEmpty(actIdList)) {
+            // 删除ACT_RU_EXECUTION 表中的实例
+            workflowMapper.deleteTaskByIdArray(taskIdList);
+        }
+    }
+
     public String matching(String activityType) {
         String value = "";
         switch (activityType) {

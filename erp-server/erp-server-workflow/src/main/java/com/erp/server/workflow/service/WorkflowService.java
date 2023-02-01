@@ -38,7 +38,5 @@ public interface WorkflowService {
    List<ApproveRecordShowDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 
-
-
-
+    void terminateProcess(ApproveProcessDTO dto);
 }

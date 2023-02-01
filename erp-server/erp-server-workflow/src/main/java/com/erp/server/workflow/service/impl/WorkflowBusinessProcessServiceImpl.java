@@ -1,11 +1,18 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.workflow.dto.BusinessTableDTO;
+import com.erp.model.workflow.dto.WorkflowBusinessProcessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.mapper.WorkflowBusinessProcessMapper;
+import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,6 +26,10 @@ import java.util.List;
  */
 @Service
 public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusinessProcessMapper, WorkflowBusinessProcessEntity> implements WorkflowBusinessProcessService {
+
+
+    @Autowired
+    private ProcessTaskService processTaskService;
 
     /**
      * 根据流程id 获取到业务数据
@@ -44,5 +55,43 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
+    }
+
+
+    /**
+     * 保存 业务与流程的关系
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-01-31 17:20
+     */
+    @Override
+    public Boolean saveBusinessProcess(WorkflowBusinessProcessDTO dto) {
+        if (dto != null) {
+            WorkflowBusinessProcessEntity process = new WorkflowBusinessProcessEntity();
+            BeanMapper.copy(dto, process);
+            return this.save(process);
+        }
+        return false;
+    }
+
+
+    /**
+     * 根据业务表 和用户获取到
+     *
+     * @param dto
+     * @return com.erp.model.workflow.vo.MyToDoTaskVO
+     * @author yl
+     * @date 2023-02-01 9:25
+     */
+    @Override
+    public MyToDoTaskVO getProcessByBusinessTable(BusinessTableDTO dto) {
+        //获取到我的待办任务
+        List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(dto.getUserId());
+        MyToDoTaskVO taskVO = list.stream().
+                filter(m -> StringUtils.isNotBlank(m.getBusinessTableId())&&m.getBusinessTableId().
+                equals(dto.getBusinessTableId())).findFirst().orElse(null);
+        return taskVO;
     }
 }

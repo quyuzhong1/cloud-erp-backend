@@ -67,10 +67,11 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
         BusinessInfoDTO result = new BusinessInfoDTO();
         LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(WorkflowBusinessEntity::getBusinessType, dto.getBusinessType());
-        queryWrapper.eq(WorkflowBusinessEntity::getParam, dto.getPlatform());
+        queryWrapper.eq(WorkflowBusinessEntity::getPlatform, dto.getPlatform());
         queryWrapper.last("LIMIT 1");
         WorkflowBusinessEntity businessEntity = this.getOne(queryWrapper);
         if (businessEntity != null) {
+            result.setId(businessEntity.getId());
             result.setBusinessKey(businessEntity.getBusinessKey());
             result.setBusinessName(businessEntity.getBusinessName());
             result.setProcessDefinitionKey(businessEntity.getProcessDefinitionKey());
