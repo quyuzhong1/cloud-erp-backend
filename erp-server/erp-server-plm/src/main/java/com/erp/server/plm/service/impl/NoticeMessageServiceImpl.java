@@ -875,7 +875,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
         //保存发送消息通知记录
         noticeMessageRecordService.saveBatch(messageRecordList);
-        return Boolean.TRUE;
+        return true;
     }
 
 

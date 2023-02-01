@@ -110,7 +110,7 @@ public class ProductCostShowDTO implements Serializable {
     /**
      * 立项成本
      */
-    private BigDecimal ProjectApprovalCost;
+    private BigDecimal projectApprovalCost;
 
     /**
      * 量产成本
