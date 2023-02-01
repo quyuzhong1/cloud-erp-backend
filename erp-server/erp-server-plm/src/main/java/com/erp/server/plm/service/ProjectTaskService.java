@@ -170,4 +170,11 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      */
     List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO dto);
 
+    /**
+     * @description: 飞书提醒
+     * @author Will
+     * @date: 2023/2/1 14:14
+     * @param dto
+     */
+    void flyingBookReminder(FlyingBookReminderDTO dto);
 }

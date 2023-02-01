@@ -595,6 +595,18 @@ public class ProjectTaskController extends BaseController {
         return success();
     }
 
+    /**
+     * 任务列表-飞书提醒
+     * @author Will
+     * @date: 2023/2/1 14:13
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/flyingBookReminder")
+    public ApiResult flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
+        taskService.flyingBookReminder(dto);
+        return success();
+    }
 
 }
 

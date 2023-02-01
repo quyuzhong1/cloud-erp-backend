@@ -6,11 +6,11 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.dto.base.UpdateStateDTO;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.FlyingBookReminderDTO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import org.springframework.scheduling.annotation.Async;
 
 import java.util.List;
 
@@ -89,4 +89,7 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
     //完成待审核的  只有审核人 发送通知
     void finishWaitConfirmNotice(String userName, List<ProjectTaskEntity> finishSkuTaskList, String productId);
+
+
+    Boolean flyingBookReminder(FlyingBookReminderDTO dto);
 }
