@@ -95,13 +95,7 @@
 
     <select id="allPagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id=#{productId}
-        <if test="statusList !=null and statusList.size>0">
-            AND status IN
-            <foreach collection="statusList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
+        WHERE product_id = #{productId}
         <if test="param != null and param != ''">
             ${param}
         </if>
@@ -217,7 +211,7 @@
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id=#{productId} <!--AND pid='0'--> AND process_id IN
+        WHERE product_id = #{productId} <!--AND pid='0'--> AND process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
         </foreach>
