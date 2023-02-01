@@ -47,7 +47,7 @@ public class ProductNoDetailDTO {
     /**
      * SPU英文名称
      */
-    private String spuEnName;
+    private String spuNameEn;
 
     /**
      * 产品经理
