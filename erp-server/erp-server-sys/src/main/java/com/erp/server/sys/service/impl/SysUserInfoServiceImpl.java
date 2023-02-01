@@ -819,7 +819,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                     }
                 }
                 //查询三级部门负责人
-                if ("0".equals(secondDepart.getParentId())) {
+                if (ObjectUtils.isNotEmpty(secondDepart) && "0".equals(secondDepart.getParentId())) {
                     SysDepartmentEntity threeDepart = sysDepartmentService.getParentDepartmentById(secondDepart.getParentId());
                     if (ObjectUtils.isNotEmpty(threeDepart)) {
                         List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(threeDepart.getParentId());
@@ -829,7 +829,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                         }
                     }
                     //查询四级部门负责人
-                    if ("0".equals(threeDepart.getParentId())) {
+                    if (ObjectUtils.isNotEmpty(threeDepart) && "0".equals(threeDepart.getParentId())) {
                         SysDepartmentEntity fourDepart = sysDepartmentService.getParentDepartmentById(threeDepart.getParentId());
                         if (ObjectUtils.isNotEmpty(fourDepart)) {
                             List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(fourDepart.getParentId());
@@ -839,7 +839,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                             }
                         }
                         //查询五级部门负责人
-                        if ("0".equals(fourDepart.getParentId())) {
+                        if (ObjectUtils.isNotEmpty(fourDepart) && "0".equals(fourDepart.getParentId())) {
                             SysDepartmentEntity fiveDepart = sysDepartmentService.getParentDepartmentById(fourDepart.getParentId());
                             if (ObjectUtils.isNotEmpty(fiveDepart)) {
                                 List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(fiveDepart.getParentId());

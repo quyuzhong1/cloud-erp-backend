@@ -132,6 +132,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     public SysDepartmentUserNumberDTO getByUserId(String id) {
         LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysDepartmentUserEntity::getUserId,id);
+        queryWrapper.last("limit 1");
         SysDepartmentUserEntity sysDepartmentUserEntity = this.getOne(queryWrapper);
         SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO();
         if (ObjectUtils.isNotEmpty(sysDepartmentUserEntity)) {
