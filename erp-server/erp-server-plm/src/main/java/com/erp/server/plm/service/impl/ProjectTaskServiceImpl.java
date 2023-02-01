@@ -2160,9 +2160,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO params) {
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
-        String phaseId = params.getPhaseId();
         String productId = params.getProductId();
-        String searchKeyword = params.getSearchKeyword();
         String param = params.getParam();
 
         List<ProductTaskCategoryCountDTO> list = new ArrayList<>();
@@ -3705,10 +3703,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             resultList.add(getProcessNode(notStartEntity, notStart,approveRecordShowList));
             //添加进行中
             resultList.add(getProcessNode(ingStateEntity, ingState,approveRecordShowList));
-            //添加待审核
-            resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
-            //添加审核中
-            resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+            if (waitConfirmState.equals(taskState)) {
+                //添加待审核
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
+            }
+            if (approvalIngState.equals(taskState)) {
+                //添加审核中
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+            }
 
             if (approvalNoPassFlag) {//添加审核不通过
                 resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,approveRecordShowList));
@@ -3720,9 +3722,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         if (reviewTask.equals(processType)) {
-            //添加待审核
-            resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
-            resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+            if (waitConfirmState.equals(taskState)) {
+                //添加待审核
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
+            }
+            if (approvalIngState.equals(taskState)) {
+                //添加审核中
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+            }
             if (approvalNoPassFlag) {//添加审核不通过
                 resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,approveRecordShowList));
             } else {

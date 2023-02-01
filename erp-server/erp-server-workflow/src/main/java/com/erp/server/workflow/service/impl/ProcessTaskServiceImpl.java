@@ -9,7 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.batch.history.HistoricBatch;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
+import org.camunda.bpm.engine.history.HistoricCaseInstance;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
@@ -188,6 +190,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                 .orderByDeleteReason()
                 .desc()
                 .list();
+        List<HistoricActivityInstance> list1 = historyService.createHistoricActivityInstanceQuery().processInstanceId(processId).list();
+        List<HistoricBatch> list2 = historyService.createHistoricBatchQuery().list();
+        List<HistoricCaseInstance> list3 = historyService.createHistoricCaseInstanceQuery().list();
         List<ApproveRecordShowDTO> resultList = new ArrayList<>();
             ApproveRecordShowDTO approveRecordShowDTO = null;
             String approvalSuggestion = "";
