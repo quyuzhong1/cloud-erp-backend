@@ -3900,7 +3900,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public String getWarning(Integer state, Integer finishState, Date planEndTime) {
         Date nowDay = new Date();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
-        String warning = "-";
+        String warning = "";
         if (planEndTime != null) {
             //状态
             if (!finishState.equals(state) && !approvalPass.equals(state)) {
