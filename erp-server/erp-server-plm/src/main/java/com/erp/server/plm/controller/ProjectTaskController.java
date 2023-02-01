@@ -9,6 +9,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.server.plm.enums.TaskPriorityEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -192,9 +193,8 @@ public class ProjectTaskController extends BaseController {
         return success(dto);
     }
 
-
     /**
-     * 项目任务-全部任务/带我完成的任务/待我审核的任务全部数量
+     * 项目任务-2全部任务/0待我完成的任务/1待我审核的任务全部数量
      *
      * @return
      */
@@ -540,6 +540,24 @@ public class ProjectTaskController extends BaseController {
     public ApiResult<List<SelectShowDTO>> getTaskStatusSelect() {
         List<SelectShowDTO> list = new ArrayList<>();
         Arrays.stream(TaskStateEnum.values()).filter(obj ->!TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getCode())).forEach(obj -> {
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setValue(obj.getCode());
+            dto.setLabel(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
+    }
+
+    /**
+     * 任务列表-优先级下拉框
+     * @author Will
+     * @date: 2023/1/31 17:16
+     * @return ApiResult<List<SelectShowDTO>>
+     */
+    @GetMapping("/getTaskPrioritySelect")
+    public ApiResult<List<SelectShowDTO>> getTaskPrioritySelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(TaskPriorityEnum.values()).forEach(obj -> {
             SelectShowDTO dto = new SelectShowDTO();
             dto.setValue(obj.getCode());
             dto.setLabel(obj.getName());

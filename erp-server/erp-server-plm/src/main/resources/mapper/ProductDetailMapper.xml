@@ -167,6 +167,7 @@
         pd.product_state,
         pd.name,
         pi.name as spuName,
+        pi.name_en as spuNameEn,
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -184,6 +185,7 @@
         pi.pirate_risk,
         pi.materials,
         pd.plan_listing_time,
+        pd.first_mass_product_date,
         pd.unit_id,
         unit.name AS unit_name,
         pd.product_state,
@@ -206,6 +208,7 @@
         pi."id",
         pi.spu_no,
         pi."name",
+        pi.name_en,
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -379,10 +382,12 @@
             AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
         </if>
     </select>
-    <select id="searchStateSku" resultType="com.erp.common.dto.base.BaseIdDTO">
+    <select id="searchStateSku" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
         SELECT
-        pd.sku_no AS id,
-        pd.name AS name
+        pd.id AS sourceId,
+        pd.product_id,
+        pd.sku_no,
+        pd.name
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
         WHERE pi.delete_state = 0 AND pd.status=#{state}

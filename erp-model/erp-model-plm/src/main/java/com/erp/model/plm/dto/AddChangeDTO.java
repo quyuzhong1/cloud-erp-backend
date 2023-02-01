@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +22,7 @@ public class AddChangeDTO implements Serializable {
     private String sourceId;
 
     @NotBlank(message = "变更类型不能为空")
+    @StateEnumValue(strValues = {"sku", "bom"}, message = "类型有误")
     private String type;
 
 

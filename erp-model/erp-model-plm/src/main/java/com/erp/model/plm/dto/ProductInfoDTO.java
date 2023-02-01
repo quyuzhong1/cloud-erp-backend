@@ -29,6 +29,11 @@ public class ProductInfoDTO {
     private String name;
 
     /**
+     * 产品名称（英文）
+     */
+    private String nameEn;
+
+    /**
      * 产品类别
      */
     private String category;

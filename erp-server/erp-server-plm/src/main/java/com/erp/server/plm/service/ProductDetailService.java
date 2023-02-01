@@ -321,7 +321,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param searchKeyword
      * @return
      */
-    List<BaseIdDTO> getSku(String searchKeyword);
+    List<ChangeInfoDTO> getSku(String searchKeyword);
 
     /**
      * 根据skuId 获取到sku 单位最小的信息 在bom 和变更那边会用到

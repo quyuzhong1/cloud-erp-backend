@@ -71,7 +71,11 @@ public class TaskSearchParamDTO  extends PermissionsDTO {
 
     /**
      * 分组的标示 可能是时间 也可能是产品id
-
      */
     private String groupFlag;
+
+    /**
+     * 高级搜索筛选条件
+     */
+    TaskSearchDTO  taskSearchDTO;
 }

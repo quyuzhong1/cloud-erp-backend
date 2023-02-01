@@ -84,7 +84,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
 
     List<SkuVO> searchSku(@Param("searchKeyword") String searchKeyword);
 
-    List<BaseIdDTO> searchStateSku(@Param("state") Integer state,@Param("searchKeyword") String searchKeyword);
+    List<ChangeInfoDTO> searchStateSku(@Param("state") Integer state,@Param("searchKeyword") String searchKeyword);
 
     List<SkuVO> getSkuBySkuIds(@Param("skuIdList")List<String> skuIdList);
 }

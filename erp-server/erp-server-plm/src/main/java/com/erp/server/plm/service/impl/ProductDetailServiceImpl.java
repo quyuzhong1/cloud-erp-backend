@@ -1692,7 +1692,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @return
      */
     @Override
-    public List<BaseIdDTO> getSku(String searchKeyword) {
+    public List<ChangeInfoDTO> getSku(String searchKeyword) {
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         return baseMapper.searchStateSku(state, searchKeyword);
     }

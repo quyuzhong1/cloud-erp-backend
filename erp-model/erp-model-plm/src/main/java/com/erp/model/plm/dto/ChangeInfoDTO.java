@@ -5,32 +5,36 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
-/**  变更详情
+/**
+ * 变更信息
+ *
  * @Classname
  * @Description TODO
- * @Date 2023-01-28 16:10
+ * @Date 2023-01-31 15:06
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class ProductChangeDTO implements Serializable {
-
+public class ChangeInfoDTO implements Serializable {
 
     /**
-     *
+     * name
      */
-    private String id;
-
-    /**
-     * 类型
-     */
-    private String type;
+    private String name;
 
 
     /**
-     * 来源的信息
+     * 来源id
      */
     private String sourceId;
 
-    private ProductSmallestUnitDTO  info;
+    private String skuNo;
+
+    private String productId;
+
+
+
+
+
+
 }

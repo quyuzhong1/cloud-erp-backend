@@ -48,4 +48,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
     void addRoleAndMembersByApproval(String productId);
 
     List<ProjectMembersEntity> getByMemberIds(List<String> memberIds,String productId);
+
+    List<ProjectMembersEntity> listByRoleIds(List<String> roleIdList, String productId);
 }

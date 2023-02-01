@@ -20,7 +20,7 @@ import java.util.List;
 public interface ProductChangeMapper extends BaseMapper<ProductChangeEntity> {
 
 
-    IPage<ProductChangePagingVO> paging(Page query, @Param("searchList") List<String> changeSearch);
+    IPage<ProductChangePagingVO> paging(Page query, @Param("searchList") List<String> changeSearch,@Param("changeIdList") List<String> changeIdList);
 
     List<String> getChangeSearchCondition(@Param("searchKeyword") String searchKeyword);
 }

@@ -6,11 +6,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.WorkflowBusinessEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.BusinessNoCreateUtil;
 import com.common.core.utils.ExcelUtil;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -23,6 +23,10 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.dto.BusinessInfoDTO;
+import com.erp.model.workflow.dto.FindProcessDTO;
+import com.erp.model.workflow.dto.ProcessNodeDTO;
+import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -40,9 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -118,6 +120,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //但是待审核的时候
             if (isSubmitAudit) {
                 //这里要发起一个流程
+
+
             }
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
@@ -132,6 +136,44 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         return saveResult;
     }
 
+
+    /**
+     * 启动一个流程
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-01-31 14:44
+     */
+    public void startBomProcess() {
+        FindProcessDTO findProcess = new FindProcessDTO();
+        String userId = commonService.getUserInfo().getUid();
+        String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
+        String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
+        findProcess.setBusinessType(businessType);
+        findProcess.setPlatform(platform);
+        //获取到业务的信息
+        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
+        if(business!=null){
+            StartProcessDTO startProcess = new StartProcessDTO();
+            startProcess.setUserId(userId);
+            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
+            startProcess.setBusinessKey(business.getBusinessKey());
+            Map<String, Object> parameterMap = new HashMap<>();
+            List<String> paramList=business.getParamList();
+            if(CollectionUtils.isNotEmpty(paramList)){
+                parameterMap.put(paramList.get(0),"1612400984472948738");
+                parameterMap.put(paramList.get(1),"1597846207349260290");
+                startProcess.setParameterMap(parameterMap);
+                ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+
+            }
+
+
+
+        }
+
+    }
 
     /**
      * 分页获取bom 列表
@@ -161,7 +203,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         }
 
-        IPage pageData = baseMapper.paging(query, params,bomIdList);
+        IPage pageData = baseMapper.paging(query, params, bomIdList);
         List<BomPagingVO> list = pageData.getRecords();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -677,7 +719,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-28 17:08
      */
     @Override
-    public List<BaseIdDTO> getBomInfo(String searchKeyword) {
+    public List<ChangeInfoDTO> getBomInfo(String searchKeyword) {
         return baseMapper.getBomInfo(BomStateEnum.AUDIT_PASS.getState(), searchKeyword);
     }
 

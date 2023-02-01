@@ -49,6 +49,12 @@ public class ProductDetailDTO implements Serializable {
     private Date planListingTime;
 
     /**
+     * 首批量产入库时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date firstMassProductDate;
+
+    /**
      * 单位表id
      */
     private String unitId;

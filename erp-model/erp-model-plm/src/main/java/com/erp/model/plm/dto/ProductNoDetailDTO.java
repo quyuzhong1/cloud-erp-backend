@@ -43,6 +43,12 @@ public class ProductNoDetailDTO {
      * SPU名称
      */
     private String spuName;
+
+    /**
+     * SPU英文名称
+     */
+    private String spuEnName;
+
     /**
      * 产品经理
      */
@@ -129,6 +135,12 @@ public class ProductNoDetailDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
     private String planListingTime;
+
+    /**
+     * 首批量产入库时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private String firstMassProductDate;
 
     /**
      * 单位表id

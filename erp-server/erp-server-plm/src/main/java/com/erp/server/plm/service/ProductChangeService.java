@@ -1,14 +1,10 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.AddChangeDTO;
-import com.erp.model.plm.dto.ProductChangeDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
-import com.erp.model.plm.dto.UpdateChangeDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.server.plm.controller.AuditParamDTO;
@@ -30,7 +26,7 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
 
     Boolean cancellation(String id);
 
-    List<BaseIdDTO> getChangeByType(String type,String searchKeyword);
+    List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword);
 
     ProductChangeDTO details(String id);
 

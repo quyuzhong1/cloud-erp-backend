@@ -3,15 +3,18 @@ package com.erp.server.workflow.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.workflow.dto.BusinessInfoDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessEntity;
 import com.erp.model.workflow.vo.WorkflowBusinessVO;
 import com.erp.server.workflow.mapper.WorkflowBusinessMapper;
 import com.erp.server.workflow.service.WorkflowBusinessService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,5 +52,37 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
         WorkflowBusinessEntity processEntity = new WorkflowBusinessEntity();
         BeanMapper.copy(dto, processEntity);
         return this.save(processEntity);
+    }
+
+    /**
+     * 获取到流程 启动流程 所需要的信息
+     *
+     * @param dto
+     * @return com.erp.model.workflow.dto.BusinessInfoDTO
+     * @author yl
+     * @date 2023-01-31 15:49
+     */
+    @Override
+    public BusinessInfoDTO getBusiness(FindProcessDTO dto) {
+        BusinessInfoDTO result = new BusinessInfoDTO();
+        LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(WorkflowBusinessEntity::getBusinessType, dto.getBusinessType());
+        queryWrapper.eq(WorkflowBusinessEntity::getParam, dto.getPlatform());
+        queryWrapper.last("LIMIT 1");
+        WorkflowBusinessEntity businessEntity = this.getOne(queryWrapper);
+        if (businessEntity != null) {
+            result.setBusinessKey(businessEntity.getBusinessKey());
+            result.setBusinessName(businessEntity.getBusinessName());
+            result.setProcessDefinitionKey(businessEntity.getProcessDefinitionKey());
+            String param = businessEntity.getParam();
+            result.setParam(param);
+            if (StringUtils.isNotBlank(param)) {
+                List<String> paramList = Arrays.asList(param.split(","));
+                result.setParamList(paramList);
+            }
+            return result;
+        }
+        return null;
+
     }
 }

@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -17,18 +16,17 @@ import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
-import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.ProductChangeDetailsService;
-import com.erp.server.plm.service.ProductChangeService;
-import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +56,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     /**
      * 添加变更
@@ -107,13 +111,28 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
+        String searchType = params.getSearchType();
+        List<String>  changeIdList = new ArrayList<>();
+
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> changeSearch = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             changeSearch = baseMapper.getChangeSearchCondition(searchKeyword);
         }
+        //待审核
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = commonService.getUserInfo().getUid();
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            changeIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(changeIdList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
 
-        IPage pageData = baseMapper.paging(query, changeSearch);
+        }
+
+        IPage pageData = baseMapper.paging(query, changeSearch,changeIdList);
         List<ProductChangePagingVO> list = pageData.getRecords();
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
@@ -126,12 +145,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             bomList = bomInfoService.getByIds(bomIdList);
         }
         //获取到类型是sku 的 源 id
-        List<String> skuNoList = list.stream().filter(c -> changeSku.equals(c.getType())).
+        List<String> skuIdList = list.stream().filter(c -> changeSku.equals(c.getType())).
                 map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
 
         List<SkuVO> skuList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(skuNoList)) {
-            skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        if (CollectionUtils.isNotEmpty(skuIdList)) {
+            skuList = productDetailService.getSkuBySkuIds(skuIdList);
         }
 
         for (ProductChangePagingVO item : list) {
@@ -147,7 +166,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             //如果是sku
             if (changeSku.equals(type)) {
-                SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(sourceId))
+                SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(sourceId))
                         .findFirst().orElse(null);
                 if (sku != null) {
                     item.setChangeSourceNo(sku.getSkuNo());
@@ -198,7 +217,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-28 17:02
      */
     @Override
-    public List<BaseIdDTO> getChangeByType(String type, String searchKeyword) {
+    public List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword) {
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
         if (changeBom.equals(type)) {
@@ -207,7 +226,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (changeSku.equals(type)) {
             return productDetailService.getSku(searchKeyword);
         }
-        return null;
+        return new ArrayList<>();
     }
 
 
@@ -222,7 +241,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     public ProductChangeDTO details(String id) {
         try {
-            ProductChangeDTO result = new ProductChangeDTO();
             //获取到变更信息
             ProductChangeEntity changeEntity = this.getById(id);
             if (Objects.isNull(changeEntity)) {
@@ -230,23 +248,30 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             //获取到对应的 json
             String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
-            result.setSourceId(result.getSourceId());
-            String type = result.getType();
-            result.setType(type);
+            String type = changeEntity.getType();
             //对应就是bom
             if (BomConstant.CHANGE_BOM.equals(type)) {
-                T bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
+                ProductBomChangeDTO result = new ProductBomChangeDTO();
+                result.setId(id);
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(type);
+                BomDTO bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
                 result.setInfo(bom);
             }
 
             //对应就是sku
             if (BomConstant.CHANGE_SKU.equals(type)) {
-                T sku = JSONObject.parseObject(detailsJson, (Type) ProductSmallestUnitDTO.class);
+                ProductChangeDTO result = new ProductChangeDTO();
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(type);
+                result.setId(id);
+                ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
                 result.setInfo(sku);
+                return result;
             }
-            return result;
-        } catch (Exception e) {
 
+        } catch (Exception e) {
+            log.error("details",e);
         }
 
         return null;
