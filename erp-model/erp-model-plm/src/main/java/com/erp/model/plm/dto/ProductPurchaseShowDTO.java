@@ -136,6 +136,21 @@ public class ProductPurchaseShowDTO implements Serializable {
     private Long actualArrivalQty;
 
     /**
+     * 试产/产量
+     */
+    private Long trialProductionOutput;
+
+    /**
+     * 试产数量
+     */
+    private Long trialProductionQty;
+
+    /**
+     * 首批量产数量
+     */
+    private Long firstMassQty;
+
+    /**
      *禁止修改的字段
      */
     private List<String> disableFieldList;

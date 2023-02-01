@@ -1290,14 +1290,30 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 dto.getApprovalList().forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
                  taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, dto.getApprovalList());
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
-                    //查询对应负责人的上级
-                    List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(chargeIds);
-                    if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                        List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                        for (String superiorType: superiorTypeList) {
-                            String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
-                            if (StringUtils.isNotBlank(userIds)) {
-                                taskChargeDistributionEntity.setChargeIds(userIds);
+
+                    if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                        taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                        List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                        //查询对应产品角色下的人员
+                        List<ProjectMembersEntity> templateMembersList= projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
+                        if (CollectionUtils.isNotEmpty(templateMembersList)) {
+                            String approverIds = templateMembersList.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
+                            taskChargeDistributionEntity.setChargeIds(approverIds);
+                        }
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
+                        //查询对应负责人的上级
+                        List<String> ids = dto.getChargeIds();
+                        List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                        if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                            List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                            for (String superiorType: superiorTypeList) {
+                                String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
+                                if (StringUtils.isNotBlank(userIds)) {
+                                    taskChargeDistributionEntity.setChargeIds(userIds);
+                                }
                             }
                         }
                     }

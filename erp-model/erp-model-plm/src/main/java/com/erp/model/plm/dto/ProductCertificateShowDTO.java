@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -77,6 +78,21 @@ public class ProductCertificateShowDTO implements Serializable {
      * 修改人名称
      */
     private String updateUserName;
+
+    /**
+     * 立项成本
+     */
+    private BigDecimal ProjectApprovalCost;
+
+    /**
+     * 量产成本
+     */
+    private BigDecimal massCost;
+
+    /**
+     * 项目成本
+     */
+    private BigDecimal projectCost;
 
     /**
      *禁止修改的字段
