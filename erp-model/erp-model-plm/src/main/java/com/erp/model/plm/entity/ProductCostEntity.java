@@ -115,7 +115,7 @@ public class ProductCostEntity implements Serializable {
      * 立项成本
      */
     @TableField(value = "project_approval_cost")
-    private BigDecimal ProjectApprovalCost;
+    private BigDecimal projectApprovalCost;
 
     /**
      * 量产成本
