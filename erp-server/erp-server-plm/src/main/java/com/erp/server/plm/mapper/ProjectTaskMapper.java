@@ -37,7 +37,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      *产品的全部任务列表
      * @return
      */
-    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId ,
+    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId , @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
                                        @Param("searchKeyword")  String searchKeyword,
                                        @Param("statusList") List<Integer> statusList,@Param("param") String param);
 

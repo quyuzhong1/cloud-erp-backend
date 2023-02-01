@@ -516,7 +516,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.allPaging(query, productId, phaseId, searchKeyword, statusList, param);
+            pageData = baseMapper.allPaging(query, productId, phaseId,taskSearchDTO, searchKeyword, statusList, param);
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -3637,7 +3637,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已完成
         Integer finishState = TaskStateEnum.FINISH.getCode();
 
-
+        //部分完成
+        Integer portionFinishState = TaskStateEnum.PORTION_FINISH.getCode();
         //审核中
         Integer approvalIngState = TaskStateEnum.APPROVAL_ING.getCode();
 
@@ -3654,7 +3655,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         TaskOperatorRecordEntity waitConfirmEntity = recordList.stream().filter(r -> r.getAfterState().equals(waitConfirmState)).findFirst().orElse(null);
         TaskOperatorRecordEntity approvalNoPassEntity = recordList.stream().filter(r -> r.getAfterState().equals(approvalNoPassState)).findFirst().orElse(null);
 
-        Boolean approvalNoPassFlag = taskState.equals(approvalNoPassState);
 
         //先添加待发布的
         TaskProcessNodeDTO processNode = new TaskProcessNodeDTO();
@@ -3664,22 +3664,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         processNode.setNodeName(TaskStateEnum.TO_BE_RELEASED.getName());
         processNode.setNodeState(waitReleasedState);
         resultList.add(processNode);
-
+        //所有人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 根据流程id查询所有审核信息
         List<ApproveRecordShowDTO> approveRecordShowList = null;
         if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
             approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
-            if (CollectionUtils.isNotEmpty(approveRecordShowList)) {
-                List<String> userIds = approveRecordShowList.stream().map(ApproveRecordShowDTO::getHandleUserName).collect(Collectors.toList());
-                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIds);
-                if (CollectionUtils.isNotEmpty(userList)) {
-                    approveRecordShowList.forEach(obj->{
-                        String userName = userList.stream().filter(e -> e.getUserId().equals(obj.getHandleUserName())).map(FindUserDTO::getUserName).findFirst().orElse("");
-                        obj.setHandleUserName(userName);
-                    });
-                }
-            }
         }
+        //查询一般任务审核人
+        List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, taskEntity.getId());
 
         //一般任务
         Integer general = TaskProcessTypeEnum.GENERAL_TASK.getCode();
@@ -3691,32 +3684,35 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         if (general.equals(processType)) {
             //添加待开始
-            resultList.add(getProcessNode(notStartEntity, notStart,approveRecordShowList));
+            resultList.add(getProcessNode(notStartEntity, notStart,userList,approveRecordShowList,null));
             //添加进行中
-            resultList.add(getProcessNode(ingStateEntity, ingState,approveRecordShowList));
+            resultList.add(getProcessNode(ingStateEntity, ingState,userList,approveRecordShowList,null));
             //添加已完成
-            resultList.add(getProcessNode(finishStateEntity, finishState,approveRecordShowList));
+            resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,null));
         }
 
         if (generalApproval.equals(processType)) {
             //添加待开始
-            resultList.add(getProcessNode(notStartEntity, notStart,approveRecordShowList));
+            resultList.add(getProcessNode(notStartEntity, notStart,userList,approveRecordShowList,null));
             //添加进行中
-            resultList.add(getProcessNode(ingStateEntity, ingState,approveRecordShowList));
+            resultList.add(getProcessNode(ingStateEntity, ingState,userList,approveRecordShowList,null));
+
             if (waitConfirmState.equals(taskState)) {
                 //添加待审核
-                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,userList,approveRecordShowList,taskChargeDistributionList));
             }
             if (approvalIngState.equals(taskState)) {
                 //添加审核中
-                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,userList,approveRecordShowList,taskChargeDistributionList));
             }
 
-            if (approvalNoPassFlag) {//添加审核不通过
-                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,approveRecordShowList));
-            } else {
+            if (approvalNoPassState.equals(taskState)) {//添加审核不通过
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,userList,approveRecordShowList,taskChargeDistributionList));
+            }
+
+            if (finishState.equals(taskState) || portionFinishState.equals(taskState)) {
                 //添加审核通过
-                resultList.add(getProcessNode(finishStateEntity, finishState,approveRecordShowList));
+                resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,taskChargeDistributionList));
             }
 
         }
@@ -3724,17 +3720,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (reviewTask.equals(processType)) {
             if (waitConfirmState.equals(taskState)) {
                 //添加待审核
-                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,approveRecordShowList));
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,userList,approveRecordShowList,null));
             }
             if (approvalIngState.equals(taskState)) {
                 //添加审核中
-                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,approveRecordShowList));
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,userList,approveRecordShowList,null));
             }
-            if (approvalNoPassFlag) {//添加审核不通过
-                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,approveRecordShowList));
-            } else {
+
+            if (approvalNoPassState.equals(taskState)) {//添加审核不通过
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,userList,approveRecordShowList,null));
+            }
+
+            if (finishState.equals(taskState) || portionFinishState.equals(taskState)) {
                 //添加审核通过
-                resultList.add(getProcessNode(finishStateEntity, finishState,approveRecordShowList));
+                resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,null));
             }
         }
 
@@ -3743,7 +3742,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     //
-    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state,List<ApproveRecordShowDTO> approveRecordShowList) {
+    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state,List<FindUserDTO> userList,List<ApproveRecordShowDTO> approveRecordShowList,List<TaskChargeDistributionEntity> taskChargeDistributionList) {
         boolean flag = !Objects.isNull(entity);
         String operatorName = "";
         Date operatorTime = null;
@@ -3763,8 +3762,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskProcessNodeDetailDTO> detailList = new ArrayList<>();
         //当状态为待审核、审核中、审核通过、审核不通过时添加详情
         if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state) || TaskStateEnum.APPROVAL_ING.getCode().equals(state)
-                || TaskStateEnum.APPROVAL_PASS.getCode().equals(state) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
-
+                || TaskStateEnum.FINISH.getCode().equals(state) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
             //根据节点名称分组，将不同节点审核人分隔
             Map<String, List<ApproveRecordShowDTO>> map = approveRecordShowList.stream().collect(Collectors.groupingBy(ApproveRecordShowDTO::getActivityName));
             for (Map.Entry<String, List<ApproveRecordShowDTO>> entry: map.entrySet()) {
@@ -3774,21 +3772,58 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //查询流程
                 for (ApproveRecordShowDTO approveRecordShowDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                    taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
-                    taskProcessNodeDTO.setOperateUserName(approveRecordShowDTO.getHandleUserName());
-                    try {
-                        Date date = DateUtils.parseDate(approveRecordShowDTO.getStartTime(), DateUtils.DATE_FORMAT_19);
-                        taskProcessNodeDTO.setOperateTime(date);
-                    } catch (ParseException e) {
-                        throw new ServiceException(ApiError.Default);
+                    String userName = userList.stream().filter(e -> e.getUserId().equals(approveRecordShowDTO.getHandleUserName())).map(FindUserDTO::getUserName).findFirst().orElse("");
+                    taskProcessNodeDTO.setOperateUserName(userName);
+                    if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName)) {
+                        //审核不通过时将对应数据状态变更为审核不通过
+                        taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
+                    } else {
+                        taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
+                    }
+                    //已经审核通过的数据格式化时间
+                    if (ObjectUtils.isNotEmpty(approveRecordShowDTO.getEndTime())) {
+                        try {
+                            Date date = DateUtils.parseDate(approveRecordShowDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
+                            taskProcessNodeDTO.setOperateTime(date);
+                        } catch (ParseException e) {
+                            throw new ServiceException(ApiError.Default);
+                        }
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
                 taskProcessNodeDetailDTO.setList(taskProcessNodeList);
                 detailList.add(taskProcessNodeDetailDTO);
             }
+            //当审核流程是逐级审核时，查询未生成审核任务的负责人
+            if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                int size1 = detailList.size();
+                int size2 = taskChargeDistributionList.size();
+                //当审核节点不一致时拼接后面的未审核数据
+                if (size1 != size2) {
+                    TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
+                    for (int i = size1 + 1;i <= size2;i++) {
+                        List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
+                        TaskChargeDistributionEntity taskChargeDistributionEntity = taskChargeDistributionList.get(i - 1);
+                        String chargeIds = taskChargeDistributionEntity.getChargeIds();
+                        if (StringUtils.isBlank(chargeIds)) {
+                            throw new ServiceException(ApiError.ERROR_95045);
+                        }
+                        List<String> userIds = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                        userIds.forEach(obj->{
+                            TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
+                            taskProcessNodeDTO.setNodeName("待审核");
+                            //名称
+                            String userName = userList.stream().filter(e -> e.getUserId().equals(obj)).map(FindUserDTO::getUserName).findFirst().orElse("");
+                            taskProcessNodeDTO.setOperateUserName(userName);
+                            taskProcessNodeList.add(taskProcessNodeDTO);
+                        });
+                        taskProcessNodeDetailDTO.setList(taskProcessNodeList);
+                        detailList.add(taskProcessNodeDetailDTO);
+                    }
+                }
+            }
             waitReleasedDTO.setDetailList(detailList);
-            long count = approveRecordShowList.stream().count();
+            Integer count = detailList.stream().map(obj -> obj.getList().size()).reduce(MathUtil.ZERO, Integer::sum);
             waitReleasedDTO.setOperateUserName("审核人【".concat(String.valueOf(count)).concat("】人"));
         }
         return waitReleasedDTO;
