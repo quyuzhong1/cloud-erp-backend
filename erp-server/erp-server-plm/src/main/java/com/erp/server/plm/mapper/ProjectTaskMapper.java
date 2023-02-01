@@ -23,13 +23,12 @@ import java.util.List;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage<TaskPagingShowDTO> paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+    IPage<TaskPagingShowDTO> paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
                  @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
                  @Param("statusList") List<Integer> statusList, @Param("param") String param
                  );
 
-    Integer pagingCount(@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
-                                    @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
+    Integer pagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                     @Param("statusList") List<Integer> statusList, @Param("param") String param
     );
 
@@ -42,9 +41,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
                                        @Param("searchKeyword")  String searchKeyword,
                                        @Param("statusList") List<Integer> statusList,@Param("param") String param);
 
-    Integer allPagingCount( @Param("productId") String productId, @Param("phaseId") String phaseId ,
-                                       @Param("searchKeyword")  String searchKeyword,
-                                       @Param("statusList") List<Integer> statusList,@Param("param") String param);
+    Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
 
     List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 
@@ -60,12 +57,11 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 
-    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
+    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
                           @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
                           @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
-    Integer myApprovalPagingCount(@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
-                                              @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
+    Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                               @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);

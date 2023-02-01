@@ -486,7 +486,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String productId = params.getProductId();
         String searchKeyword = params.getSearchKeyword();
         List<Integer> statusList = params.getStatusList();
-        List<TaskSearchDTO> searchList = params.getSearchList();
+        TaskSearchDTO taskSearchDTO = params.getTaskSearchDTO();
         String param = params.getParam();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
@@ -494,7 +494,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
             statusList.add(TaskStateEnum.PORTION_FINISH.getCode());
-            pageData = baseMapper.paging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, null);
+            pageData = baseMapper.paging(query, productId, phaseId, taskSearchDTO, userId, searchKeyword, statusList, null);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
@@ -503,7 +503,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(processIds)) {
-                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, searchList, userId, searchKeyword, statusList, processIds);
+                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, taskSearchDTO, userId, searchKeyword, statusList, processIds);
                 //要给流程任务的id
                 List<TaskPagingShowDTO> list = pageData.getRecords();
                 for (TaskPagingShowDTO show : list) {
@@ -2167,14 +2167,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String phaseId = params.getPhaseId();
         String productId = params.getProductId();
         String searchKeyword = params.getSearchKeyword();
-        List<TaskSearchDTO> searchList = params.getSearchList();
         String param = params.getParam();
 
         List<ProductTaskCategoryCountDTO> list = new ArrayList<>();
         //这个是我完成的任务
         ProductTaskCategoryCountDTO taskDTO1 = new ProductTaskCategoryCountDTO();
         List<Integer> statusList1 = Arrays.asList(TaskStateEnum.NOT_START.getCode(), TaskStateEnum.ING.getCode(), TaskStateEnum.PORTION_FINISH.getCode());
-        Integer count1 = baseMapper.pagingCount(productId, phaseId, searchList, userId, searchKeyword, statusList1, null);
+        Integer count1 = baseMapper.pagingCount(productId, userId, statusList1, null);
         taskDTO1.setCount(count1);
         taskDTO1.setType(TaskConstant.MY_FINISH_TASK);
         list.add(taskDTO1);
@@ -2187,13 +2186,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //获取流程集合
         List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(processIds)) {
-            Integer count2 = baseMapper.myApprovalPagingCount( productId, phaseId, searchList, userId, searchKeyword, statusList2, processIds);
+            Integer count2 = baseMapper.myApprovalPagingCount(productId, userId, statusList2, processIds);
             taskDTO2.setCount(count2);
         }
         list.add(taskDTO2);
         //这个是全部
         ProductTaskCategoryCountDTO taskDTO3 = new ProductTaskCategoryCountDTO();
-        Integer count3 = baseMapper.allPagingCount( productId, phaseId, searchKeyword, new ArrayList<>(), param);
+        Integer count3 = baseMapper.allPagingCount(productId, param);
         taskDTO3.setCount(count3);
         taskDTO3.setType(TaskConstant.ALL_FINISH_TASK);
         list.add(taskDTO3);
