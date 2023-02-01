@@ -22,6 +22,7 @@ import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
+import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
@@ -29,7 +30,9 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -42,7 +45,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class KingdeeCustomerServiceImpl implements IReportHistoryService {
+public class KingdeeCustomerServiceImpl implements IReportHistoryService<KingdeeShopEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -54,6 +57,9 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
 
     @Resource
     private PlatformApiTaskService platformApiTaskService;
+    @Resource
+    @Qualifier("kingdeeCustomerServiceImpl")
+    private IReportHistoryService reportSaveService;
 
     public static void main(String[] args) {
         KingdeeCustomerServiceImpl kingdeeCustomerServiceImpl = new KingdeeCustomerServiceImpl();
@@ -114,7 +120,7 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
                 }
             }
             //存储数据到中台
-            saveShopEntity(shopEntity);
+            reportSaveService.analysisOrder(shopEntity);
         }
     }
 
@@ -129,7 +135,10 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService {
         }
     }
 
-    private void saveShopEntity(KingdeeShopEntity shopEntity) {
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(KingdeeShopEntity shopEntity) {
 //        if (!"1".equals(shopEntity.getFUseOrgId())) {
 //            return;
 //        }

@@ -25,6 +25,7 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +35,10 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 金蝶退货销售出库
@@ -42,7 +46,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.SAL_RETURNSTOCK)
-public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
+public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeReturnOrderEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -57,6 +61,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("kingdeeReturnOrderInfoImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -91,7 +99,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);
                 }
                 //存储数据到中台
-                analysisReturnOrder(orderEntity);
+                reportSaveService.analysisOrder(orderEntity);
             }
         }
     }
@@ -262,8 +270,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    @Transactional
-    public void analysisReturnOrder(KingdeeReturnOrderEntity returnOrderEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(KingdeeReturnOrderEntity returnOrderEntity) throws Exception {
         if (StrUtil.isEmpty(returnOrderEntity.getFSaleOrgName()) || !"唯迹集团".equals(returnOrderEntity.getFSaleOrgName())){
             return;
         }

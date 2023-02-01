@@ -15,22 +15,26 @@ import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 金蝶退款列表
@@ -38,7 +42,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.AR_REFUNDBILL)
-public class KingdeeRefundServiceImpl implements IReportSaveService {
+public class KingdeeRefundServiceImpl implements IReportSaveService<KingdeeRefundOrderEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -49,11 +53,12 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
     @Resource
     private DmpRefundInfoService dmpRefundInfoService;
 
-    @Resource
-    private DmpRefundItemService dmpRefundItemService;
-
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("kingdeeRefundServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -87,7 +92,7 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(refundOrderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_REFUND);
                 }
                 //存储数据到中台
-                analysisRefundOrder(refundOrderEntity);
+                reportSaveService.analysisOrder(refundOrderEntity);
             }
         }
     }
@@ -224,7 +229,9 @@ public class KingdeeRefundServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public void analysisRefundOrder(KingdeeRefundOrderEntity refundOrderEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(KingdeeRefundOrderEntity refundOrderEntity) throws Exception {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 

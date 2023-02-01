@@ -24,8 +24,10 @@ import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -41,7 +43,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_ITEMS_GET)
-public class GyySkuInfoServiceImpl implements IReportSaveService {
+public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -54,6 +56,9 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("gyySkuInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyySkuInfoServiceImpl gyySkuInfoService = new GyySkuInfoServiceImpl();
@@ -212,7 +217,9 @@ public class GyySkuInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisSku(GyySkuInfoEntity gyySkuInfoEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(GyySkuInfoEntity gyySkuInfoEntity) throws Exception {
         List<DmpSkuInfoEntity> dmpSkuInfoEntitylist = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

@@ -17,6 +17,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
@@ -26,6 +27,7 @@ import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +46,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET)
-public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
+public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliveryDetailEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -60,6 +62,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("gyyDeliveryDetailServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
@@ -113,7 +119,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyDeliveryDetailEntity, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
                 }
                 //存储数据到中台
-                analysisDeliveryDetail(gyyDeliveryDetailEntity);
+                reportSaveService.analysisOrder(gyyDeliveryDetailEntity);
             }
         }
     }
@@ -221,8 +227,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    @Transactional
-    public void analysisDeliveryDetail(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

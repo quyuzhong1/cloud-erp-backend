@@ -27,6 +27,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.ORDER_GET_RETURN_ORDER_LIST)
-public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
+public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<ReturnOrderEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -60,6 +61,10 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangReturnOrderInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
@@ -117,7 +122,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(returnOrderEntity, MongoTableNameContant.ORIGINAL_MABANG_RETURN_ORDER);
                 }
                 //存储数据到中台
-                analysisReturnOrder(returnOrderEntity);
+                reportSaveService.analysisOrder(returnOrderEntity);
             }
         }
     }
@@ -223,8 +228,9 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    @Transactional
-    public void analysisReturnOrder(ReturnOrderEntity returnOrderEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(ReturnOrderEntity returnOrderEntity) throws Exception {
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

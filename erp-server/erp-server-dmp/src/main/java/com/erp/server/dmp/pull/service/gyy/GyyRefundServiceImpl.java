@@ -27,8 +27,10 @@ import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -44,7 +46,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET)
-public class GyyRefundServiceImpl implements IReportSaveService {
+public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -59,6 +61,9 @@ public class GyyRefundServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("gyyRefundServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
@@ -114,7 +119,7 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyRefundEntity, MongoTableNameContant.ORIGINAL_GYY_REFUND);
                 }
                 //存储数据到中台
-                analysisRefundOrder(gyyRefundEntity);
+                reportSaveService.analysisOrder(gyyRefundEntity);
             }
         }
     }
@@ -222,7 +227,9 @@ public class GyyRefundServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisRefundOrder(GyyRefundEntity gyyRefundEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(GyyRefundEntity gyyRefundEntity) throws Exception {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

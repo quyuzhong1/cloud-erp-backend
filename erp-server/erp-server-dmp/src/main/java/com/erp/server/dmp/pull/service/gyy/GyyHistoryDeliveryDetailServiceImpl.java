@@ -20,8 +20,10 @@ import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
+import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
+import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
@@ -30,6 +32,7 @@ import com.erp.server.dmp.utils.GyyUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,7 +49,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryService {
+public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryService<GyyDeliveryDetailEntity> {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
     @Resource
@@ -60,6 +63,10 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
 
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
+
+    @Resource
+    @Qualifier("gyyHistoryDeliveryDetailServiceImpl")
+    private IReportHistoryService reportSaveService;
 
     public static void main(String[] args) {
         GyyHistoryDeliveryDetailServiceImpl gyyOrderInfoService = new GyyHistoryDeliveryDetailServiceImpl();
@@ -112,7 +119,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 }
                 XxlJobHelper.log("mongo数据处理完成 mongoData.size={} ", CollectionUtil.isNotEmpty(mongoData) ? mongoData.size() : 0);
                 //存储数据到中台
-                analysisDeliveryDetail(gyyDeliveryDetailEntity);
+                reportSaveService.analysisOrder(gyyDeliveryDetailEntity);
                 XxlJobHelper.log("pgsql数据处理完成 gyyDeliveryDetailEntity.size={} ", JSONUtil.toJsonStr(gyyDeliveryDetailEntity));
             }catch (Exception e) {
                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
@@ -130,7 +137,6 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
     }
 
     @Override
-//    @Transactional(rollbackFor = Exception.class)
     public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
         //拉取数据 存库
         pullDataSave(requestDTO);
@@ -222,7 +228,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                 dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                 dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", e.getStackTrace().toString()));
+                throw new ServiceException(500, StrUtil.format("请求接口地址异常 错误信息={}", JSONUtil.toJsonStr(e.getStackTrace())));
             }
             pageIndex++;
         }
@@ -237,7 +243,8 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
      * @Date 2022/11/14 18:57
      **/
     @Transactional(rollbackFor = Exception.class)
-    public void analysisDeliveryDetail(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
+    @Override
+    public void analysisOrder(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

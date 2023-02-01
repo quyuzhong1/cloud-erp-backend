@@ -18,6 +18,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
@@ -28,8 +29,10 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -46,7 +49,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_GET)
-public class GyyOrderInfoServiceImpl implements IReportSaveService {
+public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -62,6 +65,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("gyyOrderInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
@@ -137,7 +143,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                 mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
             }
             //存储数据到中台
-            analysisOrder(gyyOrderEntity);
+            reportSaveService.analysisOrder(gyyOrderEntity);
         }
 
     }
@@ -178,7 +184,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
         Integer pageCount = 1;
         //总条数
         Integer totalCount = 0;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
         while (pageIndex <= pageCount) {
             // 封装传参数据
             Map<String, Object> datas = new HashMap();
@@ -204,7 +209,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
 
             Map<String, Object> stringObjectMap = null;
             try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
+                stringObjectMap = HttpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
                 if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
                     List<GyyOrderEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("orders")), GyyOrderEntity.class);
                     totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
@@ -212,7 +217,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
                     infoArrayList.addAll(dataList);
                 } else {
 
-                    log.info(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
+                    log.error(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
                     throw new RuntimeException(" ===== 拉取订单失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
@@ -245,6 +250,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());

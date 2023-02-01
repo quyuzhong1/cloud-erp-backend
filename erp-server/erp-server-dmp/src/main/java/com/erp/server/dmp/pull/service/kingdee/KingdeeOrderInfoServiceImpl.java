@@ -27,8 +27,10 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -43,7 +45,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.SAL_SALEORDER)
-public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
+public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOrderEntity> {
 
     /**
      * 唯迹集团组织ID
@@ -68,6 +70,10 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("kingdeeOrderInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
@@ -121,7 +127,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity);
+                reportSaveService.analysisOrder(orderEntity);
             }
         }
     }
@@ -347,6 +353,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void analysisOrder(KingdeeOrderEntity kingdeeOrderEntity) throws Exception {
         // 跳过非唯迹订单
         if (StrUtil.isEmpty(kingdeeOrderEntity.getFSaleOrgName()) || !ORG_CODE.equals(kingdeeOrderEntity.getFSaleOrgId())){

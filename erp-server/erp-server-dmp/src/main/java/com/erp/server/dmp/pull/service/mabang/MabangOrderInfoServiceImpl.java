@@ -28,14 +28,17 @@ import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +52,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.ORDER_GET_ORDER_LIST)
-public class MabangOrderInfoServiceImpl implements IReportSaveService {
+public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntity> {
 
     private static final Integer NOT_SHIPPED_STATUS = 6;
     private static final Integer NOT_UNSHIPPED_STATUS = 7;
@@ -67,6 +70,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangOrderInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
@@ -143,7 +150,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(orderEntity);
+                reportSaveService.analysisOrder(orderEntity);
             }
         }
     }
@@ -259,6 +266,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void analysisOrder(OrderEntity orderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());

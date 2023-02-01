@@ -24,8 +24,10 @@ import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -39,7 +41,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.SYS_GET_SHOP_LIST)
-public class MabangShopInfoServiceImpl implements IReportSaveService {
+public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -51,6 +53,10 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangShopInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -84,7 +90,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(shopEntity, MongoTableNameContant.ORIGINAL_MABANG_SHOP);
                 }
                 //存储数据到中台
-                analysisShop(shopEntity);
+                reportSaveService.analysisOrder(shopEntity);
             }
         }
     }
@@ -165,7 +171,9 @@ public class MabangShopInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisShop(ShopEntity shopEntity) {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(ShopEntity shopEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
 
         //平台店铺编号

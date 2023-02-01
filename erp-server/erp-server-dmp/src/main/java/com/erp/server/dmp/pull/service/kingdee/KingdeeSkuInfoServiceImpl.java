@@ -6,13 +6,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.KingdeeSkuMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
@@ -25,8 +23,10 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -41,7 +41,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.BD_MATERIAL)
-public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
+public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -54,6 +54,9 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("kingdeeSkuInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -87,7 +90,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(skuEntity, MongoTableNameContant.ORIGINAL_KINGDEE_SKU);
                 }
                 //存储数据到中台
-                analysisSku(skuEntity);
+                reportSaveService.analysisOrder(skuEntity);
             }
         }
     }
@@ -211,7 +214,9 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public void analysisSku(KingdeeSkuEntity skuInfoEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(KingdeeSkuEntity skuInfoEntity) throws Exception {
         if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !"唯迹集团".equals(skuInfoEntity.getFUseOrgName())){
             return;
         }

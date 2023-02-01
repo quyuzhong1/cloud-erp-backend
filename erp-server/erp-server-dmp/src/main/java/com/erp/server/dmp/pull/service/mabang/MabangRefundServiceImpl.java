@@ -28,8 +28,10 @@ import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -45,7 +47,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.ORDER_GET_REFUND_LIST)
-public class MabangRefundServiceImpl implements IReportSaveService {
+public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEntity> {
     @Resource
     private MongoService mongoService;
 
@@ -60,6 +62,11 @@ public class MabangRefundServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangRefundServiceImpl")
+    private IReportSaveService reportSaveService;
+
 
     public static void main(String[] args) {
         MabangRefundServiceImpl gyyOrderInfoService = new MabangRefundServiceImpl();
@@ -120,7 +127,7 @@ public class MabangRefundServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(refundOrderEntity, MongoTableNameContant.ORIGINAL_MABANG_REFUND);
                 }
                 //存储数据到中台
-                analysisRefundOrder(refundOrderEntity);
+                reportSaveService.analysisOrder(refundOrderEntity);
             }
         }
     }
@@ -228,7 +235,9 @@ public class MabangRefundServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public void analysisRefundOrder(RefundOrderEntity refundOrderEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(RefundOrderEntity refundOrderEntity) throws Exception {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

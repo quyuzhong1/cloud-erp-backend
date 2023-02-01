@@ -27,6 +27,7 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.SAL_OUTSTOCK)
-public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
+public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<KingdeeDeliveryDetailEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -60,6 +61,9 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("kingdeeDeliveryDetailServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -94,7 +98,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(outStockEntity, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL);
                 }
                 //存储数据到中台
-                analysisDeliveryDetail(outStockEntity);
+                reportSaveService.analysisOrder(outStockEntity);
             }
         }
     }
@@ -274,7 +278,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService {
      * @return void
      **/
     @Transactional(rollbackFor = Exception.class)
-    public void analysisDeliveryDetail(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) throws Exception {
+    @Override
+    public void analysisOrder(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) throws Exception {
         // 跳过非唯迹订单
         if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgName()) || !"唯迹集团".equals(kingdeeOutStockEntity.getFSaleOrgName())){
             return;

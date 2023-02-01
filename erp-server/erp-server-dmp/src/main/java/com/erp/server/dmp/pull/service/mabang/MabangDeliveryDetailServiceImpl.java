@@ -27,6 +27,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,7 @@ import com.erp.model.dmp.entity.MabangAppEntity;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.ORDER_GET_DELIVERY_LIST)
-public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
+public class MabangDeliveryDetailServiceImpl implements IReportSaveService<OrderEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -64,6 +65,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangDeliveryDetailServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -97,7 +102,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(orderEntity, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL);
                 }
                 //存储数据到中台
-                analysisDeliveryDetail(orderEntity);
+                reportSaveService.analysisOrder(orderEntity);
             }
         }
     }
@@ -202,8 +207,9 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    @Transactional
-    public void analysisDeliveryDetail(OrderEntity orderEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(OrderEntity orderEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 

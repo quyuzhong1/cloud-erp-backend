@@ -23,8 +23,10 @@ import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -38,7 +40,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_SHOP_GET)
-public class GyyShopInfoServiceImpl implements IReportSaveService {
+public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -51,6 +53,9 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("gyyShopInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyShopInfoServiceImpl gyyShopInfoService = new GyyShopInfoServiceImpl();
@@ -105,7 +110,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
                     mongoService.saveMongoData(gyyShopInfoEntity, MongoTableNameContant.ORIGINAL_GYY_SHOP);
                 }
                 //存储数据到中台
-                analysisShop(gyyShopInfoEntity);
+                reportSaveService.analysisOrder(gyyShopInfoEntity);
             }
         }
     }
@@ -199,7 +204,9 @@ public class GyyShopInfoServiceImpl implements IReportSaveService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public void analysisShop(GyyShopInfoEntity shopInfoEntity) {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(GyyShopInfoEntity shopInfoEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
 
         //平台店铺编号

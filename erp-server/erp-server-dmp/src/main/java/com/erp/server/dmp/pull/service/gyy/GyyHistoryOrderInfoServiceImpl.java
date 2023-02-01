@@ -33,8 +33,10 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -50,7 +52,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
+public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<GyyOrderEntity> {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
     @Resource
@@ -67,6 +69,9 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+    @Resource
+    @Qualifier("gyyHistoryOrderInfoServiceImpl")
+    private IReportHistoryService reportHistoryService;
 
     public static void main(String[] args) {
         GyyHistoryOrderInfoServiceImpl gyyOrderInfoService = new GyyHistoryOrderInfoServiceImpl();
@@ -134,7 +139,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
                     mongoService.saveMongoData(gyyOrderEntity, MongoTableNameContant.ORIGINAL_GYY_ORDER);
                 }
                 //存储数据到中台
-                analysisOrder(gyyOrderEntity);
+                reportHistoryService.analysisOrder(gyyOrderEntity);
             } catch (Exception e) {
                 DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                 dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
@@ -247,7 +252,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
                     DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
                     dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
                     dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
+                    dmpErrorLogEntity.setErrorMsg(JSONUtil.toJsonStr(e.getStackTrace()));
                     dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
                     dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
                     dmpErrorLogService.add(dmpErrorLogEntity);
@@ -266,6 +271,8 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService {
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());

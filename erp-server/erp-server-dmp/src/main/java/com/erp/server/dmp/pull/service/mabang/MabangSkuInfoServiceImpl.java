@@ -22,8 +22,10 @@ import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
@@ -36,7 +38,7 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.STOCK_DO_SEARCH_SKU_LIST)
-public class MabangSkuInfoServiceImpl implements IReportSaveService {
+public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntity> {
 
     @Resource
     private MongoService mongoService;
@@ -49,6 +51,10 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+    @Resource
+    @Qualifier("mabangSkuInfoServiceImpl")
+    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -174,7 +180,9 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService {
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    public void analysisSku(SkuInfoEntity skuInfoEntity) throws Exception {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void analysisOrder(SkuInfoEntity skuInfoEntity) throws Exception {
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
         SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
 
