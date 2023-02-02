@@ -108,7 +108,10 @@ public class BomPagingVO implements Serializable {
     private String typeName;
 
 
-
+    /**
+     * 是否是变更中 true 是
+     */
+    private Boolean isChangeIng;
 
 
 }

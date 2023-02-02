@@ -211,6 +211,7 @@ public enum ApiError implements Serializable {
     ERROR_95110(95110,"固定任务不能修改任务名称"),
     ERROR_95111(95111,"固定任务不能修改目标交付文档"),
     ERROR_95112(95112,"固定任务不能修改审核流程"),
+    ERROR_95113(95113,"bom信息变更中"),
     /**
      * bi 错误
      * 从97000 开始  以端口号

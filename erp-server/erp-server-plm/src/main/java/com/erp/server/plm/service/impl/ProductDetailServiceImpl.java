@@ -144,6 +144,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private ProductChangeService productChangeService;
+
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
@@ -170,7 +173,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
-            pageData.getRecords().forEach(obj -> obj.setStatusName(ProductDetailStatusEnum.getName(obj.getStatus())));
+            List<ProductDetailShowDTO> list = pageData.getRecords();
+            List<String> sourceIds=list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+            List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
+            for(ProductDetailShowDTO item:list){
+                item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
+                Boolean isChangeIng=changeIngSourceIds.contains(item.getId());
+                item.setIsChangeIng(isChangeIng);
+            }
         }
         return new PagingVO(pageData);
     }
@@ -1944,16 +1954,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
 
-        return resultList.stream().filter(s->StringUtils.isNotBlank(s)).collect(Collectors.toList());
+        return resultList.stream().filter(s -> StringUtils.isNotBlank(s)).collect(Collectors.toList());
     }
 
-    
+
     /**
      * 根据部门获取对应的人员
-     * @author yl
-     * @date 2023-02-01 17:50
+     *
      * @param secondDeptName
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-02-01 17:50
      */
     @Override
     public List<String> getApproveLead(String secondDeptName) {

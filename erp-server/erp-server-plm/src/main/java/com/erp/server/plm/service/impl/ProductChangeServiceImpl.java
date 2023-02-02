@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,7 +25,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.controller.AuditParamDTO;
-import com.erp.server.plm.enums.BomStateEnum;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
@@ -100,10 +100,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Boolean saveResult = this.save(change);
         if (saveResult) {
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
-            //如果变更成功 如果是bom 要改状态
-            if (isBom) {
-                bomInfoService.updateState(sourceId, BomStateEnum.ARCHIVE_CHANGE_ING.getState());
-            }
         }
 
         //启动一个流程
@@ -374,11 +370,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }
-
         }
 
         IPage pageData = baseMapper.paging(query, changeSearch, changeIdList);
         List<ProductChangePagingVO> list = pageData.getRecords();
+        if (CollectionUtils.isNotEmpty(list)) {
+            return new PagingVO(new Page());
+        }
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
         //获取到类型是bom 的 源 id
@@ -397,7 +395,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             skuList = productDetailService.getSkuBySkuIds(skuIdList);
         }
-
         for (ProductChangePagingVO item : list) {
             String type = item.getType();
             String sourceId = item.getSourceId();
@@ -511,14 +508,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (!waitAudit.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95109);
         }
-        String type = dto.getType();
-        String changeBom = BomConstant.CHANGE_BOM;
-        Boolean isBom = changeBom.equals(type);
-        //数据库的类型
-        String dbType = changeEntity.getType();
-        //数据库的bom 表id
-        String dbSourceId = changeEntity.getSourceId();
-        Boolean dbIsBom = changeBom.equals(dbType);
         //新的
         String sourceId = dto.getSourceId();
         changeEntity.setSourceId(sourceId);
@@ -533,13 +522,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
              */
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
 
-            if (isBom) {
-                bomInfoService.updateState(sourceId, BomStateEnum.ARCHIVE_CHANGE_ING.getState());
-            }
-            //老的bom 状态要改回来
-            if (dbIsBom) {
-                bomInfoService.updateState(dbSourceId, BomStateEnum.AUDIT_PASS.getState());
-            }
         }
         return result;
     }
@@ -749,7 +731,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
                 if (StringUtils.isNotBlank(detailsJson)) {
-                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson,ProductSmallestUnitDTO.class);
+                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
                     result.setInfo(bom);
                 }
                 return result;
@@ -758,6 +740,30 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             log.error("skuDetails", e);
         }
         return null;
+
+    }
+
+    /**
+     * 获取到源 id 审核中（变更中）
+     *
+     * @param sourceIds
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-02-02 16:29
+     */
+    @Override
+    public List<String> getBySourceId(List<String> sourceIds) {
+        if (CollectionUtils.isNotEmpty(sourceIds)) {
+            List<Integer> stateList = new ArrayList<>(2);
+            stateList.add(ProductChangeStateEnum.AUDIT_ING.getState());
+            stateList.add(ProductChangeStateEnum.WAIT_AUDIT.getState());
+            LambdaQueryWrapper<ProductChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(ProductChangeEntity::getSourceId);
+            queryWrapper.in(ProductChangeEntity::getSourceId, sourceIds);
+            queryWrapper.in(ProductChangeEntity::getState, stateList);
+            return this.listObjs(queryWrapper,Object::toString);
+        }
+        return new ArrayList<>();
 
     }
 }

@@ -176,7 +176,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //产品经理上级
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
             //Arrays.asList("3");
-            List<String> departmentHeadList =productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
             //
             if (CollectionUtils.isEmpty(departmentHeadList)) {
                 throw new ServiceException(ApiError.ERROR_9032);
@@ -265,6 +265,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
+        List<String> bomIds = list.stream().map(BomPagingVO::getId).collect(Collectors.toList());
+
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
         List<FindUserDTO> userList = commonService.getAllUser();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -276,6 +279,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (createUser != null) {
                 item.setCreateUserName(createUser.getUserName());
             }
+            Boolean isChangeIng=changeIngSourceIds.contains(item.getId());
+            item.setIsChangeIng(isChangeIng);
             Integer state = item.getState();
             item.setStateName(BomStateEnum.getName(state));
             String type = item.getType();
@@ -297,7 +302,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         BeanMapper.copy(bom, result);
-        String  createUserName = commonService.getNameById(result.getCreateUserId());
+        String createUserName = commonService.getNameById(result.getCreateUserId());
         result.setCreateUserName(createUserName);
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(id);
         result.setSkuList(skuList);
@@ -587,6 +592,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //只有归档才能变更
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95104);
+        }
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(Arrays.asList(sourceId));
+        if(CollectionUtils.isNotEmpty(changeIngSourceIds)){
+            throw new ServiceException(ApiError.ERROR_95113);
         }
 
     }

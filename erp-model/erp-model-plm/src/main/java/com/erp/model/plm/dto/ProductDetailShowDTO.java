@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -101,4 +100,7 @@ public class ProductDetailShowDTO implements Serializable {
      * 是否可销售(0否，1是)
      */
     private Integer isMarketable;
+
+
+    private Boolean isChangeIng;
 }

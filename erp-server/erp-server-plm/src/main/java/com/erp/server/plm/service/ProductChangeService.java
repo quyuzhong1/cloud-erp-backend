@@ -50,4 +50,6 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @return com.erp.model.plm.dto.ProductChangeDTO
      */
     ProductChangeDTO skuDetails(ProductChangeEntity changeEntity);
+
+    List<String> getBySourceId(List<String> sourceIds);
 }

@@ -16,8 +16,8 @@ public enum BomStateEnum {
     AUDIT_NO_PASS(3, "审核不通过"),
     AUDIT_PASS(4, "已归档"),
     FREEZE(5, "已冻结"),
-    SCRAP(6, "已报废"),
-    ARCHIVE_CHANGE_ING(7, "归档变更中");
+    SCRAP(6, "已报废");
+
 
     private Integer state;
     private String name;
