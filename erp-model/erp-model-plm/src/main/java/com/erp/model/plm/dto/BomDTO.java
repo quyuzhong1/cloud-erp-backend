@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class BomDTO  implements Serializable {
+public class BomDTO implements Serializable {
 
     /**
      * 表Id
@@ -31,6 +31,11 @@ public class BomDTO  implements Serializable {
     @NotNull(message = "版本不能为空")
     private Integer version;
 
+
+    /**
+     * 编号
+     */
+    private String serialNumber;
 
 
     /**
