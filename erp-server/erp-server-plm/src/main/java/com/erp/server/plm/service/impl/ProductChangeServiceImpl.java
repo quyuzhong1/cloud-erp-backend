@@ -628,6 +628,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             //获取到变更信息
             ProductChangeEntity change = this.getById(id);
             String type = change.getType();
+            change.setApprovalFinishTime(new Date());
+            this.updateById(change);
             if (change != null) {
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(change.getId());
@@ -761,7 +763,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             queryWrapper.select(ProductChangeEntity::getSourceId);
             queryWrapper.in(ProductChangeEntity::getSourceId, sourceIds);
             queryWrapper.in(ProductChangeEntity::getState, stateList);
-            return this.listObjs(queryWrapper,Object::toString);
+            return this.listObjs(queryWrapper, Object::toString);
         }
         return new ArrayList<>();
 

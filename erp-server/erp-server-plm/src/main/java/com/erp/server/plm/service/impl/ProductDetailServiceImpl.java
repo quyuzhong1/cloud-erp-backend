@@ -174,11 +174,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             List<ProductDetailShowDTO> list = pageData.getRecords();
-            List<String> sourceIds=list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
+            List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
             List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
-            for(ProductDetailShowDTO item:list){
+            for (ProductDetailShowDTO item : list) {
                 item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
-                Boolean isChangeIng=changeIngSourceIds.contains(item.getId());
+                Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
                 item.setIsChangeIng(isChangeIng);
             }
         }
@@ -1700,8 +1700,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public void updateProductStateByProductId(String productId, Integer state) {
         LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(ProductDetailEntity::getProductId,productId);
-        updateWrapper.set(ProductDetailEntity::getProductState,state);
+        updateWrapper.eq(ProductDetailEntity::getProductId, productId);
+        updateWrapper.set(ProductDetailEntity::getProductState, state);
         this.update(updateWrapper);
     }
 
@@ -1843,8 +1843,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String id = "";
 
 
-        //2.修改/新增 sku信息
         ProductDetailEntity detailEntity = skuDTO.getProductManySkuDetail();
+        ProductDetailEntity oldEntity = this.getById(detailEntity.getId());
+        //sku操作日志
+        ProductDetailDTO detail = new ProductDetailDTO();
+        BeanMapper.copy(detailEntity, detail);
+        addProductDetailLog(detail, oldEntity, detail.getId(), detailEntity.getProductId());
+        //2.修改/新增 sku信息
+
         if (detailEntity != null) {
             this.updateById(detailEntity);
         }

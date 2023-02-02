@@ -379,7 +379,12 @@
         LEFT JOIN product_info pi ON pi.id = pd.product_id
         WHERE pi.delete_state = 0
         <if test="searchKeyword != null and searchKeyword!=''">
-            AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+            AND
+            (
+            pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+             OR
+            pd.name LIKE  concat('%',#{searchKeyword},'%')
+            )
         </if>
     </select>
     <select id="searchStateSku" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
