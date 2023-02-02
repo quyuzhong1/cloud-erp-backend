@@ -1209,7 +1209,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (MathUtil.ONE.equals(taskEntity.getIsFixed())) {
             //任务名称
             if (!taskEntity.getName().equals(dto.getName())) {
-                throw new ServiceException(ApiError.ERROR_95104);
+                throw new ServiceException(ApiError.ERROR_95110);
             }
             //目标交付文档
             List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(dto.getId());
@@ -1224,11 +1224,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //比较交付文档
             boolean equalList = ListUtils.isEqualList(newDocs, oldDocs);
             if (!equalList) {
-                throw new ServiceException(ApiError.ERROR_95105);
+                throw new ServiceException(ApiError.ERROR_95111);
             }
             //审核流程
             if (!StringUtils.equals( dto.getBusinessProcessId(),taskEntity.getBusinessProcessId())) {
-                throw new ServiceException(ApiError.ERROR_95106);
+                throw new ServiceException(ApiError.ERROR_95112);
             }
         }
 
@@ -1418,7 +1418,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //固定任务不能修改名称
         if (MathUtil.ONE.equals(taskEntity.getIsFixed()) && StringUtils.isNotBlank(name)) {
             if (!taskEntity.getName().equals(name)) {
-                throw new ServiceException(ApiError.ERROR_95104);
+                throw new ServiceException(ApiError.ERROR_95110);
             }
         }
         if (updateMap.containsKey("planStartTime")) {
