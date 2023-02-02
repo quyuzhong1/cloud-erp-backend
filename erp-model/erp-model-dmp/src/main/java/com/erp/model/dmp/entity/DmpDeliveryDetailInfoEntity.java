@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -171,19 +172,19 @@ public class DmpDeliveryDetailInfoEntity implements Serializable {
      * 平台单据审核时间
      */
     @TableField(value = "platform_approve_time")
-    private Date platformApproveTime;
+    private LocalDateTime platformApproveTime;
 
     /**
      * 平台单据创建时间
      */
     @TableField(value = "platform_create_time")
-    private Date platformCreateTime;
+    private LocalDateTime platformCreateTime;
 
     /**
      * 平台单据修改时间
      */
     @TableField(value = "platform_update_time")
-    private Date platformUpdateTime;
+    private LocalDateTime platformUpdateTime;
 
     /**
      * 备注
@@ -213,13 +214,13 @@ public class DmpDeliveryDetailInfoEntity implements Serializable {
      * 创建时间
      */
     @TableField(value = "create_time")
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 发货时间
      */
     @TableField(value = "delivery_date")
-    private Date deliveryDate;
+    private LocalDateTime deliveryDate;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

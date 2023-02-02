@@ -90,7 +90,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 订单付款时间
      */
     @TableField(value = "paid_time")
-    private Date paidTime;
+    private LocalDateTime paidTime;
 
     /**
      * 平台交易号
@@ -174,7 +174,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 交易关闭时间
      */
     @TableField(value = "close_date")
-    private Date closeDate;
+    private LocalDateTime closeDate;
 
     /**
      * 买家电话1
@@ -294,7 +294,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 平台订单时间
      */
     @TableField(value = "platform_create_time")
-    private Date platformCreateTime;
+    private LocalDateTime platformCreateTime;
 
     /**
      * 部门名称
@@ -324,7 +324,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 发货时间
      */
     @TableField(value = "delivery_time")
-    private Date deliveryTime;
+    private LocalDateTime deliveryTime;
 
     /**
      * 清洗状态  1 未清洗 2 清洗完成

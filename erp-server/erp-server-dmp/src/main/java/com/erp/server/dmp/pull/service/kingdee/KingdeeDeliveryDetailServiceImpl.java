@@ -1,5 +1,7 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
@@ -12,18 +14,18 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailItemEntity;
-import com.erp.model.dmp.kingdee.KingdeeRefundOrderEntity;
+import com.erp.model.dmp.kingdee.*;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl.ORG_CODE;
 
 /**
  * 金蝶云星空出库详情
@@ -59,8 +64,6 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
     @Resource
     @Qualifier("kingdeeDeliveryDetailServiceImpl")
     private IReportSaveService reportSaveService;
@@ -112,34 +115,22 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         List<KingdeeDeliveryDetailEntity> infoArrayList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(30);
-            st = sdf.format(localDateTime);
-            sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-
-        //读取配置，初始化SDK
-        K3CloudApi client = new K3CloudApi();
-
-        LinkedList<String> queryfilters = new LinkedList<>();
-        queryfilters.add(String.format("FModifyDate >= '%s'", st));
-        queryfilters.add(String.format("FModifyDate <= '%s'", sd));
-        queryfilters.add(String.format("FBillTypeID = '%s'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
-        queryfilters.add(String.format("FDocumentStatus = '%s'", "C"));
-        String filterStr = String.join(" and ", queryfilters);
-        String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName,FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName,FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus,FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName,FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"
-                + "FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate,FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote";
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        LinkedList<String> queryFilters = new LinkedList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
+        queryFilters.add(String.format("FBillTypeID = '%s'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
+        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName," +
+                "FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName," +
+                "FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
+                "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
+                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"
+                + "FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
+                "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote";
 
         Boolean dataSign = true;
         //当前页数
@@ -148,125 +139,25 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         //每次最多获取100条
         Integer pageSize = 10000;
         while (dataSign) {
-            //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
-            QueryParam param = new QueryParam();
-            param.setFormId(dto.getJobTaskDTO().getApiCode());
-            param.setFieldKeys(fieldKeys);
-            if (StringUtils.isNotBlank(st)) {
-                param.setFilterString(filterStr);
-            }
-            param.setLimit(pageSize);
-            //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-
-            param.setStartRow(pageIndex * pageSize);
-            String s = JSONObject.toJSONString(param);
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                List<List<Object>> result = client.executeBillQuery(s);
-                if (!result.isEmpty()) {
-                    if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
-                        dataSign = false;
-                        throw new RuntimeException(" ===== 金蝶云星空解析出库详情信息数据失败 ===== " + result);
-                    }
-
-                    for (List<Object> objects : result) {
-                        Map<String, String> valMap = KingdeeUtils.keySetValByLinked(fieldKeys, objects);
-                        KingdeeDeliveryDetailEntity kingdeeReturnOrderEntity = new KingdeeDeliveryDetailEntity();
-                        kingdeeReturnOrderEntity.setFBillTypeID(valMap.get("FBillTypeID"));
-                        kingdeeReturnOrderEntity.setFBillTypeName(valMap.get("FBillTypeID.FName"));
-                        kingdeeReturnOrderEntity.setFBillNo(valMap.get("FBillNo"));
-                        kingdeeReturnOrderEntity.setFSoorDerno(valMap.get("FSoorDerno"));
-                        kingdeeReturnOrderEntity.setFDate(valMap.get("FDate"));
-                        kingdeeReturnOrderEntity.setFSaleOrgId(valMap.get("FSaleOrgId"));
-                        kingdeeReturnOrderEntity.setFSaleOrgName(valMap.get("FSaleOrgId.FName"));
-                        kingdeeReturnOrderEntity.setFCustomerID(valMap.get("FCustomerID"));
-                        kingdeeReturnOrderEntity.setFCustomerName(valMap.get("FCustomerID.FName"));
-                        kingdeeReturnOrderEntity.setFSaleDeptName(valMap.get("FSaleDeptID.FName"));
-                        kingdeeReturnOrderEntity.setFSalesManID(valMap.get("FSalesManID"));
-                        kingdeeReturnOrderEntity.setFSalesManName(valMap.get("FSalesManID.FName"));
-                        kingdeeReturnOrderEntity.setFReceiverName(valMap.get("FReceiverID.FName"));
-                        kingdeeReturnOrderEntity.setFTransferBizTypeName(valMap.get("FTransferBizType.FName"));
-                        kingdeeReturnOrderEntity.setF_ulz_BaseProperty2(valMap.get("F_ulz_BaseProperty2"));
-                        kingdeeReturnOrderEntity.setFLinkPhone(valMap.get("FLinkPhone"));
-                        kingdeeReturnOrderEntity.setFLinkMan(valMap.get("FLinkMan"));
-                        kingdeeReturnOrderEntity.setFBussinessType(valMap.get("FBussinessType"));
-                        kingdeeReturnOrderEntity.setFDocumentStatus(valMap.get("FDocumentStatus"));
-                        kingdeeReturnOrderEntity.setFNote(valMap.get("FNote"));
-                        kingdeeReturnOrderEntity.setFReceiveAddress(valMap.get("FReceiveAddress"));
-                        kingdeeReturnOrderEntity.setFCreatorName(valMap.get("FCreatorId.FName"));
-                        kingdeeReturnOrderEntity.setFCreateDate(valMap.get("FCreateDate"));
-                        kingdeeReturnOrderEntity.setFModifierName(valMap.get("FModifierId.FName"));
-                        kingdeeReturnOrderEntity.setFModifyDate(valMap.get("FModifyDate"));
-                        kingdeeReturnOrderEntity.setFApproverName(valMap.get("FApproverID.FName"));
-                        kingdeeReturnOrderEntity.setFApproveDate(valMap.get("FApproveDate"));
-                        kingdeeReturnOrderEntity.setFCancelStatus(valMap.get("FCancelStatus"));
-                        kingdeeReturnOrderEntity.setFGYDATE(valMap.get("FGYDATE"));
-                        kingdeeReturnOrderEntity.setFLogisticsNos(valMap.get("FLogisticsNos"));
-                        kingdeeReturnOrderEntity.setF_ulz_Text3(valMap.get("F_ulz_Text3"));
-                        kingdeeReturnOrderEntity.setFSettleCurrCode(valMap.get("FSettleCurrID.FCode"));
-                        kingdeeReturnOrderEntity.setFExchangeRate(valMap.get("FExchangeRate"));
-
-                        //商品信息
-                        KingdeeDeliveryDetailItemEntity itemEntity = new KingdeeDeliveryDetailItemEntity();
-                        itemEntity.setFBillNo(valMap.get("FBillNo"));
-                        itemEntity.setFSrcBillNo(valMap.get("FSrcBillNo"));
-                        itemEntity.setF_ulz_BaseProperty1(valMap.get("F_ulz_BaseProperty1"));
-                        itemEntity.setFCustMatID(valMap.get("FCustMatID"));
-                        itemEntity.setFCustMatName(valMap.get("FCustMatName"));
-                        itemEntity.setFMaterialID(valMap.get("FMaterialID"));
-                        itemEntity.setFMaterialNumber(valMap.get("FMaterialID.FNumber"));
-                        itemEntity.setFMaterialName(valMap.get("FMaterialID.FName"));
-                        itemEntity.setFBarcode(valMap.get("FBarcode"));
-                        itemEntity.setFMateriaModel(valMap.get("FMateriaModel"));
-                        itemEntity.setFMateriaType(valMap.get("FMateriaType"));
-                        itemEntity.setFRealQty(valMap.get("FRealQty"));
-                        itemEntity.setFUnitName(valMap.get("FUnitID.FName"));
-                        itemEntity.setFPrice(valMap.get("FPrice"));
-                        itemEntity.setFIsFree(valMap.get("FIsFree"));
-                        itemEntity.setFArrivalStatus(valMap.get("FArrivalStatus"));
-                        itemEntity.setFArrivalDate(valMap.get("FArrivalDate"));
-                        itemEntity.setFAmount(valMap.get("FAmount"));
-                        itemEntity.setFStockStatusID(valMap.get("FStockStatusID"));
-                        itemEntity.setFStockStatusName(valMap.get("FStockStatusID.FName"));
-                        itemEntity.setFStockName(valMap.get("FStockID.FName"));
-                        itemEntity.setF_ulz_Text1(valMap.get("F_ulz_Text1"));
-                        itemEntity.setFEntryCostAmount(valMap.get("FEntryCostAmount"));
-                        itemEntity.setFEntrynote(valMap.get("FEntrynote"));
-
-                        KingdeeDeliveryDetailEntity entity = infoArrayList.stream().filter(a -> a.getFBillNo().equals(valMap.get("FBillNo")) && a.getFSoorDerno().equals(valMap.get("FSoorDerno"))).findFirst().orElse(null);
-                        if (entity != null) {
-                            entity.getKingdeeOutStockItemEntityList().add(itemEntity);
-                        } else {
-                            List<KingdeeDeliveryDetailItemEntity> outStockItemEntityList = new ArrayList();
-                            outStockItemEntityList.add(itemEntity);
-                            kingdeeReturnOrderEntity.setKingdeeOutStockItemEntityList(outStockItemEntityList);
-                            infoArrayList.add(kingdeeReturnOrderEntity);
-                        }
-                    }
-                } else {
-                    dataSign = false;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams("");
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+            XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
+            if (result.size() < pageSize){
                 dataSign = false;
             }
-            pageIndex++;
+            if (CollectionUtil.isEmpty(result)) {
+                return Collections.emptyList();
+            }
+            List<KingdeeDeliveryDetailEntity> entityList = result.stream().map(shopEntity ->
+                    BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).collect(Collectors.toList());
+
+            Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
+                            BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class))
+                    .collect(Collectors.groupingBy(m -> StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno())));
+            entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno()))))
+                    .collect(Collectors.toList());
+            infoArrayList.addAll(entityList);
+            pageIndex ++;
         }
         return infoArrayList;
     }
@@ -281,11 +172,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     @Override
     public void analysisOrder(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) throws Exception {
         // 跳过非唯迹订单
-        if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgName()) || !"唯迹集团".equals(kingdeeOutStockEntity.getFSaleOrgName())){
+        if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) || !ORG_CODE.equals(kingdeeOutStockEntity.getFSaleOrgId())){
             return;
         }
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
         //单据编号
         deliveryDetailInfoEntity.setBillNo(kingdeeOutStockEntity.getFBillNo());
@@ -380,25 +271,24 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         //状态 1.已发货 2..已作废
         deliveryDetailInfoEntity.setStatus(status);
 
-
         //平台单据审核时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFApproveDate()) && !kingdeeOutStockEntity.getFApproveDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformApproveTime(sdf.parse(kingdeeOutStockEntity.getFApproveDate()));
+            deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(kingdeeOutStockEntity.getFApproveDate(), sdf));
         }
 
         //平台单据创建时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFCreateDate()) && !kingdeeOutStockEntity.getFCreateDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(sdf.parse(kingdeeOutStockEntity.getFCreateDate()));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFCreateDate(), sdf));
         }
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFModifyDate()) && !kingdeeOutStockEntity.getFModifyDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(sdf.parse(kingdeeOutStockEntity.getFModifyDate()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFModifyDate(), sdf));
         }
 
         //发货时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFDate()) && !kingdeeOutStockEntity.getFDate().equals("null")) {
-            deliveryDetailInfoEntity.setDeliveryDate(sdf.parse(kingdeeOutStockEntity.getFDate()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(kingdeeOutStockEntity.getFDate(), sdf));
         }
 
         //备注
@@ -414,7 +304,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         deliveryDetailInfoEntity.setCompanyName(kingdeeOutStockEntity.getFSaleOrgName());
 
         //创建时间
-        deliveryDetailInfoEntity.setCreateTime(new Date());
+        deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String deliveryDetailId = dmpDeliveryDetailInfoService.checkOrder(deliveryDetailInfoEntity);
@@ -430,7 +320,6 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      * @Date 2022/11/14 18:57
      * @return void
      **/
-    @Transactional
     public void analysisReturnOrderItem(List<KingdeeDeliveryDetailItemEntity> orderItem, String deliveryDetailId) {
         List<DmpDeliveryDetailItemEntity> orderItemList = new ArrayList<>();
         for (KingdeeDeliveryDetailItemEntity itemEntity : orderItem) {
@@ -476,7 +365,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             dmpReturnOrderItemEntity.setSpecifics(itemEntity.getFMateriaModel());
 
             //订单商品备注
-            dmpReturnOrderItemEntity.setItemRemark(itemEntity.getFEntrynote());
+            dmpReturnOrderItemEntity.setItemRemark(itemEntity.getFEntryNote());
 
             //仓库
             dmpReturnOrderItemEntity.setStockName(itemEntity.getFStockName());

@@ -1,9 +1,12 @@
 package com.erp.server.dmp.pull.thread;
 
+import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.service.ModelService;
+import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -20,6 +23,8 @@ public class PullGyyDateThread {
 
     @Resource
     private ModelService modelService;
+    @Resource
+    private DmpErrorLogService dmpErrorLogService;
 
     @Async("gyy")
     public void pullOrder(JobTaskDTO jobTaskDTO) {
@@ -30,8 +35,9 @@ public class PullGyyDateThread {
         try {
             modelService.pullDataSave(dto);
         } catch (Exception e) {
-            e.printStackTrace();
-            log.info(" ===== 管易云拉取数据错误 ===== { " + e.getMessage() + " }");
+            log.error(" 管易云拉取数据错误dto={}", JSONUtil.toJsonStr(dto), e);
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(dto),e.getMessage(), JSONUtil.toJsonStr(e.getStackTrace()));
+            dmpErrorLogService.save(dmpErrorLogEntity);
             return;
         }
         // 修改任务信息

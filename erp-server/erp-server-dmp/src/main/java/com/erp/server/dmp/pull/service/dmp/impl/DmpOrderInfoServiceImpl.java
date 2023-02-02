@@ -209,9 +209,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                             updateStatus = true;
                         }
                         LocalDateTime listingTime = skuBySkuNo.getListingTime();
-                        Date platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
+                        LocalDateTime platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
                         if (null !=  listingTime && null != platformCreateTime) {
-                            dmpOrderItemEntity.setNewSign(listingTime.getYear() == LocalDateUtil.date2LocalDateTime(platformCreateTime).getYear() ? 1 : 0);
+                            dmpOrderItemEntity.setNewSign(listingTime.getYear() == platformCreateTime.getYear() ? 1 : 0);
                             tag = true;
                             updateStatus = true;
                         }

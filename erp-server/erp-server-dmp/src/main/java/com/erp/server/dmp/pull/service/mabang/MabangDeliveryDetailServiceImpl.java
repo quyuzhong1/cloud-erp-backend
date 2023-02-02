@@ -10,11 +10,8 @@ import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.OrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
@@ -24,6 +21,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import com.erp.model.dmp.entity.MabangAppEntity;
 
 /**
  * 马帮出库详情
@@ -133,7 +127,6 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             sd = sdf.format(date);
             dto.getJobTaskDTO().setLastTime(date);
         }
-        MabangAppEntity mabangAppEntity = new MabangAppEntity();
 
         //每次最多获取100条
         Integer pageSize = 100;
@@ -141,7 +134,6 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         Integer pageIndex = 1;
         //总页数
         Integer pageCount = 1;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
         while (pageIndex <= pageCount) {
             Map<String, Object> paramsMap = new HashMap();
             paramsMap.put("updateTimeStart", st);
@@ -152,14 +144,14 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             // 封装传参数据
             Map<String, Object> datas = new HashMap();
             datas.put("api", "order-get-order-list");
-            datas.put("appkey", mabangAppEntity.getAppKey());
+            datas.put("appkey", MabangApiUtils.getAppKey());
             datas.put("version", 1);
             datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
             datas.put("data", paramsMap);
 
             // 将传参转为Json格式
             String jsonData = JSONObject.toJSONString(datas);
-            String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
+            String authorization = HmacSHA256Utils.hmacSHA256(jsonData, MabangApiUtils.getSecretKey());
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>();
@@ -168,14 +160,14 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
 
             Map<String, Object> stringObjectMap = null;
             try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
+                stringObjectMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
                 if (stringObjectMap.get("code").equals(200)) {
                     JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
                     List<OrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), OrderEntity.class);
                     pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
                     infoArrayList.addAll(dataList);
                 } else {
-                    log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
+                    log.info(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + System.currentTimeMillis() + "");
                     throw new RuntimeException(" ===== 马帮拉取出库失败，错误信息：+" + stringObjectMap + " ====");
                 }
             } catch (Exception e) {
@@ -211,7 +203,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     @Override
     public void analysisOrder(OrderEntity orderEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //单据编号
         deliveryDetailInfoEntity.setBillNo(orderEntity.getPlatformOrderId());
@@ -302,16 +294,16 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
 
         //平台单据创建时间
         if (StringUtils.isNotBlank(orderEntity.getCreateDate()) && !orderEntity.getCreateDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(sdf.parse(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(),sdf));
         }
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !orderEntity.getOperTime().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(sdf.parse(orderEntity.getOperTime()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(orderEntity.getOperTime(),sdf));
         }
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getTransportTime()) && !orderEntity.getTransportTime().equals("null")) {
-            deliveryDetailInfoEntity.setDeliveryDate(sdf.parse(orderEntity.getTransportTime()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getTransportTime(),sdf));
         }
 
         //备注
@@ -327,7 +319,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         deliveryDetailInfoEntity.setCompanyName("唯迹集团");
 
         //创建时间
-        deliveryDetailInfoEntity.setCreateTime(new Date());
+        deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增出库信息
         String deliveryDetailId = dmpDeliveryDetailInfoService.checkOrder(deliveryDetailInfoEntity);

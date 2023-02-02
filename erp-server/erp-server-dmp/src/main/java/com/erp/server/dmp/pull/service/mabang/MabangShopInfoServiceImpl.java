@@ -2,19 +2,12 @@ package com.erp.server.dmp.pull.service.mabang;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.MabangAppEntity;
-import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -22,16 +15,13 @@ import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -50,9 +40,6 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
 
     @Resource
     private DmpShopInfoService dmpShopInfoService;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
 
     @Resource
     @Qualifier("mabangShopInfoServiceImpl")
@@ -100,69 +87,11 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
      * @param dto
      * @return
      */
-    public List<ShopEntity> pullDate(RequestDTO dto) {
-        List<ShopEntity> infoArrayList = new ArrayList<>();
+    private List<ShopEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-
-        MabangAppEntity mabangAppEntity = new MabangAppEntity();
-
-        Map<String, Object> paramsMap = new HashMap();
-        // 封装传参数据
-        Map<String, Object> datas = new HashMap();
-        datas.put("api", dto.getJobTaskDTO().getApiCode());
-        datas.put("appkey", mabangAppEntity.getAppKey());
-        datas.put("version", 1);
-        datas.put("timestamp", new Long(System.currentTimeMillis() / 1000L).toString());
-        datas.put("data", paramsMap);
-
-        // 将传参转为Json格式
-        String jsonData = JSONObject.toJSONString(datas);
-        String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
-
-        //设置请求头
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("Content-Type", "application/json");
-        headerMap.put("Authorization", authorization);
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        Map<String, Object> stringObjectMap = null;
-        try {
-            stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
-            if (stringObjectMap.get("code").equals(200)) {
-                JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
-                List<ShopEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), ShopEntity.class);
-                infoArrayList.addAll(dataList);
-            } else {
-                log.info(" ===== 马帮拉取店铺信息失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
-                throw new RuntimeException(" ===== 马帮拉取店铺信息失败，错误信息：+" + stringObjectMap + " ====");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.info("请求接口地址异常 错误信息：" + e.getMessage());
-            Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-            if (errorCount < 3) {
-                dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-            } else {
-                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                dmpErrorLogEntity.setParams(jsonData);
-                dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                dmpErrorLogService.add(dmpErrorLogEntity);
-            }
-        }
-
-        return infoArrayList;
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return MabangApiUtils.queryShopList(dto.getPlatformApiEnum().getTaskName());
     }
 
     /**

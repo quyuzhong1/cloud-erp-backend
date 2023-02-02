@@ -205,57 +205,34 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
         List<KingdeeShopEntity> shopEntityList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            lastTime = lastTime.minusMinutes(2);
-        } else {
-            lastTime = LocalDateTime.now();
-            nextTime = lastTime.minusDays(1);
-        }
-        String st = sdf.format(lastTime);
-        String sd = sdf.format(nextTime);
         dto.getJobTaskDTO().setLastTime(nextTime);
         //读取配置，初始化SDK
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FModifyDate >= '%s'", st));
-        queryFilters.add(String.format("FModifyDate <= '%s'", sd));
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         // 客户类型为店铺
         queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FCUSTID,FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FShortName,FCOUNTRY.FNumber,FWEBSITE," +
-                "FGroup,FGroup.FNumber,FGroup.FName,FDescription,FInvoiceType,FCustTypeId.FDataValue,FCustTypeId.FNumber,F_ulz_Assistant.FNumber,F_ulz_Assistant.FDataValue,FDocumentStatus,FForbidStatus," +
+                "FGroup,FGroup.FNumber,FGroup.FName,FDescription,FInvoiceType,FCustTypeId.FDataValue,FCustTypeId.FNumber,F_ulz_Assistant.FNumber," +
+                "F_ulz_Assistant.FDataValue,FDocumentStatus,FForbidStatus," +
                 "FCreateDate,FModifyDate";
 
-//        String jsonData = "{\"CreateOrgId\":1,\"Number\":\"\",\"Id\":\"331875\",\"IsSortBySeq\":\"false\"}";
-//        K3CloudApi client = new K3CloudApi();
-//        String view = client.view(PlatformApiEnum.BD_CUSTOMER.taskName, jsonData);
         Boolean dataSign = true;
-        List<Map<String, Object>> result = new ArrayList<>();
         while (dataSign) {
-            try {
-                KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_CUSTOMER.taskName);
-                result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex);
-                XxlJobHelper.log("获取金蝶店铺数据第[{}]页 有{}条记录", pageIndex, pageSize);
-                if (CollectionUtil.isEmpty(result)) {
-                    return Collections.emptyList();
-                }
-                if (result.size() < pageSize){
-                    dataSign = false;
-                }
-                List<KingdeeShopEntity> entityList = result.stream().map(shopEntity ->
-                        BeanUtil.toBean(shopEntity, KingdeeShopEntity.class)).collect(Collectors.toList());
-                shopEntityList.addAll(entityList);
-            } catch (Exception e) {
-                log.error("金蝶客户列表请求接口地址异常 错误信息：", e);
-                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                dmpErrorLogEntity.setParams(filterStr);
-                dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(result));
-                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                dmpErrorLogService.add(dmpErrorLogEntity);
-                throw new RuntimeException("金蝶客户列表接口异常", e);
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+            XxlJobHelper.log("获取金蝶店铺数据第[{}]页 有{}条记录", pageIndex, pageSize);
+            if (result.size() < pageSize){
+                dataSign = false;
             }
+            if (CollectionUtil.isEmpty(result)) {
+                return Collections.emptyList();
+            }
+            List<KingdeeShopEntity> entityList = result.stream().map(shopEntity ->
+                    BeanUtil.toBean(shopEntity, KingdeeShopEntity.class)).collect(Collectors.toList());
+            shopEntityList.addAll(entityList);
             pageIndex ++;
         }
         return shopEntityList;

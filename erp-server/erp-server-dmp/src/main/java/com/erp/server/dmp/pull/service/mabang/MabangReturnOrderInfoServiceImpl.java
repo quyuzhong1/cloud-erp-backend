@@ -1,21 +1,16 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
-import com.erp.model.dmp.entity.MabangAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.ReturnOrderEntity;
 import com.erp.model.dmp.mabang.ReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -24,6 +19,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +27,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -67,10 +61,10 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
-        MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("MABANG_GET_ORDER_LIST_TASK");
+        MabangReturnOrderInfoServiceImpl getOrderInfoService = new MabangReturnOrderInfoServiceImpl();
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.ORDER_GET_RETURN_ORDER_LIST;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
@@ -82,7 +76,12 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<OrderEntity> orderEntities = getOrderInfoService.pullDate(requestDTO);
+        List<ReturnOrderEntity> orderEntities = null;
+        try {
+            orderEntities = getOrderInfoService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(orderEntities);
     }
     /**
@@ -132,94 +131,11 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
      * @param dto
      * @return
      */
-    public List<ReturnOrderEntity> pullDate(RequestDTO dto) {
-        List<ReturnOrderEntity> infoArrayList = new ArrayList<>();
-        try {
-            LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
-            LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-            String st = "";
-            String sd = "";
-            if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-                LocalDateTime localDateTime = lastTime.minusMinutes(5);
-                DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(localDateTime);
-                sd = sdf.format(nextTime);
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                LocalDateTime date = LocalDateTime.now();
-                st = null;
-                sd = null;
-                dto.getJobTaskDTO().setLastTime(date);
-            }
-            MabangAppEntity mabangAppEntity = new MabangAppEntity();
-
-            //每次最多获取100条
-            Integer pageSize = 100;
-            //当前页数
-            Integer pageIndex = 1;
-            //总页数
-            Integer pageCount = 1;
-            HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-            while (pageIndex <= pageCount) {
-                Map<String, Object> paramsMap = new HashMap();
-                paramsMap.put("updateDateStart", st);
-                paramsMap.put("updateDateEnd", sd);
-                paramsMap.put("page", pageIndex);
-                paramsMap.put("rowsPerPage", pageSize);
-
-                // 封装传参数据
-                Map<String, Object> datas = new HashMap();
-                datas.put("api", dto.getJobTaskDTO().getApiCode());
-                datas.put("appkey", mabangAppEntity.getAppKey());
-                datas.put("version", 1);
-                datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
-                datas.put("data", paramsMap);
-
-                // 将传参转为Json格式
-                String jsonData = JSONObject.toJSONString(datas);
-                String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
-
-                //设置请求头
-                Map<String,String> headerMap = new HashMap<>();
-                headerMap.put("Content-Type", "application/json");
-                headerMap.put("Authorization", authorization);
-
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                    if (stringObjectMap.get("code").equals(200)) {
-                        JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
-                        List<ReturnOrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), ReturnOrderEntity.class);
-                        pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
-                        infoArrayList.addAll(dataList);
-                    } else {
-                        log.info(" ===== 马帮拉取退货订单失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + new Date().getTime() + "");
-                        throw new RuntimeException(" ===== 马帮拉取退货订单失败，错误信息：+" + stringObjectMap + " ====");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                    if (errorCount < 3) {
-                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                    } else {
-                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                        dmpErrorLogEntity.setParams(jsonData);
-                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                        dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                        dmpErrorLogService.add(dmpErrorLogEntity);
-                    }
-                }
-                pageIndex++;
-            }
-        } catch (Exception e) {
-            log.info(" ===== 获取马帮退货订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-            throw new RuntimeException(" ===== 获取马帮退货订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-        }
-        return infoArrayList;
+    private List<ReturnOrderEntity> pullDate(RequestDTO dto) throws Exception {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return MabangApiUtils.queryReturnOrderList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 
     /**

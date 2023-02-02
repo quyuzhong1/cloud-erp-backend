@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -274,6 +275,9 @@ public class GyyOrderEntity {
     private List<TagsBean> tags;
     @SerializedName("messages")
     private List<Object> messages;
+
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
     @Override
     public String toString() {

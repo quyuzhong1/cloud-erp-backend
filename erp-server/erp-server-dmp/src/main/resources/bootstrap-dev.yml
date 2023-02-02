@@ -3,7 +3,7 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.12
-        namespace: dev-lwg
+        namespace: dev-yl
       config:
         server-addr: 172.16.100.12
         namespace: dev
@@ -23,26 +23,22 @@ fdfs:
 config:
   poolConfig:
     pool:
-      mabang:
         download:
-          corePoolSize: 5
+          corePoolSize: 10
           maxPoolSize: 30
           queueCapacity: 1
           keepAliveSeconds: 10
-          poolName: 马帮线程
-      gyy:
-        download:
-          corePoolSize: 5
-          maxPoolSize: 30
-          queueCapacity: 1
-          keepAliveSeconds: 10
-          poolName: 管易云线程
-      kingdee:
-          download:
-            corePoolSize: 5
-            maxPoolSize: 30
-            queueCapacity: 1
-            keepAliveSeconds: 10
-            poolName: 金蝶云星空线程
+          poolName: 获取erp数据线程
+
+openApi:
+  gyy:
+    appKey: 135174
+    secretKey: 7e10a52a116149d38a760c9bf4dd3cbc
+    sessionKey: 7daa147a1cea4ae189b57d95bc2a66ce
+  mabang:
+    appKey: 200780
+    secretKey: 13c324fa18feaaeb0ebcc8a7746ebfca
+
+
 
 

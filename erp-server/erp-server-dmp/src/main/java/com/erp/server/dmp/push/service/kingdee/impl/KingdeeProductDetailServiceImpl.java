@@ -17,7 +17,7 @@ import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeDocStatusEnum;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -82,7 +82,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
 
         JSONObject json = new JSONObject();
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
@@ -154,7 +154,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //查询子单据id
             String fieldKeys = "FSubHeadEntity_FEntryId,SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
                     "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId";
-            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1);
+            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
             if (CollectionUtils.isEmpty(queryList)) {
                 return;
             }

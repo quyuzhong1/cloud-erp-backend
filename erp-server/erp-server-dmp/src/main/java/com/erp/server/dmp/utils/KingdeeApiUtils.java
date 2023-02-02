@@ -28,7 +28,7 @@ public class KingdeeApiUtils {
      * @param pageIndex 页码（第几页)
      * @return List<Map<String,Object>>
      */
-    public List<Map<String,Object>> queryList(String filterStr, String fieldKeys,Integer pageSize,Integer pageIndex) {
+    public List<Map<String,Object>> queryList(String filterStr, String fieldKeys,Integer pageSize,Integer pageIndex, Integer topRowCount) {
         List<Map<String,Object>> dataList=new ArrayList<>();
         if(0 >= pageIndex){
             pageIndex=1;
@@ -44,6 +44,9 @@ public class KingdeeApiUtils {
         param.setFilterString(filterStr);
         param.setLimit(pageSize);
         param.setStartRow(startRow);
+        if (0 < topRowCount){
+            param.setTopRowCount(topRowCount);
+        }
 
         String paramJson = JSONObject.toJSONString(param);
         try {
@@ -52,7 +55,7 @@ public class KingdeeApiUtils {
                 return dataList;
             }
             if (apiResult.size() == 1 && apiResult.get(0).get(0).toString().contains("IsSuccess=false")) {
-                throw new RuntimeException(" ===== 金蝶云星空解析出库详情信息数据失败 ===== " + apiResult);
+                throw new RuntimeException(" ===== 金蝶云星空解析出信息数据失败 ===== " + apiResult);
             }
 
             List<String> numberList=new ArrayList<>();

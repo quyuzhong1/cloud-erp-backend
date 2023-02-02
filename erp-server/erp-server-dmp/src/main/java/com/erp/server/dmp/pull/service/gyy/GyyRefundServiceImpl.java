@@ -2,18 +2,15 @@ package com.erp.server.dmp.pull.service.gyy;
 
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.model.dmp.gyy.bean.RefundDetailsBean;
@@ -23,7 +20,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
-import com.erp.server.dmp.utils.GyyUtils;
+import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +28,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -67,9 +62,9 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.refund.get");
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.refund.get");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(11);
         jobTaskDTO.setApiName("管易云退款列表");
         jobTaskDTO.setId(35L);
@@ -81,7 +76,12 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyRefundEntity> orderEntities = gyyRefundService.pullDate(requestDTO);
+        List<GyyRefundEntity> orderEntities = null;
+        try {
+            orderEntities = gyyRefundService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(orderEntities);
     }
 
@@ -129,96 +129,11 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
      * @param dto
      * @return
      */
-    public List<GyyRefundEntity> pullDate(RequestDTO dto) {
-        List<GyyRefundEntity> infoArrayList = new ArrayList<>();
-        try {
-            LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
-            LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-            String st = "";
-            String sd = "";
-            if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-                LocalDateTime localDateTime = lastTime.minusMinutes(5);
-                DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(localDateTime);
-                sd = sdf.format(nextTime);
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                LocalDateTime date = LocalDateTime.now();
-                DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-                LocalDateTime localDateTime = date.minusDays(1);
-                st = sdf.format(localDateTime);
-                sd = sdf.format(date);
-                dto.getJobTaskDTO().setLastTime(date);
-            }
-            GyyAppEntity gyyAppEntity = new GyyAppEntity();
-
-            //每次最多获取100条
-            Integer pageSize = 100;
-            //当前页数
-            Integer pageIndex = 1;
-            //总页数
-            Integer pageCount = 1;
-            //总条数
-            Integer totalCount = 0;
-            HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-            while (pageIndex <= pageCount) {
-                // 封装传参数据
-                Map<String, Object> datas = new HashMap();
-                datas.put("method", dto.getJobTaskDTO().getApiCode());
-                datas.put("appkey", gyyAppEntity.getAppKey());
-                datas.put("sessionkey", gyyAppEntity.getSessionKey());
-                datas.put("start_modify_date", st);
-                datas.put("end_modify_date", sd);
-                datas.put("page_no", pageIndex);
-                datas.put("page_size", pageSize);
-                datas.put("cancel", 0);
-
-                String str = JSONObject.toJSONString(datas);
-                String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
-                datas.put("sign", sign);
-                // 将传参转为Json格式
-                String jsonData = JSONObject.toJSONString(datas);
-
-                //设置请求头
-                Map<String,String> headerMap = new HashMap<>();
-                headerMap.put("Content-Type", "text/json");
-
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                    if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
-                        List<GyyRefundEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("tradeRefunds")), GyyRefundEntity.class);
-                        totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
-                        pageCount = (totalCount + pageSize - 1) / pageSize;
-                        infoArrayList.addAll(dataList);
-                    } else {
-                        log.info(" ===== 管易云拉取退货订单失败，错误信息：+" + stringObjectMap + " ====");
-                        throw new RuntimeException(" ===== 管易云拉取退货订单失败，错误信息：+" + stringObjectMap + " ====");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                    if (errorCount < 3) {
-                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                    } else {
-                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                        dmpErrorLogEntity.setParams(jsonData);
-                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                        dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                        dmpErrorLogService.add(dmpErrorLogEntity);
-                    }
-                    break;
-                }
-                pageIndex++;
-            }
-        } catch (Exception e) {
-            log.info(" ===== 获取管易云退货订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-        }
-        return infoArrayList;
+    private List<GyyRefundEntity> pullDate(RequestDTO dto) throws Exception {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return GyyApiUtils.queryRefundList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 
     /**

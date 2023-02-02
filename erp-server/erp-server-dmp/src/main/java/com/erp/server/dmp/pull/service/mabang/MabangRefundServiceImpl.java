@@ -1,21 +1,16 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
-import com.erp.model.dmp.entity.MabangAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.mabang.RefundOrderEntity;
 import com.erp.model.dmp.mabang.RefundOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -24,7 +19,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
-import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +27,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -70,9 +63,9 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
 
     public static void main(String[] args) {
         MabangRefundServiceImpl gyyOrderInfoService = new MabangRefundServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("order-get-refund-list");
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.ORDER_GET_REFUND_LIST;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-refund-list");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
@@ -84,7 +77,12 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<RefundOrderEntity> refundOrderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        List<RefundOrderEntity> refundOrderEntities = null;
+        try {
+            refundOrderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(refundOrderEntities);
     }
 
@@ -138,94 +136,11 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
      * @param dto
      * @return
      */
-    public List<RefundOrderEntity> pullDate(RequestDTO dto) {
-        List<RefundOrderEntity> infoArrayList = new ArrayList<>();
+    private List<RefundOrderEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(1);
-            st = sdf.format(localDateTime);
-            sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-        MabangAppEntity mabangAppEntity = new MabangAppEntity();
-
-        //每次最多获取100条
-        Integer pageSize = 100;
-        //当前页数
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
-        //总条数
-        Integer totalCount = 0;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        while (pageIndex <= pageCount) {
-            Map<String, Object> paramsMap = new HashMap();
-            paramsMap.put("timeStart", st);
-            paramsMap.put("timeEnd", sd);
-            paramsMap.put("page", pageIndex);
-            paramsMap.put("pageSize", pageSize);
-
-            // 封装传参数据
-            Map<String, Object> datas = new HashMap();
-            datas.put("api", dto.getJobTaskDTO().getApiCode());
-            datas.put("appkey", mabangAppEntity.getAppKey());
-            datas.put("version", 1);
-            datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
-            datas.put("data", paramsMap);
-
-            // 将传参转为Json格式
-            String jsonData = JSONObject.toJSONString(datas);
-            String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
-
-            //设置请求头
-            Map<String, String> headerMap = new HashMap<>();
-            headerMap.put("Content-Type", "application/json");
-            headerMap.put("Authorization", authorization);
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                if (stringObjectMap.get("code").equals(200)) {
-                    JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
-                    List<RefundOrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), RefundOrderEntity.class);
-                    totalCount = Integer.valueOf(jsonObject.getString("total"));
-                    pageCount = (totalCount + pageSize - 1) / pageSize;
-                    infoArrayList.addAll(dataList);
-                } else {
-                    log.info(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + System.currentTimeMillis() + "");
-                    throw new RuntimeException(" ===== 马帮拉取退款信息失败，错误信息：+" + stringObjectMap + " ====");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
-            }
-            pageIndex++;
-        }
-        return infoArrayList;
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return MabangApiUtils.queryRefundList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 
     /**

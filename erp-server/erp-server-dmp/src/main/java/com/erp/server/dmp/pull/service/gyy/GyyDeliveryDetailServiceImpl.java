@@ -1,37 +1,30 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
-import com.erp.server.dmp.utils.GyyUtils;
+import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -60,18 +53,15 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     @Resource
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
-
     @Resource
     @Qualifier("gyyDeliveryDetailServiceImpl")
     private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyDeliveryDetailServiceImpl gyyOrderInfoService = new GyyDeliveryDetailServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.deliverys.get");
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.deliverys.get");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询订单列表");
         jobTaskDTO.setId(32L);
@@ -83,8 +73,14 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyDeliveryDetailEntity> orderEntities = gyyOrderInfoService.pullDate(requestDTO);
-        System.out.println(orderEntities);
+        List<GyyDeliveryDetailEntity> orderEntities = null;
+        try {
+            orderEntities = gyyOrderInfoService.pullDate(requestDTO);
+            System.out.println(orderEntities);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override
@@ -130,94 +126,11 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * @param dto
      * @return
      */
-    public List<GyyDeliveryDetailEntity> pullDate(RequestDTO dto) {
-        List<GyyDeliveryDetailEntity> infoArrayList = new ArrayList<>();
+    private List<GyyDeliveryDetailEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(30);
-            st = sdf.format(localDateTime);
-            sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-        GyyAppEntity gyyAppEntity = new GyyAppEntity();
-
-        //每次最多获取100条
-        Integer pageSize = 100;
-        //当前页数
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
-        //总条数
-        Integer totalCount = 0;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        while (pageIndex <= pageCount) {
-            // 封装传参数据
-            Map<String, Object> datas = new HashMap();
-            datas.put("method", dto.getJobTaskDTO().getApiCode());
-            datas.put("appkey", gyyAppEntity.getAppKey());
-            datas.put("sessionkey", gyyAppEntity.getSessionKey());
-            datas.put("start_delivery_date", st);
-            datas.put("end_delivery_date", sd);
-            datas.put("page_no", pageIndex);
-            datas.put("page_size", pageSize);
-            datas.put("delivery", 1);
-
-            String str = JSONObject.toJSONString(datas);
-            String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
-            datas.put("sign", sign);
-            // 将传参转为Json格式
-            String jsonData = JSONObject.toJSONString(datas);
-
-            //设置请求头
-            Map<String, String> headerMap = new HashMap<>();
-            headerMap.put("Content-Type", "text/json");
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
-                    List<GyyDeliveryDetailEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("deliverys")), GyyDeliveryDetailEntity.class);
-                    totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
-                    pageCount = (totalCount + pageSize - 1) / pageSize;
-                    if (dataList.size() > 0) {
-                        infoArrayList.addAll(dataList);
-                    }
-                } else {
-                    log.info(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
-                    throw new RuntimeException(" ===== 管易云拉取出库详情失败，错误信息：+" + stringObjectMap + " ====");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
-                break;
-            }
-            pageIndex++;
-        }
-        return infoArrayList;
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return GyyApiUtils.queryDeliveryList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime, Boolean.FALSE);
     }
 
     /**
@@ -231,7 +144,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     @Override
     public void analysisOrder(GyyDeliveryDetailEntity gyyDeliveryDetailEntity) throws Exception {
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //单据编号
         deliveryDetailInfoEntity.setBillNo(gyyDeliveryDetailEntity.getCode());
@@ -334,17 +247,17 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
 
         //平台单据创建时间
         if (StringUtils.isNotBlank(gyyDeliveryDetailEntity.getCreateDate()) && !gyyDeliveryDetailEntity.getCreateDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(sdf.parse(gyyDeliveryDetailEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(gyyDeliveryDetailEntity.getCreateDate(), sdf));
         }
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(gyyDeliveryDetailEntity.getModifyDate()) && !gyyDeliveryDetailEntity.getModifyDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(sdf.parse(gyyDeliveryDetailEntity.getModifyDate()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(gyyDeliveryDetailEntity.getModifyDate(), sdf));
         }
 
         //发货时间
         if (StringUtils.isNotBlank(gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate()) && !gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate().equals("null")) {
-            deliveryDetailInfoEntity.setDeliveryDate(sdf.parse(gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(gyyDeliveryDetailEntity.getDeliveryStatusInfo().getDeliveryDate(),sdf));
         }
 
         //备注
@@ -360,7 +273,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         deliveryDetailInfoEntity.setCompanyName("唯迹集团");
 
         //创建时间
-        deliveryDetailInfoEntity.setCreateTime(new Date());
+        deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
 
         //新增订单信息
         String deliveryDetailId = dmpDeliveryDetailInfoService.checkOrder(deliveryDetailInfoEntity);

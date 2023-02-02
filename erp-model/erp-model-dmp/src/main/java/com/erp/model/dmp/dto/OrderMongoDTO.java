@@ -36,4 +36,12 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "refundplatformOrderId")
     private String refundplatformOrderId;
 
+    public OrderMongoDTO(String platformCode, String code) {
+        this.platformCode = platformCode;
+        this.code = code;
+    }
+
+    public OrderMongoDTO(String id) {
+        this.id = id;
+    }
 }

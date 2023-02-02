@@ -7,6 +7,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpShopChangeLogService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
@@ -22,7 +23,7 @@ public class DmpShopChangeLogServiceImpl extends ServiceImpl<DmpShopChangeLogMap
      * @return com.erp.model.dmp.entity.DmpShopChangeLogEntity
      **/
     @Override
-    public DmpShopChangeLogEntity getShopChargeName(String shopId, Date date) {
+    public DmpShopChangeLogEntity getShopChargeName(String shopId, LocalDateTime date) {
         return baseMapper.getShopChargeName(shopId,date);
     }
 }

@@ -3,19 +3,15 @@ package com.erp.server.dmp.pull.service.mabang;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.security.HmacSHA256Utils;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.MabangAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.OrderItemEntity;
@@ -25,6 +21,7 @@ import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,18 +29,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -53,9 +48,6 @@ import java.util.stream.Collectors;
 @Component
 @SaveData(method = PlatformApiEnum.ORDER_GET_ORDER_LIST)
 public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntity> {
-
-    private static final Integer NOT_SHIPPED_STATUS = 6;
-    private static final Integer NOT_UNSHIPPED_STATUS = 7;
     @Resource
     private MongoService mongoService;
 
@@ -67,9 +59,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
 
     @Resource
     @Qualifier("mabangOrderInfoServiceImpl")
@@ -83,14 +72,19 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(null);
-        jobTaskDTO.setNextTime(null);
+        jobTaskDTO.setLastTime(LocalDateTime.now().minusDays(1));
+        jobTaskDTO.setNextTime(LocalDateTime.now());
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<OrderEntity> orderEntities = getOrderInfoService.pullDate(requestDTO);
+        List<OrderEntity> orderEntities = null;
+        try {
+            orderEntities = getOrderInfoService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         orderEntities.stream().peek(x -> System.out.println(StrUtil.format("{},{},{}",x.getSalesRecordNumber(),getOrderString(x.getOrderStatus()),  x.getPlatformId()))).collect(Collectors.toList());
 //        System.out.println(orderEntities);
     }
@@ -114,7 +108,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      * 拉取订单数据
      *
      * @param dto 任务信息
-     * @return
      */
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -161,102 +154,11 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
      * @param dto
      * @return
      */
-    public List<OrderEntity> pullDate(RequestDTO dto) {
-        List<OrderEntity> infoArrayList = new ArrayList<>();
+    private List<OrderEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(1);
-            st = sdf.format(localDateTime);
-            sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-        MabangAppEntity mabangAppEntity = new MabangAppEntity();
-
-        //每次最多获取100条
-        Integer pageSize = 100;
-        //当前页数
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
-        Integer status = NOT_SHIPPED_STATUS;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        while (pageIndex <= pageCount || NOT_SHIPPED_STATUS.equals(status)) {
-            Map<String, Object> paramsMap = new HashMap();
-            paramsMap.put("updateTimeStart", st);
-            paramsMap.put("updateTimeEnd", sd);
-//            paramsMap.put("paidtimeStart", "2022-10-01 00:00:00");
-//            paramsMap.put("paidtimeEnd", "2022-10-02 00:00:00");
-            paramsMap.put("page", pageIndex);
-            paramsMap.put("pageSize", pageSize);
-            paramsMap.put("status",status);
-
-            // 封装传参数据
-            Map<String, Object> datas = new HashMap();
-            datas.put("api", dto.getJobTaskDTO().getApiCode());
-            datas.put("appkey", mabangAppEntity.getAppKey());
-            datas.put("version", 1);
-            datas.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
-            datas.put("data", paramsMap);
-
-            // 将传参转为Json格式
-            String jsonData = JSONObject.toJSONString(datas);
-            String authorization = HmacSHA256Utils.hmacSHA256(jsonData, mabangAppEntity.getSecretKey());
-
-            //设置请求头
-            Map<String, String> headerMap = new HashMap<>();
-            headerMap.put("Content-Type", "application/json");
-            headerMap.put("Authorization", authorization);
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                if (stringObjectMap.get("code").equals(200)) {
-                    JSONObject jsonObject = JSONObject.parseObject(String.valueOf(stringObjectMap.get("data")));
-                    List<OrderEntity> dataList = JSONObject.parseArray(jsonObject.get("data").toString(), OrderEntity.class);
-                    pageCount = Integer.valueOf(jsonObject.get("pageCount").toString());
-                    infoArrayList.addAll(dataList);
-                } else {
-                    log.info(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ==== 时间戳：" + System.currentTimeMillis() + "");
-                    throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
-                throw new RuntimeException(" ===== 马帮拉取订单失败，错误信息：+" + stringObjectMap + " ====详情请看错误表");
-            }
-            pageIndex++;
-            if (pageIndex > pageCount && NOT_SHIPPED_STATUS.equals(status)) {
-                status = NOT_UNSHIPPED_STATUS;
-                pageIndex = 1;
-                pageCount = 1;
-            }
-        }
-
-        return infoArrayList;
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return MabangApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 
     /**
@@ -270,18 +172,18 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     @Override
     public void analysisOrder(OrderEntity orderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
 
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(orderEntity.getPlatformOrderId());
 
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         Integer orderStatus = orderEntity.getOrderStatus();
-        if (orderEntity.getIsReturned().equals("1")) {
+        if (Objects.equals(orderEntity.getIsReturned(), "1")) {
             orderStatus = 6;
         }
 
-        if (orderEntity.getIsRefund().equals("1")) {
+        if (Objects.equals(orderEntity.getIsRefund(), "1")) {
             orderStatus = 7;
         }
 
@@ -313,12 +215,12 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 
         //订单付款时间
         if (StringUtils.isNotBlank(orderEntity.getPaidTime())) {
-            dmpOrderInfoEntity.setPaidTime(sdf.parse(orderEntity.getPaidTime()));
+            dmpOrderInfoEntity.setPaidTime(LocalDateTime.parse(orderEntity.getPaidTime(),sdf));
         }
 
         //平台订单时间
         if (StringUtils.isNotBlank(orderEntity.getCreateDate())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(orderEntity.getCreateDate()));
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getPaidTime(),sdf));
         }
 
         //平台交易号
@@ -362,7 +264,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 
         //交易关闭时间
         if (StringUtils.isNotBlank(orderEntity.getCloseDate())) {
-            dmpOrderInfoEntity.setCloseDate(sdf.parse(orderEntity.getCloseDate()));
+            dmpOrderInfoEntity.setCloseDate(LocalDateTime.parse(orderEntity.getCloseDate(),sdf));
         }
 
         //买家电话1
@@ -381,11 +283,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         dmpOrderInfoEntity.setCurrencyCode(orderEntity.getCurrencyId());
 
         //汇率
+        dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
         if (orderEntity.getCurrencyRate() != null
-                && orderEntity.getCurrencyRate().compareTo(BigDecimal.ZERO) <= 0
-                && orderEntity.getCurrencyId().equalsIgnoreCase("CNY")) {
-            dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
-        } else {
+                && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
             dmpOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
         }
 
@@ -428,7 +328,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getTransportTime())) {
-            dmpOrderInfoEntity.setDeliveryTime(sdf.parse(orderEntity.getTransportTime()));
+            dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.parse(orderEntity.getTransportTime(),sdf));
         }
 
         //创建时间
@@ -445,7 +345,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     /**
      * 解析订单商品数据
      *
-     * @return void
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
@@ -527,11 +426,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             dmpOrderItemEntity.setErpOrderItemId(platformOrderId + "_" + orderItemBean.getStockSku());
 
             //汇率
+            dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
             if (orderEntity.getCurrencyRate() != null
-                    && orderEntity.getCurrencyRate().compareTo(BigDecimal.ZERO) <= 0
-                    && orderEntity.getCurrencyId().equalsIgnoreCase("CNY")) {
-                dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
-            } else {
+                    && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
                 dmpOrderItemEntity.setCurrencyRate(orderEntity.getCurrencyRate());
             }
             BigDecimal sellPriceOrigin = ObjectUtil.isNotEmpty(dmpOrderItemEntity.getSellPriceOrigin()) ? dmpOrderItemEntity.getSellPriceOrigin() : BigDecimal.ZERO;
@@ -544,7 +441,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
                 fee = shippingFee.subtract(shareFeeAmount);
             }else if (BigDecimal.ZERO.compareTo(shippingFee) < 0 && BigDecimal.ZERO.compareTo(amountAfter) < 0 && BigDecimal.ZERO.compareTo(itemTotal) < 0){
                 // 其他订单按照订单金额比例分摊运费 保留4位小数向上取整
-                fee = shippingFee.multiply(amountAfter).divide(itemTotal, 4, BigDecimal.ROUND_DOWN);
+                fee = shippingFee.multiply(amountAfter).divide(itemTotal, 4, RoundingMode.HALF_DOWN);
                 shareFeeAmount = shareFeeAmount.add(fee);
             }
             dmpOrderItemEntity.setShippingFee(fee);

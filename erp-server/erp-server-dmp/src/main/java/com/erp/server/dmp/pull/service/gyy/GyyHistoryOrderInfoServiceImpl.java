@@ -2,50 +2,40 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
-import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
-import com.erp.server.dmp.utils.GyyUtils;
+import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 管易云订单
@@ -67,29 +57,32 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
     @Resource
     @Qualifier("gyyHistoryOrderInfoServiceImpl")
     private IReportHistoryService reportHistoryService;
 
     public static void main(String[] args) {
         GyyHistoryOrderInfoServiceImpl gyyOrderInfoService = new GyyHistoryOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.history.get");
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.history.get");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(7);
         jobTaskDTO.setApiName("管易云查询历史订单列表");
         jobTaskDTO.setId(32L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(null);
-        jobTaskDTO.setNextTime(null);
+        jobTaskDTO.setLastTime(LocalDateTime.now().minusDays(1));
+        jobTaskDTO.setNextTime(LocalDateTime.now());
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyOrderEntity> orderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        List<GyyOrderEntity> orderEntities = null;
+        try {
+            orderEntities = gyyOrderInfoService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(orderEntities);
     }
 
@@ -105,10 +98,10 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
         //过滤数据
         if (CollectionUtil.isEmpty(gyyOrderEntityList)) {
-            XxlJobHelper.log("拉去数据列表为空 gyyOrderEntityList.size = 0 ");
+            XxlJobHelper.log("拉取历史数据列表为空 gyyHistoryOrderEntityList.size = 0 ");
             return;
         }
-        XxlJobHelper.log("本次拉去数据量 gyyOrderEntityList.size={}", gyyOrderEntityList.size());
+        XxlJobHelper.log("本次拉取历史数据量 gyyHistoryOrderEntityList.size={}", gyyOrderEntityList.size());
         gyyOrderEntityList.parallelStream().forEach(gyyOrderEntity -> {
             if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
                 return;
@@ -174,94 +167,11 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
      * @param dto
      * @return
      */
-    public List<GyyOrderEntity> pullDate(RequestDTO dto) {
-        List<GyyOrderEntity> infoArrayList = new ArrayList<>();
+    private List<GyyOrderEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            LocalDateTime localDateTime = date.minusDays(1);
-            st = sdf.format(localDateTime);
-            sd = sdf.format(date);
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-        GyyAppEntity gyyAppEntity = new GyyAppEntity();
-
-        //每次最多获取100条
-        Integer pageSize = 100;
-        //当前页数
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
-        //总条数
-        Integer totalCount = 0;
-        HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-        while (pageIndex <= pageCount) {
-            // 封装传参数据
-            Map<String, Object> datas = new HashMap();
-            datas.put("method", dto.getJobTaskDTO().getApiCode());
-            datas.put("appkey", gyyAppEntity.getAppKey());
-            datas.put("sessionkey", gyyAppEntity.getSessionKey());
-            datas.put("date_type", 3);
-            datas.put("order_state", 0);
-            datas.put("start_date", st);
-            datas.put("end_date", sd);
-            datas.put("page_no", pageIndex);
-            datas.put("page_size", pageSize);
-
-            String str = JSONObject.toJSONString(datas);
-            String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
-            datas.put("sign", sign);
-            // 将传参转为Json格式
-            String jsonData = JSONObject.toJSONString(datas);
-
-            //设置请求头
-            Map<String, String> headerMap = new HashMap<>();
-            headerMap.put("Content-Type", "text/json");
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
-                    List<GyyOrderEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("orders")), GyyOrderEntity.class);
-                    totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
-                    pageCount = (totalCount + pageSize - 1) / pageSize;
-                    infoArrayList.addAll(dataList);
-                } else {
-                    log.error(" ===== 拉取历史订单失败，错误信息：+" + stringObjectMap + " ====");
-                    XxlJobHelper.log("拉取历史订单失败，错误信息 {}", JSONUtil.toJsonStr(stringObjectMap));
-                    throw new RuntimeException(" ===== 拉取历史订单失败，错误信息：+" + stringObjectMap + " ====");
-                }
-            } catch (Exception e) {
-                log.error("请求接口地址异常 错误信息：{}", e.getMessage());
-                XxlJobHelper.log("请求接口地址异常 错误信息：{}", e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams(jsonData);
-                    dmpErrorLogEntity.setErrorMsg(JSONUtil.toJsonStr(e.getStackTrace()));
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
-                throw new ServiceException(500, StrUtil.format("请求管易历史订单接口异常 url =  {}  param = {}",UrlContant.GYY_HOST, jsonData));
-            }
-            pageIndex++;
-        }
-        return infoArrayList;
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return GyyApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime, Boolean.TRUE);
     }
 
     /**
@@ -275,8 +185,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
     @Transactional(rollbackFor = Exception.class)
     public void analysisOrder(GyyOrderEntity gyyOrderEntity) throws Exception {
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getPlatformCode());
 
@@ -332,12 +241,12 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
 
         //订单付款时间
         if (StringUtils.isNotBlank(gyyOrderEntity.getPaytime())) {
-            dmpOrderInfoEntity.setPaidTime(sdf.parse(gyyOrderEntity.getPaytime()));
+            dmpOrderInfoEntity.setPaidTime(LocalDateTime.parse(gyyOrderEntity.getPaytime(), sdf));
         }
 
         //平台订单时间
         if (StringUtils.isNotBlank(gyyOrderEntity.getCreatetime())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(sdf.parse(gyyOrderEntity.getDealtime()));
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(gyyOrderEntity.getDealtime(), sdf));
         }
 
         //平台交易号
@@ -393,7 +302,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
         dmpOrderInfoEntity.setSecondPhone(gyyOrderEntity.getReceiverPhone());
 
         //是否平台发货订单 1.否 2.是
-        dmpOrderInfoEntity.setFbaFlag(null);
+        dmpOrderInfoEntity.setFbaFlag(0);
 
         //平台备注
         dmpOrderInfoEntity.setSellerMessage(gyyOrderEntity.getBuyerMemo());
@@ -418,7 +327,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
         dmpOrderInfoEntity.setPlatformFee(BigDecimal.ZERO);
 
         //原始运费收入
-        dmpOrderInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
+        dmpOrderInfoEntity.setShippingTotalOrigin(gyyOrderEntity.getPostFee());
 
         List<DetailsBean> details = gyyOrderEntity.getDetails();
         BigDecimal costPrice = new BigDecimal(BigInteger.ZERO);
@@ -454,7 +363,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
         if (StringUtils.isNotBlank(orderInfoId)) {
             //新增订单商品信息
-            analysisOrderItem(gyyOrderEntity, orderInfoId);
+            analysisOrderItem(gyyOrderEntity, orderInfoId, orderState);
         }
     }
 
@@ -465,7 +374,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    public void analysisOrderItem(GyyOrderEntity gyyOrderEntity, String orderId) {
+    public void analysisOrderItem(GyyOrderEntity gyyOrderEntity, String orderId, Integer orderState) {
         List<DetailsBean> orderItem = gyyOrderEntity.getDetails();
         String warehouseCode = gyyOrderEntity.getWarehouseCode();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
@@ -496,7 +405,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             dmpOrderItemEntity.setSellPriceOrigin(detailsBean.getPrice());
 
             //商品售价
-            dmpOrderItemEntity.setSellPrice(detailsBean.getAmount());
+            dmpOrderItemEntity.setSellPrice(detailsBean.getPrice());
 
             //商品数量
             dmpOrderItemEntity.setQuantity(detailsBean.getQty());
@@ -515,7 +424,7 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             dmpOrderItemEntity.setHasGoods(0);
 
             //是否是组合商品 1.组合 2非组合
-            dmpOrderItemEntity.setIsCombo(null);
+            dmpOrderItemEntity.setIsCombo(0);
 
             //订单商品备注
             dmpOrderItemEntity.setItemRemark(detailsBean.getSkuNote());
@@ -526,17 +435,17 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             }
 
             //商品状态 1：未付款 2：未发货 3：已发货 4：已作废
-            Integer orderState = null;
+            // 主订单状态
             dmpOrderItemEntity.setStatus(orderState);
 
             //商品仓位
-            dmpOrderItemEntity.setStockGrid(null);
+            dmpOrderItemEntity.setStockGrid("");
 
             //sku
             dmpOrderItemEntity.setSkuNo(detailsBean.getItemCode());
 //
             //库存状态：1.自动创建 2.待开发 3.正常 4.清仓 5.停止销售
-            dmpOrderItemEntity.setStockStatus(null);
+            dmpOrderItemEntity.setStockStatus(0);
 //
             //商品仓库编号
             dmpOrderItemEntity.setStockWarehouseId(warehouseCode);

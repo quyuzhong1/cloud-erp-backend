@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -17,14 +18,11 @@ import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
-import com.erp.server.dmp.utils.KingdeeUtils;
-import com.kingdee.bos.webapi.entity.QueryParam;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +32,9 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl.ORG_CODE;
 
 /**
  * 金蝶商品
@@ -51,9 +52,6 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
 
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
     @Resource
     @Qualifier("kingdeeSkuInfoServiceImpl")
     private IReportSaveService reportSaveService;
@@ -101,33 +99,19 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
      * @param dto
      * @return
      */
-    public List<KingdeeSkuEntity> pullDate(RequestDTO dto) {
+    public List<KingdeeSkuEntity> pullDate(RequestDTO dto) throws Exception{
         List<KingdeeSkuEntity> infoArrayList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        String st = "";
-        String sd = "";
-        if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-            LocalDateTime localDateTime = lastTime.minusMinutes(5);
-            DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-            st = sdf.format(localDateTime);
-            sd = sdf.format(nextTime);
-            dto.getJobTaskDTO().setLastTime(nextTime);
-        } else {
-            LocalDateTime date = LocalDateTime.now();
-            st = "";
-            sd = "";
-            dto.getJobTaskDTO().setLastTime(date);
-        }
-        //读取配置，初始化SDK
-        K3CloudApi client = new K3CloudApi();
-
-        String formId = dto.getJobTaskDTO().getApiCode();
-        LinkedList<String> queryfilters = new LinkedList<>();
-        queryfilters.add(String.format("FModifyDate >= '%s'", st));
-        queryfilters.add(String.format("FModifyDate <= '%s'", sd));
-        String filterStr = String.join(" and ", queryfilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate,FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue,F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ,FErpClsID";
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        LinkedList<String> queryFilters = new LinkedList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
+                "FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue," +
+                "F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ,FErpClsID";
 
         Boolean dataSign = true;
         //当前页数
@@ -136,73 +120,19 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         //每次最多获取100条
         Integer pageSize = 10000;
         while (dataSign) {
-            //请求参数，示例使用的是SDK提供的模板类，还可以使用字符串拼接等方式
-            QueryParam param = new QueryParam();
-            param.setFormId(formId);
-            param.setFieldKeys(fieldKeys);
-            if (StringUtils.isNotBlank(st)) {
-                param.setFilterString(filterStr);
-            }
-            param.setLimit(pageSize);
-            //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-
-            param.setStartRow(pageIndex * pageSize);
-            String s = JSONObject.toJSONString(param);
-
-            Map<String, Object> stringObjectMap = null;
-            try {
-                List<List<Object>> result = client.executeBillQuery(s);
-                if (!result.isEmpty()) {
-                    if (result.size() == 1 && result.get(0).get(0).toString().contains("IsSuccess=false")) {
-                        dataSign = false;
-                        throw new RuntimeException(" ===== 金蝶云星空解析商品信息数据失败 ===== " + result);
-                    }
-
-                    for (List<Object> objects : result) {
-                        Map<String, String> valMap = KingdeeUtils.keySetValByLinked(fieldKeys, objects);
-                        KingdeeSkuEntity kingdeeSkuEntity = new KingdeeSkuEntity();
-                        kingdeeSkuEntity.setFUseOrgId(valMap.get("FUseOrgId"));
-                        kingdeeSkuEntity.setFUseOrgName(valMap.get("FUseOrgId.FName"));
-                        kingdeeSkuEntity.setFNumber(valMap.get("FNumber"));
-                        kingdeeSkuEntity.setFMaterialId(valMap.get("FMaterialId"));
-                        kingdeeSkuEntity.setFName(valMap.get("FName"));
-                        kingdeeSkuEntity.setFSpecification(valMap.get("FSpecification"));
-                        kingdeeSkuEntity.setFCreateDate(valMap.get("FCreateDate"));
-                        kingdeeSkuEntity.setFModifyDate(valMap.get("FModifyDate"));
-                        kingdeeSkuEntity.setFDocumentStatus(valMap.get("FDocumentStatus"));
-                        kingdeeSkuEntity.setFForbidStatus(valMap.get("FForbidStatus"));
-                        kingdeeSkuEntity.setFRefStatus(valMap.get("FRefStatus"));
-                        kingdeeSkuEntity.setFPurPrice_CMK(valMap.get("FPurPrice_CMK"));
-                        kingdeeSkuEntity.setF_PRVD_Assistant(valMap.get("F_PRVD_Assistant.FDataValue"));
-                        kingdeeSkuEntity.setF_PRVD_Assistant1(valMap.get("F_PRVD_Assistant1.FDataValue"));
-                        kingdeeSkuEntity.setFSalePrice_CMK(valMap.get("FSalePrice_CMK"));
-                        kingdeeSkuEntity.setFSSRQ(valMap.get("F_SSRQ"));
-                        kingdeeSkuEntity.setFErpClsID(valMap.get("FErpClsID"));
-                        infoArrayList.add(kingdeeSkuEntity);
-                    }
-                } else {
-                    dataSign = false;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                if (errorCount < 3) {
-                    dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                    redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                } else {
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams("");
-                    dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                }
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
+            XxlJobHelper.log("获取金蝶SKU数据第[{}]页 有{}条记录", pageIndex, pageSize);
+            if (result.size() < pageSize){
                 dataSign = false;
             }
-            pageIndex++;
+            if (CollectionUtil.isEmpty(result)) {
+                return Collections.emptyList();
+            }
+            List<KingdeeSkuEntity> entityList = result.stream().map(shopEntity ->
+                    BeanUtil.toBean(shopEntity, KingdeeSkuEntity.class)).collect(Collectors.toList());
+            infoArrayList.addAll(entityList);
+            pageIndex ++;
         }
         return infoArrayList;
     }
@@ -217,11 +147,12 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void analysisOrder(KingdeeSkuEntity skuInfoEntity) throws Exception {
-        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !"唯迹集团".equals(skuInfoEntity.getFUseOrgName())){
+        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !ORG_CODE.equals(skuInfoEntity.getFUseOrgId())){
             return;
         }
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+
 
         dmpSkuInfoEntity.setItemCode(skuInfoEntity.getFMaterialId());
 
@@ -245,27 +176,27 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         dmpSkuInfoEntity.setStatus(status);
 
         //商品创建时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getFCreateDate()) && !skuInfoEntity.getFCreateDate().equals("null")) {
-            dmpSkuInfoEntity.setSkuCreateTime(sdf.parse(skuInfoEntity.getFCreateDate()));
+        if (StringUtils.isNotBlank(skuInfoEntity.getFCreateDate()) && !"null".equals(skuInfoEntity.getFCreateDate())) {
+            dmpSkuInfoEntity.setSkuCreateTime(LocalDateTime.parse(skuInfoEntity.getFCreateDate(), sdf));
         }
 
         //商品修改时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getFModifyDate()) && !skuInfoEntity.getFModifyDate().equals("null")) {
-            dmpSkuInfoEntity.setSkuUpdateTime(sdf.parse(skuInfoEntity.getFModifyDate()));
+        if (StringUtils.isNotBlank(skuInfoEntity.getFModifyDate()) && !"null".equals(skuInfoEntity.getFModifyDate())) {
+            dmpSkuInfoEntity.setSkuUpdateTime(LocalDateTime.parse(skuInfoEntity.getFModifyDate(), sdf));
         }
 
         //品牌
         dmpSkuInfoEntity.setBrandName("");
 
         //商品目录(一级)
-        if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant()) && !skuInfoEntity.getF_PRVD_Assistant().equals("null")) {
+        if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant())) {
             dmpSkuInfoEntity.setParentCategoryName(skuInfoEntity.getF_PRVD_Assistant());
         } else {
             dmpSkuInfoEntity.setParentCategoryName("");
         }
 
         //商品目录(二级)
-        if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant1()) && !skuInfoEntity.getF_PRVD_Assistant1().equals("null")) {
+        if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant1()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant1())) {
             dmpSkuInfoEntity.setCategoryName(skuInfoEntity.getF_PRVD_Assistant1());
         } else {
             dmpSkuInfoEntity.setCategoryName("");
@@ -294,7 +225,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
 
         //上市时间
         if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
-            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ()));
+            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ(),sdf));
         }
         String itemProperty = "";
         switch (skuInfoEntity.getFErpClsID()) {
@@ -317,7 +248,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         //物料属性
         dmpSkuInfoEntity.setItemProperty(itemProperty);
 
-        dmpSkuInfoEntity.setCreateTime(new Date());
+        dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
 
         dmpSkuInfoService.checkOrder(dmpSkuInfoEntity);
     }

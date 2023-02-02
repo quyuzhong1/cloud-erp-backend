@@ -64,7 +64,7 @@ public enum PlatformApiEnum {
     private Integer id;
 
     /** 任务名 */
-    public String taskName;
+    private String taskName;
 
     PlatformApiEnum(Integer id, String taskName) {
         this.id = id;
