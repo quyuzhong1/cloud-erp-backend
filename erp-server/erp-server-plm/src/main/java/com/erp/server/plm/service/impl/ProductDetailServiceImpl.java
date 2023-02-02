@@ -1918,8 +1918,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.select(ProductDetailEntity::getChargeId);
-            queryWrapper.ne(ProductDetailEntity::getChargeId, "");
-            queryWrapper.ne(ProductDetailEntity::getChargeId, null);
             queryWrapper.in(ProductDetailEntity::getId, skuIdList);
             List<String> chargeIds = this.listObjs(queryWrapper, Object::toString);
             //有逗号
@@ -1937,7 +1935,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
 
-        return resultList;
+        return resultList.stream().filter(s->StringUtils.isNotBlank(s)).collect(Collectors.toList());
     }
 
     

@@ -110,6 +110,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
             bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+            checkAuditor(bomId);
         }
         Boolean saveResult = this.save(bom);
         //保存成功
@@ -118,20 +119,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             productBomHistoryService.insert(bom, bomSkuList);
             //但是待审核的时候
             if (isSubmitAudit) {
-                checkAuditor(bomId);
                 //这里要发起一个bom流程
                 startBomProcess(bomId);
             }
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
-
             //添加 bom的操作日志
             String operateContent = String.format(BomOperateContent.ADD, serialNumber);
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.ADD.getType(), operateContent);
-
         }
-
-
         return saveResult;
     }
 
@@ -221,7 +217,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
         //skuId
         List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
-
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
         if (CollectionUtils.isEmpty(productManagerList)) {
@@ -377,6 +372,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95098);
         }
         bom.setState(BomStateEnum.WAIT_AUDIT.getState());
+
+        checkAuditor(bomId);
         /**
          * 这里要发起一个流程
          */
@@ -384,7 +381,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-            checkAuditor(bomId);
+
             //发起bom 流程
             startBomProcess(bomId);
         }
@@ -412,7 +409,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95099);
         }
         bom.setState(BomStateEnum.WAIT_AUDIT.getState());
-
+        checkAuditor(bomId);
         /**
          * 这里要发起一个流程
          */
@@ -420,7 +417,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_NO_PASS.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-            checkAuditor(bomId);
+
             //发起bom 流程
             startBomProcess(bomId);
         }

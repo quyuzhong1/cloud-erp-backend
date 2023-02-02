@@ -91,6 +91,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         BeanMapper.copy(dto, change);
         String id = IdWorker.getIdStr();
         change.setId(id);
+        //如果是bom 检查审核人为空不
+        if (isBom) {
+            checkBomChangeAuditor(sourceId);
+        } else {
+            checkSkuChangeAuditor(sourceId);
+        }
+
         Boolean saveResult = this.save(change);
         if (saveResult) {
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
@@ -99,12 +106,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 bomInfoService.updateState(sourceId, BomStateEnum.ARCHIVE_CHANGE_ING.getState());
             }
         }
-        //如果是bom 检查审核人为空不
-        if (isBom) {
-            checkBomChangeAuditor(sourceId);
-        } else {
-            checkSkuChangeAuditor(sourceId);
-        }
+
         //启动一个流程
         startChangeProcess(change);
         return saveResult;
