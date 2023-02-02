@@ -4,10 +4,14 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.service.ProductChangeService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 变更管理
@@ -79,10 +84,26 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<ProductChangeDTO> details(@RequestBody @Validated BaseIdDTO dto) {
-        ProductChangeDTO result = productChangeService.details(dto.getId());
-        if (result != null) {
-            return success(result);
+    public ApiResult details(@RequestBody @Validated BaseIdDTO dto) {
+
+        //获取到变更信息
+        ProductChangeEntity changeEntity = productChangeService.getById(dto.getId());
+        if (Objects.isNull(changeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95105);
+        }
+        Object object = null;
+        String type = changeEntity.getType();
+        //对应就是bom
+        if (BomConstant.CHANGE_BOM.equals(type)) {
+             object = productChangeService.getBomDetails(changeEntity);
+
+        }
+        //对应sku
+        if (BomConstant.CHANGE_SKU.equals(type)) {
+             object = productChangeService.skuDetails(changeEntity);
+        }
+        if (object != null) {
+            return success(object);
         }
         return failure();
     }
@@ -138,6 +159,7 @@ public class ProductChangeController extends BaseController {
 
     /**
      * 重启流程
+     *
      * @param dto
      * @return
      */

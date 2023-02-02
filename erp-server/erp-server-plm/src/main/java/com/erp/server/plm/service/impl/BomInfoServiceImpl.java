@@ -695,6 +695,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-30 8:54
      */
     @Override
+    @Transactional
     public void bomProcessPass(ProcessPassDTO dto) {
         String bomId = dto.getBusinessTableId();
         BomInfoEntity bom = this.getById(bomId);

@@ -39,4 +39,15 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     void processPass(ProcessPassDTO dto);
 
     Boolean restartAudit(String id);
+
+    ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity);
+
+    /**
+     * SKU 详情
+     * @author yl
+     * @date 2023-02-02 9:35
+     * @param changeEntity
+     * @return com.erp.model.plm.dto.ProductChangeDTO
+     */
+    ProductChangeDTO skuDetails(ProductChangeEntity changeEntity);
 }

@@ -1825,10 +1825,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
         //2.修改/新增 sku信息
-//        ProductDetailEntity detailEntity = skuDTO.getProductManySkuDetail();
-//        if (detailEntity != null) {
-//            this.updateById(detailEntity);
-//        }
+        ProductDetailEntity detailEntity = skuDTO.getProductManySkuDetail();
+        if (detailEntity != null) {
+            this.updateById(detailEntity);
+        }
         //3.修改/新增 成本信息
         ProductCostShowDTO costShowDTO = skuDTO.getProductCostShowDTO();
         if (costShowDTO != null) {

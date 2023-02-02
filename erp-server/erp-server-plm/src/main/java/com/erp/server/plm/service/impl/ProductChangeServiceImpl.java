@@ -100,26 +100,27 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
         }
         //如果是bom 检查审核人为空不
-        if(isBom){
-           checkBomChangeAuditor(sourceId);
-        }else{
+        if (isBom) {
+            checkBomChangeAuditor(sourceId);
+        } else {
             checkSkuChangeAuditor(sourceId);
         }
         //启动一个流程
         startChangeProcess(change);
         return saveResult;
     }
-    
-    
+
+
     /**
      * 检查bom 变更审核人是否为空
-     * @author yl
-     * @date 2023-02-01 18:45
+     *
      * @param
      * @return void
+     * @author yl
+     * @date 2023-02-01 18:45
      */
-    public void checkBomChangeAuditor(String sourceId){
-        
+    public void checkBomChangeAuditor(String sourceId) {
+
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
         //skuId
         List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
@@ -139,18 +140,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (CollectionUtils.isNotEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
         }
-        
+
     }
 
 
     /**
      * 检查sku审核人是否为空
-     * @author yl
-     * @date 2023-02-01 18:47
+     *
      * @param sourceId
      * @return void
+     * @author yl
+     * @date 2023-02-01 18:47
      */
-    public void checkSkuChangeAuditor(String sourceId){
+    public void checkSkuChangeAuditor(String sourceId) {
         List<String> skuIdList = Arrays.asList(sourceId);
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
@@ -191,11 +193,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
             //如果是Bom 就要启动bom变更流程
             if (changeBom.equals(type)) {
-                startChangeBomProcess(entity.getId(), userId,entity.getSourceId());
+                startChangeBomProcess(entity.getId(), userId, entity.getSourceId());
             }
             //如果是sku 就要启动sku变更流程
             if (changeSku.equals(type)) {
-                startChangeSkuProcess(entity.getId(), userId,entity.getSourceId());
+                startChangeSkuProcess(entity.getId(), userId, entity.getSourceId());
             }
         }
 
@@ -212,7 +214,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @author yl
      * @date 2023-02-01 16:56
      */
-    private void startChangeSkuProcess(String id, String userId,String sourceId) {
+    private void startChangeSkuProcess(String id, String userId, String sourceId) {
         FindProcessDTO findProcess = new FindProcessDTO();
         String businessType = WorkflowBusinessEnum.SKU_CHANGE.getBusinessType();
         String platform = WorkflowBusinessEnum.SKU_CHANGE.getPlatform();
@@ -279,7 +281,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @author yl
      * @date 2023-02-01 16:49
      */
-    private void startChangeBomProcess(String id, String userId,String sourceId) {
+    private void startChangeBomProcess(String id, String userId, String sourceId) {
         FindProcessDTO findProcess = new FindProcessDTO();
         String businessType = WorkflowBusinessEnum.BOM_CHANGE.getBusinessType();
         String platform = WorkflowBusinessEnum.BOM_CHANGE.getPlatform();
@@ -482,42 +484,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public ProductChangeDTO details(String id) {
-        try {
-            //获取到变更信息
-            ProductChangeEntity changeEntity = this.getById(id);
-            if (Objects.isNull(changeEntity)) {
-                throw new ServiceException(ApiError.ERROR_95105);
-            }
-            //获取到对应的 json
-            String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
-            String type = changeEntity.getType();
-            //对应就是bom
-            if (BomConstant.CHANGE_BOM.equals(type)) {
-                ProductBomChangeDTO result = new ProductBomChangeDTO();
-                result.setId(id);
-                result.setSourceId(changeEntity.getSourceId());
-                result.setType(type);
-                BomDTO bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
-                result.setInfo(bom);
-            }
-
-            //对应就是sku
-            if (BomConstant.CHANGE_SKU.equals(type)) {
-                ProductChangeDTO result = new ProductChangeDTO();
-                result.setSourceId(changeEntity.getSourceId());
-                result.setType(type);
-                result.setId(id);
-                ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-                result.setInfo(sku);
-                return result;
-            }
-
-        } catch (Exception e) {
-            log.error("details", e);
-        }
-
         return null;
-
     }
 
 
@@ -721,21 +688,75 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         String changeBom = BomConstant.CHANGE_BOM;
         Boolean isBom = changeBom.equals(type);
         //如果是bom 检查审核人为空不
-        if(isBom){
+        if (isBom) {
             checkBomChangeAuditor(change.getSourceId());
-        }else{
+        } else {
             checkSkuChangeAuditor(change.getSourceId());
         }
         Integer state = change.getState();
-        if(!ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(state)){
+        if (!ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95099);
         }
         change.setState(ProductChangeStateEnum.WAIT_AUDIT.getState());
         Boolean result = this.updateById(change);
-        if(result){
+        if (result) {
             //启动流程
             startChangeProcess(change);
         }
         return result;
+    }
+
+    /**
+     * bom 详情
+     *
+     * @param changeEntity
+     * @return com.erp.model.plm.dto.ProductBomChangeDTO
+     * @author yl
+     * @date 2023-02-02 9:49
+     */
+    @Override
+    public ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity) {
+        try {
+            if (changeEntity != null) {
+                ProductBomChangeDTO result = new ProductBomChangeDTO();
+                result.setId(changeEntity.getId());
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(changeEntity.getType());
+                //获取到对应的 json
+                String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
+                if (StringUtils.isNotBlank(detailsJson)) {
+                    BomDTO bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
+                    result.setInfo(bom);
+                }
+                return result;
+            }
+        } catch (Exception e) {
+            log.error("getBomDetails", e);
+        }
+        return null;
+
+    }
+
+    @Override
+    public ProductChangeDTO skuDetails(ProductChangeEntity changeEntity) {
+        try {
+            if (changeEntity != null) {
+                ProductChangeDTO result = new ProductChangeDTO();
+                result.setId(changeEntity.getId());
+                result.setSourceId(changeEntity.getSourceId());
+                result.setType(changeEntity.getType());
+                //获取到对应的 json
+                String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
+                if (StringUtils.isNotBlank(detailsJson)) {
+                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson, (Type) ProductSmallestUnitDTO.class);
+                    result.setInfo(bom);
+                }
+                return result;
+            }
+        } catch (Exception e) {
+            log.error("skuDetails", e);
+        }
+        return null;
+
     }
 }

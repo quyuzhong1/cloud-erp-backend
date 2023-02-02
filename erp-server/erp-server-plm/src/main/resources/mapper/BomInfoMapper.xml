@@ -53,7 +53,7 @@
     </select>
 
     <select id="getBomInfo" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
-        SELECT id AS sourceId,serial_number FROM product_bom_info
+        SELECT id AS sourceId,serial_number AS  name FROM product_bom_info
         WHERE state=#{state}
         <if test="searchKeyword!=null and searchKeyword !=''">
             AND serial_number LIKE concat('%',#{searchKeyword},'%')
