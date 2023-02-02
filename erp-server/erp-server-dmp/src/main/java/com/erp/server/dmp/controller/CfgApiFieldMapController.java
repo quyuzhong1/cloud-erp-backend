@@ -153,7 +153,7 @@ public class CfgApiFieldMapController extends BaseController {
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","");
+        map.put("oneLevelCategory","43342");
         //二级分类名称
         map.put("secondLevelCategory","7777");
         //产品经理
@@ -169,9 +169,9 @@ public class CfgApiFieldMapController extends BaseController {
         //报关申报价
         map.put("declarePrice","23");
         //产品属性（是否带电）
-        map.put("productProperty_electric","23");
+        map.put("productProperty_electric",true);
         //产品属性（是否带磁）
-        map.put("productProperty_magnetism","23");
+        map.put("productProperty_magnetism",true);
         //海关编码
         map.put("customsCode","23");
         //申报要素
@@ -190,18 +190,18 @@ public class CfgApiFieldMapController extends BaseController {
         //单箱数量
         map.put("boxQty", 22);
         //单箱重量
-        map.put("boxWeight", "22");
+        map.put("boxWeight", 33);
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", "22");
+        map.put("boxSize_length", 23);
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", "22");
+        map.put("boxSize_width", 12);
         //产品尺寸-高(cm)
-        map.put("boxSize_height", "22");
+        map.put("boxSize_height", 12);
         //实际不含税成本
-        map.put("actualNoTaxCost","22");
+        map.put("actualNoTaxCost",32);
         //实际含税成本
-        map.put("actualTaxCost", "22");
+        map.put("actualTaxCost", 12);
         map.put("moq","22");
         //采购员
         map.put("purchaseUser","7777");

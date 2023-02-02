@@ -105,10 +105,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //第三方系统下划线分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
             if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
-                KingdeeUtils.makeFieldJson(json,apiField,"-",cfgApiFieldMapDTO.getDefaultValue());
+                KingdeeUtils.makeFieldJson(json,apiField,".",cfgApiFieldMapDTO.getDefaultValue());
             } else {
                 if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-                    KingdeeUtils.makeFieldJson(json,apiField,"-",map.get(cfgApiFieldMapDTO.getSelfField()));
+                    KingdeeUtils.makeFieldJson(json,apiField,".",map.get(cfgApiFieldMapDTO.getSelfField()));
                 } else {
                     //根据值映射转换
                     String apiValue = cfgApiFieldMapValueList.stream()
@@ -116,7 +116,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                             .map(CfgApiFieldMapValueEntity::getApiValue)
                             .findFirst()
                             .orElse(null);
-                    KingdeeUtils.makeFieldJson(json,apiField,"-",apiValue);
+                    KingdeeUtils.makeFieldJson(json,apiField,".",apiValue);
                 }
             }
         }
@@ -176,17 +176,17 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             }
             Map<String, Object> queryMap = queryList.get(0);
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FMATERIALID","-",model.get("Id"));
+            KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",model.get("Id"));
             Iterator iter = queryMap.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
-                KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),"-",entry.getValue());
+                KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
             //需要更新的字段
             List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
             ArrayList<String> needUpDateFields = new ArrayList<>();
             for (String field:apiFieldList) {
-                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("-")).collect(Collectors.toList());
+                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("\\.")).collect(Collectors.toList());
                 needUpDateFields.addAll(splitFields);
             }
             param.setNeedUpDateFields(needUpDateFields);
