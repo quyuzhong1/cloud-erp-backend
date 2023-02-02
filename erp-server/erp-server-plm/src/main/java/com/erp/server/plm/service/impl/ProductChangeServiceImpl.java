@@ -126,18 +126,18 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isNotEmpty(productManagerList)) {
+        if (CollectionUtils.isEmpty(productManagerList)) {
             throw new ServiceException(ApiError.ERROR_9030);
         }
         //产品经理上级
         List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
 
         //产品研发中心负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+        if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
         }
 
@@ -156,19 +156,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         List<String> skuIdList = Arrays.asList(sourceId);
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isNotEmpty(productManagerList)) {
+        if (CollectionUtils.isEmpty(productManagerList)) {
             throw new ServiceException(ApiError.ERROR_9030);
         }
 
         //产品经理上级
         List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
 
         //产品中心部门负责人，供应链中心部门负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+        if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9033);
         }
 
@@ -232,14 +232,14 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             List<String> skuIdList = Arrays.asList(sourceId);
             //产品经理
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isNotEmpty(productManagerList)) {
+            if (CollectionUtils.isEmpty(productManagerList)) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
             //产品经理
             parameterMap.put("productManagerList", productManagerList);
 
             List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
@@ -247,7 +247,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9033);
             }
             //产品中心部门负责人，供应链中心部门负责人
@@ -301,7 +301,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
             //产品经理
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isNotEmpty(productManagerList)) {
+            if (CollectionUtils.isEmpty(productManagerList)) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
 
@@ -310,14 +310,14 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
             List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
 
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+            if (CollectionUtils.isEmpty(departmentHeadList)) {
                 throw new ServiceException(ApiError.ERROR_9032);
             }
             //产品部负责人

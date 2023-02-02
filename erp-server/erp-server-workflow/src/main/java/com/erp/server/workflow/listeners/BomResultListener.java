@@ -7,6 +7,7 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ public class BomResultListener implements ExecutionListener {
     private String bomProcessPassUrl;
 
     @Override
+    @Transactional
     public void notify(DelegateExecution delegateExecution) throws Exception {
         String processId = delegateExecution.getParentActivityInstanceId();
         //业务流程表

@@ -165,21 +165,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
 
             //产品经理
+            //Arrays.asList("1")
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isNotEmpty(productManagerList)) {
+            if (CollectionUtils.isEmpty(productManagerList)) {
                 throw new ServiceException(ApiError.ERROR_9030);
             }
             //产品经理
             parameterMap.put("productManagerList", productManagerList);
-
+            //Arrays.asList("2");
             List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
-            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-            if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+            //Arrays.asList("3");
+            List<String> departmentHeadList =productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+            //
+            if (CollectionUtils.isEmpty(departmentHeadList)) {
                 throw new ServiceException(ApiError.ERROR_9032);
             }
             //产品部负责人
@@ -207,12 +210,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     /**
      * 检查审核人不能为空
-     * @author yl
-     * @date 2023-02-01 18:20
+     *
      * @param
      * @return void
+     * @author yl
+     * @date 2023-02-01 18:20
      */
-    public void checkAuditor(String bomId){
+    public void checkAuditor(String bomId) {
 
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
         //skuId
@@ -220,17 +224,17 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isNotEmpty(productManagerList)) {
+        if (CollectionUtils.isEmpty(productManagerList)) {
             throw new ServiceException(ApiError.ERROR_9030);
         }
         //产品部负责人
         List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(productManagerSupervisorList)) {
+        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
         //研发中心负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-        if (CollectionUtils.isNotEmpty(departmentHeadList)) {
+        if (CollectionUtils.isEmpty(departmentHeadList)) {
             throw new ServiceException(ApiError.ERROR_9032);
         }
     }
@@ -380,6 +384,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            checkAuditor(bomId);
             //发起bom 流程
             startBomProcess(bomId);
         }
@@ -654,6 +659,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-29 18:55
      */
     @Override
+    @Transactional
     public void approvalPass(AuditParamDTO dto) {
         BomInfoEntity bom = this.getById(dto.getId());
         //意见
@@ -697,6 +703,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     @Transactional
     public void bomProcessPass(ProcessPassDTO dto) {
+//        Object obj = null;
+//        obj.equals("zhan");
         String bomId = dto.getBusinessTableId();
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
