@@ -3938,6 +3938,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
+                taskProcessNodeDetailDTO.setIfFinishNode(Boolean.TRUE);
                 taskProcessNodeDetailDTO.setList(taskProcessNodeList);
                 detailList.add(taskProcessNodeDetailDTO);
             }
@@ -3964,6 +3965,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             taskProcessNodeDTO.setOperateUserName(userName);
                             taskProcessNodeList.add(taskProcessNodeDTO);
                         });
+                        taskProcessNodeDetailDTO.setIfFinishNode(Boolean.FALSE);
                         taskProcessNodeDetailDTO.setList(taskProcessNodeList);
                         detailList.add(taskProcessNodeDetailDTO);
                     }

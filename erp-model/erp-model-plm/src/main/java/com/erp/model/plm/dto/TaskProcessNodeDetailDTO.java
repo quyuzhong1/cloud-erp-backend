@@ -17,6 +17,11 @@ import java.util.List;
 public class TaskProcessNodeDetailDTO implements Serializable {
 
     /**
+     *  是否达到该节点
+     */
+    private Boolean  ifFinishNode;
+
+    /**
      * 节点明细信息
      */
     private List<TaskProcessNodeDTO> list;
