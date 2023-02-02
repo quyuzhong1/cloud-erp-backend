@@ -33,6 +33,7 @@ import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1183,6 +1184,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return TaskProcessTypeEnum.REVIEW_TASK.getCode();
     }
 
+
     /**
      * 修改 任务信息
      *
@@ -1197,10 +1199,39 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         checkTaskName(dto.getId(), dto.getProductId(), dto.getName());
         ProjectTaskEntity taskEntity = this.getById(dto.getId());
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
-        BeanMapper.copy(taskEntity, oldEntity);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
+        BeanMapper.copy(taskEntity, oldEntity);
+        //交付文档
+        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+        //固定任务不能修改任务名称、目标交付物、审核流程
+        if (MathUtil.ONE.equals(taskEntity.getIsFixed())) {
+            //任务名称
+            if (!taskEntity.getName().equals(dto.getName())) {
+                throw new ServiceException(ApiError.ERROR_95104);
+            }
+            //目标交付文档
+            List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(dto.getId());
+            List<String> newDocs = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
+                 newDocs = deliveryDocsList.stream().map(DocsDTO::getName).sorted().collect(Collectors.toList());
+            }
+            List<String> oldDocs = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(docsList)) {
+                oldDocs = docsList.stream().map(DeliveryDocsDTO::getDeliveryDocsName).sorted().collect(Collectors.toList());
+            }
+            //比较交付文档
+            boolean equalList = ListUtils.isEqualList(newDocs, oldDocs);
+            if (!equalList) {
+                throw new ServiceException(ApiError.ERROR_95105);
+            }
+            //审核流程
+            if (!StringUtils.equals( dto.getBusinessProcessId(),taskEntity.getBusinessProcessId())) {
+                throw new ServiceException(ApiError.ERROR_95106);
+            }
+        }
+
         String businessProcessId = taskEntity.getBusinessProcessId();
         String processId = taskEntity.getProcessId();
         BeanMapper.copy(dto, taskEntity);
@@ -1251,8 +1282,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setChargeId(String.join(",", chargeIds));
             taskEntity.setChargeName(chargeName);
         }
-        //交付文档
-        List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
+
 
         //交付文档名称
         if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
@@ -1385,6 +1415,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         //任务名
         String name = dto.getName();
+        //固定任务不能修改名称
+        if (MathUtil.ONE.equals(taskEntity.getIsFixed()) && StringUtils.isNotBlank(name)) {
+            if (!taskEntity.getName().equals(name)) {
+                throw new ServiceException(ApiError.ERROR_95104);
+            }
+        }
         if (updateMap.containsKey("planStartTime")) {
             String planStartTime = dto.getPlanStartTime();
             taskEntity.setPlanStartTime(DateUtil.stringToDate(planStartTime));
@@ -3605,10 +3641,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 productInfoService.updateProduct(dto);
             }
 
-            //审核完成后查询产品下所有任务是否全部完成，完成则自动将产品变更为已完成
+            //审核完成后查询产品下所有任务是否全部完成，完成则自动将SKU列表的产品开发状态变更为已完成
             Boolean allTaskFlag =  this.projectApprovalTaskFinish(taskEntity.getProductId(),MathUtil.TWO);
             if (allTaskFlag) {
-
+                productDetailService.updateProductStateByProductId(taskEntity.getProductId(),ProductDetailStateEnum.DEVELOP_FINISH.getCode());
             }
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();

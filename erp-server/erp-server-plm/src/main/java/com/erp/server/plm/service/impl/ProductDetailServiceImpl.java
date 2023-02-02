@@ -1535,6 +1535,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
 
+    @Override
+    public void updateProductStateByProductId(String productId, Integer state) {
+        LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ProductDetailEntity::getProductId,productId);
+        updateWrapper.set(ProductDetailEntity::getProductState,state);
+        this.update(updateWrapper);
+    }
+
+
     /**
      * @description: 更新产品信息状态
      * @author Will

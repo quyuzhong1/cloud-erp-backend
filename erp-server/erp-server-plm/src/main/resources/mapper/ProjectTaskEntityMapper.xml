@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id = #{params.productId}
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
@@ -70,7 +70,7 @@
 
 
     <select id="allPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id = #{params.productId}
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
@@ -184,7 +184,7 @@
 
 
     <select id="myApprovalPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         WHERE product_id = #{params.productId} <!--AND pid='0'--> AND process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
@@ -358,8 +358,8 @@
 
 
     <select id="toMeProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
                 product_id = #{params.groupFlag}
@@ -411,8 +411,8 @@
     </select>
 
     <select id="toMePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
                 AND status NOT IN
@@ -467,8 +467,8 @@
     </select>
 
     <select id="myCreateProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
                 AND product_id=#{params.groupFlag}
@@ -521,8 +521,8 @@
     </select>
 
     <select id="myCreatePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
                 AND status NOT IN
@@ -577,8 +577,8 @@
     </select>
 
     <select id="allProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="params.groupFlag !=null  and params.groupFlag!=''">
                 AND product_id=#{params.groupFlag}
@@ -627,8 +627,8 @@
     </select>
 
     <select id="allPlanTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
+        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
+        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
         <where>
             <if test="notStateList !=null and notStateList.size>0">
                 AND status NOT IN
