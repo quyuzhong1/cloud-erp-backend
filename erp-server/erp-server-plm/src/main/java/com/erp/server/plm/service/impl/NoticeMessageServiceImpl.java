@@ -823,6 +823,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Override
     @Async("customExecutor")
+    @Transactional
     public Boolean flyingBookReminder(FlyingBookReminderDTO dto) {
         //提醒人id
         List<String> userIds = dto.getUserIds();

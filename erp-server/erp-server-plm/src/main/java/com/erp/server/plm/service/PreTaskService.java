@@ -40,4 +40,8 @@ public interface PreTaskService extends IService<PreTaskEntity> {
      * @param taskId
      */
     void deleteByTaskId(String taskId);
+    /**
+     * 查询所有子集任务
+     */
+    void listChildrenTask(List<String> taskIds,List<ProjectTaskEntity> list);
 }

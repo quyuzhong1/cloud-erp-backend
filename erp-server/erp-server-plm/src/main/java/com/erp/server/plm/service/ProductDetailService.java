@@ -362,4 +362,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> getApproveLead(String secondDeptName);
+    /**
+     * @description: 根据产品id更新产品开发状态
+     * @author Will
+     * @date: 2023/2/2 14:53
+     * @param productId
+     * @param state
+     */
+    void updateProductStateByProductId(String productId, Integer state);
 }

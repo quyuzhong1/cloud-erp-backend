@@ -93,9 +93,9 @@ public class ProductInfoController extends BaseController {
             serviceClass = ProductInfoService.class,
             keyIdName = "id"
     )
-    public ApiResult saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
-        Boolean flag = productInfoService.saveOrUpdateProduct(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<String> saveOrUpdate(@RequestBody @Validated ProductDTO dto) {
+        String productId = productInfoService.saveOrUpdateProduct(dto);
+        return success(productId);
     }
 
     /**

@@ -23,10 +23,7 @@ import java.util.List;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage<TaskPagingShowDTO> paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
-                 @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
-                 @Param("statusList") List<Integer> statusList, @Param("param") String param
-                 );
+    IPage<TaskPagingShowDTO> paging(Page query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
 
     Integer pagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                     @Param("statusList") List<Integer> statusList, @Param("param") String param
@@ -37,9 +34,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      *产品的全部任务列表
      * @return
      */
-    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId , @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
-                                       @Param("searchKeyword")  String searchKeyword,
-                                       @Param("statusList") List<Integer> statusList,@Param("param") String param);
+    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("params") TaskPagingDTO params);
 
     Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
 
@@ -57,9 +52,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 
-    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("taskSearchDTO") TaskSearchDTO taskSearchDTO,
-                          @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
-                          @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
+    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("params") TaskPagingDTO params,@Param("processIdList") List<String> processIdList);
 
     Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                               @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);

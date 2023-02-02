@@ -195,4 +195,9 @@ public class ProjectTaskDTO  implements Serializable {
      * 分配类型，由模板生成时带过来（0角色，1人员）
      */
     private Integer distributionType;
+
+    /**
+     * 是否是固定任务 1是  0  不是
+     */
+    private Integer isFixed;
 }

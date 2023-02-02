@@ -23,7 +23,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     int countByCategoryId(String id);
 
-    Boolean saveOrUpdateProduct(ProductDTO dto);
+    String saveOrUpdateProduct(ProductDTO dto);
 
     Boolean updateCategory(MoveCategoryDTO dto);
 

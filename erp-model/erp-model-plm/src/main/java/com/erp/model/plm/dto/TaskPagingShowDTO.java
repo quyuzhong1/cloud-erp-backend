@@ -201,5 +201,8 @@ public class TaskPagingShowDTO implements Serializable {
      */
     private Integer distributionType;
 
-
+    /**
+     * 是否是固定任务 1是  0  不是
+     */
+    private Integer isFixed;
 }
