@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.modules.sys.dto.FindUserByThirdDTO;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.CommonService;
@@ -75,10 +76,9 @@ public class CommonServiceImpl implements CommonService {
 
     @Override
     public String getNameById(String userId) {
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
-        if (!Objects.isNull(user)) {
-            return user.getUserName();
+        SysUserDTO sysUser = sysUserFeign.getSysUserById(userId);
+        if (sysUser!=null) {
+            return sysUser.getUserName();
         }
         return "";
     }

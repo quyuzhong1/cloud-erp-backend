@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -143,7 +144,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
                     return b;
                 }).collect(Collectors.toList());
 
-        return CollectionUtils.isEmpty(collect) ? null : collect;
+        return CollectionUtils.isEmpty(collect) ? new ArrayList<>() : collect;
     }
 
     /**

@@ -95,12 +95,13 @@ public class ProductChangeController extends BaseController {
         String type = changeEntity.getType();
         //对应就是bom
         if (BomConstant.CHANGE_BOM.equals(type)) {
-             object = productChangeService.getBomDetails(changeEntity);
-
+            ProductBomChangeDTO bomChange = productChangeService.getBomDetails(changeEntity);
+            object = bomChange;
         }
         //对应sku
         if (BomConstant.CHANGE_SKU.equals(type)) {
-             object = productChangeService.skuDetails(changeEntity);
+            ProductChangeDTO skuChange = productChangeService.skuDetails(changeEntity);
+            object = skuChange;
         }
         if (object != null) {
             return success(object);

@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -727,7 +726,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
                 if (StringUtils.isNotBlank(detailsJson)) {
-                    BomDTO bom = JSONObject.parseObject(detailsJson, (Type) BomDTO.class);
+                    BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
                     result.setInfo(bom);
                 }
                 return result;
@@ -750,7 +749,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
                 if (StringUtils.isNotBlank(detailsJson)) {
-                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson, (Type) ProductSmallestUnitDTO.class);
+                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson,ProductSmallestUnitDTO.class);
                     result.setInfo(bom);
                 }
                 return result;

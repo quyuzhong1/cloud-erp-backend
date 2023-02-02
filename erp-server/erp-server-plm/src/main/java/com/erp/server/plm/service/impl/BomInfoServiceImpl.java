@@ -297,6 +297,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         BeanMapper.copy(bom, result);
+        String  createUserName = commonService.getNameById(result.getCreateUserId());
+        result.setCreateUserName(createUserName);
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(id);
         result.setSkuList(skuList);
         return result;
