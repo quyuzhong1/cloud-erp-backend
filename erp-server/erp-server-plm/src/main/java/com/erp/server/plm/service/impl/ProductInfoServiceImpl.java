@@ -234,7 +234,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     @Transactional
-    public Boolean saveOrUpdateProduct(ProductDTO dto) {
+    public String saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
         //根据id查询
@@ -313,7 +313,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //产品信息修改操作日志
             addProductInfoLog(dto,oldEntity,entity.getId(),entity.getId());
         }
-        return flag;
+        return entity.getId();
     }
 
 

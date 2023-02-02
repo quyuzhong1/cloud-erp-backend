@@ -483,19 +483,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
         Integer taskFlag = params.getTaskFlag();
-        String phaseId = params.getPhaseId();
-        String productId = params.getProductId();
-        String searchKeyword = params.getSearchKeyword();
         List<Integer> statusList = params.getStatusList();
-        TaskSearchDTO taskSearchDTO = params.getTaskSearchDTO();
-        String param = params.getParam();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
 
         //这个是我完成的任务
         if (TaskConstant.MY_FINISH_TASK.equals(taskFlag)) {
             statusList.add(TaskStateEnum.PORTION_FINISH.getCode());
-            pageData = baseMapper.paging(query, productId, phaseId, taskSearchDTO, userId, searchKeyword, statusList, null);
+            pageData = baseMapper.paging(query, params, userId);
         }
         //这个待我审核的任务
         if (TaskConstant.MY_APPROVAL_TASK.equals(taskFlag)) {
@@ -504,7 +499,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(processIds)) {
-                pageData = baseMapper.myApprovalPaging(query, productId, phaseId, taskSearchDTO, userId, searchKeyword, statusList, processIds);
+                pageData = baseMapper.myApprovalPaging(query, params, processIds);
                 //要给流程任务的id
                 List<TaskPagingShowDTO> list = pageData.getRecords();
                 for (TaskPagingShowDTO show : list) {
@@ -517,7 +512,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
-            pageData = baseMapper.allPaging(query, productId, phaseId,taskSearchDTO, searchKeyword, statusList, param);
+            pageData = baseMapper.allPaging(query, params);
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -3598,6 +3593,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             } else {
                 taskEntity.setStatus(TaskStateEnum.FINISH.getCode());
             }
+            taskEntity.setRealityEndTime(new Date());
+            this.updateById(taskEntity);
+
+            //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
+            Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
+            if (approvalTaskFlag) {
+                UpdateProductDTO dto = new UpdateProductDTO();
+                dto.setProductId(taskEntity.getProductId());
+                dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
+                productInfoService.updateProduct(dto);
+            }
+
+            //审核完成后查询产品下所有任务是否全部完成，完成则自动将产品变更为已完成
+            Boolean allTaskFlag =  this.projectApprovalTaskFinish(taskEntity.getProductId(),MathUtil.TWO);
+            if (allTaskFlag) {
+
+            }
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
             recordEntity.setTaskId(taskEntity.getId());
@@ -3605,8 +3617,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             recordEntity.setAfterState(TaskStateEnum.FINISH.getCode());
             recordEntity.setOperatorId(loginUser.getUid());
             recordEntity.setOperatorName(loginUser.getUserName());
-            taskEntity.setRealityEndTime(new Date());
-            this.updateById(taskEntity);
             taskOperatorRecordService.save(recordEntity);
             //操作日志
             SysLogEntity sysLogEntity = new SysLogEntity()
@@ -3616,6 +3626,65 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             sysLogService.save(sysLogEntity);
         }
 
+    }
+    /**
+     * @description: 判断任务是否完成
+     * @author Will
+     * @date: 2023/2/2 11:00
+     * @param productId
+     * @param type
+     * @return Boolean
+     */
+    private Boolean projectApprovalTaskFinish(String productId,Integer type) {
+        List<ProjectTaskEntity> projectTaskList = this.listByProductId(productId);
+        if (CollectionUtils.isEmpty(projectTaskList)) {
+            return Boolean.FALSE;
+        }
+        //已立项的任务
+        if (MathUtil.ONE.equals(type)) {
+            List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.PROJECT_TASK.equals(obj.getProperty())).collect(Collectors.toList());
+            //立项任务及其子任务全部完成则返回true
+            if (CollectionUtils.isNotEmpty(taskList)) {
+                //已完成任务数量
+                long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                if (count > 0) {
+                    return  Boolean.FALSE;
+                }
+                List<String> taskIds = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+                //查询子任务是否全部完成
+                List<ProjectTaskEntity> childrenTaskList = new ArrayList<>();
+                //添加子任务
+                preTaskService.listChildrenTask(taskIds,childrenTaskList);
+                if (CollectionUtils.isNotEmpty(childrenTaskList)) {
+                    //判断子任务是否全部完成
+                    long count1 = childrenTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                    if (count1 > 0) {
+                        return  Boolean.FALSE;
+                    }
+                }
+            }
+        }
+        //所有任务
+        if (MathUtil.TWO.equals(type)) {
+            //已完成任务数量
+            long count = projectTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+            if (count > 0) {
+                return  Boolean.FALSE;
+            }
+            List<String> taskIds = projectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            //查询子任务是否全部完成
+            List<ProjectTaskEntity> childrenTaskList = new ArrayList<>();
+            //添加子任务
+            preTaskService.listChildrenTask(taskIds,childrenTaskList);
+            if (CollectionUtils.isNotEmpty(childrenTaskList)) {
+                //判断子任务是否全部完成
+                long count1 = childrenTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
+                if (count1 > 0) {
+                    return  Boolean.FALSE;
+                }
+            }
+        }
+        return Boolean.TRUE;
     }
 
 

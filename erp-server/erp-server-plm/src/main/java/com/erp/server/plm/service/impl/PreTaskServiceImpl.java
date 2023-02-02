@@ -15,13 +15,12 @@ import com.erp.server.plm.service.TaskDeliveryService;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -271,6 +270,25 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         }
 
     }
+
+    @Override
+    public void listChildrenTask(List<String> taskIds,List<ProjectTaskEntity> list) {
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return;
+        }
+        List<PreTaskEntity> preTaskList = this.getPreTaskListByPreTaskIds(taskIds);
+        if (CollectionUtils.isNotEmpty(preTaskList)) {
+            List<String> childTaskIds = preTaskList.stream().map(PreTaskEntity::getTaskId).collect(Collectors.toList());
+            List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(childTaskIds);
+            if (CollectionUtils.isNotEmpty(projectTaskList)) {
+                list.addAll(projectTaskList);
+            }
+            //判断子任务是否还拥有子任务
+            listChildrenTask(childTaskIds,list);
+        }
+    }
+
+   
 }
 
 
