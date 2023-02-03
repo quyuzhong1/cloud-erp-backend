@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
@@ -831,10 +832,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         String content = dto.getContent();
         //任务id
         List<String> taskIds = dto.getTaskIds();
-        //产品id
-        String productId = dto.getProductId();
-        //产品信息
-        ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         //任务信息
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(taskIds);
         if (CollectionUtils.isEmpty(projectTaskList)) {
@@ -843,6 +840,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //消息记录
         List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
         for (ProjectTaskEntity task : projectTaskList) {
+            //产品id
+            String productId = task.getProductId();
+            //产品信息
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+            if (ObjectUtils.isEmpty(productInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_95010);
+            }
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
