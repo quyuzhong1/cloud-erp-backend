@@ -32,12 +32,6 @@ public class FlyingBookReminderDTO {
     private String content;
 
     /**
-     * 产品id
-     */
-    @NotBlank(message = "产品id不能为空")
-    private String productId;
-
-    /**
      * 任务id
      */
     @NotEmpty(message = "任务id不能为空")
