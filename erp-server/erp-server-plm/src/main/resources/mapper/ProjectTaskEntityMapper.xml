@@ -365,14 +365,14 @@
         left join project_info pji on pdi.id = pji.product_id
         <where>
             pdi.approval_status != 5 and pji.project_status != 4
-            <if test="params.searchCategory !=null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
-                <if test="params.groupFlag !=null  and params.groupFlag != ''">
+            <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
+                <if test="params.groupFlag != null  and params.groupFlag != ''">
                     AND pt.product_id = #{params.groupFlag}
                 </if>
                 <if test="params.searchCategory == 7">
-                    <if test="params.processInstanceIdList != null and params.processInstanceIdList.size > 0">
+                    <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
                         AND pt.process_id  IN
-                        <foreach collection="params.processInstanceIdList" item="processId" open="(" separator="," close=")">
+                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator="," close=")">
                             #{processId}
                         </foreach>
                     </if>
@@ -386,9 +386,9 @@
                     AND pt.plan_end_time &lt;= #{params.endTime}
                 </if>
                 <if test="params.searchCategory == 8">
-                    <if test="params.processInstanceIdList != null and params.processInstanceIdList.size > 0">
+                    <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
                         AND pt.process_id  IN
-                        <foreach collection="params.processInstanceIdList" item="processId" open="(" separator="," close=")">
+                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator="," close=")">
                             #{processId}
                         </foreach>
                     </if>

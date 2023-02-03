@@ -805,6 +805,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), newProduct.getName());
             }
+            //如果状态为已中止则更新产品开发列表开发状态为中止开发
+            if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
+                productDetailService.updateProductStateByProductId(newProduct.getId(),ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+            }
+
+
             UpdateProductDTO updateDto = new UpdateProductDTO();
             BeanMapperUtils.copy(newProduct,updateDto);
             //产品信息修改操作日志
@@ -844,6 +850,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         //开始项目
                         if (ProjectStateEnum.ING.getState().equals(projectStatus)) {
                             noticeMessageService.beginProjectNotice(loginUser.getUserName(), productId);
+                        }
+                        //如果状态为已终止则更新产品开发列表开发状态为中止开发
+                        if (ProjectStateEnum.STOP.getState().equals(projectStatus)) {
+                            productDetailService.updateProductStateByProductId(productId,ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
                         }
                     }
                     project.setProjectStatus(projectStatus);

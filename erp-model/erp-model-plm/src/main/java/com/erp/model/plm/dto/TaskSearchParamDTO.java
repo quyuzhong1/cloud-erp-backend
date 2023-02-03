@@ -81,6 +81,12 @@ public class TaskSearchParamDTO  extends PermissionsDTO {
      */
     private TaskSearchDTO  taskSearchDTO;
 
+    /**
+     * 是否可执行（0否，1是）
+     */
+    private Integer isExecutable;
+
+
 
 
     /**
@@ -89,20 +95,20 @@ public class TaskSearchParamDTO  extends PermissionsDTO {
     private Integer searchCategory;
 
     /**
-     * 开始时间
+     * 开始时间 (无需传值)
      */
     private Date startTime;
 
     /**
-     * 结束时间
+     * 结束时间(无需传值)
      * @return
      */
     private Date endTime;
 
     /**
-     * 流程ids
+     * 流程ids(无需传值)
      */
-    List<String> processInstanceIds;
+    private List<String> processInstanceIds;
 
 
 }
