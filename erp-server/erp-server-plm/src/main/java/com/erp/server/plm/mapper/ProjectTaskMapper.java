@@ -71,17 +71,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("notStateList") List<Integer> notStateList);
 
-    IPage<TaskPagingShowDTO> toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> toMePlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
-
-    IPage<TaskPagingShowDTO> myCreateProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> myCreatePlanEndTimeTaskList(Page query,@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,  @Param("startTime") Date startTime,@Param("endTime") Date endTime);
-
-    IPage<TaskPagingShowDTO> allProductTaskList(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params")TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> allPlanTimeTaskList(Page query,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params, @Param("startTime")Date startTime,@Param("endTime") Date endTime);
+    IPage<TaskPagingShowDTO> listProductTaskBySearchCategory(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
 
     List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
     /**
@@ -133,17 +123,5 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      **/
     List<ProjectTaskEntity> getProjectTaskByProductId(@Param("showDTO") ProductTaskCountShowDTO showDTO);
 
-    /**
-     * 分配给我待审额
-     * @param query
-     * @param userId
-     * @param notStateList
-     * @param params
-     * @param processInstanceIds
-     * @return
-     */
-    IPage<TaskPagingShowDTO> toMeWaitAuditProductTaskList(Page query, @Param("userId")String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,@Param("processInstanceIdList") List<String> processInstanceIds);
-
-    IPage<TaskPagingShowDTO> toMeWaitAuditPlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params,@Param("startTime") Date startTime, @Param("endTime") Date endTime,@Param("processInstanceIdList") List<String> processInstanceIds);
 }
 

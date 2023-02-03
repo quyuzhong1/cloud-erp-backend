@@ -1853,19 +1853,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
-            pageData = baseMapper.allProductTaskList(query, notStateList, params);
+            params.setSearchCategory(TaskSearchCategoryEnum.ALLPRODUCTTASKLIST.getCode());
+            pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
         } else {
             //根据产品分组
             if (ifProductGroup) {
                 //这个就是产品的id
-                pageData = baseMapper.allProductTaskList(query, notStateList, params);
+                params.setSearchCategory(TaskSearchCategoryEnum.ALLPRODUCTTASKLIST.getCode());
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             } else {
                 //标示是是计划时间
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                params.setStartTime(planTimeMap.get("startTime"));
+                params.setEndTime(planTimeMap.get("endTime"));
+                params.setSearchCategory(TaskSearchCategoryEnum.ALLPLANTIMETASKLIST.getCode());
                 //计划时间
-                pageData = baseMapper.allPlanTimeTaskList(query, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
 
         }
@@ -1982,19 +1987,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
-            pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+            params.setSearchCategory(TaskSearchCategoryEnum.TOMEPRODUCTTASKLIST.getCode());
+            pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
         } else {
             //根据产品分组
             if (ifProductGroup) {
+                params.setSearchCategory(TaskSearchCategoryEnum.TOMEPRODUCTTASKLIST.getCode());
                 //这个就是产品的id
-                pageData = baseMapper.toMeProductTaskList(query, userId, notStateList, params);
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             } else {
                 //标示是是计划时间
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
+                params.setStartTime(planTimeMap.get("startTime"));
+                params.setEndTime(planTimeMap.get("endTime"));
                 //计划时间
-                pageData = baseMapper.toMePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
         }
 
@@ -2111,19 +2121,27 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
-            pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+            params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPRODUCTTASKLIST.getCode());
+            params.setProcessInstanceIds(processInstanceIds);
+            pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
         } else {
             //根据产品分组
             if (ifProductGroup) {
+                params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPRODUCTTASKLIST.getCode());
+                params.setProcessInstanceIds(processInstanceIds);
                 //这个就是产品的id
-                pageData = baseMapper.toMeWaitAuditProductTaskList(query, userId, notStateList, params,processInstanceIds);
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             } else {
                 //标示是是计划时间
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
+                params.setStartTime(planTimeMap.get("startTime"));
+                params.setEndTime(planTimeMap.get("endTime"));
+                params.setProcessInstanceIds(processInstanceIds);
                 //计划时间
-                pageData = baseMapper.toMeWaitAuditPlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"),processInstanceIds);
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
         }
 
@@ -2300,19 +2318,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
-            pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+            params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPRODUCTTASKLIST.getCode());
+            pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
         } else {
             //根据产品分组
             if (ifProductGroup) {
+                params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPRODUCTTASKLIST.getCode());
                 //这个就是产品的id
-                pageData = baseMapper.myCreateProductTaskList(query, userId, notStateList, params);
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             } else {
                 //标示是是计划时间
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
+                params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
+                params.setStartTime(planTimeMap.get("startTime"));
+                params.setEndTime(planTimeMap.get("endTime"));
                 //计划时间
-                pageData = baseMapper.myCreatePlanEndTimeTaskList(query, userId, notStateList, params, planTimeMap.get("startTime"), planTimeMap.get("endTime"));
+                pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
         }
 

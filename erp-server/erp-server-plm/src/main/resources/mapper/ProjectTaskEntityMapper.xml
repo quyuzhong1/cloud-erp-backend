@@ -356,326 +356,91 @@
         GROUP BY t.plan_end_time
     </select>
 
-
-    <select id="toMeProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
+    <select id="listProductTaskBySearchCategory" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT
+        pt.id,pt.pid,pt.phase_id,pt.phase_name,pt.name,pt.type,pt.plan_start_time,pt.plan_end_time,pt.priority,pt.status,pt.is_fixed,
+        pt.charge_name,pt.quote_sys_task_id,pt.product_id,pt.charge_id,pt.process_id,pt.role_name,pt.distribution_type
+        FROM project_task pt
+        left join product_info pdi on pt.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
         <where>
-            <if test="params.groupFlag !=null  and params.groupFlag!=''">
-                product_id = #{params.groupFlag}
+            pdi.approval_status != 5 and pji.project_status != 4
+            <if test="params.searchCategory !=null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
+                <if test="params.groupFlag !=null  and params.groupFlag != ''">
+                    AND pt.product_id = #{params.groupFlag}
+                </if>
+                <if test="params.searchCategory == 7">
+                    <if test="params.processInstanceIdList != null and params.processInstanceIdList.size > 0">
+                        AND pt.process_id  IN
+                        <foreach collection="params.processInstanceIdList" item="processId" open="(" separator="," close=")">
+                            #{processId}
+                        </foreach>
+                    </if>
+                </if>
+            </if>
+            <if test="params.searchCategory != null and (params.searchCategory == 2 or params.searchCategory == 4 or params.searchCategory == 6 or params.searchCategory == 8)">
+                <if test="params.startTime != null ">
+                    AND pt.plan_end_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime != null ">
+                    AND pt.plan_end_time &lt;= #{params.endTime}
+                </if>
+                <if test="params.searchCategory == 8">
+                    <if test="params.processInstanceIdList != null and params.processInstanceIdList.size > 0">
+                        AND pt.process_id  IN
+                        <foreach collection="params.processInstanceIdList" item="processId" open="(" separator="," close=")">
+                            #{processId}
+                        </foreach>
+                    </if>
+                </if>
             </if>
             <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
+                AND pt.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                     #{state}
                 </foreach>
             </if>
             <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
+                AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO !=null">
                 <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                    AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
                 </if>
                 <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
+                    AND pt.priority in
                     <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
                         #{priority}
                     </foreach>
                 </if>
                 <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
+                    AND pt.charge_id in
                     <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
                         #{chargeId}
                     </foreach>
                 </if>
                 <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
+                    AND pt.status in
                     <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
                         #{status}
                     </foreach>
                 </if>
                 <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;= #{params.taskSearchDTO.startTime}
+                    AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
                 </if>
                 <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;= #{params.taskSearchDTO.endTime}
+                    AND pt.end_time &gt;= #{params.taskSearchDTO.endTime}
                 </if>
             </if>
-            <if test="params.param!='' and params.param!=null">
-              ${params.param}
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
-
-    </select>
-
-    <select id="toMePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        <where>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="startTime!=null ">
-                AND plan_end_time &gt;= #{startTime}
-            </if>
-            <if test="endTime!=null ">
-                AND plan_end_time &lt;= #{endTime}
-            </if>
-            <if test="params.taskSearchDTO !=null">
-                <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
-                </if>
-                <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
-                        #{priority}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                        #{chargeId}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
-                    <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
-                        #{status}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;=#{params.taskSearchDTO.startTime}
-                </if>
-                <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;=#{params.taskSearchDTO.endTime}
-                </if>
-            </if>
-            <if test="params.param!='' and params.param!=null">
+            <if test="params.param != null and params.param != ''">
                 ${params.param}
             </if>
         </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
-
-    </select>
-
-    <select id="myCreateProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        <where>
-            <if test="params.groupFlag !=null  and params.groupFlag!=''">
-                AND product_id=#{params.groupFlag}
-            </if>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="params.taskSearchDTO !=null">
-                <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
-                </if>
-                <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
-                        #{priority}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                        #{chargeId}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
-                    <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
-                        #{status}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;=#{params.taskSearchDTO.startTime}
-                </if>
-                <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;=#{params.taskSearchDTO.endTime}
-                </if>
-            </if>
-            <if test="params.param!='' and params.param!=null">
-                ${params.param}
-            </if>
-
-
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
-    </select>
-
-    <select id="myCreatePlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        <where>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="startTime!=null ">
-                AND plan_end_time &gt;= #{startTime}
-            </if>
-            <if test="endTime!=null ">
-                AND plan_end_time &lt;= #{endTime}
-            </if>
-            <if test="params.taskSearchDTO !=null">
-                <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
-                </if>
-                <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
-                        #{priority}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                        #{chargeId}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
-                    <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
-                        #{status}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;=#{params.taskSearchDTO.startTime}
-                </if>
-                <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;=#{params.taskSearchDTO.endTime}
-                </if>
-            </if>
-            <if test="params.param!='' and params.param!=null">
-                ${params.param}
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
-
-    </select>
-
-    <select id="allProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        <where>
-            <if test="params.groupFlag !=null  and params.groupFlag!=''">
-                AND product_id=#{params.groupFlag}
-            </if>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="params.taskSearchDTO !=null">
-                <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
-                </if>
-                <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
-                        #{priority}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                        #{chargeId}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
-                    <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
-                        #{status}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;=#{params.taskSearchDTO.startTime}
-                </if>
-                <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;=#{params.taskSearchDTO.endTime}
-                </if>
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
-
-    </select>
-
-    <select id="allPlanTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        <where>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="startTime!=null ">
-                AND plan_end_time &gt;= #{startTime}
-            </if>
-            <if test="endTime!=null ">
-                AND plan_end_time &lt;= #{endTime}
-            </if>
-            <if test="params.taskSearchDTO !=null">
-                <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                    AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
-                </if>
-                <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                    AND priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
-                        #{priority}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                    AND charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
-                        #{chargeId}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                    AND status in
-                    <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
-                        #{status}
-                    </foreach>
-                </if>
-                <if test="params.taskSearchDTO.startTime != null ">
-                    AND create_time &gt;=#{params.taskSearchDTO.startTime}
-                </if>
-                <if test="params.taskSearchDTO.endTime != null ">
-                    AND end_time &gt;=#{params.taskSearchDTO.endTime}
-                </if>
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
+        ORDER BY
+        <if test="params.searchType != null and params.searchType != ''">
+            pt.${params.searchType} ${params.orderBy} ,
+        </if>
+        pt.update_time desc
     </select>
 
 
@@ -987,67 +752,7 @@
 
 
 
-    <select id="toMeWaitAuditProductTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        <where>
-            <if test="params.groupFlag !=null  and params.groupFlag!=''">
-                product_id=#{params.groupFlag}
-            </if>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="processInstanceIdList !=null and processInstanceIdList.size>0">
-                AND process_id  IN
-                <foreach collection="processInstanceIdList" item="processId" open="(" separator="," close=")">
-                    #{processId}
-                </foreach>
-            </if>
-            <if test="params.param!='' and params.param!=null">
-                ${params.param}
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy}
-    </select>
 
-
-    <select id="toMeWaitAuditPlanEndTimeTaskList" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,name,type,plan_start_time,plan_end_time,priority,status,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id FROM project_task
-        <where>
-            <if test="notStateList !=null and notStateList.size>0">
-                AND status NOT IN
-                <foreach collection="notStateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
-            </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.searchKeyword},'%')
-            </if>
-            <if test="startTime!=null ">
-                AND plan_end_time &gt;= #{startTime}
-            </if>
-            <if test="endTime!=null ">
-                AND plan_end_time &lt;= #{endTime}
-            </if>
-            <if test="processInstanceIdList !=null and processInstanceIdList.size>0">
-                AND process_id  IN
-                <foreach collection="processInstanceIdList" item="processId" open="(" separator="," close=")">
-                    #{processId}
-                </foreach>
-            </if>
-            <if test="params.param!='' and params.param!=null">
-                ${params.param}
-            </if>
-        </where>
-        ORDER BY ${params.searchType} ${params.orderBy}
-    </select>
 
 
 </mapper>
