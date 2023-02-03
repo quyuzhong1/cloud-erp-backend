@@ -23,7 +23,7 @@
             FROM product_bom_sku bs LEFT JOIN product_bom_info b
             ON bs.bom_id = b.id
             <where>
-                <if test="param.searchKeyword!=null and param.searchKeyword!=''">
+                <if test="params.searchKeyword!=null and params.searchKeyword!=''">
                     b.serial_number LIKE concat('%',#{params.searchKeyword},'%')
                 </if>
                 <if test="bomIdList !=null and bomIdList.size>0">
@@ -76,8 +76,15 @@
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id
         <where>
-            <if test="param.searchKeyword!=null and param.searchKeyword!=''">
+            <if test="params.searchKeyword!=null and params.searchKeyword!=''">
                 b.serial_number LIKE concat('%',#{params.searchKeyword},'%')
+            </if>
+            <if test="bomIdList !=null and bomIdList.size>0">
+                AND
+                b.id IN
+                <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
             </if>
         </where>
     </select>

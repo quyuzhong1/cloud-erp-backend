@@ -25,12 +25,12 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
     Integer getMaxSequence();
 
-    IPage<BomPagingVO> paging(Page query, @Param("param") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList);
+    IPage<BomPagingVO> paging(Page query, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList);
 
     List<BomVO> getByIds(@Param("bomIdList") List<String> bomIdList);
 
     List<ChangeInfoDTO> getBomInfo(@Param("state")Integer state, @Param("searchKeyword") String searchKeyword);
 
-    List<BomPagingVO> getAllBom(@Param("param") SearchPagingDTO params);
+    List<BomPagingVO> getAllBom(@Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList);
 }
 

@@ -110,7 +110,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         boolean isSubmitAudit = submitAudit.equals(dto.getSubmitType());
         if (isSubmitAudit) {
             bom.setState(BomStateEnum.WAIT_AUDIT.getState());
-            checkAuditor(bomId);
+            checkAuditor(dto.getSkuList());
         }
         Boolean saveResult = this.save(bom);
         //保存成功
@@ -120,7 +120,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //但是待审核的时候
             if (isSubmitAudit) {
                 //这里要发起一个bom流程
-                startBomProcess(bomId);
+                startBomProcess(bomId, dto.getSkuList());
             }
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
@@ -133,6 +133,45 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     /**
+     * 检查审核人
+     *
+     * @param skuList
+     * @return void
+     * @author yl
+     * @date 2023-02-03 12:13
+     */
+    private List<String> getSkuIdList(List<BomSkuDTO> skuList) {
+
+        List<String> skuIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(skuList)) {
+            for (BomSkuDTO item : skuList) {
+                getSkuIdList(skuIdList, item);
+            }
+        }
+        return skuIdList;
+
+    }
+
+    /**
+     * 获取到skuId
+     *
+     * @param item
+     * @return void
+     * @author yl
+     * @date 2023-02-03 12:18
+     */
+    private void getSkuIdList(List<String> skuIdList, BomSkuDTO item) {
+        skuIdList.add(item.getSkuId());
+        List<BomSkuDTO> childrenList = item.getChildren();
+        if (CollectionUtils.isNotEmpty(childrenList)) {
+            for (BomSkuDTO childBomSku : childrenList) {
+                this.getSkuIdList(skuIdList, childBomSku);
+            }
+        }
+    }
+
+
+    /**
      * 启动一个流程
      *
      * @param
@@ -140,7 +179,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-01-31 14:44
      */
-    public void startBomProcess(String bomId) {
+    public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
         FindProcessDTO findProcess = new FindProcessDTO();
         String userId = commonService.getUserInfo().getUid();
         String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
@@ -156,9 +195,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             startProcess.setBusinessKey(business.getBusinessKey());
             Map<String, Object> parameterMap = new HashMap<>();
 
-            List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
             //skuId
-            List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+            List<String> skuIdList = getSkuIdList(skuList);
 
             //产品经理
             //Arrays.asList("1")
@@ -212,11 +250,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-01 18:20
      */
-    public void checkAuditor(String bomId) {
+    public void checkAuditor(List<BomSkuDTO> skuList) {
 
-        List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
         //skuId
-        List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = getSkuIdList(skuList);
         //产品经理
         List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
         if (CollectionUtils.isEmpty(productManagerList)) {
@@ -279,7 +316,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (createUser != null) {
                 item.setCreateUserName(createUser.getUserName());
             }
-            Boolean isChangeIng=changeIngSourceIds.contains(item.getId());
+            Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
             item.setIsChangeIng(isChangeIng);
             Integer state = item.getState();
             item.setStateName(BomStateEnum.getName(state));
@@ -379,8 +416,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95098);
         }
         bom.setState(BomStateEnum.WAIT_AUDIT.getState());
-
-        checkAuditor(bomId);
+        List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
+        checkAuditor(skuList);
         /**
          * 这里要发起一个流程
          */
@@ -388,9 +425,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
-
             //发起bom 流程
-            startBomProcess(bomId);
+            startBomProcess(bomId,skuList);
         }
         return result;
     }
@@ -416,7 +452,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95099);
         }
         bom.setState(BomStateEnum.WAIT_AUDIT.getState());
-        checkAuditor(bomId);
+
+        List<BomSkuDTO> list = bomSkuService.getByBomId(bomId);
+        checkAuditor(list);
         /**
          * 这里要发起一个流程
          */
@@ -426,7 +464,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
             //发起bom 流程
-            startBomProcess(bomId);
+            startBomProcess(bomId,list);
         }
         return result;
 
@@ -594,7 +632,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95104);
         }
         List<String> changeIngSourceIds = productChangeService.getBySourceId(Arrays.asList(sourceId));
-        if(CollectionUtils.isNotEmpty(changeIngSourceIds)){
+        if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
             throw new ServiceException(ApiError.ERROR_95113);
         }
 
@@ -629,8 +667,24 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void exportExcel(SearchPagingDTO dto, HttpServletResponse response) {
-        List<BomPagingVO> list = baseMapper.getAllBom(dto);
+
+        String fileName = "BOM数据";
+        String searchType = dto.getSearchType();
+        //待审核
+        List<String> bomIdList = new ArrayList<>();
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = commonService.getUserInfo().getUid();
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(bomIdList)) {
+            ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
+        }
+
         List<FindUserDTO> userList = commonService.getAllUser();
+
+        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList);
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
@@ -652,7 +706,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
         }
         List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
-        String fileName = "BOM数据";
+
         ExcelUtil.export(fileName, "BOM", excelList, BomExportExcelVO.class, response);
 
 
