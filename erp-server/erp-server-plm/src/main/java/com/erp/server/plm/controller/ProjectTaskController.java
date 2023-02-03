@@ -445,6 +445,11 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id,approval_user_id",
+            menuCode = "plm:task:expert:paging:assignToMe",
+            tableAlias = "pt"
+    )
     @PostMapping("/all/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.expertPaging(searchParamDTO);
@@ -460,7 +465,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id,approval_user_id",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/assignToMe/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -476,7 +481,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/assignToMe/waitFinish/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -492,7 +497,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "approval_user_id",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/assignToMe/waitAudit/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -509,7 +514,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:task:expert:paging:myCreate",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/myCreate/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {

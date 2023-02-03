@@ -5,6 +5,8 @@ import com.erp.common.dto.base.PermissionsDTO;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 以人为 维度 搜素条件
@@ -77,5 +79,36 @@ public class TaskSearchParamDTO  extends PermissionsDTO {
     /**
      * 高级搜索筛选条件
      */
-    TaskSearchDTO  taskSearchDTO;
+    private TaskSearchDTO  taskSearchDTO;
+
+    /**
+     * 是否可执行（0否，1是）
+     */
+    private Integer isExecutable;
+
+
+
+
+    /**
+     * 查询类别(TaskSearchCategoryEnum枚举，仅作用于后端判断)
+     */
+    private Integer searchCategory;
+
+    /**
+     * 开始时间 (无需传值)
+     */
+    private Date startTime;
+
+    /**
+     * 结束时间(无需传值)
+     * @return
+     */
+    private Date endTime;
+
+    /**
+     * 流程ids(无需传值)
+     */
+    private List<String> processInstanceIds;
+
+
 }
