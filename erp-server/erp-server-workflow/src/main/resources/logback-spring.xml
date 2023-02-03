@@ -1,16 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 此处的debug指是否打印logback内部日志信息 -->
 <configuration debug="false" scan="true" scanPeriod="60 seconds">
+	<contextName>${APP_NAME}</contextName>
 	<!-- 获取yml中的 应用名称 -->
-	<springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
-	<!-- 应用名称 -->
-	<property name="APP_NAME" value="erp-workflow"/>
+	<springProperty name="APP_NAME" scope="context" source="spring.application.name"/>
+	<!-- 获取服务器ip -->
+	<springProperty name="ServerIP" scope="context" source="spring.cloud.client.ip-address" defaultValue="0.0.0.0"/>
+	<!-- 获取端口号 -->
+	<springProperty name="ServerPort" scope="context" source="server.port" defaultValue="0000"/>
+
+	<!-- 获取yml中的 应用名称 -->
+<!--	<springProperty scope="context" name="APP_NAME" source="spring.application.name"/>-->
 	<!--日志文件的保存路径 -->
 	<property name="LOG_HOME" value="/logs/${APP_NAME}"/>
 	<!-- 日志输出格式 -->
-	<property name="ENCODER_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger] -%msg%n" />
-	<!-- 日志输出格式(有颜色) -->
-	<property name="ENCODER_PATTERN_COLOR" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | %boldYellow(%thread) | %highlight(%-5level) | %boldGreen(%logger) | %msg%n"/>
+<!--	<property name="ENCODER_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger] -%msg%n" />-->
+<!--	&lt;!&ndash; 日志输出格式(有颜色) &ndash;&gt;-->
+<!--	<property name="ENCODER_PATTERN_COLOR" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | %boldYellow(%thread) | %highlight(%-5level) | %boldGreen(%logger) | %msg%n"/>-->
+	<!-- 彩色日志 -->
+	<!-- 彩色日志依赖的渲染类 -->
+	<conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+	<conversionRule conversionWord="wex"
+					converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+	<conversionRule conversionWord="wEx"
+					converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+	<property name="ENCODER_PATTERN_COLOR"
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%clr(%X{traceid}){yellow},%clr(%X{X-B3-TraceId}){yellow}] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level){blue} %clr(${PID}){magenta} %clr([%thread]){orange} %clr(%logger){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+	<property name="ENCODER_PATTERN"
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%X{traceid},%X{X-B3-TraceId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 
 	<!-- 超过最大天数会清理日志 -->
     <property name="maxHistory" value="15"/>
@@ -20,14 +38,17 @@
 	<property name="totalSizeCap" value="20GB"/> 
 	<!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
     <property name="queueSize" value="512"/>
-	
-	<contextName>${APP_NAME}</contextName>
 
 	<!-- 控制台日志：输出全部日志到控制台 -->
 	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+<!--		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+<!--			<Pattern>${ENCODER_PATTERN_COLOR}</Pattern>-->
+<!--			<charset>UTF-8</charset> &lt;!&ndash; 此处设置字符集 &ndash;&gt;-->
+<!--		</encoder>-->
+		<withJansi>true</withJansi>
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<Pattern>${ENCODER_PATTERN_COLOR}</Pattern>
-			<charset>UTF-8</charset> <!-- 此处设置字符集 -->
+			<pattern>${ENCODER_PATTERN_COLOR}</pattern>
+			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
 
