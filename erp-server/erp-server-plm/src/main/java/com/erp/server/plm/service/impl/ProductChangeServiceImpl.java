@@ -768,4 +768,17 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         return new ArrayList<>();
 
     }
+
+
+    /**
+     * 根据关键字搜索 sku 或者bom 的编号
+     * @author yl
+     * @date 2023-02-03 16:07
+     * @param searchKeyword
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> getChangeSearchCondition(String searchKeyword) {
+        return baseMapper.getChangeSearchCondition(searchKeyword);
+    }
 }

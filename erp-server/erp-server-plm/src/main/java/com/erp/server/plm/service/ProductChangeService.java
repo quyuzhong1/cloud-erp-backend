@@ -52,4 +52,11 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     ProductChangeDTO skuDetails(ProductChangeEntity changeEntity);
 
     List<String> getBySourceId(List<String> sourceIds);
+
+    /**
+     *
+     * @param searchKeyword
+     * @return
+     */
+    List<String> getChangeSearchCondition(String searchKeyword);
 }

@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.SkuApproveConfigureEnum;
@@ -38,6 +37,7 @@ import com.erp.server.plm.enums.BomTypeEnum;
 import com.erp.server.plm.mapper.BomInfoMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -282,9 +282,19 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         SearchPagingDTO params = dto.getParams();
+        String searchKeyword = params.getSearchKeyword();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
         List<String> bomIdList = new ArrayList<>();
+
+
+        //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
+        List<String> skuIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(searchKeyword)) {
+            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+        }
+
+
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
             String userId = commonService.getUserInfo().getUid();
@@ -295,9 +305,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }
-
         }
-        IPage pageData = baseMapper.paging(query, params, bomIdList);
+        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
@@ -426,7 +435,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             //发起bom 流程
-            startBomProcess(bomId,skuList);
+            startBomProcess(bomId, skuList);
         }
         return result;
     }
@@ -464,7 +473,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
             //发起bom 流程
-            startBomProcess(bomId,list);
+            startBomProcess(bomId, list);
         }
         return result;
 
@@ -670,6 +679,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         String fileName = "BOM数据";
         String searchType = dto.getSearchType();
+        String searchKeyword = dto.getSearchKeyword();
+        //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
+        List<String> skuIdList = new ArrayList<>();
+        if (StringUtils.isNotBlank(searchKeyword)) {
+            skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
+        }
         //待审核
         List<String> bomIdList = new ArrayList<>();
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
@@ -677,14 +692,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //获取我的待办信息
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomIdList)) {
+                ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
+            }
+            return;
         }
-        if (CollectionUtils.isEmpty(bomIdList)) {
-            ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
-        }
+
 
         List<FindUserDTO> userList = commonService.getAllUser();
 
-        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList);
+        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList,skuIdList);
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
