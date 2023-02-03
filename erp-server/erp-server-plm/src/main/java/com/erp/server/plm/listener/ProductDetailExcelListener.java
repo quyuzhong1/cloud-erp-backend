@@ -13,10 +13,7 @@ import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.enums.BasicDictTypeEnum;
-import com.erp.server.plm.enums.PurchaseStateEnum;
-import com.erp.server.plm.enums.SaleMethodEnum;
-import com.erp.server.plm.enums.SaleStateEnum;
+import com.erp.server.plm.enums.*;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -236,6 +233,15 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("视频是否完成：是 或者 否");
             }
         }
+        //产品开发状态
+        String productState = dto.getProductState();
+        if (StringUtils.isNotBlank(productState)) {
+            Integer code = ProductDetailStateEnum.getCodeByName(productState);
+            if (ObjectUtils.isEmpty(code)) {
+                errorMsgList.add("产品开发状态有误");
+            }
+        }
+
         //产品分类
         String category = dto.getCategory();
         if (StringUtils.isBlank(category)) {
@@ -310,6 +316,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
+        productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
+        productSkuBaseInfoDTO.setFirstMassProductDate(dto.getFirstMassProductDate());
 
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
