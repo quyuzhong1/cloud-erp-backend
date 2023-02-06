@@ -1701,16 +1701,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
             notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            notStateList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
+            notStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
         }
         List<TaskGroupResultDTO> resultList = new ArrayList<>();
         //当是产品的时候
         if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(dto,notStateList);
             resultList = getProductGroup(list);
         }
         //以计划结束时间
         if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(dto,notStateList);
             resultList = getPlanEndTimeGroup(list);
         }
         return resultList;
@@ -1737,11 +1740,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //不在的 任务状态
         List<Integer> notStateList = new ArrayList<>();
         //这个是待处理 状态为-未开始，进行中，待审核，审核中，完成待审核，审核不通过
-        if (TaskConstant.WAIT_HANDLE.equals(taskCondition) || TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
+        if (TaskConstant.WAIT_HANDLE.equals(taskCondition)) {
             notStateList.add(TaskStateEnum.CLOSE.getCode());
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
             notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            notStateList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
+            notStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
+        } else if (TaskConstant.WAIT_AUDIT.equals(taskCondition)) {
+            notStateList.add(TaskStateEnum.CLOSE.getCode());
+            notStateList.add(TaskStateEnum.ING.getCode());
+            notStateList.add(TaskStateEnum.NOT_START.getCode());
+            notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
+            notStateList.add(TaskStateEnum.FINISH.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_NO_PASS.getCode());
+            notStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
+
         }
         //状态包含所有状态-除了待发布
         if (TaskConstant.ALL_TASK.equals(taskCondition)) {
@@ -1750,12 +1766,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskGroupResultDTO> resultList = new ArrayList<>();
         //当是产品的时候
         if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.toMeTaskGroup(dto.getParam(), notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.toMeTaskGroup(dto, notStateList);
             resultList = getProductGroup(list);
         }
         //以计划结束时间
         if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.toMeTaskPlanEndTimeGroup(dto.getParam(), notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.toMeTaskPlanEndTimeGroup(dto, notStateList);
             resultList = getPlanEndTimeGroup(list);
         }
         return resultList;
@@ -1784,16 +1800,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             notStateList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
             notStateList.add(TaskStateEnum.FINISH.getCode());
             notStateList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+            notStateList.add(TaskStateEnum.WAIT_CONFIRM.getCode());
+            notStateList.add(TaskStateEnum.APPROVAL_ING.getCode());
+            notStateList.add(TaskStateEnum.PORTION_FINISH.getCode());
         }
         List<TaskGroupResultDTO> resultList = new ArrayList<>();
         //当是产品的时候
         if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskGroup(dto.getParam(), notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskGroup(dto, notStateList);
             resultList = getProductGroup(list);
         }
         //以计划结束时间
         if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskPlanEndTimeGroup(dto.getParam(), notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.myCreateTaskPlanEndTimeGroup(dto, notStateList);
             resultList = getPlanEndTimeGroup(list);
         }
 

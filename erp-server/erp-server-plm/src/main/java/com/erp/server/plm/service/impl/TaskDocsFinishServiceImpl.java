@@ -119,64 +119,69 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         deleteByDocsId(dto.getProductId(),dto.getTaskDocsId(),dto.getTaskId());
         //文件名
         String fileName = "";
-        //文件地址
-        String fileUrl = "";
+        List<String> fileNames = new ArrayList<>();
         //文件后缀
         String fileSuffix = "";
         double fileSize = 0.0;
         Integer uploadType = dto.getUploadType();
-        List<TaskDocsFinishEntity> resultList  = new ArrayList<>();
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
         finishEntity.setProductId(dto.getProductId());
         finishEntity.setTaskDocsId(dto.getTaskDocsId());
         finishEntity.setTaskId(dto.getTaskId());
-        finishEntity.setFileUrl(fileUrl);
         finishEntity.setCreateUserId(loginUser.getUid());
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
         finishEntity.setUploadType(uploadType);
-        finishEntity.setOldFileUrl(fileUrl);
         finishEntity.setOldUploadType(dto.getUploadType());
         finishEntity.setOldFileName(fileName);
-        List<UploadMultipartFileDTO> multipartFileList = dto.getFiles();
-        for (UploadMultipartFileDTO uploadMultipartFileDTO: multipartFileList) {
+        List<TaskDocsFinishEntity> list = new ArrayList<>();
         //本地上传
         if (IsConstant.NO.equals(uploadType)) {
-                MultipartFile multipartFile = uploadMultipartFileDTO.getFile();
+            List<MultipartFile> multipartFileList = dto.getFiles();
+            for (MultipartFile multipartFile: multipartFileList) {
+                TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+                BeanMapperUtils.copy(finishEntity,entity);
                 double size = multipartFile.getSize();
                 fileSize = size / (1024 * 1024);
                 fileSize = (double) Math.round(fileSize * 100) / 100;
                 fileName = multipartFile.getOriginalFilename().toLowerCase();
                 fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
                 File file = FileUtil.multiToFile(multipartFile);
-                fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
                 if (StringUtils.isBlank(fileUrl)) {
                     throw new ServiceException(ApiError.ERROR_95018);
                 }
-                TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                BeanMapperUtils.copy(finishEntity,entity);
+                entity.setFileSuffix(fileSuffix);
                 entity.setFileSize(fileSize);
                 entity.setFileName(fileName);
-                entity.setFileSuffix(fileSuffix);
                 entity.setFileUrl(fileUrl);
-                resultList.add(entity);
-            }else {
-                fileUrl = uploadMultipartFileDTO.getFileUrl();
-                finishEntity.setFileUrl(fileUrl);
-                resultList.add(finishEntity);
+                entity.setOldFileName(fileName);
+                entity.setOldFileUrl(fileUrl);
+                fileNames.add(fileName);
+                list.add(entity);
+            }
+
+        } else {
+            List<String> fileUrls = dto.getFileUrls();
+            for (String  fileUrl:fileUrls) {
+                TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+                BeanMapperUtils.copy(finishEntity,entity);
+                entity.setFileUrl(fileUrl);
+                entity.setOldFileUrl(fileUrl);
+                list.add(entity);
             }
         }
         //新增上传交付物操作日志
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", fileName))
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]",String.join(",",fileNames)))
                 .setBusinessId(taskEntity.getId())
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
         sysLogService.addSysLogByOther(sysLogEntity);
 
-        return this.saveOrUpdateBatch(resultList);
+        return this.saveOrUpdateBatch(list);
     }
 
     /**

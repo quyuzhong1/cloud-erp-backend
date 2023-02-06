@@ -264,15 +264,24 @@
     <select id="toMeTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
         <where>
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
-                t.status NOT IN
+                AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                     #{state}
                 </foreach>
             </if>
-            <if test="param!=null and param!=''">
-                ${param}
+            <if test="params.isExecutable != null and params.isExecutable == 1">
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            </if>
+            <if test="params.isExecutable != null and params.isExecutable == 0">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
 
@@ -281,16 +290,24 @@
 
     <select id="toMeTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE
-         t.plan_end_time IS NOT NULL
+        FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
+        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and  t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
-        <if test="param!=null and param!=''">
-            ${param}
+        <if test="params.isExecutable != null and params.isExecutable == 1">
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+        </if>
+        <if test="params.isExecutable != null and params.isExecutable == 0">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -298,15 +315,24 @@
     <select id="myCreateTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
         <where>
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
-                 t.status NOT IN
+                AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                     #{state}
                 </foreach>
             </if>
-            <if test="param!=null and param!=''">
-                ${param}
+            <if test="params.isExecutable != null and params.isExecutable == 1">
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            </if>
+            <if test="params.isExecutable != null and params.isExecutable == 0">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
 
@@ -316,15 +342,24 @@
 
     <select id="myCreateTaskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE  t.plan_end_time IS NOT NULL
+        FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
+        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
-        <if test="param!=null and param!=''">
-            ${param}
+        <if test="params.isExecutable != null and params.isExecutable == 1">
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+        </if>
+        <if test="params.isExecutable != null and params.isExecutable == 0">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -333,12 +368,24 @@
     <select id="allTaskGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT t.product_id AS groupFlag,COUNT(*) AS taskCount
         FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
         <where>
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                     #{state}
                 </foreach>
+            </if>
+            <if test="params.isExecutable != null and params.isExecutable == 1">
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            </if>
+            <if test="params.isExecutable != null and params.isExecutable == 0">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
             </if>
         </where>
         GROUP BY t.product_id
@@ -346,12 +393,24 @@
 
     <select id="taskPlanEndTimeGroup" resultType="com.erp.model.plm.dto.TaskGroupResultDTO">
         SELECT to_char(t.plan_end_time,'yyyy-MM-dd') AS groupFlag,COUNT(*) AS taskCount
-        FROM project_task t WHERE t.plan_end_time IS NOT NULL
+        FROM project_task t
+        left join product_info pdi on t.product_id = pdi.id
+        left join project_info pji on pdi.id = pji.product_id
+        WHERE  (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
+        </if>
+        <if test="params.isExecutable != null and params.isExecutable == 1">
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+        </if>
+        <if test="params.isExecutable != null and params.isExecutable == 0">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -364,7 +423,7 @@
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            pdi.approval_status != 5 and pji.project_status != 4
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
             <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
                 <if test="params.groupFlag != null  and params.groupFlag != ''">
                     AND pt.product_id = #{params.groupFlag}

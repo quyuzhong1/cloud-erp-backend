@@ -250,6 +250,15 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public List<ProjectPhaseEntity> getByProductId(String productId) {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        queryWrapper.orderByAsc(ProjectPhaseEntity::getCreateTime);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<ProjectPhaseEntity> listByProductIds(List<String> productIds) {
+        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProjectPhaseEntity::getProductId, productIds);
+        queryWrapper.orderByAsc(ProjectPhaseEntity::getCreateTime);
         return this.list(queryWrapper);
     }
 
