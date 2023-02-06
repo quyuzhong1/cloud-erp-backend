@@ -200,4 +200,9 @@ public class ProjectTaskDTO  implements Serializable {
      * 是否是固定任务 1是  0  不是
      */
     private Integer isFixed;
+
+    /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，全部关联，2选择关联，3不关联)
+     */
+    private Integer relatedSkuType;
 }
