@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -47,11 +48,13 @@ public class TaskUploadFileDTO  implements Serializable {
     @StateEnumValue(intValues = {0, 1}, message = "上传类型只能是0或者1")
     private Integer uploadType;
 
-
     /**
      * 文件
      */
-    private List<UploadMultipartFileDTO> files;
+    private List<MultipartFile> files;
 
-
+    /**
+     * 飞书链接
+     */
+    private List<String> fileUrls;
 }

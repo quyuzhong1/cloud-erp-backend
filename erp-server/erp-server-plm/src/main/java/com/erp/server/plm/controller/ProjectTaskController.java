@@ -403,6 +403,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/group/condition/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id,approval_user_id",
+            menuCode = "plm:task:expert:paging:all",
+            tableAlias = "t"
+    )
     public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
         return success(resultList);
@@ -447,7 +452,7 @@ public class ProjectTaskController extends BaseController {
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id,approval_user_id",
-            menuCode = "plm:task:expert:paging:assignToMe",
+            menuCode = "plm:task:expert:paging:all",
             tableAlias = "pt"
     )
     @PostMapping("/all/paging")

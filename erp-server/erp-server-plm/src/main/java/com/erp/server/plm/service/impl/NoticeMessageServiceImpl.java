@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -23,7 +22,9 @@ import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.ApproveRecordShowDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.NoticeMessageConstant;
@@ -82,6 +83,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
 
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -693,16 +696,21 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 } else {
                     allNoticeUserIds = noticeUserIds;
                 }
+                //任务完成通知消息
+                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, userName);
                 //获取对应的前置关系
                 PreTaskEntity preTask = preTaskList.stream().filter(p -> p.getPreTaskId().equals(task.getId())).findFirst().orElse(null);
                 if (!Objects.isNull(preTask)) {
                     String taskId = preTask.getTaskId();
                     ProjectTaskEntity taskEntity = projectTaskList.stream().filter(p -> p.getId().equals(taskId)).findFirst().orElse(null);
-                    if (!Objects.isNull(taskEntity) && StringUtils.isNotBlank(taskEntity.getChargeId())) {
-                        List<String> preTaskChargeIdList = Arrays.asList(taskEntity.getChargeId().split(","));
-                        allNoticeUserIds.addAll(preTaskChargeIdList);
+                    if (!Objects.isNull(taskEntity)) {
+                        if (StringUtils.isNotBlank(taskEntity.getChargeId())) {
+                            List<String> preTaskChargeIdList = Arrays.asList(taskEntity.getChargeId().split(","));
+                            allNoticeUserIds.addAll(preTaskChargeIdList);
+                        }
+                        //完成任务的通知信息
+                        messageContent = String.format(NoticeMessageConstant.EXIST_PRE_FINISH_TASK, task.getName(),taskEntity.getName());
                     }
-
                 }
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
@@ -710,7 +718,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, userName);
                 String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -770,25 +777,20 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             for (ProjectTaskEntity task : taskList) {
-                List<String> allNoticeUserIds = new ArrayList<>();
-                //所有的通知用户人
-                //查询任务下审核人
-                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, task.getId());
-                if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                    for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
-                        if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
-                            List<String> approvalUserIdList = Arrays.asList(taskChargeDistributionEntity.getChargeIds().split(","));
-                            allNoticeUserIds.addAll(approvalUserIdList);
-                        }
-                    }
+                //查询当前需要审核的人员
+                List<ApproveRecordShowDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
+                if (CollectionUtils.isEmpty(approveRecordShowList)){
+                    throw new ServiceException(ApiError.ERROR_95045);
                 }
+                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj->"待审核".equals(obj.getActivityType())).map(ApproveRecordShowDTO::getHandleUserName).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM, userName);
+
+                String messageContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM, task.getChargeName());
                 String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);

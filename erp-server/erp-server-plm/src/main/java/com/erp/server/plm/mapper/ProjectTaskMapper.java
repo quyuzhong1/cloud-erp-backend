@@ -59,17 +59,17 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
 
-    List<TaskGroupResultDTO> toMeTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskGroup(@Param("params") TaskGroupParamDTO params,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(@Param("param") String param, List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("params") TaskGroupParamDTO params,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("param") String param, @Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, @Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> allTaskGroup( @Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> allTaskGroup(@Param("params") TaskGroupParamDTO params,  @Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, @Param("notStateList") List<Integer> notStateList);
 
     IPage<TaskPagingShowDTO> listProductTaskBySearchCategory(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
 

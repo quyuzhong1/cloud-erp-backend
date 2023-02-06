@@ -20,8 +20,9 @@ public class TaskGroupParamDTO extends PermissionsDTO {
 
     /**
      * 任务条件
-     * 1.待完成，待审核
+     * 1 待完成
      * 2 全部
+     * 3 待审核
      */
     @NotNull(message = "任务条件不能为空")
     @StateEnumValue(intValues = {1,2,3}, message = "任务条件有误")
@@ -35,5 +36,10 @@ public class TaskGroupParamDTO extends PermissionsDTO {
      */
     @StateEnumValue(strValues = {"no","product", "planEndTime"}, message = "分组属性有误")
     private String groupName;
+
+    /**
+     * 是否可执行（0否，1是）
+     */
+    private Integer isExecutable;
 
 }

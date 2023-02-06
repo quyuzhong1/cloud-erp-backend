@@ -23,11 +23,14 @@ public interface NoticeMessageConstant {
     //开始任务
     String START_TASK = "状态操作: [%s], 将状态由【未开始】变更为【进行中】";
 
-    //完成任务
+    //无前置任务完成任务
     String FINISH_TASK = "状态操作: [%s] 将状态由【进行中】变更为【已完成】";
 
+    //含有前置任务完成任务
+    String EXIST_PRE_FINISH_TASK = "前置任务-[%s]已完成，可以开始执行[%s]";
+
     //完成待审核
-    String FINISH_WAIT_CONFIRM = "状态操作: [%s] 将状态由【进行中】变更为【完成待审核】";
+    String FINISH_WAIT_CONFIRM = "【%s】有一条任务待您审核，请及时审核";
 
     //部分完成任务
     String  PORTION_FINISH_TASK = "状态操作: [%s] 将状态由【进行中】变更为【已完成】";

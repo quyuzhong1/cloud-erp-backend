@@ -182,6 +182,9 @@ public class ProductShowDTO implements Serializable {
     private Integer iterateCount;
 
 
-
+    /**
+     * 项目阶段
+     */
+    private String projectPhase;
 
 }
