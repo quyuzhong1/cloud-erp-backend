@@ -394,16 +394,22 @@
                     </if>
                 </if>
             </if>
-            <if test="notStateList !=null and notStateList.size>0">
+            <if test="notStateList != null and notStateList.size>0">
                 AND pt.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
                     #{state}
                 </foreach>
             </if>
-            <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+            <if test="params.searchKeyword != null and params.searchKeyword!=''">
                 AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
-            <if test="params.taskSearchDTO !=null">
+            <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = pt.id ))
+            </if>
+            <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = pt.id)
+            </if>
+            <if test="params.taskSearchDTO != null">
                 <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
                     AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
                 </if>
