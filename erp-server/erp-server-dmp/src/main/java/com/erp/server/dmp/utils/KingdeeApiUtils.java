@@ -20,6 +20,11 @@ public class KingdeeApiUtils {
         this.formId=formId;
     }
 
+    public KingdeeApiUtils(String formId,IdentifyInfo identifyInfo){
+        this.client = new K3CloudApi(identifyInfo);
+        this.formId=formId;
+    }
+
     /**
      * 查询列表(分页查询)
      * @param filterStr 过滤条件, 如 FModifyDate>"2022-01-01" and FCreatorId="1"

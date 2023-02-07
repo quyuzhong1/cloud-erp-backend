@@ -17,8 +17,8 @@ import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.server.dmp.utils.KingdeeUtils;
+import com.kingdee.bos.webapi.entity.IdentifyInfo;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
@@ -58,9 +58,14 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
 
     public static void main(String[] args) {
         Map<String, Object> resultMap = new LinkedHashMap<>();
-
+        IdentifyInfo identifyInfo = new IdentifyInfo();
+        identifyInfo.setAppId("237496_016p4bjt3qA/S4Xv2Z0r77+M5N781AMo");
+        identifyInfo.setUserName("Administrator");
+        identifyInfo.setServerUrl("http://47.106.224.95:8089/k3cloud/");
+        identifyInfo.setAppSecret("46a860e5bcd144848bc9394c9c4dfbfa");
+        identifyInfo.setdCID("604578a4a54a6f");
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName(),identifyInfo);
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FNumber = '%s'", "OJOHNFIDJFI"));
         String filterStr = String.join(" and ", queryFilters);
