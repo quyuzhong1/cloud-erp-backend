@@ -916,6 +916,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             Integer bomVersion = bomEntity.getVersion();
             bomEntity.setVersion(bomVersion + 1);
             bomEntity.setType(bom.getType());
+            List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);
             List<BomSkuDTO> bomSkuList = bom.getSkuList();
             Boolean result = this.updateById(bomEntity);
             if (result) {
@@ -923,6 +924,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 productBomHistoryService.insert(bomEntity, bomSkuList);
                 //添加 bom 与sku 关系
                 bomSkuService.updateBomSku(bomId, bomSkuList);
+
+                String operateContent = getUpdateContent(oldBomList, bomSkuList);
+                bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.UPDATE.getType(), operateContent);
             }
         }
     }

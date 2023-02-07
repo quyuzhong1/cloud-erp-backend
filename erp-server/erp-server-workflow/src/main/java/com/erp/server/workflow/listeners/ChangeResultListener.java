@@ -6,6 +6,7 @@ import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.Map;
  * @Date 2023-02-01 15:25
  * @Created by yl
  */
+@Service
 public class ChangeResultListener implements ExecutionListener {
 
     @Resource

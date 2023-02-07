@@ -12,6 +12,7 @@
           type,content
         FROM product_bom_operate_log
           WHERE bom_id=#{bomId}
+          ORDER BY create_time DESC
 
     </select>
 </mapper>

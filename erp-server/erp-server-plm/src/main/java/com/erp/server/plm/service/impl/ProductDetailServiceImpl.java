@@ -869,7 +869,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             logs.add(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU：[" + obj.getSkuNo() + "]"));
         });
         if (StringUtils.isBlank(productSpuBaseInfoDTO.getId())) {
-            logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：["+productSpuBaseInfoDTO.getName()+"]"));
+            logs.add(new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id).setOperation("新增信息").setContent("生成了一个产品：[" + productSpuBaseInfoDTO.getName() + "]"));
         }
 
         if (CollectionUtils.isNotEmpty(projectTaskRefSkuList)) {
@@ -1842,8 +1842,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
 
-        String id = "";
 
+        String id = skuDTO.getProductManySpecBaseDTO().getId();
+        ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
+        ProductInfoDTO productInfoDTO = new ProductInfoDTO();
+        BeanMapper.copy(baseDTO,productInfoDTO);
+        //SKU操作日志-产品信息
+        ProductInfoEntity productInfoEntity = productInfoService.getById(id);
+        if (ObjectUtils.isNotEmpty(baseDTO)) {
+            if (StringUtils.isNotBlank(baseDTO.getId())) {
+                //产品操作日志
+                addProductInfoLog(productInfoDTO, productInfoEntity, baseDTO.getId(), baseDTO.getId());
+            }
+            productInfoService.updateSpecByChangeSku(productInfoDTO);
+        }
 
         ProductDetailEntity detailEntity = skuDTO.getProductManySkuDetail();
         ProductDetailEntity oldEntity = this.getById(detailEntity.getId());
