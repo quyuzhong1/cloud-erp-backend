@@ -1,13 +1,15 @@
-package com.common.core.utils;
+package com.erp.common.business.utils;
 
+import com.common.core.utils.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-
 import org.csource.common.MyException;
 import org.csource.common.NameValuePair;
 import org.csource.fastdfs.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,11 +25,18 @@ import java.util.Map;
 /**
  * FastDFS文件上传下载工具类
  */
+@Configuration
 @Slf4j
 public class FastDFSClientUtil {
 
-	private static final String CONFIG_FILENAME = "config/fastdfs-client.properties";
+	private static String configFile;
+
 	private static StorageClient1 storageClient1 = null;
+
+	@Value("${fdfs.configFile}")
+	public void setConfigFile(String configFile){
+		this.configFile = configFile;
+	}
 
 	// 初始化FastDFS Client
 	public static StorageClient1 getStorageClient() {
@@ -35,7 +44,7 @@ public class FastDFSClientUtil {
 			synchronized (FastDFSClientUtil.class) {
 				if (storageClient1 == null) {
 					try {
-						ClientGlobal.initByProperties(CONFIG_FILENAME);
+						ClientGlobal.initByProperties(configFile);
 						TrackerClient trackerClient = new TrackerClient(ClientGlobal.g_tracker_group);
 						TrackerServer trackerServer = trackerClient.getTrackerServer();
 						StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
@@ -48,7 +57,6 @@ public class FastDFSClientUtil {
 		}
 		return storageClient1;
 	}
-
 
 	/**
 	 * 上传文件
