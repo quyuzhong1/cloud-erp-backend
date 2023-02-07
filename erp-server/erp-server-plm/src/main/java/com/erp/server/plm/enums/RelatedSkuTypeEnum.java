@@ -8,7 +8,7 @@ package com.erp.server.plm.enums;
  */
 public enum RelatedSkuTypeEnum {
 
-    ALL_ASSOCIATION(1,"全部关联"),
+    ALL_ASSOCIATION(1,"自动关联"),
     CHOICE_ASSOCIATION(2,"选择关联"),
     NOT_ASSOCIATION(3,"不关联");
 

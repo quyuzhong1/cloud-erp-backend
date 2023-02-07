@@ -854,8 +854,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //SKU新增操作日志
         List<SysLogEntity> logs = new LinkedList<>();
-        //查询产品下任务是否设置关联sku
-        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(id);
         //SKU新增任务关联数据
         List<ProjectTaskRefSkuEntity> projectTaskRefSkuList = new ArrayList<>();
         list.forEach(obj -> {
@@ -868,22 +866,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 entity.setIsFinishTask(IsConstant.YES);
                 projectTaskRefSkuList.add(entity);
             }
-            //任务设置全部关联sku
-            if (CollectionUtils.isNotEmpty(projectTaskList)) {
-                //全部关联,待发布、未开始、进行中
-                List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(e -> RelatedSkuTypeEnum.ALL_ASSOCIATION.getCode().equals(e.getRelatedSkuType()) && (TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus()) || TaskStateEnum.ING.getCode().equals(e.getStatus()))).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    taskList.forEach(e-> {
-                        ProjectTaskRefSkuEntity entity = new ProjectTaskRefSkuEntity();
-                        entity.setProductId(id);
-                        entity.setSkuId(obj.getId());
-                        entity.setTaskId(e.getId());
-                        entity.setIsFinishTask(IsConstant.NO);
-                        projectTaskRefSkuList.add(entity);
-                    });
-                }
-            }
-
             logs.add(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(obj.getId()).setPid(id).setOperation("新增信息").setContent("生成了一个SKU：[" + obj.getSkuNo() + "]"));
         });
         if (StringUtils.isBlank(productSpuBaseInfoDTO.getId())) {

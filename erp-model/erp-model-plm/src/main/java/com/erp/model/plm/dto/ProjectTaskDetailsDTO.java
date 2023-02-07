@@ -156,7 +156,7 @@ public class ProjectTaskDetailsDTO implements Serializable {
     private String createUserId;
 
     /**
-     * 关联sku类型,RelatedSkuTypeEnum枚举(1，全部关联，2选择关联，3不关联)
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
      */
     private Integer relatedSkuType;
 

@@ -5,6 +5,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.dmp.enums.SalesPlatformEnum;
 import com.erp.model.plm.dto.SelectShowDTO;
+import com.erp.server.plm.enums.RelatedSkuTypeEnum;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,12 +28,25 @@ public class PlmDropDownListController extends BaseController {
     /**
      * 平台下拉列表
      *
-     * @return 单条数据
+     * @return
      */
     @GetMapping("/platform/list")
     public ApiResult<List<SelectShowDTO>> listPlatformDropDown() {
         List<SelectShowDTO> result = Arrays.stream(SalesPlatformEnum.values())
                 .map(x -> new SelectShowDTO(x.getCode(), x.getName(), x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 关联类型下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/relatedSkuType/list")
+    public ApiResult<List<SelectShowDTO>> listRelatedSkuType() {
+        List<SelectShowDTO> result = Arrays.stream(RelatedSkuTypeEnum.values())
+                .map(x -> new SelectShowDTO(x.getCode(), x.getName(), x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

@@ -1135,6 +1135,26 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<Map<String, Object>> refSkuFinishList = new ArrayList<>(taskRefSkuList.size());
         List<String> skuIdList = taskRefSkuList.stream().map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
+        List<ProductDetailEntity> details = productDetailService.getSkuListByProductId(taskEntity.getProductId());
+        //如果任务设置的自动关联，则查询产品下未关联的sku
+        if (RelatedSkuTypeEnum.ALL_ASSOCIATION.getCode().equals(taskEntity.getRelatedSkuType())) {
+            if (CollectionUtils.isNotEmpty(details)) {
+                List<ProductDetailEntity> noRelatedList = details.stream().filter(obj -> !skuIdList.contains(obj.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(noRelatedList)) {
+                    //未关联上的sku
+                    for (ProductDetailEntity entity:  noRelatedList) {
+                        Map<String, Object> refSkuMap = new HashMap<>();
+                        refSkuMap.put("skuId",entity.getId());
+                        refSkuMap.put("skuNo",entity.getSkuNo());
+                        refSkuMap.put("isFinishTask",IsConstant.YES);
+                        refSkuMap.put("isGenerated",IsConstant.NO);
+                        skuIdList.add(entity.getId());
+                        refSkuFinishList.add(refSkuMap);
+                    }
+                }
+
+            }
+        }
 
         for (ProjectTaskRefSkuEntity refSkuItem : taskRefSkuList) {
             Map<String, Object> refSkuMap = new HashMap<>();
@@ -1155,7 +1175,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             detailsDTO.setFieldConfigType(refSku.getFieldConfigType());
         }
         detailsDTO.setRefSkuIdList(skuIdList);
-        List<String> skuNoList = productDetailList.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<String> skuNoList = details.stream().filter(d -> skuIdList.contains(d.getId())).map(ProductDetailEntity::getSkuNo).collect(Collectors.toList());
         detailsDTO.setRefSkuNoList(skuNoList);
         return detailsDTO;
     }
@@ -2448,9 +2468,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public void taskFinishSku(TaskFinishSkuDTO dto) {
-        String taskId = dto.getTaskId();
-        List<String> skuIdList = dto.getSkuIdList();
-        projectTaskRefSkuService.taskFinishRefSku(taskId, skuIdList);
+        projectTaskRefSkuService.taskFinishRefSku(dto);
     }
 
     /**
