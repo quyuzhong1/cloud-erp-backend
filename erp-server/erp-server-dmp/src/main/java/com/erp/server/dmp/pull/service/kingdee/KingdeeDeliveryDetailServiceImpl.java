@@ -59,7 +59,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
     @Autowired
-    private MQProducerService<DmpDeliveryDetailInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
 
     @Resource
     @Qualifier("kingdeeDeliveryDetailServiceImpl")
@@ -102,7 +102,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_DELIVERY_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_DELIVERY_ORDER_TAG.getName(),
                                 msg, msg.getBillNo()))
                 .collect(Collectors.toList());
     }

@@ -52,7 +52,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private MQProducerService<DmpSkuInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpSkuInfoEntity> mqProducerService;
     @Resource
     @Qualifier("kingdeeSkuInfoServiceImpl")
     private IReportSaveService reportSaveService;
@@ -96,7 +96,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
                                 msg, StrUtil.format("{}_{}", msg.getSkuNo(), msg.getItemCode())))
                 .collect(Collectors.toList());
 

@@ -61,7 +61,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
 
     @Autowired
-    private MQProducerService<DmpDeliveryDetailInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
 
     @Resource
     @Qualifier("gyyDeliveryDetailServiceImpl")
@@ -112,7 +112,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
                                 msg, msg.getBillNo()))
                 .collect(Collectors.toList());
     }

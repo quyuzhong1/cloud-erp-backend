@@ -62,7 +62,7 @@
 //    private DmpRefundInfoService dmpRefundInfoService;
 //
 //    @Autowired
-//    private MQProducerService<DmpRefundInfoEntity> rocketMQTemplate;
+//    private MQProducerService<DmpRefundInfoEntity> mqProducerService;
 //
 //    @Resource
 //    @Qualifier("kingdeeRefundServiceImpl")
@@ -107,7 +107,7 @@
 //
 //        // 异步推送到MQ
 //        mabangToMqlist.stream().peek(msg ->
-//                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TAG.getName(),
+//                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TAG.getName(),
 //                        msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
 //                .collect(Collectors.toList());
 //

@@ -60,7 +60,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     private DmpRefundItemService dmpRefundItemService;
 
     @Autowired
-    private MQProducerService<DmpRefundInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpRefundInfoEntity> mqProducerService;
     @Resource
     @Qualifier("gyyRefundServiceImpl")
     private IReportSaveService reportSaveService;
@@ -129,7 +129,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}",msg.getPlatformOrderId() + msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
     }

@@ -55,7 +55,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
     @Autowired
-    private MQProducerService<DmpReturnOrderInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
 
     @Resource
     @Qualifier("mabangReturnOrderInfoServiceImpl")
@@ -129,7 +129,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.MABANG_RETURN_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.MABANG_RETURN_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
 

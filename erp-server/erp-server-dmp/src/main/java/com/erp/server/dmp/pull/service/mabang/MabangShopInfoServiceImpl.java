@@ -44,7 +44,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     private DmpShopInfoService dmpShopInfoService;
 
     @Resource
-    private MQProducerService<DmpShopInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpShopInfoEntity> mqProducerService;
 
     @Resource
     @Qualifier("mabangShopInfoServiceImpl")
@@ -88,7 +88,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.MABANG_SHOP_INFO_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.MABANG_SHOP_INFO_TAG.getName(),
                                 msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode())))
                 .collect(Collectors.toList());
     }

@@ -67,7 +67,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
     private DmpOrderInfoService dmpOrderInfoService;
 
     @Autowired
-    private MQProducerService<DmpOrderInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpOrderInfoEntity> mqProducerService;
 
     @Resource
     @Qualifier("kingdeeOrderInfoServiceImpl")
@@ -136,7 +136,7 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SALE_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SALE_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
 

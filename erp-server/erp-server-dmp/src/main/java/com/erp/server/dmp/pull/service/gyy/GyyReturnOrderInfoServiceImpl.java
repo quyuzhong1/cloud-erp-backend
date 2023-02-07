@@ -7,41 +7,32 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
-import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
 import com.erp.model.dmp.gyy.bean.ReturnOrderPayments;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +55,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
     @Resource
-    private MQProducerService<DmpReturnOrderInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
     @Resource
     @Qualifier("gyyReturnOrderInfoServiceImpl")
     private IReportSaveService reportSaveService;
@@ -137,7 +128,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_RETURN_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_RETURN_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
     }

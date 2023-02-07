@@ -58,7 +58,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
     @Autowired
-    private MQProducerService<DmpOrderInfoEntity> rocketMQTemplate;
+    private MQProducerService<DmpOrderInfoEntity> mqProducerService;
     @Resource
     @Qualifier("gyyOrderInfoServiceImpl")
     private IReportSaveService reportSaveService;
@@ -143,7 +143,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_SALE_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_SALE_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
 
