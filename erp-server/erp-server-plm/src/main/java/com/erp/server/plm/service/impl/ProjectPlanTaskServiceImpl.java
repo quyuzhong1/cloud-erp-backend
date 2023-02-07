@@ -4,9 +4,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.sys.dto.CustomizeFieldDisplayDTO;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 项目计划任务表(ProjectPlanTask)表服务实现类
@@ -49,6 +52,16 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      */
     @Override
     public Boolean importTaskschedule() {
+        return null;
+    }
+
+    @Override
+    public Boolean fieldSet(List<CustomizeFieldDisplayDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public List<CustomizeFieldDisplayDTO> fieldShow() {
         return null;
     }
 }

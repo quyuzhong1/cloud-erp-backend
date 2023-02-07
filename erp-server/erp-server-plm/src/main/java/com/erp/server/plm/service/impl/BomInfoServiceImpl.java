@@ -701,8 +701,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomIdList)) {
                 ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
+                return;
             }
-            return;
+
         }
 
 
@@ -756,10 +757,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         //是不是 第一次审核
         Boolean isFirstAudit= BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
-
-
-
-
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setRemark(dto.getComment());
         Boolean result= this.updateById(bom);

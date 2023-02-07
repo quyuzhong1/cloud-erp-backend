@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.sys.dto.CustomizeFieldDisplayDTO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 产品排期
@@ -51,7 +53,7 @@ public class ProjectPlanTaskController extends BaseController {
     }
 
     /**
-     * 导出数据
+     * 导入数据
      */
     @PostMapping("/import")
     public ApiResult importTaskschedule() {
@@ -64,9 +66,18 @@ public class ProjectPlanTaskController extends BaseController {
      * 字段设置
      */
     @PostMapping("/fieldSet")
-    public ApiResult fieldSet() {
-        Boolean result = projectPlanTaskService.importTaskschedule();
+    public ApiResult fieldSet(@RequestBody List<CustomizeFieldDisplayDTO> dto) {
+        Boolean result = projectPlanTaskService.fieldSet(dto);
         return  result==true? success():failure();
+    }
+
+    /**
+     * 字段显示
+     */
+    @PostMapping("/fieldShow")
+    public ApiResult<List<CustomizeFieldDisplayDTO>> fieldShow() {
+        List<CustomizeFieldDisplayDTO> result = projectPlanTaskService.fieldShow();
+        return  success(result);
     }
 
 }

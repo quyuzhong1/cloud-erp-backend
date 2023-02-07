@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.sys.dto.CustomizeFieldDisplayDTO;
+
+import java.util.List;
 
 /**
  * 项目计划任务表(ProjectPlanTask)表服务接口
@@ -24,4 +27,8 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
     void export();
 
     Boolean importTaskschedule();
+
+    Boolean fieldSet(List<CustomizeFieldDisplayDTO> dto);
+
+    List<CustomizeFieldDisplayDTO> fieldShow();
 }

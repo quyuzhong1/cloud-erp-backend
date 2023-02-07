@@ -62,7 +62,7 @@ public class BomExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "SPU(型号/model)", index = 5)
-    private String spuName = "";
+    private String spuNo = "";
 
 
     /**

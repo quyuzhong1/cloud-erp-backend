@@ -4,7 +4,9 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.server.plm.service.ProjectPlanService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -64,5 +66,31 @@ public class ProjectPlanController extends BaseController {
         Boolean result = projectPlanService.changeSchedule(dto);
         return result == true ? success() : failure();
     }
+
+
+    /**
+     * 排期 审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalPass")
+    public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
+        return success();
+    }
+
+
+
+    /**
+     * 排期  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/approvalNoPass")
+    public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        return success();
+    }
+
 }
 
