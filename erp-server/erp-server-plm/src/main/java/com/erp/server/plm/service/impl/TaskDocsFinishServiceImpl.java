@@ -115,8 +115,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             throw new ServiceException(ApiError.ERROR_95027);
         }
         LoginUser loginUser = commonService.getUserInfo();
-        //删除文件
-        deleteByDocsId(dto.getProductId(),dto.getTaskDocsId(),dto.getTaskId());
         //文件名
         String fileName = "";
         List<String> fileNames = new ArrayList<>();
@@ -180,7 +178,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
         sysLogService.addSysLogByOther(sysLogEntity);
-
         return this.saveOrUpdateBatch(list);
     }
 

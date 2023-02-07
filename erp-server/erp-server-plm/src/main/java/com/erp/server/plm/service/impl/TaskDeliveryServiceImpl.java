@@ -9,10 +9,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.CountDTO;
-import com.erp.model.plm.dto.DeliveryDocsDTO;
-import com.erp.model.plm.dto.DocsDTO;
-import com.erp.model.plm.dto.SetDocsPowerDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.DocsPermissionEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
@@ -464,6 +461,26 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             return listObjs(queryWrapper, Object::toString);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public List<DeliveryDocsGroupDTO> listGroupByTaskId(String id) {
+        List<DeliveryDocsGroupDTO> resultList = new ArrayList<>();
+        List<DeliveryDocsDTO> list = this.getByTaskId(id);
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        Map<String, List<DeliveryDocsDTO>> map = list.stream().collect(Collectors.groupingBy(DeliveryDocsDTO::getDeliveryDocsName));
+        for (Map.Entry<String, List<DeliveryDocsDTO>>  entry: map.entrySet()) {
+            DeliveryDocsGroupDTO deliveryDocsGroupDTO = new DeliveryDocsGroupDTO();
+            List<DeliveryDocsDTO> value = entry.getValue();
+            deliveryDocsGroupDTO.setDeliveryDocsName(value.get(0).getDeliveryDocsName());
+            deliveryDocsGroupDTO.setTaskId(id);
+            deliveryDocsGroupDTO.setTaskName(value.get(0).getTaskName());
+            deliveryDocsGroupDTO.setDocsList(value);
+            resultList.add(deliveryDocsGroupDTO);
+        }
+        return resultList;
     }
 
 

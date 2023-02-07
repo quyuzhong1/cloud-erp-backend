@@ -1,7 +1,6 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
@@ -46,6 +45,12 @@ public interface TaskDeliveryService extends IService<TaskDeliveryDocsEntity> {
 
     List<String> getDocsNameByTaskIds(List<String> sysTaskIds);
 
-
-
+    /**
+     * @description: 根据交付文档分组显示
+     * @author Will
+     * @date: 2023/2/7 10:19
+     * @param id
+     * @return List<DeliveryDocsGroupDTO>
+     */
+    List<DeliveryDocsGroupDTO> listGroupByTaskId(String id);
 }
