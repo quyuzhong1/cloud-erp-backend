@@ -121,56 +121,64 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //文件后缀
         String fileSuffix = "";
         double fileSize = 0.0;
-        Integer uploadType = dto.getUploadType();
         TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
         finishEntity.setCreateUserName(loginUser.getUserName());
         finishEntity.setFileName(fileName);
         finishEntity.setProductId(dto.getProductId());
-        finishEntity.setTaskDocsId(dto.getTaskDocsId());
         finishEntity.setTaskId(dto.getTaskId());
         finishEntity.setCreateUserId(loginUser.getUid());
         finishEntity.setFileType(TaskConstant.FILE_TYPE);
         finishEntity.setFileSuffix(fileSuffix);
         finishEntity.setFileSize(fileSize);
-        finishEntity.setUploadType(uploadType);
         finishEntity.setOldUploadType(dto.getUploadType());
         finishEntity.setOldFileName(fileName);
-        List<TaskDocsFinishEntity> list = new ArrayList<>();
-        //本地上传
-        if (IsConstant.NO.equals(uploadType)) {
-            List<MultipartFile> multipartFileList = dto.getFiles();
-            for (MultipartFile multipartFile: multipartFileList) {
-                TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                BeanMapperUtils.copy(finishEntity,entity);
-                double size = multipartFile.getSize();
-                fileSize = size / (1024 * 1024);
-                fileSize = (double) Math.round(fileSize * 100) / 100;
-                fileName = multipartFile.getOriginalFilename().toLowerCase();
-                fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-                File file = FileUtil.multiToFile(multipartFile);
-                String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                if (StringUtils.isBlank(fileUrl)) {
-                    throw new ServiceException(ApiError.ERROR_95018);
+        List<TaskDocsFinishEntity> resultList = new ArrayList<>();
+        List<UploadMultipartFileDTO> list = dto.getList();
+        for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
+            //上传文件
+            List<MultipartFile> files = uploadMultipartFileDTO.getFiles();
+            //飞书链接
+            List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
+            //文件信息保存
+            if (CollectionUtils.isNotEmpty(files)) {
+                for (MultipartFile multipartFile: files) {
+                    TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+                    BeanMapperUtils.copy(finishEntity,entity);
+                    double size = multipartFile.getSize();
+                    fileSize = size / (1024 * 1024);
+                    fileSize = (double) Math.round(fileSize * 100) / 100;
+                    fileName = multipartFile.getOriginalFilename().toLowerCase();
+                    fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+                    File file = FileUtil.multiToFile(multipartFile);
+                    String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                    if (StringUtils.isBlank(fileUrl)) {
+                        throw new ServiceException(ApiError.ERROR_95018);
+                    }
+                    finishEntity.setUploadType(IsConstant.NO);
+                    entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
+                    entity.setFileSuffix(fileSuffix);
+                    entity.setFileSize(fileSize);
+                    entity.setFileName(fileName);
+                    entity.setFileUrl(fileUrl);
+                    entity.setOldFileName(fileName);
+                    entity.setOldFileUrl(fileUrl);
+                    fileNames.add(fileName);
+                    resultList.add(entity);
                 }
-                entity.setFileSuffix(fileSuffix);
-                entity.setFileSize(fileSize);
-                entity.setFileName(fileName);
-                entity.setFileUrl(fileUrl);
-                entity.setOldFileName(fileName);
-                entity.setOldFileUrl(fileUrl);
-                fileNames.add(fileName);
-                list.add(entity);
+            }
+            //飞书链接信息保存
+            if (CollectionUtils.isNotEmpty(fileUrls)) {
+                for (String fileUrl: fileUrls) {
+                    TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+                    BeanMapperUtils.copy(finishEntity,entity);
+                    entity.setUploadType(IsConstant.YES);
+                    entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
+                    entity.setFileUrl(fileUrl);
+                    entity.setOldFileUrl(fileUrl);
+                    resultList.add(entity);
+                }
             }
 
-        } else {
-            List<String> fileUrls = dto.getFileUrls();
-            for (String  fileUrl:fileUrls) {
-                TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                BeanMapperUtils.copy(finishEntity,entity);
-                entity.setFileUrl(fileUrl);
-                entity.setOldFileUrl(fileUrl);
-                list.add(entity);
-            }
         }
         //新增上传交付物操作日志
         SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]",String.join(",",fileNames)))
@@ -178,7 +186,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
         sysLogService.addSysLogByOther(sysLogEntity);
-        return this.saveOrUpdateBatch(list);
+        return this.saveOrUpdateBatch(resultList);
     }
 
     /**
