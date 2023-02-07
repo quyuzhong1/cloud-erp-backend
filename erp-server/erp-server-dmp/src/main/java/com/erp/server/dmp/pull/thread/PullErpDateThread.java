@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-public class PullGyyDateThread {
+public class PullErpDateThread {
 
     @Resource
     private PlatformApiTaskService platformApiTaskService;
@@ -26,7 +26,7 @@ public class PullGyyDateThread {
     @Resource
     private DmpErrorLogService dmpErrorLogService;
 
-    @Async("gyy")
+    @Async("pullErpOpenApi")
     public void pullOrder(JobTaskDTO jobTaskDTO) {
         PlatformApiEnum enumByType = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());
         RequestDTO dto = new RequestDTO();
@@ -34,16 +34,19 @@ public class PullGyyDateThread {
         dto.setJobTaskDTO(jobTaskDTO);
         try {
             modelService.pullDataSave(dto);
+            Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
+            if (!aBoolean) {
+                throw new RuntimeException("修改任务下次执行时间失败！");
+            }
         } catch (Exception e) {
-            log.error(" 管易云拉取数据错误dto={}", JSONUtil.toJsonStr(dto), e);
-            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(dto),e.getMessage(), JSONUtil.toJsonStr(e.getStackTrace()));
+            log.error(" {}拉取数据错误dto={}", jobTaskDTO.getPlatformName(), JSONUtil.toJsonStr(dto), e);
+            Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 1);
+            String message = e.getMessage();
+            if (!aBoolean) {
+                message = "更新任务状态失败";
+            }
+            DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(jobTaskDTO.getId(), JSONUtil.toJsonStr(dto),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);
-            return;
-        }
-        // 修改任务信息
-        Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO);
-        if (!aBoolean) {
-            throw new RuntimeException("修改任务下次执行时间失败！");
         }
     }
 }

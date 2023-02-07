@@ -7,5 +7,4 @@ public interface IReportSaveService<T> {
 
     void pullDataSave(RequestDTO dto) throws Exception;
 
-    void analysisOrder(T orderEntity) throws Exception;
 }

@@ -1,18 +1,19 @@
 package com.erp.server.dmp.pull.service.mabang;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
-import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.mabang.SkuInfoEntity;
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.mabang.SkuInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.pull.service.*;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +23,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 马帮商品
@@ -39,9 +40,6 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     private MongoService mongoService;
 
     @Resource
-    private DmpErrorLogService dmpErrorLogService;
-
-    @Resource
     private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
@@ -50,39 +48,36 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
-        List<SkuInfoEntity> skuInfoEntities = pullDate(dto);
-        if (skuInfoEntities != null && skuInfoEntities.size() > 0) {
-            for (SkuInfoEntity skuInfoEntity : skuInfoEntities) {
-                OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-                orderMongoDTO.setStockSku(skuInfoEntity.getStockSku());
-                List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (SkuInfoEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(skuInfoEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(skuInfoEntity), MapUtil.class);
-                            try {
-                                mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
-                            } catch (Exception e) {
-                                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                                dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 马帮修改mongodb商品数据失败，[ sku = " + skuInfoEntity.getStockSku() + "], 错误信息 = " + e.getMessage());
-                                dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                                dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 马帮修改mongodb商品数据失败，[ sku = " + skuInfoEntity.getStockSku() + "], 错误信息 = " + e.getMessage());
-                            }
-                        }
-                    }
-                } else {
-                    mongoService.saveMongoData(skuInfoEntity, MongoTableNameContant.ORIGINAL_MABANG_SKU);
-                }
-                //存储数据到中台  sku信息只保留金蝶数据
-//                analysisSku(skuInfoEntity);
-            }
+        List<SkuInfoEntity> entityList = pullDate(dto);
+        if (CollectionUtil.isEmpty(entityList)) {
+            log.info("拉取马帮SKU信息列表数据为空 entityList.size = 0 ");
+            return;
         }
+        log.info("拉取马帮SKU信息列表数据 entityList.size = {} ", entityList.size());
+        List<SkuInfoEntity> insertList = new ArrayList<>();
+        List<SkuInfoEntity> pushToMqList = new ArrayList<>();
+        for (SkuInfoEntity entity : entityList) {
+            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
+            List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+            if(CollectionUtil.isEmpty(mongoData)){
+                insertList.add(entity);
+                pushToMqList.add(entity);
+                continue;
+            }
+            SkuInfoEntity mongoDatum = mongoData.get(0);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(entity.toString())) {
+                continue;
+            }
+            pushToMqList.add(entity);
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_SKU);
+        }
+        // 不需要 推送到MQ
+
     }
 
     /**
@@ -99,12 +94,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
 
     /**
      * 解析订单数据
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
-     * @return void
      **/
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public void analysisOrder(SkuInfoEntity skuInfoEntity) throws Exception {
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
@@ -158,7 +148,7 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         dmpSkuInfoEntity.setDeveloperName(skuInfoEntity.getDeveloperName());
 
         //平台标识
-        dmpSkuInfoEntity.setPlatformSign("马帮");
+        dmpSkuInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
 
         dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
 

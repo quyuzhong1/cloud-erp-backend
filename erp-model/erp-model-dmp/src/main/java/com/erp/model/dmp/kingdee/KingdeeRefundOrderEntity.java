@@ -5,20 +5,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Data
 @ToString
 @NoArgsConstructor
 public class KingdeeRefundOrderEntity {
+
+    private String _id;
     @Alias("FID")
     private String fId;
     @Alias("FBillTypeID")
     private String fBillTypeID;
     @Alias("FBillTypeName")
     private String fBillTypeName;
+    @Alias("FBillTypeID.FNumber")
+    private String fBillTypeCode;
     @Alias("FBillNo")
     private String fBillNo;
     @Alias("FDATE")
-    private String fDate;
+    private LocalDateTime fDate;
     @Alias("FSETTLERATE")
     private String fSettleRate;
     @Alias("FREFUNDAMOUNTFOR_H")
@@ -42,11 +48,11 @@ public class KingdeeRefundOrderEntity {
     @Alias("FREMARK")
     private String fRemark;
     @Alias("FCreateDate")
-    private String fCreateDate;
+    private LocalDateTime fCreateDate;
     @Alias("FModifyDate")
-    private String fModifyDate;
+    private LocalDateTime fModifyDate;
     @Alias("FApproveDate")
-    private String fApproveDate;
+    private LocalDateTime fApproveDate;
     @Alias("FWBSETTLENO")
     private String fWbSettleNo;
     @Alias("FCountry")

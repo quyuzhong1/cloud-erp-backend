@@ -8,12 +8,14 @@ public interface PlatformApiTaskService extends IService<PlatformApiTaskEntity> 
 
     /**
      * 修改任务下次执行
+     *
+     * @param jobTaskDTO jobTaskDTO
+     * @param type
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2022/11/15 10:24
-     * @param jobTaskDTO jobTaskDTO
-     * @return java.lang.Boolean
      **/
-    Boolean updateTaskStateById(JobTaskDTO jobTaskDTO);
+    Boolean updateTaskStateById(JobTaskDTO jobTaskDTO, Integer type);
 
     /**
      * 获取需要执行的任务

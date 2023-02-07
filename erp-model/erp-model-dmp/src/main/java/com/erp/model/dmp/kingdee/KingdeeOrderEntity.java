@@ -12,15 +12,15 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class KingdeeOrderEntity {
-    @Alias("FID")
-    private String fID;
 
+    private String _id;
+    @Alias("FID")
+    private String fId;
     /**
      * 单据编号
      */
     @Alias("FBillNo")
     private String fBillNo;
-
     /**
      * 日期
      */
@@ -31,7 +31,7 @@ public class KingdeeOrderEntity {
      * 单据类型
      */
     @Alias("FBillTypeId.FName")
-    private String fBillTypeID;
+    private String fBillTypeId;
     @Alias("FBillTypeId.FNumber")
     private String fBillTypeCode;
 

@@ -37,9 +37,9 @@ public class MabangApiUtils {
         return SECRET_KEY;
     }
 
-    private static Integer APP_KEY;
+    private static Integer APP_KEY = 200780;
 
-    private static String SECRET_KEY;
+    private static String SECRET_KEY = "13c324fa18feaaeb0ebcc8a7746ebfca";
 
     @Value("${openApi.mabang.appKey}")
     public void setAppKey(Integer appKey){

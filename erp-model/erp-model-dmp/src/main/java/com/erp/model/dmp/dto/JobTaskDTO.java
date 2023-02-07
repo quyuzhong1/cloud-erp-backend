@@ -92,7 +92,7 @@ public class JobTaskDTO {
         this.apiCode = entity.getApiCode();
         this.apiName = entity.getApiName();
         this.taskName = "GYY_PULL_DATA_TASK";
-        this.platformName = "管易云";
+        this.platformName = PlatformEnum.GYY..getDesc();
         this.errorCount = 0;
     }
 }

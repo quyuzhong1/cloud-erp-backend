@@ -24,11 +24,11 @@ import java.util.*;
 @Slf4j
 @Component
 public class GyyApiUtils {
-    private static Integer APP_KEY;
+    private static Integer APP_KEY = 135174;
 
-    private static String SECRET_KEY;
+    private static String SECRET_KEY = "7e10a52a116149d38a760c9bf4dd3cbc";
 
-    private static String SESSION_KEY;
+    private static String SESSION_KEY ="7daa147a1cea4ae189b57d95bc2a66ce";
     @Value("${openApi.gyy.appKey}")
     public void setAppKey(Integer appKey){
         GyyApiUtils.APP_KEY = appKey;
@@ -109,8 +109,8 @@ public class GyyApiUtils {
                 params.put("end_delivery_date", sdf.format(endDate));
 
             }else {
-                params.put("start_ modify_date", sdf.format(startDate));
-                params.put("end_ modify_date", sdf.format(endDate));
+                params.put("start_modify_date", sdf.format(startDate));
+                params.put("end_modify_date", sdf.format(endDate));
                 params.put("fields", Arrays.asList("deliveryInfo","goodsInfo","invoiceInfo","uniqueInfo","batchInfo"));
                 params.put("delivery", 1);
             }

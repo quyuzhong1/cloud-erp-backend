@@ -2,17 +2,19 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @TableName dmp_order_info
  */
 @TableName(value = "dmp_order_info")
 @Data
+@NoArgsConstructor
 public class DmpOrderInfoEntity implements Serializable {
     /**
      * 主键id
@@ -30,7 +32,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @TableField(value = "order_state")
-    private Integer orderState;
+    private Integer orderStatus;
 
     /**
      * 修正状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
@@ -351,13 +353,17 @@ public class DmpOrderInfoEntity implements Serializable {
     private String chargeId;
 
     @TableField(exist = false)
+    private List<DmpOrderItemEntity> itemList;
+
+    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
 
     @Override
     public String toString() {
         return "DmpOrderInfoEntity{" +
                 "platformOrderId='" + platformOrderId + '\'' +
-                ", orderState=" + orderState +
+                ", orderState=" + orderStatus +
                 ", buyerUserId='" + buyerUserId + '\'' +
                 ", buyerName='" + buyerName + '\'' +
                 ", shopNo='" + shopNo + '\'' +

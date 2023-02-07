@@ -20,17 +20,14 @@ fdfs:
   tracker-list:
     - 172.16.100.12:22122
 
-config:
-  poolConfig:
-    pool:
-        download:
-          corePoolSize: 10
-          maxPoolSize: 30
-          queueCapacity: 1
-          keepAliveSeconds: 10
-          poolName: 获取erp数据线程
-
 openApi:
+  download:
+    pool:
+      corePoolSize: 10
+      maxPoolSize: 30
+      queueCapacity: 1
+      keepAliveSeconds: 10
+      poolName: dmp-erp线程
   gyy:
     appKey: 135174
     secretKey: 7e10a52a116149d38a760c9bf4dd3cbc
@@ -38,6 +35,39 @@ openApi:
   mabang:
     appKey: 200780
     secretKey: 13c324fa18feaaeb0ebcc8a7746ebfca
+
+# rocketMQ配置
+rocketmq:
+  name-server: 172.16.100.13:9876
+  producer:
+    # 必须指定group
+    group: erp_dmp_group
+    ##生产者发送消息超时时间,默认3s
+    send-message-timeout: 30000
+    # 同步发送消息失败重试次数，默认2
+    retry-times-when-send-failed: 3
+    # 异步发送消息失败重试次数，默认2
+    retry-times-when-send-async-failed: 3
+    #生产者消息压缩大小,默认达到4KB启用消息压缩
+    compress-message-body-threshold: 4096
+    #生产者发送消息最大字节数,默认4MB
+    max-message-size: 4194304
+    #生产者消息失败容错策略,默认false不开启,生产环境建议开启
+    retry-next-server: true
+    #配置acl用户名密码
+    access-key: dmp_erp_mq
+    secret-key: ttzgyaW48nyWpKy2
+
+
+
+  consumer:
+    consumer: erp_dmp_group1
+    access-key: dmp_erp_mq
+    secret-key: ttzgyaW48nyWpKy2
+    message-model: CLUSTERING
+    #TAG or SelectorType.SQL92
+    selector-type: TAG
+    pull-batch-size: 10
 
 
 

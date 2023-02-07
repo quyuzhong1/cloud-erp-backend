@@ -9,6 +9,4 @@ public interface IReportHistoryService<T> {
 
     void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception;
 
-    void analysisOrder(T entity) throws Exception;
-
 }

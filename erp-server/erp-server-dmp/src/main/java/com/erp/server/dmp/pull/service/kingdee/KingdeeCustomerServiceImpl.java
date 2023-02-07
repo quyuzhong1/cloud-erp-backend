@@ -4,30 +4,27 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.KingdeeShopMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
-import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,13 +47,13 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
     private MongoService mongoService;
 
     @Resource
-    private DmpErrorLogService dmpErrorLogService;
-
-    @Resource
     private DmpShopInfoService dmpShopInfoService;
 
     @Resource
     private PlatformApiTaskService platformApiTaskService;
+
+    @Resource
+    private MQProducerService<DmpShopInfoEntity> rocketMQTemplate;
     @Resource
     @Qualifier("kingdeeCustomerServiceImpl")
     private IReportHistoryService reportSaveService;
@@ -89,39 +86,47 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<KingdeeShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
+            log.info("拉取管易退货订单列表数据为空 entityList.size = 0 ");
+            XxlJobHelper.log("拉取管易退货订单列表数据为空 entityList.size = 0 ");
             return;
         }
-        for (KingdeeShopEntity shopEntity : skuEntityList) {
-            KingdeeShopMongoDTO shopMongoDTO = new KingdeeShopMongoDTO();
-            shopMongoDTO.setCustId(shopEntity.getFCustId());
-            List<KingdeeShopEntity> mongoDataList = mongoService.findMongoData(shopMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
-            if (CollectionUtil.isEmpty(mongoDataList)) {
-                mongoService.saveMongoData(shopEntity, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP);
-            }else {
-                KingdeeShopEntity mongoShopEntity = mongoDataList.get(0);
-                if (mongoShopEntity.toString().equals(shopEntity.toString())){
-                    continue;
-                }
-                // 比较数据是否相同
-                // 修改数据
-                MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(shopEntity), MapUtil.class);
-                try {
-                    mongoService.updateMongoData(shopMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeSkuEntity.class);
-                } catch (Exception e) {
-                    log.error("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 ={}, 错误信息]", shopMongoDTO.getCustId(), e);
-                    DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                    dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                    dmpErrorLogEntity.setParams("");
-                    dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 = " + e.getMessage());
-                    dmpErrorLogEntity.setReturnMsg("");
-                    dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                    dmpErrorLogService.add(dmpErrorLogEntity);
-                    throw new RuntimeException("==== 金蝶云星空修改mongo店铺数据失败，[ 商品编号 = " + shopMongoDTO.getCustId() + "], 错误信息 ={} " , e);
-                }
+        log.info("拉取管易退货订单列表数据 entityList.size = {}} ", skuEntityList.size());
+        XxlJobHelper.log("拉取管易退货订单列表数据 entityList.size = {}} ", skuEntityList.size());
+        List<KingdeeShopEntity> insertList = new ArrayList<>();
+        List<KingdeeShopEntity> pushToMqList = new ArrayList<>();
+        for (KingdeeShopEntity entity : skuEntityList) {
+            KingdeeShopMongoDTO queryMongoDTO = new KingdeeShopMongoDTO(entity.getFCustId());
+            List<KingdeeShopEntity> mongoData = mongoService.findMongoData(queryMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
+            if(CollectionUtil.isEmpty(mongoData)){
+                insertList.add(entity);
+                pushToMqList.add(entity);
+                continue;
             }
-            //存储数据到中台
-            reportSaveService.analysisOrder(shopEntity);
+            KingdeeShopEntity mongoDatum = mongoData.get(0);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(entity.toString())) {
+                continue;
+            }
+            pushToMqList.add(entity);
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            KingdeeShopMongoDTO updateDto = new KingdeeShopMongoDTO(mongoDatum.get_id());
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
         }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP);
+        }
+        // 构造订单结构
+        List<DmpShopInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+                .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.toList());
+
+        // 异步推送到MQ
+        mabangToMqlist.stream().peek(msg ->
+                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SHOP_INFO_TAG.getName(),
+                                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode())))
+                .collect(Collectors.toList());
+
     }
 
     @Override
@@ -129,32 +134,25 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
         //拉取数据 存库
         pullDataSave(requestDTO);
         // 修改任务执行结果信息
-        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO());
+        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 1);
         if (!aBoolean) {
             throw new RuntimeException("修改任务下次执行时间失败！");
         }
     }
 
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void analysisOrder(KingdeeShopEntity shopEntity) {
+    private DmpShopInfoEntity initOrderInfoEntity(KingdeeShopEntity shopEntity) {
 //        if (!"1".equals(shopEntity.getFUseOrgId())) {
 //            return;
 //        }
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
-//        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
-
+        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
         //平台店铺账户
-//        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
-
+        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
         //平台店铺标识
-//        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
-
+        dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
         //店铺名称
         dmpShopInfoEntity.setName(shopEntity.getFName());
-
         //店铺站点
 //        String site = "";
 //        if (StrUtil.isNotEmpty(shopEntity.getFCOUNTRY_FNumber())) {
@@ -163,13 +161,12 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
 //        }
 //        dmpShopInfoEntity.setSite(site);
         //店铺状态:1启用 2停用
-//        dmpShopInfoEntity.setStatus(2);
-//        if ("A".equals(shopEntity.getFForbidStatus())){
-//            dmpShopInfoEntity.setStatus(1);
-//        }
-
+        dmpShopInfoEntity.setStatus(2);
+        if ("A".equals(shopEntity.getFForbidStatus())){
+            dmpShopInfoEntity.setStatus(1);
+        }
         //平台名称
-//        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
+        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
         String orgName = shopEntity.getFUseOrgId_FName();
         if(StrUtil.isNotBlank(shopEntity.getFUseOrgId_FName())){
             dmpShopInfoEntity.setIsVijim(Boolean.TRUE);
@@ -179,17 +176,19 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
         }
         dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
         dmpShopInfoEntity.setUseOrgName(shopEntity.getFUseOrgId_FName());
-
         //财务编码
-//        dmpShopInfoEntity.setFinanceCode("");
-
+        dmpShopInfoEntity.setFinanceCode("");
         //平台标识
-//        dmpShopInfoEntity.setPlatformSign("金蝶云星空");
-
+        dmpShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
         dmpShopInfoEntity.setCountry(shopEntity.getFCOUNTRY_FNumber());
         dmpShopInfoEntity.setCustomerId(shopEntity.getFCustId());
-        dmpShopInfoService.checkShopByKingDee(dmpShopInfoEntity);
+        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
+        return dmpShopInfoEntity;
     }
+
+    /**
+     * dmpShopInfoService.checkShopByKingDee(dmpShopInfoEntity);
+     */
 
     /**
      * 请求金蝶云星空客户列表接口
@@ -214,7 +213,7 @@ public class KingdeeCustomerServiceImpl implements IReportHistoryService<Kingdee
         // 客户类型为店铺
         queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FCUSTID,FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FShortName,FCOUNTRY.FNumber,FWEBSITE," +
+        String fieldKeys = "FID,FCUSTID,FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FShortName,FCOUNTRY.FNumber,FWEBSITE," +
                 "FGroup,FGroup.FNumber,FGroup.FName,FDescription,FInvoiceType,FCustTypeId.FDataValue,FCustTypeId.FNumber,F_ulz_Assistant.FNumber," +
                 "F_ulz_Assistant.FDataValue,FDocumentStatus,FForbidStatus," +
                 "FCreateDate,FModifyDate";

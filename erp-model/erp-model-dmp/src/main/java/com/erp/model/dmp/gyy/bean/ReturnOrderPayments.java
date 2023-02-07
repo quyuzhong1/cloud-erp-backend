@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @ToString
@@ -28,5 +29,5 @@ public class ReturnOrderPayments {
     @SerializedName("pay_type_code")
     private String payTypeCode;
     @SerializedName("pay_time")
-    private String payTime;
+    private LocalDateTime payTime;
 }

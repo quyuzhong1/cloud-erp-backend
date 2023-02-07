@@ -2,39 +2,41 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.dto.KingdeeSkuMongoDTO;
+import com.erp.model.dmp.constant.RocketMqTagEnum;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
+import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.erp.server.dmp.pull.service.kingdee.KingdeeOrderInfoServiceImpl.ORG_CODE;
 
 /**
  * 金蝶商品
@@ -48,49 +50,57 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     private MongoService mongoService;
 
     @Resource
-    private DmpErrorLogService dmpErrorLogService;
+    private DmpSkuInfoService dmpSkuInfoService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private MQProducerService<DmpSkuInfoEntity> rocketMQTemplate;
     @Resource
     @Qualifier("kingdeeSkuInfoServiceImpl")
     private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
-        List<KingdeeSkuEntity> skuEntityList = pullDate(dto);
-        if (skuEntityList != null && skuEntityList.size() > 0) {
-            for (KingdeeSkuEntity skuEntity : skuEntityList) {
-                KingdeeSkuMongoDTO kingdeeSkuMongoDTO = new KingdeeSkuMongoDTO();
-                kingdeeSkuMongoDTO.setMaterialId(skuEntity.getFMaterialId());
-                List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(kingdeeSkuMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
-                if (CollectionUtil.isNotEmpty(mongoData)) {
-                    for (KingdeeSkuEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(skuEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(skuEntity), MapUtil.class);
-                            try {
-                                mongoService.updateMongoData(kingdeeSkuMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
-                            } catch (Exception e) {
-                                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                                dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
-                                dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                                dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 金蝶云星空修改mongodb商品数据失败，[ 商品编号 = " + skuEntity.getFMaterialId() + "], 错误信息 = " + e.getMessage());
-                            }
-                        }
-                    }
-                } else {
-                    mongoService.saveMongoData(skuEntity, MongoTableNameContant.ORIGINAL_KINGDEE_SKU);
-                }
-                //存储数据到中台
-                reportSaveService.analysisOrder(skuEntity);
-            }
+        List<KingdeeSkuEntity> entityList = pullDate(dto);
+        if (CollectionUtil.isEmpty(entityList)) {
+            log.info("拉取金蝶销售订单列表数据为空 entityList.size = 0 ");
+            return;
         }
+        log.info("拉取金蝶销售订单列表数据 entityList.size = {} ", entityList.size());
+        List<KingdeeSkuEntity> insertList = new ArrayList<>();
+        List<KingdeeSkuEntity> pushToMqList = new ArrayList<>();
+        for (KingdeeSkuEntity entity : entityList) {
+            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getFMaterialId());
+            List<KingdeeSkuEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
+            if(CollectionUtil.isEmpty(mongoData)){
+                insertList.add(entity);
+                pushToMqList.add(entity);
+                continue;
+            }
+            KingdeeSkuEntity mongoDatum = mongoData.get(0);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(entity.toString())) {
+                continue;
+            }
+            pushToMqList.add(entity);
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_SKU);
+        }
+        // 构造订单结构
+        List<DmpSkuInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+                .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.toList());
+
+        // 异步推送到MQ
+        mabangToMqlist.stream().peek(msg ->
+                        rocketMQTemplate.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
+                                msg, StrUtil.format("{}_{}", msg.getSkuNo(), msg.getItemCode())))
+                .collect(Collectors.toList());
+
     }
 
     /**
@@ -109,7 +119,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
+        String fieldKeys = "FID,FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
                 "FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue," +
                 "F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ,FErpClsID";
 
@@ -144,89 +154,60 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
      **/
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void analysisOrder(KingdeeSkuEntity skuInfoEntity) throws Exception {
-        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !ORG_CODE.equals(skuInfoEntity.getFUseOrgId())){
-            return;
+    public DmpSkuInfoEntity initOrderInfoEntity(KingdeeSkuEntity skuInfoEntity) {
+        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode().equals(skuInfoEntity.getFUseOrgId())){
+            return null;
         }
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-
-
         dmpSkuInfoEntity.setItemCode(skuInfoEntity.getFMaterialId());
-
         //sku编号
         dmpSkuInfoEntity.setSkuNo(skuInfoEntity.getFNumber());
-
         //中文名
         dmpSkuInfoEntity.setNameCn(skuInfoEntity.getFName());
-
         //英文名
         dmpSkuInfoEntity.setNameEn("");
-
         //统一成本价
         dmpSkuInfoEntity.setDefaultCost(new BigDecimal(skuInfoEntity.getFPurPrice_CMK()));
-
         Integer status = 3;
         if (skuInfoEntity.getFForbidStatus().equals("C")) {
             status = 5;
         }
         //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
         dmpSkuInfoEntity.setStatus(status);
-
         //商品创建时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getFCreateDate()) && !"null".equals(skuInfoEntity.getFCreateDate())) {
-            dmpSkuInfoEntity.setSkuCreateTime(LocalDateTime.parse(skuInfoEntity.getFCreateDate(), sdf));
-        }
-
+        dmpSkuInfoEntity.setSkuCreateTime(skuInfoEntity.getFCreateDate());
         //商品修改时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getFModifyDate()) && !"null".equals(skuInfoEntity.getFModifyDate())) {
-            dmpSkuInfoEntity.setSkuUpdateTime(LocalDateTime.parse(skuInfoEntity.getFModifyDate(), sdf));
-        }
-
+        dmpSkuInfoEntity.setSkuUpdateTime(skuInfoEntity.getFModifyDate());
         //品牌
         dmpSkuInfoEntity.setBrandName("");
-
         //商品目录(一级)
         if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant())) {
             dmpSkuInfoEntity.setParentCategoryName(skuInfoEntity.getF_PRVD_Assistant());
         } else {
             dmpSkuInfoEntity.setParentCategoryName("");
         }
-
         //商品目录(二级)
         if (StringUtils.isNotBlank(skuInfoEntity.getF_PRVD_Assistant1()) && !"null".equals(skuInfoEntity.getF_PRVD_Assistant1())) {
             dmpSkuInfoEntity.setCategoryName(skuInfoEntity.getF_PRVD_Assistant1());
         } else {
             dmpSkuInfoEntity.setCategoryName("");
         }
-
         //售价
         dmpSkuInfoEntity.setSalePrice(new BigDecimal(skuInfoEntity.getFSalePrice_CMK()));
-
         //申报价格
         dmpSkuInfoEntity.setDeclarePrice(BigDecimal.ZERO);
-
         //开发员id
         dmpSkuInfoEntity.setDeveloperId("");
-
         //开发员名称
         dmpSkuInfoEntity.setDeveloperName("");
-
         //平台标识
-        dmpSkuInfoEntity.setPlatformSign("金蝶云星空");
-
+        dmpSkuInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
         //企业id
         dmpSkuInfoEntity.setCompanyId(skuInfoEntity.getFUseOrgId());
-
         //企业名称
         dmpSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
-
         //上市时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getFSSRQ()) && !skuInfoEntity.getFSSRQ().equals("null")) {
-            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ(),sdf));
-        }
+        dmpSkuInfoEntity.setListingTime(skuInfoEntity.getFSSRQ());
         String itemProperty = "";
         switch (skuInfoEntity.getFErpClsID()) {
             case "1" :
@@ -247,9 +228,11 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         }
         //物料属性
         dmpSkuInfoEntity.setItemProperty(itemProperty);
-
         dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
-
-        dmpSkuInfoService.checkOrder(dmpSkuInfoEntity);
+        return  dmpSkuInfoEntity;
     }
+
+    /**
+     *      dmpSkuInfoService.checkOrder(dmpSkuInfoEntity);
+     */
 }

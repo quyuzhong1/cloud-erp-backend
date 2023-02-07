@@ -8,7 +8,7 @@ package com.erp.model.dmp.enums;
  */
 public enum ApiKingdeeOrganizationEnum {
 
-    ORGANIZATION_WEIJI(0, "唯迹集团", "唯迹集团");
+    ORGANIZATION_WEIJI(1, "唯迹集团", "唯迹集团");
 
     private Integer code;
 

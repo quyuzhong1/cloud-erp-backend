@@ -6,16 +6,19 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @ToString
 public class ReturnOrderEntity {
+
+    private String _id;
     private String platformOrderId;
     private String shopId;
-    private String paidTime;
-    private String expressTime;
+    private LocalDateTime paidTime;
+    private LocalDateTime expressTime;
     private Integer status;
     private String salesRecordNumber;
     private BigDecimal orderFee;
@@ -31,13 +34,9 @@ public class ReturnOrderEntity {
     private String remark;
     private String currencyId;
     private BigDecimal currencyRate;
-    private String createDate;
-    private String refundTime;
+    private LocalDateTime createDate;
+    private LocalDateTime refundTime;
     private String inTime;
-    @SerializedName("return_tracknumber")
-    private String returnTracknumber;
-    @SerializedName("return_type")
-    private String returnType;
     @SerializedName("update_time")
     private String updateTime;
     private String myLogisticsChannelName;

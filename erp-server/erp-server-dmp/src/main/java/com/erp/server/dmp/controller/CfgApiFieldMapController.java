@@ -1,20 +1,40 @@
 package com.erp.server.dmp.controller;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.RocketMqTopic;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.entity.MessageBody;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
+import com.erp.server.dmp.service.mq.MQProducerService;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import feign.Body;
+import lombok.Data;
 import org.apache.ibatis.annotations.Param;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.TransactionSendResult;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,5 +230,28 @@ public class CfgApiFieldMapController extends BaseController {
         return success();
     }
 
+    @Resource
+    private MQProducerService producerService;
+    @PostMapping("/push/mq")
+    public void pushToRocket(@RequestBody JSONObject body){
+        producerService.syncSendMsg("", RocketMqTopic.DMP_TOPIC, body.getString("tag"), body,"dmp test");
+    }
+    @PostMapping("/push/mq/batch")
+    public SendResult pushToRocketBatch(@RequestBody TestMq body){
+        return producerService.syncClassMsg(RocketMqTopic.DMP_TOPIC, body.getTag(), body, body.getKey());
+    }
+
+    @Data
+    public static class TestMq{
+        private String key;
+
+//        @JsonSerialize(as = LocalDateTimeSerializer.class)
+//        @JsonDeserialize(using = LocalDateTimeDeserializer.class, as = LocalDateTime.class)
+//        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+        private LocalDateTime time;
+        private List<String> codeList;
+
+        private String tag;
+    }
 
 }

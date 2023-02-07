@@ -5,10 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @NoArgsConstructor
 @Data
 @ToString
 public class KingdeeSkuEntity {
+
+    private String _id;
     @Alias("FUseOrgId")
     private String fUseOrgId;
     @Alias("FUseOrgId.FName")
@@ -22,9 +26,9 @@ public class KingdeeSkuEntity {
     @Alias("FSpecification")
     private String fSpecification;
     @Alias("FCreateDate")
-    private String fCreateDate;
+    private LocalDateTime fCreateDate;
     @Alias("FModifyDate")
-    private String fModifyDate;
+    private LocalDateTime fModifyDate;
     @Alias("FDocumentStatus")
     private String fDocumentStatus;
     @Alias("FForbidStatus")
@@ -40,7 +44,7 @@ public class KingdeeSkuEntity {
     @Alias("FSalePrice_CMK")
     private String fSalePrice_CMK;
     @Alias("F_SSRQ")
-    private String FSSRQ;
+    private LocalDateTime FSSRQ;
     @Alias("FErpClsID")
     private String FErpClsID;
 }

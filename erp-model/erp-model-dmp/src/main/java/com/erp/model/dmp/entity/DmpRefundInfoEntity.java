@@ -6,7 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 /**
  * 退款表
@@ -67,7 +67,7 @@ public class DmpRefundInfoEntity implements Serializable {
      * 申请时间
      */
     @TableField(value = "refund_create_time")
-    private Date refundCreateTime;
+    private LocalDateTime refundCreateTime;
 
     /**
      * 店铺编号
@@ -91,7 +91,7 @@ public class DmpRefundInfoEntity implements Serializable {
      * 退款时间
      */
     @TableField(value = "refund_time")
-    private Date refundTime;
+    private LocalDateTime refundTime;
 
     /**
      * 汇率
@@ -151,13 +151,13 @@ public class DmpRefundInfoEntity implements Serializable {
      * 订单时间
      */
     @TableField(value = "order_time")
-    private Date orderTime;
+    private LocalDateTime orderTime;
 
     /**
      * 发货时间
      */
     @TableField(value = "express_time")
-    private Date expressTime;
+    private LocalDateTime expressTime;
 
     /**
      * 退货图片多个用英文 , 隔开
@@ -169,7 +169,7 @@ public class DmpRefundInfoEntity implements Serializable {
      * 平台最后修改时间
      */
     @TableField(value = "platform_update_time")
-    private Date platformUpdateTime;
+    private LocalDateTime platformUpdateTime;
 
     /**
      * 包裹单号
@@ -236,6 +236,9 @@ public class DmpRefundInfoEntity implements Serializable {
      */
     @TableField(value = "retry_count")
     private Integer retryCount;
+
+    @TableField(exist = false)
+    private List<DmpRefundItemEntity> itemList;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

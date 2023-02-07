@@ -10,7 +10,9 @@ import java.util.List;
 @Data
 @ToString
 @NoArgsConstructor
-public class KingdeeDeliveryDetailEntity {
+public class KingdeeDeliveryDetailEntity{
+
+    private String _id;
     @Alias("FBillTypeID")
     private String fBillTypeID;
     @Alias("FBillTypeID.FName")

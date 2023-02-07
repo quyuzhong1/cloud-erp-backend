@@ -14,7 +14,6 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode
-@ToString
 @NoArgsConstructor
 public class GyyDeliveryDetailEntity {
     /**

@@ -6,12 +6,15 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @ToString
 public class KingdeeReturnOrderEntity {
+
+    private String _id;
     @Alias("FBillTypeID")
     private String fBillTypeID;
     @Alias("FBillTypeID.FName")
@@ -39,9 +42,9 @@ public class KingdeeReturnOrderEntity {
     @Alias("FSalesManId.FName")
     private String fSalesManName;
     @Alias("FCreateDate")
-    private String fCreateDate;
+    private LocalDateTime fCreateDate;
     @Alias("FModifyDate")
-    private String fModifyDate;
+    private LocalDateTime fModifyDate;
     @Alias("FCancelStatus")
     private String fCancelStatus;
     @Alias("FReceiverCountry")
@@ -51,7 +54,7 @@ public class KingdeeReturnOrderEntity {
     @Alias("FExchangeRate")
     private BigDecimal fExchangeRate;
     @Alias("FApproveDate")
-    private String fApproveDate;
+    private LocalDateTime fApproveDate;
     @Alias("FBussinessType")
     private String fBussinessType;
     @Alias("FOwnerTypeIdHead")
@@ -59,7 +62,7 @@ public class KingdeeReturnOrderEntity {
     @Alias("FSettleCurrId.FCode")
     private String fSettleCurrCode;
     @Alias("FDelTime")
-    private String FDelTime;
+    private LocalDateTime FDelTime;
     @Alias("FHeadNote")
     private String FHeadNote;
     private List<KingdeeReturnOrderItemEntity> itemEntityList;

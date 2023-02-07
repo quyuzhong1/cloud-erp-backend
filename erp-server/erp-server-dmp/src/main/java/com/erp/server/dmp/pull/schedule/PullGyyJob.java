@@ -3,13 +3,12 @@ package com.erp.server.dmp.pull.schedule;
 import com.alibaba.fastjson2.JSONObject;
 import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
-import com.erp.server.dmp.pull.thread.PullGyyDateThread;
+import com.erp.server.dmp.pull.thread.PullErpDateThread;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -23,9 +22,9 @@ public class PullGyyJob {
     private RedisTemplate<String, String> template;
 
     @Resource
-    private PullGyyDateThread pullGyyDateThread;
+    private PullErpDateThread pullErpDateThread;
 
-    @Resource(name = "gyy")
+    @Resource(name = "pullErpOpenApi")
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     // 拉取管易云数据任务
@@ -42,7 +41,7 @@ public class PullGyyJob {
             if (orderJobTask == null) {
                 break;
             }
-            pullGyyDateThread.pullOrder(orderJobTask);
+            pullErpDateThread.pullOrder(orderJobTask);
         }
     }
 }
