@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
+import com.erp.common.business.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.BaseIdDTO;
