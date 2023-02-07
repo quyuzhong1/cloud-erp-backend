@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
