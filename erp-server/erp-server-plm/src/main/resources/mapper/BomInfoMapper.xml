@@ -37,6 +37,13 @@
                         #{skuId}
                     </foreach>
                 </if>
+                <if test="stateList !=null and stateList.size>0">
+                    AND
+                    b.state IN
+                    <foreach collection="stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
             </where>
             ORDER BY b.create_time DESC
 
@@ -90,6 +97,13 @@
                 bs.sku_id IN
                 <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                     #{skuId}
+                </foreach>
+            </if>
+            <if test="stateList !=null and stateList.size>0">
+                AND
+                b.state IN
+                <foreach collection="stateList" item="state" open="(" separator="," close=")">
+                    #{state}
                 </foreach>
             </if>
         </where>
