@@ -5,8 +5,8 @@ spring:
         server-addr: 172.16.100.12
         namespace: ${NACOS_NAMESPACE:dev-yl}
       config:
-        server-addr: 172.16.100.12
-        namespace: dev
+        server-addr: 172.16.100.10
+        namespace: prod
         file-extension: yml
         shared-configs: gateway.yml,common.yml
 #    gateway:

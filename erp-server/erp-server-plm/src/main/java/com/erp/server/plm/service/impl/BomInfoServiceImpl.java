@@ -79,6 +79,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Resource
     private ProductChangeService productChangeService;
 
+
+    @Resource
+    private SysLogService sysLogService;
+
     /**
      * 添加bom
      *
@@ -292,6 +296,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
         }
 
+        List<Integer> stateList = new ArrayList<>();
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
             String userId = commonService.getUserInfo().getUid();
@@ -302,10 +307,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }
+            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+            stateList.add(BomStateEnum.AUDIT_ING.getState());
         }
-        List<Integer> stateList = new ArrayList<>();
-        stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-        stateList.add(BomStateEnum.AUDIT_ING.getState());
+
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -373,6 +378,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
         Integer bomVersion = bom.getVersion();
+        List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(id);
         bom.setVersion(bomVersion + 1);
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
@@ -381,8 +387,84 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             productBomHistoryService.insert(bom, bomSkuList);
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
+            String operateContent = getUpdateContent(oldBomList, bomSkuList);
+            bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
         }
         return result;
+    }
+
+
+    /**
+     * 获取变更信息
+     *
+     * @param oldBomList
+     * @param newBomList
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-02-07 17:07
+     */
+    private String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList) {
+
+        BomSkuDTO oldParent = oldBomList.stream().
+                filter(b -> b.getParentSkuNo().equals("0")).findFirst().orElse(null);
+        BomSkuDTO newParent = newBomList.stream().
+                filter(n -> n.getParentSkuNo().equals("0")).findFirst().orElse(null);
+        List<String> contentList = new ArrayList<>(10);
+        if (oldParent != null && newParent != null) {
+            if (!oldParent.getSkuNo().equals(newParent.getSkuNo())) {
+                String parentContent = "父物料" + oldParent.getSkuNo() + "变更到" + newParent.getSkuNo();
+                contentList.add(parentContent);
+            }
+            if (!oldParent.getQuantity().equals(newParent.getQuantity())) {
+                String parentQuantityContent = "父物料用量" + oldParent.getQuantity() + "变更到" + newParent.getQuantity();
+                contentList.add(parentQuantityContent);
+
+            }
+            if (!oldParent.getChildren().equals(newParent.getChildren())) {
+
+                getChildrenUpdateContent(oldParent.getChildren(), newParent.getChildren(), contentList);
+
+            }
+        }
+
+        return String.join(";", contentList);
+    }
+
+    /**
+     * 获取到子集
+     *
+     * @param
+     * @param contentList
+     * @return void
+     * @author yl
+     * @date 2023-02-07 17:11
+     */
+    private void getChildrenUpdateContent(List<BomSkuDTO> OldChildrenList, List<BomSkuDTO> newChildrenList, List<String> contentList) {
+        int oldSize = OldChildrenList.size();
+        for (int i = 0; i < newChildrenList.size(); i++) {
+            BomSkuDTO newBom = newChildrenList.get(i);
+            if (oldSize > i) {
+                BomSkuDTO oldBom = OldChildrenList.get(i);
+                if (!oldBom.getSkuNo().equals(newBom.getSkuNo())) {
+                    String childrenContent = "子物料" + oldBom.getSkuNo() +
+                            "变更到" + newBom.getSkuNo() + "用量为" + newBom.getQuantity();
+                    contentList.add(childrenContent);
+                }
+                if (
+                        oldBom.getSkuNo().equals(newBom.getSkuNo())
+                                && (!oldBom.getQuantity().
+                                equals(newBom.getQuantity()))) {
+                    String childrenQuantityContent = "子物料" + oldBom.getSkuNo() + "用量" + oldBom.getQuantity() + "变更到" + newBom.getQuantity();
+                    contentList.add(childrenQuantityContent);
+                }
+            } else {
+                String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
+                contentList.add(addContent);
+            }
+
+
+        }
+
     }
 
 
@@ -695,6 +777,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
         }
+        List<Integer> stateList = new ArrayList<>();
         //待审核
         List<String> bomIdList = new ArrayList<>();
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
@@ -706,17 +789,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
                 return;
             }
-
+            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+            stateList.add(BomStateEnum.AUDIT_ING.getState());
         }
-
 
         List<FindUserDTO> userList = commonService.getAllUser();
 
-        List<Integer> stateList = new ArrayList<>();
-        stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-        stateList.add(BomStateEnum.AUDIT_ING.getState());
 
-        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList, skuIdList,stateList);
+        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList, skuIdList, stateList);
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
