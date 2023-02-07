@@ -470,10 +470,11 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
-        Map<String, List<DeliveryDocsDTO>> map = list.stream().collect(Collectors.groupingBy(DeliveryDocsDTO::getDeliveryDocsName));
+        Map<String, List<DeliveryDocsDTO>> map = list.stream().collect(Collectors.groupingBy(DeliveryDocsDTO::getId));
         for (Map.Entry<String, List<DeliveryDocsDTO>>  entry: map.entrySet()) {
             DeliveryDocsGroupDTO deliveryDocsGroupDTO = new DeliveryDocsGroupDTO();
             List<DeliveryDocsDTO> value = entry.getValue();
+            deliveryDocsGroupDTO.setId(entry.getKey());
             deliveryDocsGroupDTO.setDeliveryDocsName(value.get(0).getDeliveryDocsName());
             deliveryDocsGroupDTO.setTaskId(id);
             deliveryDocsGroupDTO.setTaskName(value.get(0).getTaskName());

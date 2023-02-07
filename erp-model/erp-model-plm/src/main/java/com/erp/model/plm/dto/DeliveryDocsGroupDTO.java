@@ -16,6 +16,11 @@ import java.util.List;
 public class DeliveryDocsGroupDTO {
 
     /**
+     *id
+     */
+    private String id;
+
+    /**
      * 交付文档名
      */
     private String deliveryDocsName;
