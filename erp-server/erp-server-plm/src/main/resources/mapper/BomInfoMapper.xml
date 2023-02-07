@@ -38,10 +38,7 @@
                     </foreach>
                 </if>
             </where>
-
             ORDER BY b.create_time DESC
-
-
 
     </select>
     <select id="getByIds" resultType="com.erp.model.plm.vo.BomVO">

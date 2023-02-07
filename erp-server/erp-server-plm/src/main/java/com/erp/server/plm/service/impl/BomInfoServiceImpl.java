@@ -286,14 +286,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
         List<String> bomIdList = new ArrayList<>();
-
-
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
         }
-
 
         //待审核
         if (SearchType.WAIT_AUDIT.equals(searchType)) {
