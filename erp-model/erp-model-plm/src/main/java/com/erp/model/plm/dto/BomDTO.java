@@ -50,7 +50,7 @@ public class BomDTO implements Serializable {
     private List<BomSkuDTO> skuList;
 
 
-    private Date updateTime;
+    private Date createTime;
 
 
     private String createUserId;

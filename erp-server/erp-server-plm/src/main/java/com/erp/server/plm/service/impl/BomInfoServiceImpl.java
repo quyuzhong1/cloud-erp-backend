@@ -497,6 +497,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95100);
         }
+        List<String> bomIds = Arrays.asList(bomId);
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
+        if(changeIngSourceIds.contains(bomId)){
+            throw new ServiceException(ApiError.ERROR_95114);
+        }
         bom.setState(BomStateEnum.FREEZE.getState());
         Boolean result = this.updateById(bom);
         if (result) {
@@ -610,6 +615,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Integer state = bom.getState();
         if (!BomStateEnum.AUDIT_PASS.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95108);
+        }
+        List<String> bomIds = Arrays.asList(bomId);
+        List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
+        if(changeIngSourceIds.contains(bomId)){
+            throw new ServiceException(ApiError.ERROR_95114);
         }
         bom.setState(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
         Boolean result = this.updateById(bom);
@@ -746,9 +756,22 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
+
+        //是不是 第一次审核
+        Boolean isFirstAudit= BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
+
+
+
+
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setRemark(dto.getComment());
-        this.updateById(bom);
+        Boolean result= this.updateById(bom);
+        if(result&&isFirstAudit){
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(),BomStateEnum.AUDIT_ING.getName());
+            //操作记录
+            bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+
+        }
 
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
@@ -782,13 +805,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     @Transactional
     public void bomProcessPass(ProcessPassDTO dto) {
-//        Object obj = null;
-//        obj.equals("zhan");
         String bomId = dto.getBusinessTableId();
         BomInfoEntity bom = this.getById(bomId);
         if (bom != null) {
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
             this.updateById(bom);
+
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(),BomStateEnum.AUDIT_PASS.getName());
+            //操作记录
+            bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+
         }
     }
 

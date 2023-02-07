@@ -20,7 +20,7 @@ import javax.annotation.Resource;
  * @since 2023-02-03 15:03:44
  */
 @RestController
-@RequestMapping("plm/project/plan")
+@RequestMapping("plm/schedule/task")
 public class ProjectPlanTaskController extends BaseController {
     /**
      * 服务对象
@@ -29,12 +29,45 @@ public class ProjectPlanTaskController extends BaseController {
     private ProjectPlanTaskService projectPlanTaskService;
 
 
+    /**
+     * 任务列表
+     *
+     * @param dto
+     * @return
+     */
     @PostMapping("/list")
     public ApiResult<ProductItemScheduleVO> list(@Validated @RequestBody ProjectPlanTaskConditionDTO dto) {
         return success(this.projectPlanTaskService.getTaskList(dto));
     }
 
 
+    /**
+     * 导出数据
+     */
+    @PostMapping("/export")
+    public ApiResult export() {
+        projectPlanTaskService.export();
+        return success();
+    }
+
+    /**
+     * 导出数据
+     */
+    @PostMapping("/import")
+    public ApiResult importTaskschedule() {
+        Boolean result = projectPlanTaskService.importTaskschedule();
+        return  result==true? success():failure();
+    }
+
+
+    /**
+     * 字段设置
+     */
+    @PostMapping("/fieldSet")
+    public ApiResult fieldSet() {
+        Boolean result = projectPlanTaskService.importTaskschedule();
+        return  result==true? success():failure();
+    }
 
 }
 

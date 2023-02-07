@@ -20,4 +20,8 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @return
      */
     ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto);
+
+    void export();
+
+    Boolean importTaskschedule();
 }

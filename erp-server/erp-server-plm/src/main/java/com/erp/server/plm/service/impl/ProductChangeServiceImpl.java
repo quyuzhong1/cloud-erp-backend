@@ -374,7 +374,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
         IPage pageData = baseMapper.paging(query, changeSearch, changeIdList);
         List<ProductChangePagingVO> list = pageData.getRecords();
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(new Page());
         }
         String changeBom = BomConstant.CHANGE_BOM;

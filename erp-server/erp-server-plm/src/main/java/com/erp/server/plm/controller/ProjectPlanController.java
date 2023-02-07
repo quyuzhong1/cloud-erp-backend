@@ -2,12 +2,11 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseIdDTO;
-import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.entity.ProjectPlanEntity;
+import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.server.plm.service.ProjectPlanService;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -18,7 +17,7 @@ import javax.annotation.Resource;
  * @since 2023-02-03 15:14:29
  */
 @RestController
-@RequestMapping("projectPlan")
+@RequestMapping("plm/product/schedule")
 public class ProjectPlanController extends BaseController {
     /**
      * 服务对象
@@ -27,61 +26,43 @@ public class ProjectPlanController extends BaseController {
     private ProjectPlanService projectPlanService;
 
     /**
-     * 项目计划
+     * 提交排期
      *
-     * @return 查询结果
+     * @return
      */
-    @PostMapping("/paging")
-    public ApiResult<PagingVO<ProjectPlanEntity>> queryByPage() {
-        return success(this.projectPlanService.queryByPage());
+    @PostMapping("/submit")
+    public ApiResult submitSchedule(HandleTaskScheduleDTO dto) {
+        Boolean result = projectPlanService.submitSchedule(dto);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 取消排期
+     */
+    @PostMapping("/cancel")
+    public  ApiResult cancelSchedule(HandleTaskScheduleDTO dto){
+        Boolean result = projectPlanService.cancelSchedule(dto);
+        return result == true ? success() : failure();
     }
 
     /**
-     * 通过主键查询单条数据
-     *
-     * @param id 主键
-     * @return 单条数据
+     * 重启排期
      */
-    @GetMapping("{id}")
-    public ApiResult<ProjectPlanEntity> queryById(@PathVariable("id") String id) {
-        return success(this.projectPlanService.queryById(id));
+    @PostMapping("/restart")
+    public  ApiResult restartSchedule(HandleTaskScheduleDTO dto){
+        Boolean result = projectPlanService.restartSchedule(dto);
+        return result == true ? success() : failure();
     }
+
 
     /**
-     * 新增数据
-     *
-     * @param projectPlan 实体
-     * @return 新增结果
+     * 变更排期
      */
-    @PostMapping("/add")
-    public ApiResult add(ProjectPlanEntity projectPlan) {
-        Boolean flag=this.projectPlanService.insert(projectPlan);
-        return flag == true ? success() : failure();
+    @PostMapping("/change")
+    public  ApiResult changeSchedule(HandleTaskScheduleDTO dto){
+        Boolean result = projectPlanService.changeSchedule(dto);
+        return result == true ? success() : failure();
     }
-
-    /**
-     * 编辑数据
-     *
-     * @param projectPlan 实体
-     * @return 编辑结果
-     */
-    @PostMapping("/update")
-    public ApiResult edit(ProjectPlanEntity projectPlan) {
-         Boolean flag=this.projectPlanService.update(projectPlan);
-        return flag == true ? success() : failure();
-    }
-
-    /**
-     * 删除数据
-     *
-     * @param
-     * @return 删除是否成功
-     */
-     @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag=this.projectPlanService.deleteById(dto.getId());
-        return flag == true ? success() : failure();
-    }
-
 }
 
