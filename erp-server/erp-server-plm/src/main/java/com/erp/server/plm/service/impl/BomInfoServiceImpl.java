@@ -303,7 +303,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 return new PagingVO(pageData);
             }
         }
-        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
+        List<Integer> stateList = new ArrayList<>();
+        stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+        stateList.add(BomStateEnum.AUDIT_ING.getState());
+        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
@@ -496,7 +499,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         List<String> bomIds = Arrays.asList(bomId);
         List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
-        if(changeIngSourceIds.contains(bomId)){
+        if (changeIngSourceIds.contains(bomId)) {
             throw new ServiceException(ApiError.ERROR_95114);
         }
         bom.setState(BomStateEnum.FREEZE.getState());
@@ -615,7 +618,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         List<String> bomIds = Arrays.asList(bomId);
         List<String> changeIngSourceIds = productChangeService.getBySourceId(bomIds);
-        if(changeIngSourceIds.contains(bomId)){
+        if (changeIngSourceIds.contains(bomId)) {
             throw new ServiceException(ApiError.ERROR_95114);
         }
         bom.setState(BomStateEnum.WAIT_SUBMIT_AUDIT.getState());
@@ -709,7 +712,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         List<FindUserDTO> userList = commonService.getAllUser();
 
-        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList,skuIdList);
+        List<Integer> stateList = new ArrayList<>();
+        stateList.add(BomStateEnum.WAIT_AUDIT.getState());
+        stateList.add(BomStateEnum.AUDIT_ING.getState());
+
+        List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList, skuIdList,stateList);
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
@@ -756,12 +763,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
 
         //是不是 第一次审核
-        Boolean isFirstAudit= BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
+        Boolean isFirstAudit = BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setRemark(dto.getComment());
-        Boolean result= this.updateById(bom);
-        if(result&&isFirstAudit){
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(),BomStateEnum.AUDIT_ING.getName());
+        Boolean result = this.updateById(bom);
+        if (result && isFirstAudit) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
@@ -805,7 +812,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bom.setState(BomStateEnum.AUDIT_PASS.getState());
             this.updateById(bom);
 
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(),BomStateEnum.AUDIT_PASS.getName());
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_PASS.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
