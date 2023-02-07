@@ -5,6 +5,7 @@ import com.common.core.constant.RedisCacheConstants;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.JwtUtils;
 import com.common.web.service.RedisService;
+import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.server.auth.config.AuthJwtProperties;
@@ -106,7 +107,8 @@ public class AuthTokenService {
             if (StringUtils.isNotBlank(userKey)) {
                 redisService.deleteObject(userKey);
             }
-
+            //暂时
+            CommonInterceptor.threadLocal.remove();
 
         }
     }

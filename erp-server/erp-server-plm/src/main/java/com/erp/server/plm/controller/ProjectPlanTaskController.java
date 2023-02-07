@@ -39,7 +39,8 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @PostMapping("/list")
     public ApiResult<ProductItemScheduleVO> list(@Validated @RequestBody ProjectPlanTaskConditionDTO dto) {
-        return success(this.projectPlanTaskService.getTaskList(dto));
+        ProductItemScheduleVO scheduleVO = projectPlanTaskService.getTaskList(dto);
+        return success(scheduleVO);
     }
 
 
@@ -58,7 +59,7 @@ public class ProjectPlanTaskController extends BaseController {
     @PostMapping("/import")
     public ApiResult importTaskschedule() {
         Boolean result = projectPlanTaskService.importTaskschedule();
-        return  result==true? success():failure();
+        return result == true ? success() : failure();
     }
 
 
@@ -68,7 +69,7 @@ public class ProjectPlanTaskController extends BaseController {
     @PostMapping("/fieldSet")
     public ApiResult fieldSet(@RequestBody List<CustomizeFieldDisplayDTO> dto) {
         Boolean result = projectPlanTaskService.fieldSet(dto);
-        return  result==true? success():failure();
+        return result == true ? success() : failure();
     }
 
     /**
@@ -77,7 +78,7 @@ public class ProjectPlanTaskController extends BaseController {
     @PostMapping("/fieldShow")
     public ApiResult<List<CustomizeFieldDisplayDTO>> fieldShow() {
         List<CustomizeFieldDisplayDTO> result = projectPlanTaskService.fieldShow();
-        return  success(result);
+        return success(result);
     }
 
 }
