@@ -36,7 +36,6 @@ public class TaskUploadFileDTO  implements Serializable {
     /**
      * 上传类型 0 本地上传  1 飞书 上传 飞书链接
      */
-    @StateEnumValue(intValues = {0, 1}, message = "上传类型只能是0或者1")
     private Integer uploadType;
 
     /**
