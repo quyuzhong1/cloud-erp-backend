@@ -3,6 +3,7 @@ package com.erp.server.dmp.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,12 +16,48 @@ public class KingdeeApiUtils {
     private K3CloudApi client;
     private String formId;
 
-    public KingdeeApiUtils(String formId){
-        this.client = new K3CloudApi();
-        this.formId=formId;
+    private static String APPID;
+
+    private static String USERNAME;
+
+    private static String SERVERURL;
+
+    private static String APPSECRET;
+
+    private static String DCID;
+
+    @Value("${openApi.kingdee.appId}")
+    public void setAppId(String appId){
+        this.APPID = appId;
     }
 
-    public KingdeeApiUtils(String formId,IdentifyInfo identifyInfo){
+    @Value("${openApi.kingdee.userName}")
+    public void setUserName(String userName){
+        this.USERNAME = userName;
+    }
+
+    @Value("${openApi.kingdee.serverUrl}")
+    public void setServerUrl(String serverUrl){
+        this.SERVERURL = serverUrl;
+    }
+
+    @Value("${openApi.kingdee.appSecret}")
+    public void setAppSecret(String appSecret){
+        this.APPSECRET = appSecret;
+    }
+
+    @Value("${openApi.kingdee.dCid}")
+    public void setDCid(String dCid){
+        this.DCID = dCid;
+    }
+
+    public KingdeeApiUtils(String formId){
+        IdentifyInfo identifyInfo = new IdentifyInfo();
+        identifyInfo.setdCID(DCID);
+        identifyInfo.setAppId(APPID);
+        identifyInfo.setUserName(USERNAME);
+        identifyInfo.setServerUrl(SERVERURL);
+        identifyInfo.setAppSecret(APPSECRET);
         this.client = new K3CloudApi(identifyInfo);
         this.formId=formId;
     }
