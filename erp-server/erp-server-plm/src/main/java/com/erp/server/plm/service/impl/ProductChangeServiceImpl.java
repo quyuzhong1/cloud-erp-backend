@@ -590,6 +590,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
+        changeEntity.setApprovalFinishTime(new Date());
         this.updateById(changeEntity);
 
         String userId = commonService.getUserInfo().getUid();
