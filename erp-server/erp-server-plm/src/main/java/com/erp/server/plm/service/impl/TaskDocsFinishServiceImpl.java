@@ -178,8 +178,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
         sysLogService.addSysLogByOther(sysLogEntity);
-        //删除文件
-        deleteByDocsId(dto.getProductId(),dto.getTaskDocsId(),dto.getTaskId());
         return this.saveOrUpdateBatch(list);
     }
 
