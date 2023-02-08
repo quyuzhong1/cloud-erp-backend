@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.business.utils.FastDFSClientUtil;
@@ -315,7 +316,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //飞书链接
             List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
             if (CollectionUtils.isEmpty(files) && CollectionUtils.isEmpty(fileUrls)) {
-                throw new ServiceException(ApiError.ERROR_95028);
+                continue;
             }
             //文件信息保存
             if (CollectionUtils.isNotEmpty(files)) {
@@ -423,6 +424,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
             businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
         }
+        if (ObjectUtils.isEmpty(businessProcess)) {
+            throw new ServiceException(ApiError.ERROR_94001);
+        }
+
         StartProcessDTO startProcess = new StartProcessDTO();
         startProcess.setUserId(userId);
         startProcess.setProcessDefinitionKey(businessProcess.getProcessDefinitionKey());
@@ -571,7 +576,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //飞书链接
             List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
             if (CollectionUtils.isEmpty(files) && CollectionUtils.isEmpty(fileUrls)) {
-                throw new ServiceException(ApiError.ERROR_95028);
+                continue;
             }
             //文件信息保存
             if (CollectionUtils.isNotEmpty(files)) {
@@ -650,8 +655,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     public int getFinishDocsNum(String taskId) {
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
-        return this.count(queryWrapper);
-
+        List<TaskDocsFinishEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return 0;
+        } else {
+            long count = list.stream().map(TaskDocsFinishEntity::getTaskDocsId).distinct().count();
+            return (int) count;
+        }
     }
 
 
