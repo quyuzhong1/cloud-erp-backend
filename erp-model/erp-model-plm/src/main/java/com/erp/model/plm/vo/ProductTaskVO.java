@@ -1,14 +1,11 @@
 package com.erp.model.plm.vo;
 
-import com.erp.model.plm.dto.DocsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname 产品任务
@@ -19,6 +16,17 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class ProductTaskVO implements Serializable {
+
+    /**
+     * id（用于前端展示）
+     */
+    private Integer id;
+
+
+    /**
+     * 父级id（用于前端展示）
+     */
+    private Integer parentId;
 
     /**
      * 任务id
@@ -42,10 +50,7 @@ public class ProductTaskVO implements Serializable {
     private String productId;
 
 
-    /**
-     * 产品名
-     */
-    private String productName;
+
 
 
     /**
@@ -62,8 +67,13 @@ public class ProductTaskVO implements Serializable {
     /**
      * 负责人id
      */
+    private String chargeId;
 
-    private List<String> chargeIds;
+
+    /**
+     * 负责人名
+     */
+    private String chargeName;
 
     /**
      * 前置任务id
@@ -127,11 +137,7 @@ public class ProductTaskVO implements Serializable {
     private Integer status;
 
 
-    /**
-     * 交付文档
-     */
-    @Valid
-    private List<DocsDTO> deliveryDocsList;
+
 
     /**
      * 设置里程碑(0否，1是)
@@ -150,20 +156,10 @@ public class ProductTaskVO implements Serializable {
     private List<String> refSkuNoList;
 
 
-    /**
-     * 字段配置类型 createSku 创造sku，fillProductInfo 填写信息
-     */
-    private String fieldConfigType;
 
 
     /**
-     * sku 完成信息
-     */
-    private List<Map<String, Object>> refSkuFinishList;
-
-
-    /**
-     * 交付文档名称（逗号分隔，用于操作日志）
+     * 交付文档名称
      */
     private String deliveryDocsNames;
 

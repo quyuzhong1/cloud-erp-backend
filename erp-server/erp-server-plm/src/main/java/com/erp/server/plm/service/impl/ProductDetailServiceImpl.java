@@ -1695,7 +1695,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public List<SkuVO> searchSku(String searchKeyword) {
-        return baseMapper.searchSku(searchKeyword);
+        return baseMapper.searchSku(searchKeyword,ProductDetailStatusEnum.APPROVAL_PASS.getCode());
     }
 
 

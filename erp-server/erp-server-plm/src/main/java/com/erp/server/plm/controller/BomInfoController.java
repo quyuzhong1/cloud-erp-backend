@@ -255,6 +255,17 @@ public class BomInfoController extends BaseController {
     }
 
 
+    /**
+     * bom 审核情况
+     *
+     * @return
+     */
+    @PostMapping("/auditInfo")
+    public ApiResult auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+        bomInfoService.auditInfo(dto.getId());
+        return success();
+    }
+
 
 }
 

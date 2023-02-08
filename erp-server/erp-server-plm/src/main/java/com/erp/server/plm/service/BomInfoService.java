@@ -66,4 +66,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     void bomProcessPass(ProcessPassDTO dto);
 
     void changeBom(BomDTO bom);
+
+    void auditInfo(String id);
 }

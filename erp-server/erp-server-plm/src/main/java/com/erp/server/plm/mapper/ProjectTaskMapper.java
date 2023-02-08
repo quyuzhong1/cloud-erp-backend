@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.ProductTaskVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -123,5 +124,13 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      **/
     List<ProjectTaskEntity> getProjectTaskByProductId(@Param("showDTO") ProductTaskCountShowDTO showDTO);
 
+    /**
+     * 根据产品id 获取到项目计划的任务
+     * @author yl
+     * @date 2023-02-08 9:26
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.ProductTaskVO>
+     */
+    List<ProductTaskVO> getScheduleTask(@Param("dto") ProjectPlanTaskConditionDTO dto);
 }
 

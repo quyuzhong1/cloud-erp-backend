@@ -4,6 +4,7 @@ import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -23,6 +24,7 @@ public class ProjectPlanTaskConditionDTO implements Serializable {
     /**
      * 产品id
      */
+    @NotBlank(message = "产品id 不能为空")
     private String productId;
 
     /**

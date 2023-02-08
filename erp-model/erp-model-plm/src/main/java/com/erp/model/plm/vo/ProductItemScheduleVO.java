@@ -21,24 +21,24 @@ public class ProductItemScheduleVO implements Serializable {
     /**
      * 总任务数
      */
-    private Integer totalTaskCount;
+    private Integer totalTaskCount=0;
 
     /**
      * 已排期的任务数
      */
-    private Integer scheduleTaskCount;
+    private Integer scheduleTaskCount=0;
 
 
     /**
      * 未排期任务数
      */
-    private Integer unscheduledTaskCount;
+    private Integer unscheduledTaskCount=0;
 
 
     /**
      * 审核的任务数
      */
-    private Integer scheduleAuditTaskCount;
+    private Integer scheduleAuditTaskCount=0;
 
 
     private List<ProductTaskVO> taskList;

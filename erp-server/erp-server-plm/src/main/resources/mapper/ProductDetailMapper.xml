@@ -377,7 +377,7 @@
         pd.name AS skuName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pi.delete_state = 0
+        WHERE pi.delete_state = 0 AND pd.status=#{state}
         <if test="searchKeyword != null and searchKeyword!=''">
             AND
             (

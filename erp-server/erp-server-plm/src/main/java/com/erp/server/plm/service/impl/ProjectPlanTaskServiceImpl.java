@@ -4,11 +4,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.plm.vo.ProductTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldDisplayDTO;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
+import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.ProjectPlanTaskService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -21,6 +25,9 @@ import java.util.List;
 public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMapper, ProjectPlanTaskEntity> implements ProjectPlanTaskService {
 
 
+    @Resource
+    private ProjectTaskMapper projectTaskMapper;
+
     /**
      * 根据条件获取到项目计划任务
      *
@@ -32,6 +39,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto) {
         ProductItemScheduleVO resultVO = new ProductItemScheduleVO();
+
+        List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
 
 
         return null;

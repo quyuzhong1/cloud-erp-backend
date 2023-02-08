@@ -1,6 +1,5 @@
 package com.erp.server.workflow.controller.api;
 
-import com.common.core.utils.OkHttpUtils;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.model.workflow.dto.FindProcessDTO;
@@ -12,9 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname WorkflowBusinessController
@@ -55,15 +52,5 @@ public class WorkflowBusinessController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
-    @PostMapping("/test")
-    public ApiResult test() {
-        String bomProcessPassUrl = "http://172.16.110.187:9050/plm/bom/workflow/pass";
-        Map<String, Object> params = new HashMap<>();
-        params.put("processId", "");
-        params.put("businessTableId", "1620668344204484610");
-        OkHttpUtils.doPostJson(bomProcessPassUrl, params, null);
-        return success();
-    }
 
 }

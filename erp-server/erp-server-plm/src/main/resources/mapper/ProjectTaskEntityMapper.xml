@@ -14,7 +14,7 @@
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
-            AND  strpos (charge_id,#{userId})>0
+            AND strpos (charge_id,#{userId})>0
         </if>
         <if test="params.statusList != null and params.statusList.size > 0">
             AND status IN
@@ -48,7 +48,7 @@
                 AND create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND end_time &gt;= #{params.taskSearchDTO.endTime}
+                AND end_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
@@ -58,7 +58,7 @@
         SELECT count(0) FROM project_task
         WHERE product_id=#{productId}
         <if test="userId !=null and userId!=''">
-            AND  strpos (charge_id,#{userId})>0
+            AND strpos (charge_id,#{userId})>0
         </if>
         <if test="statusList !=null and statusList.size>0">
             AND status IN
@@ -108,7 +108,7 @@
                 AND create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND end_time &gt;= #{params.taskSearchDTO.endTime}
+                AND end_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         <if test="params.param != null and params.param != ''">
@@ -134,10 +134,10 @@
         to_char(t.reality_start_time,'yyyy-MM-dd') AS realityStartTime,to_char(t.reality_end_time,'yyyy-MM-dd') AS
         realityEndTime,
         t.status AS taskState,
-         case when date_part('day',t.plan_end_time - t.plan_start_time)  = 0 then 1
-             else date_part('day',t.plan_end_time - t.plan_start_time) end AS expectedDay,
+        case when date_part('day',t.plan_end_time - t.plan_start_time) = 0 then 1
+        else date_part('day',t.plan_end_time - t.plan_start_time) end AS expectedDay,
         case when date_part('day',t.reality_end_time - t.reality_start_time) = 0 then 1
-            else date_part('day',t.reality_end_time - t.reality_start_time) end AS realityDay,
+        else date_part('day',t.reality_end_time - t.reality_start_time) end AS realityDay,
         p.name AS productName
         FROM project_task t INNER JOIN product_info p
         on p.id=t.product_id
@@ -267,7 +267,8 @@
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -275,10 +276,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
+                b.status != 4 and a.task_id = t.id )
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
+                = 1 or b.status = 3) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -293,7 +296,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and  t.plan_end_time IS NOT NULL
+        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -301,10 +305,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
+            != 4 and a.task_id = t.id )
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
+            or b.status = 3) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -318,7 +324,8 @@
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -326,10 +333,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
+                b.status != 4 and a.task_id = t.id )
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
+                = 1 or b.status = 3) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -345,7 +354,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and t.plan_end_time IS NOT NULL
+        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -353,10 +363,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
+            != 4 and a.task_id = t.id )
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
+            or b.status = 3) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -371,7 +383,8 @@
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -379,10 +392,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
+                b.status != 4 and a.task_id = t.id )
             </if>
             <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
+                = 1 or b.status = 3) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -396,7 +411,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        WHERE  (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4) and t.plan_end_time IS NOT NULL
+        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -404,10 +420,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = t.id )
+            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
+            != 4 and a.task_id = t.id )
         </if>
         <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = t.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
+            or b.status = 3) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -423,15 +441,17 @@
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or  pji.project_status != 4)
+            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            pji.project_status != 4)
             <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
                 <if test="params.groupFlag != null  and params.groupFlag != ''">
                     AND pt.product_id = #{params.groupFlag}
                 </if>
                 <if test="params.searchCategory == 7">
                     <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
-                        AND pt.process_id  IN
-                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator="," close=")">
+                        AND pt.process_id IN
+                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator=","
+                                 close=")">
                             #{processId}
                         </foreach>
                     </if>
@@ -446,8 +466,9 @@
                 </if>
                 <if test="params.searchCategory == 8">
                     <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
-                        AND pt.process_id  IN
-                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator="," close=")">
+                        AND pt.process_id IN
+                        <foreach collection="params.processInstanceIds" item="processId" open="(" separator=","
+                                 close=")">
                             #{processId}
                         </foreach>
                     </if>
@@ -463,10 +484,13 @@
                 AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id = pt.id ))
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id
+                = pt.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1 or b.status = 3) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
+                = 1 or b.status = 3) and a.task_id = pt.id)
             </if>
             <if test="params.taskSearchDTO != null">
                 <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
@@ -474,13 +498,15 @@
                 </if>
                 <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                     AND pt.priority in
-                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
+                    <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator=","
+                             close=")">
                         #{priority}
                     </foreach>
                 </if>
                 <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
                     AND pt.charge_id in
-                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
+                    <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator=","
+                             close=")">
                         #{chargeId}
                     </foreach>
                 </if>
@@ -494,7 +520,7 @@
                     AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
                 </if>
                 <if test="params.taskSearchDTO.endTime != null ">
-                    AND pt.end_time &gt;= #{params.taskSearchDTO.endTime}
+                    AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
                 </if>
             </if>
             <if test="params.param != null and params.param != ''">
@@ -523,32 +549,33 @@
 
     <select id="getAllTaskPersonnelView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
         select
-            t.*
+        t.*
         from
         (select
-                pi.id as productId,
-                pi.name as productName,
-                pi.approval_status,
-                pt.name as taskName,
-                to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
-                to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
-                to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
-                to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
-                pt.id as taskId,
-                pt.status,
-                regexp_split_to_table(pt.charge_id,',') as charge_id,
-                regexp_split_to_table(pt.charge_name,',') as charge_name,
-                pt.phase_name,
-                pi2.project_status,
-                case when pt.plan_end_time is null then 0
-                    when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
-                    when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
-                    else 0 end isDelay
+        pi.id as productId,
+        pi.name as productName,
+        pi.approval_status,
+        pt.name as taskName,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
+        pt.id as taskId,
+        pt.status,
+        regexp_split_to_table(pt.charge_id,',') as charge_id,
+        regexp_split_to_table(pt.charge_name,',') as charge_name,
+        pt.phase_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+        when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5
+        then 1
+        else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
-        where  pi.is_finished_product_dev = 1
-            ) t
+        where pi.is_finished_product_dev = 1
+        ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
                 and
@@ -589,32 +616,33 @@
 
     <select id="getAllTaskProductView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
         select
-            t.*
+        t.*
         from
         (select
-            pi.id as productId,
-            pi.name as productName,
-            pi.approval_status,
-            pi.create_time,
-            pt.name as taskName,
-            to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
-            to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
-            to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
-            to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
-            pt.id as taskId,
-            pt.status,
-            pt.charge_id as charge_id,
-            pt.charge_name as charge_name,
-            pi2.project_status,
-            case when pt.plan_end_time is null then 0
-                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
-                when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
-                else 0 end isDelay
+        pi.id as productId,
+        pi.name as productName,
+        pi.approval_status,
+        pi.create_time,
+        pt.name as taskName,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
+        pt.id as taskId,
+        pt.status,
+        pt.charge_id as charge_id,
+        pt.charge_name as charge_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+        when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5
+        then 1
+        else 0 end isDelay
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
-        where  pi.is_finished_product_dev = 1
-            ) t
+        where pi.is_finished_product_dev = 1
+        ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
@@ -655,34 +683,35 @@
 
     <select id="getAllTaskPhaseView" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
         select
-            t.*
+        t.*
         from
         (select
-            pi.id as productId,
-            pi.name as productName,
-            pi.approval_status,
-            pt.name as taskName,
-            to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
-            to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
-            to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
-            to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
-            pt.id as taskId,
-            pt.status,
-            pt.charge_id as charge_id,
-            pt.charge_name as charge_name,
-            pt.phase_id,
-            pt.phase_name,
-            pi2.project_status,
-            case when pt.plan_end_time is null then 0
-                when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
-                when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5 then 1
-                else 0 end isDelay,
-            pp.create_time
+        pi.id as productId,
+        pi.name as productName,
+        pi.approval_status,
+        pt.name as taskName,
+        to_char(pt.plan_start_time, 'yyyy-MM-dd') as plan_start_time,
+        to_char(pt.plan_end_time, 'yyyy-MM-dd') as plan_end_time,
+        to_char(pt.reality_start_time, 'yyyy-MM-dd') as reality_start_time,
+        to_char(pt.reality_end_time, 'yyyy-MM-dd') as reality_end_time,
+        pt.id as taskId,
+        pt.status,
+        pt.charge_id as charge_id,
+        pt.charge_name as charge_name,
+        pt.phase_id,
+        pt.phase_name,
+        pi2.project_status,
+        case when pt.plan_end_time is null then 0
+        when to_char(pt.plan_end_time, 'YYYYMMDD') &gt;= to_char(now(), 'YYYYMMDD') then 0
+        when to_char(now(), 'YYYYMMDD') &gt; to_char(pt.plan_end_time, 'YYYYMMDD') and pt.status != 4 and pt.status != 5
+        then 1
+        else 0 end isDelay,
+        pp.create_time
         from product_info pi
         inner join project_task pt on pi.id = pt.product_id
         left join project_info pi2 on pi.id = pi2.product_id
         left join project_phase pp on pt.phase_id = pp.id
-        where  pi.is_finished_product_dev = 1
+        where pi.is_finished_product_dev = 1
         ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
@@ -725,27 +754,27 @@
 
     <select id="getAllTaskInWarehouseTimeView" resultType="com.erp.model.plm.dto.ProductTaskInWarehouseTimeChildDTO">
         select
-            t.*
+        t.*
         from
         (select
-            pi.id as productId,
-            pi.name as productName,
-            pi.charge_id,
-            pi.charge_name,
-            pi.approval_status,
-            pi2.project_status,
-            pd.id as skuId,
-            pd.sku_no,
-            to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
-            COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
-            COALESCE(pi2.project_status,pi.approval_status) as status,
-            case when COALESCE(pi2.project_status,-1) = -1 then 0
-            else 1 end as isProjectStatus
+        pi.id as productId,
+        pi.name as productName,
+        pi.charge_id,
+        pi.charge_name,
+        pi.approval_status,
+        pi2.project_status,
+        pd.id as skuId,
+        pd.sku_no,
+        to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
+        COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
+        COALESCE(pi2.project_status,pi.approval_status) as status,
+        case when COALESCE(pi2.project_status,-1) = -1 then 0
+        else 1 end as isProjectStatus
         from product_info pi
         inner join product_detail pd on pi.id = pd.product_id
         left join project_info pi2 on pi.id = pi2.product_id
         where pi.is_finished_product_dev = 1
-            ) t
+        ) t
         <where>
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
@@ -780,35 +809,35 @@
 
     <select id="getProjectTaskByProductId" resultType="com.erp.model.plm.entity.ProjectTaskEntity">
         SELECT
-            id,
-            name,
-            type,
-            charge_id,
-            charge_name,
-            plan_start_time,
-            plan_end_time,
-            priority,
-            phase_id,
-            is_fixed,
-            description,
-            create_time,
-            update_time,
-            process_id,
-            quote_sys_task_id,
-            product_id,
-            property,
-            status,
-            phase_name,
-            project_id,
-            pid,
-            reality_start_time,
-            reality_end_time,
-            create_user_id,
-            create_user_name,
-            business_process_id,
-            approval_user_id,
-            is_milepost,
-            is_sku_change
+        id,
+        name,
+        type,
+        charge_id,
+        charge_name,
+        plan_start_time,
+        plan_end_time,
+        priority,
+        phase_id,
+        is_fixed,
+        description,
+        create_time,
+        update_time,
+        process_id,
+        quote_sys_task_id,
+        product_id,
+        property,
+        status,
+        phase_name,
+        project_id,
+        pid,
+        reality_start_time,
+        reality_end_time,
+        create_user_id,
+        create_user_name,
+        business_process_id,
+        approval_user_id,
+        is_milepost,
+        is_sku_change
         FROM project_task WHERE product_id = #{showDTO.productId}
         <if test="showDTO.param != null and showDTO.param != ''">
             ${showDTO.param}
@@ -816,8 +845,53 @@
     </select>
 
 
+    <select id="getScheduleTask" resultType="com.erp.model.plm.vo.ProductTaskVO">
+        SELECT
+        id AS taskId,
+        project_id,
+        pid,
+        product_id,
+        name,
+        type,
+        charge_id,
+        charge_name,
+        plan_start_time,
+        plan_end_time,
+        reality_start_time,
+        reality_end_time,
+        priority,
+        project_id,
+        phase_name,
+        description,
+        is_milepost,
+        create_user_name,
+        create_time,
+        update_time,
+        update_user_name
+        FROM project_task
+        WHERE product_id=#{dto.productId}
+        <if test="dto.phase!=null and dto.phase!=''  ">
+            <if test="dto.phase='projectApproval'">
+                AND property=1
+            </if>
+            <if test="dto.phase='project'">
+                AND property=2
+            </if>
+        </if>
+        <if test="dto.taskChargeId !=null and dto.taskChargeId!=''">
+             AND string_to_array(charge_id,',')  &amp;&amp; string_to_array(dto.taskChargeId,',')
+        </if>
+        <if test="dto.searchKeyword !=null and dto.searchKeyword!=''">
+               AND name LIKE concat('%',#{dto.searchKeyword},'%'
+        </if>
+        <if test="dto.planStartTime !=null ">
+            AND plan_start_time  &gt;= #{dto.planStartTime}
+        </if>
+        <if test="dto.planEndTime !=null ">
+            AND plan_end_time  &lt;= #{dto.planEndTime}
+        </if>
 
-
+    </select>
 
 
 </mapper>

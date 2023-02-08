@@ -932,6 +932,18 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     /**
+     * 审核情况
+     * @author yl
+     * @date 2023-02-08 9:00
+     * @param bomId
+     * @return void
+     */
+    @Override
+    public void auditInfo(String bomId) {
+        
+    }
+
+    /**
      * bom 审核不通过
      *
      * @param dto
