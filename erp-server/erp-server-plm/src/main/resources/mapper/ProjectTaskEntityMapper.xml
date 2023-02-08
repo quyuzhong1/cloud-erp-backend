@@ -580,7 +580,7 @@
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0 ">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id = #{item}
+                    string_to_array(t.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -647,7 +647,7 @@
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id = #{item}
+                    string_to_array(t.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -717,7 +717,7 @@
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id = #{item}
+                    string_to_array(t.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
@@ -779,7 +779,7 @@
             <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
                 and
                 <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
-                    t.charge_id = #{item}
+                    string_to_array(t.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
                 </foreach>
             </if>
             <if test="dto.productIds != null and dto.productIds.size() > 0">
