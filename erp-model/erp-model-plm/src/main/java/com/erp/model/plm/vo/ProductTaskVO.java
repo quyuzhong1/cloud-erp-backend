@@ -23,6 +23,8 @@ public class ProductTaskVO implements Serializable {
     private Integer id;
 
 
+    private String productName;
+
     /**
      * 父级id（用于前端展示）
      */
@@ -48,9 +50,6 @@ public class ProductTaskVO implements Serializable {
      * 产品id
      */
     private String productId;
-
-
-
 
 
     /**
@@ -98,13 +97,13 @@ public class ProductTaskVO implements Serializable {
 
 
     /**
-     *实际开始时间
+     * 实际开始时间
      */
     private Date realityStartTime;
 
 
     /**
-     *实际结束时间
+     * 实际结束时间
      */
     private Date realityEndTime;
 
@@ -136,7 +135,10 @@ public class ProductTaskVO implements Serializable {
      */
     private Integer status;
 
-
+    /**
+     * 状态名
+     */
+    private String statusName;
 
 
     /**
@@ -156,14 +158,10 @@ public class ProductTaskVO implements Serializable {
     private List<String> refSkuNoList;
 
 
-
-
     /**
      * 交付文档名称
      */
     private String deliveryDocsNames;
-
-
 
 
     /**
@@ -175,7 +173,7 @@ public class ProductTaskVO implements Serializable {
     /**
      * 创建人
      */
-    private Date createUserName;
+    private String createUserName;
 
 
     /**
@@ -187,7 +185,14 @@ public class ProductTaskVO implements Serializable {
     /**
      * 更新人
      */
-    private Date updateUserName;
+    private String updateUserName;
+
+
+    /**
+     * 是否变更中
+     */
+
+    private Boolean isChange = false;
 
 
 }

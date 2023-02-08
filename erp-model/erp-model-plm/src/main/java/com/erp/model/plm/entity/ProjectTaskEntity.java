@@ -161,11 +161,17 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("pid")
     private String pid;
 
-    @TableField("create_user_id")
+    @TableField(value="create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
 
-    @TableField("create_user_name")
+    @TableField(value="create_user_name",fill = FieldFill.INSERT)
     private String createUserName;
+
+    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
 
     //流程表id
     @TableField("business_process_id")

@@ -13,29 +13,38 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class CustomizeFieldDisplayDTO implements Serializable {
+public class CustomizeFieldHiddenDTO implements Serializable {
 
 
     /**
      * 字段标题
      */
-    private String  fieldTitle;
+    private String fieldTitle;
 
 
     /**
      * 字段标题
      */
-    private String  fieldName;
+    private String fieldName;
 
 
     /**
      * 模块编号
      */
-    private String  moduleCode;
+    private String moduleCode;
 
 
     /**
      * 模块名称
      */
-    private String  moduleName;
+    private String moduleName;
+
+    /**
+     * 是否否认
+     */
+    private Boolean isDefault;
+
+    private String userId;
+
+
 }

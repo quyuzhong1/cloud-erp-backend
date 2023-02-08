@@ -111,4 +111,13 @@ public interface SysUserFeign {
     //根据部门名称查询部门负责人
     @PostMapping("sys/feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
+
+    //保存反选字段
+    @PostMapping("sys/feign/customize/field/add")
+    Boolean batchAdd(@RequestBody List<CustomizeFieldHiddenDTO> dto);
+
+    //获取反选字段
+    @PostMapping("sys/feign/customize/field/getByUserId")
+    List<CustomizeFieldHiddenDTO> getByUserId(@RequestBody FindCustomizeFieldDTO dto);
+
 }

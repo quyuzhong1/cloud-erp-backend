@@ -15,8 +15,8 @@ import java.util.Date;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("customize_field_display")
-public class CustomizeFieldDisplayEntity implements Serializable {
+@TableName("customize_field_hidden")
+public class CustomizeFieldHiddenEntity implements Serializable {
     private static final long serialVersionUID = -23577872711182914L;
     /**
      * 表id

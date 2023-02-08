@@ -24,10 +24,14 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         Date now = new Date();
         String userId = commonService.getUserInfo().getUid();
+        String userName = commonService.getUserInfo().getUserName();
         this.setFieldValByName("createTime", now, metaObject);
         this.setFieldValByName("updateTime", now, metaObject);
         this.setFieldValByName("createUserId", userId, metaObject);
+        this.setFieldValByName("createUserName", userName, metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
+        this.setFieldValByName("updateUserName", userName, metaObject);
+
 
     }
 
@@ -35,8 +39,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
+        String userName = commonService.getUserInfo().getUserName();
         this.setFieldValByName("updateTime", new Date(), metaObject);
         this.setFieldValByName("updateUserId", userId, metaObject);
-
+        this.setFieldValByName("updateUserName", userName, metaObject);
     }
 }

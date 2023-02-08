@@ -1,11 +1,11 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -18,7 +18,7 @@ import java.util.Date;
  */
 @Data
 @NoArgsConstructor
-public class ProjectPlanTaskConditionDTO implements Serializable {
+public class ProjectPlanTaskConditionDTO extends SortDTO {
 
 
     /**
