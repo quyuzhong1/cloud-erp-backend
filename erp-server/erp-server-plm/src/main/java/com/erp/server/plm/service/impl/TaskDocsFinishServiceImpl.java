@@ -180,15 +180,21 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             }
 
         }
-        //新增上传交付物操作日志
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]",String.join(",",fileNames)))
-                .setBusinessId(taskEntity.getId())
-                .setOperation("文档操作")
-                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-        sysLogService.addSysLogByOther(sysLogEntity);
-        //删除飞书通知
-        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
-        return this.saveOrUpdateBatch(resultList);
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            //删除飞书通知
+            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
+            boolean flag = this.saveOrUpdateBatch(resultList);
+            if (flag) {
+                //新增上传交付物操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]",String.join(",",fileNames)))
+                        .setBusinessId(taskEntity.getId())
+                        .setOperation("文档操作")
+                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                sysLogService.addSysLogByOther(sysLogEntity);
+            }
+        }
+
+      return Boolean.TRUE;
     }
 
     /**
@@ -354,27 +360,28 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
 
         StringBuffer sb = new StringBuffer();
-        //删除飞书通知
-        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
-        Boolean flag = this.saveBatch(resultList);
-        //当更新成功后 保存记录
-        if (flag) {
-            noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
-            sb.append("变更为").append(String.join(",",fileNames));
-            for (TaskDocsFinishEntity taskDocsFinishEntity: resultList) {
-                docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            //删除飞书通知
+            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
+            Boolean flag = this.saveBatch(resultList);
+            //当更新成功后 保存记录
+            if (flag) {
+                noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
+                sb.append("变更为").append(String.join(",",fileNames));
+                for (TaskDocsFinishEntity taskDocsFinishEntity: resultList) {
+                    docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
+                }
             }
+            //新增变更文档操作日志
+            SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",",fileNames)))
+                    .setBusinessId(taskEntity.getId())
+                    .setOperation("文档操作")
+                    .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+            sysLogService.addSysLogByOther(sysLogEntity);
         }
-        //新增变更文档操作日志
-        SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", fileName))
-                .setBusinessId(taskEntity.getId())
-                .setOperation("文档操作")
-                .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-        sysLogService.addSysLogByOther(sysLogEntity);
-
         startChangeDocsProcess(loginUser.getUid(), taskEntity);
 
-        return flag;
+        return Boolean.TRUE;
     }
 
     /**
@@ -609,25 +616,27 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
 
         StringBuffer sb = new StringBuffer();
-        //删除飞书通知
-        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
-        Boolean flag = this.saveBatch(resultList);
-        //当更新成功后 保存记录
-        if (flag) {
-            noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
-            sb.append("新增文档").append(String.join(",",fileNames));
-            for (TaskDocsFinishEntity taskDocsFinishEntity:resultList) {
-                docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            //删除飞书通知
+            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
+            Boolean flag = this.saveBatch(resultList);
+            //当更新成功后 保存记录
+            if (flag) {
+                noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
+                sb.append("新增文档").append(String.join(",",fileNames));
+                for (TaskDocsFinishEntity taskDocsFinishEntity:resultList) {
+                    docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
+                }
+                //新增产品操作日志
+                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+                productOperateRecordDTO.setProductId(finishEntity.getProductId());
+                List<String> remarkList = new ArrayList<>();
+                remarkList.add("变更文档：[" + fileNames + "]");
+                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
-            //新增产品操作日志
-            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-            productOperateRecordDTO.setProductId(finishEntity.getProductId());
-            List<String> remarkList = new ArrayList<>();
-            remarkList.add("变更文档：[" + fileNames + "]");
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         }
-        return flag;
+        return Boolean.TRUE;
     }
 
     private void deleteByUploadType(String productId, String taskId,Integer uploadType) {
