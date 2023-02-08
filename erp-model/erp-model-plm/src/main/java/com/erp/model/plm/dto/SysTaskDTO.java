@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -106,6 +107,11 @@ public class SysTaskDTO implements Serializable {
      * 业务流程表id
      */
     private String businessProcessId;
+
+    /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+     */
+    private String relatedSkuType;
 
     /**
      * 业务流程名
