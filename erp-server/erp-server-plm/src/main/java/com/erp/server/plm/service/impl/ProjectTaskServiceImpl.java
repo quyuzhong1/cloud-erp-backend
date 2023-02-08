@@ -3330,6 +3330,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 List<List<String>> membersIds = new ArrayList<>();
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                    if (StringUtils.isBlank(taskChargeDistributionEntity.getChargeIds())) {
+                        throw new ServiceException(ApiError.ERROR_95045);
+                    }
                     List<String> userIdList = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
                     membersIds.add(userIdList);
                 }
