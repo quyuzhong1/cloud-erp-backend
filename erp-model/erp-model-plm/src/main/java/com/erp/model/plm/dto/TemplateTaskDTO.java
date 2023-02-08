@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -141,6 +142,11 @@ public class TemplateTaskDTO implements Serializable {
          * 设置里程碑(0否，1是)
          */
         private Integer isMilepost;
+
+        /**
+         * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+         */
+        private String relatedSkuType;
 
         /**
          * 字段配置类型

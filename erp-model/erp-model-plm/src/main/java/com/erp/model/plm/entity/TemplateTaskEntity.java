@@ -171,4 +171,10 @@ public class TemplateTaskEntity implements Serializable {
     @TableField("distribution_type")
     private Integer distributionType;
 
+    /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+     */
+    @TableField("related_sku_type")
+    private String relatedSkuType;
+
 }
