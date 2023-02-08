@@ -186,6 +186,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 .setOperation("文档操作")
                 .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
         sysLogService.addSysLogByOther(sysLogEntity);
+        //删除飞书通知
+        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
         return this.saveOrUpdateBatch(resultList);
     }
 
@@ -352,6 +354,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
 
         StringBuffer sb = new StringBuffer();
+        //删除飞书通知
+        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
         Boolean flag = this.saveBatch(resultList);
         //当更新成功后 保存记录
         if (flag) {
@@ -605,6 +609,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
 
         StringBuffer sb = new StringBuffer();
+        //删除飞书通知
+        deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
         Boolean flag = this.saveBatch(resultList);
         //当更新成功后 保存记录
         if (flag) {
@@ -624,6 +630,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         return flag;
     }
 
+    private void deleteByUploadType(String productId, String taskId,Integer uploadType) {
+        LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
+        queryWrapper.eq(TaskDocsFinishEntity::getProductId, productId);
+        queryWrapper.eq(TaskDocsFinishEntity::getUploadType,uploadType);
+        this.remove(queryWrapper);
+    }
 
     public int getFinishDocsNum(String taskId) {
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
