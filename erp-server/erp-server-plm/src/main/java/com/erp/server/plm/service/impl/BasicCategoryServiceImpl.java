@@ -307,17 +307,21 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @param id
      */
     private void checkCategoryCode(String code,String pid,String id) {
+        BasicCategoryEntity parent = this.getById(pid);
+        //一二级分类必须填写代号
+        if ("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) {
+            if (StringUtils.isBlank(code)) {
+                throw new ServiceException(ApiError.ERROR_95069);
+            }
+        }
         if (!"0".equals(pid) && StringUtils.isNotBlank(code)) {
-            BasicCategoryEntity parent = this.getById(pid);
             //判断是否是二级分类，非一、二级分类无需添加代号
             if (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid())) {
                 throw new ServiceException(ApiError.ERROR_95093);
             }
         }
         //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
-        if (StringUtils.isBlank(code)) {
-            throw new ServiceException(ApiError.ERROR_95069);
-        } else {
+        if (StringUtils.isNotBlank(code)) {
             Boolean flag = false;
             for (int i = 65;i <= 90; i++) {
                 char c = (char) (i);
@@ -330,11 +334,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             }
             LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
             queryWrapper.eq(BasicCategoryEntity::getCode, code);
-            if ("0".equals(pid)) {
-                queryWrapper.eq(BasicCategoryEntity::getPid, pid);
-            } else {
-                queryWrapper.ne(BasicCategoryEntity::getPid,"0");
-            }
+            queryWrapper.eq(BasicCategoryEntity::getPid, pid);
             queryWrapper.last("LIMIT 1");
             BasicCategoryEntity entity = this.getOne(queryWrapper);
             if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
