@@ -10,7 +10,7 @@
         pi.project_status,p.brand_name,p.type,pi.id AS projectId,p.grade_id,
         p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.approval_status,pi.charge_name AS projectChargeName ,pi.end_time,
-        pi.create_time,
+        pi.create_time
         FROM product_info p INNER JOIN project_info
         pi
         ON p.id=pi.product_id
