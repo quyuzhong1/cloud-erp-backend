@@ -193,7 +193,7 @@ public class ProjectTaskEntity implements Serializable {
      * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
      */
     @TableField("related_sku_type")
-    private Integer relatedSkuType;
+    private String relatedSkuType;
 
     /**
      * 辅助字段：是否完成

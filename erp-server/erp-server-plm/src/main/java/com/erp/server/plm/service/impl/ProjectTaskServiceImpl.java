@@ -1137,7 +1137,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProductDetailEntity> productDetailList = productDetailService.getByIdList(skuIdList);
         List<ProductDetailEntity> details = productDetailService.getSkuListByProductId(taskEntity.getProductId());
         //如果任务设置的自动关联，则查询产品下未关联的sku
-        if (RelatedSkuTypeEnum.ALL_ASSOCIATION.getCode().equals(taskEntity.getRelatedSkuType())) {
+        if (RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType())) {
             if (CollectionUtils.isNotEmpty(details)) {
                 List<ProductDetailEntity> noRelatedList = details.stream().filter(obj -> !skuIdList.contains(obj.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(noRelatedList)) {

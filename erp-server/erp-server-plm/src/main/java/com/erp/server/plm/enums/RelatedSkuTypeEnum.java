@@ -8,21 +8,21 @@ package com.erp.server.plm.enums;
  */
 public enum RelatedSkuTypeEnum {
 
-    ALL_ASSOCIATION(1,"自动关联"),
-    CHOICE_ASSOCIATION(2,"选择关联"),
-    NOT_ASSOCIATION(3,"不关联");
+    ALL_RELATED("1","自动关联"),
+    CHOICE_RELATED("2","选择关联"),
+    NOT_RELATED("3","不关联");
 
-    private Integer code;
+    private String code;
 
     private String name;
 
 
-    RelatedSkuTypeEnum(Integer code, String name) {
+    RelatedSkuTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 
@@ -30,7 +30,7 @@ public enum RelatedSkuTypeEnum {
         return name;
     }
 
-    public static String getName(Integer code) {
+    public static String getName(String code) {
         for (RelatedSkuTypeEnum state : RelatedSkuTypeEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();

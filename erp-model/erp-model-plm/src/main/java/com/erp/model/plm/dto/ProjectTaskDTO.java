@@ -204,5 +204,5 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
      */
-    private Integer relatedSkuType;
+    private String relatedSkuType;
 }
