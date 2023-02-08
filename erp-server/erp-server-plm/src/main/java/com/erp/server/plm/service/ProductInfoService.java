@@ -83,4 +83,12 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return void
      */
     void updateSpecByChangeSku(ProductInfoDTO productInfoDTO);
+    /**
+     * @description: 根据spu编码查询产品
+     * @author Will
+     * @date: 2023/2/8 14:49
+     * @param spuNo
+     * @return ProductInfoEntity
+     */
+    ProductInfoEntity getBySpuNo(String spuNo);
 }

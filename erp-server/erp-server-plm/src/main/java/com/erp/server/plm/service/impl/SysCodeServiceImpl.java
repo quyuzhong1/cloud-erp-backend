@@ -129,7 +129,24 @@ public class SysCodeServiceImpl implements SysCodeService {
         dto.setCategory(category);
         dto.setType(SysNoEnum.SPU_NO.getCode());
         String sysNo = sysUserFeign.getSpuNo(dto);
+        isExistSpuNo(sysNo,dto);
         return sysNo;
     }
+
+    /**
+     * 判断spu编号是否存在
+     */
+    private void isExistSpuNo(String sysNo,SysCodeDTO dto) {
+        //判断spu编码系统中是否已经存在，存在则获取下一个编码
+        ProductInfoEntity productInfoEntity = productInfoService.getBySpuNo(sysNo);
+        if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+             sysNo = sysUserFeign.getSpuNo(dto);
+             //再次判断是否存在
+             isExistSpuNo(sysNo,dto);
+        } else {
+            return;
+        }
+    }
+
 
 }

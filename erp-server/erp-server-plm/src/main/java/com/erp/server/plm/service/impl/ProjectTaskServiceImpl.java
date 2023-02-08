@@ -3741,8 +3741,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             return Boolean.FALSE;
         }
         //已立项的任务
-        if (MathUtil.ONE.equals(type)) {
-            List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.PROJECT_TASK.equals(obj.getProperty())).collect(Collectors.toList());
+         if (MathUtil.ONE.equals(type)) {
+            List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.APPROVAL_TASK.equals(obj.getProperty())).collect(Collectors.toList());
             //立项任务及其子任务全部完成则返回true
             if (CollectionUtils.isNotEmpty(taskList)) {
                 //已完成任务数量

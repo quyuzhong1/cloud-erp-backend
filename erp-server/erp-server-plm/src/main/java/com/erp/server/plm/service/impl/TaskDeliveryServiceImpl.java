@@ -470,7 +470,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
-        Map<String, List<DeliveryDocsDTO>> map = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getFinishDocsId())).collect(Collectors.groupingBy(DeliveryDocsDTO::getId));
+        Map<String, List<DeliveryDocsDTO>> map = list.stream().collect(Collectors.groupingBy(DeliveryDocsDTO::getId));
         for (Map.Entry<String, List<DeliveryDocsDTO>>  entry: map.entrySet()) {
             DeliveryDocsGroupDTO deliveryDocsGroupDTO = new DeliveryDocsGroupDTO();
             List<DeliveryDocsDTO> value = entry.getValue();
@@ -478,7 +478,8 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             deliveryDocsGroupDTO.setDeliveryDocsName(value.get(0).getDeliveryDocsName());
             deliveryDocsGroupDTO.setTaskId(id);
             deliveryDocsGroupDTO.setTaskName(value.get(0).getTaskName());
-            deliveryDocsGroupDTO.setDocsList(value);
+            List<DeliveryDocsDTO> addList = value.stream().filter(obj -> StringUtils.isNotBlank(obj.getFinishDocsId())).collect(Collectors.toList());
+            deliveryDocsGroupDTO.setDocsList(addList);
             resultList.add(deliveryDocsGroupDTO);
         }
         return resultList;

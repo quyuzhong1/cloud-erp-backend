@@ -281,7 +281,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
         //自动生成产品编号
-        if (ObjectUtils.isEmpty(entity.getId()) && StringUtils.isBlank(entity.getSpuNo())) {
+        if (ObjectUtils.isEmpty(entity.getId()) || !entity.getCategoryId().equals(oldEntity.getCategoryId())) {
             String spuNo = sysCodeService.getSpuNo(categoryId);
             entity.setSpuNo(spuNo);
         }
@@ -1077,7 +1077,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 更改sku 信息
      *
-     * @param productInfoDTO
+     * @param dto
      * @return void
      * @author yl
      * @date 2023-02-07 20:02
@@ -1104,6 +1104,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             this.saveOrUpdate(productInfoEntity);
         }
 
+    }
+
+    @Override
+    public ProductInfoEntity getBySpuNo(String spuNo) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductInfoEntity::getSpuNo,spuNo);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 
     /**
