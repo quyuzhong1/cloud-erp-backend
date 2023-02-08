@@ -336,13 +336,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (Objects.isNull(category)) {
             throw new ServiceException(ApiError.ERROR_95025);
         }
-        LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper();
-        updateWrapper.set(ProductInfoEntity::getCategoryId, dto.getCategoryId());
-        updateWrapper.set(ProductInfoEntity::getCategory, category.getName());
-        updateWrapper.in(ProductInfoEntity::getId, dto.getProductIds());
+        List<ProductInfoEntity> list = new ArrayList<>();
 
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
+            productInfoEntity.setCategory(category.getName());
+            productInfoEntity.setCategory(dto.getCategoryId());
+            //自动生成产品编号
+            if (!productInfoEntity.getCategoryId().equals(category.getId())) {
+                String spuNo = sysCodeService.getSpuNo(category.getId());
+                productInfoEntity.setSpuNo(spuNo);
+            }
+            list.add(productInfoEntity);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(req);
@@ -355,8 +360,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
                     .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
         });
-
-        return this.update(updateWrapper);
+        if (CollectionUtils.isNotEmpty(list)) {
+            this.saveOrUpdateBatch(list);
+        }
+         return Boolean.TRUE;
     }
 
 
