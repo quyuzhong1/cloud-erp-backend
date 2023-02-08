@@ -3,5 +3,20 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectPlanTaskMapper">
 
 
+    <select id="getScheduleTaskList" resultType="com.erp.model.plm.vo.ScheduleTaskVO">
+        SELECT
+            pt.product_id,
+            pt.task_id,
+            pt.origin_start_time,
+            pt.origin_end_time,
+            pt.change_start_time,
+            pt.change_end_time,
+            pt.origin_charge_id,
+            pt.change_chrge_id
+        FROM project_plan_task pt LEFT JOIN project_plan pp
+        ON pt.project_plan_id=pp.id
+        WHERE  PP.product_id=#{productId}   AND PP.status!=#{status}
+
+    </select>
 </mapper>
 

@@ -1,4 +1,4 @@
-package com.erp.common.enums;
+package com.common.core.enums;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -8,7 +8,7 @@ package com.erp.server.plm.enums;
  * @Date 2023-01-09 14:43
  * @Created by yl
  */
-public enum BomStateEnum {
+public enum BomStateEnum  {
 
     WAIT_SUBMIT_AUDIT(0, "待提交审核"),
     WAIT_AUDIT(1, "待审核"),

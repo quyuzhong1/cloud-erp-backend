@@ -1,5 +1,7 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,26 +25,32 @@ public class ProjectPlanEntity implements Serializable {
     /**
      * 创建人id
      */
+    @TableField(value="create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
     /**
      * 创建人name
      */
+    @TableField(value="create_user_name",fill = FieldFill.INSERT)
     private String createUserName;
     /**
      * 创建时间
      */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
     /**
      * 更改人id
      */
+    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
     /**
      * 更改人名
      */
+    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
     /**
      * 时间
      */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
     /**
      * 产品id
@@ -61,9 +69,9 @@ public class ProjectPlanEntity implements Serializable {
      */
     private Date approvalFinishTime;
     /**
-     * 状态 0 待审核
+     * 状态  waitSubmit 待提交 waitAudit 待审核 auditIng 审核中 auditNoPass 审核不通过， auditPass 审核通过
      */
-    private Integer state;
+    private String state;
     /**
      * 任务数量
      */

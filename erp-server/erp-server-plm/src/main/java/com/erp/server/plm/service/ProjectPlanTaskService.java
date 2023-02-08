@@ -3,7 +3,9 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
 
 import java.util.List;
@@ -34,4 +36,9 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
     List<CustomizeFieldHiddenDTO> allField();
 
     List<CustomizeFieldHiddenDTO> getUserHiddenField();
+
+
+    List<ScheduleTaskVO> getScheduleTaskList(String productId,String status);
+
+    void savePlanTask(String projectPlanId,String productId,List<ProjectTaskEntity> taskList);
 }

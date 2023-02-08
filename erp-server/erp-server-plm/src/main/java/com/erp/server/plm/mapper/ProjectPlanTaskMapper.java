@@ -2,7 +2,11 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @Classname ProjectPlanTaskMapper
@@ -12,4 +16,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ProjectPlanTaskMapper extends BaseMapper<ProjectPlanTaskEntity> {
+    List<ScheduleTaskVO> getScheduleTaskList(@Param("productId") String productId,@Param("status") String status);
 }

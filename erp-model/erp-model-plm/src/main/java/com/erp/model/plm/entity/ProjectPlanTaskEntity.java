@@ -1,8 +1,6 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,26 +24,32 @@ public class ProjectPlanTaskEntity implements Serializable {
     /**
      * 创建人id
      */
+    @TableField(value="create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
     /**
      * 创建名
      */
+    @TableField(value="create_user_name",fill = FieldFill.INSERT)
     private String createUserName;
     /**
      * 创建时间
      */
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
     /**
      * 更改人
      */
+    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
     /**
      * 更改人名
      */
+    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
     /**
      * 更改时间
      */
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
     /**
      * 产品id
@@ -75,6 +79,16 @@ public class ProjectPlanTaskEntity implements Serializable {
      * 项目变更表id
      */
     private String projectPlanId;
+
+    /**
+     * 源负责人id
+     */
+    private String originChargeId;
+
+    /**
+     * 变更负责人
+     */
+    private String changeChargeId;
 
 
 

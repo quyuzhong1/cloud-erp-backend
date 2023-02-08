@@ -1,15 +1,17 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.CustomizeFieldEnum;
 import com.erp.common.dto.base.SortParamDTO;
-import com.erp.common.enums.CustomizeFieldEnum;
 import com.erp.common.enums.ModuleEnum;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.PreTaskEntity;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ProductTaskVO;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -199,5 +201,46 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         return sysUserFeign.getByUserId(dto);
     }
 
+
+    /**
+     * 获取到审核的任务
+     *
+     * @param productId
+     * @return
+     */
+    public List<ScheduleTaskVO> getScheduleTaskList(String productId, String status) {
+        return baseMapper.getScheduleTaskList(productId, status);
+    }
+
+
+    /**
+     * 保存任务
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-02-08 19:16
+     */
+    @Override
+    public void savePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList) {
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            List<ProjectPlanTaskEntity> saveList = new ArrayList<>(taskList.size());
+            for (ProjectTaskEntity item : taskList) {
+                ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
+                entity.setChangeEndTime(item.getPlanEndTime());
+                entity.setChangeStartTime(item.getPlanStartTime());
+                entity.setOriginEndTime(item.getPlanEndTime());
+                entity.setOriginStartTime(item.getPlanStartTime());
+                entity.setProductId(productId);
+                entity.setProjectPlanId(projectPlanId);
+                entity.setOriginChargeId(item.getChargeId());
+                entity.setChangeChargeId(item.getChargeId());
+                saveList.add(entity);
+            }
+
+            this.saveBatch(saveList);
+        }
+
+    }
 
 }
