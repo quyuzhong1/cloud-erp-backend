@@ -185,10 +185,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         if (ObjectUtils.isEmpty(projectRoleEntity)) {
             throw new ServiceException(ApiError.ERROR_9021);
         }
-        //成员新增成功后，需要更新产品下面的待审核任务
+        //成员新增成功后，需要更新产品下面的未发布、未开始、进行中的任务
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
-            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> projectRoleEntity.getName().equals(obj.getRoleName()) && !TaskStateEnum.APPROVAL_PASS.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_ING.getCode().equals(obj.getStatus()) && !TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(obj.getStatus())).collect(Collectors.toList());
+            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> projectRoleEntity.getName().equals(obj.getRoleName()) && (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(list)) {
                 list.forEach(obj -> {
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
