@@ -483,10 +483,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             for (ProductShowDTO item : list) {
                 //项目阶段，判断阶段任务是否全部完成
                 if (CollectionUtils.isNotEmpty(taskList)) {
-                    List<ProjectTaskEntity> projectTaskList = taskList.stream().filter(e -> e.getProductId().equals(item.getProductId())).collect(Collectors.toList());
+                    List<ProjectTaskEntity> projectTaskList = taskList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(projectTaskList)) {
                         //产品下任务阶段
-                        List<ProjectPhaseEntity> projectPhaseList = phaseList.stream().filter(e -> e.getProductId().equals(item.getProductId())).collect(Collectors.toList());
+                        List<ProjectPhaseEntity> projectPhaseList = phaseList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
                         if (CollectionUtils.isNotEmpty(projectPhaseList)) {
                             //未开始
                             List<Pair<String, Integer>> unStartList = new ArrayList<>();

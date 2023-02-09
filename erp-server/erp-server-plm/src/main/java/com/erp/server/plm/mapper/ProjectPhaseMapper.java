@@ -19,4 +19,6 @@ import java.util.List;
 public interface ProjectPhaseMapper extends BaseMapper<ProjectPhaseEntity> {
 
     List<TaskPhaseDTO> getTaskPhaseByProductId(@Param("productId") String productId);
+
+    List<ProjectPhaseEntity> listTaskPhaseByProductIds(@Param("productIds") List<String> productIds);
 }

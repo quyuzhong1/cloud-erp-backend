@@ -1,10 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.MathUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicProductIdDTO;
@@ -90,9 +90,8 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
             chekPhaseName(list, productId);
-            //删除阶段后重新新增
-            removeByProductId(productId);
             List<ProjectPhaseEntity> saveList = new LinkedList<>();
+            Integer seq = MathUtil.ONE;
             for (TaskPhaseDTO item : list) {
                 if (StringUtils.isBlank(item.getName())) {
                     throw new ServiceException(ApiError.ERROR_95002);
@@ -100,23 +99,15 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
                 entity.setName(item.getName());
                 entity.setProductId(productId);
+                entity.setId(item.getId());
+                entity.setSeq(seq);
                 saveList.add(entity);
+                seq++;
             }
-            this.saveBatch(saveList);
+            this.saveOrUpdateBatch(saveList);
         }
     }
 
-    /**
-     * @description: 根据产品id删除阶段
-     * @author Will
-     * @date: 2023/1/31 17:02
-     * @param productId
-     */
-    private void removeByProductId(String productId) {
-        LambdaUpdateWrapper<ProjectPhaseEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(ProjectPhaseEntity::getProductId,productId);
-        this.remove(updateWrapper);
-    }
 
     private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {
         List<ProjectPhaseEntity> phaseList = getByProductId(productId);
@@ -256,10 +247,10 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     @Override
     public List<ProjectPhaseEntity> listByProductIds(List<String> productIds) {
-        LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(ProjectPhaseEntity::getProductId, productIds);
-        queryWrapper.orderByAsc(ProjectPhaseEntity::getCreateTime);
-        return this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(productIds)) {
+            return new ArrayList<>();
+        }
+        return this.baseMapper.listTaskPhaseByProductIds(productIds);
     }
 
     private void checkPhaseTask(String id) {
