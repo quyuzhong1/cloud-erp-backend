@@ -35,7 +35,7 @@ public class ProjectPlanController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
-    public ApiResult submitSchedule(HandleTaskScheduleDTO dto) {
+    public ApiResult submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanService.submitSchedule(dto);
         return result == true ? success() : failure();
     }

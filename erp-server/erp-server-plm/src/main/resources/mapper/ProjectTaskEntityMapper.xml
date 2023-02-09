@@ -926,6 +926,26 @@
          FROM project_task WHERE product_id=#{productId}
     </select>
 
+    <select id="getScheduleTaskByTaskIds" resultType="com.erp.model.plm.vo.ScheduleTaskVO">
+        SELECT
+        product_id,
+        id AS taskid,
+        plan_start_time,
+        plan_end_time,
+        charge_id,
+        charge_name,
+        schedule_status,
+        schedule_type
+        FROM plm_product_task
+        WHERE  product_id=#{productId}
+        <if test="taskIdList!=null and taskIdList.size>0">
+            AND id IN
+            <foreach collection="taskIdList" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </if>
+    </select>
+
 
     <update id="updateScheduleStatus">
         UPDATE project_task SET schedule_status = #{scheduleStatus} WHERE  product_id=#{productId}  AND id IN

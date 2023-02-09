@@ -101,7 +101,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-08 17:37
      */
     private void checkTaskStatus(List<String> taskIds, String productId) {
-        List<ScheduleTaskVO> taskList = projectPlanTaskService.getByTaskIds(productId, taskIds);
+        List<ScheduleTaskVO> taskList = taskService.getScheduleTaskByTaskIds(productId, taskIds);
         List<String> statusList = new ArrayList<>(2);
         String waitSubmit = BaseStatusEnum.WAIT_SUBMIT.getStatus();
         String cancel = BaseStatusEnum.CANCEL.getStatus();
@@ -127,7 +127,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 filter(t -> Objects.isNull(t.getPlanEndTime()) || Objects.isNull(t.getPlanStartTime())).
                 count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95010);
+            throw new ServiceException(ApiError.ERROR_95115);
         }
 
     }

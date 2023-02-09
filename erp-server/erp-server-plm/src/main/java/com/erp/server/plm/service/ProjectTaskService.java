@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.Date;
@@ -197,4 +198,14 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return java.util.Map<java.lang.String,java.lang.Integer>
      */
     Map<String, Object> getProductMapByProductId(String productId);
+
+    /**
+     * 获取计划的任务 根据任务id
+     * @author yl
+     * @date 2023-02-09 19:51
+     * @param productId
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.vo.ScheduleTaskVO>
+     */
+    List<ScheduleTaskVO> getScheduleTaskByTaskIds(String productId, List<String> taskIds);
 }

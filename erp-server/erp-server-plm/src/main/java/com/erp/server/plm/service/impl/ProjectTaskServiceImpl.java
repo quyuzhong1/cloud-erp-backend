@@ -23,6 +23,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -2339,11 +2340,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-02-09 14:16
      */
     @Override
-    public void updateScheduleStatus(String productId, List<String> taskIdList, String status,String scheduleType) {
-        if(CollectionUtils.isNotEmpty(taskIdList)){
-            if(StringUtils.isNotBlank(scheduleType)){
-                baseMapper.updateScheduleTask(productId, taskIdList, status,scheduleType);
-            }else{
+    public void updateScheduleStatus(String productId, List<String> taskIdList, String status, String scheduleType) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            if (StringUtils.isNotBlank(scheduleType)) {
+                baseMapper.updateScheduleTask(productId, taskIdList, status, scheduleType);
+            } else {
                 baseMapper.updateScheduleStatus(productId, taskIdList, status);
 
             }
@@ -2354,15 +2355,25 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 获取产品名称及任务数
+     *
+     * @param productId
+     * @return java.util.Map<java.lang.String, java.lang.Integer>
      * @author yl
      * @date 2023-02-09 17:14
-     * @param productId
-     * @return java.util.Map<java.lang.String,java.lang.Integer>
      */
     @Override
     public Map<String, Object> getProductMapByProductId(String productId) {
-        Map<String,Object> resultMap=baseMapper.getProductMapByProductId(productId);
+        Map<String, Object> resultMap = baseMapper.getProductMapByProductId(productId);
         return resultMap;
+    }
+
+    @Override
+    public List<ScheduleTaskVO> getScheduleTaskByTaskIds(String productId, List<String> taskIds) {
+        if (CollectionUtils.isNotEmpty(taskIds)) {
+            return baseMapper.getScheduleTaskByTaskIds(productId, taskIds);
+        }
+        return new ArrayList<>();
+
     }
 
     /**
@@ -3788,9 +3799,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已立项的任务
         if (MathUtil.ONE.equals(type)) {
             List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.APPROVAL_TASK.equals(obj.getProperty())).collect(Collectors.toList());
-           if (CollectionUtils.isEmpty(taskList)) {
-               return  Boolean.FALSE;
-           }
+            if (CollectionUtils.isEmpty(taskList)) {
+                return Boolean.FALSE;
+            }
             //立项任务及其子任务全部完成则返回true
             if (CollectionUtils.isNotEmpty(taskList)) {
                 //已完成任务数量

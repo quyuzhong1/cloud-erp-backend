@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductTaskVO;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -151,5 +152,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     void updateScheduleTask(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status,@Param("scheduleType") String scheduleType);
 
     Map<String, Object> getProductMapByProductId(@Param("productId") String productId);
+
+    List<ScheduleTaskVO> getScheduleTaskByTaskIds(@Param("productId") String productId, @Param("taskIdList")List<String> taskIds);
 }
 
