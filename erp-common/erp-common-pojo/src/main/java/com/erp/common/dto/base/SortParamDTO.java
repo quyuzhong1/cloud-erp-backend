@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Classname SortParamDTO
@@ -23,4 +25,24 @@ public class SortParamDTO implements Serializable {
     @NotBlank(message = "排序值不能为空")
     @StateEnumValue(strValues = {"DESC","ASC"},message = "排序值有误")
     private String sort;
+
+
+    public void setField(String name) {
+        this.field = underlineByhump(name);
+    }
+
+    public static Pattern compile = Pattern.compile("[A-Z]");
+
+    /**
+     * 驼峰转下划线
+     */
+    public static String underlineByhump(String str) {
+        Matcher matcher = compile.matcher(str);
+        StringBuffer sb = new StringBuffer();
+        while(matcher.find()) {
+            matcher.appendReplacement(sb,  "_" + matcher.group(0).toLowerCase());
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
 }
