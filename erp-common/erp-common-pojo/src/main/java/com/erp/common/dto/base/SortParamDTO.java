@@ -4,6 +4,7 @@ import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -16,9 +17,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SortParamDTO implements Serializable {
 
-
+    @NotBlank(message = "排序字段不能为空")
     private String field;
 
+    @NotBlank(message = "排序值不能为空")
     @StateEnumValue(strValues = {"DESC","ASC"},message = "排序值有误")
     private String sort;
 }

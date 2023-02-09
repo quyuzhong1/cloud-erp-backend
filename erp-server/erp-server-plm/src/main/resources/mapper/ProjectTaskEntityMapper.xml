@@ -51,7 +51,13 @@
                 AND end_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        update_time desc
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">
@@ -117,7 +123,13 @@
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        update_time desc
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -232,7 +244,13 @@
                 AND end_time &gt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
-        ORDER BY ${params.searchType} ${params.orderBy} ,update_time desc
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        update_time desc
     </select>
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
@@ -531,8 +549,10 @@
                 ${params.param}
             </if>
             ORDER BY
-            <if test="params.searchType != null and params.searchType != ''">
-                pt.${params.searchType} ${params.orderBy} ,
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    pt.${item.field} ${item.sort}
+                </foreach>
             </if>
             pt.update_time desc
     </select>

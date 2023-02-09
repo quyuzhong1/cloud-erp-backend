@@ -1,7 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
-import com.erp.common.dto.base.PermissionsDTO;
+import com.erp.common.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskPagingDTO extends PermissionsDTO implements Serializable {
+public class TaskPagingDTO extends SortDTO implements Serializable {
 
      /**
       * 产品id
@@ -38,24 +38,6 @@ public class TaskPagingDTO extends PermissionsDTO implements Serializable {
       */
      @StateEnumValue(intValues = {0,1,2}, message = "任务类型有误")
      private Integer taskFlag;
-
-     /**
-      * 排序类型
-      * priority 任务优秀级
-      * plan_end_time
-      * create_time 创建时间
-      * reality_end_time 实际接受时间
-      */
-     @StateEnumValue(strValues = {"priority", "plan_end_time", "create_time", "reality_end_time" }, message = "搜索类型有误")
-     private String searchType="plan_end_time";
-
-     /**
-      * 排序
-      * desc  降序
-      * asc 升序
-      */
-     @StateEnumValue(strValues = {"desc","asc"}, message = "排序有误")
-     private String orderBy="desc";
 
      /**
       * 高级搜索筛选条件

@@ -32,7 +32,6 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -482,92 +481,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             for (ProductShowDTO item : list) {
                 //项目阶段，判断阶段任务是否全部完成
-                if (CollectionUtils.isNotEmpty(taskList)) {
-                    List<ProjectTaskEntity> projectTaskList = taskList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(projectTaskList)) {
-                        //产品下任务阶段
-                        List<ProjectPhaseEntity> projectPhaseList = phaseList.stream().filter(e -> item.getProductId().equals(e.getProductId())).collect(Collectors.toList());
-                        if (CollectionUtils.isNotEmpty(projectPhaseList)) {
-                            //未开始
-                            List<Pair<String, Integer>> unStartList = new ArrayList<>();
-                            //进行中
-                            List<Pair<String, Integer>> progressList = new ArrayList<>();
-                            //已完成
-                            List<Pair<String, Integer>> finishList = new ArrayList<>();
-                            //进行中和已完成
-                            List<Pair<String, Integer>> inFinishList = new ArrayList<>();
-                            //结果集
-                            List<String> resultList = new ArrayList<>();
-                            for (int i = 0; i < projectPhaseList.size(); i++) {
-                                ProjectPhaseEntity projectPhaseEntity = projectPhaseList.get(i);
-                                List<ProjectTaskEntity> value = projectTaskList.stream().filter(e -> e.getPhaseId().equals(projectPhaseEntity.getId())).collect(Collectors.toList());
-                                if (CollectionUtils.isEmpty(value)) {
-                                    continue;
-                                }
-                                //判断该阶段任务是否全部未开始
-                                long count1 = value.stream().filter(e -> TaskStateEnum.TO_BE_RELEASED.getCode().equals(e.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(e.getStatus())).count();
-                                if (count1 == value.size()) {
-                                    unStartList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                                    continue;
-                                }
-                                //判断该阶段任务是否全部未完成
-                                long count2 = value.stream().filter(e -> TaskStateEnum.FINISH.getCode().equals(e.getStatus())
-                                        || TaskStateEnum.APPROVAL_ING.getCode().equals(e.getStatus())
-                                        || TaskStateEnum.APPROVAL_PASS.getCode().equals(e.getStatus())
-                                        || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())
-                                        || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
-                                if (count2 == value.size()) {
-                                    finishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                                    inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                                    continue;
-                                }
-                                //阶段下任务为进行中
-                                progressList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                                inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
-                            }
-                            //存在完成或进行中阶段
-                            if (CollectionUtils.isNotEmpty(progressList)) {
-                                List<String> progress = progressList.stream().map(e -> e.getKey()).collect(Collectors.toList());
-                                if (CollectionUtils.isNotEmpty(progress)) {
-                                    resultList.addAll(progress);
-                                }
-                            }
-                            if (CollectionUtils.isNotEmpty(unStartList)) {
-                                if (CollectionUtils.isEmpty(inFinishList)) {
-                                    //都是未开始，则显示第一个
-                                    resultList.add(unStartList.get(0).getKey());
-                                } else {
-                                    Pair<String, Integer> pair = inFinishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
-                                    List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
-                                    if (CollectionUtils.isNotEmpty(unStart)) {
-                                        resultList.addAll(unStart);
-                                    }
-                                }
-                            }
-                            if ( CollectionUtils.isNotEmpty(finishList)){
-                                if (CollectionUtils.isEmpty(progressList)  ) {
-                                    if (CollectionUtils.isNotEmpty(unStartList)) {
-                                        Pair<String, Integer> pair = finishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
-                                        List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
-                                        if (CollectionUtils.isEmpty(unStart)) {
-                                            //未开始阶段在已完成阶段后面则显示最后一条
-                                            resultList.add(finishList.get(finishList.size() - 1).getKey());
-                                        }
-                                    } else {
-                                        //全部已完成则显示最后一条
-                                        resultList.add(finishList.get(finishList.size() - 1).getKey());
-                                    }
-
-                                }
-                            }
-                            if (CollectionUtils.isNotEmpty(resultList)) {
-                                item.setProjectPhase(String.join(",", resultList));
-                            }
-                        }
-
-                    }
-                }
-
+                projectInfoService.setProjectPhase(taskList,phaseList,item);
 
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);

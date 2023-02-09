@@ -3,6 +3,7 @@ package com.erp.common.dto.base;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.io.Serializable;
 import java.util.List;
 
@@ -14,8 +15,8 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SortDTO implements Serializable {
+public class SortDTO extends PermissionsDTO implements Serializable {
 
-
+    @Valid
     private List<SortParamDTO>  sortList;
 }
