@@ -837,7 +837,7 @@ ProductDetailController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/commit")
-    public ApiResult commit(BaseIdDTO dto) {
+    public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.commit(dto.getId());
         return result == true ? success() : failure();
     }
