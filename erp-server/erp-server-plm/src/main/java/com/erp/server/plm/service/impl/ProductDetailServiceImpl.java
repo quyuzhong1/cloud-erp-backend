@@ -1730,9 +1730,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isBlank(productDetailEntity.getName())) {
             str.append("产品名称(品名)不能为空");
         }
-        if (StringUtils.isBlank(productDetailEntity.getVariantProperty())) {
-            str.append("产品属性不能为空");
-        }
         if (ObjectUtils.isEmpty(productDetailEntity.getProductState())) {
             str.append("产品开发状态不能为空");
         }
