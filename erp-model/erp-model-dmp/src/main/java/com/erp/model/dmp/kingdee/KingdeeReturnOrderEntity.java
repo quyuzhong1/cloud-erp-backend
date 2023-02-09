@@ -42,9 +42,9 @@ public class KingdeeReturnOrderEntity {
     @Alias("FSalesManId.FName")
     private String fSalesManName;
     @Alias("FCreateDate")
-    private LocalDateTime fCreateDate;
+    private String fCreateDate;
     @Alias("FModifyDate")
-    private LocalDateTime fModifyDate;
+    private String fModifyDate;
     @Alias("FCancelStatus")
     private String fCancelStatus;
     @Alias("FReceiverCountry")
@@ -54,7 +54,7 @@ public class KingdeeReturnOrderEntity {
     @Alias("FExchangeRate")
     private BigDecimal fExchangeRate;
     @Alias("FApproveDate")
-    private LocalDateTime fApproveDate;
+    private String fApproveDate;
     @Alias("FBussinessType")
     private String fBussinessType;
     @Alias("FOwnerTypeIdHead")
@@ -62,7 +62,7 @@ public class KingdeeReturnOrderEntity {
     @Alias("FSettleCurrId.FCode")
     private String fSettleCurrCode;
     @Alias("FDelTime")
-    private LocalDateTime FDelTime;
+    private String FDelTime;
     @Alias("FHeadNote")
     private String FHeadNote;
     private List<KingdeeReturnOrderItemEntity> itemEntityList;

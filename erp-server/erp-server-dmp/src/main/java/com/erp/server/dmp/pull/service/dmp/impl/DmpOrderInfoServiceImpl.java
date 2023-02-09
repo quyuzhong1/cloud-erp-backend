@@ -1,11 +1,14 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
@@ -22,6 +25,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * 订单服务类
@@ -56,7 +60,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      **/
     @Override
     public String add(DmpOrderInfoEntity dmpOrderInfoEntity) {
-        this.save(dmpOrderInfoEntity);
+        save(dmpOrderInfoEntity);
         return dmpOrderInfoEntity.getId();
     }
 
@@ -96,20 +100,33 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
      * @Date 2022/11/14 21:25
      * @return void
      **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public String checkOrder(DmpOrderInfoEntity orderInfoEntity) {
         String orderInfoId = "";
-        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber());
-        if (dmpOrderInfoEntity != null) {
+        DmpOrderInfoEntity dmpOrderInfoEntity = this.getOrderBySalesRecordNumber(orderInfoEntity.getSalesRecordNumber(), orderInfoEntity.getPlatformOrderId());
+        if (null != dmpOrderInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(orderInfoEntity.toString())) {
                 orderInfoEntity.setId(dmpOrderInfoEntity.getId());
-                this.updateById(orderInfoEntity);
-                orderInfoId = dmpOrderInfoEntity.getId();
+                updateById(orderInfoEntity);
             }
-
+            orderInfoId = dmpOrderInfoEntity.getId();
         } else {
-            orderInfoId = this.add(orderInfoEntity);
+            // 修正状态同步
+            orderInfoEntity.setCorrectionStatus(orderInfoEntity.getOrderStatus());
+            orderInfoId = add(orderInfoEntity);
         }
+        if(StrUtil.isBlank(orderInfoId)){
+            throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
+        }
+        List<DmpOrderItemEntity> itemList = orderInfoEntity.getItemList();
+        if (CollectionUtil.isEmpty(itemList)){
+            return orderInfoId;
+        }
+        String orderId = orderInfoId;
+        itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
+        dmpOrderItemService.checkOrderItem(itemList);
         return orderInfoId;
     }
 
@@ -240,9 +257,9 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     }
 
     @Override
-    public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber) {
+    public DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber, String platformOrderId) {
         return lambdaQuery().eq(DmpOrderInfoEntity::getSalesRecordNumber, salesRecordNumber)
-                .last("limit 1")
+                .eq(DmpOrderInfoEntity::getPlatformOrderId, platformOrderId)
                 .one();
     }
 

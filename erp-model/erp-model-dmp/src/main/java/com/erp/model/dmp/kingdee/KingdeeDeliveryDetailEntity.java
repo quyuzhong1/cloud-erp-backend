@@ -13,14 +13,17 @@ import java.util.List;
 public class KingdeeDeliveryDetailEntity{
 
     private String _id;
-    @Alias("FBillTypeID")
-    private String fBillTypeID;
-    @Alias("FBillTypeID.FName")
-    private String fBillTypeName;
+    @Alias("FID")
+    private String fId;
+
     @Alias("FBillNo")
     private String fBillNo;
     @Alias("FSoorDerno")
     private String fSoorDerno;
+    @Alias("FBillTypeID")
+    private String fBillTypeID;
+    @Alias("FBillTypeID.FName")
+    private String fBillTypeName;
     @Alias("FDate")
     private String fDate;
     @Alias("FSaleOrgId")
@@ -43,6 +46,9 @@ public class KingdeeDeliveryDetailEntity{
     private String fTransferBizTypeName;
     @Alias("F_ulz_BaseProperty2")
     private String f_ulz_BaseProperty2;
+    @Alias("F_ulz_BaseProperty2.FNumber")
+    private String f_ulz_BaseProperty2Code;
+
     @Alias("FLinkPhone")
     private String fLinkPhone;
     @Alias("FLinkMan")

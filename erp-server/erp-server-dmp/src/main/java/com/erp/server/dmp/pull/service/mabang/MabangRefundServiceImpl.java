@@ -4,11 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -16,8 +16,8 @@ import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.mabang.RefundOrderEntity;
-import com.erp.model.dmp.mabang.RefundOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -25,6 +25,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,6 +35,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,18 +50,10 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     private MongoService mongoService;
 
     @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
     private DmpRefundItemService dmpRefundItemService;
 
     @Autowired
     private MQProducerService<DmpRefundInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("mabangRefundServiceImpl")
-    private IReportSaveService reportSaveService;
-
 
     public static void main(String[] args) {
         MabangRefundServiceImpl gyyOrderInfoService = new MabangRefundServiceImpl();
@@ -105,7 +99,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         List<RefundOrderEntity> pushToMqList = new ArrayList<>();
         for (RefundOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
-            List<RefundOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, RefundOrderEntity.class);
+            List<RefundOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -118,10 +112,14 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, RefundOrderEntity.class);
+            mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_REFUND);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("马帮退款订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpRefundInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -182,14 +180,6 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         dmpRefundInfoEntity.setItemList(initOrderItem(refundOrderEntity));
         return dmpRefundInfoEntity;
     }
-    /**
-     *         //新增订单信息
-     *         String refundInfoId = dmpRefundInfoService.checkOrder(dmpRefundInfoEntity);
-     *         if (StringUtils.isNotBlank(refundInfoId)) {
-     *             //新增订单商品信息
-     *             analysisRefundOrderItem(refundOrderEntity.getProductList(), refundInfoId);
-     *         }
-     */
 
     /**
      * 解析退款订单商品数据
@@ -200,10 +190,12 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
      **/
     public List<DmpRefundItemEntity> initOrderItem(RefundOrderEntity refundOrderEntity) {
         List<DmpRefundItemEntity> orderItemList = new ArrayList<>();
+        HashMap<String, Integer> skuCountMap = new HashMap<>();
         refundOrderEntity.getProductList().stream().forEach( refundOrderItemEntity -> {
             DmpRefundItemEntity dmpRefundItemEntity = new DmpRefundItemEntity();
             //sku编号
-            dmpRefundItemEntity.setSkuNo(refundOrderItemEntity.getRefundStock());
+            String skuNo = refundOrderItemEntity.getRefundStock();
+            dmpRefundItemEntity.setSkuNo(skuNo);
             //订单原始商品数量
             dmpRefundItemEntity.setQuantity(refundOrderItemEntity.getStock_quantity());
             //退款商品数量
@@ -211,21 +203,12 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
             //是否属于组合sku：0. 否 1. 是
             dmpRefundItemEntity.setIsCombo(refundOrderItemEntity.getIsCombo());
             dmpRefundItemEntity.setAmountAfter(BigDecimal.ZERO);
+            //erp平台商品id
+            String erpOrderItemId = refundOrderEntity.getPlatformOrderId() + "_" + refundOrderEntity.getRefundplatformOrderId() + "_" + skuNo;
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap,skuNo,erpOrderItemId);
+            dmpRefundItemEntity.setErpOrderItemId(erpOrderItemId);
             orderItemList.add(dmpRefundItemEntity);
         });
        return orderItemList;
-    }
-
-    /**
-     *  checkOrderItem(orderItemList, refundInfoId);
-     * 校验退款商品数据在中台是否存在，存在就修改不存在则新增
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     **/
-    public void checkOrderItem(List<DmpRefundItemEntity> orderItem, String returnOrderId) {
-        dmpRefundItemService.deleteRefundItemByRefundId(returnOrderId);
-        dmpRefundItemService.batchAdd(orderItem);
     }
 }

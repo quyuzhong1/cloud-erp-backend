@@ -4,11 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -17,6 +17,7 @@ import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -26,6 +27,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,7 +38,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -110,17 +114,23 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
                 continue;
             }
             OrderEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("马帮销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -149,10 +159,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 
     /**
      * 解析订单数据
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
      **/
 
     public static DmpOrderInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
@@ -196,7 +202,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         //平台标识
         dmpOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         //企业Id
-        dmpOrderInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode().toString());
+        dmpOrderInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
         dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
@@ -207,20 +213,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     }
 
     /**
-     *  //新增订单信息
-     *         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
-     *
-     *          if (StringUtils.isNotBlank(orderInfoId)) {
-     *             //新增订单商品信息
-     *             analysisOrderItem(orderEntity, orderInfoId, orderEntity.getPlatformOrderId());
-     *         }
-     */
-
-    /**
      * 解析订单商品数据
-     *
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
      **/
     public static List<DmpOrderItemEntity> initOrderItem(OrderEntity orderEntity) {
         List<OrderItemEntity> orderItems = orderEntity.getOrderItem();
@@ -228,6 +221,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         BigDecimal shippingFee = null != orderEntity.getShippingTotalOrigin() ? orderEntity.getShippingTotalOrigin() : BigDecimal.ZERO;
         BigDecimal itemTotal = orderEntity.getItemTotalOrigin();
         BigDecimal shareFeeAmount = BigDecimal.ZERO;
+        HashMap<String, Integer> skuCountMap = new HashMap<>();
         List<DmpOrderItemEntity> items = new ArrayList<>();
         for (int i = 0; i < orderItems.size(); i++) {
             OrderItemEntity orderItemBean = orderItems.get(i);
@@ -236,9 +230,12 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             //商品名称
             dmpOrderItemEntity.setItemName(orderItemBean.getTitle());;
             //sku
-            dmpOrderItemEntity.setSkuNo(orderItemBean.getStockSku());
+            String skuNo = orderItemBean.getStockSku();
+            dmpOrderItemEntity.setSkuNo(skuNo);
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId(orderEntity.getPlatformOrderId() + "_" + orderItemBean.getStockSku());
+            String erpOrderItemId = orderEntity.getPlatformOrderId() + "_" + orderItemBean.getStockSku();
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap,skuNo,erpOrderItemId);
+            dmpOrderItemEntity.setErpOrderItemId(erpOrderItemId);
             //汇率
             dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
             if (orderEntity.getCurrencyRate() != null
@@ -264,8 +261,4 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         }
         return items;
     }
-
-    /**
-     * dmpOrderItemService.checkOrderItem(orderItemList);
-     */
 }

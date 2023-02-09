@@ -33,6 +33,7 @@ public class PullErpDateThread {
         dto.setPlatformApiEnum(enumByType);
         dto.setJobTaskDTO(jobTaskDTO);
         try {
+            log.info("发起异步{}调用任务{}", dto.getJobTaskDTO().getPlatformName(),dto.getJobTaskDTO().getTaskName());
             modelService.pullDataSave(dto);
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {

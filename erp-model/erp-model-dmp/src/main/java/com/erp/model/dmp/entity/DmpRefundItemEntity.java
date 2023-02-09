@@ -53,6 +53,12 @@ public class DmpRefundItemEntity implements Serializable {
     private Integer isCombo;
 
     /**
+     * erp平台商品id
+     */
+    @TableField(value = "erp_order_item_id")
+    private String erpOrderItemId;
+
+    /**
      * 折扣后订单总金额
      */
     @TableField(value = "amount_after")

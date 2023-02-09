@@ -36,4 +36,10 @@ public interface DmpRefundItemService extends IService<DmpRefundItemEntity> {
      * @return java.lang.Boolean
      **/
     Boolean deleteRefundItemByRefundId(String refundId);
+
+    /**
+     * 处理退款订单详情数据
+     * @param itemList
+     */
+    void checkOrderItem(List<DmpRefundItemEntity> itemList);
 }

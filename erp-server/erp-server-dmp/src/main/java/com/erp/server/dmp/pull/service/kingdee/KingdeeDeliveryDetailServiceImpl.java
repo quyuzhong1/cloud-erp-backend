@@ -2,13 +2,14 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.KingdeeOutStockDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -17,20 +18,18 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -52,18 +51,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     @Resource
     private MongoService mongoService;
 
-    @Resource
-    private DmpDeliveryDetailInfoService dmpDeliveryDetailInfoService;
-
-    @Resource
-    private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
-
     @Autowired
     private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("kingdeeDeliveryDetailServiceImpl")
-    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -83,21 +72,28 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 continue;
             }
             KingdeeDeliveryDetailEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL);
         }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("金蝶发货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
                 .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
@@ -119,17 +115,18 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         dto.getJobTaskDTO().setLastTime(nextTime);
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
-        queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
-        queryFilters.add(String.format("FBillTypeID = '%s'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
-        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
+        queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(StrUtil.format("FModifyDate <= '{}}'", sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FBillTypeID = '{}'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
+        queryFilters.add(StrUtil.format("F_ulz_BaseProperty2.FNumber in ('{}','{}','{}')", "3001","3000","3003"));
+        queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FFBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName," +
+        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName," +
                 "FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName," +
-                "FTransferBizType.FName,F_ulz_BaseProperty2,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
+                "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
                 "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
-                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"
-                + "FSrcBillNo,F_ulz_BaseProperty1,FCustMatID,FCustMatName,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
+                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"+
+                "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
                 "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote";
 
@@ -150,7 +147,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 return Collections.emptyList();
             }
             List<KingdeeDeliveryDetailEntity> entityList = result.stream().map(shopEntity ->
-                    BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).collect(Collectors.toList());
+                    BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
 
             Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
                             BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class))
@@ -168,10 +165,12 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      **/
     private DmpDeliveryDetailInfoEntity initOrderInfoEntity(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
         // 跳过非唯迹订单
-        if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) || !ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId())){
+        if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) ||
+                ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
+                        ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId())
+        ){
             return null;
         }
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         //单据编号
         deliveryDetailInfoEntity.setBillNo(kingdeeOutStockEntity.getFBillNo());
@@ -241,19 +240,19 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         deliveryDetailInfoEntity.setStatus(status);
         //平台单据审核时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFApproveDate()) && !kingdeeOutStockEntity.getFApproveDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(kingdeeOutStockEntity.getFApproveDate(), sdf));
+            deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(kingdeeOutStockEntity.getFApproveDate()));
         }
         //平台单据创建时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFCreateDate()) && !kingdeeOutStockEntity.getFCreateDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFCreateDate(), sdf));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFCreateDate()));
         }
         //平台单据修改时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFModifyDate()) && !kingdeeOutStockEntity.getFModifyDate().equals("null")) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFModifyDate(), sdf));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(kingdeeOutStockEntity.getFModifyDate()));
         }
         //发货时间
         if (StringUtils.isNotBlank(kingdeeOutStockEntity.getFDate()) && !kingdeeOutStockEntity.getFDate().equals("null")) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(kingdeeOutStockEntity.getFDate(), sdf));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(kingdeeOutStockEntity.getFDate()));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(kingdeeOutStockEntity.getFNote());
@@ -267,15 +266,6 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         deliveryDetailInfoEntity.setDetails(initOrderItem(kingdeeOutStockEntity));
         return deliveryDetailInfoEntity;
     }
-
-    /**
-     *         //新增订单信息
-     *         String deliveryDetailId = dmpDeliveryDetailInfoService.checkOrder(deliveryDetailInfoEntity);
-     *         if (StringUtils.isNotBlank(deliveryDetailId)) {
-     *             //新增订单商品信息
-     *             analysisReturnOrderItem(kingdeeOutStockEntity.getKingdeeOutStockItemEntityList(), deliveryDetailId);
-     *         }
-     */
 
     /**
      * 解析出库详情商品数据
@@ -319,19 +309,5 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             orderItemList.add(dmpReturnOrderItemEntity);
         });
         return orderItemList;
-    }
-
-    /**
-     * checkOrderItem(orderItemList, deliveryDetailId);
-     */
-    /**
-     * 校验出库详情商品信息在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     * @return void
-     **/
-    public void checkOrderItem(List<DmpDeliveryDetailItemEntity> orderItem, String deliveryDetailId) {
-        dmpDeliveryDetailItemService.deleteDeliveryDetailItemByDetailId(deliveryDetailId);
-        dmpDeliveryDetailItemService.batchAdd(orderItem);
     }
 }

@@ -42,10 +42,6 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
 
-    @Resource
-    @Qualifier("mabangSkuInfoServiceImpl")
-    private IReportSaveService reportSaveService;
-
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<SkuInfoEntity> entityList = pullDate(dto);
@@ -98,55 +94,39 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     public void analysisOrder(SkuInfoEntity skuInfoEntity) throws Exception {
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-
         dmpSkuInfoEntity.setItemCode(skuInfoEntity.getStockSku());
-
         //sku编号
         dmpSkuInfoEntity.setSkuNo(skuInfoEntity.getStockSku());
-
         //中文名
         dmpSkuInfoEntity.setNameCn(skuInfoEntity.getNameCN());
-
         //英文名
         dmpSkuInfoEntity.setNameEn(skuInfoEntity.getNameEN());
-
         //统一成本价
         dmpSkuInfoEntity.setDefaultCost(skuInfoEntity.getDefaultCost());
-
         //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
         dmpSkuInfoEntity.setStatus(skuInfoEntity.getStatus());
-
         //商品创建时间
         if (StringUtils.isNotBlank(skuInfoEntity.getTimeCreated())) {
             dmpSkuInfoEntity.setSkuCreateTime(LocalDateTime.parse(skuInfoEntity.getTimeCreated(), sdf));
         }
-
         //商品修改时间
         if (StringUtils.isNotBlank(skuInfoEntity.getTimeModify())) {
             dmpSkuInfoEntity.setSkuUpdateTime(LocalDateTime.parse(skuInfoEntity.getTimeModify(), sdf));
         }
-
         //品牌
         dmpSkuInfoEntity.setBrandName(skuInfoEntity.getBrandName());
-
         //商品目录(一级)
         dmpSkuInfoEntity.setParentCategoryName(skuInfoEntity.getParentCategoryName());
-
         //商品目录(二级)
         dmpSkuInfoEntity.setCategoryName(skuInfoEntity.getCategoryName());
-
         //售价
         dmpSkuInfoEntity.setSalePrice(skuInfoEntity.getSalePrice());
-
         //申报价格
         dmpSkuInfoEntity.setDeclarePrice(skuInfoEntity.getDeclareValue());
-
         //开发员id
         dmpSkuInfoEntity.setDeveloperId(skuInfoEntity.getDeveloperId());
-
         //开发员名称
         dmpSkuInfoEntity.setDeveloperName(skuInfoEntity.getDeveloperName());
-
         //平台标识
         dmpSkuInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
 

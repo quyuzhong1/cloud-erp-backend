@@ -7,12 +7,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,9 +27,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpShopInfoEntity>
     implements DmpShopInfoService {
-
-    @Autowired
-    private DmpShopInfoMapper dmpShopInfoMapper;
 
     /**
      * 添加店铺信息
@@ -79,6 +78,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
      * @return void
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkOrder(DmpShopInfoEntity dmpShopInfoEntity) {
         DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlarformShopNo(), dmpShopInfoEntity.getPlatformSign());
         if (dmpOrderInfoEntity != null) {
@@ -121,15 +121,16 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity) {
         List<DmpShopInfoEntity> shopInfoEntity = lambdaQuery()
-                .eq(DmpShopInfoEntity::getName, dmpShopInfoEntity.getName())
+                .eq(DmpShopInfoEntity::getFinanceCode, dmpShopInfoEntity.getPlarformShopNo())
                 .list();
         if (CollectionUtil.isEmpty(shopInfoEntity)) {
             return;
         }
         shopInfoEntity.forEach(entity -> {
-            //如果数据有变动需要更新数据库订单信息
+            //如果数据有变动需要更新
             if (Objects.equals(dmpShopInfoEntity.getUseOrgId(), entity.getUseOrgId())
                     && Objects.equals(dmpShopInfoEntity.getUseOrgName(), entity.getUseOrgName())) {
                 return;

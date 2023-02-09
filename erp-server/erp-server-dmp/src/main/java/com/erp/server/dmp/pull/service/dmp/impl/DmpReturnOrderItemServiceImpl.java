@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
@@ -7,7 +8,9 @@ import com.erp.server.dmp.pull.mapper.DmpReturnOrderItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 中台订单退货服务类
@@ -63,6 +66,31 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
         LambdaQueryWrapper<DmpReturnOrderItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpReturnOrderItemEntity::getReturnOrderId, returnOrderId);
         return this.remove(lambdaQueryWrapper);
+    }
+
+    @Override
+    public void checkOrderItem(List<DmpReturnOrderItemEntity> itemList) {
+        List<DmpReturnOrderItemEntity> insertList = new ArrayList<>();
+        for (DmpReturnOrderItemEntity orderItemBean : itemList) {
+            Optional<DmpReturnOrderItemEntity> dmpReturnOrderItemEntity = lambdaQuery()
+                    .eq(DmpReturnOrderItemEntity::getErpOrderItemId, orderItemBean.getErpOrderItemId())
+                    .oneOpt();
+            if (dmpReturnOrderItemEntity.isPresent()) {
+                //如果数据有变动需要更新数据库订单商品信息
+                if (!dmpReturnOrderItemEntity.get().toString().equals(orderItemBean.toString())) {
+                    orderItemBean.setId(dmpReturnOrderItemEntity.get().getId());
+                    updateById(orderItemBean);
+                }
+            } else {
+//                if (orderItemBean.getIsDeleted()){
+//                    continue;
+//                }
+                insertList.add(orderItemBean);
+            }
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            saveBatch(insertList);
+        }
     }
 }
 

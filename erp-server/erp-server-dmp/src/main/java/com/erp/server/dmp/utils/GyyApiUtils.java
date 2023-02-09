@@ -111,7 +111,7 @@ public class GyyApiUtils {
             }else {
                 params.put("start_modify_date", sdf.format(startDate));
                 params.put("end_modify_date", sdf.format(endDate));
-                params.put("fields", Arrays.asList("deliveryInfo","goodsInfo","invoiceInfo","uniqueInfo","batchInfo"));
+//                params.put("fields", Arrays.asList("deliveryInfo","goodsInfo","invoiceInfo","uniqueInfo","batchInfo"));
                 params.put("delivery", 1);
             }
             Map<String, Object> paramMap = getParamMap(method, pageSize, pageIndex, params);
@@ -154,8 +154,8 @@ public class GyyApiUtils {
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         while (pageIndex <= pageCount) {
             HashMap<String, Object> params = new HashMap<>(6);
-            params.put("modify_start_date", sdf.format(startDate));
-            params.put("modify_end_date", sdf.format(endDate));
+            params.put("start_modify_date", sdf.format(startDate));
+            params.put("end_modify_date", sdf.format(endDate));
             params.put("cancel", 0);
             Map<String, Object> paramMap = getParamMap(method,pageSize, pageIndex, params);
 

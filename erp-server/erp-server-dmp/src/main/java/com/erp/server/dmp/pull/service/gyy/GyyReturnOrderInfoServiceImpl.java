@@ -3,12 +3,13 @@ package com.erp.server.dmp.pull.service.gyy;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -26,6 +27,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -35,7 +37,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -49,16 +53,10 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     private MongoService mongoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
-
-    @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
     @Resource
     private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
-    @Resource
-    @Qualifier("gyyReturnOrderInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyReturnOrderInfoServiceImpl gyyReturnOrderInfoService = new GyyReturnOrderInfoServiceImpl();
@@ -108,17 +106,23 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
                 continue;
             }
             GyyReturnOrderEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("管易退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -222,19 +226,13 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         dmpReturnOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
         //平台标识
         dmpReturnOrderInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
+        dmpReturnOrderInfoEntity.setIsDeleted(Boolean.FALSE);
         dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpReturnOrderInfoEntity.setItemList(initOrderItem(gyyReturnOrderEntity));
         return dmpReturnOrderInfoEntity;
     }
 
     /**
-     *
-     *    //新增订单信息
-     *         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
-     *         if (StringUtils.isNotBlank(orderInfoId)) {
-     *             //新增订单商品信息
-     *             analysisReturnOrderItem(gyyReturnOrderEntity.getDetails(), orderInfoId);
-     *         }
      * 解析退货订单商品数据
      *
      * @return void
@@ -243,10 +241,12 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      **/
     private List<DmpReturnOrderItemEntity> initOrderItem(GyyReturnOrderEntity gyyReturnOrderEntity) {
         List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
+        Map<String, Integer> skuCountMap = new HashMap<>();
         gyyReturnOrderEntity.getDetails().stream().forEach(orderItemBean -> {
             DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
             //sku编号
-            dmpReturnOrderItemEntity.setSkuNo(orderItemBean.getItemCode());
+            String skuNo = orderItemBean.getItemCode();
+            dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getItemName());
             //买家购买数量
@@ -261,6 +261,11 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             dmpReturnOrderItemEntity.setSpecifics("");
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(0);
+            //erp平台商品id
+            String erpOrderItemId = gyyReturnOrderEntity.getCode() + "_" + gyyReturnOrderEntity.getPlatformCode() + "_" + skuNo;
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
+            dmpReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            dmpReturnOrderItemEntity.setIsDeleted(Boolean.FALSE);
             //折扣后金额
             dmpReturnOrderItemEntity.setAmountAfter(new BigDecimal(orderItemBean.getAmountAfter()));
             orderItemList.add(dmpReturnOrderItemEntity);
@@ -268,17 +273,5 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
        return orderItemList;
     }
 
-    /**
-     *
-     *  checkOrderItem(orderItemList, orderId);
-     * 校验退货订单商品信息在中台是否存在，存在就修改不存在则新增
-     *
-     * @return void
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     **/
-    public void checkOrderItem(List<DmpReturnOrderItemEntity> orderItem, String returnOrderId) {
-        dmpReturnOrderItemService.deleteOrderByReturnOrderId(returnOrderId);
-        dmpReturnOrderItemService.batchAdd(orderItem);
-    }
+
 }

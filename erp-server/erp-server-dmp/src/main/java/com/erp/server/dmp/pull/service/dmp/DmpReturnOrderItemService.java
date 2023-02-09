@@ -44,4 +44,11 @@ public interface DmpReturnOrderItemService extends IService<DmpReturnOrderItemEn
      * @return java.lang.Boolean
      **/
     Boolean deleteOrderByReturnOrderId(String returnOrderId);
+
+    /**
+     * 处理退货详情数据
+     *
+     * @param itemList
+     */
+    void checkOrderItem(List<DmpReturnOrderItemEntity> itemList);
 }

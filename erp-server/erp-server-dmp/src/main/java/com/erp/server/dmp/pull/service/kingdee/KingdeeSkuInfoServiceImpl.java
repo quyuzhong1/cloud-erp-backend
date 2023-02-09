@@ -4,29 +4,28 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -49,13 +48,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     private MongoService mongoService;
 
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
-
-    @Resource
     private MQProducerService<DmpSkuInfoEntity> mqProducerService;
-    @Resource
-    @Qualifier("kingdeeSkuInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -76,17 +69,23 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
                 continue;
             }
             KingdeeSkuEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_SKU);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("金蝶SKU信息, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpSkuInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -118,7 +117,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
+        String fieldKeys = "FUseOrgId,FUseOrgId.FName,FNumber,FMaterialId,FName,FSpecification,FCreateDate,FModifyDate," +
                 "FDocumentStatus,FForbidStatus,FRefStatus,FPurPrice_CMK,F_PRVD_Assistant.FDataValue," +
                 "F_PRVD_Assistant1.FDataValue,FSalePrice_CMK,F_SSRQ,FErpClsID";
 
@@ -154,7 +153,10 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
      * @Date 2022/11/14 18:57
      **/
     public DmpSkuInfoEntity initOrderInfoEntity(KingdeeSkuEntity skuInfoEntity) {
-        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) || !ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode().equals(skuInfoEntity.getFUseOrgId())){
+        if (StrUtil.isEmpty(skuInfoEntity.getFUseOrgId()) ||
+                ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(skuInfoEntity.getFUseOrgId()) ||
+                ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(skuInfoEntity.getFUseOrgId())
+        ){
             return null;
         }
         DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
@@ -206,7 +208,9 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         //企业名称
         dmpSkuInfoEntity.setCompanyName(skuInfoEntity.getFUseOrgName());
         //上市时间
-        dmpSkuInfoEntity.setListingTime(skuInfoEntity.getFSSRQ());
+        if (!"null".equals(skuInfoEntity.getFSSRQ()) && StrUtil.isNotEmpty(skuInfoEntity.getFSSRQ())){
+            dmpSkuInfoEntity.setListingTime(LocalDateTime.parse(skuInfoEntity.getFSSRQ()));
+        }
         String itemProperty = "";
         switch (skuInfoEntity.getFErpClsID()) {
             case "1" :
@@ -230,8 +234,4 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
         dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
         return  dmpSkuInfoEntity;
     }
-
-    /**
-     *      dmpSkuInfoService.checkOrder(dmpSkuInfoEntity);
-     */
 }

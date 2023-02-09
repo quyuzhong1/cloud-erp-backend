@@ -1,4 +1,4 @@
-package com.erp.model.dmp.constant;
+package com.erp.model.dmp.enums;
 
 import cn.hutool.core.collection.CollectionUtil;
 
@@ -154,7 +154,7 @@ public enum RocketMqTagEnum {
     }
 
     public static void main(String[] args) {
-        String tagStrByType = getTagStrByType(SALES_ORDER);
+        String tagStrByType = getTagStrByType(SKU_INFO);
         System.out.println("tagStrByType = " + tagStrByType);
     }
 

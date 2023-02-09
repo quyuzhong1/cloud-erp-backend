@@ -4,21 +4,20 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.mabang.ReturnOrderEntity;
-import com.erp.model.dmp.mabang.ReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -26,6 +25,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,6 +35,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,17 +50,10 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     private MongoService mongoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
-
-    @Resource
     private DmpReturnOrderItemService dmpReturnOrderItemService;
 
     @Autowired
     private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("mabangReturnOrderInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         MabangReturnOrderInfoServiceImpl getOrderInfoService = new MabangReturnOrderInfoServiceImpl();
@@ -102,24 +96,30 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         List<ReturnOrderEntity> pushToMqList = new ArrayList<>();
         for (ReturnOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
-            List<ReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, ReturnOrderEntity.class);
+            List<ReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_RETURN_ORDER, ReturnOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
             ReturnOrderEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, ReturnOrderEntity.class);
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_RETURN_ORDER, ReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_ORDER);
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_RETURN_ORDER);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("马帮退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -176,24 +176,16 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
     }
 
     /**
-     *
-     *       //新增订单信息
-     *         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
-     *         if (StringUtils.isNotBlank(orderInfoId)) {
-     *             //新增订单商品信息
-     *             analysisReturnOrderItem(returnOrderEntity.getItem(), orderInfoId, 5 == returnOrderEntity.getStatus());
-     *         }
      * 解析退货订单商品数据
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
-     * @return void
      **/
     public List<DmpReturnOrderItemEntity> initOrderItem(ReturnOrderEntity returnOrderEntity) {
         List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
+        HashMap<String, Integer> skuCountMap = new HashMap<>();
         returnOrderEntity.getItem().stream().forEach(orderItemBean -> {
             DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
             //sku编号
-            dmpReturnOrderItemEntity.setSkuNo(orderItemBean.getStockSku());
+            String skuNo = orderItemBean.getStockSku();
+            dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getTitle());
             //买家购买数量
@@ -208,25 +200,14 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
             dmpReturnOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(orderItemBean.getStatus());
+            dmpReturnOrderItemEntity.setIsDeleted(5 == returnOrderEntity.getStatus());
+            //erp平台商品id
+            String erpOrderItemId = returnOrderEntity.getPlatformOrderId() + "_" + returnOrderEntity.getSalesRecordNumber() + "_" + skuNo;
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
+            dmpReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
             dmpReturnOrderItemEntity.setAmountAfter(orderItemBean.getSellPrice().multiply(new BigDecimal(orderItemBean.getQuantity())));
             orderItemList.add(dmpReturnOrderItemEntity);
         });
         return orderItemList;
-    }
-
-    /**
-     *  checkOrderItem(orderItemList, orderId, isDeleted);
-     *
-     *     orderItemList.add(dmpReturnOrderItemEntity);
-     * 校验退货订单商品信息在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     * @return void
-     **/
-    public void checkOrderItem(List<DmpReturnOrderItemEntity> orderItem, String returnOrderId, boolean isDeleted) {
-        dmpReturnOrderItemService.deleteOrderByReturnOrderId(returnOrderId);
-        if (!isDeleted){
-            dmpReturnOrderItemService.batchAdd(orderItem);
-        }
     }
 }

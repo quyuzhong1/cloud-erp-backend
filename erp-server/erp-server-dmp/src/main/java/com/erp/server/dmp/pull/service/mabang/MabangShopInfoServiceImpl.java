@@ -3,25 +3,24 @@ package com.erp.server.dmp.pull.service.mabang;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -41,14 +40,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     private MongoService mongoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
-
-    @Resource
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("mabangShopInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -79,6 +71,10 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_SHOP);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("马帮店铺信息, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpShopInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -131,8 +127,4 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
         dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
         return dmpShopInfoEntity;
     }
-
-    /**
-     *  dmpShopInfoService.checkOrder(dmpShopInfoEntity);
-     */
 }

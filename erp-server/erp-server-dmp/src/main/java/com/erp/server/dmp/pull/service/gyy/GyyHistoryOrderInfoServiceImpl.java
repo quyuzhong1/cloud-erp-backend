@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.gyy;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
@@ -8,12 +9,14 @@ import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.erp.server.dmp.utils.MapCountUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 
 /**
  * 管易云订单
@@ -55,6 +58,24 @@ public class GyyHistoryOrderInfoServiceImpl implements IReportHistoryService<Gyy
             String message = e.getMessage();
             DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);
+        }
+    }
+
+    public static void main(String[] args) {
+        HashMap<String, Integer> skuCountMap = new HashMap<>();
+        for (int i = 0; i < 10; i++ ) {
+            String temp = String.valueOf(i%3);
+            skuCountMap.compute(temp, (k, v) -> (v == null) ? 1 : v + 1);
+            String erpOrderItemId = "key"+temp;
+            erpOrderItemId = StrUtil.format("{}_{}", erpOrderItemId, skuCountMap.get(temp));
+            System.out.println("erpOrderItemId = " + erpOrderItemId);
+        }
+        HashMap<String, Integer> skuCountMap2 = new HashMap<>();
+        for (int i = 0; i < 10; i++ ) {
+            String sku = String.valueOf(i%3);
+            String erpOrderItemId = "key"+sku;
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap2, sku, erpOrderItemId);
+            System.out.println("erpOrderItemId2 = " + erpOrderItemId);
         }
     }
 }

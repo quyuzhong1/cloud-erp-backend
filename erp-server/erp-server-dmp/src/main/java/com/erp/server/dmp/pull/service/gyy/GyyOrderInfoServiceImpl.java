@@ -2,13 +2,12 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -16,29 +15,27 @@ import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -48,21 +45,10 @@ import java.util.stream.Collectors;
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_GET)
 public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntity> {
-
     @Resource
     private MongoService mongoService;
-
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
-    @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
     @Autowired
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
-    @Resource
-    @Qualifier("gyyOrderInfoServiceImpl")
-    private IReportSaveService reportSaveService;
-
     public static void main(String[] args) {
         GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
@@ -135,7 +121,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_ORDER);
         }
-
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("管易销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
         // 构造订单结构
         List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
                 .map(this::initOrderInfoEntity)
@@ -282,14 +271,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         dmpOrderInfoEntity.setItemList(initOrderItem(gyyOrderEntity, orderState));
         return dmpOrderInfoEntity;
     }
-    /**
-     *    //新增订单信息
-     *         String orderInfoId = dmpOrderInfoService.checkOrder(dmpOrderInfoEntity);
-     *         if (StringUtils.isNotBlank(orderInfoId)) {
-     *             //新增订单商品信息
-     *             analysisOrderItem(gyyOrderEntity, orderInfoId, orderState);
-     *         }
-     */
 
     /**
      * 解析订单商品数据
@@ -302,6 +283,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         List<DetailsBean> orderItem = gyyOrderEntity.getDetails();
         String warehouseCode = gyyOrderEntity.getWarehouseCode();
         List<DmpOrderItemEntity> orderItemList = new ArrayList<>();
+        Map<String, Integer> skuCountMap = new HashMap<>();
         for (DetailsBean detailsBean : orderItem) {
             DmpOrderItemEntity dmpOrderItemEntity = new DmpOrderItemEntity();
             //商品id
@@ -347,7 +329,10 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             //商品仓库编号
             dmpOrderItemEntity.setStockWarehouseId(warehouseCode);
             //erp平台商品id
-            dmpOrderItemEntity.setErpOrderItemId(gyyOrderEntity.getCode() + "-" + detailsBean.getItemCode());
+            String erpOrderItemId = gyyOrderEntity.getCode() + "_" + detailsBean.getItemCode();
+            String skuNo = detailsBean.getItemCode();
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
+            dmpOrderItemEntity.setErpOrderItemId(erpOrderItemId);
             //汇率
             dmpOrderItemEntity.setCurrencyRate(BigDecimal.ONE);
             //折扣后金额
@@ -356,7 +341,4 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         }
         return orderItemList;
     }
-    /**
-     * dmpOrderItemService.checkOrderItem(orderItemList);
-     */
 }

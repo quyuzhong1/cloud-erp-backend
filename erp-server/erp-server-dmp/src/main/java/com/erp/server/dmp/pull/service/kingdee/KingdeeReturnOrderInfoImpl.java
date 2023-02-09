@@ -4,12 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
@@ -17,24 +17,20 @@ import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -51,17 +47,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
     private MongoService mongoService;
 
     @Resource
-    private DmpReturnOrderInfoService dmpReturnOrderInfoService;
-
-    @Resource
-    private DmpReturnOrderItemService dmpReturnOrderItemService;
-
-    @Resource
     private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("kingdeeReturnOrderInfoImpl")
-    private IReportSaveService reportSaveService;
 
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
@@ -82,17 +68,23 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 continue;
             }
             KingdeeReturnOrderEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+            OrderMongoDTO updateDto = new OrderMongoDTO(id);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_ORDER);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("金蝶退货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
         }
         // 构造订单结构
         List<DmpReturnOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
@@ -123,7 +115,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
         queryFilters.add(String.format("FBillTypeID = '%s'", "73383412199a402bb58439509e089077"));
-        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
+//        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
         queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
@@ -168,7 +160,13 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
      * 解析订单数据
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(KingdeeReturnOrderEntity returnOrderEntity) {
-        if (StrUtil.isEmpty(returnOrderEntity.getFSaleOrgId()) || !ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode().equals(returnOrderEntity.getFSaleOrgId())){
+        if (StrUtil.isEmpty(returnOrderEntity.getFSaleOrgId()) ||
+                ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(returnOrderEntity.getFSaleOrgId()) ||
+                ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(returnOrderEntity.getFSaleOrgId())
+        ){
+            return null;
+        }
+        if (StrUtil.isBlank(returnOrderEntity.getFOrderNo())){
             return null;
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
@@ -183,7 +181,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         //付款时间
         dmpReturnOrderInfoEntity.setPaidTime(null);
         //发货时间
-        dmpReturnOrderInfoEntity.setExpressTime(returnOrderEntity.getFDelTime());
+        if (!"null".equals(returnOrderEntity.getFDelTime()) && StrUtil.isNotEmpty(returnOrderEntity.getFDelTime())){
+            dmpReturnOrderInfoEntity.setExpressTime(LocalDateTime.parse(returnOrderEntity.getFDelTime()));
+        }
         Integer status = 2;
         if (Objects.equals(returnOrderEntity.getFCancelStatus(), "C")) {
             status = 5;
@@ -225,9 +225,13 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         //备注
         dmpReturnOrderInfoEntity.setRemark(returnOrderEntity.getFHeadNote());
         //退货信息创建时间
-        dmpReturnOrderInfoEntity.setReturnCreateTime(returnOrderEntity.getFCreateDate());
+        if (!"null".equals(returnOrderEntity.getFCreateDate()) && StrUtil.isNotEmpty(returnOrderEntity.getFCreateDate())){
+            dmpReturnOrderInfoEntity.setReturnCreateTime(LocalDateTime.parse(returnOrderEntity.getFCreateDate()));
+        }
         //退款时间
-        dmpReturnOrderInfoEntity.setRefundTime(returnOrderEntity.getFApproveDate());
+        if (!"null".equals(returnOrderEntity.getFApproveDate()) && StrUtil.isNotEmpty(returnOrderEntity.getFApproveDate())){
+            dmpReturnOrderInfoEntity.setRefundTime(LocalDateTime.parse(returnOrderEntity.getFApproveDate()));
+        }
         //币种
         dmpReturnOrderInfoEntity.setCurrencyCode(returnOrderEntity.getFSettleCurrCode());
         //平台标识
@@ -236,18 +240,13 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         dmpReturnOrderInfoEntity.setCompanyId(returnOrderEntity.getFSaleOrgId());
         //企业名称
         dmpReturnOrderInfoEntity.setCompanyName(returnOrderEntity.getFSaleOrgName());
+        dmpReturnOrderInfoEntity.setIsDeleted(Boolean.FALSE);
         dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpReturnOrderInfoEntity.setItemList(initOrderItem(returnOrderEntity));
         return dmpReturnOrderInfoEntity;
     }
 
     /**
-     *         //新增订单信息
-     *         String orderInfoId = dmpReturnOrderInfoService.checkOrder(dmpReturnOrderInfoEntity);
-     *         if (StringUtils.isNotBlank(orderInfoId)) {
-     *             //新增订单商品信息
-     *             analysisReturnOrderItem(returnOrderEntity.getItemEntityList(), orderInfoId);
-     *         }
      * 解析退货订单商品数据
      * @Author Luo_WG
      * @Date 2022/11/14 18:57
@@ -255,10 +254,12 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
      **/
     public List<DmpReturnOrderItemEntity> initOrderItem(KingdeeReturnOrderEntity returnOrderEntity) {
         List<DmpReturnOrderItemEntity> orderItemList = new ArrayList<>();
+        HashMap<String, Integer> skuCountMap = new HashMap<>();
         returnOrderEntity.getItemEntityList().stream().forEach(orderItemBean ->{
             DmpReturnOrderItemEntity dmpReturnOrderItemEntity = new DmpReturnOrderItemEntity();
             //sku编号
-            dmpReturnOrderItemEntity.setSkuNo(orderItemBean.getFMaterialNumber());
+            String skuNo = orderItemBean.getFMaterialNumber();
+            dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
             //买家购买数量
@@ -273,21 +274,14 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             dmpReturnOrderItemEntity.setSpecifics(orderItemBean.getFMaterialModel());
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(2);
+            //erp平台商品id
+            String erpOrderItemId = returnOrderEntity.getFOrderNo() + "_" + returnOrderEntity.getFBillNo() + "_" + skuNo;
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
+            dmpReturnOrderItemEntity.setErpOrderItemId(erpOrderItemId);
+            dmpReturnOrderItemEntity.setIsDeleted(Boolean.FALSE);
             dmpReturnOrderItemEntity.setAmountAfter(orderItemBean.getFAllAmount());
             orderItemList.add(dmpReturnOrderItemEntity);
         });
         return orderItemList;
-    }
-
-    /**
-     * checkOrderItem(orderItemList, orderId);
-     * 校验退货订单商品信息在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     * @return void
-     **/
-    public void checkOrderItem(List<DmpReturnOrderItemEntity> orderItem, String returnOrderId) {
-        dmpReturnOrderItemService.deleteOrderByReturnOrderId(returnOrderId);
-        dmpReturnOrderItemService.batchAdd(orderItem);
     }
 }

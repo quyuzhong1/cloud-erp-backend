@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class KingdeeOrderEntity {
 
     private String _id;
@@ -259,4 +259,51 @@ public class KingdeeOrderEntity {
      * 商品信息
      */
     private List<KingdeeOrderItemEntity> orderItemEntityList;
+
+    @Override
+    public String toString() {
+        return "KingdeeOrderEntity{" +
+                "fId='" + fId + '\'' +
+                ", fBillNo='" + fBillNo + '\'' +
+                ", fDate='" + fDate + '\'' +
+                ", fBillTypeId='" + fBillTypeId + '\'' +
+                ", fBillTypeCode='" + fBillTypeCode + '\'' +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fCustId='" + fCustId + '\'' +
+                ", fSaleDeptId='" + fSaleDeptId + '\'' +
+                ", fSalerId='" + fSalerId + '\'' +
+                ", fReceiveAddress='" + fReceiveAddress + '\'' +
+                ", fLinkMan='" + fLinkMan + '\'' +
+                ", fLinkPhone='" + fLinkPhone + '\'' +
+                ", fApproverId='" + fApproverId + '\'' +
+                ", fApproveDate='" + fApproveDate + '\'' +
+                ", fCloseStatus='" + fCloseStatus + '\'' +
+                ", fCloseDate='" + fCloseDate + '\'' +
+                ", fCancelStatus='" + fCancelStatus + '\'' +
+                ", fChangerId='" + fChangerId + '\'' +
+                ", fReceiveId='" + fReceiveId + '\'' +
+                ", fNote='" + fNote + '\'' +
+                ", fHeadDeliveryWay='" + fHeadDeliveryWay + '\'' +
+                ", fHEADLOCID='" + fHEADLOCID + '\'' +
+                ", fCorrespondOrgId='" + fCorrespondOrgId + '\'' +
+                ", fSaleGroupId='" + fSaleGroupId + '\'' +
+                ", fChangeReason='" + fChangeReason + '\'' +
+                ", fBussinessType='" + fBussinessType + '\'' +
+                ", fReceiveContact='" + fReceiveContact + '\'' +
+                ", fChargeId='" + fChargeId + '\'' +
+                ", fCreatorId='" + fCreatorId + '\'' +
+                ", fCreateDate='" + fCreateDate + '\'' +
+                ", fModifierId='" + fModifierId + '\'' +
+                ", fModifyDate='" + fModifyDate + '\'' +
+                ", fSaleOrgId='" + fSaleOrgId + '\'' +
+                ", fSaleOrgName='" + fSaleOrgName + '\'' +
+                ", fVersionNo='" + fVersionNo + '\'' +
+                ", fSignStatus='" + fSignStatus + '\'' +
+                ", fSOFrom='" + fSOFrom + '\'' +
+                ", f_SK_Date='" + f_SK_Date + '\'' +
+                ", fSHGJ1='" + fSHGJ1 + '\'' +
+                ", fExchangeRate=" + fExchangeRate +
+                ", fSettleCurrId='" + fSettleCurrId + '\'' +
+                '}';
+    }
 }

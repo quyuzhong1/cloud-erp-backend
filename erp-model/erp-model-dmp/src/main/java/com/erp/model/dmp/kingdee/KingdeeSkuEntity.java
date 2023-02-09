@@ -44,7 +44,7 @@ public class KingdeeSkuEntity {
     @Alias("FSalePrice_CMK")
     private String fSalePrice_CMK;
     @Alias("F_SSRQ")
-    private LocalDateTime FSSRQ;
+    private String FSSRQ;
     @Alias("FErpClsID")
     private String FErpClsID;
 }

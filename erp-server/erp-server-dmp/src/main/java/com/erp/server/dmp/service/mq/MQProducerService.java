@@ -53,7 +53,7 @@ public class MQProducerService<T> {
                     @Override
                     public void onException(Throwable throwable) {
                         log.error("MQService:" + ExceptionUtils.getStackTrace(throwable));
-                        throw new ServiceException(ApiError.valueOf(String.format("消息发送失败 topic_tag:%s", destination )));
+                        throw new RuntimeException(String.format("消息发送失败 topic_tag:%s", destination ));
                     }
                 });
                 break;
@@ -165,7 +165,7 @@ public class MQProducerService<T> {
             @Override
             public void onException(Throwable throwable) {
                 log.error("MQService:destination={} entity={} e={}",destination, JSONUtil.toJsonStr(entity), ExceptionUtils.getStackTrace(throwable));
-                throw new ServiceException(ApiError.valueOf(String.format("消息发送失败 topic_tag:%s", destination)));
+                throw new RuntimeException(String.format("消息发送失败 topic_tag:%s", destination));
             }
         });
     }

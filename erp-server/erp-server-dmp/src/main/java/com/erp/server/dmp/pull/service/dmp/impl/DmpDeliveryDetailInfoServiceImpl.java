@@ -1,11 +1,23 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
+import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 货详情信息
@@ -13,6 +25,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDetailInfoMapper, DmpDeliveryDetailInfoEntity>
     implements DmpDeliveryDetailInfoService {
+
+    @Resource
+    private DmpDeliveryDetailItemService dmpDeliveryDetailItemService;
+
+
 
     /**
      * 添加发货详情信息
@@ -80,18 +97,33 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
      * @return void
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String checkOrder(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity) {
         String deliveryDetailId = "";
-        DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = this.getDeliveryDetailByBillNo(dmpDeliveryDetailInfoEntity);
-        if (deliveryDetailInfoEntity != null) {
+        DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = getDeliveryDetailByBillNo(dmpDeliveryDetailInfoEntity);
+        if (null != deliveryDetailInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
             if (!deliveryDetailInfoEntity.toString().equals(deliveryDetailInfoEntity.toString())) {
-                this.updateDeliveryDetailByBillNo(dmpDeliveryDetailInfoEntity);
-                deliveryDetailId = dmpDeliveryDetailInfoEntity.getId();
+                deliveryDetailInfoEntity.setId(dmpDeliveryDetailInfoEntity.getId());
+                updateById(deliveryDetailInfoEntity);
+                deliveryDetailId = deliveryDetailInfoEntity.getId();
+            } else {
+                return deliveryDetailId ;
             }
         } else {
-            deliveryDetailId = this.add(dmpDeliveryDetailInfoEntity);
+            deliveryDetailId = add(dmpDeliveryDetailInfoEntity);
         }
+        if(StrUtil.isBlank(deliveryDetailId)){
+            throw new RuntimeException("DmpDeliveryDetailInfoServiceImpl>>>checkOrder>>>发货订单保存失败");
+        }
+        List<DmpDeliveryDetailItemEntity> itemList = dmpDeliveryDetailInfoEntity.getDetails();
+        if (CollectionUtil.isEmpty(itemList)){
+            return deliveryDetailId;
+        }
+        String orderId = deliveryDetailId;
+        itemList.stream().peek(entity -> entity.setDeliveryDetailId(orderId)).collect(Collectors.toList());
+        dmpDeliveryDetailItemService.deleteDeliveryDetailItemByDetailId(deliveryDetailId);
+        dmpDeliveryDetailItemService.batchAdd(itemList);
         return deliveryDetailId;
     }
 }

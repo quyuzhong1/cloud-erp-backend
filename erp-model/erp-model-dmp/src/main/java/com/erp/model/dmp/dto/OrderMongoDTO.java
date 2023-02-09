@@ -36,7 +36,7 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "refundplatformOrderId")
     private String refundPlatformOrderId;
 
-    @Panno(findType = PannoEnum.EQ,field = "FId")
+    @Panno(findType = PannoEnum.EQ,field = "fId")
     private String fId;
 
     public OrderMongoDTO(String platformCode, String code) {

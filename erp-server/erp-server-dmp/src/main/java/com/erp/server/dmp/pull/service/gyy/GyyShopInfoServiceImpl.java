@@ -3,31 +3,28 @@ package com.erp.server.dmp.pull.service.gyy;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.RocketMqTagEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -110,6 +107,10 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_SHOP);
         }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("管易店铺数据, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
         // 构造订单结构
         List<DmpShopInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
                 .map(this::initOrderInfoEntity)
@@ -132,6 +133,10 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     private List<GyyShopInfoEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        if(null == lastTime || null == nextTime){
+            lastTime = LocalDateTime.parse("2021-01-01T00:00:00");
+            nextTime = LocalDateTime.now();
+        }
         dto.getJobTaskDTO().setLastTime(nextTime);
         return GyyApiUtils.queryShopList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }

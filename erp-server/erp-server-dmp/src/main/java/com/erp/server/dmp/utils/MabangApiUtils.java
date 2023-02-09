@@ -129,7 +129,9 @@ public class MabangApiUtils {
             }
             JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
             List<RefundOrderEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), RefundOrderEntity.class);
-            pageCount = dataJson.getInteger("pageCount");
+//            pageCount = dataJson.getInteger("pageCount");
+            Integer totalCount = dataJson.getInteger("total");
+            pageCount = (totalCount + pageSize - 1) / pageSize;
             if(CollectionUtil.isNotEmpty(dataList)){
                 infoArrayList.addAll(dataList);
             }
@@ -167,6 +169,7 @@ public class MabangApiUtils {
             }
             JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
             List<ReturnOrderEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), ReturnOrderEntity.class);
+            pageCount = dataJson.getInteger("pageCount");
             if(CollectionUtil.isNotEmpty(dataList)){
                 infoArrayList.addAll(dataList);
             }
