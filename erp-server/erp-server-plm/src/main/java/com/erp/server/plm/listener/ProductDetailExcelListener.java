@@ -235,12 +235,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             }
         }
         //产品开发状态
-        String productState = dto.getProductState();
+        String productState = dto.getProductStateName();
         if (StringUtils.isNotBlank(productState)) {
             Integer code = ProductDetailStateEnum.getCodeByName(productState);
             if (ObjectUtils.isEmpty(code)) {
                 errorMsgList.add("产品开发状态有误");
             }
+            productSkuBaseInfoDTO.setProductState(code);
         }
 
         //产品分类

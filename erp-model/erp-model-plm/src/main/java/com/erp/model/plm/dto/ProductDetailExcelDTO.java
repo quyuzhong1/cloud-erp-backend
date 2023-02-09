@@ -202,11 +202,11 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "二级供应商", index = 61)
     private String secondSupplier;
 
-    @ExcelProperty(value = "产品开发状态", index = 62)
-    private String productState;
-
-    @ExcelProperty(value = "量产入库时间", index = 63)
+    @ExcelProperty(value = "量产入库时间", index = 62)
     private Date firstMassProductDate;
+
+    @ExcelProperty(value = "产品开发状态", index = 63)
+    private String productStateName;
 
     @ExcelProperty(value = "错误信息", index = 64)
     private String errorMsg;

@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
@@ -626,7 +625,7 @@ ProductDetailController extends BaseController {
 
                 return failure();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
         return success();
