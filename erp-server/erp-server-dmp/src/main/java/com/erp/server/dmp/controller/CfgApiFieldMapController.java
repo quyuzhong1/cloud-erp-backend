@@ -1,14 +1,11 @@
 package com.erp.server.dmp.controller;
 
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
-import com.erp.common.entity.MessageBody;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
@@ -16,20 +13,9 @@ import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.mq.MQProducerService;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import feign.Body;
 import lombok.Data;
 import org.apache.ibatis.annotations.Param;
 import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.TransactionSendResult;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -161,67 +147,67 @@ public class CfgApiFieldMapController extends BaseController {
         //id
         map.put("id","444");
         //sku
-        map.put("skuNo","OJOHNFIDJFI");
+        map.put("skuNo","0005");
         //sku
-        map.put("name","pppp");
+        map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
         //spu
-        map.put("spuNo","pppp");
+        map.put("spuNo","");
         //产品功能描述
-        map.put("functionDesc","pppp");
+        map.put("functionDesc","");
         //属性
         map.put("property","7777");
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","43342");
+        map.put("oneLevelCategory","灯光类");
         //二级分类名称
-        map.put("secondLevelCategory","7777");
+        map.put("secondLevelCategory","工作室灯");
         //产品经理
-        map.put("chargeName","777");
+        map.put("chargeName","阮青海");
         //销售信息
         //上市时间
         map.put("listingTime","23");
         //物流信息
         //报关中文名
-        map.put("declareChineseName","23");
+        map.put("declareChineseName","补光灯");
         //报关英文名
-        map.put("declareEnglishName","23");
+        map.put("declareEnglishName","light");
         //报关申报价
-        map.put("declarePrice","23");
+        map.put("declarePrice","7");
         //产品属性（是否带电）
-        map.put("productProperty_electric",true);
+        map.put("productProperty_electric",false);
         //产品属性（是否带磁）
-        map.put("productProperty_magnetism",true);
+        map.put("productProperty_magnetism",false);
         //海关编码
-        map.put("customsCode","23");
+        map.put("customsCode","");
         //申报要素
-        map.put("declareElement","23");
+        map.put("declareElement","");
         //毛重
-        map.put("grossWeight", 22);
+        map.put("grossWeight", 517);
         //净重
-        map.put("netWeight", 22);
+        map.put("netWeight", 509);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  333333333);
+        map.put("productSize_length",  "");
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  2233333);
+        map.put("productSize_width",  "");
         //产品尺寸-高(cm)
-        map.put("productSize_height",  224444);
+        map.put("productSize_height",  "");
         //单箱数量
-        map.put("boxQty", 22);
+        map.put("boxQty", "");
         //单箱重量
-        map.put("boxWeight", 33);
+        map.put("boxWeight", "");
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", 23);
+        map.put("boxSize_length", "");
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", 12);
+        map.put("boxSize_width", "");
         //产品尺寸-高(cm)
-        map.put("boxSize_height", 12);
+        map.put("boxSize_height", "");
         //实际不含税成本
-        map.put("actualNoTaxCost",32);
+        map.put("actualNoTaxCost","");
         //实际含税成本
-        map.put("actualTaxCost", 12);
+        map.put("actualTaxCost", "");
         map.put("moq","22");
         //采购员
         map.put("purchaseUser","7777");

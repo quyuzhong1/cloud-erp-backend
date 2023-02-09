@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * 金蝶API 处理类
  */
+@Component
 public class KingdeeApiUtils {
     private K3CloudApi client;
     private String formId;
@@ -51,6 +53,9 @@ public class KingdeeApiUtils {
         this.DCID = dCid;
     }
 
+    public KingdeeApiUtils(){
+    }
+
     public KingdeeApiUtils(String formId){
         IdentifyInfo identifyInfo = new IdentifyInfo();
         identifyInfo.setdCID(DCID);
@@ -59,7 +64,7 @@ public class KingdeeApiUtils {
         identifyInfo.setServerUrl(SERVERURL);
         identifyInfo.setAppSecret(APPSECRET);
         this.client = new K3CloudApi(identifyInfo);
-        this.formId=formId;
+        this.formId = formId;
     }
 
     /**

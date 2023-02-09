@@ -60,7 +60,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "OJOHNFIDJFI"));
+        queryFilters.add(String.format("FNumber = '%s'", "0005"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
                 "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
