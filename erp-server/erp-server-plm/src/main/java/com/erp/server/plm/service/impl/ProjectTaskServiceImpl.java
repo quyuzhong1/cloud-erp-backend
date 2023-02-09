@@ -1864,8 +1864,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<ProjectTaskEntity> listByProductId(String productId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTaskEntity::getProjectId, productId);
-        return this.list(queryWrapper);
+        queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
+        List<ProjectTaskEntity> list = this.list(queryWrapper);
+        return list;
     }
 
     @Override
