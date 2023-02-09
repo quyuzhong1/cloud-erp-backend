@@ -829,4 +829,16 @@ ProductDetailController extends BaseController {
         return success(sku);
     }
 
+   /**
+    * @description: 提交
+    * @author Will
+    * @date: 2023/2/9 13:34
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/commit")
+    public ApiResult commit(BaseIdDTO dto) {
+        Boolean result = productDetailService.commit(dto.getId());
+        return result == true ? success() : failure();
+    }
 }

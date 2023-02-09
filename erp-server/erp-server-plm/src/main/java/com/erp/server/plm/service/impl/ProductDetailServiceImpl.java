@@ -14,6 +14,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
+import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
@@ -432,10 +433,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             detailEntity.setUpdateUserName(loginUser.getUserName());
         }
         detailEntity.setIsChange(IsConstant.NO);
-        if (ObjectUtils.isEmpty(detailEntity.getId())) {
-            //启动审核流程
-            this.productDetailStartProcess(detailEntity);
-        }
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -462,10 +459,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
             req.setIsChange(IsConstant.NO);
-            if ((ObjectUtils.isEmpty(req.getId()))) {
-                //启动审核流程
-                this.productDetailStartProcess(req);
-            }
         });
         return this.saveOrUpdateBatch(list);
     }
@@ -528,13 +521,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Boolean isAdd = false;
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
-            if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                //重启审核流程
-                productDetailStartProcess(oldEntity);
-                productSkuBaseInfoDTO.setStatus(oldEntity.getStatus());
-                productSkuBaseInfoDTO.setProcessId(oldEntity.getProcessId());
-                productSkuBaseInfoDTO.setBusinessProcessId(oldEntity.getBusinessProcessId());
-            }
             addProductSkuBaseInfoLog(productSkuBaseInfoDTO, oldEntity, productSkuBaseInfoDTO.getId(), id);
         } else {
             isAdd = true;
@@ -667,13 +653,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //操作日志
             productDetailLists.forEach(obj -> {
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
-                if (ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode().equals(oldEntity.getStatus())) {
-                    //重启审核流程
-                    productDetailStartProcess(oldEntity);
-                    obj.setStatus(oldEntity.getStatus());
-                    obj.setProcessId(oldEntity.getProcessId());
-                    obj.setBusinessProcessId(oldEntity.getBusinessProcessId());
-                }
                 //sku操作日志
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });
@@ -843,8 +822,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
-            //添加审核流程
-            this.productDetailStartProcess(productDetailEntity);
             list.add(productDetailEntity);
         }
 
@@ -1707,6 +1684,48 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         this.update(updateWrapper);
     }
 
+    @Override
+    public Boolean commit(String id) {
+        ProductDetailEntity productDetailEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        if (ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(productDetailEntity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95117);
+        }
+        //验证必填信息
+        String str = checkRequiredData(productDetailEntity);
+        if (StringUtils.isNotBlank(str)) {
+            throw new ServiceException(new ApiResult(1,str));
+        }
+        //更新审核状态
+        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+        //启动流程
+        productDetailStartProcess(productDetailEntity);
+
+        return this.updateById(productDetailEntity);
+    }
+
+
+    private String checkRequiredData(ProductDetailEntity productDetailEntity) {
+        StringBuffer str = new StringBuffer();
+        if (StringUtils.isBlank(productDetailEntity.getSkuNo())) {
+            str.append("sku编号不能为空");
+        }
+        if (StringUtils.isBlank(productDetailEntity.getChargeId())) {
+            str.append("产品经理不能为空");
+        }
+        if (StringUtils.isBlank(productDetailEntity.getName())) {
+            str.append("产品名称(品名)不能为空");
+        }
+        if (StringUtils.isBlank(productDetailEntity.getVariantProperty())) {
+            str.append("产品属性不能为空");
+        }
+        if (ObjectUtils.isEmpty(productDetailEntity.getProductState())) {
+            str.append("产品开发状态不能为空");
+        }
+        return  str.toString();
+    }
 
     /**
      * 获取 审核通过 的sku 信息

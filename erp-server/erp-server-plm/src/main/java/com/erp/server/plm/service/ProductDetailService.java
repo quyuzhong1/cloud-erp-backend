@@ -370,4 +370,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param state
      */
     void updateProductStateByProductId(String productId, Integer state);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/2/9 13:34
+     * @param id
+     * @return Boolean
+     */
+    Boolean commit(String id);
 }

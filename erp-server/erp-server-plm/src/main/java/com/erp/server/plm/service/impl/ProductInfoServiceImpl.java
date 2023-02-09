@@ -492,7 +492,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             List<Pair<String, Integer>> unStartList = new ArrayList<>();
                             //进行中
                             List<Pair<String, Integer>> progressList = new ArrayList<>();
-                            //进行中和已完成合集
+                            //已完成
+                            List<Pair<String, Integer>> finishList = new ArrayList<>();
+                            //进行中和已完成
                             List<Pair<String, Integer>> inFinishList = new ArrayList<>();
                             //结果集
                             List<String> resultList = new ArrayList<>();
@@ -515,6 +517,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                                         || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(e.getStatus())
                                         || TaskStateEnum.CLOSE.getCode().equals(e.getStatus())).count();
                                 if (count2 == value.size()) {
+                                    finishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                                     inFinishList.add(new Pair<>(projectPhaseEntity.getName(), Integer.valueOf(i)));
                                     continue;
                                 }
@@ -524,19 +527,28 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                             }
                             //存在完成或进行中阶段
                             if (CollectionUtils.isNotEmpty(progressList)) {
-                                Pair<String, Integer> pair = inFinishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
-                                List<String> unStart = unStartList.stream().filter(e -> pair.getValue() >= e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
-                                List<String> progress = progressList.stream().filter(e -> pair.getValue() >= e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
-                                if (CollectionUtils.isNotEmpty(unStart)) {
-                                    resultList.addAll(unStart);
-                                }
+                                List<String> progress = progressList.stream().map(e -> e.getKey()).collect(Collectors.toList());
                                 if (CollectionUtils.isNotEmpty(progress)) {
                                     resultList.addAll(progress);
                                 }
-                            } else {
-                                //不存在则直接取第一条阶段显示
-                                resultList.add(projectTaskList.get(0).getPhaseName());
+                            } else if (CollectionUtils.isNotEmpty(unStartList)) {
+                                if (CollectionUtils.isEmpty(inFinishList)) {
+                                    //都是未开始，则显示第一个
+                                    resultList.add(unStartList.get(0).getKey());
+                                } else {
+                                    Pair<String, Integer> pair = inFinishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
+                                    List<String> unStart = unStartList.stream().filter(e -> pair.getValue() >= e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
+                                    if (CollectionUtils.isNotEmpty(unStart)) {
+                                        resultList.addAll(unStart);
+                                    }
+                                }
+                            }else if ( CollectionUtils.isNotEmpty(finishList)){
+                                if (CollectionUtils.isEmpty(progressList) && CollectionUtils.isEmpty(unStartList)) {
+                                    //全部已完成则显示最后一条
+                                    resultList.add(finishList.get(finishList.size() - 1).getKey());
+                                }
                             }
+
                             if (CollectionUtils.isNotEmpty(resultList)) {
                                 item.setProjectPhase(String.join(",", resultList));
                             }
