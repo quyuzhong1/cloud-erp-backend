@@ -378,4 +378,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean commit(String id);
+    /**
+     * @description: 反提交
+     * @author Will
+     * @date: 2023/2/9 14:37
+     * @param id
+     * @return Boolean
+     */
+    Boolean unCommit(String id);
 }

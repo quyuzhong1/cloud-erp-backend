@@ -144,7 +144,7 @@ public class ProductDetailEntity implements Serializable {
     private List<String> disableFieldList;
 
     /**
-     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过,4，暂存
+     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过,4，待提交
      */
     @TableField("status")
     private Integer status;

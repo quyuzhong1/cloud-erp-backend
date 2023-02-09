@@ -216,7 +216,7 @@ public enum ApiError implements Serializable {
     ERROR_95115(95115,"排期时间不存在"),
     ERROR_95116(95116,"只有排期状态为待提交/已取消才能提交计划"),
     ERROR_95117(95117,"待提交产品信息才能提交"),
-
+    ERROR_95118(95118,"待审核产品信息才能反提交"),
 
     /**
      * bi 错误

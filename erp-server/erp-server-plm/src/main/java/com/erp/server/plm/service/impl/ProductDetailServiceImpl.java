@@ -1698,11 +1698,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(str)) {
             throw new ServiceException(new ApiResult(1,str));
         }
-        //更新审核状态
-        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
         //启动流程
         productDetailStartProcess(productDetailEntity);
 
+        return this.updateById(productDetailEntity);
+    }
+
+    @Override
+    public Boolean unCommit(String id) {
+        ProductDetailEntity productDetailEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95117);
+        }
+        //更新审核状态
+        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         return this.updateById(productDetailEntity);
     }
 

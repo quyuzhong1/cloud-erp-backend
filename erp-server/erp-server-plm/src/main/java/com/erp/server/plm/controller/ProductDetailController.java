@@ -830,7 +830,7 @@ ProductDetailController extends BaseController {
     }
 
    /**
-    * @description: 提交
+    *  产品信息-提交
     * @author Will
     * @date: 2023/2/9 13:34
     * @param dto
@@ -839,6 +839,19 @@ ProductDetailController extends BaseController {
     @PostMapping("/commit")
     public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = productDetailService.commit(dto.getId());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     *  产品信息-反提交
+     * @author Will
+     * @date: 2023/2/9 13:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/unCommit")
+    public ApiResult unCommit(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productDetailService.unCommit(dto.getId());
         return result == true ? success() : failure();
     }
 }
