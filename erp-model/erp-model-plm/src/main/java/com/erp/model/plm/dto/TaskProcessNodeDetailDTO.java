@@ -22,6 +22,11 @@ public class TaskProcessNodeDetailDTO implements Serializable {
     private Boolean  ifFinishNode;
 
     /**
+     * 开始时间
+     */
+    private String startDate;
+
+    /**
      * 节点明细信息
      */
     private List<TaskProcessNodeDTO> list;

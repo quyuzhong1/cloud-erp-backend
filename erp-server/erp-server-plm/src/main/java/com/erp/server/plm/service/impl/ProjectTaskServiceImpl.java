@@ -4014,6 +4014,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ApproveRecordShowDTO> value = entry.getValue();
                 List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                 TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
+                taskProcessNodeDetailDTO.setStartDate(value.get(0).getStartTime());
                 //查询流程
                 for (ApproveRecordShowDTO approveRecordShowDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
@@ -4040,6 +4041,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 taskProcessNodeDetailDTO.setIfFinishNode(Boolean.TRUE);
                 taskProcessNodeDetailDTO.setList(taskProcessNodeList);
                 detailList.add(taskProcessNodeDetailDTO);
+            }
+            //按生成时间排序（逐级排序）
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                detailList = detailList.stream().sorted(Comparator.comparing(TaskProcessNodeDetailDTO::getStartDate)).collect(Collectors.toList());
             }
             //当审核流程是逐级审核时，查询未生成审核任务的负责人
             if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
