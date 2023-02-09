@@ -243,4 +243,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     }
 
+    
+    /**
+     * 根据任务id 获取到任务的情况
+     * @author yl
+     * @date 2023-02-09 9:57
+     * @param productId
+     * @param taskIdList
+     * @return java.util.List<com.erp.model.plm.vo.ScheduleTaskVO>
+     */
+    @Override
+    public List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList) {
+        return baseMapper.getByTaskIds(productId,taskIdList);
+    }
+
 }

@@ -18,5 +18,27 @@
         WHERE  PP.product_id=#{productId}   AND PP.status!=#{status}
 
     </select>
+
+    <select id="getByTaskIds" resultType="com.erp.model.plm.vo.ScheduleTaskVO">
+        SELECT
+            pt.product_id,
+            pt.task_id,
+            pt.origin_start_time,
+            pt.origin_end_time,
+            pt.change_start_time,
+            pt.change_end_time,
+            pt.origin_charge_id,
+            pt.change_chrge_id
+        FROM project_plan_task pt LEFT JOIN project_plan pp
+        ON pt.project_plan_id=pp.id
+        WHERE  PP.product_id=#{productId}
+        <if test="taskIdList!=null and taskIdList.size>0">
+            AND pt.task_id IN
+           <foreach collection="taskIdList" item="taskId" open="(" separator="," close=")">
+
+               #{deptId}
+           </foreach>
+        </if>
+    </select>
 </mapper>
 

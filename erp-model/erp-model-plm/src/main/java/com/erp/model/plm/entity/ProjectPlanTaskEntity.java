@@ -90,7 +90,8 @@ public class ProjectPlanTaskEntity implements Serializable {
      */
     private String changeChargeId;
 
-
+    @TableLogic
+    private Boolean isDeleted;
 
 }
 

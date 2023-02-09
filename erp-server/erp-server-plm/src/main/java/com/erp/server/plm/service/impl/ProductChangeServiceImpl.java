@@ -384,7 +384,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         List<String> bomIdList = list.stream().filter(c -> changeBom.equals(c.getType())).
                 map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
 
-        List<WorkflowBusinessProcessDTO> businessProcessList = workflowFeign.getProcessIds(businessTableIds);
+
         List<BomVO> bomList = new ArrayList<>();
         //当不为空的时候表示有 bom 的
         if (CollectionUtils.isNotEmpty(bomIdList)) {

@@ -41,4 +41,6 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
     List<ScheduleTaskVO> getScheduleTaskList(String productId,String status);
 
     void savePlanTask(String projectPlanId,String productId,List<ProjectTaskEntity> taskList);
+
+    List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList);
 }

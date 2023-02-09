@@ -27,14 +27,7 @@ public class HandleTaskScheduleDTO implements Serializable {
     private String productId;
 
 
-    /**
-     *  项目计划表id
-     * @author yl
-     * @date 2023-02-03 17:29
-     * @param null
-     * @return
-     */
-    private List<String>  projectPlanIdList;
+
 
 
     /**

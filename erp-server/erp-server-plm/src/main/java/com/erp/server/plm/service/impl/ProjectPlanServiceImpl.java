@@ -72,8 +72,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         projectPlan.setId(id);
         Boolean saveResult = this.save(projectPlan);
 
-        if(saveResult){
-            projectPlanTaskService.savePlanTask(id,dto.getProductId(),taskList);
+        if (saveResult) {
+            projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
         }
         return saveResult;
     }
@@ -126,6 +126,13 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      */
     @Override
     public Boolean cancelSchedule(HandleTaskScheduleDTO dto) {
+        String productId = dto.getProductId();
+        //项目计划表id
+        if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
+            List<ScheduleTaskVO> taskList = projectPlanTaskService.getByTaskIds(productId, dto.getTaskIdList());
+
+        }
+
         return null;
     }
 

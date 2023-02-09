@@ -43,5 +43,21 @@ public class ScheduleTaskVO implements Serializable {
      */
     private String productId;
 
+    /**
+     * 计划类型
+     */
+    private String type;
+
+    /**
+     * 计划类型
+     */
+    private String projectPlanId;
+
+
+    /**
+     * 状态
+     */
+    private String status;
+
 
 }

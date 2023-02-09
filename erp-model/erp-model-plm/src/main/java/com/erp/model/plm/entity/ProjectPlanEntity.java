@@ -2,6 +2,7 @@ package com.erp.model.plm.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,17 +21,17 @@ import java.util.Date;
 @TableName("project_plan")
 public class ProjectPlanEntity implements Serializable {
     private static final long serialVersionUID = 240838215899434939L;
-    
+
     private String id;
     /**
      * 创建人id
      */
-    @TableField(value="create_user_id", fill = FieldFill.INSERT)
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
     /**
      * 创建人name
      */
-    @TableField(value="create_user_name",fill = FieldFill.INSERT)
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
     /**
      * 创建时间
@@ -40,12 +41,12 @@ public class ProjectPlanEntity implements Serializable {
     /**
      * 更改人id
      */
-    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
     /**
      * 更改人名
      */
-    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
     /**
      * 时间
@@ -77,6 +78,8 @@ public class ProjectPlanEntity implements Serializable {
      */
     private Integer taskQuantity;
 
+    @TableLogic
+    private Boolean isDeleted;
 
 
 }
