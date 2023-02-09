@@ -132,5 +132,21 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.vo.ProductTaskVO>
      */
     List<ProductTaskVO> getScheduleTask(@Param("dto") ProjectPlanTaskConditionDTO dto,@Param("sortSql") String sql);
+
+    /**
+     * 更改任务排期状态
+     * @param productId
+     * @param taskIdList
+     * @param status
+     */
+    void updateScheduleStatus(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status);
+
+    /**
+     * 更改任务排期状态及类型
+     * @param productId
+     * @param taskIdList
+     * @param status
+     */
+    void updateScheduleTask(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status,@Param("scheduleType") String scheduleType);
 }
 

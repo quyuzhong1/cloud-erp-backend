@@ -177,4 +177,15 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param dto
      */
     void flyingBookReminder(FlyingBookReminderDTO dto);
+
+    
+    /**
+     * 更改任务排期状态
+     * @author yl
+     * @date 2023-02-09 14:16
+     * @param productId
+     * @param taskIdList
+     * @return void
+     */
+    void updateScheduleStatus(String productId, List<String> taskIdList,String status,String scheduleType);
 }

@@ -72,7 +72,7 @@ public class ProjectPlanEntity implements Serializable {
     /**
      * 状态  waitSubmit 待提交 waitAudit 待审核 auditIng 审核中 auditNoPass 审核不通过， auditPass 审核通过
      */
-    private String state;
+    private String status;
     /**
      * 任务数量
      */

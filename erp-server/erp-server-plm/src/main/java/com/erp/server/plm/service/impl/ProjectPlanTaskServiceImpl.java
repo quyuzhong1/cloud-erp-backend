@@ -1,35 +1,32 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.BaseStatusEnum;
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.common.core.enums.CustomizeFieldEnum;
+import com.common.core.enums.ModuleEnum;
 import com.erp.common.dto.base.SortParamDTO;
-import com.erp.common.enums.ModuleEnum;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
-import com.erp.model.plm.entity.PreTaskEntity;
-import com.erp.model.plm.entity.ProjectPlanTaskEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ProductTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
-import com.erp.model.sys.dto.FindCustomizeFieldDTO;
+import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.PreTaskService;
-import com.erp.server.plm.service.ProjectPlanTaskService;
-import com.erp.server.plm.service.TaskDeliveryService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +43,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     private ProjectTaskMapper projectTaskMapper;
 
     @Resource
+    private ProjectTaskService projectTaskService;
+
+    @Resource
     private PreTaskService preTaskService;
 
     @Resource
@@ -57,6 +57,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private ProjectPlanService projectPlanService;
 
     /**
      * 根据条件获取到项目计划任务
@@ -163,9 +166,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public Boolean fieldSet(List<CustomizeFieldHiddenDTO> dto) {
         if (CollectionUtils.isNotEmpty(dto)) {
             String userId = commonService.getUserInfo().getUid();
-            dto.stream().forEach(
-                    c -> c.setUserId(userId)
-            );
+            for (CustomizeFieldHiddenDTO item : dto) {
+                item.setUserId(userId);
+                item.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.name);
+                item.setFieldTitle(CustomizeFieldEnum.getByModuleFieldTitle(item.getModuleName()));
+            }
         }
         return sysUserFeign.batchAdd(dto);
     }
@@ -189,16 +194,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
 
     /**
-     * 获取用户隐藏的字段
+     * 获取用户设置的字段
      *
      * @return
      */
     @Override
-    public List<CustomizeFieldHiddenDTO> getUserHiddenField() {
-        FindCustomizeFieldDTO dto = new FindCustomizeFieldDTO();
-        dto.setUserId(commonService.getUserInfo().getUid());
-        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.code);
-        return sysUserFeign.getByUserId(dto);
+    public UserFieldVO getUserField() {
+//        FindCustomizeFieldDTO dto = new FindCustomizeFieldDTO();
+//        dto.setUserId(commonService.getUserInfo().getUid());
+//        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.code);
+//        return sysUserFeign.getByUserId(dto);
+        return null;
     }
 
 
@@ -243,18 +249,227 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
     }
 
-    
+
     /**
      * 根据任务id 获取到任务的情况
-     * @author yl
-     * @date 2023-02-09 9:57
+     *
      * @param productId
      * @param taskIdList
      * @return java.util.List<com.erp.model.plm.vo.ScheduleTaskVO>
+     * @author yl
+     * @date 2023-02-09 9:57
      */
     @Override
     public List<ScheduleTaskVO> getByTaskIds(String productId, List<String> taskIdList) {
-        return baseMapper.getByTaskIds(productId,taskIdList);
+        return baseMapper.getByTaskIds(productId, taskIdList);
+    }
+
+    @Override
+    public List<ScheduleTaskVO> getPlanTaskByTaskIds(String productId, List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            return baseMapper.getByTaskIds(productId, taskIdList);
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<ProjectPlanTaskEntity> getByTaskIdList(String productId, List<String> taskIdList) {
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectPlanTaskEntity::getTaskId, taskIdList);
+            queryWrapper.eq(ProjectPlanTaskEntity::getProductId, productId);
+            return this.list(queryWrapper);
+        }
+
+        return new ArrayList<>();
+    }
+
+
+    /**
+     * 取消任务排期
+     * 只有待审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-09 14:39
+     */
+    @Override
+    public Boolean cancelSchedule(HandleTaskScheduleDTO dto) {
+        String productId = dto.getProductId();
+        Boolean result = true;
+        //项目计划表id
+        if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
+            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, dto.getTaskIdList());
+            String waitAudit = BaseStatusEnum.WAIT_AUDIT.getStatus();
+            //初始提交
+            Long count = taskList.stream().filter(p -> !waitAudit.equals(p.getScheduleStatus()))
+                    .count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95121);
+            }
+
+            String cancelStatus = BaseStatusEnum.CANCEL.getStatus();
+            List<ProjectPlanTaskEntity> planTaskList = this.getByTaskIdList(productId, dto.getTaskIdList());
+            //获取到项目计划的表id
+            List<String> projectPlanIds = planTaskList.stream().map(ProjectPlanTaskEntity::getProjectPlanId).collect(Collectors.toList());
+            //去重
+            projectPlanIds = projectPlanIds.stream().distinct().collect(Collectors.toList());
+            List<ProjectPlanEntity> planList = projectPlanService.getByIds(projectPlanIds);
+            if (CollectionUtils.isNotEmpty(planList)) {
+                planList.stream().forEach(
+                        p -> p.setStatus(cancelStatus)
+                );
+                //更改审核状态
+                result = projectPlanService.saveOrUpdateBatch(planList);
+                //更改任务状态
+                projectTaskService.updateScheduleStatus(productId, dto.getTaskIdList(), cancelStatus,"");
+            }
+
+        }
+        return result;
+    }
+
+    /**
+     * 根据项目id  获取对应任务
+     *
+     * @param projectPlanId
+     * @return
+     */
+    @Override
+    public List<ProjectPlanTaskEntity> getByProjectPlanId(String projectPlanId) {
+        LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectPlanTaskEntity::getProjectPlanId, projectPlanId);
+        return this.list(queryWrapper);
+    }
+
+    /**
+     * 重新启动
+     * 只有审核不通过才能重新启动
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-09 15:18
+     */
+    @Override
+    public Boolean restartSchedule(HandleTaskScheduleDTO dto) {
+        String productId = dto.getProductId();
+        Boolean result = true;
+        if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
+            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, dto.getTaskIdList());
+            String auditNoPassStatus = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
+            //初始提交
+            Long count = taskList.stream().filter(p -> !auditNoPassStatus.equals(p.getScheduleStatus()))
+                    .count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95119);
+            }
+            //待审核
+            String waitAuditStatus = BaseStatusEnum.WAIT_AUDIT.getStatus();
+            List<ProjectPlanTaskEntity> planTaskList = this.getByTaskIdList(productId, dto.getTaskIdList());
+            //获取到项目计划的表id
+            List<String> projectPlanIds = planTaskList.stream().map(ProjectPlanTaskEntity::getProjectPlanId).collect(Collectors.toList());
+            //去重
+            projectPlanIds = projectPlanIds.stream().distinct().collect(Collectors.toList());
+            List<ProjectPlanEntity> planList = projectPlanService.getByIds(projectPlanIds);
+            if (CollectionUtils.isNotEmpty(planList)) {
+                planList.stream().forEach(
+                        p -> p.setStatus(waitAuditStatus)
+                );
+                //更改审核状态
+                result = projectPlanService.updateBatchById(planList);
+                //启动流程吗？
+
+                //更改任务状态
+                projectTaskService.updateScheduleStatus(productId, dto.getTaskIdList(), waitAuditStatus,"");
+            }
+
+        }
+        return result;
+
+
+    }
+
+    /**
+     * 变更排期
+     * 只有审核通过才能变更
+     *
+     * @param list
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-09 15:43
+     */
+    @Override
+    public Boolean changeSchedule(List<ChangeTaskScheduleDTO> list) {
+        Boolean result = true;
+        if (CollectionUtils.isNotEmpty(list)) {
+            String productId = list.get(0).getProductId();
+            List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
+            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, taskIdList);
+            String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+            Long count = taskList.stream().filter(p -> !auditPassStatus.equals(p.getScheduleStatus()))
+                    .count();
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95120);
+            }
+            //检查时间
+            long timeCount = taskList.stream().
+                    filter(t -> Objects.isNull(t.getPlanEndTime()) || Objects.isNull(t.getPlanStartTime())).
+                    count();
+            if (timeCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95010);
+            }
+
+            result = projectPlanService.changeSchedule(list);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 保存变更的任务
+     *
+     * @param projectPlanId
+     * @param productId
+     * @param taskList
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-02-09 16:00
+     */
+    @Override
+    public void saveChangePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList, List<ChangeTaskScheduleDTO> list) {
+        List<ProjectPlanTaskEntity> addList = new ArrayList<>(list.size());
+        for (ProjectTaskEntity item : taskList) {
+            String taskId = item.getId();
+            ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
+            entity.setProjectPlanId(projectPlanId);
+            entity.setOriginChargeId(item.getChargeId());
+            entity.setOriginStartTime(item.getPlanStartTime());
+            entity.setOriginEndTime(item.getPlanEndTime());
+
+            ChangeTaskScheduleDTO changeTask = list.stream().filter(t -> t.getTaskId().equals(taskId)).findFirst().orElse(null);
+            //从参数里面取
+            if (changeTask != null) {
+                List<String> chargeIds = changeTask.getChargeIdList();
+                if (CollectionUtils.isNotEmpty(chargeIds)) {
+                    entity.setChangeChargeId(String.join(",", chargeIds));
+                } else {
+                    entity.setChangeChargeId(item.getChargeId());
+                }
+                entity.setChangeStartTime(changeTask.getPlanStartTime());
+                entity.setChangeEndTime(changeTask.getPlanEndTime());
+            } else {
+                entity.setChangeStartTime(item.getPlanStartTime());
+                entity.setChangeEndTime(item.getPlanEndTime());
+                entity.setChangeChargeId(item.getChargeId());
+            }
+
+            addList.add(entity);
+        }
+        this.saveBatch(addList);
     }
 
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.entity.CustomizeFieldHiddenEntity;
+import com.erp.model.sys.vo.UserFieldVO;
 
 import java.util.List;
 
@@ -18,5 +19,5 @@ public interface CustomizeFieldHiddenService extends IService<CustomizeFieldHidd
 
     Boolean add(List<CustomizeFieldHiddenDTO> dto);
 
-    List<CustomizeFieldHiddenDTO> getByUserId(FindCustomizeFieldDTO dto);
+    UserFieldVO getByUserId(FindCustomizeFieldDTO dto);
 }

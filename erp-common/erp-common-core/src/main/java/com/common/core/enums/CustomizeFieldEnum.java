@@ -86,4 +86,14 @@ public enum CustomizeFieldEnum {
         }
         return resultList;
     }
+
+
+    public static String getByModuleFieldTitle(String fieldName) {
+        for (CustomizeFieldEnum item : CustomizeFieldEnum.values()) {
+            if (fieldName.equals(item.getModuleCode())) {
+                item.getFieldTitle();
+            }
+        }
+        return "";
+    }
 }

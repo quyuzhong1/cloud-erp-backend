@@ -8,6 +8,9 @@ package com.common.core.enums;
  */
 public enum BaseStatusEnum {
 
+
+    CHANGE_ING("changeIng","变更中"),
+    CANCEL("cancel","取消"),
     WAIT_SUBMIT("waitSubmit","待提交"),
     WAIT_AUDIT("waitAudit", "待审核"),
     AUDIT_ING("auditIng", "审核中"),

@@ -1,10 +1,13 @@
 package com.erp.server.plm.controller;
 
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +53,34 @@ public class ProjectPlanTaskController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 取消排期
+     */
+    @PostMapping("/cancel")
+    public  ApiResult cancelSchedule(HandleTaskScheduleDTO dto){
+        Boolean result = projectPlanTaskService.cancelSchedule(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 重启排期
+     */
+    @PostMapping("/restart")
+    public  ApiResult restartSchedule(HandleTaskScheduleDTO dto){
+        Boolean result = projectPlanTaskService.restartSchedule(dto);
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 变更排期
+     */
+    @PostMapping("/change")
+    public  ApiResult changeSchedule(List<ChangeTaskScheduleDTO> list){
+        Boolean result = projectPlanTaskService.changeSchedule(list);
+        return result == true ? success() : failure();
+    }
+
     /**
      * 导入数据
      */
@@ -83,8 +114,8 @@ public class ProjectPlanTaskController extends BaseController {
      * @return
      */
     @GetMapping("/getUserField")
-    public ApiResult<List<CustomizeFieldHiddenDTO>> getUserHiddenField() {
-        List<CustomizeFieldHiddenDTO> result = projectPlanTaskService.getUserHiddenField();
+    public ApiResult<UserFieldVO> getUserField() {
+        UserFieldVO result = projectPlanTaskService.getUserField();
         return success(result);
     }
 

@@ -1,8 +1,11 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
+
+import java.util.List;
 
 /**
  * 项目计划表(ProjectPlan)表服务接口
@@ -16,9 +19,11 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
 
     Boolean submitSchedule(HandleTaskScheduleDTO dto);
 
-    Boolean cancelSchedule(HandleTaskScheduleDTO dto);
+    Boolean cancelSchedule(String id);
 
-    Boolean restartSchedule(HandleTaskScheduleDTO dto);
+    Boolean restartSchedule(String id);
 
-    Boolean changeSchedule(HandleTaskScheduleDTO dto);
+    Boolean changeSchedule(List<ChangeTaskScheduleDTO> list);
+
+    List<ProjectPlanEntity> getByIds(List<String> projectPlanIds);
 }

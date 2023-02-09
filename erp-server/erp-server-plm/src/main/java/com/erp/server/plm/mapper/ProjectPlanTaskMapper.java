@@ -19,4 +19,5 @@ public interface ProjectPlanTaskMapper extends BaseMapper<ProjectPlanTaskEntity>
     List<ScheduleTaskVO> getScheduleTaskList(@Param("productId") String productId,@Param("status") String status);
 
     List<ScheduleTaskVO> getByTaskIds(@Param("productId") String productId, @Param("taskIdList")List<String> taskIdList);
+
 }

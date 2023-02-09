@@ -2,6 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.ProjectTaskMapper">
 
+
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
         charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
@@ -918,6 +919,22 @@
         </if>
 
     </select>
+
+
+    <update id="updateScheduleStatus">
+        UPDATE project_task SET schedule_status = #{scheduleStatus} WHERE  product_id=#{productId}  AND id IN
+        <foreach item="taskId" collection="taskIdList" separator="," open="(" close=")" index="">
+            #{taskId}
+        </foreach>
+    </update>
+
+    <update id="updateScheduleTask">
+        UPDATE project_task SET schedule_status = #{scheduleStatus},schedule_type=#{scheduleType}
+         WHERE  product_id=#{productId}  AND id IN
+        <foreach item="taskId" collection="taskIdList" separator="," open="(" close=")" index="">
+            #{taskId}
+        </foreach>
+    </update>
 
 
 </mapper>

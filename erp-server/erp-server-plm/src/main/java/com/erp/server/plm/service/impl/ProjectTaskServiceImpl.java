@@ -201,12 +201,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     //判断负责人分配方式是否是角色
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
                         List<String> roleIds = Arrays.stream(item.getRoleId().split(",")).collect(Collectors.toList());
-                        List<TemplateMembersEntity> templateMembersList= templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
+                        List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleIds(roleIds, projectTemplateEntity.getId());
                         if (CollectionUtils.isNotEmpty(templateMembersList)) {
                             List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).collect(Collectors.toList());
                             List<String> memberNames = templateMembersList.stream().map(TemplateMembersEntity::getMemberName).collect(Collectors.toList());
-                            entity.setChargeId(StringUtils.join(memberIds,","));
-                            entity.setChargeName(StringUtils.join(memberNames,","));
+                            entity.setChargeId(StringUtils.join(memberIds, ","));
+                            entity.setChargeName(StringUtils.join(memberNames, ","));
                         }
                     }
                 }
@@ -218,7 +218,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
                     if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
                         //保存交付文档的审核人
-                        taskChargeDistributionService.removeAndSave(entity.getId(),taskChargeDistributionList, MathUtil.THREE);
+                        taskChargeDistributionService.removeAndSave(entity.getId(), taskChargeDistributionList, MathUtil.THREE);
                     }
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
 
@@ -234,7 +234,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     taskList.add(entity);
                     noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
                 }
-                sysLogService.addSysLogBySave("新增了一个：["+entity.getName()+"]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),entity.getId(),null);
+                sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
 
             }
 
@@ -730,7 +730,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
 
-
         List<String> chargeId = dto.getChargeIds();
         String chargeNames = commonService.getNameByIds(chargeId);
 
@@ -756,56 +755,56 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.save(taskEntity);
         if (flag) {
             //新增操作日志
-            sysLogService.addSysLogBySave("新增了一个：["+taskEntity.getName()+"]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),taskEntity.getId(),null);
+            sysLogService.addSysLogBySave("新增了一个：[" + taskEntity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), taskEntity.getId(), null);
             if (StringUtils.isNotBlank(taskEntity.getPid())) {
                 //创建子任务时父级任务新增操作日志
                 SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("创建子任务[%s]", taskEntity.getName()))
-                                            .setBusinessId(taskEntity.getPid())
-                                            .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                        .setBusinessId(taskEntity.getPid())
+                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
                 sysLogService.addSysLogByOther(sysLogEntity);
             }
-                List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
-                if (CollectionUtils.isNotEmpty(approvalList)) {
-                    approvalList.forEach(obj->{
-                        obj.setCharges(String.join(",",obj.getChargeList()));
-                        obj.setDistributionType(ObjectUtils.isEmpty(obj.getDistributionType()) ? DistributionTypeEnum.DISTRIBUTION_USER.getCode() : obj.getDistributionType());
-                    });
-                    taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
-                    //根据分配类型查询模板中的数据
-                    for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
-                        if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
-                            throw new ServiceException(ApiError.ERROR_95097);
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(approvalList)) {
+                approvalList.forEach(obj -> {
+                    obj.setCharges(String.join(",", obj.getChargeList()));
+                    obj.setDistributionType(ObjectUtils.isEmpty(obj.getDistributionType()) ? DistributionTypeEnum.DISTRIBUTION_USER.getCode() : obj.getDistributionType());
+                });
+                taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, approvalList);
+                //根据分配类型查询模板中的数据
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
+                    if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
+                        throw new ServiceException(ApiError.ERROR_95097);
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                        taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                        List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                        //查询对应产品角色下的人员
+                        List<ProjectMembersEntity> templateMembersList = projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
+                        if (CollectionUtils.isNotEmpty(templateMembersList)) {
+                            String approverIds = templateMembersList.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
+                            taskChargeDistributionEntity.setChargeIds(approverIds);
                         }
-                        if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                            taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
-                        }
-                        if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                            List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                            //查询对应产品角色下的人员
-                            List<ProjectMembersEntity> templateMembersList= projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
-                            if (CollectionUtils.isNotEmpty(templateMembersList)) {
-                                String approverIds = templateMembersList.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
-                                taskChargeDistributionEntity.setChargeIds(approverIds);
-                            }
-                        }
-                        if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
-                            //查询对应负责人的上级
-                            List<String> ids = dto.getChargeIds();
-                            List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
-                            if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                                List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                                for (String superiorType: superiorTypeList) {
-                                    String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
-                                    if (StringUtils.isNotBlank(userIds)) {
-                                        taskChargeDistributionEntity.setChargeIds(userIds);
-                                    }
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
+                        //查询对应负责人的上级
+                        List<String> ids = dto.getChargeIds();
+                        List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                        if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                            List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                            for (String superiorType : superiorTypeList) {
+                                String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
+                                if (StringUtils.isNotBlank(userIds)) {
+                                    taskChargeDistributionEntity.setChargeIds(userIds);
                                 }
                             }
                         }
                     }
                 }
+            }
             //保存交付文档的审核人
-            taskChargeDistributionService.removeAndSave(taskEntity.getId(),taskChargeDistributionList,MathUtil.THREE);
+            taskChargeDistributionService.removeAndSave(taskEntity.getId(), taskChargeDistributionList, MathUtil.THREE);
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
@@ -936,7 +935,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         checkTaskIfExistPid(taskId);
         Boolean flag = this.removeById(entity);
         if (flag) {
-            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE,taskId);
+            taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.THREE, taskId);
             taskDeliveryService.removeByTaskId(taskId);
             taskDocsFinishService.removeByTaskId(taskId);
             taskRefSkuConfigService.deleteByTaskId(taskId);
@@ -1145,12 +1144,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ProductDetailEntity> noRelatedList = details.stream().filter(obj -> !skuIdList.contains(obj.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(noRelatedList)) {
                     //未关联上的sku
-                    for (ProductDetailEntity entity:  noRelatedList) {
+                    for (ProductDetailEntity entity : noRelatedList) {
                         Map<String, Object> refSkuMap = new HashMap<>();
-                        refSkuMap.put("skuId",entity.getId());
-                        refSkuMap.put("skuNo",entity.getSkuNo());
-                        refSkuMap.put("isFinishTask",IsConstant.YES);
-                        refSkuMap.put("isGenerated",IsConstant.NO);
+                        refSkuMap.put("skuId", entity.getId());
+                        refSkuMap.put("skuNo", entity.getSkuNo());
+                        refSkuMap.put("isFinishTask", IsConstant.YES);
+                        refSkuMap.put("isGenerated", IsConstant.NO);
                         skuIdList.add(entity.getId());
                         refSkuFinishList.add(refSkuMap);
                     }
@@ -1238,7 +1237,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             List<DeliveryDocsDTO> docsList = taskDeliveryService.getByTaskId(dto.getId());
             List<String> newDocs = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(deliveryDocsList)) {
-                 newDocs = deliveryDocsList.stream().map(DocsDTO::getName).sorted().collect(Collectors.toList());
+                newDocs = deliveryDocsList.stream().map(DocsDTO::getName).sorted().collect(Collectors.toList());
             }
             List<String> oldDocs = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(docsList)) {
@@ -1250,7 +1249,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 throw new ServiceException(ApiError.ERROR_95111);
             }
             //审核流程
-            if (!StringUtils.equals( dto.getBusinessProcessId(),taskEntity.getBusinessProcessId())) {
+            if (!StringUtils.equals(dto.getBusinessProcessId(), taskEntity.getBusinessProcessId())) {
                 throw new ServiceException(ApiError.ERROR_95112);
             }
         }
@@ -1286,18 +1285,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             if (CollectionUtils.isNotEmpty(chargeIds)) {
                 //如果传入负责人和角色一致则无需插入
-              if (String.join(",", chargeIds).equals(taskEntity.getRoleName())) {
-                  chargeIds = null;
-              } else {
-                  //否则查询对应角色存入RoleName
-                  List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
-                  if (CollectionUtils.isNotEmpty(sysRoleList)) {
-                      String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
-                      taskEntity.setRoleName(roleNames);
-                  } else {
-                      taskEntity.setRoleName("");
-                  }
-              }
+                if (String.join(",", chargeIds).equals(taskEntity.getRoleName())) {
+                    chargeIds = null;
+                } else {
+                    //否则查询对应角色存入RoleName
+                    List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
+                    if (CollectionUtils.isNotEmpty(sysRoleList)) {
+                        String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
+                        taskEntity.setRoleName(roleNames);
+                    } else {
+                        taskEntity.setRoleName("");
+                    }
+                }
             }
         }
         if (CollectionUtils.isNotEmpty(chargeIds)) {
@@ -1330,14 +1329,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
         //新增任务操作日志
-        addProjectTaskDTOLog(dto,oldEntity,taskEntity.getId());
+        addProjectTaskDTOLog(dto, oldEntity, taskEntity.getId());
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(dto.getApprovalList())) {
-                dto.getApprovalList().forEach(obj->obj.setCharges(String.join(",",obj.getChargeList())));
-                 taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, dto.getApprovalList());
-                for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+                dto.getApprovalList().forEach(obj -> obj.setCharges(String.join(",", obj.getChargeList())));
+                taskChargeDistributionList = BeanMapperUtils.copyList(TaskChargeDistributionEntity.class, dto.getApprovalList());
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
 
                     if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
@@ -1345,7 +1344,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                         //查询对应产品角色下的人员
-                        List<ProjectMembersEntity> templateMembersList= projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
+                        List<ProjectMembersEntity> templateMembersList = projectMembersService.listByRoleIds(roleIdList, taskEntity.getProductId());
                         if (CollectionUtils.isNotEmpty(templateMembersList)) {
                             String approverIds = templateMembersList.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.joining(","));
                             taskChargeDistributionEntity.setChargeIds(approverIds);
@@ -1357,7 +1356,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
                         if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
                             List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                            for (String superiorType: superiorTypeList) {
+                            for (String superiorType : superiorTypeList) {
                                 String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
                                 if (StringUtils.isNotBlank(userIds)) {
                                     taskChargeDistributionEntity.setChargeIds(userIds);
@@ -1368,7 +1367,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
             }
             //保存交付文档的审核人
-            taskChargeDistributionService.removeAndSave(taskEntity.getId(),taskChargeDistributionList,MathUtil.THREE);
+            taskChargeDistributionService.removeAndSave(taskEntity.getId(), taskChargeDistributionList, MathUtil.THREE);
 
 
             //保存交付文档
@@ -1433,7 +1432,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             throw new ServiceException(ApiError.ERROR_95027);
         }
         ProjectTaskEntity oldEntity = new ProjectTaskEntity();
-        BeanMapperUtils.copy(taskEntity,oldEntity);
+        BeanMapperUtils.copy(taskEntity, oldEntity);
 
         LoginUser loginUser = commonService.getUserInfo();
         //任务名
@@ -1477,23 +1476,23 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         //如果审核分配类型是上级负责人则需要更新审核人
-        List<TaskChargeDistributionEntity> taskChargeDistributionList= taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, dto.getTaskId());
-       if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-           for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
-               //查询对应负责人的上级
-               List<String> ids = dto.getChargeIdList();
-               List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
-               if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
-                   List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                   for (String superiorType: superiorTypeList) {
-                       String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
-                       if (StringUtils.isNotBlank(userIds)) {
-                           taskChargeDistributionEntity.setChargeIds(userIds);
-                       }
-                   }
-               }
+        List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, dto.getTaskId());
+        if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+            for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
+                //查询对应负责人的上级
+                List<String> ids = dto.getChargeIdList();
+                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                    List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                    for (String superiorType : superiorTypeList) {
+                        String userIds = userSuperiorDTOS.stream().filter(obj -> obj.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
+                        if (StringUtils.isNotBlank(userIds)) {
+                            taskChargeDistributionEntity.setChargeIds(userIds);
+                        }
+                    }
+                }
             }
-       }
+        }
         if (CollectionUtils.isNotEmpty(chargeIdList)) {
             taskEntity.setChargeId(String.join(",", chargeIdList));
             String chargeName = commonService.getNameByIds(chargeIdList);
@@ -1501,7 +1500,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         noticeMessageService.editTaskNotice(loginUser.getUserName(), taskEntity, taskEntity.getProductId());
         //添加操作日志
-        addUpdateTaskDTOLog(taskEntity,oldEntity,oldEntity.getId());
+        addUpdateTaskDTOLog(taskEntity, oldEntity, oldEntity.getId());
         return this.updateById(taskEntity);
     }
 
@@ -1538,8 +1537,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //查询模板任务下审核人
         List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, taskEntity.getId());
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-            List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class,taskChargeDistributionList);
-            list.forEach(obj->{
+            List<TaskChargeDistributionDTO> list = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
+            list.forEach(obj -> {
                 List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
                 obj.setChargeList(collect);
                 //回显名称
@@ -1548,7 +1547,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
                     if (CollectionUtils.isNotEmpty(userList)) {
                         List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                        obj.setChargeNames(String.join(",",usrNameList));
+                        obj.setChargeNames(String.join(",", usrNameList));
                     }
                 }
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
@@ -1558,7 +1557,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
                     //上级分配取枚举
                     List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
-                    obj.setChargeNames(String.join(",",superiors));
+                    obj.setChargeNames(String.join(",", superiors));
                 }
 
             });
@@ -1731,12 +1730,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskGroupResultDTO> resultList = new ArrayList<>();
         //当是产品的时候
         if (TaskConstant.PRODUCT.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(dto,notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.allTaskGroup(dto, notStateList);
             resultList = getProductGroup(list);
         }
         //以计划结束时间
         if (TaskConstant.PLAN_END_TIME.equals(groupName)) {
-            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(dto,notStateList);
+            List<TaskGroupResultDTO> list = baseMapper.taskPlanEndTimeGroup(dto, notStateList);
             resultList = getPlanEndTimeGroup(list);
         }
         return resultList;
@@ -1864,7 +1863,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Override
     public List<ProjectTaskEntity> listByProductId(String productId) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTaskEntity::getProjectId,productId);
+        queryWrapper.eq(ProjectTaskEntity::getProjectId, productId);
         return this.list(queryWrapper);
     }
 
@@ -2314,7 +2313,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //操作日志
         List<String> taskIds = dto.getTaskIds();
         List<SysLogEntity> logList = new ArrayList<>();
-        taskIds.forEach(obj->{
+        taskIds.forEach(obj -> {
             SysLogEntity sysLogEntity = new SysLogEntity();
             sysLogEntity.setOperation("飞书提醒");
             sysLogEntity.setBusinessId(obj);
@@ -2327,6 +2326,30 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             logList.add(sysLogEntity);
         });
         sysLogService.saveBatch(logList);
+    }
+
+
+    /**
+     * 更改任务状态
+     *
+     * @param productId
+     * @param taskIdList
+     * @return void
+     * @author yl
+     * @date 2023-02-09 14:16
+     */
+    @Override
+    public void updateScheduleStatus(String productId, List<String> taskIdList, String status,String scheduleType) {
+        if(CollectionUtils.isNotEmpty(taskIdList)){
+            if(StringUtils.isNotBlank(scheduleType)){
+                baseMapper.updateScheduleTask(productId, taskIdList, status,scheduleType);
+            }else{
+                baseMapper.updateScheduleStatus(productId, taskIdList, status);
+
+            }
+
+        }
+
     }
 
     /**
@@ -2991,7 +3014,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.NOT_START.getName(),TaskStateEnum.ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.NOT_START.getName(), TaskStateEnum.ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送开始任务通知
@@ -3034,7 +3057,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             generalTaskIds.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.TO_BE_RELEASED.getName(),TaskStateEnum.NOT_START.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.TO_BE_RELEASED.getName(), TaskStateEnum.NOT_START.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发布任务消息
@@ -3156,7 +3179,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             list.forEach(task -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.TO_BE_RELEASED.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(task.getStatus()), TaskStateEnum.TO_BE_RELEASED.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
@@ -3192,7 +3215,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             list.forEach(task -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.CLOSE.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(task.getStatus()), TaskStateEnum.CLOSE.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
             //发送关闭任务通知
@@ -3312,7 +3335,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         list.forEach(task -> {
-            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.getName(task.getStatus()),TaskStateEnum.FINISH.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.getName(task.getStatus()), TaskStateEnum.FINISH.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(task.getId()));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
         //发送完成任务通知
@@ -3332,7 +3355,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     throw new ServiceException(ApiError.ERROR_95045);
                 }
                 List<List<String>> membersIds = new ArrayList<>();
-                for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     if (StringUtils.isBlank(taskChargeDistributionEntity.getChargeIds())) {
                         throw new ServiceException(ApiError.ERROR_95045);
                     }
@@ -3489,10 +3512,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         this.updateTaskState(taskIdList, approvalIngCode, null, null);
         taskOperatorRecordService.batchSaveRecord(taskIdList, waitConfirmCode, approvalIngCode, loginUser.getUid(), loginUser.getUserName(), "");
-       //操作日志
+        //操作日志
         List<SysLogEntity> sysLogEntityList = new LinkedList<>();
         taskIdList.forEach(taskId -> {
-            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]",TaskStateEnum.WAIT_CONFIRM.getName(),TaskStateEnum.APPROVAL_ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+            sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s]", TaskStateEnum.WAIT_CONFIRM.getName(), TaskStateEnum.APPROVAL_ING.getName())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
 
@@ -3574,7 +3597,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //操作日志
             List<SysLogEntity> sysLogEntityList = new LinkedList<>();
             taskIdList.forEach(taskId -> {
-                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]",TaskStateEnum.APPROVAL_ING.getName(),TaskStateEnum.APPROVAL_NO_PASS.getName(),dto.getComment())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
+                sysLogEntityList.add(new SysLogEntity().setContent(String.format("编辑了一个[任务状态]由[%s]为[%s],原因[%s]", TaskStateEnum.APPROVAL_ING.getName(), TaskStateEnum.APPROVAL_NO_PASS.getName(), dto.getComment())).setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc()).setBusinessId(taskId));
             });
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
@@ -3714,9 +3737,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
 
             //审核完成后查询产品下所有任务是否全部完成，完成则自动将SKU列表的产品开发状态变更为已完成
-            Boolean allTaskFlag =  this.projectApprovalTaskFinish(taskEntity.getProductId(),MathUtil.TWO);
+            Boolean allTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.TWO);
             if (allTaskFlag) {
-                productDetailService.updateProductStateByProductId(taskEntity.getProductId(),ProductDetailStateEnum.DEVELOP_FINISH.getCode());
+                productDetailService.updateProductStateByProductId(taskEntity.getProductId(), ProductDetailStateEnum.DEVELOP_FINISH.getCode());
             }
             //保存记录
             TaskOperatorRecordEntity recordEntity = new TaskOperatorRecordEntity();
@@ -3735,21 +3758,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
 
     }
+
     /**
-     * @description: 判断任务是否完成
-     * @author Will
-     * @date: 2023/2/2 11:00
      * @param productId
      * @param type
      * @return Boolean
+     * @description: 判断任务是否完成
+     * @author Will
+     * @date: 2023/2/2 11:00
      */
-    private Boolean projectApprovalTaskFinish(String productId,Integer type) {
+    private Boolean projectApprovalTaskFinish(String productId, Integer type) {
         List<ProjectTaskEntity> projectTaskList = this.listByProductId(productId);
         if (CollectionUtils.isEmpty(projectTaskList)) {
             return Boolean.FALSE;
         }
         //已立项的任务
-         if (MathUtil.ONE.equals(type)) {
+        if (MathUtil.ONE.equals(type)) {
             List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.APPROVAL_TASK.equals(obj.getProperty())).collect(Collectors.toList());
            if (CollectionUtils.isEmpty(taskList)) {
                return  Boolean.FALSE;
@@ -3759,18 +3783,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //已完成任务数量
                 long count = taskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                 if (count > 0) {
-                    return  Boolean.FALSE;
+                    return Boolean.FALSE;
                 }
                 List<String> taskIds = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
                 //查询子任务是否全部完成
                 List<ProjectTaskEntity> childrenTaskList = new ArrayList<>();
                 //添加子任务
-                preTaskService.listChildrenTask(taskIds,childrenTaskList);
+                preTaskService.listChildrenTask(taskIds, childrenTaskList);
                 if (CollectionUtils.isNotEmpty(childrenTaskList)) {
                     //判断子任务是否全部完成
                     long count1 = childrenTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                     if (count1 > 0) {
-                        return  Boolean.FALSE;
+                        return Boolean.FALSE;
                     }
                 }
             }
@@ -3780,18 +3804,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //已完成任务数量
             long count = projectTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
             if (count > 0) {
-                return  Boolean.FALSE;
+                return Boolean.FALSE;
             }
             List<String> taskIds = projectTaskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             //查询子任务是否全部完成
             List<ProjectTaskEntity> childrenTaskList = new ArrayList<>();
             //添加子任务
-            preTaskService.listChildrenTask(taskIds,childrenTaskList);
+            preTaskService.listChildrenTask(taskIds, childrenTaskList);
             if (CollectionUtils.isNotEmpty(childrenTaskList)) {
                 //判断子任务是否全部完成
                 long count1 = childrenTaskList.stream().filter(obj -> !TaskStateEnum.FINISH.getCode().equals(obj.getStatus())).count();
                 if (count1 > 0) {
-                    return  Boolean.FALSE;
+                    return Boolean.FALSE;
                 }
             }
         }
@@ -3905,35 +3929,35 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         if (general.equals(processType)) {
             //添加待开始
-            resultList.add(getProcessNode(notStartEntity, notStart,userList,approveRecordShowList,null));
+            resultList.add(getProcessNode(notStartEntity, notStart, userList, approveRecordShowList, null));
             //添加进行中
-            resultList.add(getProcessNode(ingStateEntity, ingState,userList,approveRecordShowList,null));
+            resultList.add(getProcessNode(ingStateEntity, ingState, userList, approveRecordShowList, null));
             //添加已完成
-            resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,null));
+            resultList.add(getProcessNode(finishStateEntity, finishState, userList, approveRecordShowList, null));
         }
 
         if (generalApproval.equals(processType)) {
             //添加待开始
-            resultList.add(getProcessNode(notStartEntity, notStart,userList,approveRecordShowList,null));
+            resultList.add(getProcessNode(notStartEntity, notStart, userList, approveRecordShowList, null));
             //添加进行中
-            resultList.add(getProcessNode(ingStateEntity, ingState,userList,approveRecordShowList,null));
+            resultList.add(getProcessNode(ingStateEntity, ingState, userList, approveRecordShowList, null));
 
             if (waitConfirmState.equals(taskState)) {
                 //添加待审核
-                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,userList,approveRecordShowList,taskChargeDistributionList));
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState, userList, approveRecordShowList, taskChargeDistributionList));
             }
             if (approvalIngState.equals(taskState)) {
                 //添加审核中
-                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,userList,approveRecordShowList,taskChargeDistributionList));
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState, userList, approveRecordShowList, taskChargeDistributionList));
             }
 
             if (approvalNoPassState.equals(taskState)) {//添加审核不通过
-                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,userList,approveRecordShowList,taskChargeDistributionList));
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState, userList, approveRecordShowList, taskChargeDistributionList));
             }
 
             if (finishState.equals(taskState) || portionFinishState.equals(taskState)) {
                 //添加审核通过
-                resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,taskChargeDistributionList));
+                resultList.add(getProcessNode(finishStateEntity, finishState, userList, approveRecordShowList, taskChargeDistributionList));
             }
 
         }
@@ -3941,20 +3965,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (reviewTask.equals(processType)) {
             if (waitConfirmState.equals(taskState)) {
                 //添加待审核
-                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState,userList,approveRecordShowList,null));
+                resultList.add(getProcessNode(waitConfirmEntity, waitConfirmState, userList, approveRecordShowList, null));
             }
             if (approvalIngState.equals(taskState)) {
                 //添加审核中
-                resultList.add(getProcessNode(approvalIngEntity, approvalIngState,userList,approveRecordShowList,null));
+                resultList.add(getProcessNode(approvalIngEntity, approvalIngState, userList, approveRecordShowList, null));
             }
 
             if (approvalNoPassState.equals(taskState)) {//添加审核不通过
-                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState,userList,approveRecordShowList,null));
+                resultList.add(getProcessNode(approvalNoPassEntity, approvalNoPassState, userList, approveRecordShowList, null));
             }
 
             if (finishState.equals(taskState) || portionFinishState.equals(taskState)) {
                 //添加审核通过
-                resultList.add(getProcessNode(finishStateEntity, finishState,userList,approveRecordShowList,null));
+                resultList.add(getProcessNode(finishStateEntity, finishState, userList, approveRecordShowList, null));
             }
         }
 
@@ -3963,7 +3987,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     //
-    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state,List<FindUserDTO> userList,List<ApproveRecordShowDTO> approveRecordShowList,List<TaskChargeDistributionEntity> taskChargeDistributionList) {
+    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state, List<FindUserDTO> userList, List<ApproveRecordShowDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
         boolean flag = !Objects.isNull(entity);
         String operatorName = "";
         Date operatorTime = null;
@@ -3986,7 +4010,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 || TaskStateEnum.FINISH.getCode().equals(state) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
             //根据节点名称分组，将不同节点审核人分隔
             Map<String, List<ApproveRecordShowDTO>> map = approveRecordShowList.stream().collect(Collectors.groupingBy(ApproveRecordShowDTO::getActivityName));
-            for (Map.Entry<String, List<ApproveRecordShowDTO>> entry: map.entrySet()) {
+            for (Map.Entry<String, List<ApproveRecordShowDTO>> entry : map.entrySet()) {
                 List<ApproveRecordShowDTO> value = entry.getValue();
                 List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                 TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
@@ -4024,7 +4048,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //当审核节点不一致时拼接后面的未审核数据
                 if (size1 != size2) {
                     TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
-                    for (int i = size1 + 1;i <= size2;i++) {
+                    for (int i = size1 + 1; i <= size2; i++) {
                         List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                         TaskChargeDistributionEntity taskChargeDistributionEntity = taskChargeDistributionList.get(i - 1);
                         String chargeIds = taskChargeDistributionEntity.getChargeIds();
@@ -4032,7 +4056,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             throw new ServiceException(ApiError.ERROR_95045);
                         }
                         List<String> userIds = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
-                        userIds.forEach(obj->{
+                        userIds.forEach(obj -> {
                             TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
                             taskProcessNodeDTO.setNodeName("待审核");
                             //名称
@@ -4183,11 +4207,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 编辑任务操作日志
      */
-    private void addProjectTaskDTOLog(ProjectTaskDTO projectTaskDTO,ProjectTaskEntity oldEntity,String businessId) {
+    private void addProjectTaskDTOLog(ProjectTaskDTO projectTaskDTO, ProjectTaskEntity oldEntity, String businessId) {
         ProjectTaskDTO oldDto = new ProjectTaskDTO();
         //查询修改之前的任务数据
         if (ObjectUtils.isNotEmpty(oldEntity)) {
-            BeanMapperUtils.copy(oldEntity,oldDto);
+            BeanMapperUtils.copy(oldEntity, oldDto);
         }
         //处理变更前交付文档
         List<DeliveryDocsDTO> deliveryDocsList = taskDeliveryService.getByTaskId(businessId);
@@ -4217,14 +4241,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 oldDto.setRefSkuNoList(refSkuNoList);
             }
         }
-        sysLogService.addSysLogByUpdate(oldDto,projectTaskDTO,SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),businessId,null,String.format("任务[%s]",oldEntity.getName()));
+        sysLogService.addSysLogByUpdate(oldDto, projectTaskDTO, SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), businessId, null, String.format("任务[%s]", oldEntity.getName()));
     }
 
     /**
      * 编辑任务操作日志
      */
-    private void addUpdateTaskDTOLog(ProjectTaskEntity newEntity,ProjectTaskEntity oldEntity,String businessId) {
-        sysLogService.addSysLogByUpdate(oldEntity,newEntity,SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(),businessId,null,String.format("任务[%s]",oldEntity.getName()));
+    private void addUpdateTaskDTOLog(ProjectTaskEntity newEntity, ProjectTaskEntity oldEntity, String businessId) {
+        sysLogService.addSysLogByUpdate(oldEntity, newEntity, SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), businessId, null, String.format("任务[%s]", oldEntity.getName()));
     }
 
 }

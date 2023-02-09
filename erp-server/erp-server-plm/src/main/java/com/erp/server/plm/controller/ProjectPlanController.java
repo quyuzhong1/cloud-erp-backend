@@ -2,6 +2,7 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.validation.annotation.Validated;
@@ -43,8 +44,8 @@ public class ProjectPlanController extends BaseController {
      * 取消排期
      */
     @PostMapping("/cancel")
-    public  ApiResult cancelSchedule(HandleTaskScheduleDTO dto){
-        Boolean result = projectPlanService.cancelSchedule(dto);
+    public  ApiResult cancelSchedule(BaseIdDTO dto){
+        Boolean result = projectPlanService.cancelSchedule(dto.getId());
         return result == true ? success() : failure();
     }
 
@@ -52,20 +53,11 @@ public class ProjectPlanController extends BaseController {
      * 重启排期
      */
     @PostMapping("/restart")
-    public  ApiResult restartSchedule(HandleTaskScheduleDTO dto){
-        Boolean result = projectPlanService.restartSchedule(dto);
+    public  ApiResult restartSchedule(BaseIdDTO dto){
+        Boolean result = projectPlanService.restartSchedule(dto.getId());
         return result == true ? success() : failure();
     }
 
-
-    /**
-     * 变更排期
-     */
-    @PostMapping("/change")
-    public  ApiResult changeSchedule(HandleTaskScheduleDTO dto){
-        Boolean result = projectPlanService.changeSchedule(dto);
-        return result == true ? success() : failure();
-    }
 
 
     /**

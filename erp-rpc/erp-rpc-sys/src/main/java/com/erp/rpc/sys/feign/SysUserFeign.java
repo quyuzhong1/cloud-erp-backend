@@ -6,6 +6,7 @@ import com.erp.common.modules.sys.dto.SysCodeSkuDTO;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.vo.UserFieldVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,6 +119,6 @@ public interface SysUserFeign {
 
     //获取反选字段
     @PostMapping("sys/feign/customize/field/getByUserId")
-    List<CustomizeFieldHiddenDTO> getByUserId(@RequestBody FindCustomizeFieldDTO dto);
+    List<UserFieldVO> getByUserId(@RequestBody FindCustomizeFieldDTO dto);
 
 }

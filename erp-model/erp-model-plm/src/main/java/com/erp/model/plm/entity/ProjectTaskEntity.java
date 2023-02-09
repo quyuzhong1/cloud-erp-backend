@@ -64,13 +64,13 @@ public class ProjectTaskEntity implements Serializable {
     /**
      * 计划开始时间
      */
-    @TableField(value = "plan_start_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "plan_start_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
     private Date planStartTime;
 
     /**
      * j计划结束时间
      */
-    @TableField(value = "plan_end_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "plan_end_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
     private Date planEndTime;
 
     /**
@@ -161,16 +161,16 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("pid")
     private String pid;
 
-    @TableField(value="create_user_id", fill = FieldFill.INSERT)
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
 
-    @TableField(value="create_user_name",fill = FieldFill.INSERT)
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
 
-    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
 
-    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
 
     //流程表id
@@ -198,6 +198,19 @@ public class ProjectTaskEntity implements Serializable {
     /**
      * 辅助字段：是否完成
      */
-    @TableField(exist=false)
+    @TableField(exist = false)
     private Integer isfinish;
+
+
+    /**
+     * 计划状态
+     */
+    @TableField("schedule_status")
+    private String scheduleStatus;
+
+    /**
+     * 排期类型
+     */
+    @TableField("schedule_type")
+    private String scheduleType;
 }
