@@ -19,9 +19,15 @@ import java.util.regex.Pattern;
 @NoArgsConstructor
 public class SortParamDTO implements Serializable {
 
+    /**
+     * 排序字段
+     */
     @NotBlank(message = "排序字段不能为空")
     private String field;
 
+    /**
+     * 排序值，DESC,ASC
+     */
     @NotBlank(message = "排序值不能为空")
     @StateEnumValue(strValues = {"DESC","ASC"},message = "排序值有误")
     private String sort;
