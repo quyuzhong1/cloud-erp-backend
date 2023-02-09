@@ -152,8 +152,14 @@ public class DataPermissionAspect {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DataPermission inject = method.getAnnotation(DataPermission.class);
         String tableFields = dataPermission.tableField();
+        //字段名称
         List<String> tableFieldList = Arrays.asList(tableFields.split(","));
         int tableFieldSize = tableFieldList.size();
+        //表别名
+        String tableAlias = dataPermission.tableAlias();
+        List<String> tableAliasList = Arrays.asList(tableAlias.split(","));
+        boolean flag = tableFieldList.size() == tableAliasList.size();
+
         StringBuilder sqlString = new StringBuilder();
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             sqlString = new StringBuilder();
@@ -165,26 +171,26 @@ public class DataPermissionAspect {
             }
             if (CollectionUtils.isNotEmpty(list)) {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
+                    sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
                 } else {
-                    sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
+                    sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + StringUtils.join(list,",") + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + StringUtils.join(list,",") + "',','))");
+                            sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + StringUtils.join(list,",") + "',','))");
                         }
                     }
                 }
 
             } else {
                 if (tableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                    sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
                 } else {
-                    sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                    sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
                     if (tableFieldSize > 1) {
                         sqlString.append(" OR ");
                         for (int i = 1; i < tableFieldSize; i++) {
-                            sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
+                            sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
                         }
                     }
                 }
@@ -192,13 +198,13 @@ public class DataPermissionAspect {
             //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (tableFieldSize == 1) {
-                sqlString.append(" AND string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                sqlString.append(" AND string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
             } else {
-                sqlString.append(" AND (string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
+                sqlString.append(" AND (string_to_array("+ tableAliasList.get(0) + "."+ tableFieldList.get(0) +",',') && string_to_array('" + user.getUid() + "',',')");
                 if (tableFieldSize > 1) {
                     sqlString.append(" OR ");
                     for (int i = 1; i < tableFieldSize; i++) {
-                        sqlString.append("string_to_array("+ dataPermission.tableAlias() + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
+                        sqlString.append("string_to_array("+ (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "."+ tableFieldList.get(i) +",',') && string_to_array('" + user.getUid() + "',','))");
                     }
                 }
             }

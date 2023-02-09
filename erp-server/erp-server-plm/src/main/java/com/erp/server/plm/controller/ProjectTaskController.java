@@ -404,9 +404,9 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/group/condition/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:all",
-            tableAlias = "t"
+            tableAlias = "t,tcd"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
@@ -420,9 +420,9 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/group/condition/assignToMe/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "t"
+            tableAlias = "t,tcd"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupAssignToMeConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupAssignToMeCondition(dto);
@@ -451,9 +451,9 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:all",
-            tableAlias = "pt"
+            tableAlias = "pt,tcd"
     )
     @PostMapping("/all/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -468,9 +468,9 @@ public class ProjectTaskController extends BaseController {
      */
 
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "pt"
+            tableAlias = "pt,tcd"
     )
     @PostMapping("/assignToMe/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -500,9 +500,9 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "approval_user_id",
+            tableField = "charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "pt"
+            tableAlias = "tcd"
     )
     @PostMapping("/assignToMe/waitAudit/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
