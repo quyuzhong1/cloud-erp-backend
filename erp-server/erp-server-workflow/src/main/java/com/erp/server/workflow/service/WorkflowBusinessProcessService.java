@@ -5,6 +5,7 @@ import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessProcessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 
 import java.util.List;
 
@@ -22,4 +23,6 @@ public interface WorkflowBusinessProcessService extends IService<WorkflowBusines
     Boolean saveBusinessProcess(WorkflowBusinessProcessDTO dto);
 
     MyToDoTaskVO getProcessByBusinessTable(BusinessTableDTO dto);
+
+    List<ProcessCurrentAuditorVO> getProcessCurrentAuditor(List<String> businessTableIds);
 }

@@ -102,7 +102,6 @@ public class ProcessFeignController extends BaseController {
     }
 
 
-
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")
     public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
@@ -150,6 +149,22 @@ public class ProcessFeignController extends BaseController {
     public MyToDoTaskVO getProcessByBusinessTable(@RequestBody BusinessTableDTO dto) {
         MyToDoTaskVO result = businessProcessService.getProcessByBusinessTable(dto);
         return result;
+
+    }
+
+
+    /**
+     * 根据业务表id集合 获取到对应 流程id
+     *
+     * @param businessTableIds
+     * @return java.util.List<com.erp.model.workflow.dto.WorkflowBusinessProcessDTO>
+     * @author yl
+     * @date 2023-02-08 19:48
+     */
+    @PostMapping("/getProcess")
+    public List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds) {
+        List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(businessTableIds);
+        return list;
 
     }
 

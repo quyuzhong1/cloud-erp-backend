@@ -8,6 +8,7 @@ import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessProcessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.server.workflow.mapper.WorkflowBusinessProcessMapper;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
@@ -90,8 +91,27 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         //获取到我的待办任务
         List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(dto.getUserId());
         MyToDoTaskVO taskVO = list.stream().
-                filter(m -> StringUtils.isNotBlank(m.getBusinessTableId())&&m.getBusinessTableId().
-                equals(dto.getBusinessTableId())).findFirst().orElse(null);
+                filter(m -> StringUtils.isNotBlank(m.getBusinessTableId()) && m.getBusinessTableId().
+                        equals(dto.getBusinessTableId())).findFirst().orElse(null);
         return taskVO;
+    }
+
+
+    /**
+     * 获取到 当前审核人
+     *
+     * @param businessTableIds
+     * @return java.util.List<com.erp.model.workflow.vo.ProcessCurrentAuditorVO>
+     * @author yl
+     * @date 2023-02-09 9:23
+     */
+    @Override
+    public List<ProcessCurrentAuditorVO> getProcessCurrentAuditor(List<String> businessTableIds) {
+        LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableIds);
+        List<WorkflowBusinessProcessEntity> list = this.list(queryWrapper);
+        return null;
+
+
     }
 }

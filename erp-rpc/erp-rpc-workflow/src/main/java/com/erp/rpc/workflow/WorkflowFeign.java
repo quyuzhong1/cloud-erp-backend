@@ -92,4 +92,7 @@ public interface WorkflowFeign {
 
     @PostMapping("workflow/feign/process/getProcessByBusinessTable")
     MyToDoTaskVO getByBusinessTableId(@RequestBody BusinessTableDTO  dto);
+
+    @PostMapping("workflow/feign/process/getProcess")
+    List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds);
 }

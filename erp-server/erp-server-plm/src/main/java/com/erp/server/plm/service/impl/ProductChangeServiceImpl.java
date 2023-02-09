@@ -379,9 +379,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
+        List<String> businessTableIds = list.stream().map(ProductChangePagingVO::getId).collect(Collectors.toList());
         //获取到类型是bom 的 源 id
         List<String> bomIdList = list.stream().filter(c -> changeBom.equals(c.getType())).
                 map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
+
+        List<WorkflowBusinessProcessDTO> businessProcessList = workflowFeign.getProcessIds(businessTableIds);
         List<BomVO> bomList = new ArrayList<>();
         //当不为空的时候表示有 bom 的
         if (CollectionUtils.isNotEmpty(bomIdList)) {
@@ -773,10 +776,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     /**
      * 根据关键字搜索 sku 或者bom 的编号
-     * @author yl
-     * @date 2023-02-03 16:07
+     *
      * @param searchKeyword
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-02-03 16:07
      */
     @Override
     public List<String> getChangeSearchCondition(String searchKeyword) {
