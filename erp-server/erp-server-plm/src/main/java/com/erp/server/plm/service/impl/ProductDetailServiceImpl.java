@@ -1690,7 +1690,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        if (ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(productDetailEntity.getStatus())) {
+        if (!ProductDetailStatusEnum.WAIT_COMMIT.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95117);
         }
         //验证必填信息
@@ -1710,7 +1710,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus())) {
+        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productDetailEntity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95117);
         }
         //更新审核状态
