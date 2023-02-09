@@ -1,20 +1,19 @@
-package com.erp.model.sys.dto;
+package com.erp.model.sys.vo;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
- * @Classname CustomizeFieldDisplayDTO
+ * @Classname CustomizeFieldVO
  * @Description TODO
- * @Date 2023-02-07 9:44
+ * @Date 2023-02-09 19:08
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
-public class CustomizeFieldHiddenDTO implements Serializable {
-
+@NotBlank
+public class CustomizeFieldVO  implements Serializable {
 
     /**
      * 字段标题
@@ -43,8 +42,6 @@ public class CustomizeFieldHiddenDTO implements Serializable {
      * 是否否认
      */
     private Boolean isDefault;
-
-    private String userId;
 
 
 }

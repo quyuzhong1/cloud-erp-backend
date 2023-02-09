@@ -1,12 +1,10 @@
 package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
-import com.erp.model.sys.entity.CustomizeFieldHiddenEntity;
+import com.erp.model.sys.entity.CustomizeFieldLayoutEntity;
 import com.erp.model.sys.vo.UserFieldVO;
-
-import java.util.List;
 
 /**
  * (CustomizeFieldDisplay)表服务接口
@@ -14,10 +12,10 @@ import java.util.List;
  * @author yl
  * @since 2023-02-03 18:59:41
  */
-public interface CustomizeFieldHiddenService extends IService<CustomizeFieldHiddenEntity> {
+public interface CustomizeFieldLayoutService extends IService<CustomizeFieldLayoutEntity> {
 
 
-    Boolean add(List<CustomizeFieldHiddenDTO> dto);
+    Boolean add(CustomizeFieldLayoutDTO dto);
 
     UserFieldVO getByUserId(FindCustomizeFieldDTO dto);
 }

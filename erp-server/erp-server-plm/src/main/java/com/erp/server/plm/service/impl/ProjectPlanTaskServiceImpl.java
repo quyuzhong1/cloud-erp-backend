@@ -3,19 +3,22 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
 import com.erp.common.dto.base.SortParamDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ProductTaskVO;
+import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
-import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
+import com.erp.model.sys.dto.FindCustomizeFieldDTO;
+import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
@@ -163,25 +166,25 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     }
 
     @Override
-    public Boolean fieldSet(List<CustomizeFieldHiddenDTO> dto) {
-        if (CollectionUtils.isNotEmpty(dto)) {
+    public Boolean fieldSet(CustomizeFieldLayoutDTO dto) {
+
             String userId = commonService.getUserInfo().getUid();
-            for (CustomizeFieldHiddenDTO item : dto) {
-                item.setUserId(userId);
-                item.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.name);
-                item.setFieldTitle(CustomizeFieldEnum.getByModuleFieldTitle(item.getModuleName()));
-            }
-        }
+            dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.getCode());
+            dto.setUserId(userId);
+            dto.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.getName());
+            dto.setLayoutJson(dto.getLayoutJson());
+
+
         return sysUserFeign.batchAdd(dto);
     }
 
     @Override
-    public List<CustomizeFieldHiddenDTO> allField() {
+    public List<CustomizeFieldVO> allField() {
         String code = ModuleEnum.PLM_SCHEDULE_TASK.code;
         List<CustomizeFieldEnum> customizeFieldList = CustomizeFieldEnum.getByModuleCode(code);
-        List<CustomizeFieldHiddenDTO> resultList = new ArrayList<>(customizeFieldList.size());
+        List<CustomizeFieldVO> resultList = new ArrayList<>(customizeFieldList.size());
         for (CustomizeFieldEnum item : customizeFieldList) {
-            CustomizeFieldHiddenDTO dto = new CustomizeFieldHiddenDTO();
+            CustomizeFieldVO dto = new CustomizeFieldVO();
             dto.setFieldName(item.getFieldName());
             dto.setFieldTitle(item.getFieldTitle());
             dto.setIsDefault(item.getIsDefault());
@@ -200,11 +203,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      */
     @Override
     public UserFieldVO getUserField() {
-//        FindCustomizeFieldDTO dto = new FindCustomizeFieldDTO();
-//        dto.setUserId(commonService.getUserInfo().getUid());
-//        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.code);
-//        return sysUserFeign.getByUserId(dto);
-        return null;
+        FindCustomizeFieldDTO dto = new FindCustomizeFieldDTO();
+        dto.setUserId(commonService.getUserInfo().getUid());
+        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.code);
+        return sysUserFeign.getByUserId(dto);
+
     }
 
 
@@ -470,6 +473,21 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             addList.add(entity);
         }
         this.saveBatch(addList);
+    }
+
+    
+    /**
+     * 获取到排期 类型的 任务
+     * @author yl
+     * @date 2023-02-09 17:50
+     * @param productId
+     * @param projectPlanChange
+     * @return java.util.List<com.erp.model.plm.entity.ProjectPlanEntity>
+     */
+    @Override
+    public List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange) {
+
+        return baseMapper.getTaskByPlanType(productId,projectPlanChange);
     }
 
 }

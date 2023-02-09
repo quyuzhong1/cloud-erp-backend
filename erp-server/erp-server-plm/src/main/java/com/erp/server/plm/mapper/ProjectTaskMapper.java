@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -148,5 +149,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @param status
      */
     void updateScheduleTask(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status,@Param("scheduleType") String scheduleType);
+
+    Map<String, Object> getProductMapByProductId(@Param("productId") String productId);
 }
 

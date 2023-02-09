@@ -15,8 +15,8 @@ import java.util.Date;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("customize_field_hidden")
-public class CustomizeFieldHiddenEntity implements Serializable {
+@TableName("customize_field_layout")
+public class CustomizeFieldLayoutEntity implements Serializable {
     private static final long serialVersionUID = -23577872711182914L;
     /**
      * 表id
@@ -43,22 +43,16 @@ public class CustomizeFieldHiddenEntity implements Serializable {
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
-    /**
-     * 字段标题
-     */
-    private String fieldTitle;
+
     /**
      * 字段名称
      */
-    private String fieldName;
+    private String layoutJson;
     /**
      * 用户id
      */
     private String userId;
-    /**
-     * 排序
-     */
-    private Integer orderIndex;
+
     /**
      * 页面模块编号
      */

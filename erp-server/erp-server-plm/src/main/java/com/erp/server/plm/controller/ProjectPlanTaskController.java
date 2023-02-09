@@ -1,12 +1,13 @@
 package com.erp.server.plm.controller;
 
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
-import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
+import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import org.springframework.validation.annotation.Validated;
@@ -95,7 +96,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 字段设置
      */
     @PostMapping("/fieldSet")
-    public ApiResult fieldSet(@RequestBody List<CustomizeFieldHiddenDTO> dto) {
+    public ApiResult fieldSet(@RequestBody CustomizeFieldLayoutDTO dto) {
         Boolean result = projectPlanTaskService.fieldSet(dto);
         return result == true ? success() : failure();
     }
@@ -104,8 +105,8 @@ public class ProjectPlanTaskController extends BaseController {
      * 所有字段显示
      */
     @GetMapping("/allField")
-    public ApiResult<List<CustomizeFieldHiddenDTO>> fieldShow() {
-        List<CustomizeFieldHiddenDTO> result = projectPlanTaskService.allField();
+    public ApiResult<List<CustomizeFieldVO>> fieldShow() {
+        List<CustomizeFieldVO> result = projectPlanTaskService.allField();
         return success(result);
     }
 

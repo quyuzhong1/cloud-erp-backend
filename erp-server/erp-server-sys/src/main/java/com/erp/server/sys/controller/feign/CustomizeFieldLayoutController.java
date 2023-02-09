@@ -1,17 +1,16 @@
 package com.erp.server.sys.controller.feign;
 
 import com.erp.common.controller.BaseController;
-import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.UserFieldVO;
-import com.erp.server.sys.service.CustomizeFieldHiddenService;
+import com.erp.server.sys.service.CustomizeFieldLayoutService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * @Classname CustomizeFieldFeignController
@@ -21,21 +20,21 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("sys/feign/customize/field")
-public class CustomizeFieldFeignController extends BaseController {
+public class CustomizeFieldLayoutController extends BaseController {
 
     @Resource
-    private CustomizeFieldHiddenService customizeFieldHiddenService;
+    private CustomizeFieldLayoutService customizeFieldLayoutService;
 
 
     @PostMapping("/add")
-    public Boolean saveHiddenField(@RequestBody List<CustomizeFieldHiddenDTO> dto) {
-        Boolean result = customizeFieldHiddenService.add(dto);
+    public Boolean saveHiddenField(@RequestBody CustomizeFieldLayoutDTO dto) {
+        Boolean result = customizeFieldLayoutService.add(dto);
         return result;
     }
 
     @PostMapping("/getByUserId")
     public UserFieldVO getByUserId(@RequestBody FindCustomizeFieldDTO  dto) {
-        UserFieldVO vo = customizeFieldHiddenService.getByUserId(dto);
+        UserFieldVO vo = customizeFieldLayoutService.getByUserId(dto);
         return vo;
     }
 }

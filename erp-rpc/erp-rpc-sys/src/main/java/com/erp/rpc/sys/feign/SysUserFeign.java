@@ -115,10 +115,10 @@ public interface SysUserFeign {
 
     //保存反选字段
     @PostMapping("sys/feign/customize/field/add")
-    Boolean batchAdd(@RequestBody List<CustomizeFieldHiddenDTO> dto);
+    Boolean batchAdd(@RequestBody CustomizeFieldLayoutDTO dto);
 
     //获取反选字段
     @PostMapping("sys/feign/customize/field/getByUserId")
-    List<UserFieldVO> getByUserId(@RequestBody FindCustomizeFieldDTO dto);
+    UserFieldVO getByUserId(@RequestBody FindCustomizeFieldDTO dto);
 
 }

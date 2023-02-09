@@ -7,8 +7,10 @@ import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
-import com.erp.model.sys.dto.CustomizeFieldHiddenDTO;
+import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
+import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 
 import java.util.List;
@@ -33,10 +35,10 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
 
     Boolean importTaskschedule();
 
-    Boolean fieldSet(List<CustomizeFieldHiddenDTO> dto);
+    Boolean fieldSet(CustomizeFieldLayoutDTO dto);
 
 
-    List<CustomizeFieldHiddenDTO> allField();
+    List<CustomizeFieldVO> allField();
 
     UserFieldVO getUserField();
 
@@ -86,4 +88,15 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @return void
      */
     void saveChangePlanTask(String id, String productId, List<ProjectTaskEntity> taskList, List<ChangeTaskScheduleDTO> list);
+
+    
+    /**
+     * 获取到类型的任务
+     * @author yl
+     * @date 2023-02-09 17:49
+     * @param productId
+     * @param projectPlanChange
+     * @return java.util.List<com.erp.model.plm.entity.ProjectPlanEntity>
+     */
+    List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange);
 }

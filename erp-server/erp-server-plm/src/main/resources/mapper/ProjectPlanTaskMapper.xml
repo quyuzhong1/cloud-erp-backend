@@ -41,5 +41,21 @@
            </foreach>
         </if>
     </select>
+
+    <select id="getTaskByPlanType" resultType="com.erp.model.plm.vo.ScheduleTaskDetailsVO">
+
+         SELECT
+            pt.product_id,
+            pt.task_id,
+            pt.origin_start_time AS planStartTime,
+            pt.origin_end_time AS planEndTime,
+            pt.origin_charge_id AS chargeId,
+            FROM project_plan_task pt
+            WHERE pt.product_id=#{productId}  AND pt.project_plan_id IN (
+                SELECT id FROM  project_plan WHERE product_id=#{productId} AND type=#{projectPlanType} AND is_deleted=false
+            )
+
+
+    </select>
 </mapper>
 

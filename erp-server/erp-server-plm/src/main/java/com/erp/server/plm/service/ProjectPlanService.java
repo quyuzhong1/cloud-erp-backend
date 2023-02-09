@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
+import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 
 import java.util.List;
 
@@ -26,4 +27,6 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
     Boolean changeSchedule(List<ChangeTaskScheduleDTO> list);
 
     List<ProjectPlanEntity> getByIds(List<String> projectPlanIds);
+
+    ProjectPlanDetailsVO details(String id);
 }

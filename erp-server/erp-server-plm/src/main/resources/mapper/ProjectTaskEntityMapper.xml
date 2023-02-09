@@ -917,7 +917,13 @@
         <if test="sortSql!=null and sortSql!=''">
             ORDER BY sortSql
         </if>
+    </select>
 
+
+    <select id="getProductMapByProductId" resultType="java.util.Map">
+         SELECT COUNT(*) AS taskCount,
+         (SELECT name AS productName  FROM product_info WHERE id=#{productId})
+         FROM project_task WHERE product_id=#{productId}
     </select>
 
 

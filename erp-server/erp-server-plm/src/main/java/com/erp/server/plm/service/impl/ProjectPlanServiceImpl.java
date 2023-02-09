@@ -4,14 +4,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
+import com.common.core.utils.date.DateUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.ProjectPlanDetailsVO;
+import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
@@ -19,12 +24,11 @@ import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +45,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private ProjectPlanTaskService projectPlanTaskService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
 
     /**
@@ -151,7 +158,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanId(id);
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             //更改任务状态
-            taskService.updateScheduleStatus(productId, taskIds, cancelStatus,plan.getType());
+            taskService.updateScheduleStatus(productId, taskIds, cancelStatus, plan.getType());
         }
         return result;
     }
@@ -174,6 +181,90 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         return new ArrayList<>();
 
+    }
+
+    /**
+     * 排期详情
+     *
+     * @param id
+     * @return com.erp.model.plm.vo.ProjectPlanDetailsVO
+     * @author yl
+     * @date 2023-02-09 17:07
+     */
+    @Override
+    public ProjectPlanDetailsVO details(String id) {
+        ProjectPlanDetailsVO vo = new ProjectPlanDetailsVO();
+        ProjectPlanEntity plan = this.getById(id);
+        if (Objects.isNull(plan)) {
+            throw new ServiceException(ApiError.ERROR_95122);
+        }
+        String productId = plan.getProductId();
+        vo.setProductId(productId);
+        Map<String, Object> productMap = taskService.getProductMapByProductId(productId);
+        vo.setProductName(productMap.get("productName").toString());
+        vo.setTotalTaskCount((Integer) productMap.get("taskCount"));
+        //获取任务
+        List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanId(id);
+        //最小计划开始时间
+        Date minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
+        //最大计划结束时间
+        Date maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
+        vo.setScheduleStartTine(minStartTime);
+        vo.setScheduleEndTine(maxEndTime);
+        //相差多少天
+        Integer durationDay = DateUtil.getDiffDay(minStartTime, maxEndTime);
+        vo.setDurationDay(durationDay);
+        vo.setWaitAuditTaskCount(planTaskList.size());
+
+        List<ScheduleTaskDetailsVO> taskList = new ArrayList<>(20);
+
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        /**
+         * 获取是变更的任务
+         */
+        List<ScheduleTaskDetailsVO> changeTaskList = projectPlanTaskService.getTaskByPlanType(productId, ProjectPlanConstant.PROJECT_PLAN_CHANGE);
+        for (ProjectPlanTaskEntity item : planTaskList) {
+            ScheduleTaskDetailsVO task = new ScheduleTaskDetailsVO();
+            String chargeId = item.getChangeChargeId();
+            String taskId = item.getTaskId();
+            task.setChargeId(item.getChangeChargeId());
+            task.setChargeName(getNameByIds(chargeId, userList));
+            task.setPlanEndTime(item.getChangeEndTime());
+            task.setPlanStartTime(item.getChangeStartTime());
+            task.setTaskId(taskId);
+
+            List<ScheduleTaskDetailsVO> historyList = changeTaskList.stream().filter(c -> c.getTaskId().equals(taskId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(historyList)) {
+                for (ScheduleTaskDetailsVO hi : historyList) {
+                    String hiChargeId = hi.getChargeId();
+                    hi.setChargeName(getNameByIds(hiChargeId,userList));
+                }
+            }
+            task.setHistoryList(historyList);
+            taskList.add(task);
+        }
+
+
+        vo.setTaskList(taskList);
+        return vo;
+    }
+
+
+    public String getNameByIds(String userId, List<FindUserDTO> userList) {
+        if (StringUtils.isNotBlank(userId)) {
+            List<String> names = new ArrayList<>();
+            String[] userIds = userId.split(",");
+            for (String user : userIds) {
+                FindUserDTO findUser = userList.stream().filter(u -> user.equals(u.getUserId())).findFirst().orElse(null);
+                if (findUser != null) {
+                    names.add(findUser.getUserName());
+                } else {
+                    names.add("");
+                }
+            }
+            return StringUtils.join(names, ",");
+        }
+        return "";
     }
 
     /**
@@ -205,7 +296,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanId(id);
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             //更改任务状态
-            taskService.updateScheduleStatus(productId, taskIds, waitAuditStatus,plan.getType());
+            taskService.updateScheduleStatus(productId, taskIds, waitAuditStatus, plan.getType());
         }
 
         return result;
@@ -251,7 +342,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //发起流程
             //更改任务状态
-            taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(),type);
+            taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(), type);
         }
         return saveResult;
 

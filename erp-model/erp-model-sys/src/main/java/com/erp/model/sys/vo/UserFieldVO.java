@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @Classname UserFieldVO
@@ -17,15 +16,7 @@ import java.util.List;
 public class UserFieldVO implements Serializable {
 
 
-    /**
-     * 反选字段
-     */
-    private List<String> invertList;
-
-    /**
-     * 选中的字段
-     */
-    private List<String> checkList;
+    private String layoutJson;
 
     private String moduleCode;
 

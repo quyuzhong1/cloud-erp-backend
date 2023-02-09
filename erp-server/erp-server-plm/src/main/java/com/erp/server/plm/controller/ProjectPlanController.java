@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,6 +57,15 @@ public class ProjectPlanController extends BaseController {
     public  ApiResult restartSchedule(BaseIdDTO dto){
         Boolean result = projectPlanService.restartSchedule(dto.getId());
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 详情
+     */
+    @PostMapping("/view")
+    public  ApiResult<ProjectPlanDetailsVO> details(BaseIdDTO dto){
+        ProjectPlanDetailsVO resultVO = projectPlanService.details(dto.getId());
+        return success(resultVO);
     }
 
 

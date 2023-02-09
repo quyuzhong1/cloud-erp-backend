@@ -2353,6 +2353,19 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     /**
+     * 获取产品名称及任务数
+     * @author yl
+     * @date 2023-02-09 17:14
+     * @param productId
+     * @return java.util.Map<java.lang.String,java.lang.Integer>
+     */
+    @Override
+    public Map<String, Object> getProductMapByProductId(String productId) {
+        Map<String,Object> resultMap=baseMapper.getProductMapByProductId(productId);
+        return resultMap;
+    }
+
+    /**
      * 我创造的    任务创建人=当前账号人
      *
      * @param searchParamDTO
