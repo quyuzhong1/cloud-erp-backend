@@ -58,7 +58,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        update_time desc
+        create_time asc
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">
@@ -130,7 +130,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        update_time desc
+        create_time desc
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -251,7 +251,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        update_time desc
+        create_time asc
     </select>
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
