@@ -442,24 +442,35 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                                 if (CollectionUtils.isNotEmpty(progress)) {
                                     resultList.addAll(progress);
                                 }
-                            } else if (CollectionUtils.isNotEmpty(unStartList)) {
+                            }
+                            if (CollectionUtils.isNotEmpty(unStartList)) {
                                 if (CollectionUtils.isEmpty(inFinishList)) {
                                     //都是未开始，则显示第一个
                                     resultList.add(unStartList.get(0).getKey());
                                 } else {
                                     Pair<String, Integer> pair = inFinishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
-                                    List<String> unStart = unStartList.stream().filter(e -> pair.getValue() >= e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
+                                    List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
                                     if (CollectionUtils.isNotEmpty(unStart)) {
                                         resultList.addAll(unStart);
                                     }
                                 }
-                            }else if ( CollectionUtils.isNotEmpty(finishList)){
-                                if (CollectionUtils.isEmpty(progressList) && CollectionUtils.isEmpty(unStartList)) {
-                                    //全部已完成则显示最后一条
-                                    resultList.add(finishList.get(finishList.size() - 1).getKey());
+                            }
+                            if ( CollectionUtils.isNotEmpty(finishList)){
+                                if (CollectionUtils.isEmpty(progressList)  ) {
+                                    if (CollectionUtils.isNotEmpty(unStartList)) {
+                                        Pair<String, Integer> pair = finishList.stream().max((a, b) -> Integer.compare(a.getValue(), b.getValue())).get();
+                                        List<String> unStart = unStartList.stream().filter(e -> pair.getValue() > e.getValue()).map(e -> e.getKey()).collect(Collectors.toList());
+                                        if (CollectionUtils.isEmpty(unStart)) {
+                                            //未开始阶段在已完成阶段后面则显示最后一条
+                                            resultList.add(finishList.get(finishList.size() - 1).getKey());
+                                        }
+                                    } else {
+                                        //全部已完成则显示最后一条
+                                        resultList.add(finishList.get(finishList.size() - 1).getKey());
+                                    }
+
                                 }
                             }
-
                             if (CollectionUtils.isNotEmpty(resultList)) {
                                 item.setProjectPhase(String.join(",", resultList));
                             }
