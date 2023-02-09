@@ -136,66 +136,78 @@ public class ProductDetailExcelDTO {
     @ExcelProperty(value = "英文用途", index = 39)
     private String englishUsage;
 
-    @ExcelProperty(value = "产品尺寸", index = 40)
-    private String productSize;
+    @ExcelProperty(value = "产品尺寸(长)", index = 40)
+    private BigDecimal productSizeLength;
 
-    @ExcelProperty(value = "毛重", index = 41)
+    @ExcelProperty(value = "产品尺寸(宽)", index = 41)
+    private BigDecimal productSizeWide;
+
+    @ExcelProperty(value = "产品尺寸(高)", index = 42)
+    private BigDecimal productSizeHigh;
+
+    @ExcelProperty(value = "毛重", index = 43)
     private BigDecimal grossWeight;
 
-    @ExcelProperty(value = "净重", index = 42)
+    @ExcelProperty(value = "净重", index = 44)
     private BigDecimal netWeight;
 
-    @ExcelProperty(value = "箱规", index = 43)
-    private String boxSize;
+    @ExcelProperty(value = "箱规(长)", index = 45)
+    private BigDecimal boxSizeLength;
 
-    @ExcelProperty(value = "单箱重量", index = 44)
+    @ExcelProperty(value = "箱规(宽)", index = 46)
+    private BigDecimal boxSizeWide;
+
+    @ExcelProperty(value = "箱规(高)", index = 47)
+    private BigDecimal boxSizeHigh;
+
+    @ExcelProperty(value = "单箱重量", index = 48)
     private BigDecimal boxWeight;
 
-    @ExcelProperty(value = "单箱数量", index = 45)
+    @ExcelProperty(value = "单箱数量", index = 49)
     private BigDecimal boxQty;
 
-    @ExcelProperty(value = "ean码", index = 46)
+    @ExcelProperty(value = "ean码", index = 50)
     private String ean;
 
-    @ExcelProperty(value = "计划首批下单量", index = 47)
+    @ExcelProperty(value = "计划首批下单量", index = 51)
     private Long planOrderQty;
 
-    @ExcelProperty(value = "首批下单时间", index = 48)
+    @ExcelProperty(value = "首批下单时间", index = 52)
     private Date placeOrderTime;
 
-    @ExcelProperty(value = "预计首批到货时间", index = 49)
+    @ExcelProperty(value = "预计首批到货时间", index = 53)
     private Date planArrivalTime;
 
-    @ExcelProperty(value = "MOQ(最小起订量)", index = 50)
+    @ExcelProperty(value = "MOQ(最小起订量)", index = 54)
     private Integer moq;
 
-    @ExcelProperty(value = "交货周期(天)", index = 51)
+    @ExcelProperty(value = "交货周期(天)", index = 55)
     private BigDecimal deliveryCycle;
 
-    @ExcelProperty(value = "实际首批到货时间", index = 52)
+    @ExcelProperty(value = "实际首批到货时间", index = 56)
     private Date actualArrivalTime;
 
-    @ExcelProperty(value = "实际首批到货量", index = 53)
+    @ExcelProperty(value = "实际首批到货量", index = 57)
     private Long actualArrivalQty;
 
-    @ExcelProperty(value = "首批到货状态", index = 54)
+    @ExcelProperty(value = "首批到货状态", index = 58)
     private String arrivalState;
 
-    @ExcelProperty(value = "采购员", index = 55)
+    @ExcelProperty(value = "采购员", index = 59)
     private String purchaseUser;
 
-    @ExcelProperty(value = "一级供应商", index = 56)
+    @ExcelProperty(value = "一级供应商", index = 60)
     private String mainSupplier;
 
-    @ExcelProperty(value = "二级供应商", index = 57)
+    @ExcelProperty(value = "二级供应商", index = 61)
     private String secondSupplier;
 
-    @ExcelProperty(value = "产品开发状态", index = 58)
+    @ExcelProperty(value = "产品开发状态", index = 62)
     private String productState;
 
-    @ExcelProperty(value = "量产入库时间", index = 59)
+    @ExcelProperty(value = "量产入库时间", index = 63)
     private Date firstMassProductDate;
 
-    @ExcelProperty(value = "错误信息", index = 60)
+    @ExcelProperty(value = "错误信息", index = 64)
     private String errorMsg;
 }

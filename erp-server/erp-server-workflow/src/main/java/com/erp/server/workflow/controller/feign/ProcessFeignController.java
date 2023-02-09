@@ -161,12 +161,12 @@ public class ProcessFeignController extends BaseController {
      * @author yl
      * @date 2023-02-08 19:48
      */
-    @PostMapping("/getProcess")
+   /* @PostMapping("/getProcess")
     public List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds) {
         List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(businessTableIds);
         return list;
 
-    }
+    }*/
 
 
 }

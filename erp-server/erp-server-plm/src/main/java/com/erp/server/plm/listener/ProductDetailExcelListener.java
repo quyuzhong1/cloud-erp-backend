@@ -2,6 +2,7 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
 import com.erp.common.dto.base.ApiResult;
@@ -18,10 +19,10 @@ import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductUnitService;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -388,6 +389,36 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //产品包装信息
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
+        String productSize = "";
+        String boxSize ="";
+        BigDecimal productSizeLength = dto.getProductSizeLength();
+        BigDecimal productSizeWide = dto.getProductSizeWide();
+        BigDecimal productSizeHigh = dto.getProductSizeHigh();
+        BigDecimal boxSizeLength = dto.getBoxSizeLength();
+        BigDecimal boxSizeWide = dto.getBoxSizeWide();
+        BigDecimal boxSizeHigh = dto.getBoxSizeHigh();
+
+        if (ObjectUtils.isNotEmpty(productSizeLength)) {
+            productSize = productSizeLength.stripTrailingZeros().toPlainString();
+        }
+        if (ObjectUtils.isNotEmpty(productSizeWide)) {
+            productSize = productSize.concat("X").concat(productSizeWide.stripTrailingZeros().toPlainString());
+        }
+        if (ObjectUtils.isNotEmpty(productSizeHigh)) {
+            productSize = productSize.concat("X").concat(productSizeHigh.stripTrailingZeros().toPlainString());
+        }
+        productPackDTO.setProductSize(productSize);
+
+        if (ObjectUtils.isNotEmpty(boxSizeLength)) {
+            boxSize = boxSizeLength.stripTrailingZeros().toPlainString();
+        }
+        if (ObjectUtils.isNotEmpty(boxSizeWide)) {
+            boxSize = boxSize.concat("X").concat(boxSizeWide.stripTrailingZeros().toPlainString());
+        }
+        if (ObjectUtils.isNotEmpty(boxSizeHigh)) {
+            boxSize = boxSize.concat("X").concat(boxSizeHigh.stripTrailingZeros().toPlainString());
+        }
+        productPackDTO.setBoxSize(boxSize);
         productNoSpecDTO.setProductPackDTO(productPackDTO);
 
         /*//产品证书信息
@@ -396,6 +427,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productNoSpecDTO.setProductCertificateDTO(productCertificateDTO);*/
 
         productDetailService.inportExcel(productNoSpecDTO);
+    }
+
+    public static void main(String[] args) {
+        System.out.println( new BigDecimal("300.0000").stripTrailingZeros().toPlainString());
     }
 
     public List<ProductDetailExcelDTO> getDateList(){

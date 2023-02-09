@@ -3699,13 +3699,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskEntity.setRealityEndTime(new Date());
             this.updateById(taskEntity);
 
-            //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
-            Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
-            if (approvalTaskFlag) {
-                UpdateProductDTO dto = new UpdateProductDTO();
-                dto.setProductId(taskEntity.getProductId());
-                dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
-                productInfoService.updateProduct(dto);
+            if (MathUtil.ONE.equals(taskEntity.getProperty())) {
+                //审核完成后查询产品下立项任务是否全部完成，完成则自动将产品变更为已立项
+                Boolean approvalTaskFlag = this.projectApprovalTaskFinish(taskEntity.getProductId(), MathUtil.ONE);
+                if (approvalTaskFlag) {
+                    UpdateProductDTO dto = new UpdateProductDTO();
+                    dto.setProductId(taskEntity.getProductId());
+                    dto.setApprovalStatus(ApprovalStatusEnum.APPROVAL.getCode());
+                    productInfoService.updateProduct(dto);
+                }
             }
 
             //审核完成后查询产品下所有任务是否全部完成，完成则自动将SKU列表的产品开发状态变更为已完成
@@ -3746,6 +3748,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //已立项的任务
          if (MathUtil.ONE.equals(type)) {
             List<ProjectTaskEntity> taskList = projectTaskList.stream().filter(obj -> TaskConstant.APPROVAL_TASK.equals(obj.getProperty())).collect(Collectors.toList());
+           if (CollectionUtils.isEmpty(taskList)) {
+               return  Boolean.FALSE;
+           }
             //立项任务及其子任务全部完成则返回true
             if (CollectionUtils.isNotEmpty(taskList)) {
                 //已完成任务数量
