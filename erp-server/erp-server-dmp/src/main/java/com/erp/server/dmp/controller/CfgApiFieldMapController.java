@@ -147,7 +147,7 @@ public class CfgApiFieldMapController extends BaseController {
         //id
         map.put("id","444");
         //sku
-        map.put("skuNo","0005");
+        map.put("skuNo","SKU1");
         //sku
         map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
         //spu
@@ -159,11 +159,15 @@ public class CfgApiFieldMapController extends BaseController {
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","灯光类");
+        map.put("oneLevelCategory","相机");
+        //一级分类编码
+        map.put("oneLevelCategoryCode","B");
         //二级分类名称
-        map.put("secondLevelCategory","工作室灯");
+        map.put("secondLevelCategory","相机机身配件");
+        //二级分类编码
+        map.put("secondLevelCategoryCode","BC");
         //产品经理
-        map.put("chargeName","阮青海");
+        map.put("chargeName","王杰");
         //销售信息
         //上市时间
         map.put("listingTime","23");
@@ -188,22 +192,22 @@ public class CfgApiFieldMapController extends BaseController {
         map.put("netWeight", 509);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  "");
+        map.put("productSize_length",  13);
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  "");
+        map.put("productSize_width",  12);
         //产品尺寸-高(cm)
-        map.put("productSize_height",  "");
+        map.put("productSize_height",  12);
         //单箱数量
-        map.put("boxQty", "");
+        map.put("boxQty", 12);
         //单箱重量
-        map.put("boxWeight", "");
+        map.put("boxWeight", 12);
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", "");
+        map.put("boxSize_length", 12);
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", "");
+        map.put("boxSize_width", 12);
         //产品尺寸-高(cm)
-        map.put("boxSize_height", "");
+        map.put("boxSize_height", 12);
         //实际不含税成本
         map.put("actualNoTaxCost","");
         //实际含税成本
