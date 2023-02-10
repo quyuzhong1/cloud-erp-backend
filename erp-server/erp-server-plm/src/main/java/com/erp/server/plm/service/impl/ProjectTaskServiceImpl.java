@@ -1286,16 +1286,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             if (CollectionUtils.isNotEmpty(chargeIds)) {
                 //如果传入负责人和角色一致则无需插入
-                if (String.join(",", chargeIds).equals(taskEntity.getRoleName())) {
-                    chargeIds = null;
-                } else {
-                    //否则查询对应角色存入RoleName
-                    List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIds);
-                    if (CollectionUtils.isNotEmpty(sysRoleList)) {
-                        String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
-                        taskEntity.setRoleName(roleNames);
-                    } else {
-                        taskEntity.setRoleName("");
+                String[] splits = taskEntity.getRoleName().split(",");
+                for (String roleName: splits) {
+                    if (chargeIds.contains(roleName)) {
+                        chargeIds.remove(roleName);
                     }
                 }
             }
@@ -1462,16 +1456,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             if (CollectionUtils.isNotEmpty(chargeIdList)) {
                 //如果传入负责人和角色一致则无需插入
-                if (String.join(",", chargeIdList).equals(taskEntity.getRoleName())) {
-                    chargeIdList = null;
-                } else {
-                    //否则查询对应角色存入RoleName
-                    List<ProjectRoleEntity> sysRoleList = projectRoleService.listRoleByMemberIds(chargeIdList);
-                    if (CollectionUtils.isNotEmpty(sysRoleList)) {
-                        String roleNames = sysRoleList.stream().map(ProjectRoleEntity::getName).collect(Collectors.joining(","));
-                        taskEntity.setRoleName(roleNames);
-                    } else {
-                        taskEntity.setRoleName("");
+                String[] splits = taskEntity.getRoleName().split(",");
+                for (String roleName: splits) {
+                    if (chargeIdList.contains(roleName)) {
+                        chargeIdList.remove(roleName);
                     }
                 }
             }
@@ -1957,6 +1945,20 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
+                    //负责人为角色
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(Arrays.asList(item.getRoleName().split(",")));
+                    }
+                } else {
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(new ArrayList<>());
+                    }
+                }
                 Integer totalDocsCount = 0;
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
@@ -2092,6 +2094,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
+
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
+                    //负责人为角色
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(Arrays.asList(item.getRoleName().split(",")));
+                    }
+                } else {
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(new ArrayList<>());
+                    }
+                }
+
                 Integer totalDocsCount = 0;
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
@@ -2233,6 +2251,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
+
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
+                    //负责人为角色
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(Arrays.asList(item.getRoleName().split(",")));
+                    }
+                } else {
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(new ArrayList<>());
+                    }
+                }
                 Integer totalDocsCount = 0;
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {
@@ -2320,7 +2353,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             sysLogEntity.setOperation("飞书提醒");
             sysLogEntity.setBusinessId(obj);
             sysLogEntity.setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-            sysLogEntity.setContent(dto.getContent());
+            sysLogEntity.setContent("发送飞书提醒【".concat(dto.getContent()).concat("】"));
             if (ObjectUtils.isNotEmpty(loginUser)) {
                 sysLogEntity.setCreateUserId(loginUser.getUid());
                 sysLogEntity.setCreateUserName(loginUser.getUserName());
@@ -2478,6 +2511,21 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
                 item.setWarning(warning);
+
+                if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
+                    //负责人为角色
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(Arrays.asList(item.getRoleName().split(",")));
+                    }
+                } else {
+                    if (StringUtils.isNotBlank(chargeId)) {
+                        item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+                    } else {
+                        item.setChargeIdList(new ArrayList<>());
+                    }
+                }
                 Integer totalDocsCount = 0;
                 CountDTO countDTO = taskDocsCounts.stream().filter(d -> d.getFlagId().equals(taskId)).findFirst().orElse(null);
                 if (countDTO != null) {

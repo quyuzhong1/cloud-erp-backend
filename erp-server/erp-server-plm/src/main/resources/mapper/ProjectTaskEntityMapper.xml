@@ -285,9 +285,9 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join task_charge_distribution tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
@@ -316,8 +316,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join task_charge_distribution tcd on pt.id = tcd.task_id and tcd.source = 3
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
         pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
@@ -345,7 +345,7 @@
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
@@ -375,7 +375,7 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
         pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
@@ -403,9 +403,9 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join task_charge_distribution tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+            (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
@@ -433,8 +433,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join task_charge_distribution tcd on pt.id = tcd.task_id and tcd.source = 3
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
         pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
@@ -463,8 +463,8 @@
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join task_charge_distribution tcd on pt.id = tcd.task_id and tcd.source = 3
-        where  (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        where  (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
             <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
                 <if test="params.groupFlag != null  and params.groupFlag != ''">
