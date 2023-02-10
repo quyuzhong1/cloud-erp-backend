@@ -9,6 +9,9 @@ import lombok.ToString;
 @Data
 @ToString
 public class KingdeeShopEntity {
+
+    private String _id;
+
     @Alias("FCUSTID")
     private String fCustId;
     @Alias("FUseOrgId")

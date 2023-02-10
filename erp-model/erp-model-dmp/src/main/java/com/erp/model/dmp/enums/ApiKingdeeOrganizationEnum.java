@@ -8,15 +8,19 @@ package com.erp.model.dmp.enums;
  */
 public enum ApiKingdeeOrganizationEnum {
 
-    ORGANIZATION_WEIJI(0, "唯迹集团", "唯迹集团");
+    ORGANIZATION_WEIJI("1", "100","唯迹集团", "唯迹集团"),
+    ORGANIZATION_YZS("100504", "101","优至胜", "优至胜"),
+    ORGANIZATION_XX("173616", "105","小隼", "小隼"),
+    ;
+    private String code;
 
-    private Integer code;
+    private String number;
 
     private String name;
 
     private String desc;
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 
@@ -28,13 +32,14 @@ public enum ApiKingdeeOrganizationEnum {
         return desc;
     }
 
-    ApiKingdeeOrganizationEnum(Integer code, String name, String desc) {
+    ApiKingdeeOrganizationEnum(String code, String number, String name, String desc) {
         this.code = code;
+        this.number = number;
         this.name = name;
         this.desc = desc;
     }
 
-    public static ApiKingdeeOrganizationEnum getByCode(Integer code) {
+    public static ApiKingdeeOrganizationEnum getByCode(String code) {
         ApiKingdeeOrganizationEnum[] values = values();
         for (ApiKingdeeOrganizationEnum value : values) {
             if (value.code.equals(code)) {
@@ -52,5 +57,9 @@ public enum ApiKingdeeOrganizationEnum {
             }
         }
         return null;
+    }
+
+    public String getNumber() {
+        return number;
     }
 }

@@ -381,7 +381,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         Map<Integer, BigDecimal> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
                     // 按照季度分组
-                    LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
+                        (flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
                     // 对销售额进行求和
                     Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getOrderFee, BigDecimal::add)
             ));
@@ -442,7 +442,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 对订单号进行季度分组
         Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x -> (
                         // 按照季度分组
-                        LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
+                        (flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue() - 1) / 3 + 1,
                 Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0)))
         );
         // 计算完成率
@@ -485,7 +485,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         }
         Map<Integer, BigDecimal> monthMap = entityList.stream().collect(Collectors.groupingBy(x ->
                         // 按照季度分组
-                        LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
+                        (flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
                 // 对销售额进行求和
                 Collectors.reducing(BigDecimal.ZERO, DmpOrderInfoEntity::getOrderFee, BigDecimal::add)
         ));
@@ -539,7 +539,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 对订单号进行月度分组
         Map<Integer, Integer> quarterMap = entityList.stream().collect(Collectors.groupingBy(x ->
                         // 按照季度分组
-                        LocalDateUtil.date2LocalDate(flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
+                        (flag ? x.getPlatformCreateTime() : x.getDeliveryTime()).getMonthValue(),
                 Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0)))
         );
         // 计算完成率
@@ -1037,15 +1037,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<Integer, BigDecimal> resultMap = new HashMap<>();
         if (0 == type){
             // 月份
-            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue(),
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> x.getPlatformCreateTime().getMonthValue(),
                     BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else if (1 == type){
             // 季度
-            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> (LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getMonthValue()-1) / 3 + 1,
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> (x.getPlatformCreateTime().getMonthValue()-1) / 3 + 1,
                     BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }else {
             // 年度
-            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> LocalDateUtil.date2LocalDate(x.getPlatformCreateTime()).getYear(),
+            resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> x.getPlatformCreateTime().getYear(),
                     BigDecimalUtil.summingBigDecimal(x -> x.getOrderFee().multiply(x.getCurrencyRate()).setScale(4, BigDecimal.ROUND_DOWN))));
         }
         return resultMap;

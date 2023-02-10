@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -92,7 +93,7 @@ public class JobTaskDTO {
         this.apiCode = entity.getApiCode();
         this.apiName = entity.getApiName();
         this.taskName = "GYY_PULL_DATA_TASK";
-        this.platformName = "管易云";
+        this.platformName = PlatformEnum.GYY.getDesc();
         this.errorCount = 0;
     }
 }

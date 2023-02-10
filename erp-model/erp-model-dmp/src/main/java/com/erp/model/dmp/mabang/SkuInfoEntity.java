@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class SkuInfoEntity {
+    private String id;
     private String salesSku;
     private String stockSku;
     private String nameCN;

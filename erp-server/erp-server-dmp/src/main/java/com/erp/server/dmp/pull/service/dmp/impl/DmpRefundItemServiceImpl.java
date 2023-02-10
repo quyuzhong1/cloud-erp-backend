@@ -1,13 +1,18 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpRefundItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 退款商品列表服务类
@@ -51,6 +56,29 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
         LambdaQueryWrapper<DmpRefundItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(DmpRefundItemEntity::getRefundId, refundId);
         return this.remove(lambdaQueryWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void checkOrderItem(List<DmpRefundItemEntity> itemList) {
+        List<DmpRefundItemEntity> insertList = new ArrayList<>();
+        for (DmpRefundItemEntity orderItemBean : itemList) {
+            Optional<DmpRefundItemEntity> dmpRefundItemEntity = lambdaQuery()
+                    .eq(DmpRefundItemEntity::getErpOrderItemId, orderItemBean.getErpOrderItemId())
+                    .oneOpt();
+            if (dmpRefundItemEntity.isPresent()) {
+                //如果数据有变动需要更新数据库订单商品信息
+                if (!dmpRefundItemEntity.get().toString().equals(orderItemBean.toString())) {
+                    orderItemBean.setId(dmpRefundItemEntity.get().getId());
+                    updateById(orderItemBean);
+                }
+            } else {
+                insertList.add(orderItemBean);
+            }
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            saveBatch(insertList);
+        }
     }
 }
 

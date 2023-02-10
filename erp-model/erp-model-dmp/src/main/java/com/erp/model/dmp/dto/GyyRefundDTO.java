@@ -17,4 +17,15 @@ public class GyyRefundDTO {
     @Panno(findType = PannoEnum.EQ,field = "platfromCode")
     private String platfromCode;
 
+    @Panno(findType = PannoEnum.EQ,field = "_id")
+    private String id;
+
+    public GyyRefundDTO(String platfromCode, String refundCode) {
+        this.platfromCode = platfromCode;
+        this.refundCode = refundCode;
+    }
+
+    public GyyRefundDTO(String id) {
+        this.id = id;
+    }
 }

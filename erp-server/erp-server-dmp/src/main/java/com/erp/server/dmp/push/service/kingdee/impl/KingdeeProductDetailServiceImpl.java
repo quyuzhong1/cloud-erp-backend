@@ -17,7 +17,6 @@ import com.erp.model.dmp.enums.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeDocStatusEnum;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -56,6 +55,21 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
     @Resource
     private ApiSyncTaskService apiSyncTaskService;
 
+    public static void main(String[] args) {
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FNumber = '%s'", "0005"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
+                "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
+                "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
+                "FWIDTH,F_ulz_Qty1";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        System.out.println(queryList);
+    }
+
     @Override
     @Transactional
     public void pushProductDetail(Map<String, Object> map) {
@@ -82,17 +96,17 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList = cfgApiFieldMapValueService.listByFieldMapIds(fieldMapIds);
 
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.taskName);
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
 
         JSONObject json = new JSONObject();
         for (CfgApiFieldMapDTO cfgApiFieldMapDTO : mapList) {
             //第三方系统下划线分割多层结构
             String apiField = cfgApiFieldMapDTO.getApiField();
             if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
-                KingdeeUtils.makeFieldJson(json,apiField,"_",cfgApiFieldMapDTO.getDefaultValue());
+                KingdeeUtils.makeFieldJson(json,apiField,".",cfgApiFieldMapDTO.getDefaultValue());
             } else {
                 if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
-                    KingdeeUtils.makeFieldJson(json,apiField,"_",map.get(cfgApiFieldMapDTO.getSelfField()));
+                    KingdeeUtils.makeFieldJson(json,apiField,".",map.get(cfgApiFieldMapDTO.getSelfField()));
                 } else {
                     //根据值映射转换
                     String apiValue = cfgApiFieldMapValueList.stream()
@@ -100,7 +114,7 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                             .map(CfgApiFieldMapValueEntity::getApiValue)
                             .findFirst()
                             .orElse(null);
-                    KingdeeUtils.makeFieldJson(json,apiField,"_",apiValue);
+                    KingdeeUtils.makeFieldJson(json,apiField,".",apiValue);
                 }
             }
         }
@@ -154,23 +168,23 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             //查询子单据id
             String fieldKeys = "FSubHeadEntity_FEntryId,SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
                     "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId";
-            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1);
+            List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
             if (CollectionUtils.isEmpty(queryList)) {
                 return;
             }
             Map<String, Object> queryMap = queryList.get(0);
             //主单据id
-            KingdeeUtils.makeFieldJson(json,"FMATERIALID","_",model.get("Id"));
+            KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",model.get("Id"));
             Iterator iter = queryMap.entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
-                KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),"_",entry.getValue());
+                KingdeeUtils.makeFieldJson(json, String.valueOf(entry.getKey()),".",entry.getValue());
             }
             //需要更新的字段
             List<String> apiFieldList = mapList.stream().map(obj -> obj.getApiField()).sorted().distinct().collect(Collectors.toList());
             ArrayList<String> needUpDateFields = new ArrayList<>();
             for (String field:apiFieldList) {
-                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("_")).collect(Collectors.toList());
+                ArrayList<String> splitFields =(ArrayList<String>) Arrays.stream(field.split("\\.")).collect(Collectors.toList());
                 needUpDateFields.addAll(splitFields);
             }
             param.setNeedUpDateFields(needUpDateFields);

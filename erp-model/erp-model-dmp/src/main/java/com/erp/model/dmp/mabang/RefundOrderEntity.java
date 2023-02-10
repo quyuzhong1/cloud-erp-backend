@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -24,7 +25,7 @@ public class RefundOrderEntity {
     private String content;
     private Integer type;
     private Integer flag;
-    private String createTime;
+    private LocalDateTime createTime;
     private String errorDescr;
     private Integer orderStatus;
     private String shopId;
@@ -32,7 +33,7 @@ public class RefundOrderEntity {
     private String platformName;
     private String platformOrderId;
     private String refundplatformOrderId;
-    private String refundTime;
+    private LocalDateTime refundTime;
     private BigDecimal currencyRate;
     private String expressType;
     private String logisticsChannelName;
@@ -46,11 +47,11 @@ public class RefundOrderEntity {
     private BigDecimal itemTotalOrigin;
     private BigDecimal shippingTotalOrigin;
     private String paypalId;
-    private String orderTime;
-    private String expressTime;
+    private LocalDateTime orderTime;
+    private LocalDateTime expressTime;
     private Integer source;
     private String pictureUrl;
-    private String updateTime;
+    private LocalDateTime updateTime;
     private String refundText;
     private String complaintId;
     private String trackNumber;

@@ -2,17 +2,19 @@ package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 /**
  * @TableName dmp_order_info
  */
 @TableName(value = "dmp_order_info")
 @Data
+@NoArgsConstructor
 public class DmpOrderInfoEntity implements Serializable {
     /**
      * 主键id
@@ -30,7 +32,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
      */
     @TableField(value = "order_state")
-    private Integer orderState;
+    private Integer orderStatus;
 
     /**
      * 修正状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
@@ -90,7 +92,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 订单付款时间
      */
     @TableField(value = "paid_time")
-    private Date paidTime;
+    private LocalDateTime paidTime;
 
     /**
      * 平台交易号
@@ -174,7 +176,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 交易关闭时间
      */
     @TableField(value = "close_date")
-    private Date closeDate;
+    private LocalDateTime closeDate;
 
     /**
      * 买家电话1
@@ -294,7 +296,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 平台订单时间
      */
     @TableField(value = "platform_create_time")
-    private Date platformCreateTime;
+    private LocalDateTime platformCreateTime;
 
     /**
      * 部门名称
@@ -324,7 +326,7 @@ public class DmpOrderInfoEntity implements Serializable {
      * 发货时间
      */
     @TableField(value = "delivery_time")
-    private Date deliveryTime;
+    private LocalDateTime deliveryTime;
 
     /**
      * 清洗状态  1 未清洗 2 清洗完成
@@ -351,13 +353,17 @@ public class DmpOrderInfoEntity implements Serializable {
     private String chargeId;
 
     @TableField(exist = false)
+    private List<DmpOrderItemEntity> itemList;
+
+    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
 
     @Override
     public String toString() {
         return "DmpOrderInfoEntity{" +
                 "platformOrderId='" + platformOrderId + '\'' +
-                ", orderState=" + orderState +
+                ", orderState=" + orderStatus +
                 ", buyerUserId='" + buyerUserId + '\'' +
                 ", buyerName='" + buyerName + '\'' +
                 ", shopNo='" + shopNo + '\'' +

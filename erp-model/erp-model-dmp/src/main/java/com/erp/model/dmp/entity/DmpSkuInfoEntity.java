@@ -15,7 +15,6 @@ import java.util.Date;
  */
 @TableName(value ="dmp_sku_info")
 @Data
-@ToString
 public class DmpSkuInfoEntity implements Serializable {
     /**
      * 主键id
@@ -64,13 +63,13 @@ public class DmpSkuInfoEntity implements Serializable {
      * 商品创建时间
      */
     @TableField(value = "sku_create_time")
-    private Date skuCreateTime;
+    private LocalDateTime skuCreateTime;
 
     /**
      * 商品修改时间
      */
     @TableField(value = "sku_update_time")
-    private Date skuUpdateTime;
+    private LocalDateTime skuUpdateTime;
 
     /**
      * 品牌
@@ -118,7 +117,7 @@ public class DmpSkuInfoEntity implements Serializable {
      * 拉取时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT_UPDATE)
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 平台标识

@@ -1,13 +1,11 @@
 package com.common.core.utils;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +14,6 @@ import java.util.concurrent.TimeUnit;
  * Http公共接口
  */
 @Slf4j
-@Component
 public class HttpCommonUtil {
 
     /**
@@ -30,10 +27,9 @@ public class HttpCommonUtil {
      * @return
      * @throws Exception
      */
-    public Map<String, Object> sendOkhttp(String url, String parameters, Map<String, Object> map,
+    public static JSONObject sendOkhttp(String url, String parameters, Map<String, Object> map,
                                           Map<String, String> header, RequestMethod method) {
 
-        Map<String, Object> ressultMap = new HashMap<>();
         Response response = null;
         Long start = System.currentTimeMillis();
         String responseString = "";
@@ -67,12 +63,12 @@ public class HttpCommonUtil {
 
         if (RequestMethod.GET.equals(method)) {
             if (map != null && map.size() > 0) {
-                url = this.buildUrl(url, map);
+                url = buildUrl(url, map);
             }
 
             if (!ObjectUtils.isEmpty(parameters)) {
                 Map map1 = JSONObject.parseObject(parameters, Map.class);
-                url = this.buildUrl(url, map1);
+                url = buildUrl(url, map1);
             }
             requestBuilder.get();
         }
@@ -81,19 +77,19 @@ public class HttpCommonUtil {
         try {
             response = doSend(requestBuilder);
             responseString = response.body().string();
-            ressultMap = JSONObject.parseObject(responseString, HashMap.class);
-            return ressultMap;
+            return JSONObject.parseObject(responseString);
         } catch (Exception e) {
+            JSONObject result = new JSONObject();
             if (e.getMessage().contains("connect timed out")) {
-                ressultMap.put("code", "411");
+                result.put("code", 411);
             } else {
-                ressultMap.put("code", "500");
+                result.put("code", 500);
             }
-            ressultMap.put("msg", e.getMessage());
+            result.put("msg", e.getMessage());
 
 //            log.info(String.format("::::: sendHttp ::::: 请求地址 => %s, 请求方式 => %s, 请求参数 => %s, 返回参数 => %s, 错误信息 => %s ",
 //                    url, method, parameters, responseString, e));
-            return ressultMap;
+            return result;
         } finally {
 
             Long end = System.currentTimeMillis();
@@ -106,16 +102,18 @@ public class HttpCommonUtil {
         }
     }
 
-    private Response doSend(Request.Builder request) throws Exception {
+    private static Response doSend(Request.Builder request) throws Exception {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(600, TimeUnit.SECONDS)//设置连接超时时间
-                .readTimeout(600, TimeUnit.SECONDS)//设置读取超时时间
+                //设置连接超时时间
+                .connectTimeout(300, TimeUnit.SECONDS)
+                //设置读取超时时间
+                .readTimeout(300, TimeUnit.SECONDS)
                 .build();
         Response response = okHttpClient.newCall(request.build()).execute();
         return response;
     }
 
-    private String buildUrl(String url, Map parameters) {
+    private static String buildUrl(String url, Map parameters) {
         StringBuilder builder = new StringBuilder(url).append("?");
         Set<Map.Entry<String, Object>> entrySet = parameters.entrySet();
         entrySet.stream().forEachOrdered(e -> builder.append(e.getKey()).append("=").append(e.getValue()).append("&"));

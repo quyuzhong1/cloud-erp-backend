@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 退货订单表
@@ -49,13 +50,13 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      * 付款时间
      */
     @TableField(value = "paid_time")
-    private Date paidTime;
+    private LocalDateTime paidTime;
 
     /**
      * 发货时间
      */
     @TableField(value = "express_time")
-    private Date expressTime;
+    private LocalDateTime expressTime;
 
     /**
      * 状态：1待处理 2已退款 3已重发 4已完成 5已作废
@@ -133,13 +134,13 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      * 退货信息创建时间
      */
     @TableField(value = "return_create_time")
-    private Date returnCreateTime;
+    private LocalDateTime returnCreateTime;
 
     /**
      * 退款时间
      */
     @TableField(value = "refund_time")
-    private Date refundTime;
+    private LocalDateTime refundTime;
 
     /**
      * 币种
@@ -181,7 +182,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      * 订单时间
      */
     @TableField(value = "order_time")
-    private Date orderTime;
+    private LocalDateTime orderTime;
 
     /**
      * cny-结算汇率
@@ -213,6 +214,15 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "retry_count")
     private Integer retryCount;
 
+    /**
+     * 逻辑删除 FALSE 未删除 TRUE 已删除
+     */
+    @TableField(value = "is_deleted")
+    private Boolean isDeleted;
+
+    @TableField(exist = false)
+    private List<DmpReturnOrderItemEntity> itemList;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -242,6 +252,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", currencyCode='" + currencyCode + '\'' +
                 ", currencyRate=" + currencyRate +
                 ", platformSign='" + platformSign + '\'' +
+                ", isDeleted='" + isDeleted + '\'' +
                 '}';
     }
 }

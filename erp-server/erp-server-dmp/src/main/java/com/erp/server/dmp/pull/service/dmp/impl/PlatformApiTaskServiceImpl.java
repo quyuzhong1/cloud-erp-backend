@@ -9,7 +9,6 @@ import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Service
 public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMapper, PlatformApiTaskEntity>
@@ -17,23 +16,27 @@ public class PlatformApiTaskServiceImpl extends ServiceImpl<PlatformApiTaskMappe
 
     /**
      * 修改任务下次执行
+     *
+     * @param jobTaskDTO jobTaskDTO
+     * @param type
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2022/11/15 10:24
-     * @param jobTaskDTO jobTaskDTO
-     * @return java.lang.Boolean
      **/
     @Override
-    public Boolean updateTaskStateById(JobTaskDTO jobTaskDTO){
-        Integer interval = jobTaskDTO.getIntervalTime();
-        LocalDateTime lastTime = jobTaskDTO.getLastTime();
-        LocalDateTime nextTime = lastTime.plusSeconds(interval);
-        if (nextTime.isAfter(LocalDateTime.now())){
-            nextTime = LocalDateTime.now();
-        }
+    public Boolean updateTaskStateById(JobTaskDTO jobTaskDTO, Integer type){
         LambdaUpdateWrapper<PlatformApiTaskEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
-        lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);
-        if(3 != jobTaskDTO.getState()){
+        if (1 != type){
+            Integer interval = jobTaskDTO.getIntervalTime();
+            LocalDateTime lastTime = jobTaskDTO.getLastTime();
+            LocalDateTime nextTime = lastTime.plusSeconds(interval);
+            if (nextTime.isAfter(LocalDateTime.now())){
+                nextTime = LocalDateTime.now();
+            }
+            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getLastTime, jobTaskDTO.getLastTime());
+            lambdaUpdateWrapper.set(PlatformApiTaskEntity::getNextTime, nextTime);
+        }
+        if(3 != type){
             lambdaUpdateWrapper.set(PlatformApiTaskEntity::getState, 1);
         }
         lambdaUpdateWrapper.set(PlatformApiTaskEntity::getUpdateTime, LocalDateTime.now());

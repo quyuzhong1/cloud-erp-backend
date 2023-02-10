@@ -199,6 +199,9 @@ public class DmpOrderItemEntity implements Serializable {
     @TableField(value = "shipping_fee")
     private BigDecimal shippingFee;
 
+    @TableField(value = "refresh_status")
+    private Boolean refreshStatus;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -228,6 +231,7 @@ public class DmpOrderItemEntity implements Serializable {
                 ", stockWarehouseId='" + stockWarehouseId + '\'' +
                 ", erpOrderItemId='" + erpOrderItemId + '\'' +
                 ", amountAfter='" + amountAfter + '\'' +
+                ", shippingFee='" + shippingFee + '\'' +
                 '}';
     }
 }

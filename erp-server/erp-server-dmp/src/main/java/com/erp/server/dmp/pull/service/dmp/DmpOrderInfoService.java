@@ -2,6 +2,8 @@ package com.erp.server.dmp.pull.service.dmp;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 
 import java.util.List;
@@ -61,14 +63,19 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param salesRecordNumber 销售订单号
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
-    DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber);
+    DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber, String platformOrderId);
 
     /**
      * 更新清洗数据
      * @param userDeptList
-     * @param times
      * @param dmpOrderInfoEntity
      */
-    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, AtomicInteger times, DmpOrderInfoEntity dmpOrderInfoEntity);
+    void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity);
+
+    /**
+     * 获取需要清理订单列表
+     * @return
+     */
+    List<CleanAmountAfterVO> getCleanOrderList();
 
 }

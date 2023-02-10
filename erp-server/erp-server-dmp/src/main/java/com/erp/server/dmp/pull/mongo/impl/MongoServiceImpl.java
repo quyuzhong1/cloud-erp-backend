@@ -18,6 +18,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public <T> void saveMongoData(T data, String table) throws Exception {
 		orderTemplate.insert(data, table);
 	}

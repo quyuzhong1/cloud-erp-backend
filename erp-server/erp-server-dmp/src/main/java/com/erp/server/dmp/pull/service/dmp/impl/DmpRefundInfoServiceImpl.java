@@ -1,19 +1,27 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpRefundInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 退款列表服务类
@@ -28,6 +36,8 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+    @Resource
+    private DmpRefundItemService dmpRefundItemService;
 
     /**
      * 添加退款列表信息
@@ -81,18 +91,30 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      * @return java.lang.String
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String checkOrder(DmpRefundInfoEntity returnOrderInfoEntity) {
         String refundInfoId = "";
         DmpRefundInfoEntity dmpReturnOrderInfoEntity = this.getRefundByPlatformOrderId(returnOrderInfoEntity);
         if (dmpReturnOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {
-                this.updateRefundByPlatformOrderId(returnOrderInfoEntity);
-                refundInfoId = returnOrderInfoEntity.getId();
+                returnOrderInfoEntity.setId(dmpReturnOrderInfoEntity.getId());
+                updateById(returnOrderInfoEntity);
             }
+            refundInfoId = dmpReturnOrderInfoEntity.getId();
         } else {
-            refundInfoId = this.add(returnOrderInfoEntity);
+            refundInfoId = add(returnOrderInfoEntity);
         }
+        if(StrUtil.isBlank(refundInfoId)){
+            throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
+        }
+        List<DmpRefundItemEntity> itemList = returnOrderInfoEntity.getItemList();
+        if (CollectionUtil.isEmpty(itemList)){
+            return refundInfoId;
+        }
+        String orderId = refundInfoId;
+        itemList.stream().peek(entity -> entity.setRefundId(orderId)).collect(Collectors.toList());
+        dmpRefundItemService.checkOrderItem(itemList);
         return refundInfoId;
     }
 
@@ -111,7 +133,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
 
         for (DmpRefundInfoEntity dmpRefundInfoEntity : dmpRefundInfoEntities) {
             LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpRefundInfoEntity.getSalesRecordNumber());
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpRefundInfoEntity.getSalesRecordNumber(), dmpRefundInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
                 updateWrapper.set(StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()), DmpRefundInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());

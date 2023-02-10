@@ -77,6 +77,18 @@ public class DmpReturnOrderItemEntity implements Serializable {
     private Integer status;
 
     /**
+     * erp平台商品id
+     */
+    @TableField(value = "erp_order_item_id")
+    private String erpOrderItemId;
+
+    /**
+     * 逻辑删除 FALSE 未删除 TRUE 已删除
+     */
+    @TableField(value = "is_deleted")
+    private Boolean isDeleted;
+
+    /**
      * 折扣后订单总金额
      */
     @TableField(value = "amount_after")

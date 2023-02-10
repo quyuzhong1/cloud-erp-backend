@@ -1,5 +1,7 @@
 package com.erp.server.dmp.controller;
 
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.RocketMqTopic;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
@@ -10,11 +12,15 @@ import com.erp.model.dmp.dto.CfgApiFieldMapValueDTO;
 import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
+import com.erp.server.dmp.service.mq.MQProducerService;
+import lombok.Data;
 import org.apache.ibatis.annotations.Param;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -141,67 +147,71 @@ public class CfgApiFieldMapController extends BaseController {
         //id
         map.put("id","444");
         //sku
-        map.put("skuNo","OJOHNFIDJFI");
+        map.put("skuNo","SKU1");
         //sku
-        map.put("name","pppp");
+        map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
         //spu
-        map.put("spuNo","pppp");
+        map.put("spuNo","");
         //产品功能描述
-        map.put("functionDesc","pppp");
+        map.put("functionDesc","");
         //属性
         map.put("property","7777");
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","");
+        map.put("oneLevelCategory","相机");
+        //一级分类编码
+        map.put("oneLevelCategoryCode","B");
         //二级分类名称
-        map.put("secondLevelCategory","7777");
+        map.put("secondLevelCategory","相机机身配件");
+        //二级分类编码
+        map.put("secondLevelCategoryCode","BC");
         //产品经理
-        map.put("chargeName","777");
+        map.put("chargeName","王杰");
         //销售信息
         //上市时间
         map.put("listingTime","23");
         //物流信息
         //报关中文名
-        map.put("declareChineseName","23");
+        map.put("declareChineseName","补光灯");
         //报关英文名
-        map.put("declareEnglishName","23");
+        map.put("declareEnglishName","light");
         //报关申报价
-        map.put("declarePrice","23");
+        map.put("declarePrice","7");
         //产品属性（是否带电）
-        map.put("productProperty_electric","23");
+        map.put("productProperty_electric",false);
         //产品属性（是否带磁）
-        map.put("productProperty_magnetism","23");
+        map.put("productProperty_magnetism",false);
         //海关编码
-        map.put("customsCode","23");
+        map.put("customsCode","");
         //申报要素
-        map.put("declareElement","23");
+        map.put("declareElement","");
         //毛重
-        map.put("grossWeight", 22);
+        map.put("grossWeight", 517);
         //净重
-        map.put("netWeight", 22);
+        map.put("netWeight", 509);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  333333333);
+        map.put("productSize_length",  13);
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  2233333);
+        map.put("productSize_width",  12);
         //产品尺寸-高(cm)
-        map.put("productSize_height",  224444);
+        map.put("productSize_height",  12);
         //单箱数量
-        map.put("boxQty", 22);
+        map.put("boxQty", 12);
         //单箱重量
-        map.put("boxWeight", "22");
+        map.put("boxWeight", 12);
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", "22");
+        map.put("boxSize_length", 12);
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", "22");
+        map.put("boxSize_width", 12);
         //产品尺寸-高(cm)
-        map.put("boxSize_height", "22");
+        map.put("boxSize_height", 12);
         //实际不含税成本
-        map.put("actualNoTaxCost","22");
+        map.put("actualNoTaxCost","");
         //实际含税成本
-        map.put("actualTaxCost", "22");
+        map.put("actualTaxCost", "");
         map.put("moq","22");
         //采购员
         map.put("purchaseUser","7777");
@@ -210,5 +220,28 @@ public class CfgApiFieldMapController extends BaseController {
         return success();
     }
 
+    @Resource
+    private MQProducerService producerService;
+    @PostMapping("/push/mq")
+    public void pushToRocket(@RequestBody JSONObject body){
+        producerService.syncSendMsg("", RocketMqTopic.DMP_TOPIC, body.getString("tag"), body,"dmp test");
+    }
+    @PostMapping("/push/mq/batch")
+    public SendResult pushToRocketBatch(@RequestBody TestMq body){
+        return producerService.syncClassMsg(RocketMqTopic.DMP_TOPIC, body.getTag(), body, body.getKey());
+    }
+
+    @Data
+    public static class TestMq{
+        private String key;
+
+//        @JsonSerialize(as = LocalDateTimeSerializer.class)
+//        @JsonDeserialize(using = LocalDateTimeDeserializer.class, as = LocalDateTime.class)
+//        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+        private LocalDateTime time;
+        private List<String> codeList;
+
+        private String tag;
+    }
 
 }

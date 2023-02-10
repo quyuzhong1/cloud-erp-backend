@@ -1,4 +1,4 @@
-package com.erp.server.dmp.utils;
+package com.erp.model.dmp.enums;
 
 public enum KingdeeDocStatusEnum {
     SAVED("Z","暂存"),
