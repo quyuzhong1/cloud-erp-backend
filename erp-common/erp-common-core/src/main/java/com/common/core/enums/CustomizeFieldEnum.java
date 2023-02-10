@@ -33,8 +33,7 @@ public enum CustomizeFieldEnum {
     TASK_CREATE_USER_NAME("创建人", "createUserName", false, "plmScheduleTask", "plm项目计划任务"),
     TASK_CREATE_TIME("创建时间", "createTime", false, "plmScheduleTask", "plm项目计划任务"),
     TASK_UPDATE_USER_NAME("更新人", "updateUserName", false, "plmScheduleTask", "plm项目计划任务"),
-    TASK_UPDATE_TIME("更新时间", "updateTime", false, "plmScheduleTask", "plm项目计划任务"),
-    a("测试", "test", false, "plmScheduleTask", "plm项目计划任务");
+    TASK_UPDATE_TIME("更新时间", "updateTime", false, "plmScheduleTask", "plm项目计划任务");
 
 
     //字段标题
