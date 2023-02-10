@@ -1,7 +1,7 @@
 package com.erp.server.plm.api.kingdee;
 
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeDocStatusEnum;
 import com.kingdee.bos.webapi.entity.OperatorResult;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class KingdeeTransferDirectTest {
 
 
         while (true){
-            List<Map<String, Object>> dataList = saleOrderApi.queryList(filterStr,fieldKeys,2000,0);
+            List<Map<String, Object>> dataList = saleOrderApi.queryList(filterStr,fieldKeys,2000,0,0);
             if (dataList.isEmpty()){
                 break;
             }

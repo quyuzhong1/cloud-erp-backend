@@ -174,7 +174,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
                 addEntity.setSkuId(taskId);
                 addEntity.setProductId(productId);
                 addEntity.setIsFinishTask(IsConstant.NO);
-                addList.add(entity);
+                addList.add(addEntity);
             }
         }
         if (CollectionUtils.isNotEmpty(addList)) {

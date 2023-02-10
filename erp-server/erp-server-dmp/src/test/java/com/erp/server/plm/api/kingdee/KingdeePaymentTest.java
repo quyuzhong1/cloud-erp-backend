@@ -1,13 +1,8 @@
 package com.erp.server.plm.api.kingdee;
 
-import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
-import com.erp.server.dmp.utils.KingdeeDocStatusEnum;
-import com.erp.server.dmp.utils.KingdeeUtils;
-import com.kingdee.bos.webapi.entity.OperateParam;
 import com.kingdee.bos.webapi.entity.OperatorResult;
-import com.kingdee.bos.webapi.entity.QueryParam;
-import com.kingdee.bos.webapi.sdk.K3CloudApi;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -39,7 +34,7 @@ public class KingdeePaymentTest {
 
 
         while (true){
-            List<Map<String, Object>> dataList = saleOrderApi.queryList(filterStr,fieldKeys,2000,0);
+            List<Map<String, Object>> dataList = saleOrderApi.queryList(filterStr,fieldKeys,2000,0,0);
             if (dataList.isEmpty()){
                 break;
             }
