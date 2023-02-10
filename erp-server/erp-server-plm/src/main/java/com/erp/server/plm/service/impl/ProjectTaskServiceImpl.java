@@ -1863,6 +1863,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
+        params.setParam(searchParamDTO.getParam());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ALL;
@@ -2012,6 +2013,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
+        params.setParam(searchParamDTO.getParam());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
@@ -2162,6 +2164,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
+        params.setParam(searchParamDTO.getParam());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;

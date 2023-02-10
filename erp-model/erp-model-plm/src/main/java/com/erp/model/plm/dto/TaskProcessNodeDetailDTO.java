@@ -22,7 +22,7 @@ public class TaskProcessNodeDetailDTO implements Serializable {
     private Boolean  ifFinishNode;
 
     /**
-     * 开始时间
+     * 开始时间（用于排序）
      */
     private String startDate;
 
