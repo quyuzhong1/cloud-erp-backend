@@ -18,7 +18,7 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-public class PullKingdeeShopJob {
+public class PullKingDeeShopJob {
     @Resource
     private PlatformApiTaskService platformApiTaskService;
     @Resource
