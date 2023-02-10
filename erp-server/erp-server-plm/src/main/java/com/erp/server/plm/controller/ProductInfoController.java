@@ -60,6 +60,20 @@ public class ProductInfoController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 产品列表-无分页
+     * @author Will
+     * @date: 2023/2/10 14:47
+     * @param dto
+     * @return ApiResult<List<BasicDTO>>
+     */
+    @PostMapping("/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
+    public ApiResult<List<BasicDTO>> listProductInfo(@RequestBody @Validated ProductSearchDTO dto) {
+        List<BasicDTO> list = productInfoService.listProductInfo(dto);
+        return success(list);
+    }
+
 
     /**
      * 产品列表-编辑时候详情

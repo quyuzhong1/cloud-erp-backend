@@ -23,15 +23,22 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
+    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 
     List<CountDTO> getProductRelevanceList();
 
     IPage<ProductShowDTO> myCollectPaging(Page query, @Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 
+    List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
+
     List<ProductProjectDTO> getProductAndProjectList(@Param("archiveProductIdList") List<String> archiveProductIdList,@Param("projectStatus") Integer projectStatus);
 
     ProductShowDTO getProductInfo(@Param("productId") String productId);
 
     List<ProductShowDTO> getProductInfoByIds(@Param("productIds") List<String> productIds);
+
+
+
 }

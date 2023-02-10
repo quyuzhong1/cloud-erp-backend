@@ -566,6 +566,26 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return new PagingVO(pageData);
     }
 
+    @Override
+    public List<BasicDTO> listProductInfo(ProductSearchDTO params) {
+        List<BasicDTO> dataList = new ArrayList<>();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        //根据当前登录人id 获取收藏的列表
+        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
+
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
+            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
+                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
+            }
+        } else {
+            dataList = baseMapper.listNotPaging(params, archiveProductIds);
+        }
+        return dataList;
+    }
+
 
     /**
      * 检查产品名 是否重复

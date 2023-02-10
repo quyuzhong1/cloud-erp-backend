@@ -33,6 +33,14 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO> dto);
 
+    /**
+     * @description: 查询产品列表数据（无分页）
+     * @author Will
+     * @date: 2023/2/10 14:35
+     * @param dto
+     * @return List<ProductShowDTO>
+     */
+    List<BasicDTO> listProductInfo(ProductSearchDTO dto);
 
     Boolean saveTemplate(SaveProductTemplateDTO dto);
 
@@ -91,4 +99,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return ProductInfoEntity
      */
     ProductInfoEntity getBySpuNo(String spuNo);
+
+
 }
