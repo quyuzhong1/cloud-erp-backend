@@ -12,7 +12,9 @@ import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -31,9 +33,9 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
     ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto);
 
-    void export();
+    void exportExcel(HandleTaskScheduleDTO dto, HttpServletResponse response);
 
-    Boolean importTaskschedule();
+    Boolean importTaskSchedule(MultipartFile excelFile, HttpServletResponse response);
 
     Boolean fieldSet(CustomizeFieldLayoutDTO dto);
 
@@ -99,4 +101,6 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @return java.util.List<com.erp.model.plm.entity.ProjectPlanEntity>
      */
     List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange);
+
+
 }

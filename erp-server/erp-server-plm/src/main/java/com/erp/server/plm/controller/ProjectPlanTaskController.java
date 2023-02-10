@@ -12,8 +12,10 @@ import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -48,9 +50,9 @@ public class ProjectPlanTaskController extends BaseController {
     /**
      * 导出数据
      */
-    @PostMapping("/export")
-    public ApiResult export() {
-        projectPlanTaskService.export();
+    @PostMapping("/exportExcel")
+    public ApiResult export(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
+        projectPlanTaskService.exportExcel(dto,response);
         return success();
     }
 
@@ -86,8 +88,8 @@ public class ProjectPlanTaskController extends BaseController {
      * 导入数据
      */
     @PostMapping("/import")
-    public ApiResult importTaskschedule() {
-        Boolean result = projectPlanTaskService.importTaskschedule();
+    public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,response);
         return result == true ? success() : failure();
     }
 
@@ -111,7 +113,7 @@ public class ProjectPlanTaskController extends BaseController {
     }
 
     /**
-     *
+     * 获取用户设置字段
      * @return
      */
     @GetMapping("/getUserField")

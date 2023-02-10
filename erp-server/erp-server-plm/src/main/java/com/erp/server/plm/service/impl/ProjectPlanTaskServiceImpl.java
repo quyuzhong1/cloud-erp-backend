@@ -1,34 +1,37 @@
 package com.erp.server.plm.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.vo.ProductItemScheduleVO;
-import com.erp.model.plm.vo.ProductTaskVO;
-import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
-import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.dto.FindCustomizeFieldDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -132,8 +135,14 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * 导出
      */
     @Override
-    public void export() {
-
+    public void exportExcel(HandleTaskScheduleDTO dto, HttpServletResponse response) {
+        List<ScheduleTaskExportExcelVO> excelList = projectTaskMapper.getExportScheduleTask(dto);
+        for(ScheduleTaskExportExcelVO vo:excelList){
+            String status=vo.getScheduleStatus();
+            vo.setScheduleStatusName(BaseStatusEnum.getName(status));
+        }
+        String fileName = "任务数据";
+        ExcelUtil.export(fileName, "task", excelList, ScheduleTaskExportExcelVO.class, response);
     }
 
 
@@ -146,8 +155,21 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-03 18:37
      */
     @Override
-    public Boolean importTaskschedule() {
-        return null;
+    public Boolean importTaskSchedule(MultipartFile excelFile, HttpServletResponse response) {
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService,projectPlanService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class,excelListenerUtil).sheet(0).doRead();
+            List<ScheduleTaskExportExcelVO> list = excelListenerUtil.getDateList();
+            if (CollectionUtils.isEmpty(list)) {
+                return true;
+            }
+            String fileName = "排期错误";
+            ExcelUtil.export(fileName,"task",list,ScheduleTaskExportExcelVO.class,response);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.Default);
+        }
+
+        return false;
     }
 
     @Override
@@ -319,7 +341,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 //更改审核状态
                 result = projectPlanService.saveOrUpdateBatch(planList);
                 List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
-                List<String> taskIdList=planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                List<String> taskIdList = planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
                 projectTaskService.updateScheduleStatus(productId, taskIdList, cancelStatus, "");
             }
@@ -383,7 +405,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 //启动流程吗？
 
                 List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
-                List<String> taskIdList=planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                List<String> taskIdList = planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
                 projectTaskService.updateScheduleStatus(productId, taskIdList, waitAuditStatus, "");
             }

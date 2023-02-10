@@ -23,6 +23,7 @@ import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.workflow.dto.*;
@@ -2408,6 +2409,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return new ArrayList<>();
 
+    }
+
+    @Override
+    public ScheduleTaskExportExcelVO getExport(String productId, String taskId) {
+        return baseMapper.getExport(productId,taskId);
     }
 
     /**

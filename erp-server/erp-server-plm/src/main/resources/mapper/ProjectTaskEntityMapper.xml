@@ -950,6 +950,43 @@
         </if>
     </select>
 
+    <select id="getExportScheduleTask" resultType="com.erp.model.plm.vo.ScheduleTaskExportExcelVO">
+        SELECT
+            pt.product_id,
+            pt.name AS taskName,
+            pi.name AS productName,
+            pt.id AS taskid,
+            pt.plan_start_time,
+            pt.plan_end_time,
+            pt.charge_name,
+            pt.schedule_status
+        FROM project_task pt LEFT JOIN product_info pi
+        ON pt.product_id=pi.id
+        WHERE  product_id=#{dto.productId}
+        <if test="dto.taskIdList !=null and dto.taskIdList.size>0">
+            AND pt.id IN
+            <foreach collection="dto.taskIdList" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getExport" resultType="com.erp.model.plm.vo.ScheduleTaskExportExcelVO">
+         SELECT
+            pt.product_id,
+            pt.name AS taskName,
+            pi.name AS productName,
+            pt.id AS taskid,
+            pt.plan_start_time,
+            pt.plan_end_time,
+            pt.charge_name,
+            pt.schedule_status
+        FROM project_task pt INNER JOIN product_info pi
+        ON pt.product_id=pi.id
+        WHERE  product_id=#{productId}
+        AND pt.id=#{taskId}
+    </select>
+
 
     <update id="updateScheduleStatus">
         UPDATE project_task SET schedule_status = #{scheduleStatus} WHERE  product_id=#{productId}  AND id IN

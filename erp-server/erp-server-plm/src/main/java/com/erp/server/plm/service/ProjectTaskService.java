@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
 
@@ -208,4 +209,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.vo.ScheduleTaskVO>
      */
     List<ScheduleTaskVO> getScheduleTaskByTaskIds(String productId, List<String> taskIds);
+
+    ScheduleTaskExportExcelVO getExport(String productId, String taskId);
 }
