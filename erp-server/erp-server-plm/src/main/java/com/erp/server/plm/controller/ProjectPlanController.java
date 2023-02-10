@@ -3,8 +3,12 @@ package com.erp.server.plm.controller;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
+import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 产品排期
@@ -28,6 +33,19 @@ public class ProjectPlanController extends BaseController {
      */
     @Resource
     private ProjectPlanService projectPlanService;
+
+
+    /**
+     * 产品排期 分页
+     *
+     * @param
+     * @return 查询结果
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<List<SchedulePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
+        PagingVO<List<SchedulePagingVO>> pagingVO = projectPlanService.paging(dto);
+        return success(pagingVO);
+    }
 
     /**
      * 提交排期
@@ -45,7 +63,7 @@ public class ProjectPlanController extends BaseController {
      * 取消排期
      */
     @PostMapping("/cancel")
-    public  ApiResult cancelSchedule(BaseIdDTO dto){
+    public ApiResult cancelSchedule(BaseIdDTO dto) {
         Boolean result = projectPlanService.cancelSchedule(dto.getId());
         return result == true ? success() : failure();
     }
@@ -54,7 +72,7 @@ public class ProjectPlanController extends BaseController {
      * 重启排期
      */
     @PostMapping("/restart")
-    public  ApiResult restartSchedule(BaseIdDTO dto){
+    public ApiResult restartSchedule(BaseIdDTO dto) {
         Boolean result = projectPlanService.restartSchedule(dto.getId());
         return result == true ? success() : failure();
     }
@@ -63,11 +81,10 @@ public class ProjectPlanController extends BaseController {
      * 详情
      */
     @PostMapping("/view")
-    public  ApiResult<ProjectPlanDetailsVO> details(BaseIdDTO dto){
+    public ApiResult<ProjectPlanDetailsVO> details(@RequestBody @Validated BaseIdDTO dto) {
         ProjectPlanDetailsVO resultVO = projectPlanService.details(dto.getId());
         return success(resultVO);
     }
-
 
 
     /**
@@ -80,7 +97,6 @@ public class ProjectPlanController extends BaseController {
     public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
         return success();
     }
-
 
 
     /**

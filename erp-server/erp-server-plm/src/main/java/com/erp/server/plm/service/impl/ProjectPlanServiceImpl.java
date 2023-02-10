@@ -1,31 +1,41 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
+import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
+import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
+import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
-import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
+import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
+import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProjectPlanService;
 import com.erp.server.plm.service.ProjectPlanTaskService;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -49,6 +59,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     /**
      * 提交项目计划
@@ -59,13 +74,14 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-03 17:08
      */
     @Override
+    @Transactional
     public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
-            checkTaskStatus(taskIds, productId);
+            checkTaskStatus(taskList);
         }
         long approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).count();
         long projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).count();
@@ -95,13 +111,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     /**
      * 检查任务状态
      *
-     * @param taskIds
+     * @param
      * @return void
      * @author yl
      * @date 2023-02-08 17:37
      */
-    private void checkTaskStatus(List<String> taskIds, String productId) {
-        List<ScheduleTaskVO> taskList = taskService.getScheduleTaskByTaskIds(productId, taskIds);
+    private void checkTaskStatus(List<ProjectTaskEntity> taskList) {
         List<String> statusList = new ArrayList<>(2);
         String waitSubmit = BaseStatusEnum.WAIT_SUBMIT.getStatus();
         String cancel = BaseStatusEnum.CANCEL.getStatus();
@@ -155,7 +170,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Boolean result = this.updateById(plan);
         if (result) {
             String productId = plan.getProductId();
-            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanId(id);
+            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, cancelStatus, plan.getType());
@@ -202,13 +217,13 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         vo.setProductId(productId);
         Map<String, Object> productMap = taskService.getProductMapByProductId(productId);
         vo.setProductName(productMap.get("productName").toString());
-        vo.setTotalTaskCount((Integer) productMap.get("taskCount"));
+        vo.setTotalTaskCount(Integer.valueOf(productMap.get("taskCount").toString()));
         //获取任务
-        List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanId(id);
+        List<ProjectPlanTaskEntity> planTaskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
         //最小计划开始时间
         Date minStartTime = planTaskList.stream().filter(p -> p.getChangeStartTime() != null).min(Comparator.comparing(ProjectPlanTaskEntity::getChangeStartTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
         //最大计划结束时间
-        Date maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeStartTime).get();
+        Date maxEndTime = planTaskList.stream().filter(obj -> obj.getChangeEndTime() != null).max(Comparator.comparing(ProjectPlanTaskEntity::getChangeEndTime)).map(ProjectPlanTaskEntity::getChangeEndTime).get();
         vo.setScheduleStartTine(minStartTime);
         vo.setScheduleEndTine(maxEndTime);
         //相差多少天
@@ -247,6 +262,47 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
         vo.setTaskList(taskList);
         return vo;
+    }
+
+
+    /**
+     * 排期审核分页
+     * @author yl
+     * @date 2023-02-10 9:15
+     * @param dto
+     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.vo.SchedulePagingVO>>
+     */
+    @Override
+    public PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        SearchPagingDTO params = dto.getParams();
+        String searchType = params.getSearchType();
+        List<String> idList = new ArrayList<>();
+        List<String> statusList = new ArrayList<>();
+        //待审核
+        if (SearchType.WAIT_AUDIT.equals(searchType)) {
+            String userId = commonService.getUserInfo().getUid();
+            //获取我的待办信息
+            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+            idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(idList)) {
+                IPage pageData = new Page();
+                return new PagingVO(pageData);
+            }
+            statusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
+            statusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
+        }
+        IPage pageData = baseMapper.paging(query, params, idList,statusList);
+        List<SchedulePagingVO> list=pageData.getRecords();
+        if(CollectionUtils.isEmpty(list)){
+            return new PagingVO(pageData);
+        }
+        for(SchedulePagingVO item:list){
+            item.setStatusName(BaseStatusEnum.getName(item.getStatus()));
+        }
+
+
+        return new PagingVO(pageData);
     }
 
 
@@ -293,7 +349,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             //这里要发起流程
 
             String productId = plan.getProductId();
-            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanId(id);
+            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, waitAuditStatus, plan.getType());

@@ -1,10 +1,9 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
+import com.erp.common.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.io.Serializable;
 
 /**
  * @Classname BomSearchPagingDTO
@@ -14,7 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class SearchPagingDTO implements Serializable {
+public class SearchPagingDTO extends SortDTO {
 
     @StateEnumValue(strValues = {"all","waitAudit"}, message = "搜索类型有误")
     private String searchType;

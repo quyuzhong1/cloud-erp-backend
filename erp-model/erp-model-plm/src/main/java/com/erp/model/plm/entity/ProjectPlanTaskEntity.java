@@ -24,12 +24,12 @@ public class ProjectPlanTaskEntity implements Serializable {
     /**
      * 创建人id
      */
-    @TableField(value="create_user_id", fill = FieldFill.INSERT)
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
     /**
      * 创建名
      */
-    @TableField(value="create_user_name",fill = FieldFill.INSERT)
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
     /**
      * 创建时间
@@ -39,12 +39,12 @@ public class ProjectPlanTaskEntity implements Serializable {
     /**
      * 更改人
      */
-    @TableField(value="update_user_id",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
     private String updateUserId;
     /**
      * 更改人名
      */
-    @TableField(value="update_user_name",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
     private String updateUserName;
     /**
      * 更改时间
@@ -92,6 +92,9 @@ public class ProjectPlanTaskEntity implements Serializable {
 
     @TableLogic
     private Boolean isDeleted;
+
+
+
 
 }
 

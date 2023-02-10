@@ -59,7 +59,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 取消排期
      */
     @PostMapping("/cancel")
-    public  ApiResult cancelSchedule(HandleTaskScheduleDTO dto){
+    public  ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto){
         Boolean result = projectPlanTaskService.cancelSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -68,7 +68,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 重启排期
      */
     @PostMapping("/restart")
-    public  ApiResult restartSchedule(HandleTaskScheduleDTO dto){
+    public  ApiResult restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto){
         Boolean result = projectPlanTaskService.restartSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -77,7 +77,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 变更排期
      */
     @PostMapping("/change")
-    public  ApiResult changeSchedule(List<ChangeTaskScheduleDTO> list){
+    public  ApiResult changeSchedule(@RequestBody @Validated List<ChangeTaskScheduleDTO> list){
         Boolean result = projectPlanTaskService.changeSchedule(list);
         return result == true ? success() : failure();
     }

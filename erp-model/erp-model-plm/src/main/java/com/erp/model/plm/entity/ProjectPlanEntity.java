@@ -81,6 +81,8 @@ public class ProjectPlanEntity implements Serializable {
     @TableLogic
     private Boolean isDeleted;
 
+    private String remark;
+
 
 }
 

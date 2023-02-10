@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
-import com.erp.common.dto.base.SortParamDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
@@ -27,6 +26,7 @@ import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -74,24 +74,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      */
     @Override
     public ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto) {
-        List<SortParamDTO> sortList = dto.getSortList();
-        StringBuilder sb = new StringBuilder();
-        if (CollectionUtils.isNotEmpty(sortList)) {
-            boolean flag = false;
-            for (SortParamDTO sort : sortList) {
-                if (flag) {
-                    sb.append(",");
-                }
-                sb.append(sort.getField());
-                sb.append(" ");
-                sb.append(sort.getField());
-                flag = true;
-            }
-        }
-        String sql = sb.toString();
         ProductItemScheduleVO resultVO = new ProductItemScheduleVO();
         String productId = dto.getProductId();
-        List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto, sql);
+        List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
         List<ProductTaskVO> resultList = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(taskList)) {
             //前置任务列表
@@ -168,11 +153,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public Boolean fieldSet(CustomizeFieldLayoutDTO dto) {
 
-            String userId = commonService.getUserInfo().getUid();
-            dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.getCode());
-            dto.setUserId(userId);
-            dto.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.getName());
-            dto.setLayoutJson(dto.getLayoutJson());
+        String userId = commonService.getUserInfo().getUid();
+        dto.setModuleCode(ModuleEnum.PLM_SCHEDULE_TASK.getCode());
+        dto.setUserId(userId);
+        dto.setModuleName(ModuleEnum.PLM_SCHEDULE_TASK.getName());
+        dto.setLayoutJson(dto.getLayoutJson());
 
 
         return sysUserFeign.batchAdd(dto);
@@ -234,6 +219,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public void savePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList) {
         if (CollectionUtils.isNotEmpty(taskList)) {
             List<ProjectPlanTaskEntity> saveList = new ArrayList<>(taskList.size());
+            List<String> taskId = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             for (ProjectTaskEntity item : taskList) {
                 ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
                 entity.setChangeEndTime(item.getPlanEndTime());
@@ -242,12 +228,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 entity.setOriginStartTime(item.getPlanStartTime());
                 entity.setProductId(productId);
                 entity.setProjectPlanId(projectPlanId);
+                entity.setTaskId(item.getId());
                 entity.setOriginChargeId(item.getChargeId());
                 entity.setChangeChargeId(item.getChargeId());
                 saveList.add(entity);
             }
 
-            this.saveBatch(saveList);
+            boolean flag = this.saveBatch(saveList);
+            if (flag) {
+
+                projectTaskService.updateScheduleStatus(productId, taskId, BaseStatusEnum.WAIT_AUDIT.getStatus(), "");
+
+            }
         }
 
     }
@@ -298,12 +290,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-09 14:39
      */
     @Override
+    @Transactional
     public Boolean cancelSchedule(HandleTaskScheduleDTO dto) {
         String productId = dto.getProductId();
         Boolean result = true;
         //项目计划表id
         if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
-            List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, dto.getTaskIdList());
+            List<ScheduleTaskVO> taskList = projectTaskService.getScheduleTaskByTaskIds(productId, dto.getTaskIdList());
             String waitAudit = BaseStatusEnum.WAIT_AUDIT.getStatus();
             //初始提交
             Long count = taskList.stream().filter(p -> !waitAudit.equals(p.getScheduleStatus()))
@@ -325,8 +318,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 );
                 //更改审核状态
                 result = projectPlanService.saveOrUpdateBatch(planList);
+                List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
+                List<String> taskIdList=planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
-                projectTaskService.updateScheduleStatus(productId, dto.getTaskIdList(), cancelStatus,"");
+                projectTaskService.updateScheduleStatus(productId, taskIdList, cancelStatus, "");
             }
 
         }
@@ -336,14 +331,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     /**
      * 根据项目id  获取对应任务
      *
-     * @param projectPlanId
+     * @param projectPlanIds
      * @return
      */
     @Override
-    public List<ProjectPlanTaskEntity> getByProjectPlanId(String projectPlanId) {
-        LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectPlanTaskEntity::getProjectPlanId, projectPlanId);
-        return this.list(queryWrapper);
+    public List<ProjectPlanTaskEntity> getByProjectPlanIdList(List<String> projectPlanIds) {
+        if (CollectionUtils.isNotEmpty(projectPlanIds)) {
+            LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(ProjectPlanTaskEntity::getProjectPlanId, projectPlanIds);
+            return this.list(queryWrapper);
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -384,8 +382,10 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 result = projectPlanService.updateBatchById(planList);
                 //启动流程吗？
 
+                List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
+                List<String> taskIdList=planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
                 //更改任务状态
-                projectTaskService.updateScheduleStatus(productId, dto.getTaskIdList(), waitAuditStatus,"");
+                projectTaskService.updateScheduleStatus(productId, taskIdList, waitAuditStatus, "");
             }
 
         }
@@ -475,19 +475,20 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         this.saveBatch(addList);
     }
 
-    
+
     /**
      * 获取到排期 类型的 任务
-     * @author yl
-     * @date 2023-02-09 17:50
+     *
      * @param productId
      * @param projectPlanChange
      * @return java.util.List<com.erp.model.plm.entity.ProjectPlanEntity>
+     * @author yl
+     * @date 2023-02-09 17:50
      */
     @Override
     public List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange) {
 
-        return baseMapper.getTaskByPlanType(productId,projectPlanChange);
+        return baseMapper.getTaskByPlanType(productId, projectPlanChange);
     }
 
 }

@@ -3,6 +3,45 @@
 <mapper namespace="com.erp.server.plm.mapper.ProjectPlanMapper">
 
 
-
+    <select id="paging" resultType="com.erp.model.plm.vo.SchedulePagingVO">
+        SELECT
+          pp.id,pp.create_user_id,
+          pp.create_user_name,
+          pp.create_time,
+          pp.product_id,
+          pi.name AS productName,
+          pp.type,pp.phase,
+          pp.approval_finish_time,
+          pp.status,pp.task_quantity,
+          pp.remark
+          FROM project_plan PP LEFT JOIN product_info pi
+          ON PP.product_id =pi.id
+          WHERE PP.is_deleted=false
+          <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+               AND
+               pi.name LIKE concat('%',#{params.searchKeyword},'%')
+          </if>
+          <if test="idList!=null and idList.size>0">
+              AND
+              pp.id IN
+              <foreach collection="idList" item="id" open="(" separator="," close=")">
+                 #{id}
+              </foreach>
+          </if>
+          <if test="statusList !=null and statusList.size>0">
+              AND
+              pp.status IN
+              <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                  #{state}
+              </foreach>
+          </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                pp.${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC
+    </select>
 </mapper>
 

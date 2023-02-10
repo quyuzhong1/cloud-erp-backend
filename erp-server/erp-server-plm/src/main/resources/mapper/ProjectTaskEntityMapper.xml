@@ -914,15 +914,19 @@
         <if test="dto.planEndTime !=null ">
             AND plan_end_time &lt;= #{dto.planEndTime}
         </if>
-        <if test="sortSql!=null and sortSql!=''">
-            ORDER BY sortSql
+        ORDER BY
+        <if test="dto.sortList != null and dto.sortList.size > 0">
+            <foreach collection="dto.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
         </if>
+        create_time asc
     </select>
 
 
     <select id="getProductMapByProductId" resultType="java.util.Map">
-         SELECT COUNT(*) AS taskCount,
-         (SELECT name AS productName  FROM product_info WHERE id=#{productId})
+         SELECT COUNT(*) AS "taskCount",
+         (SELECT name AS "productName"  FROM product_info WHERE id=#{productId})
          FROM project_task WHERE product_id=#{productId}
     </select>
 
@@ -936,7 +940,7 @@
         charge_name,
         schedule_status,
         schedule_type
-        FROM plm_product_task
+        FROM project_task
         WHERE  product_id=#{productId}
         <if test="taskIdList!=null and taskIdList.size>0">
             AND id IN

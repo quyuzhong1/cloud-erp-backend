@@ -56,7 +56,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
 
     Boolean cancelSchedule(HandleTaskScheduleDTO dto);
 
-    List<ProjectPlanTaskEntity> getByProjectPlanId(String id);
+    List<ProjectPlanTaskEntity> getByProjectPlanIdList(List<String> projectPlanIds);
 
     /**
      * 重启排期
