@@ -147,7 +147,7 @@ public class CfgApiFieldMapController extends BaseController {
         //id
         map.put("id","444");
         //sku
-        map.put("skuNo","SKU1");
+        map.put("skuNo","SKU1333333");
         //sku
         map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
         //spu
@@ -159,13 +159,13 @@ public class CfgApiFieldMapController extends BaseController {
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","相机");
+        map.put("oneLevelCategory","手机");
         //一级分类编码
-        map.put("oneLevelCategoryCode","B");
+        map.put("oneLevelCategoryCode","M");
         //二级分类名称
-        map.put("secondLevelCategory","相机机身配件");
+        map.put("secondLevelCategory","耳机");
         //二级分类编码
-        map.put("secondLevelCategoryCode","BC");
+        map.put("secondLevelCategoryCode","AE");
         //产品经理
         map.put("chargeName","王杰");
         //销售信息
@@ -214,8 +214,8 @@ public class CfgApiFieldMapController extends BaseController {
         map.put("actualTaxCost", "");
         map.put("moq","22");
         //采购员
-        map.put("purchaseUser","7777");
-        map.put("mainSupplier","7777");
+        map.put("purchaseUser","王杰");
+        map.put("mainSupplier","王杰");
         this.kingdeeProductDetailService.pushProductDetail(map);
         return success();
     }

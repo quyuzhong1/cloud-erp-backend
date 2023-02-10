@@ -4271,7 +4271,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (planEndTime != null) {
             //状态
             if (!finishState.equals(state) && !approvalPass.equals(state)) {
-                int difference = DateUtil.getDiffDay(planEndTime, nowDay);
+                Long difference = DateUtil.getDiffDay(DateUtils.format(planEndTime,DateUtils.DATE_FORMAT_10) , DateUtils.format(nowDay,DateUtils.DATE_FORMAT_10));
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
                 }
@@ -4280,7 +4280,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 if (difference < 0) {
                     if (difference >= -2) {
-                        warning = Math.abs(difference) + 1 + "天后过期";
+                        warning = Math.abs(difference) + "天后过期";
                     }
                 }
             }

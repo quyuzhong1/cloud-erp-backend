@@ -1,11 +1,11 @@
 package com.erp.server.dmp.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -162,7 +162,7 @@ public class KingdeeApiUtils {
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setId(id);
-        return view(param,(null == ignoreError? false: ignoreError[0]));
+        return view(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     /**
@@ -175,7 +175,7 @@ public class KingdeeApiUtils {
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setNumber(number);
-        return view(param,(null == ignoreError? false: ignoreError[0]));
+        return view(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     public OperatorResult view(OperateParam param,boolean ignoreError){
@@ -229,7 +229,7 @@ public class KingdeeApiUtils {
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        return audit(param, (null == ignoreError? false: ignoreError[0]));
+        return audit(param, (ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     /**
@@ -242,7 +242,7 @@ public class KingdeeApiUtils {
         OperatorResult result=null;
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
-        return audit(param, (null == ignoreError? false: ignoreError[0]));
+        return audit(param, (ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     public OperatorResult audit(OperateParam param,boolean ignoreError){
@@ -273,7 +273,7 @@ public class KingdeeApiUtils {
 
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        return unAudit(param,(null == ignoreError? false: ignoreError[0]));
+        return unAudit(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     /**
@@ -286,7 +286,7 @@ public class KingdeeApiUtils {
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
-        return unAudit(param,(null == ignoreError? false: ignoreError[0]));
+        return unAudit(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     public OperatorResult unAudit(OperateParam param, boolean ignoreError){
@@ -310,12 +310,12 @@ public class KingdeeApiUtils {
         OperatorResult result;
         OperateParam param = new OperateParam();
         param.setIds(String.join(",",idList));
-        return delete(param,(null == ignoreError? false: ignoreError[0]));
+        return delete(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
     public OperatorResult deleteByNumber(List<String> numberList, boolean... ignoreError){
         OperateParam param = new OperateParam();
         param.setNumbers(numberList);
-        return delete(param,(null == ignoreError? false: ignoreError[0]));
+        return delete(param,(ObjectUtils.isEmpty(ignoreError)? false: ignoreError[0]));
     }
 
     private OperatorResult delete(OperateParam param, boolean ignoreError){

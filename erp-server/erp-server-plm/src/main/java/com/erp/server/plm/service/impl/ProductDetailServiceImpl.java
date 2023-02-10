@@ -1449,8 +1449,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         resultMap.put("unitName", entity.getUnitName());
         //一级分类名称
         resultMap.put("oneLevelCategory", "");
+        //一级分类名称
+        resultMap.put("oneLevelCategory", "");
         //二级分类名称
         resultMap.put("secondLevelCategory", productInfoEntity.getCategory());
+        //二级分类编码
+        resultMap.put("secondLevelCategoryCode", "");
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
         //销售信息

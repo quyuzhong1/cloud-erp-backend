@@ -292,7 +292,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser);
             //异步发送通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
-            //默认查询立项模板中的成员信息
+            //默认查询立项模板中的成员和角色信息
             projectMembersService.addRoleAndMembersByApproval(entity.getId());
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -342,7 +342,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setCategory(category.getName());
             productInfoEntity.setCategoryId(dto.getCategoryId());
             //自动生成产品编号
-            if (!productInfoEntity.getCategoryId().equals(category.getId())) {
+            if (!dto.getCategoryId().equals(category.getId())) {
                 String spuNo = sysCodeService.getSpuNo(category.getId());
                 productInfoEntity.setSpuNo(spuNo);
             }
