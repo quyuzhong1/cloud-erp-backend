@@ -339,13 +339,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
-            productInfoEntity.setCategory(category.getName());
-            productInfoEntity.setCategoryId(dto.getCategoryId());
             //自动生成产品编号
-            if (!dto.getCategoryId().equals(category.getId())) {
+            if (!dto.getCategoryId().equals(productInfoEntity.getCategoryId())) {
                 String spuNo = sysCodeService.getSpuNo(category.getId());
                 productInfoEntity.setSpuNo(spuNo);
             }
+
+            productInfoEntity.setCategory(category.getName());
+            productInfoEntity.setCategoryId(dto.getCategoryId());
             list.add(productInfoEntity);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
