@@ -187,21 +187,39 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         //成员新增成功后，需要更新产品下面的未发布、未开始、进行中的任务
         List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
         if (CollectionUtils.isNotEmpty(projectTaskList)) {
-            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> projectRoleEntity.getName().equals(obj.getRoleName()) && (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
+            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(list)) {
+                List<ProjectTaskEntity> addTaskList = new ArrayList<>();
+                List<TaskChargeDistributionEntity> addTaskChargeDistributionList = new ArrayList<>();
                 list.forEach(obj -> {
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
-                        //更新任务负责人
-                        if (StringUtils.isNotBlank(obj.getChargeId())) {
-                            List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
-                            for (String userId :dto.getUserIdList()) {
-                                if (!chargetIds.contains(userId)) {
-                                    chargetIds.add(userId);
+                        List<String> collect = Arrays.stream(obj.getRoleName().split(",")).collect(Collectors.toList());
+                        if (collect.contains(projectRoleEntity.getName())) {
+                            //更新任务负责人
+                            if (StringUtils.isNotBlank(obj.getChargeId())) {
+                                List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                                for (String userId :dto.getUserIdList()) {
+                                    if (!chargetIds.contains(userId)) {
+                                        chargetIds.add(userId);
+                                    }
+                                }
+                                chargetIds = chargetIds.stream().distinct().collect(Collectors.toList());
+                                List<String> finalChargetIds = chargetIds;
+                                //人员名称
+                                List<String> userNameList = userList.stream().filter(e -> finalChargetIds.contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                obj.setChargeId(StringUtils.join(chargetIds,","));
+                                if (CollectionUtils.isNotEmpty(userNameList)) {
+                                    obj.setChargeName(StringUtils.join(userNameList,","));
+                                }
+                            } else {
+                                obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
+                                //人员名称
+                                List<String> userNameList = userList.stream().filter(e -> dto.getUserIdList().contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                if (CollectionUtils.isNotEmpty(userNameList)) {
+                                    obj.setChargeName(StringUtils.join(userNameList,","));
                                 }
                             }
-                            obj.setChargeId(StringUtils.join(chargetIds,","));
-                        } else {
-                            obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
+                            addTaskList.add(obj);
                         }
                     }
                     //查询任务下审核人
@@ -228,6 +246,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                                     } else {
                                         taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(),","));
                                     }
+                                    addTaskChargeDistributionList.add(taskChargeDistributionEntity);
                                 }
                             }
                             //按上级分配
@@ -237,17 +256,29 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                                 List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
                                 if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
                                     for (String superiorType: chargeList) {
-                                        String userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.joining(","));
-                                        if (StringUtils.isNotBlank(userIds)) {
-                                            taskChargeDistributionEntity.setChargeIds(userIds);
+                                        List<String> userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+                                        //判断是否存在上级
+                                        if (CollectionUtils.isNotEmpty(userIds)) {
+                                            if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                                                List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                                                userIds.addAll(chargetIds);
+                                                userIds = userIds.stream().distinct().collect(Collectors.toList());
+                                            }
+                                            taskChargeDistributionEntity.setChargeIds(StringUtils.join(userIds,","));
+                                            addTaskChargeDistributionList.add(taskChargeDistributionEntity);
                                         }
                                     }
                                 }
                             }
                         }
+                        if (CollectionUtils.isNotEmpty(addTaskChargeDistributionList)) {
+                            taskChargeDistributionService.updateBatchById(addTaskChargeDistributionList);
+                        }
                     }
                 });
-                projectTaskService.updateBatchById(list);
+                if (CollectionUtils.isNotEmpty(addTaskList)) {
+                    projectTaskService.updateBatchById(addTaskList);
+                }
             }
         }
 

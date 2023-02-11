@@ -1,12 +1,14 @@
 package com.erp.server.plm.enums;
 
+import com.common.core.constant.EnumMessage;
+
 /**
  * @author Will
  * @version 1.0
  * @description: TODO
  * @date 2023/2/6 17:31
  */
-public enum RelatedSkuTypeEnum {
+public enum RelatedSkuTypeEnum implements EnumMessage {
 
     ALL_RELATED("1","自动关联"),
     CHOICE_RELATED("2","选择关联"),

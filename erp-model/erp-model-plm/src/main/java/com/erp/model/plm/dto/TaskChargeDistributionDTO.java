@@ -37,4 +37,8 @@ public class TaskChargeDistributionDTO {
      */
     private String chargeNames;
 
+    /**
+     * 负责人id,逗号分隔
+     */
+    private String chargeIds;
 }

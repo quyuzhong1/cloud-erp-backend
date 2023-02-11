@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.constant.EnumMessage;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -16,7 +17,7 @@ public class EnumsUtil {
     /**
      * 存放单个枚举对象 map常量定义
      */
-    private static Map<Integer, EnumMessage> SINGLE_ENUM_MAP;
+    private static Map<Object, EnumMessage> SINGLE_ENUM_MAP;
 
 
     /**静态初始化块*/
@@ -48,6 +49,9 @@ public class EnumsUtil {
             throw new ServiceException(ApiError.ERROR_9028);
         }
         T retobj= (T)SINGLE_ENUM_MAP.get(value);
+        if (ObjectUtils.isEmpty(retobj)) {
+            retobj= (T)SINGLE_ENUM_MAP.get(String.valueOf(value));
+        }
 
         return retobj;
     }

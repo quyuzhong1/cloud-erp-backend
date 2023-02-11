@@ -25,4 +25,25 @@
         ORDER BY tm.create_time DESC
     </select>
 
+    <select id="listByRoleNames" resultType="com.erp.model.plm.entity.TemplateMembersEntity">
+        select
+            tm.id,
+            tm.member_id,
+            tm.member_name,
+            tm.template_id,
+            tm.create_time,
+            tm.update_time,
+            tm.create_user_id,
+            tm.create_user_name,
+            tm.update_user_id,
+            tm.update_user_name
+        from template_members tm
+        left join template_role_ref_members trrm on trrm.members_id = tm.id and trrm.template_id = tm.template_id
+        left join template_role tr on tr.id = trrm.role_id and trrm.template_id = tr.template_id
+        where tr.template_id = #{templateId} and tr.name in
+        <foreach collection="roleNames" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

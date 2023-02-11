@@ -30,10 +30,10 @@ public class SysLogFieldServiceImpl extends ServiceImpl<SysLogFieldMapper, SysLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-         String  classPath = SysLogClassPathEnum.BOM_SKU_ENTITY.getDesc();
+         String  classPath = SysLogClassPathEnum.PROJECTTASKENTITY.getDesc();
         List<SysLogFieldEntity> logFields =  Arrays.asList(
-            new SysLogFieldEntity().setField("parentSkuNo").setFieldName("父物料").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new SysLogFieldEntity().setField("skuNo").setFieldName("子物料").setClassPath(classPath).setType(0) .setEnumClass(null)
+            new SysLogFieldEntity().setField("relatedSkuType").setFieldName("SKU关联").setClassPath(classPath).setType(2) .setEnumClass("RelatedSkuTypeEnum")
+                //new SysLogFieldEntity().setField("skuNo").setFieldName("子物料").setClassPath(classPath).setType(0) .setEnumClass(null)
                  /*new SysLogFieldEntity().setField("saleMethod").setFieldName("销售方式").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("entrustedDevelopCost").setFieldName("委托开发成本").setClassPath(classPath).setType(0) .setEnumClass(null),
                 new SysLogFieldEntity().setField("moldCost").setFieldName("模具成本").setClassPath(classPath).setType(0) .setEnumClass(null),

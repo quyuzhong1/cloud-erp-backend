@@ -87,8 +87,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
             }
             String fieldName = sysLogFieldEntity.getFieldName();
             Integer type = sysLogFieldEntity.getType();
-            String oldValue = valuePair.getKey();
-            String newValue = valuePair.getValue();
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
             if (type == 1) {//是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
@@ -147,7 +147,9 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                 }
 
             }
-
+            if (oldValue.equals(newValue)) {
+                continue;
+            }
             String content = "";
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");

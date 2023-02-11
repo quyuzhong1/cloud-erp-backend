@@ -293,6 +293,11 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         return this.listByIds(membersIds);
     }
 
+    @Override
+    public List<TemplateMembersEntity> listByRoleNames(List<String> roleNames, String templateId) {
+        return this.baseMapper.listByRoleNames(roleNames,templateId);
+    }
+
     /**
      * @description: 根据id和模板id修改
      * @author Will

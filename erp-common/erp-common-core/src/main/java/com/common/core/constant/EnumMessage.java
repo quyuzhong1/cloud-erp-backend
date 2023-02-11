@@ -8,6 +8,6 @@ package com.common.core.constant;
  */
 public interface EnumMessage {
 
-    Integer getCode();
+    Object getCode();
     String getName();
 }
