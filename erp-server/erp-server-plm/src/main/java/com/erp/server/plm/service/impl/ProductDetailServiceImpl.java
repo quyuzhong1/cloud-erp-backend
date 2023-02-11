@@ -1415,10 +1415,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
         //审核通过后发送到金蝶系统
-        //sendDataToKingdee(entity);
+        sendDataToKingdee(entity);
         return this.updateById(entity);
     }
 
+    /**
+     * 组装数据发送到金蝶
+     */
     private void sendDataToKingdee(ProductDetailEntity entity) {
         //产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
@@ -1447,14 +1450,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         resultMap.put("property", productInfoEntity.getProperty());
         //单位
         resultMap.put("unitName", entity.getUnitName());
-        //一级分类名称
-        resultMap.put("oneLevelCategory", "");
-        //一级分类名称
-        resultMap.put("oneLevelCategory", "");
-        //二级分类名称
-        resultMap.put("secondLevelCategory", productInfoEntity.getCategory());
-        //二级分类编码
-        resultMap.put("secondLevelCategoryCode", "");
+
+        BasicCategoryEntity basicCategoryEntity = basicCategoryService.getById(productInfoEntity.getCategoryId());
+        if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
+            List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
+            if (CollectionUtils.isNotEmpty(basicCategoryList)) {
+                //一级分类
+                BasicCategoryEntity basicCategoryEntity1 = basicCategoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(basicCategoryEntity1)) {
+                    resultMap.put("oneLevelCategory", basicCategoryEntity1.getName());
+                    //一级分类编码
+                    resultMap.put("oneLevelCategoryCode", basicCategoryEntity1.getCode());
+                    //二级分类
+                    BasicCategoryEntity basicCategoryEntity2 = basicCategoryList.stream().filter(obj -> basicCategoryEntity1.getId().equals(obj.getPid())).findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(basicCategoryEntity2)) {
+                        resultMap.put("secondLevelCategory", basicCategoryEntity2.getName());
+                        //二级分类编码
+                        resultMap.put("secondLevelCategoryCode", basicCategoryEntity1.getCode().concat(basicCategoryEntity2.getCode()));
+                    }
+                }
+            }
+        }
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
         //销售信息
@@ -1470,10 +1486,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             resultMap.put("declareEnglishName", productLogisticsEntity.getDeclareEnglishName());
             //报关申报价
             resultMap.put("declarePrice", productLogisticsEntity.getDeclarePrice());
-            //产品属性（是否带电）
-            resultMap.put("productProperty_electric", productLogisticsEntity.getDeclarePrice());
-            //产品属性（是否带磁）
-            resultMap.put("productProperty_magnetism", productLogisticsEntity.getDeclarePrice());
+            //产品属性
+            BasicDictEntity declareProperty = basicDictService.getById( productLogisticsEntity.getProductPropertyId());
+            if (ObjectUtils.isNotEmpty(declareProperty)) {
+                //产品属性（是否带电）
+                resultMap.put("productProperty_electric","内电".equals(declareProperty.getValue()) ? true : false);
+                //产品属性（是否带磁）
+                resultMap.put("productProperty_magnetism", "带磁".equals(declareProperty.getValue()) ? true : false);
+            }
             //海关编码
             resultMap.put("customsCode", productLogisticsEntity.getCustomsCode());
             //申报要素
