@@ -114,4 +114,28 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
 
 
     }
+
+
+    /**
+     * 根据业务表id 获取到对应 流程信息
+     *
+     * @param businessTableIds
+     * @return java.util.List<com.erp.model.workflow.dto.WorkflowBusinessProcessDTO>
+     * @author yl
+     * @date 2023-02-11 11:52
+     */
+    @Override
+    public List<WorkflowBusinessProcessDTO> getProcessByTables(List<String> businessTableIds) {
+        if (CollectionUtils.isNotEmpty(businessTableIds)) {
+            LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableIds);
+            queryWrapper.orderByDesc(WorkflowBusinessProcessEntity::getCreateTime);
+            List<WorkflowBusinessProcessEntity> list = this.list(queryWrapper);
+            List<WorkflowBusinessProcessDTO> resultList = new ArrayList<>();
+            resultList = BeanMapper.copyList(list, WorkflowBusinessProcessDTO.class);
+            return resultList;
+        }
+        return new ArrayList<>();
+
+    }
 }

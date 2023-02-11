@@ -80,9 +80,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     private ProductChangeService productChangeService;
 
 
-    @Resource
-    private SysLogService sysLogService;
-
     /**
      * 添加bom
      *
@@ -847,12 +844,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         bom.setState(BomStateEnum.AUDIT_ING.getState());
         bom.setRemark(dto.getComment());
         Boolean result = this.updateById(bom);
-        if (result && isFirstAudit) {
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName());
-            //操作记录
-            bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
 
-        }
 
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
@@ -860,14 +852,23 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if (processTask != null) {
-            //审核
-            ApproveProcessDTO approveProcess = new ApproveProcessDTO();
-            approveProcess.setTaskId(processTask.getTaskId());
-            approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
-            approveProcess.setUserId(userId);
-            approveProcess.setComment(comment);
-            workflowFeign.taskPass(approveProcess);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
+        //审核
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(processTask.getTaskId());
+        approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(comment);
+        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
+        if (node != null) {
+            if (result && isFirstAudit) {
+                String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName());
+                //操作记录
+                bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+            }
         }
 
 
@@ -933,14 +934,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     /**
      * 审核情况
-     * @author yl
-     * @date 2023-02-08 9:00
+     *
      * @param bomId
      * @return void
+     * @author yl
+     * @date 2023-02-08 9:00
      */
     @Override
     public void auditInfo(String bomId) {
-        
+
     }
 
     /**
@@ -959,22 +961,31 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
         bom.setRemark(dto.getComment());
-        //流程需要关闭吗
-        this.updateById(bom);
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(bom.getId());
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if (processTask != null) {
-            ApproveProcessDTO process = new ApproveProcessDTO();
-            process.setComment(dto.getComment());
-            process.setProcessInstanceId(processTask.getProcessInstanceId());
-            process.setUserId(userId);
-            process.setTaskId(processTask.getTaskId());
-            //终止流程
-            workflowFeign.terminate(process);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
+        //流程需要关闭吗
+        Boolean result = this.updateById(bom);
+
+        ApproveProcessDTO process = new ApproveProcessDTO();
+        process.setComment(dto.getComment());
+        process.setProcessInstanceId(processTask.getProcessInstanceId());
+        process.setUserId(userId);
+        process.setTaskId(processTask.getTaskId());
+        //终止流程
+        workflowFeign.terminate(process);
+
+        if (result) {
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_NO_PASS.getName());
+            //操作记录
+            bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }
 
 

@@ -32,6 +32,10 @@ public class ApproveRecordShowDTO implements Serializable {
 
 
     //处理人
+    private String handleUserId;
+
+
+    //处理人
     private String handleUserName;
 
 

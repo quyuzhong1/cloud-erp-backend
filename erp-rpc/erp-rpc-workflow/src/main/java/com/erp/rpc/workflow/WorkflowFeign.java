@@ -43,6 +43,11 @@ public interface WorkflowFeign {
     @PostMapping("workflow/feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 
+
+    //审核任务不通过
+    @PostMapping("workflow/feign/process/taskNoPass")
+    ProcessNodeDTO taskNoPass(@RequestBody ApproveProcessDTO dto);
+
     //撤销流程
     @PostMapping("workflow/feign/process/withDraw")
     void withDraw(@RequestBody ApproveProcessDTO dto);
@@ -95,4 +100,14 @@ public interface WorkflowFeign {
 
     @PostMapping("workflow/feign/process/getProcess")
     List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds);
+
+    /**
+     * 根据业务表获取审核记录
+     * @author yl
+     * @date 2023-02-11 11:32
+     * @param id
+     * @return java.util.List<com.erp.model.workflow.dto.ApproveRecordShowDTO>
+     */
+    @PostMapping("workflow/feign/process/getHistoryTaskByBusinessTableId")
+    List<ApproveRecordShowDTO> getHistoryTaskByBusinessTableId(@RequestBody String id);
 }

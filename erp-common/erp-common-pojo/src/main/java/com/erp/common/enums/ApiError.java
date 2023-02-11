@@ -90,6 +90,9 @@ public enum ApiError implements Serializable {
     ERROR_94002(94002, "当前节点为空"),
     ERROR_94003(94003, "不是第一个用户任务节点无法取回"),
     ERROR_94004(94004, "启动流程失败"),
+    ERROR_94005(94005, "您无权操作,不是您审核"),
+    ERROR_94006(94006, "审核失败"),
+
 
 
 

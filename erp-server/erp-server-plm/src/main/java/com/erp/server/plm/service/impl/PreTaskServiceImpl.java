@@ -269,7 +269,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     }
 
     @Override
-    public void listChildrenTask(List<String> taskIds,List<ProjectTaskEntity> list) {
+    public void listChildrenTask(List<String> taskIds, List<ProjectTaskEntity> list) {
         if (CollectionUtils.isEmpty(taskIds)) {
             return;
         }
@@ -281,8 +281,47 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
                 list.addAll(projectTaskList);
             }
             //判断子任务是否还拥有子任务
-            listChildrenTask(childTaskIds,list);
+            listChildrenTask(childTaskIds, list);
         }
+    }
+
+
+    /**
+     * 批量更新前置任务
+     *
+     * @param taskIdList
+     * @param preTaskIdList
+     * @return void
+     * @author yl
+     * @date 2023-02-10 16:53
+     */
+    @Override
+    public void batchUpdate(String productId, List<String> taskIdList, List<String> preTaskIdList) {
+
+
+        if (CollectionUtils.isEmpty(taskIdList) || CollectionUtils.isEmpty(preTaskIdList)) {
+            return;
+        }
+
+        //先删除
+        if (CollectionUtils.isNotEmpty(taskIdList)) {
+            LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(PreTaskEntity::getTaskId, taskIdList);
+            this.remove(queryWrapper);
+        }
+        List<PreTaskEntity> addList = new ArrayList<>();
+        //后添加
+        for (String taskId : taskIdList) {
+            for (String preTaskId : preTaskIdList) {
+                PreTaskEntity entity = new PreTaskEntity();
+                entity.setProductId(productId);
+                entity.setTaskId(taskId);
+                entity.setPreTaskId(preTaskId);
+                addList.add(entity);
+            }
+        }
+
+        this.saveBatch(addList);
     }
 
 

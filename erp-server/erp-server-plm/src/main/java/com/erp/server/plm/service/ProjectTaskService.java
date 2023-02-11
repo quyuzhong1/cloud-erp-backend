@@ -5,6 +5,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
@@ -211,4 +212,25 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<ScheduleTaskVO> getScheduleTaskByTaskIds(String productId, List<String> taskIds);
 
     ScheduleTaskExportExcelVO getExport(String productId, String taskId);
+
+    
+    /**
+     * 批量更新任务字段
+     * @author yl
+     * @date 2023-02-10 16:37
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean batchUpdate(BatchScheduleTaskDTO dto);
+
+    
+    /**
+     * 当变更通过后 更改负责人 和时间
+     * @author yl
+     * @date 2023-02-11 16:42
+     * @param taskList
+     * @param status
+     * @return void
+     */
+    void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status);
 }

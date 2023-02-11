@@ -31,10 +31,10 @@ public interface ProcessTaskService {
      * @description: 根据审核任务id查看任务
      * @author Will
      * @date: 2022/11/28 15:20
-     * @param processId
+     * @param taskId
      * @return List<TaskShowDTO>
      */
-    List<TaskShowDTO> queryMyToDoByTaskId(String processId);
+    List<TaskShowDTO> queryMyToDoByTaskId(String taskId);
 
    /**
     * @description: 查询流程下所有审核记录
@@ -54,4 +54,14 @@ public interface ProcessTaskService {
      * @return java.util.List<com.erp.model.workflow.vo.MyToDoTaskVO>
      */
     List<MyToDoTaskVO> getMyToDoTasks(String userId);
+
+    
+    /**
+     * 审核不通过
+     * @author yl
+     * @date 2023-02-11 16:13
+     * @param dto
+     * @return com.erp.model.workflow.dto.ProcessNodeDTO
+     */
+    ProcessNodeDTO taskNoPass(ApproveProcessDTO dto);
 }

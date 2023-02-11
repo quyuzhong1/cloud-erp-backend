@@ -44,4 +44,16 @@ public interface PreTaskService extends IService<PreTaskEntity> {
      * 查询所有子集任务
      */
     void listChildrenTask(List<String> taskIds,List<ProjectTaskEntity> list);
+
+    
+    /**
+     * 批量更新前置任务
+     * @author yl
+     * @date 2023-02-10 16:52
+     *  @param productId
+     * @param taskIdList
+     * @param preTaskIdList
+     * @return void
+     */
+    void batchUpdate(String productId, List<String> taskIdList, List<String> preTaskIdList);
 }

@@ -5,6 +5,7 @@ import com.alibaba.excel.util.DateUtils;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
@@ -18,10 +19,8 @@ import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import javax.annotation.Resource;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +48,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     @Autowired
     private RuntimeService runtimeService;
+
+    @Resource
+    private WorkflowMapper workflowMapper;
 
     /**
      * 查询我的任务待办
@@ -108,7 +110,42 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         //审批通过后 需要保存流程节点信息
         actHistoryActivityService.saveActivity(activityDTO);
         return new ProcessNodeDTO();
+
     }
+
+    /**
+     * 审批 不通过任务
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-08-10 16:57
+     */
+    @Override
+    public ProcessNodeDTO taskNoPass(ApproveProcessDTO dto) {
+        String processInstanceId = dto.getProcessInstanceId();
+        String taskId = dto.getTaskId();
+        Task task = taskService.createTaskQuery().
+                taskId(taskId).singleResult();
+        if (Objects.isNull(task)) {
+            return null;
+        }
+        if(StringUtils.isBlank(dto.getComment())){
+            dto.setComment("审核不通过");
+        }
+        //添加审批意见
+        taskService.createComment(taskId, processInstanceId, dto.getComment());
+
+        workflowMapper.deleteTaskByIdArray(Arrays.asList(taskId));
+        taskService.deleteTask(taskId);
+
+
+        return new ProcessNodeDTO();
+
+    }
+
+
+
 
 
     /**
@@ -171,10 +208,10 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     }
 
     @Override
-    public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
+    public List<TaskShowDTO> queryMyToDoByTaskId(String taskId) {
         List<TaskShowDTO> resultList = new ArrayList<>();
-        if (StringUtils.isNotBlank(processId)) {
-            List<Task> tasks = taskService.createTaskQuery().taskId(processId).list();
+        if (StringUtils.isNotBlank(taskId)) {
+            List<Task> tasks = taskService.createTaskQuery().taskId(taskId).list();
             for (Task task : tasks) {
                 TaskShowDTO vo = new TaskShowDTO();
                 vo.setAssignee(task.getAssignee());
@@ -191,8 +228,8 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         List<HistoricTaskInstance> list = historyService // 历史相关Service
                 .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
                 .processInstanceId(processId) // 用流程实例id查询
-                .orderByDeleteReason()
-                .desc()
+                .orderByHistoricActivityInstanceStartTime()
+                .asc()
                 .list();
         List<ApproveRecordShowDTO> resultList = new ArrayList<>();
         ApproveRecordShowDTO approveRecordShowDTO = null;
@@ -206,10 +243,10 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             } else {
                 approvalSuggestion = "";
             }
+            approveRecordShowDTO.setActivityName(item.getName());
             approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
             approveRecordShowDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
-            approveRecordShowDTO.setHandleUserName(item.getAssignee());
-            approveRecordShowDTO.setActivityName(item.getName());
+            approveRecordShowDTO.setHandleUserId(item.getAssignee());
             approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
             approveRecordShowDTO.setComment(approvalSuggestion);
             resultList.add(approveRecordShowDTO);

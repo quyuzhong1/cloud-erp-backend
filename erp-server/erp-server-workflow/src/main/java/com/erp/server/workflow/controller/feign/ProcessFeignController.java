@@ -1,13 +1,16 @@
 package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import com.erp.server.workflow.service.WorkflowBusinessService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,6 +45,9 @@ public class ProcessFeignController extends BaseController {
 
     @Autowired
     private WorkflowBusinessProcessService businessProcessService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
 
     //启动流程
@@ -68,6 +76,13 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/taskPass")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
         ProcessNodeDTO node = processTaskService.taskPass(dto);
+        return node;
+    }
+
+    //审核不通过任务
+    @PostMapping("/taskNoPass")
+    public ProcessNodeDTO taskNoPass(@RequestBody @Validated ApproveProcessDTO dto) {
+        ProcessNodeDTO node = processTaskService.taskNoPass(dto);
         return node;
     }
 
@@ -104,8 +119,8 @@ public class ProcessFeignController extends BaseController {
 
     //根据审核任务id查看任务
     @PostMapping("/queryMyToDoByTaskId")
-    public List<TaskShowDTO> queryMyToDoByTaskId(String processId) {
-        List<TaskShowDTO> list = processTaskService.queryMyToDoByTaskId(processId);
+    public List<TaskShowDTO> queryMyToDoByTaskId(String taskId) {
+        List<TaskShowDTO> list = processTaskService.queryMyToDoByTaskId(taskId);
         return list;
     }
 
@@ -115,6 +130,38 @@ public class ProcessFeignController extends BaseController {
         List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
         return resultList;
     }
+
+    /**
+     * 根据业务表id获取审批情况
+     *
+     * @param businessTableId
+     * @return
+     * @author yl
+     * @date 2023-02-11 11:33
+     */
+    //查看流程审批情况
+    @PostMapping("/getHistoryTaskByBusinessTableId")
+    public List<ApproveRecordShowDTO> getHistoryTaskByBusinessTableId(@RequestBody String businessTableId) {
+        List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(Arrays.asList(businessTableId));
+        if (CollectionUtils.isNotEmpty(list)) {
+            WorkflowBusinessProcessDTO dto = list.get(0);
+            List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(dto.getProcessId());
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            for(ApproveRecordShowDTO item:resultList){
+                FindUserDTO findUser = userList.stream().filter(u -> item.getHandleUserId().equals(u.getUserId())).findFirst().orElse(null);
+                if (findUser != null) {
+                    item.setHandleUserName(findUser.getUserName());
+                } else {
+                    item.setHandleUserName("");
+                }
+            }
+
+
+            return resultList;
+        }
+        return new ArrayList<>();
+    }
+
 
     /**
      * 查看业务流程具体信息
@@ -161,12 +208,12 @@ public class ProcessFeignController extends BaseController {
      * @author yl
      * @date 2023-02-08 19:48
      */
-   /* @PostMapping("/getProcess")
+    @PostMapping("/getProcess")
     public List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds) {
         List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(businessTableIds);
         return list;
 
-    }*/
+    }
 
 
 }

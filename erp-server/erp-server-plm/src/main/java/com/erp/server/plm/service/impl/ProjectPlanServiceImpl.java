@@ -6,11 +6,14 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
+import com.common.core.enums.SkuApproveConfigureEnum;
+import com.common.core.enums.WorkflowBusinessEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
@@ -21,23 +24,23 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.constant.TaskConstant;
+import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.ProjectPlanService;
-import com.erp.server.plm.service.ProjectPlanTaskService;
-import com.erp.server.plm.service.ProjectTaskService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +68,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private ProductDetailService productDetailService;
+
     /**
      * 提交项目计划
      *
@@ -79,6 +85,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         List<String> taskIds = dto.getTaskIdList();
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
+        checkAuditor();
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
             checkTaskStatus(taskList);
@@ -103,6 +110,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (saveResult) {
             projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
             //发起流程啊
+            startScheduleTaskProcess(id);
         }
         return saveResult;
     }
@@ -252,7 +260,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             if (CollectionUtils.isNotEmpty(historyList)) {
                 for (ScheduleTaskDetailsVO hi : historyList) {
                     String hiChargeId = hi.getChargeId();
-                    hi.setChargeName(getNameByIds(hiChargeId,userList));
+                    hi.setChargeName(getNameByIds(hiChargeId, userList));
                 }
             }
             task.setHistoryList(historyList);
@@ -267,10 +275,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     /**
      * 排期审核分页
+     *
+     * @param dto
+     * @return com.erp.common.vo.PagingVO<java.util.List < com.erp.model.plm.vo.SchedulePagingVO>>
      * @author yl
      * @date 2023-02-10 9:15
-     * @param dto
-     * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.vo.SchedulePagingVO>>
      */
     @Override
     public PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
@@ -292,12 +301,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             statusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
             statusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
         }
-        IPage pageData = baseMapper.paging(query, params, idList,statusList);
-        List<SchedulePagingVO> list=pageData.getRecords();
-        if(CollectionUtils.isEmpty(list)){
+        IPage pageData = baseMapper.paging(query, params, idList, statusList);
+        List<SchedulePagingVO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
-        for(SchedulePagingVO item:list){
+        for (SchedulePagingVO item : list) {
             item.setStatusName(BaseStatusEnum.getName(item.getStatus()));
         }
 
@@ -339,15 +348,17 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             throw new ServiceException(ApiError.ERROR_95122);
         }
         String status = plan.getStatus();
-        if (BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(status)) {
+        if (!BaseStatusEnum.AUDIT_NO_PASS.getStatus().equals(status)) {
             throw new ServiceException(ApiError.ERROR_95119);
         }
+
+        checkAuditor();
         String waitAuditStatus = BaseStatusEnum.WAIT_AUDIT.getStatus();
         plan.setStatus(waitAuditStatus);
         Boolean result = this.updateById(plan);
         if (result) {
             //这里要发起流程
-
+            startScheduleTaskProcess(id);
             String productId = plan.getProductId();
             List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
             List<String> taskIds = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
@@ -372,6 +383,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
+        //检查审核人
+        checkAuditor();
         List<String> taskIds = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = list.get(0).getProductId();
@@ -397,13 +410,284 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectPlanTaskService.saveChangePlanTask(id, productId, taskList, list);
 
             //发起流程
+            startScheduleTaskProcess(id);
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(), type);
         }
         return saveResult;
 
+    }
+
+
+    /**
+     * 启动一个流程
+     *
+     * @param id
+     * @return
+     * @author yl
+     * @date 2023-02-11 10:04
+     */
+
+    @Override
+    public void startScheduleTaskProcess(String id) {
+        FindProcessDTO findProcess = new FindProcessDTO();
+        String userId = commonService.getUserInfo().getUid();
+        String businessType = WorkflowBusinessEnum.SCHEDULE_TASK.getBusinessType();
+        String platform = WorkflowBusinessEnum.SCHEDULE_TASK.getPlatform();
+        findProcess.setBusinessType(businessType);
+        findProcess.setPlatform(platform);
+        //获取到业务的信息
+        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
+        if (business != null) {
+            StartProcessDTO startProcess = new StartProcessDTO();
+            startProcess.setUserId(userId);
+            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
+            startProcess.setBusinessKey(business.getBusinessKey());
+            Map<String, Object> parameterMap = new HashMap<>();
+            parameterMap.put("pmoCharge", "1585078174348218369");
+            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+            if (CollectionUtils.isEmpty(departmentHeadList)) {
+                throw new ServiceException(ApiError.ERROR_9032);
+            }
+            parameterMap.put("departmentHead", departmentHeadList.get(0));
+            startProcess.setParameterMap(parameterMap);
+            //启动流程
+            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
+            //流程id
+            String processId = processResult.getProcessId();
+            if (StringUtils.isNotBlank(processId)) {
+                WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
+                businessProcess.setBusinessId(business.getId());
+                businessProcess.setCreateTime(LocalDateTime.now());
+                businessProcess.setBusinessTableId(id);
+                businessProcess.setCreateUserId(userId);
+                businessProcess.setProcessId(processId);
+                //保存业务与流程的信息
+                workflowFeign.saveBusinessProcess(businessProcess);
+            }
+
+
+        }
+    }
+
+
+    /**
+     * 审核通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 18:55
+     */
+    @Override
+    @Transactional
+    public Boolean approvalPass(AuditParamDTO dto) {
+        String id = dto.getId();
+        ProjectPlanEntity plan = this.getById(id);
+        if (Objects.isNull(plan)) {
+            throw new ServiceException(ApiError.ERROR_95122);
+        }
+        String userId = commonService.getUserInfo().getUid();
+
+        //意见
+        String comment = dto.getComment();
+        String status = BaseStatusEnum.AUDIT_ING.getStatus();
+        plan.setStatus(status);
+        plan.setRemark(dto.getComment());
+
+        BusinessTableDTO tableDTO = new BusinessTableDTO();
+        tableDTO.setBusinessTableId(id);
+        tableDTO.setUserId(userId);
+        //获取到用户该业务表的待办任务
+        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
+        //审核
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(processTask.getTaskId());
+        approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(comment);
+        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
+        //表示成功
+        if (node != null) {
+            Boolean result = this.updateById(plan);
+            if (result) {
+                List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+                List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+            }
+        } else {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+        return true;
+    }
+
+    /**
+     * 审核不通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-01-29 18:53
+     */
+    @Override
+    public Boolean approvalNoPass(AuditParamDTO dto) {
+//        String id = dto.getId();
+//        ProjectPlanEntity plan = this.getById(id);
+//        if (Objects.isNull(plan)) {
+//            throw new ServiceException(ApiError.ERROR_95122);
+//        }
+//        String status = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
+//        plan.setStatus(status);
+//        plan.setRemark(dto.getComment());
+//        String userId = commonService.getUserInfo().getUid();
+//        BusinessTableDTO tableDTO = new BusinessTableDTO();
+//        tableDTO.setBusinessTableId(id);
+//        tableDTO.setUserId(userId);
+//        //获取到用户该业务表的待办任务
+//        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+//        if (Objects.isNull(processTask)) {
+//            throw new ServiceException(ApiError.ERROR_94005);
+//        }
+//
+//        ApproveProcessDTO process = new ApproveProcessDTO();
+//        process.setComment(dto.getComment());
+//        process.setProcessInstanceId(processTask.getProcessInstanceId());
+//        process.setUserId(userId);
+//        process.setTaskId(processTask.getTaskId());
+//        //终止流程
+//        Boolean result = this.updateById(plan);
+//        if (result) {
+//            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+//            List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+//            taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+//        }
+//        return result;
+
+
+
+        String id = dto.getId();
+        ProjectPlanEntity plan = this.getById(id);
+        if (Objects.isNull(plan)) {
+            throw new ServiceException(ApiError.ERROR_95122);
+        }
+        String userId = commonService.getUserInfo().getUid();
+
+        //意见
+        String comment = dto.getComment();
+        String status = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
+        plan.setStatus(status);
+        plan.setRemark(dto.getComment());
+
+        BusinessTableDTO tableDTO = new BusinessTableDTO();
+        tableDTO.setBusinessTableId(id);
+        tableDTO.setUserId(userId);
+        //获取到用户该业务表的待办任务
+        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
+        //审核
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(processTask.getTaskId());
+        approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(comment);
+        ProcessNodeDTO node = workflowFeign.taskNoPass(approveProcess);
+        //表示成功
+        if (node != null) {
+            Boolean result = this.updateById(plan);
+            if (result) {
+                List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+                List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+            }
+        } else {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+        return true;
 
     }
 
+
+    /**
+     * 最终审核通过
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-02-11 11:11
+     */
+    @Override
+    public void processPass(ProcessPassDTO dto) {
+        String id = dto.getBusinessTableId();
+        ProjectPlanEntity plan = this.getById(id);
+        if (plan != null) {
+            String status = BaseStatusEnum.AUDIT_PASS.getStatus();
+            plan.setStatus(status);
+            plan.setApprovalFinishTime(new Date());
+            Boolean result = this.updateById(plan);
+            if (result) {
+                List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
+                List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+                /**
+                 * 当是变更的情况 就要去更改数据
+                 * @author yl
+                 * @date 2023-02-11 16:39
+                 * @param dto
+                 * @return void
+                 */
+                if(ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())){
+                    taskService.updateScheduleTask(taskList,status);
+                }else{
+                    //只需要改状态
+                    taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+
+                }
+
+            }
+        }
+    }
+
+
+    /**
+     * 审核情况
+     *
+     * @param id
+     * @return void
+     * @author yl
+     * @date 2023-02-08 9:00
+     */
+    @Override
+    public List<ApproveRecordShowDTO> auditInfo(String id) {
+        if (StringUtils.isNotBlank(id)) {
+            List<ApproveRecordShowDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
+            return list;
+        }
+        return new ArrayList<>();
+
+
+    }
+
+
+    /**
+     * 检查审核人是否为空
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-02-11 9:57
+     */
+    public void checkAuditor() {
+        //研发中心负责人
+        List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
+        if (CollectionUtils.isEmpty(departmentHeadList)) {
+            throw new ServiceException(ApiError.ERROR_9032);
+        }
+    }
 
 }

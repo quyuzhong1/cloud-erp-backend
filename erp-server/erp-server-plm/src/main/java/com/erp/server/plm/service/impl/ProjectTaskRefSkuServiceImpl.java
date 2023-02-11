@@ -166,7 +166,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         List<String> skuIdList = dto.getSkuIdList();
         List<String> allList = dto.getAllList();
         List<ProjectTaskRefSkuEntity> addList = new ArrayList<>();
-        for (String skuId: allList) {
+        for (String skuId : allList) {
             ProjectTaskRefSkuEntity entity = this.getBySkuIdAndTaskId(skuId, taskId);
             if (ObjectUtils.isEmpty(entity)) {
                 ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
@@ -194,8 +194,42 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Override
     public List<ProjectTaskRefSkuEntity> listBySkuId(String skuId) {
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId,skuId);
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId, skuId);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 批量更新 关联的sku
+     *
+     * @param productId
+     * @param taskIdList
+     * @param refSkuIdList
+     * @return void
+     * @author yl
+     * @date 2023-02-11 9:27
+     */
+    @Override
+    public void batchUpdate(String productId, List<String> taskIdList, List<String> refSkuIdList) {
+        if (CollectionUtils.isEmpty(taskIdList) || CollectionUtils.isEmpty(refSkuIdList)) {
+            return;
+        }
+        //先删除
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskIdList);
+        this.remove(queryWrapper);
+        //后添加
+        List<ProjectTaskRefSkuEntity> addList = new ArrayList<>(20);
+        for (String taskId : taskIdList) {
+            for (String skuId : refSkuIdList) {
+                ProjectTaskRefSkuEntity entity = new ProjectTaskRefSkuEntity();
+                entity.setProductId(productId);
+                entity.setTaskId(taskId);
+                entity.setSkuId(skuId);
+                addList.add(entity);
+            }
+        }
+        this.saveBatch(addList);
     }
 
 
@@ -220,19 +254,20 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         this.remove(queryWrapper);
 
     }
+
     /**
-     * @description: 根据skuId和任务id查询关联信息
-     * @author Will
-     * @date: 2023/2/7 16:42
      * @param skuId
      * @param taskId
      * @return ProjectTaskRefSkuEntity
+     * @description: 根据skuId和任务id查询关联信息
+     * @author Will
+     * @date: 2023/2/7 16:42
      */
-    public ProjectTaskRefSkuEntity getBySkuIdAndTaskId(String skuId,String taskId) {
+    public ProjectTaskRefSkuEntity getBySkuIdAndTaskId(String skuId, String taskId) {
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId, skuId);
         queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
         queryWrapper.last("limit 1");
-       return this.getOne(queryWrapper);
+        return this.getOne(queryWrapper);
     }
 }

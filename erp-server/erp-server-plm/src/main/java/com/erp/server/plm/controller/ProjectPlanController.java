@@ -4,11 +4,13 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
+import com.erp.model.workflow.dto.ApproveRecordShowDTO;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,7 +65,7 @@ public class ProjectPlanController extends BaseController {
      * 取消排期
      */
     @PostMapping("/cancel")
-    public ApiResult cancelSchedule(BaseIdDTO dto) {
+    public ApiResult cancelSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.cancelSchedule(dto.getId());
         return result == true ? success() : failure();
     }
@@ -72,7 +74,7 @@ public class ProjectPlanController extends BaseController {
      * 重启排期
      */
     @PostMapping("/restart")
-    public ApiResult restartSchedule(BaseIdDTO dto) {
+    public ApiResult restartSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.restartSchedule(dto.getId());
         return result == true ? success() : failure();
     }
@@ -95,7 +97,8 @@ public class ProjectPlanController extends BaseController {
      */
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
-        return success();
+       Boolean flag= projectPlanService.approvalPass(dto);
+        return flag==true?success():failure();
     }
 
 
@@ -107,7 +110,29 @@ public class ProjectPlanController extends BaseController {
      */
     @PostMapping("/approvalNoPass")
     public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        Boolean flag= projectPlanService.approvalNoPass(dto);
+        return flag==true?success():failure();
+    }
+
+
+    /**
+     * 排期 审核通过后改变  状态
+     */
+    @PostMapping("/workflow/pass")
+    public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
+        projectPlanService.processPass(dto);
         return success();
+    }
+
+    /**
+     * bom 审核情况
+     *
+     * @return
+     */
+    @PostMapping("/auditInfo")
+    public ApiResult auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ApproveRecordShowDTO> list=  projectPlanService.auditInfo(dto.getId());
+        return success(list);
     }
 
 }

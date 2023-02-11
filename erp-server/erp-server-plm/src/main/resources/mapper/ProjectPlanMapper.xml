@@ -32,7 +32,7 @@
               AND
               pp.status IN
               <foreach collection="statusList" item="status" open="(" separator="," close=")">
-                  #{state}
+                  #{status}
               </foreach>
           </if>
         ORDER BY

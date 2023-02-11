@@ -25,4 +25,6 @@ public interface WorkflowBusinessProcessService extends IService<WorkflowBusines
     MyToDoTaskVO getProcessByBusinessTable(BusinessTableDTO dto);
 
     List<ProcessCurrentAuditorVO> getProcessCurrentAuditor(List<String> businessTableIds);
+
+    List<WorkflowBusinessProcessDTO> getProcessByTables(List<String> businessTableIds);
 }

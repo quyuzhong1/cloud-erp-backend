@@ -551,7 +551,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        this.updateById(changeEntity);
 
         String userId = commonService.getUserInfo().getUid();
         BusinessTableDTO tableDTO = new BusinessTableDTO();
@@ -559,14 +558,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if (processTask != null) {
-            //审核
-            ApproveProcessDTO approveProcess = new ApproveProcessDTO();
-            approveProcess.setTaskId(processTask.getTaskId());
-            approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
-            approveProcess.setUserId(userId);
-            approveProcess.setComment(comment);
-            workflowFeign.taskPass(approveProcess);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
+        //审核
+        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
+        approveProcess.setTaskId(processTask.getTaskId());
+        approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
+        approveProcess.setUserId(userId);
+        approveProcess.setComment(comment);
+        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
+        if(node!=null){
+            this.updateById(changeEntity);
         }
 
     }
@@ -594,6 +598,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             changeEntity.setRemark(dto.getComment());
         }
         changeEntity.setApprovalFinishTime(new Date());
+        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         this.updateById(changeEntity);
 
         String userId = commonService.getUserInfo().getUid();
@@ -633,6 +638,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             ProductChangeEntity change = this.getById(id);
             String type = change.getType();
             change.setApprovalFinishTime(new Date());
+            change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
             this.updateById(change);
             if (change != null) {
                 //获取到对应的 json

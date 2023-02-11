@@ -2,6 +2,7 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.model.plm.dto.BatchScheduleTaskDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
@@ -10,6 +11,7 @@ import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.server.plm.service.ProjectPlanTaskService;
+import com.erp.server.plm.service.ProjectTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +35,9 @@ public class ProjectPlanTaskController extends BaseController {
     @Resource
     private ProjectPlanTaskService projectPlanTaskService;
 
+    @Resource
+    private ProjectTaskService projectTaskService;
+
 
     /**
      * 任务列表
@@ -52,7 +57,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @PostMapping("/exportExcel")
     public ApiResult export(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
-        projectPlanTaskService.exportExcel(dto,response);
+        projectPlanTaskService.exportExcel(dto, response);
         return success();
     }
 
@@ -61,7 +66,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 取消排期
      */
     @PostMapping("/cancel")
-    public  ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto){
+    public ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.cancelSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -70,7 +75,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 重启排期
      */
     @PostMapping("/restart")
-    public  ApiResult restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto){
+    public ApiResult restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.restartSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -79,7 +84,7 @@ public class ProjectPlanTaskController extends BaseController {
      * 变更排期
      */
     @PostMapping("/change")
-    public  ApiResult changeSchedule(@RequestBody @Validated List<ChangeTaskScheduleDTO> list){
+    public ApiResult changeSchedule(@RequestBody @Validated List<ChangeTaskScheduleDTO> list) {
         Boolean result = projectPlanTaskService.changeSchedule(list);
         return result == true ? success() : failure();
     }
@@ -89,7 +94,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,response);
+        Boolean result = projectPlanTaskService.importTaskSchedule(excelFile, response);
         return result == true ? success() : failure();
     }
 
@@ -114,12 +119,23 @@ public class ProjectPlanTaskController extends BaseController {
 
     /**
      * 获取用户设置字段
+     *
      * @return
      */
     @GetMapping("/getUserField")
     public ApiResult<UserFieldVO> getUserField() {
         UserFieldVO result = projectPlanTaskService.getUserField();
         return success(result);
+    }
+
+    /**
+     * 批量更新
+     * 字段
+     */
+    @PostMapping("/batchUpdate")
+    public ApiResult batchUpdate(@RequestBody @Validated BatchScheduleTaskDTO dto) {
+        Boolean result = projectTaskService.batchUpdate(dto);
+        return result == true ? success() : failure();
     }
 
 }

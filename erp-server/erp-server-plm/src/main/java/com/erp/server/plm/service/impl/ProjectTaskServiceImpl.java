@@ -135,8 +135,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectTemplateService projectTemplateService;
 
-    @Autowired
-    private ProjectRoleService projectRoleService;
 
     @Autowired
     private TemplateMembersService templateMembersService;
@@ -1288,7 +1286,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isNotEmpty(chargeIds)) {
                 //如果传入负责人和角色一致则无需插入
                 String[] splits = taskEntity.getRoleName().split(",");
-                for (String roleName: splits) {
+                for (String roleName : splits) {
                     if (chargeIds.contains(roleName)) {
                         chargeIds.remove(roleName);
                     }
@@ -1458,7 +1456,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isNotEmpty(chargeIdList)) {
                 //如果传入负责人和角色一致则无需插入
                 String[] splits = taskEntity.getRoleName().split(",");
-                for (String roleName: splits) {
+                for (String roleName : splits) {
                     if (chargeIdList.contains(roleName)) {
                         chargeIdList.remove(roleName);
                     }
@@ -2416,7 +2414,98 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Override
     public ScheduleTaskExportExcelVO getExport(String productId, String taskId) {
-        return baseMapper.getExport(productId,taskId);
+        return baseMapper.getExport(productId, taskId);
+    }
+
+
+    /**
+     * 批量更新任务字段
+     *
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-10 16:38
+     */
+    @Override
+    @Transactional
+    public Boolean batchUpdate(BatchScheduleTaskDTO dto) {
+        LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(ProjectTaskEntity::getId, dto.getTaskIdList());
+        updateWrapper.set(ProjectTaskEntity::getPlanStartTime, dto.getPlanEndTime());
+        updateWrapper.set(ProjectTaskEntity::getPlanEndTime, dto.getPlanEndTime());
+        updateWrapper.set(ProjectTaskEntity::getPhaseId, dto.getPhaseId());
+
+        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+        String phaseName = "";
+        if (phaseEntity != null) {
+            phaseName = phaseEntity.getName();
+        }
+        updateWrapper.set(ProjectTaskEntity::getPhaseName, phaseName);
+        List<String> chargeId = dto.getChargeIds();
+        updateWrapper.set(ProjectTaskEntity::getChargeId, String.join(",", chargeId));
+        String chargeNames = commonService.getNameByIds(chargeId);
+        updateWrapper.set(ProjectTaskEntity::getChargeName, chargeNames);
+        updateWrapper.set(ProjectTaskEntity::getDescription, dto.getDescription());
+        updateWrapper.set(ProjectTaskEntity::getPriority, dto.getPriority());
+        updateWrapper.set(ProjectTaskEntity::getIsMilepost, dto.getIsMilepost());
+        Boolean result = this.update(updateWrapper);
+        //更改成功
+        if (result) {
+            //批量更新前置任务
+            preTaskService.batchUpdate(dto.getProductId(), dto.getTaskIdList(), dto.getPreTaskIdList());
+            //批量更新关联的sku
+            projectTaskRefSkuService.batchUpdate(dto.getProductId(), dto.getTaskIdList(), dto.getRefSkuIdList());
+        }
+        return result;
+    }
+
+
+    /**
+     * 项目计划
+     * 当变更通过后 更改负责人 和时间
+     *
+     * @param taskList
+     * @param status
+     * @return void
+     * @author yl
+     * @date 2023-02-11 16:42
+     */
+    @Override
+    public void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status) {
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
+            List<ProjectTaskEntity> projectTaskList = this.getByTaskIds(taskIdList);
+            List<ProjectTaskEntity> updateList = new ArrayList<>(projectTaskList.size());
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            for (ProjectTaskEntity item : projectTaskList) {
+                ProjectPlanTaskEntity planTask = taskList.stream().filter(t -> item.getId().
+                        equals(t.getTaskId())).findFirst().orElse(null);
+                if (planTask != null) {
+                    String changeChargeId = planTask.getChangeChargeId();
+                    item.setChargeId(changeChargeId);
+                    if (StringUtils.isNotBlank(changeChargeId)) {
+                        List<String> names = new ArrayList<>();
+                        for (String userId : changeChargeId.split(",")) {
+                            FindUserDTO findUser = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
+                            if (findUser != null) {
+                                names.add(findUser.getUserName());
+                            } else {
+                                names.add("");
+                            }
+                        }
+                        item.setChargeName(String.join(",",names));
+                    }
+
+                    item.setPlanStartTime(planTask.getChangeStartTime());
+                    item.setPlanEndTime(planTask.getChangeEndTime());
+                    item.setScheduleStatus(status);
+                    updateList.add(item);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                this.updateBatchById(updateList);
+            }
+        }
+
     }
 
     /**
@@ -4274,7 +4363,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (planEndTime != null) {
             //状态
             if (!finishState.equals(state) && !approvalPass.equals(state)) {
-                Long difference = DateUtil.getDiffDay(DateUtils.format(planEndTime,DateUtils.DATE_FORMAT_10) , DateUtils.format(nowDay,DateUtils.DATE_FORMAT_10));
+                Long difference = DateUtil.getDiffDay(DateUtils.format(planEndTime, DateUtils.DATE_FORMAT_10), DateUtils.format(nowDay, DateUtils.DATE_FORMAT_10));
                 if (difference > 0) {
                     warning = "过期" + difference + "天";
                 }

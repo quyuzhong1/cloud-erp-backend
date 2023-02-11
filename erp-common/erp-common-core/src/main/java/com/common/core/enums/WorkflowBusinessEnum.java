@@ -17,7 +17,8 @@ public enum WorkflowBusinessEnum {
     PRODUCT_DETAIL("productDetail", "SKU审核","plm"),
     BOM_AUDIT("bom","bom审核","plm"),
     BOM_CHANGE("bomChange","bom变更审核","plm"),
-    SKU_CHANGE("skuChange","sku变更审核","plm");
+    SKU_CHANGE("skuChange","sku变更审核","plm"),
+    SCHEDULE_TASK("taskSchedule","任务排期审核","plm");
 
 
     private String businessType;
