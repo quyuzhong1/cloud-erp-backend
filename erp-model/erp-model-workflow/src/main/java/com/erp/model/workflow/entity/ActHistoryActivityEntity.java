@@ -50,6 +50,13 @@ public class ActHistoryActivityEntity implements Serializable {
     private String nextActivityId;
 
     /**
+     * 审核状态
+     */
+    @TableField("audit_status")
+    private String auditStatus;
+
+
+    /**
      * 创建时间
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)

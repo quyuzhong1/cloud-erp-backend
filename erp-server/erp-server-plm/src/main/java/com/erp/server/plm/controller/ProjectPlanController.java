@@ -125,7 +125,7 @@ public class ProjectPlanController extends BaseController {
     }
 
     /**
-     * bom 审核情况
+     * 审核情况
      *
      * @return
      */

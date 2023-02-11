@@ -2,7 +2,9 @@ package com.erp.server.workflow.service.impl;
 
 
 import com.alibaba.excel.util.DateUtils;
+import com.common.core.enums.BaseStatusEnum;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.ActHistoryActivityEntity;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
@@ -130,22 +132,28 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         if (Objects.isNull(task)) {
             return null;
         }
-        if(StringUtils.isBlank(dto.getComment())){
+        if (StringUtils.isBlank(dto.getComment())) {
             dto.setComment("审核不通过");
         }
         //添加审批意见
         taskService.createComment(taskId, processInstanceId, dto.getComment());
+        Map<String, Object> map = dto.getParameterMap();
+        if (map != null && !map.isEmpty()) {
+            taskService.complete(taskId, map);
+        } else {
+            taskService.complete(taskId);
+        }
 
-        workflowMapper.deleteTaskByIdArray(Arrays.asList(taskId));
-        taskService.deleteTask(taskId);
-
-
+        String nowActivityId = task.getTaskDefinitionKey();
+        ActivityDTO activityDTO = new ActivityDTO();
+        activityDTO.setNowActivityId(nowActivityId);
+        activityDTO.setProcessInstanceId(processInstanceId);
+        activityDTO.setAuditStatus(BaseStatusEnum.AUDIT_NO_PASS.getStatus());
+        //审批通过后 需要保存流程节点信息
+        actHistoryActivityService.saveActivity(activityDTO);
         return new ProcessNodeDTO();
 
     }
-
-
-
 
 
     /**
@@ -235,6 +243,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         ApproveRecordShowDTO approveRecordShowDTO = null;
         String approvalSuggestion = "";
         List<Comment> commentList = null;
+        List<ActHistoryActivityEntity> historyActivityList = actHistoryActivityService.getByProcessId(processId);
         for (HistoricTaskInstance item : list) {
             approveRecordShowDTO = new ApproveRecordShowDTO();
             commentList = taskService.getTaskComments(item.getId());
@@ -243,11 +252,18 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             } else {
                 approvalSuggestion = "";
             }
+            ActHistoryActivityEntity entity=  historyActivityList.stream().filter(a -> a.getActivityId().
+                    equals(item.getProcessDefinitionId())).findFirst().orElse(null);
+            if(entity!=null){
+                approveRecordShowDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
+            }else{
+                approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+
+            }
             approveRecordShowDTO.setActivityName(item.getName());
             approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
             approveRecordShowDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
             approveRecordShowDTO.setHandleUserId(item.getAssignee());
-            approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
             approveRecordShowDTO.setComment(approvalSuggestion);
             resultList.add(approveRecordShowDTO);
         }
@@ -280,10 +296,10 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         List<WorkflowBusinessProcessEntity> businessProcessList = businessProcessService.getByProcessIds(processIds);
         for (MyToDoTaskVO item : resultList) {
             String processId = item.getProcessInstanceId();
-            WorkflowBusinessProcessEntity businessProcess= businessProcessList.stream().
+            WorkflowBusinessProcessEntity businessProcess = businessProcessList.stream().
                     filter(b -> b.getProcessId().equals(processId)).
                     findFirst().orElse(null);
-            if(businessProcess!=null){
+            if (businessProcess != null) {
                 item.setBusinessTableId(businessProcess.getBusinessTableId());
             }
 

@@ -20,4 +20,8 @@ public class ActivityDTO implements Serializable {
 
     //流程id
     private String processInstanceId;
+
+
+    //审核状态
+    private String auditStatus;
 }

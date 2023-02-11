@@ -535,39 +535,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      */
     @Override
     public Boolean approvalNoPass(AuditParamDTO dto) {
-//        String id = dto.getId();
-//        ProjectPlanEntity plan = this.getById(id);
-//        if (Objects.isNull(plan)) {
-//            throw new ServiceException(ApiError.ERROR_95122);
-//        }
-//        String status = BaseStatusEnum.AUDIT_NO_PASS.getStatus();
-//        plan.setStatus(status);
-//        plan.setRemark(dto.getComment());
-//        String userId = commonService.getUserInfo().getUid();
-//        BusinessTableDTO tableDTO = new BusinessTableDTO();
-//        tableDTO.setBusinessTableId(id);
-//        tableDTO.setUserId(userId);
-//        //获取到用户该业务表的待办任务
-//        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-//        if (Objects.isNull(processTask)) {
-//            throw new ServiceException(ApiError.ERROR_94005);
-//        }
-//
-//        ApproveProcessDTO process = new ApproveProcessDTO();
-//        process.setComment(dto.getComment());
-//        process.setProcessInstanceId(processTask.getProcessInstanceId());
-//        process.setUserId(userId);
-//        process.setTaskId(processTask.getTaskId());
-//        //终止流程
-//        Boolean result = this.updateById(plan);
-//        if (result) {
-//            List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
-//            List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
-//            taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
-//        }
-//        return result;
-
-
 
         String id = dto.getId();
         ProjectPlanEntity plan = this.getById(id);
@@ -597,6 +564,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+        Map<String, Object> parameterMap = new HashMap<>();
+        parameterMap.put("agree", false);
+        approveProcess.setParameterMap(parameterMap);
         ProcessNodeDTO node = workflowFeign.taskNoPass(approveProcess);
         //表示成功
         if (node != null) {
@@ -641,9 +611,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                  * @param dto
                  * @return void
                  */
-                if(ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())){
-                    taskService.updateScheduleTask(taskList,status);
-                }else{
+                if (ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())) {
+                    taskService.updateScheduleTask(taskList, status);
+                } else {
                     //只需要改状态
                     taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
 

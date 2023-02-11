@@ -3,7 +3,8 @@ package com.erp.server.workflow.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.workflow.dto.ActivityDTO;
 import com.erp.model.workflow.entity.ActHistoryActivityEntity;
-import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -19,4 +20,6 @@ public interface ActHistoryActivityService extends IService<ActHistoryActivityEn
     void saveActivity(ActivityDTO activityDTO);
 
     String getProActivityId(String processInstanceId, String nowActivityId);
+
+    List<ActHistoryActivityEntity> getByProcessId(String processId);
 }
