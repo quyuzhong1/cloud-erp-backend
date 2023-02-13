@@ -1442,6 +1442,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, Object> resultMap = new HashMap<>();
         //sku
         resultMap.put("skuNo", entity.getSkuNo());
+        //名称
+        resultMap.put("name",entity.getName());
         //spu
         resultMap.put("spuNo", productInfoEntity.getSpuNo());
         //产品功能描述
@@ -1563,10 +1565,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productPurchaseEntity)) {
             //MOQ(最小起订量)
             resultMap.put("moq", productPurchaseEntity.getMoq());
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                //采购员
-                resultMap.put("purchaseUser", findUserDTO.getUserName());
+            if (StringUtils.isNotBlank(productPurchaseEntity.getPurchaseUserId())) {
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
+                if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                    //采购员
+                    resultMap.put("purchaseUser", findUserDTO.getUserName());
+                }
             }
             //一级供应商
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
