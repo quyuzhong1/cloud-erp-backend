@@ -13,6 +13,8 @@ import com.erp.server.workflow.mapper.WorkflowBusinessProcessMapper;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.camunda.bpm.engine.HistoryService;
+import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,10 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
 
     @Autowired
     private ProcessTaskService processTaskService;
+
+    @Autowired
+    private HistoryService historyService;
+
 
     /**
      * 根据流程id 获取到业务数据
@@ -110,8 +116,30 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableIds);
         List<WorkflowBusinessProcessEntity> list = this.list(queryWrapper);
-        return null;
+        List<ProcessCurrentAuditorVO> resultList = new ArrayList<>(list.size());
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (WorkflowBusinessProcessEntity item : list) {
+                ProcessCurrentAuditorVO vo = new ProcessCurrentAuditorVO();
+                vo.setBusinessTableId(item.getBusinessTableId());
+                String processId = item.getProcessId();
+                vo.setProcessId(processId);
 
+                List<HistoricTaskInstance> historyList = historyService // 历史相关Service
+                        .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
+                        .processInstanceId(processId) // 用流程实例id查询
+                        .orderByHistoricActivityInstanceStartTime()
+                        .asc()
+                        .list();
+                HistoricTaskInstance historicTask = historyList.stream().filter(h -> h.getEndTime() == null).findFirst().orElse(null);
+                if (historicTask != null) {
+                    vo.setHandleUserId(historicTask.getAssignee());
+                }
+                resultList.add(vo);
+            }
+
+        }
+
+        return  resultList;
 
     }
 

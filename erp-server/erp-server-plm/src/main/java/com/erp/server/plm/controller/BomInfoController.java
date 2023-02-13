@@ -12,6 +12,7 @@ import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.dto.UpdateBomDTO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
+import com.erp.model.workflow.dto.ApproveRecordShowDTO;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import org.springframework.validation.annotation.Validated;
@@ -261,9 +262,9 @@ public class BomInfoController extends BaseController {
      * @return
      */
     @PostMapping("/auditInfo")
-    public ApiResult auditInfo(@RequestBody @Validated BaseIdDTO dto) {
-        bomInfoService.auditInfo(dto.getId());
-        return success();
+    public ApiResult<List<ApproveRecordShowDTO>> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ApproveRecordShowDTO> list=bomInfoService.auditInfo(dto.getId());
+        return success(list);
     }
 
 

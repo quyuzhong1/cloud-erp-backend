@@ -162,8 +162,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             FindUserDTO user = userList.stream().filter(u -> userId.equals(u.getUserId())).findFirst().orElse(null);
             String userName = "";
             if (user != null) {
-
-
                 userName = user.getUserName();
             }
             entity.setMemberName(userName);
@@ -387,7 +385,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         //当不为空
         if (CollectionUtils.isNotEmpty(memberList)) {
             LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(ProjectMembersEntity::getMemberId, memberList);
+            queryWrapper.in(ProjectMembersEntity::getId, memberList);
             List<ProjectMembersEntity> list = this.list(queryWrapper);
             //以成员id 分类
             Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));

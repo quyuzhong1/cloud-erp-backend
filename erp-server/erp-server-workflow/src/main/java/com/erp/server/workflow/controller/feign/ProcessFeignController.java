@@ -4,6 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
@@ -212,7 +213,22 @@ public class ProcessFeignController extends BaseController {
     public List<WorkflowBusinessProcessDTO> getProcess(@RequestBody List<String> businessTableIds) {
         List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(businessTableIds);
         return list;
+    }
 
+
+
+    /**
+     * 根据业务表id集合 获取到对应流程当前审核人信息
+     *
+     * @param businessTableIds
+     * @return java.util.List<com.erp.model.workflow.dto.WorkflowBusinessProcessDTO>
+     * @author yl
+     * @date 2023-02-08 19:48
+     */
+    @PostMapping("/getProcessCurrentAudit")
+    public List<ProcessCurrentAuditorVO> getProcessCurrentAudit(@RequestBody List<String> businessTableIds) {
+        List<ProcessCurrentAuditorVO> list = businessProcessService.getProcessCurrentAuditor(businessTableIds);
+        return list;
     }
 
 

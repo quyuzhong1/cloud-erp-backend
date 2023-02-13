@@ -2,6 +2,7 @@ package com.erp.rpc.workflow;
 
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -110,4 +111,13 @@ public interface WorkflowFeign {
      */
     @PostMapping("workflow/feign/process/getHistoryTaskByBusinessTableId")
     List<ApproveRecordShowDTO> getHistoryTaskByBusinessTableId(@RequestBody String id);
+
+
+    /**
+     * 根据业务表id获取当前审核人情况
+     * @param businessTableIds
+     * @return
+     */
+    @PostMapping("workflow/feign/process/getProcessCurrentAudit")
+    List<ProcessCurrentAuditorVO> getProcessCurrentAudit(@RequestBody List<String> businessTableIds);
 }

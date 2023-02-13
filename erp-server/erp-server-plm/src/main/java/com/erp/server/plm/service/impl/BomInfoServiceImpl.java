@@ -392,7 +392,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
 
     /**
-     * 获取变更信息
+     * 获取 修改的信息
      *
      * @param oldBomList
      * @param newBomList
@@ -438,7 +438,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     private void getChildrenUpdateContent(List<BomSkuDTO> OldChildrenList, List<BomSkuDTO> newChildrenList, List<String> contentList) {
         int oldSize = OldChildrenList.size();
-        for (int i = 0; i < newChildrenList.size(); i++) {
+        int newSize = newChildrenList.size();
+        for (int i = 0; i < newSize; i++) {
             BomSkuDTO newBom = newChildrenList.get(i);
             if (oldSize > i) {
                 BomSkuDTO oldBom = OldChildrenList.get(i);
@@ -454,13 +455,19 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                     String childrenQuantityContent = "子物料" + oldBom.getSkuNo() + "用量" + oldBom.getQuantity() + "变更到" + newBom.getQuantity();
                     contentList.add(childrenQuantityContent);
                 }
-            } else {
+            }
+            if (oldSize < i) {
                 String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
                 contentList.add(addContent);
             }
-
-
         }
+        //删除
+        if (oldSize > newSize) {
+            String removeContent = "删除了" + (oldSize-newSize) + "个子物料";
+            contentList.add(removeContent);
+        }
+
+
 
     }
 
@@ -863,7 +870,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
         Map<String, Object> parameterMap = new HashMap<>();
-        parameterMap.put("agree",true);
+        parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         if (node != null) {
@@ -944,8 +951,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-02-08 9:00
      */
     @Override
-    public void auditInfo(String bomId) {
-
+    public List<ApproveRecordShowDTO> auditInfo(String bomId) {
+        if (StringUtils.isNotBlank(bomId)) {
+            List<ApproveRecordShowDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
+            return list;
+        }
+        return new ArrayList<>();
     }
 
     /**
@@ -984,7 +995,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         process.setTaskId(processTask.getTaskId());
 
         Map<String, Object> parameterMap = new HashMap<>();
-        parameterMap.put("agree",false);
+        parameterMap.put("agree", false);
         process.setParameterMap(parameterMap);
         //
         workflowFeign.taskNoPass(process);

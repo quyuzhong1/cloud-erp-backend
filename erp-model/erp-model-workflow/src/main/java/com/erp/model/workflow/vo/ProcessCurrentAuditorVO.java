@@ -26,10 +26,7 @@ public class ProcessCurrentAuditorVO implements Serializable {
      */
     private String businessTableId;
 
-    /**
-     * 流程任务id
-     */
-    private String taskId;
 
-    private String handleUserIds;
+
+    private String handleUserId;
 }

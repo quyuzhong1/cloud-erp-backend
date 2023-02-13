@@ -466,7 +466,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 workflowFeign.saveBusinessProcess(businessProcess);
             }
 
-
         }
     }
 
@@ -652,6 +651,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @author yl
      * @date 2023-02-11 9:57
      */
+    @Override
     public void checkAuditor() {
         //研发中心负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());

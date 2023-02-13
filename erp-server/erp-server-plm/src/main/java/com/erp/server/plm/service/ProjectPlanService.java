@@ -78,4 +78,6 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @return void
      */
     void processPass(ProcessPassDTO dto);
+
+    void checkAuditor();
 }

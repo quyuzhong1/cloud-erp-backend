@@ -12,6 +12,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -21,6 +22,8 @@ import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
@@ -30,6 +33,7 @@ import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +70,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private BomSkuService bomSkuService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     /**
      * 添加变更
@@ -380,6 +387,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         String changeBom = BomConstant.CHANGE_BOM;
         String changeSku = BomConstant.CHANGE_SKU;
         List<String> businessTableIds = list.stream().map(ProductChangePagingVO::getId).collect(Collectors.toList());
+        //当前审核人
+        List<ProcessCurrentAuditorVO> currentAuditorList = workflowFeign.getProcessCurrentAudit(businessTableIds);
+
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
         //获取到类型是bom 的 源 id
         List<String> bomIdList = list.stream().filter(c -> changeBom.equals(c.getType())).
                 map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
@@ -416,6 +428,16 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 if (sku != null) {
                     item.setChangeSourceNo(sku.getSkuNo());
                     item.setChangeSourceName(sku.getSkuName());
+                }
+            }
+
+            ProcessCurrentAuditorVO currentAuditor = currentAuditorList.stream().filter(c -> c.getBusinessTableId().
+                    equals(item.getId())).findFirst().orElse(null);
+            if (currentAuditor != null) {
+                FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(currentAuditor.getHandleUserId())).
+                        findFirst().orElse(null);
+                if (user != null) {
+                    item.setPersonApproving(user.getUserName());
                 }
             }
 
@@ -570,10 +592,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         approveProcess.setComment(comment);
 
         Map<String, Object> parameterMap = new HashMap<>();
-        parameterMap.put("agree",true);
+        parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
-        if(node!=null){
+        if (node != null) {
             this.updateById(changeEntity);
         }
 
@@ -611,14 +633,23 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
+        if (Objects.isNull(processTask)) {
+            throw new ServiceException(ApiError.ERROR_94005);
+        }
+
         if (processTask != null) {
             ApproveProcessDTO process = new ApproveProcessDTO();
             process.setComment(dto.getComment());
             process.setProcessInstanceId(processTask.getProcessInstanceId());
             process.setUserId(userId);
             process.setTaskId(processTask.getTaskId());
+
+            Map<String, Object> parameterMap = new HashMap<>();
+            parameterMap.put("agree", false);
+            process.setParameterMap(parameterMap);
+
             //终止流程
-            workflowFeign.terminate(process);
+            workflowFeign.taskNoPass(process);
         }
     }
 

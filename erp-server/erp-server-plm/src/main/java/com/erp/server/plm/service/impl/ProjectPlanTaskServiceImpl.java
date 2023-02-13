@@ -137,8 +137,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public void exportExcel(HandleTaskScheduleDTO dto, HttpServletResponse response) {
         List<ScheduleTaskExportExcelVO> excelList = projectTaskMapper.getExportScheduleTask(dto);
-        for(ScheduleTaskExportExcelVO vo:excelList){
-            String status=vo.getScheduleStatus();
+        for (ScheduleTaskExportExcelVO vo : excelList) {
+            String status = vo.getScheduleStatus();
             vo.setScheduleStatusName(BaseStatusEnum.getName(status));
         }
         String fileName = "任务数据";
@@ -156,15 +156,15 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      */
     @Override
     public Boolean importTaskSchedule(MultipartFile excelFile, HttpServletResponse response) {
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService,projectPlanService);
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class,excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> list = excelListenerUtil.getDateList();
             if (CollectionUtils.isEmpty(list)) {
                 return true;
             }
             String fileName = "排期错误";
-            ExcelUtil.export(fileName,"task",list,ScheduleTaskExportExcelVO.class,response);
+            ExcelUtil.export(fileName, "task", list, ScheduleTaskExportExcelVO.class, response);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);
         }
@@ -378,6 +378,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public Boolean restartSchedule(HandleTaskScheduleDTO dto) {
         String productId = dto.getProductId();
+        //检查审核人
+        projectPlanService.checkAuditor();
+
         Boolean result = true;
         if (CollectionUtils.isNotEmpty(dto.getTaskIdList())) {
             List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, dto.getTaskIdList());
@@ -403,6 +406,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 //更改审核状态
                 result = projectPlanService.updateBatchById(planList);
                 //启动流程吗？
+                startProcess(projectPlanIds);
+
 
                 List<ProjectPlanTaskEntity> planTaskEntityList = this.getByProjectPlanIdList(projectPlanIds);
                 List<String> taskIdList = planTaskEntityList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
@@ -412,6 +417,23 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
         }
         return result;
+
+
+    }
+
+
+    /**
+     * 启动流程
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-02-13 9:25
+     */
+    public void startProcess(List<String> projectPlanIds) {
+        for (String planId : projectPlanIds) {
+            projectPlanService.startScheduleTaskProcess(planId);
+        }
 
 
     }
