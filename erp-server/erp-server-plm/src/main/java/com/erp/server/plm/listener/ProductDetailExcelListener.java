@@ -42,6 +42,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private List<ProductDetailExcelDTO> list;
 
+    private List<ProductDetailExcelDTO> dataList;
+
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
     public ProductDetailExcelListener(Integer importType, ProductDetailService productDetailService, ProductUnitService productUnitService,
@@ -65,7 +67,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
     @Override
     public void invoke(ProductDetailExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        
+        //添加
+        dataList.add(dto);
         if (StringUtils.isBlank(dto.getName())) {
             errorMsgList.add("产品名称不能为空");
         }
@@ -430,12 +433,12 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productDetailService.inportExcel(productNoSpecDTO);
     }
 
-    public static void main(String[] args) {
-        System.out.println( new BigDecimal("300.0000").stripTrailingZeros().toPlainString());
-    }
-
     public List<ProductDetailExcelDTO> getDateList(){
         return list;
+    }
+
+    public List<ProductDetailExcelDTO> getExcelDateList(){
+        return dataList;
     }
 
     /**

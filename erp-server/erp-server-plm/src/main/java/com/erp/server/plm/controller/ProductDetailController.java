@@ -19,6 +19,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
@@ -613,20 +615,28 @@ ProductDetailController extends BaseController {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productNoSpecDetail.xlsx";
-                String name = "productNoSpecDetail";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String name = "productNoSpecDetail";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
                 new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-
-                return failure();
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
             }
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+
+            return failure();
         }
         return success();
     }
