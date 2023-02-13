@@ -620,6 +620,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         updateWrapper.set(TemplateTaskEntity::getType, entity.getType());
         updateWrapper.set(TemplateTaskEntity::getRoleId, entity.getRoleId());
         updateWrapper.set(TemplateTaskEntity::getRoleName, entity.getRoleName());
+        updateWrapper.set(TemplateTaskEntity::getDistributionType, entity.getDistributionType());
         this.update(updateWrapper);
     }
 }
