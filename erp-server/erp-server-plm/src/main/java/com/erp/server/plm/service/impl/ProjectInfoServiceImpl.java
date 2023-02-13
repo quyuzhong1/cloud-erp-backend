@@ -562,7 +562,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                         }
                     }
                     if (CollectionUtils.isNotEmpty(resultList)) {
-                        item.setProjectPhase(String.join(",", resultList));
+                        List<ProjectPhaseEntity> phasesList = projectPhaseService.listByPhaseNames(resultList,item.getProductId());
+                        if (CollectionUtils.isNotEmpty(phasesList)) {
+                            List<String> names = phasesList.stream().map(ProjectPhaseEntity::getName).collect(Collectors.toList());
+                            item.setProjectPhase(String.join(",", names));
+                        }
                     }
                 }
 

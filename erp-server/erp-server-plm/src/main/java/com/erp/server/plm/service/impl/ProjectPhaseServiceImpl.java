@@ -253,6 +253,11 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         return this.baseMapper.listTaskPhaseByProductIds(productIds);
     }
 
+    @Override
+    public List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId) {
+        return this.baseMapper.listByPhaseNames(phaseNames,productId);
+    }
+
     private void checkPhaseTask(String id) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getPhaseId, id);

@@ -17,4 +17,13 @@
         ORDER BY seq asc ,update_time asc ,id asc
     </select>
 
+    <select id="listByPhaseNames" resultType="com.erp.model.plm.entity.ProjectPhaseEntity">
+        SELECT ID,NAME,product_id FROM  project_phase
+        WHERE product_id = #{productId} and name in
+        <foreach collection="phaseNames" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        ORDER BY seq asc ,update_time asc ,id asc
+    </select>
+
 </mapper>

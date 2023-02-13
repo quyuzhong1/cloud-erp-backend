@@ -1301,6 +1301,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> chargeIds = dto.getChargeIds();
 
         taskEntity.setPhaseName(phaseName);
+        dto.setPhaseName(phaseName);
         //如果分配类型为角色，则需要更新底层角色名称字段
         if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskEntity.getDistributionType())) {
             if (CollectionUtils.isNotEmpty(chargeIds)) {
