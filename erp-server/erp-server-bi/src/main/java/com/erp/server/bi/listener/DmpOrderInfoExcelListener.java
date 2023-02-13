@@ -213,7 +213,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
         DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getByPlatformOrderId(dto.getPlatformOrderId());
         if (ObjectUtils.isEmpty(dmpOrderInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
-            entity.setOrderState(OrderStateEnum.getCodeByName(dto.getOrderStateName()));
+            entity.setOrderStatus(OrderStateEnum.getCodeByName(dto.getOrderStateName()));
             entity.setChargeId(chargeNameList.get(0).getUserId());
             dmpOrderInfoService.save(entity);
         }

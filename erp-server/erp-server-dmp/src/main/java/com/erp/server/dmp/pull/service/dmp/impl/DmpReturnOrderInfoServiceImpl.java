@@ -1,19 +1,27 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
+import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
+import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 退货订单服务
@@ -28,6 +36,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
     @Resource
     private DmpOrderInfoService dmpOrderInfoService;
+
+    @Resource
+    private DmpReturnOrderItemService dmpReturnOrderItemService;
 
     /**
      * 添加退货订单信息
@@ -86,27 +97,34 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
         return this.update(dmpReturnOrderInfoEntity, lambdaQueryWrapper);
     }
 
-    /**
-     * 校验退货订单在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/16 11:18
-     * @param returnOrderInfoEntity returnOrderInfoEntity
-     * @return java.lang.String
-     **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String checkOrder(DmpReturnOrderInfoEntity returnOrderInfoEntity) {
         String returnOrderId = "";
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = this.getOrderByPlatformOrderId(returnOrderInfoEntity);
-        if (dmpReturnOrderInfoEntity != null) {
+        if(null != dmpReturnOrderInfoEntity && returnOrderInfoEntity.getIsDeleted()){
+            return returnOrderId;
+        }
+        if (null != dmpReturnOrderInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {
-                this.updateOrderByPlatformOrderId(returnOrderInfoEntity);
-                returnOrderId = returnOrderInfoEntity.getId();
+                returnOrderInfoEntity.setId(dmpReturnOrderInfoEntity.getId());
+                updateById(returnOrderInfoEntity);
             }
-
+            returnOrderId = dmpReturnOrderInfoEntity.getId();
         } else {
-            returnOrderId = this.add(returnOrderInfoEntity);
+            returnOrderId = add(returnOrderInfoEntity);
         }
+        if(StrUtil.isBlank(returnOrderId)){
+            throw new RuntimeException("DmpOrderInfoServiceImpl>>>checkOrder>>>销售订单保存失败");
+        }
+        List<DmpReturnOrderItemEntity> itemList = returnOrderInfoEntity.getItemList();
+        if (CollectionUtil.isEmpty(itemList)){
+            return returnOrderId;
+        }
+        String orderId = returnOrderId;
+        itemList.stream().peek(entity -> entity.setReturnOrderId(orderId)).collect(Collectors.toList());
+        dmpReturnOrderItemService.checkOrderItem(itemList);
         return returnOrderId;
     }
 
@@ -125,7 +143,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
         for (DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity : dmpReturnOrderInfoEntities) {
             LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpReturnOrderInfoEntity.getSalesRecordNumber());
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpReturnOrderInfoEntity.getSalesRecordNumber(), dmpReturnOrderInfoEntity.getPlatformOrderId());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
                 updateWrapper.set(StrUtil.isNotBlank(dmpOrderInfoEntity.getChargeId()), DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());

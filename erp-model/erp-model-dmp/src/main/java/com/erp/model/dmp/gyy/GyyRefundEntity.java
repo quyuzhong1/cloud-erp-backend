@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -54,10 +55,12 @@ public class GyyRefundEntity {
      * amount : 1.0000
      */
 
+    private String _id;
+
     @SerializedName("create_date")
-    private String createDate;
+    private LocalDateTime createDate;
     @SerializedName("modify_date")
-    private String modifyDate;
+    private LocalDateTime modifyDate;
     @SerializedName("code")
     private String code;
     @SerializedName("approve")
@@ -69,7 +72,7 @@ public class GyyRefundEntity {
     @SerializedName("reason")
     private String reason;
     @SerializedName("agree_date")
-    private String agreeDate;
+    private LocalDateTime agreeDate;
     @SerializedName("refund_phase")
     private String refundPhase;
     @SerializedName("account_id")

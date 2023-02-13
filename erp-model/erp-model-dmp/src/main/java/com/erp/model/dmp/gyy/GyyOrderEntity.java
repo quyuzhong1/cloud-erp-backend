@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -135,13 +136,13 @@ public class GyyOrderEntity {
     @SerializedName("platform_code")
     private String platformCode;
     @SerializedName("createtime")
-    private String createtime;
+    private LocalDateTime createtime;
     @SerializedName("modifytime")
-    private String modifytime;
+    private LocalDateTime modifytime;
     @SerializedName("dealtime")
-    private String dealtime;
+    private LocalDateTime dealtime;
     @SerializedName("paytime")
-    private String paytime;
+    private LocalDateTime paytime;
     @SerializedName("shop_name")
     private String shopName;
     @SerializedName("shop_code")
@@ -274,6 +275,10 @@ public class GyyOrderEntity {
     private List<TagsBean> tags;
     @SerializedName("messages")
     private List<Object> messages;
+
+    private LocalDateTime createTime;
+
+    private LocalDateTime updateTime;
 
     @Override
     public String toString() {

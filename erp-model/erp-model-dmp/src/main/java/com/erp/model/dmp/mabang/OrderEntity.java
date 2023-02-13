@@ -5,13 +5,17 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @ToString
 public class OrderEntity {
+
+    private String _id;
     private String platformOrderId;
+    private String salesRecordNumber;
     private Integer orderStatus;
     private Integer myLogisticsChannelId;
     private String trackNumber;
@@ -24,21 +28,21 @@ public class OrderEntity {
     private String companyId;
     private String countryCode;
     private BigDecimal orderCost;
-    private String transportTime;
-    private String quickPickTime;
-    private String canSend;
-    private String createDate;
-    private String isReturned;
-    private String isRefund;
-    private String paidTime;
-    private String salesRecordNumber;
+    private LocalDateTime transportTime;
+    private LocalDateTime quickPickTime;
+    private Integer canSend;
+    private LocalDateTime createDate;
+    private Integer isReturned;
+    private Integer isRefund;
+    private LocalDateTime paidTime;
+
     private BigDecimal orderFee;
     private String platformId;
-    private String expressTime;
-    private String isUnion;
-    private String isSplit;
-    private String isResend;
-    private String hasGoods;
+    private LocalDateTime expressTime;
+    private Integer isUnion;
+    private Integer isSplit;
+    private Integer isResend;
+    private Integer hasGoods;
     private String hasBattery;
     private String isSyncLogisticsDescr;
     private String paypalId;
@@ -47,7 +51,7 @@ public class OrderEntity {
     private String isSyncPlatformDescr;
     private String district;
     private String paypalEmail;
-    private String closeDate;
+    private LocalDateTime closeDate;
     private String street1;
     private String street2;
     private String isVirtual;
@@ -59,11 +63,11 @@ public class OrderEntity {
     private String email;
     private String isNewOrder;
     private String doorcode;
-    private String fbaFlag;
-    private String fbaStartDateTime;
-    private String fbaEndDateTime;
+    private Integer fbaFlag;
+    private LocalDateTime fbaStartDateTime;
+    private LocalDateTime fbaEndDateTime;
     private String CarrierCode;
-    private String operTime;
+    private LocalDateTime operTime;
     private String shippingService;
     private String packageWeight;
     private String platformOrderStatus;

@@ -3,6 +3,8 @@ package com.erp.server.dmp.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,13 +13,58 @@ import java.util.Map;
 /**
  * 金蝶API 处理类
  */
+@Component
 public class KingdeeApiUtils {
     private K3CloudApi client;
     private String formId;
 
+    private static String APPID;
+
+    private static String USERNAME;
+
+    private static String SERVERURL;
+
+    private static String APPSECRET;
+
+    private static String DCID;
+
+    @Value("${openApi.kingdee.appId}")
+    public void setAppId(String appId){
+        KingdeeApiUtils.APPID = appId;
+    }
+
+    @Value("${openApi.kingdee.userName}")
+    public void setUserName(String userName){
+        KingdeeApiUtils.USERNAME = userName;
+    }
+
+    @Value("${openApi.kingdee.serverUrl}")
+    public void setServerUrl(String serverUrl){
+        KingdeeApiUtils.SERVERURL = serverUrl;
+    }
+
+    @Value("${openApi.kingdee.appSecret}")
+    public void setAppSecret(String appSecret){
+        KingdeeApiUtils.APPSECRET = appSecret;
+    }
+
+    @Value("${openApi.kingdee.dCid}")
+    public void setDCid(String dCid){
+        KingdeeApiUtils.DCID = dCid;
+    }
+
+    public KingdeeApiUtils(){
+    }
+
     public KingdeeApiUtils(String formId){
-        this.client = new K3CloudApi();
-        this.formId=formId;
+        IdentifyInfo identifyInfo = new IdentifyInfo();
+        identifyInfo.setdCID(DCID);
+        identifyInfo.setAppId(APPID);
+        identifyInfo.setUserName(USERNAME);
+        identifyInfo.setServerUrl(SERVERURL);
+        identifyInfo.setAppSecret(APPSECRET);
+        this.client = new K3CloudApi(identifyInfo);
+        this.formId = formId;
     }
 
     /**
@@ -28,7 +75,7 @@ public class KingdeeApiUtils {
      * @param pageIndex 页码（第几页)
      * @return List<Map<String,Object>>
      */
-    public List<Map<String,Object>> queryList(String filterStr, String fieldKeys,Integer pageSize,Integer pageIndex) {
+    public List<Map<String,Object>> queryList(String filterStr, String fieldKeys,Integer pageSize,Integer pageIndex, Integer topRowCount) {
         List<Map<String,Object>> dataList=new ArrayList<>();
         if(0 >= pageIndex){
             pageIndex=1;
@@ -44,6 +91,9 @@ public class KingdeeApiUtils {
         param.setFilterString(filterStr);
         param.setLimit(pageSize);
         param.setStartRow(startRow);
+        if (0 < topRowCount){
+            param.setTopRowCount(topRowCount);
+        }
 
         String paramJson = JSONObject.toJSONString(param);
         try {
@@ -52,10 +102,8 @@ public class KingdeeApiUtils {
                 return dataList;
             }
             if (apiResult.size() == 1 && apiResult.get(0).get(0).toString().contains("IsSuccess=false")) {
-                throw new RuntimeException(" ===== 金蝶云星空解析出库详情信息数据失败 ===== " + apiResult);
+                throw new RuntimeException(" ===== 金蝶云星空解析出信息数据失败 ===== " + apiResult);
             }
-
-            List<String> numberList=new ArrayList<>();
             for (List<Object> objects : apiResult) {
                 Map<String, Object> rowData = KingdeeUtils.getApiDataForMap(fieldKeys, objects);
                 dataList.add(rowData);

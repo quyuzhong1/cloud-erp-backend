@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public interface DmpShopChangeLogService extends IService<DmpShopChangeLogEntity> {
@@ -15,5 +16,5 @@ public interface DmpShopChangeLogService extends IService<DmpShopChangeLogEntity
      * @param date date
      * @return com.erp.model.dmp.entity.DmpShopChangeLogEntity
      **/
-    DmpShopChangeLogEntity getShopChargeName(String shopId, Date date);
+    DmpShopChangeLogEntity getShopChargeName(String shopId, LocalDateTime date);
 }

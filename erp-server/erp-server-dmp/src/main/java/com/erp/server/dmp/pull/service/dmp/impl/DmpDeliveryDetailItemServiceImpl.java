@@ -1,14 +1,19 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailItemMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 发货详情商品信息
@@ -37,7 +42,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
      **/
     @Override
     public Boolean batchAdd(List<DmpDeliveryDetailItemEntity> dmpDeliveryDetailItemEntityList) {
-        return this.saveBatch(dmpDeliveryDetailItemEntityList);
+        return this.saveBatch(dmpDeliveryDetailItemEntityList, 500);
     }
 
     /**

@@ -54,7 +54,7 @@ public class KingdeeUtils {
             jsonRoot = new JSONObject();
         }
 
-        String[] fieldArr = pathStr.replace(splitStr,"_").split("_");
+        String[] fieldArr = pathStr.replace(splitStr,"||").split("\\|\\|");
         JSONObject curNode=jsonRoot;
         for(int i=0;i<fieldArr.length;i++){
             String field=fieldArr[i];

@@ -1,7 +1,9 @@
 package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -13,6 +15,8 @@ import java.util.Date;
  */
 @TableName(value ="dmp_error_log")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DmpErrorLogEntity implements Serializable {
     /**
      * 主键id
@@ -52,4 +56,12 @@ public class DmpErrorLogEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public DmpErrorLogEntity(Long taskId, String params, String returnMsg, String errorMsg) {
+        this.taskId = taskId;
+        this.params = params;
+        this.returnMsg = returnMsg;
+        this.errorMsg = errorMsg;
+        this.createTime = LocalDateTime.now();
+    }
 }

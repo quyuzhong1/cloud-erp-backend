@@ -5,6 +5,7 @@ import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Mapper
@@ -18,5 +19,5 @@ public interface DmpShopChangeLogMapper extends BaseMapper<DmpShopChangeLogEntit
      * @param date date
      * @return com.erp.model.dmp.entity.DmpShopChangeLogEntity
      **/
-    DmpShopChangeLogEntity getShopChargeName(@Param("shopId") String shopId, @Param("date") Date date);
+    DmpShopChangeLogEntity getShopChargeName(@Param("shopId") String shopId, @Param("date") LocalDateTime date);
 }

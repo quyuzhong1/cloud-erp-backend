@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -76,11 +77,11 @@ public class JobTaskDTO {
     private String platformName;
 
     /**
-     * 错误次数
+     * 重试次数
      */
-    private Integer errorCount;
+    private Integer retryCount;
 
-    public JobTaskDTO(PlatformApiTaskEntity entity) {
+    public JobTaskDTO(PlatformApiTaskEntity entity, String taskName) {
         this.id = Long.parseLong(entity.getId());
         this.platformId = entity.getPlatformId();
         this.apiId = entity.getApiId();
@@ -91,8 +92,8 @@ public class JobTaskDTO {
         this.createTime = entity.getCreateTime();
         this.apiCode = entity.getApiCode();
         this.apiName = entity.getApiName();
-        this.taskName = "GYY_PULL_DATA_TASK";
-        this.platformName = "管易云";
-        this.errorCount = 0;
+        this.taskName = taskName;
+        this.platformName = PlatformEnum.GYY.getDesc();
+        this.retryCount = 0;
     }
 }

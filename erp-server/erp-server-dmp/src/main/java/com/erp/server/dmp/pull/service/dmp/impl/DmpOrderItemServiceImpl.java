@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
@@ -8,6 +9,7 @@ import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +40,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      **/
     @Override
     public Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList) {
-        return this.saveBatch(dmpOrderInfoEntityList);
+        return this.saveBatch(dmpOrderInfoEntityList, 500);
     }
 
     /**
@@ -83,24 +85,25 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
         return this.update(dmpOrderItemEntity, lambdaQueryWrapper);
     }
 
-    /**
-     * 校验订单商品信息在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     * @return void
-     **/
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem) {
+        List<DmpOrderItemEntity> insertList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
             DmpOrderItemEntity dmpOrderItemEntity = this.getByErpOrderItemId(orderItemBean.getErpOrderItemId());
-            if (dmpOrderItemEntity != null) {
+            if (null != dmpOrderItemEntity) {
                 //如果数据有变动需要更新数据库订单商品信息
                 if (!dmpOrderItemEntity.toString().equals(orderItemBean.toString())) {
-                    this.updateOrderItemByErpOrderItemId(orderItemBean);
+                    orderItemBean.setId(dmpOrderItemEntity.getId());
+                    updateById(orderItemBean);
                 }
             } else {
-                this.save(orderItemBean);
+                insertList.add(orderItemBean);
             }
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            saveBatch(insertList);
         }
     }
 }

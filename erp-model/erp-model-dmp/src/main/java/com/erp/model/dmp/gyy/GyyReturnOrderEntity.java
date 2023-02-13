@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -78,6 +79,8 @@ public class GyyReturnOrderEntity {
      * stock_location : []
      */
 
+    private String _id;
+
     @SerializedName("code")
     private String code;
     @SerializedName("reason")
@@ -85,9 +88,9 @@ public class GyyReturnOrderEntity {
     @SerializedName("note")
     private String note;
     @SerializedName("create_date")
-    private String createDate;
+    private LocalDateTime createDate;
     @SerializedName("approve_date")
-    private String approveDate;
+    private LocalDateTime approveDate;
     @SerializedName("approve")
     private Integer approve;
     @SerializedName("receive_date")

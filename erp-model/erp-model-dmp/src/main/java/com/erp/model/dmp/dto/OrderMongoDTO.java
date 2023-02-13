@@ -34,6 +34,38 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "salesRecordNumber")
     private String salesRecordNumber;
     @Panno(findType = PannoEnum.EQ,field = "refundplatformOrderId")
-    private String refundplatformOrderId;
+    private String refundPlatformOrderId;
 
+    @Panno(findType = PannoEnum.EQ,field = "fId")
+    private String fId;
+
+    public OrderMongoDTO(String platformCode, String code) {
+        this.platformCode = platformCode;
+        this.code = code;
+    }
+
+    public OrderMongoDTO(String id) {
+        this.id = id;
+    }
+
+    public static OrderMongoDTO getByFIdAndBillNo(String fBillNo, String fId) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setBillNo(fBillNo);
+        orderMongoDTO.setFId(fId);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByBillNoAndOrderNo(String fBillNo, String fOrderNo) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setBillNo(fBillNo);
+        orderMongoDTO.setOrderNo(fOrderNo);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByOrderIdAndSaleNum(String platformOrderId, String salesRecordNumber) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setPlatformOrderId(platformOrderId);
+        orderMongoDTO.setSalesRecordNumber(salesRecordNumber);
+        return orderMongoDTO;
+    }
 }

@@ -3,7 +3,6 @@ package com.erp.server.dmp.pull.service.dmp;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.enums.ErpPlatformSignEnum;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 
 import java.util.List;

@@ -1,42 +1,42 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.utils.HttpCommonUtil;
+import com.common.core.constant.RocketMqTopic;
+import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
-import com.erp.model.dmp.entity.GyyAppEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
-import com.erp.model.dmp.gyy.bean.RefundDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
-import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
-import com.erp.server.dmp.utils.GyyUtils;
+import com.erp.server.dmp.service.mq.MQProducerService;
+import com.erp.server.dmp.utils.GyyApiUtils;
+import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 管易云退款列表
@@ -44,27 +44,18 @@ import java.util.*;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET)
-public class GyyRefundServiceImpl implements IReportSaveService {
+public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity> {
     @Resource
     private MongoService mongoService;
 
-    @Resource
-    private DmpErrorLogService dmpErrorLogService;
-
-    @Resource
-    private DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
-    private DmpRefundItemService dmpRefundItemService;
-
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    private MQProducerService<DmpRefundInfoEntity> mqProducerService;
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType("gy.erp.trade.refund.get");
+        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_REFUND_GET;
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("gy.erp.trade.refund.get");
+        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
         jobTaskDTO.setApiId(11);
         jobTaskDTO.setApiName("管易云退款列表");
         jobTaskDTO.setId(35L);
@@ -76,7 +67,12 @@ public class GyyRefundServiceImpl implements IReportSaveService {
         RequestDTO requestDTO = new RequestDTO();
         requestDTO.setPlatformApiEnum(platformApiEnum);
         requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyRefundEntity> orderEntities = gyyRefundService.pullDate(requestDTO);
+        List<GyyRefundEntity> orderEntities = null;
+        try {
+            orderEntities = gyyRefundService.pullDate(requestDTO);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(orderEntities);
     }
 
@@ -84,39 +80,50 @@ public class GyyRefundServiceImpl implements IReportSaveService {
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<GyyRefundEntity> gyyRefundEntityList = pullDate(dto);
-        if (gyyRefundEntityList != null && gyyRefundEntityList.size() > 0) {
-            for (GyyRefundEntity gyyRefundEntity : gyyRefundEntityList) {
-                GyyRefundDTO gyyRefundDTO = new GyyRefundDTO();
-                gyyRefundDTO.setPlatfromCode(gyyRefundEntity.getPlatfromCode());
-                gyyRefundDTO.setRefundCode(gyyRefundEntity.getRefundCode());
-                List<GyyRefundEntity> mongoData = mongoService.findMongoData(gyyRefundDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
-                if (mongoData != null && mongoData.size() > 0) {
-                    for (GyyRefundEntity mongoDatum : mongoData) {
-                        // 比较数据是否相同
-                        if (!mongoDatum.toString().equals(gyyRefundEntity.toString())) {
-                            // 修改数据
-                            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyRefundEntity), MapUtil.class);
-                            try {
-                                mongoService.updateMongoData(gyyRefundDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
-                            } catch (Exception e) {
-                                DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                                dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                                dmpErrorLogEntity.setParams("");
-                                dmpErrorLogEntity.setErrorMsg("==== 管易云修改mongodb退款数据失败，[ 订单号 = " + gyyRefundEntity.getPlatfromCode() + "], 错误信息 = " + e.getMessage());
-                                dmpErrorLogEntity.setReturnMsg("");
-                                dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                                dmpErrorLogService.add(dmpErrorLogEntity);
-                                throw new RuntimeException("==== 管易云修改mongodb退款数据失败，[ 订单号 = " + gyyRefundEntity.getPlatfromCode() + "], 错误信息 = " + e.getMessage());
-                            }
-                        }
-                    }
-                } else {
-                    mongoService.saveMongoData(gyyRefundEntity, MongoTableNameContant.ORIGINAL_GYY_REFUND);
-                }
-                //存储数据到中台
-                analysisRefundOrder(gyyRefundEntity);
-            }
+        if (CollectionUtil.isEmpty(gyyRefundEntityList)) {
+            log.info("拉取管易退款列表数据为空 gyyOrderEntityList.size = 0 ");
+            return;
         }
+        List<GyyRefundEntity> insertList = new ArrayList<>();
+        List<GyyRefundEntity> pushToMqList = new ArrayList<>();
+        for (GyyRefundEntity entity : gyyRefundEntityList) {
+            GyyRefundDTO orderMongoDTO = new GyyRefundDTO(entity.getPlatfromCode(), entity.getRefundCode());
+            List<GyyRefundEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+            if(CollectionUtil.isEmpty(mongoData)){
+                insertList.add(entity);
+                pushToMqList.add(entity);
+                continue;
+            }
+            GyyRefundEntity mongoDatum = mongoData.get(0);
+            String id = mongoDatum.get_id();
+            mongoDatum.set_id(null);
+            // 比较数据是否相同
+            if (mongoDatum.toString().equals(entity.toString())) {
+                continue;
+            }
+            pushToMqList.add(entity);
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+            GyyRefundDTO updateDto = new GyyRefundDTO(id);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+        }
+        if(CollectionUtil.isNotEmpty(insertList)){
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_REFUND);
+        }
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("管易退款订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
+        // 构造订单结构
+        List<DmpRefundInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
+                .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.toList());
+
+        // 异步推送到MQ
+        mabangToMqlist.stream().peek(msg ->
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
+                                msg, StrUtil.format("{}_{}",msg.getPlatformOrderId() + msg.getSalesRecordNumber())))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -124,145 +131,45 @@ public class GyyRefundServiceImpl implements IReportSaveService {
      * @param dto
      * @return
      */
-    public List<GyyRefundEntity> pullDate(RequestDTO dto) {
-        List<GyyRefundEntity> infoArrayList = new ArrayList<>();
-        try {
-            LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
-            LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-            String st = "";
-            String sd = "";
-            if (dto.getJobTaskDTO().getLastTime() != null && dto.getJobTaskDTO().getNextTime() != null) {
-                LocalDateTime localDateTime = lastTime.minusMinutes(5);
-                DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-                st = sdf.format(localDateTime);
-                sd = sdf.format(nextTime);
-                dto.getJobTaskDTO().setLastTime(nextTime);
-            } else {
-                LocalDateTime date = LocalDateTime.now();
-                DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-                LocalDateTime localDateTime = date.minusDays(1);
-                st = sdf.format(localDateTime);
-                sd = sdf.format(date);
-                dto.getJobTaskDTO().setLastTime(date);
-            }
-            GyyAppEntity gyyAppEntity = new GyyAppEntity();
-
-            //每次最多获取100条
-            Integer pageSize = 100;
-            //当前页数
-            Integer pageIndex = 1;
-            //总页数
-            Integer pageCount = 1;
-            //总条数
-            Integer totalCount = 0;
-            HttpCommonUtil httpCommonUtil = new HttpCommonUtil();
-            while (pageIndex <= pageCount) {
-                // 封装传参数据
-                Map<String, Object> datas = new HashMap();
-                datas.put("method", dto.getJobTaskDTO().getApiCode());
-                datas.put("appkey", gyyAppEntity.getAppKey());
-                datas.put("sessionkey", gyyAppEntity.getSessionKey());
-                datas.put("start_modify_date", st);
-                datas.put("end_modify_date", sd);
-                datas.put("page_no", pageIndex);
-                datas.put("page_size", pageSize);
-                datas.put("cancel", 0);
-
-                String str = JSONObject.toJSONString(datas);
-                String sign = GyyUtils.sign(str, gyyAppEntity.getSecretKey());
-                datas.put("sign", sign);
-                // 将传参转为Json格式
-                String jsonData = JSONObject.toJSONString(datas);
-
-                //设置请求头
-                Map<String,String> headerMap = new HashMap<>();
-                headerMap.put("Content-Type", "text/json");
-
-                Map<String, Object> stringObjectMap = null;
-                try {
-                    stringObjectMap = httpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, jsonData, null, headerMap, RequestMethod.POST);
-                    if (Boolean.valueOf(stringObjectMap.get("success").toString())) {
-                        List<GyyRefundEntity> dataList = JSONObject.parseArray(String.valueOf(stringObjectMap.get("tradeRefunds")), GyyRefundEntity.class);
-                        totalCount = Integer.valueOf(stringObjectMap.get("total").toString());
-                        pageCount = (totalCount + pageSize - 1) / pageSize;
-                        infoArrayList.addAll(dataList);
-                    } else {
-                        log.info(" ===== 管易云拉取退货订单失败，错误信息：+" + stringObjectMap + " ====");
-                        throw new RuntimeException(" ===== 管易云拉取退货订单失败，错误信息：+" + stringObjectMap + " ====");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.info("请求接口地址异常 错误信息：" + e.getMessage());
-                    Integer errorCount = dto.getJobTaskDTO().getErrorCount();
-                    if (errorCount < 3) {
-                        dto.getJobTaskDTO().setErrorCount(errorCount + 1);
-                        redisTemplate.boundListOps(dto.getJobTaskDTO().getTaskName()).leftPush(JSONObject.toJSONString(dto.getJobTaskDTO()));
-                    } else {
-                        DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity();
-                        dmpErrorLogEntity.setTaskId(dto.getJobTaskDTO().getId());
-                        dmpErrorLogEntity.setParams(jsonData);
-                        dmpErrorLogEntity.setErrorMsg(e.getMessage());
-                        dmpErrorLogEntity.setReturnMsg(JSONObject.toJSONString(stringObjectMap));
-                        dmpErrorLogEntity.setCreateTime(LocalDateTime.now());
-                        dmpErrorLogService.add(dmpErrorLogEntity);
-                    }
-                    break;
-                }
-                pageIndex++;
-            }
-        } catch (Exception e) {
-            log.info(" ===== 获取管易云退货订单列表数据失败， 错误信息 = { " + e.getMessage() + " }");
-        }
-        return infoArrayList;
+    private List<GyyRefundEntity> pullDate(RequestDTO dto) throws Exception {
+        LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
+        LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        dto.getJobTaskDTO().setLastTime(nextTime);
+        return GyyApiUtils.queryRefundList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
 
     /**
      * 解析退款订单数据
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
-     * @return void
      **/
-    public void analysisRefundOrder(GyyRefundEntity gyyRefundEntity) throws Exception {
+    private DmpRefundInfoEntity initOrderInfoEntity(GyyRefundEntity gyyRefundEntity) {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
-        SimpleDateFormat sdf = new SimpleDateFormat(EnumTimePattern.y_m_dhms.toTimePattern());
-
         //平台订单编号
-        dmpRefundInfoEntity.setPlatformOrderId(gyyRefundEntity.getPlatfromCode());
-
+        dmpRefundInfoEntity.setPlatformOrderId(gyyRefundEntity.getCode());
         //退货单号
         dmpRefundInfoEntity.setRefundId(gyyRefundEntity.getRefundCode());
-
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode("CNY");
-
         //退货金额
         dmpRefundInfoEntity.setRefundAmount(gyyRefundEntity.getAmount());
-
         //退款类型：1、未收到货部分退款 2、未收到货全额退款 3、已收到货部分退款 4、已收到货全额退款
-        dmpRefundInfoEntity.setRefundType(null);
-
+        dmpRefundInfoEntity.setRefundType(0);
         //退款原因
         dmpRefundInfoEntity.setRefundReasonDesc(gyyRefundEntity.getReason());
-
         //退款备注
         dmpRefundInfoEntity.setRefundRemark(gyyRefundEntity.getNote());
-
         Integer refundStatus = 4;
         if (gyyRefundEntity.getApprove()) {
             refundStatus = 3;
         } else {
             refundStatus = 2;
         }
-
         if (gyyRefundEntity.getCancel()) {
             refundStatus = 6;
         }
-
         if (gyyRefundEntity.getCancel()) {
             refundStatus = 6;
         }
-
-        if (gyyRefundEntity.getAgreeRefuse() != null) {
+        if (null != gyyRefundEntity.getAgreeRefuse()) {
             Integer agreeRefuse = gyyRefundEntity.getAgreeRefuse();
             if (agreeRefuse == 1) {
                 refundStatus = 4;
@@ -270,127 +177,77 @@ public class GyyRefundServiceImpl implements IReportSaveService {
                 refundStatus = 5;
             }
         }
-
         //退款状态：1、新建退款 2、审核中 3、财务审核 4、成功 5、失败 6、作废
         dmpRefundInfoEntity.setRefundStatus(refundStatus);
-
         //申请时间
-        if (StringUtils.isNotBlank(gyyRefundEntity.getCreateDate())) {
-            dmpRefundInfoEntity.setRefundCreateTime(sdf.parse(gyyRefundEntity.getCreateDate()));
-        }
-
+        dmpRefundInfoEntity.setRefundCreateTime(gyyRefundEntity.getCreateDate());
         //店铺编号
-        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopCode());
-
+        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopId());
         //店铺名称
         dmpRefundInfoEntity.setShopName(gyyRefundEntity.getShopCode());
-
         //平台名称
         dmpRefundInfoEntity.setPlatformName("");
-
         //退款时间
-        if (StringUtils.isNotBlank(gyyRefundEntity.getAgreeDate())) {
-            dmpRefundInfoEntity.setRefundTime(sdf.parse(gyyRefundEntity.getAgreeDate()));
-        }
-
+        dmpRefundInfoEntity.setRefundTime(gyyRefundEntity.getAgreeDate());
         //汇率
-        dmpRefundInfoEntity.setCurrencyRate(BigDecimal.ZERO);
-
-        //国家二字码 例如：US
-        dmpRefundInfoEntity.setCountryCode("CN");
-
+        dmpRefundInfoEntity.setCurrencyRate(BigDecimal.ONE);
+        //国家 二字码 例如：US
+        dmpRefundInfoEntity.setCountryCode(CountrySiteEnum.CHINA.getSite());
         //国家中文名
-        dmpRefundInfoEntity.setCountryCn("中国");
-
+        dmpRefundInfoEntity.setCountryCn(CountrySiteEnum.CHINA.getCurrencyName());
         //国家英文名
-        dmpRefundInfoEntity.setCountryEn("China");
-
+        dmpRefundInfoEntity.setCountryEn(CountrySiteEnum.CHINA.getCurrencyCode());
         //平台交易号
         dmpRefundInfoEntity.setSalesRecordNumber(gyyRefundEntity.getRefundCode());
-
         //买家用户Id
         dmpRefundInfoEntity.setBuyerUserId("");
-
         //买家用户名
         dmpRefundInfoEntity.setBuyerName("");
-
         //原始订单金额
         dmpRefundInfoEntity.setItemTotalOrigin(gyyRefundEntity.getAmount());
-
         //原始订单运费金额
         dmpRefundInfoEntity.setShippingTotalOrigin(BigDecimal.ZERO);
-
         //订单时间
         dmpRefundInfoEntity.setOrderTime(null);
-
         //发货时间
         dmpRefundInfoEntity.setExpressTime(null);
-
         //退货图片多个用英文 , 隔开
         dmpRefundInfoEntity.setPictureUrl("");
-
         //平台最后修改时间
-        if (StringUtils.isNotBlank(gyyRefundEntity.getModifyDate())) {
-            dmpRefundInfoEntity.setPlatformUpdateTime(sdf.parse(gyyRefundEntity.getModifyDate()));
-        }
-
+        dmpRefundInfoEntity.setPlatformUpdateTime(gyyRefundEntity.getModifyDate());
         //包裹单号
-        dmpRefundInfoEntity.setTrackNumber(null);
-
+        dmpRefundInfoEntity.setTrackNumber("");
         //平台标识
-        dmpRefundInfoEntity.setPlatformSign("管易云");
-
+        dmpRefundInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         dmpRefundInfoEntity.setCreateTime(LocalDateTime.now());
-
-        //新增订单信息
-        String refundInfoId = dmpRefundInfoService.checkOrder(dmpRefundInfoEntity);
-        if (StringUtils.isNotBlank(refundInfoId)) {
-            //新增订单商品信息
-            analysisRefundOrderItem(gyyRefundEntity.getDetails(), refundInfoId);
-        }
+        dmpRefundInfoEntity.setItemList(initOrderItem(gyyRefundEntity));
+        return dmpRefundInfoEntity;
     }
 
     /**
      * 解析退款订单商品数据
-     * @Author Luo_WG
-     * @Date 2022/11/14 18:57
-     * @return void
      **/
-    public void analysisRefundOrderItem(List<RefundDetailsBean> refundOrderItemEntityList, String refundInfoId) {
+    private List<DmpRefundItemEntity> initOrderItem(GyyRefundEntity gyyRefundEntity) {
         List<DmpRefundItemEntity> orderItemList = new ArrayList<>();
-        for (RefundDetailsBean refundDetailsBean : refundOrderItemEntityList) {
+        Map<String, Integer> skuCountMap = new HashMap<>();
+        gyyRefundEntity.getDetails().stream().forEach(refundDetailsBean -> {
             DmpRefundItemEntity dmpRefundItemEntity = new DmpRefundItemEntity();
-
-            //退款表id
-            dmpRefundItemEntity.setRefundId(refundInfoId);
-
             //sku编号
             dmpRefundItemEntity.setSkuNo(refundDetailsBean.getItemCode());
-
             //订单原始商品数量
             dmpRefundItemEntity.setQuantity(refundDetailsBean.getQty());
-
             //退款商品数量
             dmpRefundItemEntity.setRefundNum(refundDetailsBean.getQty());
-
             //是否属于组合sku：0. 否 1. 是
             dmpRefundItemEntity.setIsCombo(0);
+            String skuNo = refundDetailsBean.getItemCode();
+            String erpOrderItemId = gyyRefundEntity.getCode() + "_" + gyyRefundEntity.getRefundCode() + "_" + refundDetailsBean.getItemCode();
+            erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
+            dmpRefundItemEntity.setErpOrderItemId(erpOrderItemId);
             //折扣后金额
             dmpRefundItemEntity.setAmountAfter(new BigDecimal(refundDetailsBean.getAmount()));
             orderItemList.add(dmpRefundItemEntity);
-        }
-        checkOrderItem(orderItemList, refundInfoId);
-    }
-
-
-    /**
-     * 校验退款商品数据在中台是否存在，存在就修改不存在则新增
-     * @Author Luo_WG
-     * @Date 2022/11/14 21:25
-     * @return void
-     **/
-    public void checkOrderItem(List<DmpRefundItemEntity> orderItem, String returnOrderId) {
-        dmpRefundItemService.deleteRefundItemByRefundId(returnOrderId);
-        dmpRefundItemService.batchAdd(orderItem);
+        });
+        return orderItemList;
     }
 }
