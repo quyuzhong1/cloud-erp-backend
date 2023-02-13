@@ -862,6 +862,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+        Map<String, Object> parameterMap = new HashMap<>();
+        parameterMap.put("agree",true);
+        approveProcess.setParameterMap(parameterMap);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         if (node != null) {
             if (result && isFirstAudit) {
@@ -979,8 +982,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         process.setProcessInstanceId(processTask.getProcessInstanceId());
         process.setUserId(userId);
         process.setTaskId(processTask.getTaskId());
-        //终止流程
-        workflowFeign.terminate(process);
+
+        Map<String, Object> parameterMap = new HashMap<>();
+        parameterMap.put("agree",false);
+        process.setParameterMap(parameterMap);
+        //
+        workflowFeign.taskNoPass(process);
 
         if (result) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_NO_PASS.getName());

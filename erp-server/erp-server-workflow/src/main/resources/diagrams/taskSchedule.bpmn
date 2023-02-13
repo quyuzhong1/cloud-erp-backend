@@ -11,7 +11,7 @@
         </bpmn:userTask>
         <bpmn:userTask id="Activity_18h1e6j" name="产品研发中心负责人 审核" camunda:assignee="${departmentHead}">
             <bpmn:incoming>Flow_0d8t2pl</bpmn:incoming>
-            <bpmn:outgoing>Flow_04v7qlh</bpmn:outgoing>
+            <bpmn:outgoing>Flow_1r0ed6o</bpmn:outgoing>
         </bpmn:userTask>
         <bpmn:sequenceFlow id="Flow_06zzcgz" sourceRef="Activity_0ryjowm" targetRef="Gateway_0s3crpc" />
         <bpmn:endEvent id="Event_12mvfrv" name="结束">
@@ -20,7 +20,6 @@
             </bpmn:extensionElements>
             <bpmn:incoming>Flow_0biqcck</bpmn:incoming>
         </bpmn:endEvent>
-        <bpmn:sequenceFlow id="Flow_04v7qlh" sourceRef="Activity_18h1e6j" targetRef="Gateway_0nyxqwy" />
         <bpmn:exclusiveGateway id="Gateway_0s3crpc">
             <bpmn:incoming>Flow_06zzcgz</bpmn:incoming>
             <bpmn:outgoing>Flow_17lwd4x</bpmn:outgoing>
@@ -36,7 +35,7 @@
             <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${agree==true}</bpmn:conditionExpression>
         </bpmn:sequenceFlow>
         <bpmn:exclusiveGateway id="Gateway_0nyxqwy">
-            <bpmn:incoming>Flow_04v7qlh</bpmn:incoming>
+            <bpmn:incoming>Flow_1r0ed6o</bpmn:incoming>
             <bpmn:outgoing>Flow_0biqcck</bpmn:outgoing>
             <bpmn:outgoing>Flow_054nsq7</bpmn:outgoing>
         </bpmn:exclusiveGateway>
@@ -49,13 +48,10 @@
         <bpmn:sequenceFlow id="Flow_054nsq7" name="不同意" sourceRef="Gateway_0nyxqwy" targetRef="Event_1n2msjm">
             <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${agree==false}</bpmn:conditionExpression>
         </bpmn:sequenceFlow>
+        <bpmn:sequenceFlow id="Flow_1r0ed6o" sourceRef="Activity_18h1e6j" targetRef="Gateway_0nyxqwy" />
     </bpmn:process>
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
         <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_task_schedule">
-            <bpmndi:BPMNEdge id="Flow_04v7qlh_di" bpmnElement="Flow_04v7qlh">
-                <di:waypoint x="850" y="117" />
-                <di:waypoint x="975" y="117" />
-            </bpmndi:BPMNEdge>
             <bpmndi:BPMNEdge id="Flow_06zzcgz_di" bpmnElement="Flow_06zzcgz">
                 <di:waypoint x="440" y="117" />
                 <di:waypoint x="545" y="117" />
@@ -66,9 +62,9 @@
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNEdge id="Flow_17lwd4x_di" bpmnElement="Flow_17lwd4x">
                 <di:waypoint x="570" y="142" />
-                <di:waypoint x="570" y="272" />
+                <di:waypoint x="570" y="242" />
                 <bpmndi:BPMNLabel>
-                    <dc:Bounds x="569" y="204" width="33" height="14" />
+                    <dc:Bounds x="569" y="188" width="33" height="14" />
                 </bpmndi:BPMNLabel>
             </bpmndi:BPMNEdge>
             <bpmndi:BPMNEdge id="Flow_0d8t2pl_di" bpmnElement="Flow_0d8t2pl">
@@ -92,6 +88,10 @@
                     <dc:Bounds x="999" y="189" width="33" height="14" />
                 </bpmndi:BPMNLabel>
             </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1r0ed6o_di" bpmnElement="Flow_1r0ed6o">
+                <di:waypoint x="850" y="117" />
+                <di:waypoint x="975" y="117" />
+            </bpmndi:BPMNEdge>
             <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
                 <dc:Bounds x="179" y="99" width="36" height="36" />
                 <bpmndi:BPMNLabel>
@@ -108,12 +108,6 @@
             <bpmndi:BPMNShape id="Activity_0eqkzy7_di" bpmnElement="Activity_18h1e6j">
                 <dc:Bounds x="750" y="77" width="100" height="80" />
             </bpmndi:BPMNShape>
-            <bpmndi:BPMNShape id="Event_0wr2uzi_di" bpmnElement="Event_0wr2uzi">
-                <dc:Bounds x="552" y="272" width="36" height="36" />
-                <bpmndi:BPMNLabel>
-                    <dc:Bounds x="559" y="315" width="22" height="14" />
-                </bpmndi:BPMNLabel>
-            </bpmndi:BPMNShape>
             <bpmndi:BPMNShape id="Event_12mvfrv_di" bpmnElement="Event_12mvfrv">
                 <dc:Bounds x="1162" y="99" width="36" height="36" />
                 <bpmndi:BPMNLabel>
@@ -125,6 +119,12 @@
             </bpmndi:BPMNShape>
             <bpmndi:BPMNShape id="Event_1n2msjm_di" bpmnElement="Event_1n2msjm">
                 <dc:Bounds x="982" y="242" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_0wr2uzi_di" bpmnElement="Event_0wr2uzi">
+                <dc:Bounds x="552" y="242" width="36" height="36" />
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="559" y="285" width="22" height="14" />
+                </bpmndi:BPMNLabel>
             </bpmndi:BPMNShape>
         </bpmndi:BPMNPlane>
     </bpmndi:BPMNDiagram>

@@ -568,6 +568,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+
+        Map<String, Object> parameterMap = new HashMap<>();
+        parameterMap.put("agree",true);
+        approveProcess.setParameterMap(parameterMap);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         if(node!=null){
             this.updateById(changeEntity);
