@@ -2,11 +2,13 @@ package com.erp.server.plm.controller;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.BatchScheduleTaskDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.plm.vo.ScheduleChangeTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
@@ -137,6 +139,18 @@ public class ProjectPlanTaskController extends BaseController {
         Boolean result = projectTaskService.batchUpdate(dto);
         return result == true ? success() : failure();
     }
+
+
+    /**
+     * 排期变更添加任务 =查询任务
+     */
+    @PostMapping("/changeTaskList")
+    public ApiResult<List<ScheduleChangeTaskVO>> addChangeTask(@RequestBody @Validated BaseIdDTO dto) {
+        // Boolean result = projectTaskService.getChangeTaskList(dto);
+        //  return result == true ? success() : failure();
+        return success();
+    }
+
 
 }
 

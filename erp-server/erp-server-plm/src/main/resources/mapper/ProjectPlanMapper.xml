@@ -5,14 +5,14 @@
 
     <select id="paging" resultType="com.erp.model.plm.vo.SchedulePagingVO">
         SELECT
-          pp.id,pp.create_user_id,
-          pp.create_user_name,
-          pp.create_time,
-          pp.product_id,
+          pp.id,pp.create_user_id AS createUserId,
+          pp.create_user_name AS createUserName,
+          pp.create_time AS createTime,
+          pp.product_id AS productId,
           pi.name AS productName,
           pp.type,pp.phase,
-          pp.approval_finish_time,
-          pp.status,pp.task_quantity,
+          pp.approval_finish_time AS approvalFinishTime,
+          pp.status,pp.task_quantity  AS taskQuantity,
           pp.remark
           FROM project_plan PP LEFT JOIN product_info pi
           ON PP.product_id =pi.id
