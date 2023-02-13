@@ -828,8 +828,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Async("customExecutor")
     @Transactional
     public Boolean flyingBookReminder(FlyingBookReminderDTO dto) {
-        //提醒人id
+        //需要发生通知的人员
+        List<String> sendIds = new ArrayList<>();
+        //抄送人id
         List<String> userIds = dto.getUserIds();
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            sendIds.addAll(userIds);
+        }
         //提醒内容
         String content = dto.getContent();
         //任务id
@@ -844,6 +849,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         for (ProjectTaskEntity task : projectTaskList) {
             //产品id
             String productId = task.getProductId();
+            String chargeIds = task.getChargeId();
+            if (StringUtils.isNotBlank(chargeIds)) {
+                 List<String> chargeIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                 sendIds.addAll(chargeIdList);
+                 //去重
+                sendIds = sendIds.stream().distinct().collect(Collectors.toList());
+            }
             //产品信息
             ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
             if (ObjectUtils.isEmpty(productInfoEntity)) {
@@ -852,7 +864,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
-            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, userIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, sendIds);
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             String projectContent = getTaskProjectContent(task.getName(), productInfoEntity.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());

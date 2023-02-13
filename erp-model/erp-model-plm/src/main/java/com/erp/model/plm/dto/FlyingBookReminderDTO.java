@@ -19,9 +19,8 @@ import java.util.List;
 public class FlyingBookReminderDTO {
 
     /**
-     * 提醒人id
+     * 抄送人id
      */
-    @NotEmpty(message = "提醒人不能为空")
     private List<String> userIds;
 
     /**
