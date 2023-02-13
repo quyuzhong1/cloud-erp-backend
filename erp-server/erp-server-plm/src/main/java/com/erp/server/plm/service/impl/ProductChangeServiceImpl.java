@@ -170,6 +170,14 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_9031);
         }
 
+
+        //品质部人员审核
+        List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
+        if(CollectionUtils.isEmpty(qualityPeople)){
+            throw new ServiceException(ApiError.ERROR_9034);
+        }
+
+
         //产品中心部门负责人，供应链中心部门负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(departmentHeadList)) {
@@ -248,6 +256,21 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             //产品经理上级
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
+
+
+
+            //品质部人员审核
+            List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
+            if(CollectionUtils.isEmpty(qualityPeople)){
+                throw new ServiceException(ApiError.ERROR_9034);
+            }
+            parameterMap.put("qualityPeopleList",qualityPeople);
+
+
+
+            parameterMap.put("financial","1597846207349260290");
+
+
 
 
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
