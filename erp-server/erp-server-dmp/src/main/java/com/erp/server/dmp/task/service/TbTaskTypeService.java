@@ -1,18 +1,21 @@
 package com.erp.server.dmp.task.service;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.erp.model.dmp.constant.TaskConstant;
+import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.task.mapper.PlatformApiMapper;
 import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -24,9 +27,23 @@ public class TbTaskTypeService {
     @Resource
     private PlatformApiTaskMapper platformApiTaskMapper;
 
-    private final Integer pageSize = 100;
+    private Long timeoutSeconds;
 
-    private static Integer pageNumber = 1;
+    private Long timeoutMabangHours;
+
+    @Value("${openApi.mabang.timeoutHour:26}")
+    public void setTimeoutMabangHours(Long timeoutMabangHours) {
+        this.timeoutMabangHours = timeoutMabangHours;
+    }
+
+    @Value("${openApi.timeoutSeconds:3600}")
+    public void setTimeoutSeconds(Long timeoutSeconds) {
+        this.timeoutSeconds = timeoutSeconds;
+    }
+
+    private final Integer PAGE_SIZE = 100;
+
+    private static  Integer PAGE_NUMBER = 1;
 
     /**
      * 定时查询需要拉取数据的任务
@@ -37,15 +54,44 @@ public class TbTaskTypeService {
     public List<JobTaskDTO> getTask() {
         LocalDateTime localTime = LocalDateTime.now();
         // 查询任务列表
-        List<JobTaskDTO> jobTaskDTOList = platformApiTaskMapper.selectApiTask((pageNumber - 1), pageSize, localTime);
-        pageNumber++;
-        if (jobTaskDTOList == null || jobTaskDTOList.isEmpty()) { // 任务量等于0，任务重新开始,分页设置成0
-            pageNumber = 1;
-            return null;
+        List<JobTaskDTO> jobTaskDTOList = platformApiTaskMapper.selectApiTask((PAGE_NUMBER - 1), PAGE_SIZE, localTime);
+        PAGE_NUMBER++;
+        // 任务量等于0，任务重新开始,分页设置成0
+        if (CollectionUtil.isEmpty(jobTaskDTOList)) {
+            PAGE_NUMBER = 1;
+            return jobTaskDTOList;
         }
+        // 设置超时恢复状态
+        List<JobTaskDTO> timeoutList = new ArrayList<>();
+        List<JobTaskDTO> inProgressList = new ArrayList<>();
+        for (JobTaskDTO jobTaskDTO : jobTaskDTOList) {
+            if (1 == jobTaskDTO.getState()) {
+                inProgressList.add(jobTaskDTO);
+            }else if(2 == jobTaskDTO.getState()){
+                // 马帮历史数据超时
+                if (TaskConstant.MABANG_PULL_DATA_TASK.equals(jobTaskDTO.getTaskName())) {
+                    LocalDateTime nextTime = jobTaskDTO.getNextTime();
+                    if (nextTime.plusHours(timeoutMabangHours).isAfter(localTime)) {
+                        timeoutList.add(jobTaskDTO);
+                    }
+                }else {
+                    LocalDateTime nextTime = jobTaskDTO.getNextTime();
+                    if (nextTime.plusSeconds(timeoutSeconds).isAfter(localTime)) {
+                        timeoutList.add(jobTaskDTO);
+                    }
+                }
+            }
+        }
+        // 需要设置超时恢复的任务
+        if (CollectionUtil.isNotEmpty(timeoutList)){
+            platformApiTaskMapper.updateTaskTypeState(timeoutList, 1);
+        }
+
         // 设置任务正在执行中
-        platformApiTaskMapper.updateTaskTypeState(jobTaskDTOList);
-        return jobTaskDTOList;
+        if (CollectionUtil.isNotEmpty(inProgressList)){
+            platformApiTaskMapper.updateTaskTypeState(inProgressList, 2);
+        }
+        return inProgressList;
     }
 
     /**
@@ -81,6 +127,7 @@ public class TbTaskTypeService {
             log.error(" === 增加任务失败， 错误信息 = {}", e.getMessage());
         }
     }
+
 
 
 }

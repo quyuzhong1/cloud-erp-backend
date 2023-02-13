@@ -42,7 +42,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
      **/
     @Override
     public Boolean batchAdd(List<DmpDeliveryDetailItemEntity> dmpDeliveryDetailItemEntityList) {
-        return this.saveBatch(dmpDeliveryDetailItemEntityList);
+        return this.saveBatch(dmpDeliveryDetailItemEntityList, 500);
     }
 
     /**

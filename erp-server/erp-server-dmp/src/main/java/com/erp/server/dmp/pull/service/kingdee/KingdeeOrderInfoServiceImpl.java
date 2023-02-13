@@ -10,7 +10,6 @@ import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -20,21 +19,19 @@ import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.KingdeeOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -62,18 +59,8 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
     @Resource
     private DmpErrorLogService dmpErrorLogService;
 
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
-    @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
-
     @Autowired
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("kingdeeOrderInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         KingdeeOrderInfoServiceImpl kingdeeOrderInfoService = new KingdeeOrderInfoServiceImpl();
@@ -238,7 +225,6 @@ public class KingdeeOrderInfoServiceImpl implements IReportSaveService<KingdeeOr
         if (StrUtil.isBlank(kingdeeOrderEntity.getFBillTypeCode()) || !ORDER_TYPES.contains(kingdeeOrderEntity.getFBillTypeCode())){
             return null;
         }
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(kingdeeOrderEntity.getFBillNo());

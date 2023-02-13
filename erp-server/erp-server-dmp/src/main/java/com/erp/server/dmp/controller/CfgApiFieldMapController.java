@@ -13,7 +13,9 @@ import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.mq.MQProducerService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.ibatis.annotations.Param;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.validation.annotation.Validated;
@@ -147,7 +149,7 @@ public class CfgApiFieldMapController extends BaseController {
         //id
         map.put("id","444");
         //sku
-        map.put("skuNo","SKU1");
+        map.put("skuNo","0005");
         //sku
         map.put("name","永诺YN300Air双色3200K-5500K可调色温超簿LED摄影灯");
         //spu
@@ -159,15 +161,11 @@ public class CfgApiFieldMapController extends BaseController {
         //单位
         map.put("unitName","Pcs");
         //一级分类名称
-        map.put("oneLevelCategory","相机");
-        //一级分类编码
-        map.put("oneLevelCategoryCode","B");
+        map.put("oneLevelCategory","灯光类");
         //二级分类名称
-        map.put("secondLevelCategory","相机机身配件");
-        //二级分类编码
-        map.put("secondLevelCategoryCode","BC");
+        map.put("secondLevelCategory","工作室灯");
         //产品经理
-        map.put("chargeName","王杰");
+        map.put("chargeName","阮青海");
         //销售信息
         //上市时间
         map.put("listingTime","23");
@@ -192,22 +190,22 @@ public class CfgApiFieldMapController extends BaseController {
         map.put("netWeight", 509);
         //产品尺寸
         //产品尺寸-长(cm)
-        map.put("productSize_length",  13);
+        map.put("productSize_length",  "");
         //产品尺寸-宽(cm)
-        map.put("productSize_width",  12);
+        map.put("productSize_width",  "");
         //产品尺寸-高(cm)
-        map.put("productSize_height",  12);
+        map.put("productSize_height",  "");
         //单箱数量
-        map.put("boxQty", 12);
+        map.put("boxQty", "");
         //单箱重量
-        map.put("boxWeight", 12);
+        map.put("boxWeight", "");
         //单箱尺寸
         //产品尺寸-长(cm)
-        map.put("boxSize_length", 12);
+        map.put("boxSize_length", "");
         //产品尺寸-宽(cm)
-        map.put("boxSize_width", 12);
+        map.put("boxSize_width", "");
         //产品尺寸-高(cm)
-        map.put("boxSize_height", 12);
+        map.put("boxSize_height", "");
         //实际不含税成本
         map.put("actualNoTaxCost","");
         //实际含税成本
@@ -218,30 +216,6 @@ public class CfgApiFieldMapController extends BaseController {
         map.put("mainSupplier","7777");
         this.kingdeeProductDetailService.pushProductDetail(map);
         return success();
-    }
-
-    @Resource
-    private MQProducerService producerService;
-    @PostMapping("/push/mq")
-    public void pushToRocket(@RequestBody JSONObject body){
-        producerService.syncSendMsg("", RocketMqTopic.DMP_TOPIC, body.getString("tag"), body,"dmp test");
-    }
-    @PostMapping("/push/mq/batch")
-    public SendResult pushToRocketBatch(@RequestBody TestMq body){
-        return producerService.syncClassMsg(RocketMqTopic.DMP_TOPIC, body.getTag(), body, body.getKey());
-    }
-
-    @Data
-    public static class TestMq{
-        private String key;
-
-//        @JsonSerialize(as = LocalDateTimeSerializer.class)
-//        @JsonDeserialize(using = LocalDateTimeDeserializer.class, as = LocalDateTime.class)
-//        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-        private LocalDateTime time;
-        private List<String> codeList;
-
-        private String tag;
     }
 
 }

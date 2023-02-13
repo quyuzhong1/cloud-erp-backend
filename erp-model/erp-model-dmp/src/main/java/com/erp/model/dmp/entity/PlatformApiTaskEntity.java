@@ -86,6 +86,10 @@ public class PlatformApiTaskEntity implements Serializable {
     @TableField(value = "is_deleted")
     private Boolean isDeleted;
 
+
+    @TableField(value = "retry_count")
+    private Integer retryCount;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

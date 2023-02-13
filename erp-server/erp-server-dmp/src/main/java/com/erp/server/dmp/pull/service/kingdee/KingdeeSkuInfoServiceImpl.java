@@ -54,10 +54,10 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<KingdeeSkuEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
-            log.info("拉取金蝶销售订单列表数据为空 entityList.size = 0 ");
+            log.info("拉取金蝶SKU信息列表数据为空 entityList.size = 0 ");
             return;
         }
-        log.info("拉取金蝶销售订单列表数据 entityList.size = {} ", entityList.size());
+        log.info("拉取金蝶SKU信息列表数据 entityList.size = {} ", entityList.size());
         List<KingdeeSkuEntity> insertList = new ArrayList<>();
         List<KingdeeSkuEntity> pushToMqList = new ArrayList<>();
         for (KingdeeSkuEntity entity : entityList) {

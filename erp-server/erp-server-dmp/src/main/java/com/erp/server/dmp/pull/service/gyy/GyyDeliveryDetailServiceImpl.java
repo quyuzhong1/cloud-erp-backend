@@ -196,7 +196,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         deliveryDetailInfoEntity.setSalesManId("");
         //销售员名称
         deliveryDetailInfoEntity.setSalesManName(BusinessmanName);
-        Integer status = gyyDeliveryDetailEntity.getCancel() ? 2 : 1;
+        Integer status = (null != gyyDeliveryDetailEntity.getCancel() && gyyDeliveryDetailEntity.getCancel()) ? 2 : 1;
         //状态 1.已发货 2..已作废
         deliveryDetailInfoEntity.setStatus(status);
         //平台单据创建时间
@@ -216,9 +216,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         //平台标识
         deliveryDetailInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
         //企业Id
-        deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
+//        deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
-        deliveryDetailInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
+//        deliveryDetailInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
         deliveryDetailInfoEntity.setDetails(initOrderItem(gyyDeliveryDetailEntity));
         return deliveryDetailInfoEntity;

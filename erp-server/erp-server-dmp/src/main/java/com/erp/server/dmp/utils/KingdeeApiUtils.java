@@ -30,27 +30,27 @@ public class KingdeeApiUtils {
 
     @Value("${openApi.kingdee.appId}")
     public void setAppId(String appId){
-        this.APPID = appId;
+        KingdeeApiUtils.APPID = appId;
     }
 
     @Value("${openApi.kingdee.userName}")
     public void setUserName(String userName){
-        this.USERNAME = userName;
+        KingdeeApiUtils.USERNAME = userName;
     }
 
     @Value("${openApi.kingdee.serverUrl}")
     public void setServerUrl(String serverUrl){
-        this.SERVERURL = serverUrl;
+        KingdeeApiUtils.SERVERURL = serverUrl;
     }
 
     @Value("${openApi.kingdee.appSecret}")
     public void setAppSecret(String appSecret){
-        this.APPSECRET = appSecret;
+        KingdeeApiUtils.APPSECRET = appSecret;
     }
 
     @Value("${openApi.kingdee.dCid}")
     public void setDCid(String dCid){
-        this.DCID = dCid;
+        KingdeeApiUtils.DCID = dCid;
     }
 
     public KingdeeApiUtils(){
@@ -104,8 +104,6 @@ public class KingdeeApiUtils {
             if (apiResult.size() == 1 && apiResult.get(0).get(0).toString().contains("IsSuccess=false")) {
                 throw new RuntimeException(" ===== 金蝶云星空解析出信息数据失败 ===== " + apiResult);
             }
-
-            List<String> numberList=new ArrayList<>();
             for (List<Object> objects : apiResult) {
                 Map<String, Object> rowData = KingdeeUtils.getApiDataForMap(fieldKeys, objects);
                 dataList.add(rowData);

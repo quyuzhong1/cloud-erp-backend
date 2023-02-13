@@ -4,6 +4,7 @@ import com.common.core.constant.RocketMqTopic;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.controller.CfgApiFieldMapController;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +14,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.lang.reflect.Array;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +44,12 @@ class MQProducerServiceTest {
     }
 
     @Test
-    void testSyncSendMsg() {
+    void testSendBatch() {
+
+//        List<CfgApiFieldMapController.TestMq> list = IntStream.rangeClosed(1, 10)
+//                .mapToObj(x -> new CfgApiFieldMapController.TestMq(String.valueOf(x), LocalDateTime.now(), Arrays.asList(String.valueOf(x)), "tag2"))
+//                .collect(Collectors.toList());
+//        mQProducerService.sendBachMsg(RocketMqTopic.DMP_TOPIC, "tag2", list);
     }
 
     @Test

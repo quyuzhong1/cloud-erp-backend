@@ -79,7 +79,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
                 }
                 valueList.forEach(obj-> obj.setFieldMapId(entity.getId()));
                 List<CfgApiFieldMapValueEntity> detailList = BeanMapperUtils.copyList(CfgApiFieldMapValueEntity.class, valueList);
-                cfgApiFieldMapValueService.saveBatch(detailList);
+                cfgApiFieldMapValueService.saveBatch(detailList, 500);
             }
         }
         return true;

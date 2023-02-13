@@ -8,22 +8,20 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
-import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -44,13 +42,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     private MongoService mongoService;
 
     @Resource
-    private DmpShopInfoService dmpShopInfoService;
-
-    @Resource
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
-    @Resource
-    @Qualifier("gyyShopInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         GyyShopInfoServiceImpl gyyShopInfoService = new GyyShopInfoServiceImpl();
