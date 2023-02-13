@@ -42,9 +42,9 @@ public class MQConsumerService {
      * rocketmq 监听销售订单相关数据
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
-            consumerGroup = "sales_order_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_order_consumer")
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
         public void onMessage(DmpOrderInfoEntity ext) {
@@ -58,9 +58,9 @@ public class MQConsumerService {
      * rocketmq 监听发货订单相关数据
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag",
-            consumerGroup = "sales_delivery_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_delivery_consumer")
     public class ConsumerErpDeliveryOrder implements RocketMQListener<DmpDeliveryDetailInfoEntity> {
         @Override
         public void onMessage(DmpDeliveryDetailInfoEntity ext) {
@@ -74,9 +74,9 @@ public class MQConsumerService {
      * rocketmq 监听退款订单相关数据
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_refund_order_tag||kingdee_refund_order_tag||mabang_refund_order_tag",
-            consumerGroup = "sales_refund_order_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_refund_order_consumer")
     public class ConsumerErpRefundOrder implements RocketMQListener<DmpRefundInfoEntity> {
         @Override
         public void onMessage(DmpRefundInfoEntity ext) {
@@ -90,9 +90,9 @@ public class MQConsumerService {
      * rocketmq 监听退款订单相关数据
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_return_order_tag||kingdee_return_order_tag||mabang_return_order_tag",
-            consumerGroup = "sales_return_order_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_return_order_consumer")
     public class ConsumerErpReturnOrder implements RocketMQListener<DmpReturnOrderInfoEntity> {
         @Override
         public void onMessage(DmpReturnOrderInfoEntity ext) {
@@ -103,9 +103,9 @@ public class MQConsumerService {
     }
 
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_shop_info_tag||kingdee_shop_info_tag||mabang_shop_info_tag||kingdee_ecc_shop_info_tag",
-            consumerGroup = "sales_shop_info_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_shop_info_consumer")
     public class ConsumerErpShopInfo implements RocketMQListener<DmpShopInfoEntity> {
         @Override
         public void onMessage(DmpShopInfoEntity ext) {
@@ -121,9 +121,9 @@ public class MQConsumerService {
     }
 
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC,
             selectorExpression = "gyy_sku_info_tag||kingdee_sku_info_tag||mabang_sku_info_tag",
-            consumerGroup = "sales_sku_info_consumer")
+            consumerGroup = "${spring.profiles.active}-sales_sku_info_consumer")
     public class ConsumerErpSkuInfo implements RocketMQListener<DmpSkuInfoEntity> {
         @Override
         public void onMessage(DmpSkuInfoEntity ext) {

@@ -1,11 +1,10 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
 import com.erp.common.entity.MessageBody;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -13,12 +12,11 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +30,9 @@ public class MQProducerService<T> {
      */
     @Autowired
     private RocketMQTemplate rocketMQTemplate;
+
+    private String activeProfile = SpringUtil.getActiveProfile();
+
 
 	private void sendMsg(MSG_TYPE msgType,String msgKey, String destination, Object payload, String msgSource){
         if(StrUtil.isBlank(msgKey)){
@@ -163,7 +164,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        String destination = StrUtil.format("{}:{}", topic, tag);
+        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
         rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
