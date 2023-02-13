@@ -42,7 +42,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     private List<ProductDetailExcelDTO> list;
 
-    private List<ProductDetailExcelDTO> dataList;
+    private List<ProductDetailExcelDTO> dataList = new ArrayList<>();
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
