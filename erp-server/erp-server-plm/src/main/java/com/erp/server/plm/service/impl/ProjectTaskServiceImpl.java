@@ -4271,35 +4271,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             if (CollectionUtils.isNotEmpty(detailList)) {
                 detailList = detailList.stream().sorted(Comparator.comparing(TaskProcessNodeDetailDTO::getStartDate)).collect(Collectors.toList());
             }
-            //当审核流程是逐级审核时，查询未生成审核任务的负责人
-            if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                int size1 = detailList.size();
-                int size2 = taskChargeDistributionList.size();
-                //当审核节点不一致时拼接后面的未审核数据
-                if (size1 != size2) {
-                    TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
-                    for (int i = size1 + 1; i <= size2; i++) {
-                        List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
-                        TaskChargeDistributionEntity taskChargeDistributionEntity = taskChargeDistributionList.get(i - 1);
-                        String chargeIds = taskChargeDistributionEntity.getChargeIds();
-                        if (StringUtils.isBlank(chargeIds)) {
-                            throw new ServiceException(ApiError.ERROR_95045);
-                        }
-                        List<String> userIds = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
-                        userIds.forEach(obj -> {
-                            TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                            taskProcessNodeDTO.setNodeName("待审核");
-                            //名称
-                            String userName = userList.stream().filter(e -> e.getUserId().equals(obj)).map(FindUserDTO::getUserName).findFirst().orElse("");
-                            taskProcessNodeDTO.setOperateUserName(userName);
-                            taskProcessNodeList.add(taskProcessNodeDTO);
-                        });
-                        taskProcessNodeDetailDTO.setIfFinishNode(Boolean.FALSE);
-                        taskProcessNodeDetailDTO.setList(taskProcessNodeList);
-                        detailList.add(taskProcessNodeDetailDTO);
-                    }
-                }
-            }
             waitReleasedDTO.setDetailList(detailList);
             Integer count = detailList.stream().map(obj -> obj.getList().size()).reduce(MathUtil.ZERO, Integer::sum);
             waitReleasedDTO.setOperateUserName("审核人【".concat(String.valueOf(count)).concat("】人"));
