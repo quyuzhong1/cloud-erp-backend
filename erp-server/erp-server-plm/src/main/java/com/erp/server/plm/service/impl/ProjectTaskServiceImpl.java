@@ -4242,15 +4242,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //查询流程
                 for (ApproveRecordShowDTO approveRecordShowDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                    String userName = userList.stream().filter(e -> e.getUserId().equals(approveRecordShowDTO.getHandleUserName())).map(FindUserDTO::getUserName).findFirst().orElse("");
+                    String userName = userList.stream().filter(e -> e.getUserId().equals(approveRecordShowDTO.getHandleUserId())).map(FindUserDTO::getUserName).findFirst().orElse("");
                     taskProcessNodeDTO.setOperateUserName(userName);
                     taskProcessNodeDTO.setIfFinishNode(Boolean.TRUE);
-                    if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName)) {
-                        //审核不通过时将对应数据状态变更为审核不通过
-                        taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
-                    } else {
-                        taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
-                    }
                     //已经审核通过的数据格式化时间
                     if (ObjectUtils.isNotEmpty(approveRecordShowDTO.getEndTime())) {
                         try {
@@ -4259,6 +4253,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         } catch (ParseException e) {
                             throw new ServiceException(ApiError.Default);
                         }
+                    }
+                    if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName)) {
+                        //审核不通过时将对应数据状态变更为审核不通过
+                        taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
+                        taskProcessNodeDTO.setOperateTime(operatorTime);
+                    } else {
+                        taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }

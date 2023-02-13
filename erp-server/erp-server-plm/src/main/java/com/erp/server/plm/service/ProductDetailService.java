@@ -386,4 +386,12 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean unCommit(String id);
+    /**
+     * @description: 发送金蝶数据
+     * @author Will
+     * @date: 2023/2/13 13:27
+     * @param id
+     * @return Boolean
+     */
+    Boolean sendKingDeeData(String id);
 }

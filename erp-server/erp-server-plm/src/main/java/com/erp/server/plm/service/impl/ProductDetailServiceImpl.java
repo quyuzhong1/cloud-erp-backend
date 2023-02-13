@@ -1746,6 +1746,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.updateById(productDetailEntity);
     }
 
+    @Override
+    public Boolean sendKingDeeData(String id) {
+        ProductDetailEntity productDetailEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productDetailEntity.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_95126);
+        }
+        this.sendDataToKingdee(productDetailEntity);
+        return Boolean.TRUE;
+    }
+
 
     private String checkRequiredData(ProductDetailEntity productDetailEntity) {
         StringBuffer str = new StringBuffer();

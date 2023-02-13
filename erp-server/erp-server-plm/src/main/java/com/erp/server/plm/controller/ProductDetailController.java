@@ -863,4 +863,18 @@ ProductDetailController extends BaseController {
         Boolean result = productDetailService.unCommit(dto.getId());
         return result == true ? success() : failure();
     }
+
+    /**
+     * 产品信息-发送金蝶数据
+     * @author Will
+     * @date: 2023/2/13 13:30
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/sendKingDeeData")
+    public ApiResult sendKingDeeData(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productDetailService.sendKingDeeData(dto.getId());
+        return result == true ? success() : failure();
+    }
+
 }

@@ -639,6 +639,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 remarkList.add("变更文档：[" + fileNames + "]");
                 productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+                //新增变更文档操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",",fileNames)))
+                        .setBusinessId(taskEntity.getId())
+                        .setOperation("文档操作")
+                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+                sysLogService.addSysLogByOther(sysLogEntity);
             }
         }
         return Boolean.TRUE;

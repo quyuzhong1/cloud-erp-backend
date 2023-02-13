@@ -228,6 +228,7 @@ public enum ApiError implements Serializable {
     ERROR_95123(95123,"导入数据不能为空"),
     ERROR_95124(95124,"导入数据失败"),
     ERROR_95125(95125,"导出错误数据失败"),
+    ERROR_95126(95126,"审核通过才能发送金蝶数据"),
     /**
      * bi 错误
      * 从97000 开始  以端口号
