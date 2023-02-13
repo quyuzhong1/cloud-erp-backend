@@ -11,6 +11,7 @@ import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -109,6 +110,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         ActivityDTO activityDTO = new ActivityDTO();
         activityDTO.setNowActivityId(nowActivityId);
         activityDTO.setProcessInstanceId(processInstanceId);
+        activityDTO.setAuditStatus(BaseStatusEnum.AUDIT_PASS.getStatus());
         //审批通过后 需要保存流程节点信息
         actHistoryActivityService.saveActivity(activityDTO);
         return new ProcessNodeDTO();
@@ -244,6 +246,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         String approvalSuggestion = "";
         List<Comment> commentList = null;
         List<ActHistoryActivityEntity> historyActivityList = actHistoryActivityService.getByProcessId(processId);
+        Boolean historyActivity = CollectionUtils.isNotEmpty(historyActivityList);
         for (HistoricTaskInstance item : list) {
             approveRecordShowDTO = new ApproveRecordShowDTO();
             commentList = taskService.getTaskComments(item.getId());
@@ -252,14 +255,25 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             } else {
                 approvalSuggestion = "";
             }
-            ActHistoryActivityEntity entity=  historyActivityList.stream().filter(a -> a.getActivityId().
-                    equals(item.getProcessDefinitionId())).findFirst().orElse(null);
-            if(entity!=null){
-                approveRecordShowDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
-            }else{
+
+            //这个是处理时间
+            Date endTime = item.getEndTime();
+            //表示没有处理
+            if(endTime==null){
                 approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+            }else{
+                //表示有处理
+                //表示有活动节点
+                if (historyActivity) {
+                    ActHistoryActivityEntity entity = historyActivityList.get(0);
+                    approveRecordShowDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
+                }else{
+                    approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+
+                }
 
             }
+
             approveRecordShowDTO.setActivityName(item.getName());
             approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
             approveRecordShowDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));

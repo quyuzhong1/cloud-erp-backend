@@ -110,6 +110,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
     public List<ActHistoryActivityEntity> getByProcessId(String processId) {
         LambdaQueryWrapper<ActHistoryActivityEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ActHistoryActivityEntity::getProcessInstanceId, processId);
+        queryWrapper.orderByDesc(ActHistoryActivityEntity::getCreateTime);
         return this.list(queryWrapper);
     }
 
