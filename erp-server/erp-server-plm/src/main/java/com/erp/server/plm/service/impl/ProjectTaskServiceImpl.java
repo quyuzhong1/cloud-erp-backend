@@ -232,7 +232,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                                 continue;
                             }
                             List<String> chargeIds = Arrays.stream(entity.getChargeId().split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(entity.getDistributionType())) {
+                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                                 //需要添加的负责人
                                 List<String> supueriorIds = new ArrayList<>();
                                 //查询对应负责人的上级
