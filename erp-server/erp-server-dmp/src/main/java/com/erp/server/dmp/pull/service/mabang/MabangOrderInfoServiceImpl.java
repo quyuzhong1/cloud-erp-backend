@@ -9,12 +9,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.RocketMqTagEnum;
@@ -23,24 +23,22 @@ import com.erp.model.dmp.mabang.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.core.Local;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -53,18 +51,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     @Resource
     private MongoService mongoService;
 
-    @Resource
-    private DmpOrderItemService dmpOrderItemService;
-
-    @Resource
-    private DmpOrderInfoService dmpOrderInfoService;
-
     @Autowired
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
-
-    @Resource
-    @Qualifier("mabangOrderInfoServiceImpl")
-    private IReportSaveService reportSaveService;
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
@@ -153,6 +141,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     private List<OrderEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
+        if(null != lastTime && null != nextTime && TaskConstant.MABANG_PULL_DATA_TASK.equals(dto.getJobTaskDTO().getTaskName())){
+            lastTime = LocalDateTime.of(lastTime.toLocalDate(), LocalTime.MIN);
+            nextTime = LocalDateTime.of(nextTime.toLocalDate(), LocalTime.MAX);
+        }
         dto.getJobTaskDTO().setLastTime(nextTime);
         return MabangApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }
@@ -202,9 +194,9 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         //平台标识
         dmpOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         //企业Id
-        dmpOrderInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
+//        dmpOrderInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
-        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
+//        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
         dmpOrderInfoEntity.setDeliveryTime(orderEntity.getTransportTime());
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());

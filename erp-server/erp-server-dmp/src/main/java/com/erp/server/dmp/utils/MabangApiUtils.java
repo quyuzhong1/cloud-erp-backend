@@ -29,13 +29,6 @@ public class MabangApiUtils {
     private static final Integer NOT_SHIPPED_STATUS = 6;
     private static final Integer NOT_UNSHIPPED_STATUS = 7;
 
-    public static Integer getAppKey() {
-        return APP_KEY;
-    }
-
-    public static String getSecretKey() {
-        return SECRET_KEY;
-    }
 
     private static Integer APP_KEY = 200780;
 
@@ -74,7 +67,7 @@ public class MabangApiUtils {
             params.put("canSend", "3");
             params.put("updateTimeStart", sdf.format(startDate));
             params.put("updateTimeEnd", sdf.format(endDate));
-//            params.put("pageSize", pageSize);
+            params.put("pageSize", pageSize);
             ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
@@ -149,7 +142,7 @@ public class MabangApiUtils {
      * @throws Exception
      */
     public static List<ReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
-        Integer pageSize = 100;
+        Integer pageSize = 1000;
         Integer pageIndex = 1;
         //总页数
         Integer pageCount = 1;

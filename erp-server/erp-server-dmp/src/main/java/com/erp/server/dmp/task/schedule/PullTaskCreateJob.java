@@ -1,5 +1,6 @@
 package com.erp.server.dmp.task.schedule;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
@@ -45,7 +46,7 @@ public class PullTaskCreateJob {
     @XxlJob("createOrderJob")
     public void createOrderJob() {
         List<JobTaskDTO> list = tbTaskTypeService.getTask();
-        if(list != null){
+        if(CollectionUtil.isNotEmpty(list)){
             reportTaskService.addTaskToQueue(list);
         }
     }

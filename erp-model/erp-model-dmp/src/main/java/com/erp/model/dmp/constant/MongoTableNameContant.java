@@ -100,6 +100,11 @@ public interface MongoTableNameContant {
     String ORIGINAL_KINGDEE_SHOP = "original_kingdee_shop";
 
     /**
+     * 网店管理数据
+     */
+    String ORIGINAL_KINGDEE_ECC_SHOP = "original_kingdee_ecc_shop";
+
+    /**
      * 出库详情
      */
     String ORIGINAL_KINGDEE_DELIVERY_DETAIL = "original_kingdee_delivery_detail";

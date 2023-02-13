@@ -21,14 +21,11 @@ import com.erp.model.dmp.mabang.RefundOrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpRefundItemService;
 import com.erp.server.dmp.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -48,9 +45,6 @@ import java.util.stream.Collectors;
 public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEntity> {
     @Resource
     private MongoService mongoService;
-
-    @Resource
-    private DmpRefundItemService dmpRefundItemService;
 
     @Autowired
     private MQProducerService<DmpRefundInfoEntity> mqProducerService;

@@ -67,9 +67,13 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_RETURN_ORDER_TAG(12,RocketMqTagEnum.RETURN_ORDER,"kingdee_return_order_tag"),
     /**
-     * 金蝶退货订单tag
+     * 金蝶订单tag
      */
     KINGDEE_SHOP_INFO_TAG(13,RocketMqTagEnum.SHOP_INFO,"kingdee_shop_info_tag"),
+    /**
+     * 金蝶退货订单tag
+     */
+    KINGDEE_ECC_SHOP_INFO_TAG(21,RocketMqTagEnum.SHOP_INFO,"kingdee_ecc_shop_info_tag"),
     /**
      * 金蝶sku信息tag
      */

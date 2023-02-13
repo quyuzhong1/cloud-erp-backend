@@ -39,7 +39,6 @@ public class MongoServiceImpl implements MongoService {
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class)
 	public <T> void saveMongoData(T data, String table) throws Exception {
 		orderTemplate.insert(data, table);
 	}

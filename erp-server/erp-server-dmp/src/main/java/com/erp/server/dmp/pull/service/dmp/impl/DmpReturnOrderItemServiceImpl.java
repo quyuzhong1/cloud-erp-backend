@@ -39,7 +39,7 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
      **/
     @Override
     public Boolean batchAdd(List<DmpReturnOrderItemEntity> dmpOrderInfoEntityList) {
-        return this.saveBatch(dmpOrderInfoEntityList);
+        return this.saveBatch(dmpOrderInfoEntityList, 500);
     }
 
     /**
@@ -82,14 +82,14 @@ public class DmpReturnOrderItemServiceImpl extends ServiceImpl<DmpReturnOrderIte
                     updateById(orderItemBean);
                 }
             } else {
-//                if (orderItemBean.getIsDeleted()){
-//                    continue;
-//                }
+                if (orderItemBean.getIsDeleted()){
+                    continue;
+                }
                 insertList.add(orderItemBean);
             }
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            saveBatch(insertList);
+            saveBatch(insertList, 500);
         }
     }
 }

@@ -114,38 +114,37 @@ public class MQProducerService<T> {
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
-
-    public SendResult batchSendEntity(String msgKey,String topic, String tag, List<T> entityList) {
-        List<Message<T>> msgList = entityList.stream()
-                .map(x ->
-                MessageBuilder.withPayload(x).build())
-                .collect(Collectors.toList());
-        SendResult result = rocketMQTemplate.syncSend(topic+tag, msgList, 60000);
-        return result;
-    }
-
     /**
      * 普通发送（这里的参数对象User可以随意定义，可以发送个对象，也可以是字符串等）
      */
-    public void sendEntity(String msgKey, String topic, String tag, T entity) {
+    public void sendEntity(String topic, String tag, T entity) {
         rocketMQTemplate.convertAndSend(topic + tag, entity);
     }
 
     /**
-     * 普通发送（这里的参数对象User可以随意定义，可以发送个对象，也可以是字符串等）
+     *发送批量消息
+     * @param topic
+     * @param tag
+     * @param msgs
+     * @return
      */
-    public SendResult sendMsg(String msgKey, String topic, String tag, Message msg) {
-         return rocketMQTemplate.syncSend(topic + tag, msg);
-    }
-
-    public SendResult sendBachMsg(String topic, String tag, List msgs) {
-        List<Message<String>> messageList = new ArrayList<>();
-        for (Object msg : msgs) {
-            messageList.add(MessageBuilder.withPayload("批量消息" + msg).build());
-        }
+    public SendResult sendBachMsg(String topic, String tag, List<T> msgs) {
+        List<Message<T>> messageList = msgs.stream()
+                .map(msg -> MessageBuilder.withPayload(msg)
+                        .setHeader(RocketMQHeaders.KEYS, IdUtils.simpleUUID())
+                        .build())
+                .collect(Collectors.toList());
         return rocketMQTemplate.syncSend(topic + tag, messageList);
     }
 
+    /**
+     * 同步发送对象消息
+     * @param topic
+     * @param tag
+     * @param entity
+     * @param key
+     * @return
+     */
     public SendResult syncClassMsg(String topic, String tag, T entity, String key) {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
@@ -153,6 +152,13 @@ public class MQProducerService<T> {
         return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic, tag), msg);
     }
 
+    /**
+     * 异步发送对象消息
+     * @param topic
+     * @param tag
+     * @param entity
+     * @param key
+     */
     public void asyncClassMsg(String topic, String tag, T entity, String key) {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)

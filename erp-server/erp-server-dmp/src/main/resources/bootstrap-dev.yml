@@ -57,6 +57,7 @@ rocketmq:
     #配置acl用户名密码
     access-key: dmp_erp_mq
     secret-key: ttzgyaW48nyWpKy2
+    dmp-topic: dmp_erp_pull_topic
 
 
 

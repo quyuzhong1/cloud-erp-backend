@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +15,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ThreadFactory;
 
 @Component
 @Slf4j
 @EnableScheduling
 public class PullKindeeJob {
-    @Autowired
-    private RedisTemplate<String, String> template;
 
     @Resource
     private PullErpDateThread pullErpDateThread;
@@ -32,17 +32,8 @@ public class PullKindeeJob {
     //@Scheduled(cron = "*/5 * * * * ?")
     @XxlJob("kindeeExecute")
     public void execute() {
-        while (threadPoolTaskExecutor.getActiveCount() + 1 < threadPoolTaskExecutor.getMaxPoolSize()) {
-            // 获取请求任务
-            String o = template.opsForList().leftPop(TaskConstant.KINGDEE_PULL_DATA_TASK);
-            if(ObjectUtils.isEmpty(o) || "null".equals(o)) {
-                break;
-            }
-            JobTaskDTO orderJobTask = JSONObject.parseObject(o, JobTaskDTO.class);
-            if (orderJobTask == null) {
-                break;
-            }
-            pullErpDateThread.pullOrder(orderJobTask);
-        }
+        threadPoolTaskExecutor.execute(() ->{
+            pullErpDateThread.executeTask(TaskConstant.KINGDEE_PULL_DATA_TASK);
+        });
     }
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.CleanOrderMongoDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -16,12 +17,9 @@ import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.ModelService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
-import com.erp.server.dmp.pull.service.gyy.GyyHistoryDeliveryDetailServiceImpl;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -30,12 +28,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -67,7 +62,7 @@ public class PullGyyHistoryJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET.getTaskName());
             return ReturnT.SUCCESS;
         }
-        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity);
+        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
         // 执行拉取任务
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_HISTORY_GET);
@@ -85,7 +80,7 @@ public class PullGyyHistoryJob {
             XxlJobHelper.log("{}任务task记录为空异常", PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET.getTaskName());
             return ReturnT.SUCCESS;
         }
-        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity);
+        JobTaskDTO jobTaskDTO = new JobTaskDTO(entity, TaskConstant.GYY_PULL_DATA_TASK);
         // 执行拉取任务
         //通过枚举获取对应service
         RequestDTO requestDTO = new RequestDTO(jobTaskDTO, PlatformApiEnum.GY_ERP_TRADE_HISTORY_GET);
