@@ -10,7 +10,7 @@ import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -131,7 +131,7 @@ public class ProjectPlanController extends BaseController {
      */
     @PostMapping("/auditInfo")
     public ApiResult auditInfo(@RequestBody @Validated BaseIdDTO dto) {
-        List<AuditorHandleDTO> list=  projectPlanService.auditInfo(dto.getId());
+        List<ApproveNodeRecordVO> list=  projectPlanService.auditInfo(dto.getId());
         return success(list);
     }
 

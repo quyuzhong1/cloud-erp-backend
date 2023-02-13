@@ -25,6 +25,7 @@ import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -632,9 +633,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-08 9:00
      */
     @Override
-    public List<AuditorHandleDTO> auditInfo(String id) {
+    public List<ApproveNodeRecordVO> auditInfo(String id) {
         if (StringUtils.isNotBlank(id)) {
-            List<AuditorHandleDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
+            List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
             return list;
         }
         return new ArrayList<>();

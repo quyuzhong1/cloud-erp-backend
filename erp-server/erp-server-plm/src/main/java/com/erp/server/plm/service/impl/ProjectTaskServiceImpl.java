@@ -4259,7 +4259,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
                         taskProcessNodeDTO.setOperateTime(operatorTime);
                     } else {
-                        taskProcessNodeDTO.setNodeName(auditorHandleDTO.getActivityType());
+                        taskProcessNodeDTO.setNodeName(auditorHandleDTO.getHandContent());
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }

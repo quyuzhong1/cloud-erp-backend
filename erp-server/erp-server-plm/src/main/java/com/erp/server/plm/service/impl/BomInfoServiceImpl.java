@@ -25,6 +25,7 @@ import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -951,9 +952,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-02-08 9:00
      */
     @Override
-    public List<AuditorHandleDTO> auditInfo(String bomId) {
+    public List<ApproveNodeRecordVO> auditInfo(String bomId) {
         if (StringUtils.isNotBlank(bomId)) {
-            List<AuditorHandleDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
+            List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
             return list;
         }
         return new ArrayList<>();

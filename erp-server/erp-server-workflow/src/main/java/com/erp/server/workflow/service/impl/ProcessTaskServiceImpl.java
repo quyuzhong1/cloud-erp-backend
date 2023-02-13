@@ -156,10 +156,11 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
     /**
      * 根据业务表id 获取审核人 操作记录
-     * @author yl
-     * @date 2023-02-13 17:00
+     *
      * @param businessTableId
      * @return java.util.List<com.erp.model.workflow.vo.ApproveNodeRecordVO>
+     * @author yl
+     * @date 2023-02-13 17:00
      */
     @Override
     public List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(String businessTableId) {
@@ -177,13 +178,19 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                 }
             }
 
-            Map<String, List<AuditorHandleDTO>> preMap = auditorHandleList.parallelStream().
-                    collect(Collectors.groupingBy(AuditorHandleDTO::getTaskDefinitionKey));
+            LinkedHashMap<String, List<AuditorHandleDTO>> map = auditorHandleList.stream().
+                    collect(Collectors.groupingBy(AuditorHandleDTO::getTaskDefinitionKey, LinkedHashMap::new, Collectors.toList()));
 
+            List<ApproveNodeRecordVO> resultList = new ArrayList<>(map.size());
 
-
+            for (Map.Entry<String, List<AuditorHandleDTO>> item : map.entrySet()) {
+                ApproveNodeRecordVO vo = new ApproveNodeRecordVO();
+                vo.setAuditorHandleList(item.getValue());
+                resultList.add(vo);
+            }
+            return resultList;
         }
-        return null;
+        return new ArrayList<>();
     }
 
 
@@ -287,20 +294,17 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             //这个是处理时间
             Date endTime = item.getEndTime();
             //表示没有处理
-            if(endTime==null){
-                auditorHandleDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
-            }else{
+            if (endTime == null) {
+            } else {
                 //表示有处理
                 //表示有活动节点
 
-                ActHistoryActivityEntity entity=  historyActivityList.stream().filter(a -> a.getActivityId().
-                        equals(item.getProcessDefinitionId())).findFirst().orElse(null);
-
-                if (entity!=null) {
-                    auditorHandleDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
-                }else{
-                    auditorHandleDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
-
+                ActHistoryActivityEntity entity = historyActivityList.stream().filter(a -> a.getActivityId().
+                        equals(item.getTaskDefinitionKey())).findFirst().orElse(null);
+                if (entity != null) {
+                    auditorHandleDTO.setHandContent(BaseStatusEnum.getName(entity.getAuditStatus()));
+                } else {
+                    auditorHandleDTO.setHandContent("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
                 }
             }
 
@@ -308,7 +312,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
             auditorHandleDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
             auditorHandleDTO.setHandleUserId(item.getAssignee());
-            auditorHandleDTO.setTaskDefinitionKey( item.getTaskDefinitionKey());
+            auditorHandleDTO.setTaskDefinitionKey(item.getTaskDefinitionKey());
             auditorHandleDTO.setComment(approvalSuggestion);
             resultList.add(auditorHandleDTO);
         }

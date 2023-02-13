@@ -18,8 +18,15 @@ public class AuditorHandleDTO implements Serializable {
     //节点名称
     private String activityName;
 
+
     //节点类型
     private String activityType;
+
+
+    //操作内容
+    private String handContent;
+
+
 
     //开始时间
     private String startTime;

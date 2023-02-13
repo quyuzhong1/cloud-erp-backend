@@ -1,6 +1,7 @@
 package com.erp.rpc.workflow;
 
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -110,7 +111,7 @@ public interface WorkflowFeign {
      * @return java.util.List<com.erp.model.workflow.dto.ApproveRecordShowDTO>
      */
     @PostMapping("workflow/feign/process/getHistoryTaskByBusinessTableId")
-    List<AuditorHandleDTO> getHistoryTaskByBusinessTableId(@RequestBody String id);
+    List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(@RequestBody String id);
 
 
     /**
