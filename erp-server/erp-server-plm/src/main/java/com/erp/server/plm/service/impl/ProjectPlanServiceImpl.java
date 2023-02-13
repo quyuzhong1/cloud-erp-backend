@@ -632,9 +632,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-08 9:00
      */
     @Override
-    public List<ApproveRecordShowDTO> auditInfo(String id) {
+    public List<AuditorHandleDTO> auditInfo(String id) {
         if (StringUtils.isNotBlank(id)) {
-            List<ApproveRecordShowDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
+            List<AuditorHandleDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
             return list;
         }
         return new ArrayList<>();

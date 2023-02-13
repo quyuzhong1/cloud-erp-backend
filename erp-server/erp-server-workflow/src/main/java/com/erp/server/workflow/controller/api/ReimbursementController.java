@@ -115,7 +115,7 @@ public class ReimbursementController extends BaseController {
     //查看流程审批情况
     @GetMapping("/queryProcessApprove")
     public ApiResult queryProcessApprove(@RequestBody @Validated ProcessBaseDTO dto) {
-        List<ApproveRecordShowDTO> resultList=workflowService.queryApproveRecord(dto);
+        List<AuditorHandleDTO> resultList=workflowService.queryApproveRecord(dto);
         return success(resultList);
     }
 

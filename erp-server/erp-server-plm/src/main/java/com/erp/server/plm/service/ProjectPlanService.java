@@ -10,7 +10,7 @@ import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
-import com.erp.model.workflow.dto.ApproveRecordShowDTO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.server.plm.controller.AuditParamDTO;
 
 import java.util.List;
@@ -49,7 +49,7 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * 审核情况
      *
      */
-    List<ApproveRecordShowDTO> auditInfo(String id);
+    List<AuditorHandleDTO> auditInfo(String id);
 
     Boolean cancelSchedule(String id);
 

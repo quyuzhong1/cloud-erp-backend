@@ -9,7 +9,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
-import com.erp.model.workflow.dto.ApproveRecordShowDTO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.server.plm.controller.AuditParamDTO;
 
 import javax.servlet.http.HttpServletResponse;
@@ -68,5 +68,5 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     void changeBom(BomDTO bom);
 
-    List<ApproveRecordShowDTO> auditInfo(String id);
+    List<AuditorHandleDTO> auditInfo(String id);
 }

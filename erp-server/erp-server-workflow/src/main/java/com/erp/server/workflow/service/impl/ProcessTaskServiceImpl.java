@@ -3,18 +3,19 @@ package com.erp.server.workflow.service.impl;
 
 import com.alibaba.excel.util.DateUtils;
 import com.common.core.enums.BaseStatusEnum;
+import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.ActHistoryActivityEntity;
 import com.erp.model.workflow.entity.WorkflowBusinessProcessEntity;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
-import com.erp.server.workflow.mapper.WorkflowMapper;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.ActHistoryActivityService;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
-import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.task.Comment;
@@ -22,7 +23,6 @@ import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,12 +48,8 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     @Autowired
     private WorkflowBusinessProcessService businessProcessService;
 
-
     @Autowired
-    private RuntimeService runtimeService;
-
-    @Resource
-    private WorkflowMapper workflowMapper;
+    private SysUserFeign sysUserFeign;
 
     /**
      * 查询我的任务待办
@@ -159,6 +155,39 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
 
     /**
+     * 根据业务表id 获取审核人 操作记录
+     * @author yl
+     * @date 2023-02-13 17:00
+     * @param businessTableId
+     * @return java.util.List<com.erp.model.workflow.vo.ApproveNodeRecordVO>
+     */
+    @Override
+    public List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(String businessTableId) {
+        List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(Arrays.asList(businessTableId));
+        if (CollectionUtils.isNotEmpty(list)) {
+            WorkflowBusinessProcessDTO dto = list.get(0);
+            List<AuditorHandleDTO> auditorHandleList = this.getHistoryTaskByProcessId(dto.getProcessId());
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            for (AuditorHandleDTO item : auditorHandleList) {
+                FindUserDTO findUser = userList.stream().filter(u -> item.getHandleUserId().equals(u.getUserId())).findFirst().orElse(null);
+                if (findUser != null) {
+                    item.setHandleUserName(findUser.getUserName());
+                } else {
+                    item.setHandleUserName("");
+                }
+            }
+
+            Map<String, List<AuditorHandleDTO>> preMap = auditorHandleList.parallelStream().
+                    collect(Collectors.groupingBy(AuditorHandleDTO::getTaskDefinitionKey));
+
+
+
+        }
+        return null;
+    }
+
+
+    /**
      * 我的已办  任务历史
      *
      * @param dto userId
@@ -234,21 +263,20 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         return resultList;
     }
 
-    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId) {
+    public List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId) {
         List<HistoricTaskInstance> list = historyService // 历史相关Service
                 .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
                 .processInstanceId(processId) // 用流程实例id查询
                 .orderByHistoricActivityInstanceStartTime()
                 .asc()
                 .list();
-        List<ApproveRecordShowDTO> resultList = new ArrayList<>();
-        ApproveRecordShowDTO approveRecordShowDTO = null;
+        List<AuditorHandleDTO> resultList = new ArrayList<>();
+        AuditorHandleDTO auditorHandleDTO = null;
         String approvalSuggestion = "";
         List<Comment> commentList = null;
         List<ActHistoryActivityEntity> historyActivityList = actHistoryActivityService.getByProcessId(processId);
-        Boolean historyActivity = CollectionUtils.isNotEmpty(historyActivityList);
         for (HistoricTaskInstance item : list) {
-            approveRecordShowDTO = new ApproveRecordShowDTO();
+            auditorHandleDTO = new AuditorHandleDTO();
             commentList = taskService.getTaskComments(item.getId());
             if (commentList != null && !commentList.isEmpty()) {
                 approvalSuggestion = commentList.get(0).getFullMessage();
@@ -260,26 +288,29 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             Date endTime = item.getEndTime();
             //表示没有处理
             if(endTime==null){
-                approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+                auditorHandleDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
             }else{
                 //表示有处理
                 //表示有活动节点
-                if (historyActivity) {
-                    ActHistoryActivityEntity entity = historyActivityList.get(0);
-                    approveRecordShowDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
+
+                ActHistoryActivityEntity entity=  historyActivityList.stream().filter(a -> a.getActivityId().
+                        equals(item.getProcessDefinitionId())).findFirst().orElse(null);
+
+                if (entity!=null) {
+                    auditorHandleDTO.setActivityType(BaseStatusEnum.getName(entity.getAuditStatus()));
                 }else{
-                    approveRecordShowDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
+                    auditorHandleDTO.setActivityType("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
 
                 }
-
             }
 
-            approveRecordShowDTO.setActivityName(item.getName());
-            approveRecordShowDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
-            approveRecordShowDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
-            approveRecordShowDTO.setHandleUserId(item.getAssignee());
-            approveRecordShowDTO.setComment(approvalSuggestion);
-            resultList.add(approveRecordShowDTO);
+            auditorHandleDTO.setActivityName(item.getName());
+            auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
+            auditorHandleDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
+            auditorHandleDTO.setHandleUserId(item.getAssignee());
+            auditorHandleDTO.setTaskDefinitionKey( item.getTaskDefinitionKey());
+            auditorHandleDTO.setComment(approvalSuggestion);
+            resultList.add(auditorHandleDTO);
         }
         return resultList;
     }

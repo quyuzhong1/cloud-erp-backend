@@ -22,7 +22,7 @@ import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.workflow.dto.ApproveRecordShowDTO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -778,11 +778,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             for (ProjectTaskEntity task : taskList) {
                 //查询当前需要审核的人员
-                List<ApproveRecordShowDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
+                List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
                 if (CollectionUtils.isEmpty(approveRecordShowList)){
                     throw new ServiceException(ApiError.ERROR_95045);
                 }
-                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj->"待审核".equals(obj.getActivityType())).map(ApproveRecordShowDTO::getHandleUserName).collect(Collectors.toList());
+                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj->"待审核".equals(obj.getActivityType())).map(AuditorHandleDTO::getHandleUserName).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);

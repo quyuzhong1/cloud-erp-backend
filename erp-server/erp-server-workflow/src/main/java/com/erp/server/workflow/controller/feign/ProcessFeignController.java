@@ -1,17 +1,15 @@
 package com.erp.server.workflow.controller.feign;
 
 import com.erp.common.controller.BaseController;
-import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowBusinessProcessService;
 import com.erp.server.workflow.service.WorkflowBusinessService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,8 +43,7 @@ public class ProcessFeignController extends BaseController {
     @Autowired
     private WorkflowBusinessProcessService businessProcessService;
 
-    @Autowired
-    private SysUserFeign sysUserFeign;
+
 
 
     //启动流程
@@ -127,8 +122,8 @@ public class ProcessFeignController extends BaseController {
 
     //查看流程审批情况
     @PostMapping("/getHistoryTaskByProcessId")
-    public List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId) {
-        List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
+    public List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId) {
+        List<AuditorHandleDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
         return resultList;
     }
 
@@ -142,25 +137,9 @@ public class ProcessFeignController extends BaseController {
      */
     //查看流程审批情况
     @PostMapping("/getHistoryTaskByBusinessTableId")
-    public List<ApproveRecordShowDTO> getHistoryTaskByBusinessTableId(@RequestBody String businessTableId) {
-        List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(Arrays.asList(businessTableId));
-        if (CollectionUtils.isNotEmpty(list)) {
-            WorkflowBusinessProcessDTO dto = list.get(0);
-            List<ApproveRecordShowDTO> resultList = processTaskService.getHistoryTaskByProcessId(dto.getProcessId());
-            List<FindUserDTO> userList = sysUserFeign.getUserList();
-            for(ApproveRecordShowDTO item:resultList){
-                FindUserDTO findUser = userList.stream().filter(u -> item.getHandleUserId().equals(u.getUserId())).findFirst().orElse(null);
-                if (findUser != null) {
-                    item.setHandleUserName(findUser.getUserName());
-                } else {
-                    item.setHandleUserName("");
-                }
-            }
-
-
-            return resultList;
-        }
-        return new ArrayList<>();
+    public List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(@RequestBody String businessTableId) {
+        List<ApproveNodeRecordVO> list = processTaskService.getHistoryTaskByBusinessTableId(businessTableId);
+        return list;
     }
 
 
@@ -214,7 +193,6 @@ public class ProcessFeignController extends BaseController {
         List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(businessTableIds);
         return list;
     }
-
 
 
     /**

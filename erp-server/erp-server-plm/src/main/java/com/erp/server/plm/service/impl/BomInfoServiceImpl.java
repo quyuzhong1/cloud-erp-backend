@@ -951,9 +951,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-02-08 9:00
      */
     @Override
-    public List<ApproveRecordShowDTO> auditInfo(String bomId) {
+    public List<AuditorHandleDTO> auditInfo(String bomId) {
         if (StringUtils.isNotBlank(bomId)) {
-            List<ApproveRecordShowDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
+            List<AuditorHandleDTO> list = workflowFeign.getHistoryTaskByBusinessTableId(bomId);
             return list;
         }
         return new ArrayList<>();

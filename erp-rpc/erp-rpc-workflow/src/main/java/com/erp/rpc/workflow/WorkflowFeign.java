@@ -74,7 +74,7 @@ public interface WorkflowFeign {
 
     //获取审核记录
     @PostMapping("workflow/feign/process/getHistoryTaskByProcessId")
-    List<ApproveRecordShowDTO> getHistoryTaskByProcessId(@RequestParam(value="processId") String processId);
+    List<AuditorHandleDTO> getHistoryTaskByProcessId(@RequestParam(value="processId") String processId);
 
     /**
      * 获取 业务信息
@@ -110,7 +110,7 @@ public interface WorkflowFeign {
      * @return java.util.List<com.erp.model.workflow.dto.ApproveRecordShowDTO>
      */
     @PostMapping("workflow/feign/process/getHistoryTaskByBusinessTableId")
-    List<ApproveRecordShowDTO> getHistoryTaskByBusinessTableId(@RequestBody String id);
+    List<AuditorHandleDTO> getHistoryTaskByBusinessTableId(@RequestBody String id);
 
 
     /**

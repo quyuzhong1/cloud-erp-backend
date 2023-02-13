@@ -345,18 +345,18 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @date 2022-08-18 11:34
      */
     @Override
-    public List<ApproveRecordShowDTO> queryApproveRecord(ProcessBaseDTO dto) {
+    public List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .orderByHistoricActivityInstanceStartTime()
                 .asc()
                 .list();
-        List<ApproveRecordShowDTO> resultList = new ArrayList<>(list.size());
+        List<AuditorHandleDTO> resultList = new ArrayList<>(list.size());
         for (HistoricActivityInstance item : list) {
             String taskId = item.getTaskId();
             List<Comment> taskComments = taskService.getTaskComments(taskId);
-            ApproveRecordShowDTO vo = new ApproveRecordShowDTO();
+            AuditorHandleDTO vo = new AuditorHandleDTO();
             vo.setActivityName(item.getActivityName());
             vo.setActivityType(matching(item.getActivityType()));
             vo.setComment(taskComments.size() > 0 ? taskComments.get(0).getFullMessage() : "");

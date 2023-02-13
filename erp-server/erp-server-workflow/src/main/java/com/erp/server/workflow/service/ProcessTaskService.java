@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 
@@ -43,7 +44,7 @@ public interface ProcessTaskService {
     * @param processId
     * @return List<ApproveRecordShowDTO>
     */
-    List<ApproveRecordShowDTO> getHistoryTaskByProcessId(String processId);
+    List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId);
 
     
     /**
@@ -64,4 +65,13 @@ public interface ProcessTaskService {
      * @return com.erp.model.workflow.dto.ProcessNodeDTO
      */
     ProcessNodeDTO taskNoPass(ApproveProcessDTO dto);
+
+    /**
+     * 根据业务表id 获取审核人 操作记录
+     * @author yl
+     * @date 2023-02-13 17:00
+     * @param businessTableId
+     * @return java.util.List<com.erp.model.workflow.vo.ApproveNodeRecordVO>
+     */
+    List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(String businessTableId);
 }

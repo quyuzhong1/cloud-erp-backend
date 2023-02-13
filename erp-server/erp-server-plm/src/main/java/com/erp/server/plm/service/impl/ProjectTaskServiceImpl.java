@@ -4136,7 +4136,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //所有人员
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 根据流程id查询所有审核信息
-        List<ApproveRecordShowDTO> approveRecordShowList = null;
+        List<AuditorHandleDTO> approveRecordShowList = null;
         if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
             approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
         }
@@ -4211,7 +4211,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     //
-    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state, List<FindUserDTO> userList, List<ApproveRecordShowDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
+    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state, List<FindUserDTO> userList, List<AuditorHandleDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
         boolean flag = !Objects.isNull(entity);
         String operatorName = "";
         Date operatorTime = null;
@@ -4233,22 +4233,22 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state) || TaskStateEnum.APPROVAL_ING.getCode().equals(state)
                 || TaskStateEnum.FINISH.getCode().equals(state) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state)) {
             //根据节点名称分组，将不同节点审核人分隔
-            Map<String, List<ApproveRecordShowDTO>> map = approveRecordShowList.stream().collect(Collectors.groupingBy(ApproveRecordShowDTO::getActivityName));
-            for (Map.Entry<String, List<ApproveRecordShowDTO>> entry : map.entrySet()) {
-                List<ApproveRecordShowDTO> value = entry.getValue();
+            Map<String, List<AuditorHandleDTO>> map = approveRecordShowList.stream().collect(Collectors.groupingBy(AuditorHandleDTO::getActivityName));
+            for (Map.Entry<String, List<AuditorHandleDTO>> entry : map.entrySet()) {
+                List<AuditorHandleDTO> value = entry.getValue();
                 List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                 TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
                 taskProcessNodeDetailDTO.setStartDate(value.get(0).getStartTime());
                 //查询流程
-                for (ApproveRecordShowDTO approveRecordShowDTO : value) {
+                for (AuditorHandleDTO auditorHandleDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
-                    String userName = userList.stream().filter(e -> e.getUserId().equals(approveRecordShowDTO.getHandleUserId())).map(FindUserDTO::getUserName).findFirst().orElse("");
+                    String userName = userList.stream().filter(e -> e.getUserId().equals(auditorHandleDTO.getHandleUserId())).map(FindUserDTO::getUserName).findFirst().orElse("");
                     taskProcessNodeDTO.setOperateUserName(userName);
                     taskProcessNodeDTO.setIfFinishNode(Boolean.TRUE);
                     //已经审核通过的数据格式化时间
-                    if (ObjectUtils.isNotEmpty(approveRecordShowDTO.getEndTime())) {
+                    if (ObjectUtils.isNotEmpty(auditorHandleDTO.getEndTime())) {
                         try {
-                            Date date = DateUtils.parseDate(approveRecordShowDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
+                            Date date = DateUtils.parseDate(auditorHandleDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
                             taskProcessNodeDTO.setOperateTime(date);
                         } catch (ParseException e) {
                             throw new ServiceException(ApiError.Default);
@@ -4259,7 +4259,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
                         taskProcessNodeDTO.setOperateTime(operatorTime);
                     } else {
-                        taskProcessNodeDTO.setNodeName(approveRecordShowDTO.getActivityType());
+                        taskProcessNodeDTO.setNodeName(auditorHandleDTO.getActivityType());
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }

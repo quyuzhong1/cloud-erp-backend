@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ApproveRecordShowDTO implements Serializable {
+public class AuditorHandleDTO implements Serializable {
 
     //节点名称
     private String activityName;
@@ -41,5 +41,8 @@ public class ApproveRecordShowDTO implements Serializable {
 
     //意见
     private String comment;
+
+    //任务的数据
+    private String taskDefinitionKey;
 
 }
