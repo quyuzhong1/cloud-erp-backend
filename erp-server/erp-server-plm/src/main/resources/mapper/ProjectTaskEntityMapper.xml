@@ -4,66 +4,93 @@
 
 
     <select id="paging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        WHERE product_id = #{params.productId}
+        SELECT
+            pt.id,
+            pt.pid,
+            pt.phase_id as phaseId,
+            pt.phase_name as phaseName,
+            pt.name,
+            pt.type,
+            pt.plan_start_time as planStartTime,
+            pt.plan_end_time as planEndTime,
+            pt.priority,
+            pt.status,
+            pt.is_fixed as isFixed,
+            pt.charge_name as chargeName,
+            pt.quote_sys_task_id as quoteSysTaskId,
+            pt.product_id as productId,
+            pt.charge_id as chargeId,
+            pt.process_id as processId,
+            pt.role_name as roleName,
+            pt.distribution_type as distributionType,
+            pp.seq
+        FROM project_task pt
+        left join project_phase pp on pt.phase_id = pp.id
+        WHERE pt.product_id = #{params.productId}
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
-            AND phase_id = #{params.phaseId}
+            AND pt.phase_id = #{params.phaseId}
         </if>
 
         <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
-            AND strpos (charge_id,#{userId})>0
+            AND strpos (pt.charge_id,#{userId})>0
         </if>
         <if test="params.statusList != null and params.statusList.size > 0">
-            AND status IN
+            AND pt.status IN
             <foreach collection="params.statusList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                AND priority in
+                AND pt.priority in
                 <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
                     #{priority}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND charge_id in
+                AND pt.charge_id in
                 <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
                     #{chargeId}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                AND status in
+                AND pt.status in
                 <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
                     #{status}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.startTime != null ">
-                AND create_time &gt;= #{params.taskSearchDTO.startTime}
+                AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND end_time &lt;= #{params.taskSearchDTO.endTime}
+                AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
+                 <choose >
+                     <when test="item.field == 'phaseName'">
+                         pp.seq ${item.sort}
+                     </when>
+                     <otherwise>
+                        ${item.field} ${item.sort}
+                     </otherwise>
+                 </choose>
             </foreach>
         </if>
-        create_time asc
+        pt.create_time asc
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">
         SELECT count(0) FROM project_task
-        WHERE product_id=#{productId}
+        WHERE product_id = #{productId}
         <if test="userId !=null and userId!=''">
             AND strpos (charge_id,#{userId})>0
         </if>
@@ -77,60 +104,87 @@
 
 
     <select id="allPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        WHERE product_id = #{params.productId}
+        SELECT
+            pt.id,
+            pt.pid,
+            pt.phase_id as phaseId,
+            pt.phase_name as phaseName,
+            pt.name,
+            pt.type,
+            pt.plan_start_time as planStartTime,
+            pt.plan_end_time as planEndTime,
+            pt.priority,
+            pt.status,
+            pt.is_fixed as isFixed,
+            pt.charge_name as chargeName,
+            pt.quote_sys_task_id as quoteSysTaskId,
+            pt.product_id as productId,
+            pt.charge_id as chargeId,
+            pt.process_id as processId,
+            pt.role_name as roleName,
+            pt.distribution_type as distributionType,
+            pp.seq
+        FROM project_task pt
+        left join project_phase pp on pt.phase_id = pp.id
+        WHERE pt.product_id = #{params.productId}
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
-            AND phase_id = #{params.phaseId}
+            AND pt.phase_id = #{params.phaseId}
         </if>
         <if test="params.statusList !=null and params.statusList.size>0">
-            AND status IN
+            AND pt.status IN
             <foreach collection="params.statusList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                AND priority in
+                AND pt.priority in
                 <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
                     #{priority}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND charge_id in
+                AND pt.charge_id in
                 <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
                     #{chargeId}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                AND status in
+                AND pt.status in
                 <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
                     #{status}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.startTime != null ">
-                AND create_time &gt;= #{params.taskSearchDTO.startTime}
+                AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND end_time &lt;= #{params.taskSearchDTO.endTime}
+                AND pt.end_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
+                <choose >
+                    <when test="item.field == 'phaseName'">
+                        pp.seq ${item.sort}
+                    </when>
+                    <otherwise>
+                        ${item.field} ${item.sort}
+                    </otherwise>
+                </choose>
             </foreach>
         </if>
-        create_time desc
+        pt.create_time desc
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -197,61 +251,88 @@
 
 
     <select id="myApprovalPaging" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
-        SELECT id,pid,phase_id,phase_name,name,type,plan_start_time,plan_end_time,priority,status,is_fixed,
-        charge_name,quote_sys_task_id,product_id,charge_id,process_id,role_name,distribution_type FROM project_task
-        WHERE product_id = #{params.productId} <!--AND pid='0'--> AND process_id IN
+        SELECT
+            pt.id,
+            pt.pid,
+            pt.phase_id as phaseId,
+            pt.phase_name as phaseName,
+            pt.name,
+            pt.type,
+            pt.plan_start_time as planStartTime,
+            pt.plan_end_time as planEndTime,
+            pt.priority,
+            pt.status,
+            pt.is_fixed as isFixed,
+            pt.charge_name as chargeName,
+            pt.quote_sys_task_id as quoteSysTaskId,
+            pt.product_id as productId,
+            pt.charge_id as chargeId,
+            pt.process_id as processId,
+            pt.role_name as roleName,
+            pt.distribution_type as distributionType,
+            pp.seq
+        FROM project_task pt
+        left join project_phase pp on pt.phase_id = pp.id
+        WHERE pt.product_id = #{params.productId} <!--AND pid='0'--> AND pt.process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
         </foreach>
 
         <if test="params.phaseId != null and params.phaseId != '' and params.phaseId != 0 ">
-            AND phase_id = #{params.phaseId}
+            AND pt.phase_id = #{params.phaseId}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="params.statusList !=null and params.statusList.size>0">
-            AND status IN
+            AND pt.status IN
             <foreach collection="params.statusList" item="state" open="(" separator="," close=")">
                 #{state}
             </foreach>
         </if>
         <if test="params.taskSearchDTO !=null">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
-                AND priority in
+                AND pt.priority in
                 <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator="," close=")">
                     #{priority}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
-                AND charge_id in
+                AND pt.charge_id in
                 <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator="," close=")">
                     #{chargeId}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
-                AND status in
+                AND pt.status in
                 <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
                     #{status}
                 </foreach>
             </if>
             <if test="params.taskSearchDTO.startTime != null ">
-                AND create_time &gt;= #{params.taskSearchDTO.startTime}
+                AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
             </if>
             <if test="params.taskSearchDTO.endTime != null ">
-                AND end_time &gt;= #{params.taskSearchDTO.endTime}
+                AND pt.end_time &gt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
+                <choose >
+                    <when test="item.field == 'phaseName'">
+                        pp.seq ${item.sort}
+                    </when>
+                    <otherwise>
+                        ${item.field} ${item.sort}
+                    </otherwise>
+                </choose>
             </foreach>
         </if>
-        create_time asc
+        pt.create_time asc
     </select>
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
@@ -295,13 +376,13 @@
                     #{state}
                 </foreach>
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
-                b.status != 4 and a.task_id = t.id )
+            <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+                = pt.id ))
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
-                = 1 or b.status = 3) and a.task_id = t.id)
+            <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -325,13 +406,13 @@
                 #{state}
             </foreach>
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
-            != 4 and a.task_id = t.id )
+        <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+            = pt.id ))
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
-            or b.status = 3) and a.task_id = t.id)
+        <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -353,13 +434,13 @@
                     #{state}
                 </foreach>
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
-                b.status != 4 and a.task_id = t.id )
+            <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+                = pt.id ))
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
-                = 1 or b.status = 3) and a.task_id = t.id)
+            <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -383,13 +464,13 @@
                 #{state}
             </foreach>
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
-            != 4 and a.task_id = t.id )
+        <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+            = pt.id ))
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
-            or b.status = 3) and a.task_id = t.id)
+        <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -413,13 +494,13 @@
                     #{state}
                 </foreach>
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 1">
-                AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where
-                b.status != 4 and a.task_id = t.id )
+            <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+                = pt.id ))
             </if>
-            <if test="params.isExecutable != null and params.isExecutable == 0">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
-                = 1 or b.status = 3) and a.task_id = t.id)
+            <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -442,13 +523,13 @@
                 #{state}
             </foreach>
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 1">
-            AND not EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status
-            != 4 and a.task_id = t.id )
+        <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
+            = pt.id ))
         </if>
-        <if test="params.isExecutable != null and params.isExecutable == 0">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status = 1
-            or b.status = 3) and a.task_id = t.id)
+        <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -458,8 +539,24 @@
 
     <select id="listProductTaskBySearchCategory" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT
-        pt.id,pt.pid,pt.phase_id,pt.phase_name,pt.name,pt.type,pt.plan_start_time,pt.plan_end_time,pt.priority,pt.status,pt.is_fixed,
-        pt.charge_name,pt.quote_sys_task_id,pt.product_id,pt.charge_id,pt.process_id,pt.role_name,pt.distribution_type
+        pt.id,
+               pt.pid,
+               pt.phase_id as phaseId,
+               pt.phase_name as phaseName,
+               pt.name,
+               pt.type,
+               pt.plan_start_time as planStartTime,
+               pt.plan_end_time as planEndTime,
+               pt.priority,
+               pt.status,
+               pt.is_fixed as isFixed,
+               pt.charge_name as chargeName,
+               pt.quote_sys_task_id as quoteSysTaskId,
+               pt.product_id as productId,
+               pt.charge_id as chargeId,
+               pt.process_id as processId,
+               pt.role_name as roleName,
+               pt.distribution_type as distributionType
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
@@ -508,12 +605,11 @@
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
                 AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
-                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status != 4 and a.task_id
+                b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 or b.status != 5) and a.task_id
                 = pt.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status
-                = 1 or b.status = 3) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
             </if>
             <if test="params.taskSearchDTO != null">
                 <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
