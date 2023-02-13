@@ -77,7 +77,7 @@ public class DmpRefundItemServiceImpl extends ServiceImpl<DmpRefundItemMapper, D
             }
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            saveBatch(insertList);
+            saveBatch(insertList, 500);
         }
     }
 }

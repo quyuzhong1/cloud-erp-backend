@@ -15,4 +15,5 @@ public class KingdeeShopMongoDTO {
     public KingdeeShopMongoDTO(String fCustId) {
         this.custId = fCustId;
     }
+
 }

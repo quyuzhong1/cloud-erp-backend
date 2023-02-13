@@ -56,4 +56,5 @@ public class KingdeeShopEntity {
     private String fCreateDate;
     @Alias("FModifyDate")
     private String fModifyDate;
+
 }

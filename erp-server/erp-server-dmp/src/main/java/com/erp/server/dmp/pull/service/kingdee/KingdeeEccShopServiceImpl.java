@@ -12,11 +12,13 @@ import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.KingdeeShopMongoDTO;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.RocketMqTagEnum;
+import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
@@ -40,52 +42,73 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.BD_CUSTOMER)
-public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeShopEntity> {
+@SaveData(method = PlatformApiEnum.ECC_SHOP)
+public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShopEntity> {
     @Resource
     private MongoService mongoService;
-    @Resource
-    private PlatformApiTaskService platformApiTaskService;
+
     @Resource
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
 
+    public static void main(String[] args) {
+        KingdeeEccShopServiceImpl shopService = new KingdeeEccShopServiceImpl();
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        jobTaskDTO.setApiCode(PlatformApiEnum.ECC_SHOP.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取订单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2021-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-05-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(1);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.ECC_SHOP);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            List<KingdeeEccShopEntity> kingdeeSkuEntities = shopService.pullDate(requestDTO);
+            System.out.println(kingdeeSkuEntities);
+        }catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+    }
+
     @Override
     public void pullDataSave(RequestDTO dto) throws Exception {
-        List<KingdeeShopEntity> skuEntityList = pullDate(dto);
+        List<KingdeeEccShopEntity> skuEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(skuEntityList)){
-            log.info("拉取金蝶客户信息列表数据为空 entityList.size = 0 ");
-            XxlJobHelper.log("拉取金蝶客户信息列表数据为空 entityList.size = 0 ");
+            log.info("拉取金蝶网店管理列表数据为空 entityList.size = 0 ");
+            XxlJobHelper.log("拉取金蝶网店管理列表数据为空 entityList.size = 0 ");
             return;
         }
-        log.info("拉取金蝶客户信息列表数据 entityList.size = {}} ", skuEntityList.size());
-        XxlJobHelper.log("拉取金蝶客户信息列表数据 entityList.size = {}} ", skuEntityList.size());
-        List<KingdeeShopEntity> insertList = new ArrayList<>();
-        List<KingdeeShopEntity> pushToMqList = new ArrayList<>();
-        for (KingdeeShopEntity entity : skuEntityList) {
-            KingdeeShopMongoDTO queryMongoDTO = new KingdeeShopMongoDTO(entity.getFCustId());
-            List<KingdeeShopEntity> mongoData = mongoService.findMongoData(queryMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
+        log.info("拉取金蝶网店管理列表数据 entityList.size = {}} ", skuEntityList.size());
+        XxlJobHelper.log("拉取金蝶网店管理列表数据 entityList.size = {}} ", skuEntityList.size());
+        List<KingdeeEccShopEntity> insertList = new ArrayList<>();
+        List<KingdeeEccShopEntity> pushToMqList = new ArrayList<>();
+        for (KingdeeEccShopEntity entity : skuEntityList) {
+            OrderMongoDTO queryMongoDTO = new OrderMongoDTO(entity.getId());
+            List<KingdeeShopEntity> mongoData = mongoService.findMongoData(queryMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeShopEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
             KingdeeShopEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            KingdeeShopMongoDTO updateDto = new KingdeeShopMongoDTO(id);
-            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
+            mongoService.updateMongoData(queryMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeShopEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP);
+            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
-            log.warn("金蝶商户数据为空, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            log.warn("金蝶网店管理数据为空, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
         // 构造订单结构
@@ -96,52 +119,38 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SHOP_INFO_TAG.getName(),
-                                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode())))
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_ECC_SHOP_INFO_TAG.getName(),
+                                msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getId())))
                 .collect(Collectors.toList());
 
     }
 
-//    @Override
-//    public void pullHistoryOrderInfo(RequestDTO requestDTO) throws Exception {
-//        //拉取数据 存库
-//        pullDataSave(requestDTO);
-//        // 修改任务执行结果信息
-//        Boolean aBoolean = platformApiTaskService.updateTaskStateById(requestDTO.getJobTaskDTO(), 3);
-//        if (!aBoolean) {
-//            throw new RuntimeException("修改任务下次执行时间失败！");
-//        }
-//    }
-
-    private DmpShopInfoEntity initOrderInfoEntity(KingdeeShopEntity shopEntity) {
-//        if (!"1".equals(shopEntity.getFUseOrgId())) {
-//            return;
-//        }
+    private DmpShopInfoEntity initOrderInfoEntity(KingdeeEccShopEntity shopEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
         dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
         //平台店铺账户
-        dmpShopInfoEntity.setAccountUserName(shopEntity.getFName());
+        dmpShopInfoEntity.setAccountUserName(shopEntity.getFShopName());
         //平台店铺标识
         dmpShopInfoEntity.setAccountStoreName(shopEntity.getFName());
         //店铺名称
-        dmpShopInfoEntity.setName(shopEntity.getFName());
+        dmpShopInfoEntity.setName(shopEntity.getFCustomerIdName());
         //平台名称
-        dmpShopInfoEntity.setPlatformName(shopEntity.getF_ulz_Assistant_FDataValue());
-        String orgName = shopEntity.getFUseOrgId_FName();
+        dmpShopInfoEntity.setPlatformName(shopEntity.getFGYShopType());
+        String orgName = shopEntity.getFSaleOrgIdName();
         if(StrUtil.isNotBlank(orgName)){
             dmpShopInfoEntity.setIsVijim(Boolean.TRUE);
             if (orgName.contains("优至胜") || orgName.contains("小隼")) {
                 dmpShopInfoEntity.setIsVijim(Boolean.FALSE);
             }
         }
-        dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFUseOrgId()));
+        dmpShopInfoEntity.setUseOrgId(Integer.parseInt(shopEntity.getFSaleOrgId()));
         dmpShopInfoEntity.setUseOrgName(orgName);
+        dmpShopInfoEntity.setFinanceCode("");
         //平台标识
-        dmpShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
-        dmpShopInfoEntity.setCountry(shopEntity.getFCOUNTRY_FNumber());
-        dmpShopInfoEntity.setCustomerId(shopEntity.getFCustId());
-        dmpShopInfoEntity.setCreateTime(LocalDateTime.now());
+        dmpShopInfoEntity.setPlatformSign(PlatformEnum.KINGDEE_ECC.getDesc());
+        dmpShopInfoEntity.setCustomerId(shopEntity.getFCustomerId());
+        dmpShopInfoEntity.setCreateUserId(shopEntity.getFCreateOrgId());
         return dmpShopInfoEntity;
     }
     /**
@@ -150,12 +159,12 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
      * @param dto
      * @return
      */
-    public List<KingdeeShopEntity> pullDate(RequestDTO dto) throws Exception {
+    public List<KingdeeEccShopEntity> pullDate(RequestDTO dto) throws Exception {
         // 当前页数
         Integer pageIndex = 0;
         // 每次最多获取100条
         Integer pageSize = 10000;
-        List<KingdeeShopEntity> shopEntityList = new ArrayList<>();
+        List<KingdeeEccShopEntity> shopEntityList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         if(null == lastTime || null == nextTime){
@@ -168,12 +177,12 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
-        // 客户类型为店铺
-//        queryFilters.add(String.format("FCustTypeId.FNumber = '%s'", "KHLB004_SYS"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FCUSTID,FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FShortName,FCOUNTRY.FNumber,FWEBSITE," +
-                "FGroup,FGroup.FNumber,FGroup.FName,FDescription,FInvoiceType,FCustTypeId.FDataValue,FCustTypeId.FNumber,F_ulz_Assistant.FNumber," +
-                "F_ulz_Assistant.FDataValue,FDocumentStatus,FForbidStatus," +
+        String fieldKeys = "FId,FNumber,FName,FSaleOrgId,FSaleOrgId.FNumber,FSaleOrgId.FName," +
+                "FCreateOrgId,FCreateOrgId.FNumber,FCreateOrgId.FName,FShopType,FShopName,FStartDate,FSettlementCurrency," +
+                "FSettlementCurrency.FName,FCustomerId,FCustomerId.FNumber,FCustomerId.FName," +
+                "FSettlementOrgId,FSettlementOrgId.FNumber,FSettlementOrgId.FName,FDownloadByGY,FNick,FGYShopType," +
+                "FGYModifyDate,FStockOrgId,FStockOrgId.FName,FModifierId,FModifierId.FName,FCreatorId,FCreatorId.FName," +
                 "FCreateDate,FModifyDate";
 
         Boolean dataSign = true;
@@ -187,8 +196,8 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
             if (CollectionUtil.isEmpty(result)) {
                 return Collections.emptyList();
             }
-            List<KingdeeShopEntity> entityList = result.stream().map(shopEntity ->
-                    BeanUtil.toBean(shopEntity, KingdeeShopEntity.class)).collect(Collectors.toList());
+            List<KingdeeEccShopEntity> entityList = result.stream().map(shopEntity ->
+                    BeanUtil.toBean(shopEntity, KingdeeEccShopEntity.class)).collect(Collectors.toList());
             shopEntityList.addAll(entityList);
             pageIndex ++;
         }

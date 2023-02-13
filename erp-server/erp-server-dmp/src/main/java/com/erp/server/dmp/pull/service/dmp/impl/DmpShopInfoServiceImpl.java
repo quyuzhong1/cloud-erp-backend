@@ -124,7 +124,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Transactional(rollbackFor = Exception.class)
     public void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity) {
         List<DmpShopInfoEntity> shopInfoEntity = lambdaQuery()
-                .eq(DmpShopInfoEntity::getFinanceCode, dmpShopInfoEntity.getPlarformShopNo())
+                .eq(PlatformEnum.KINGDEE.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getFinanceCode, dmpShopInfoEntity.getPlarformShopNo())
+                .eq(PlatformEnum.KINGDEE_ECC.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getPlarformShopNo, dmpShopInfoEntity.getPlarformShopNo())
                 .list();
         if (CollectionUtil.isEmpty(shopInfoEntity)) {
             return;
@@ -136,7 +137,13 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 return;
             }
             dmpShopInfoEntity.setId(entity.getId());
-            updateById(dmpShopInfoEntity);
+            entity.setIsVijim(dmpShopInfoEntity.getIsVijim());
+            entity.setUseOrgName(dmpShopInfoEntity.getUseOrgName());
+            entity.setUseOrgId(dmpShopInfoEntity.getUseOrgId());
+            entity.setCustomerId(dmpShopInfoEntity.getCustomerId());
+            entity.setCreateUserName(dmpShopInfoEntity.getCreateUserName());
+            entity.setCountry(dmpShopInfoEntity.getCountry());
+            updateById(entity);
         });
     }
 }

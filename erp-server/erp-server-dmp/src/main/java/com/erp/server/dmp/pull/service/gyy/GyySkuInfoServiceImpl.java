@@ -20,7 +20,6 @@ import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -44,11 +43,6 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
 
     @Resource
     private DmpSkuInfoService dmpSkuInfoService;
-
-    @Resource
-    @Qualifier("gyySkuInfoServiceImpl")
-    private IReportSaveService reportSaveService;
-
     public static void main(String[] args) {
         GyySkuInfoServiceImpl gyySkuInfoService = new GyySkuInfoServiceImpl();
         PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_ITEMS_GET;

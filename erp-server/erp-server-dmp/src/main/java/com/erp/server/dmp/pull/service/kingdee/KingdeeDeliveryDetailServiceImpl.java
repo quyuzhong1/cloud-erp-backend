@@ -58,7 +58,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     public void pullDataSave(RequestDTO dto) throws Exception {
         List<KingdeeDeliveryDetailEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
-            log.info("拉取管易退货订单列表数据为空 entityList.size = 0 ");
+            log.info("拉取金蝶发货订单列表数据为空 entityList.size = 0 ");
             return;
         }
         List<KingdeeDeliveryDetailEntity> insertList = new ArrayList<>();
@@ -116,7 +116,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         LinkedList<String> queryFilters = new LinkedList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
-        queryFilters.add(StrUtil.format("FModifyDate <= '{}}'", sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FModifyDate <= '{}'", sdf.format(nextTime)));
         queryFilters.add(StrUtil.format("FBillTypeID = '{}'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
         queryFilters.add(StrUtil.format("F_ulz_BaseProperty2.FNumber in ('{}','{}','{}')", "3001","3000","3003"));
         queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));

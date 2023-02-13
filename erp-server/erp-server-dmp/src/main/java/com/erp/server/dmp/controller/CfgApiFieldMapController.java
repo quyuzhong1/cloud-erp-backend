@@ -13,7 +13,9 @@ import com.erp.model.dmp.vo.CfgApiFieldMapVO;
 import com.erp.server.dmp.push.service.kingdee.KingdeeProductDetailService;
 import com.erp.server.dmp.service.CfgApiFieldMapService;
 import com.erp.server.dmp.service.mq.MQProducerService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.ibatis.annotations.Param;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.validation.annotation.Validated;
@@ -218,30 +220,6 @@ public class CfgApiFieldMapController extends BaseController {
         map.put("mainSupplier","王杰");
         this.kingdeeProductDetailService.pushProductDetail(map);
         return success();
-    }
-
-    @Resource
-    private MQProducerService producerService;
-    @PostMapping("/push/mq")
-    public void pushToRocket(@RequestBody JSONObject body){
-        producerService.syncSendMsg("", RocketMqTopic.DMP_TOPIC, body.getString("tag"), body,"dmp test");
-    }
-    @PostMapping("/push/mq/batch")
-    public SendResult pushToRocketBatch(@RequestBody TestMq body){
-        return producerService.syncClassMsg(RocketMqTopic.DMP_TOPIC, body.getTag(), body, body.getKey());
-    }
-
-    @Data
-    public static class TestMq{
-        private String key;
-
-//        @JsonSerialize(as = LocalDateTimeSerializer.class)
-//        @JsonDeserialize(using = LocalDateTimeDeserializer.class, as = LocalDateTime.class)
-//        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-        private LocalDateTime time;
-        private List<String> codeList;
-
-        private String tag;
     }
 
 }

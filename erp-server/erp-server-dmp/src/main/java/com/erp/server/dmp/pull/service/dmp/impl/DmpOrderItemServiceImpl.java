@@ -40,7 +40,7 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
      **/
     @Override
     public Boolean batchAdd(List<DmpOrderItemEntity> dmpOrderInfoEntityList) {
-        return this.saveBatch(dmpOrderInfoEntityList);
+        return this.saveBatch(dmpOrderInfoEntityList, 500);
     }
 
     /**

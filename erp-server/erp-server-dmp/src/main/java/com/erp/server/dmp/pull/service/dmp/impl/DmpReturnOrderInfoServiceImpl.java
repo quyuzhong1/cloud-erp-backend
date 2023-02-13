@@ -102,9 +102,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     public String checkOrder(DmpReturnOrderInfoEntity returnOrderInfoEntity) {
         String returnOrderId = "";
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = this.getOrderByPlatformOrderId(returnOrderInfoEntity);
-//        if(returnOrderInfoEntity.getIsDeleted() && null != dmpReturnOrderInfoEntity){
-//            return returnOrderId;
-//        }
+        if(null != dmpReturnOrderInfoEntity && returnOrderInfoEntity.getIsDeleted()){
+            return returnOrderId;
+        }
         if (null != dmpReturnOrderInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {

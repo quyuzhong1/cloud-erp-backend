@@ -10,7 +10,7 @@ public enum ApiKingdeeOrganizationEnum {
 
     ORGANIZATION_WEIJI("1", "100","唯迹集团", "唯迹集团"),
     ORGANIZATION_YZS("100504", "101","优至胜", "优至胜"),
-    ORGANIZATION_XX("173616", "105","小隼", "小隼"),
+    ORGANIZATION_XX("173616", "105","小隼科技", "小隼"),
     ;
     private String code;
 

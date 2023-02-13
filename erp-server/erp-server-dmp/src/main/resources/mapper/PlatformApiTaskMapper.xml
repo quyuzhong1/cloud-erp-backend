@@ -21,16 +21,17 @@
         pat.next_time,
         pat.state,
         pat.create_time,
+        pat.retry_count,
         pa.api_code,
         pa.api_name,
         p.task_name,
         p.name AS platformName
         FROM platform_api_task pat
-        INNER JOIN platform_api pa ON pat.api_id = pa.id
-        INNER JOIN platform p ON pa.platform_id = p.id
+        LEFT JOIN platform_api pa ON pat.api_id = pa.id
+        LEFT JOIN platform p ON pa.platform_id = p.id
         WHERE
-        (pat.next_time &lt; #{localTime} OR pat.next_time IS NULL)
-        AND state=1
+        (pat.next_time &lt; #{localTime} and pat.next_time IS NOT NULL)
+--         AND state=1
         and pat.is_deleted = false
         limit #{pageSize} offset #{pageNumber}
     </select>
@@ -47,7 +48,7 @@
     </insert>
 
     <update id="updateTaskTypeState">
-        UPDATE platform_api_task SET state = 2 WHERE id IN
+        UPDATE platform_api_task SET state = #{state} WHERE id IN
         <foreach item="task" collection="jobTaskDTOList" separator="," open="(" close=")" index="">
             #{task.id}
         </foreach>
