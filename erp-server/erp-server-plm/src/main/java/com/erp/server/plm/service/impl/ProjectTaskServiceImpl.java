@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.BaseStatusEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -3360,6 +3361,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态
         checkTaskState(list);
+
+        //如果  排期任务状态 要通过才能发布任务
+        //审核通过
+        String auditPassStatus= BaseStatusEnum.AUDIT_PASS.getStatus();
+        List<String> scheduleStatusList=list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+        //当不包含就要去除
+        if(!scheduleStatusList.contains(auditPassStatus)){
+            throw new ServiceException(ApiError.ERROR_95127);
+        }
+
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
