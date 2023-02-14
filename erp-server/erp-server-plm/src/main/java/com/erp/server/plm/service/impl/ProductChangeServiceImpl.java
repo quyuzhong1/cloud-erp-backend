@@ -401,6 +401,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 return new PagingVO(pageData);
             }
         }
+        //如果搜索是空就返回空
+        if(CollectionUtils.isEmpty(changeSearch)){
+            IPage pageData = new Page();
+            return new PagingVO(pageData);
+        }
 
         IPage pageData = baseMapper.paging(query, changeSearch, changeIdList);
         List<ProductChangePagingVO> list = pageData.getRecords();

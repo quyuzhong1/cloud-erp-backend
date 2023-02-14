@@ -23,6 +23,7 @@ import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.listener.ChangeScheduleExcelListener;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
@@ -93,10 +94,16 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             //交付文档列表
             List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(productId);
 
+            //排期状态
+            List<String> scheduleStatusList = new ArrayList<>();
+            scheduleStatusList.add(BaseStatusEnum.AUDIT_PASS.getStatus());
+            scheduleStatusList.add(BaseStatusEnum.AUDIT_PASS.getStatus());
+
             //根据阶段分组
             Map<String, List<ProductTaskVO>> map = taskList.stream().
                     collect(Collectors.groupingBy(ProductTaskVO::getPhaseId));
-
+            //变更
+            String change= ProjectPlanConstant.PROJECT_PLAN_CHANGE;
             int parentId = 1;
             for (Map.Entry<String, List<ProductTaskVO>> item : map.entrySet()) {
                 ProductTaskVO parentVO = new ProductTaskVO();
@@ -124,7 +131,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
                     vo.setDeliveryDocsNames(String.join(",", docsNameList));
                     vo.setStatusName(TaskStateEnum.getName(vo.getStatus()));
-                    vo.setScheduleStatusName(BaseStatusEnum.getName(vo.getScheduleStatusName()));
+                    //排期状态
+                    String scheduleStatus = vo.getScheduleStatus();
+                    //排期类型
+                    String scheduleType = vo.getScheduleType();
+                    //如果是变更 且不在 两个状态中 就是变更
+                    if(change.equals(scheduleType)){
+                        if(!scheduleStatusList.contains(scheduleStatus)){
+                            vo.setIsChange(true);
+                        }
+                    }
+                    vo.setScheduleStatusName(BaseStatusEnum.getName(vo.getScheduleStatus()));
                     parentId++;
                 }
                 resultList.add(parentVO);
@@ -478,7 +495,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public Boolean changeSchedule(ChangeScheduleDTO dto) {
         Boolean result = true;
-        List<ChangeTaskScheduleDTO> list=dto.getChangeTaskList();
+        List<ChangeTaskScheduleDTO> list = dto.getChangeTaskList();
         if (CollectionUtils.isNotEmpty(list)) {
             String productId = dto.getProductId();
             List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
@@ -497,7 +514,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 throw new ServiceException(ApiError.ERROR_95010);
             }
 
-            result = projectPlanService.changeSchedule(productId,list);
+            result = projectPlanService.changeSchedule(productId, list);
         }
 
         return result;
@@ -537,6 +554,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 }
                 entity.setChangeStartTime(changeTask.getPlanStartTime());
                 entity.setChangeEndTime(changeTask.getPlanEndTime());
+                if(changeTask.getIsRestart()!=null){
+                    entity.setIsRestart(changeTask.getIsRestart());
+                }
             } else {
                 entity.setChangeStartTime(item.getPlanStartTime());
                 entity.setChangeEndTime(item.getPlanEndTime());

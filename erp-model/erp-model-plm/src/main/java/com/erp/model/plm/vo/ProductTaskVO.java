@@ -150,6 +150,11 @@ public class ProductTaskVO implements Serializable {
      */
     private String scheduleStatusName;
 
+    /**
+     * 排期类型
+     */
+    private String scheduleType;
+
 
 
     /**

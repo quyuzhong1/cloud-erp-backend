@@ -989,6 +989,7 @@
         update_time AS updateTime,
         update_user_name AS updateUserName,
         schedule_status AS scheduleStatus,
+        schedule_type AS scheduleType,
         status
         FROM project_task
         WHERE product_id=#{dto.productId}

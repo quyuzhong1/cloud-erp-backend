@@ -49,7 +49,7 @@ public class BomSkuDTO implements Serializable {
      * 数量
      */
     @NotNull(message = "数量不能为空")
-    @DecimalMax(value = "999",message ="最大值为999" )
+    @DecimalMax(value = "9999",message ="最大值为9999" )
     @DecimalMin(value = "1",message ="最小值为1" )
     private Integer quantity;
 

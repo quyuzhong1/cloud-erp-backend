@@ -94,6 +94,12 @@ public class ProjectPlanTaskEntity implements Serializable {
     private Boolean isDeleted;
 
 
+    /**
+     * 是否重启
+     */
+    private Boolean isRestart;
+
+
 
 
 }
