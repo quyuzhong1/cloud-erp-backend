@@ -402,7 +402,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
         }
         //如果搜索是空就返回空
-        if(CollectionUtils.isEmpty(changeSearch)){
+        if(CollectionUtils.isEmpty(changeSearch)&&StringUtils.isNotBlank(searchKeyword)){
             IPage pageData = new Page();
             return new PagingVO(pageData);
         }
