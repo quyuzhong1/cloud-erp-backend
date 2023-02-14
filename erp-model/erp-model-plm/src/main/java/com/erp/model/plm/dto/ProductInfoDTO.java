@@ -31,6 +31,7 @@ public class ProductInfoDTO {
     /**
      * 产品名称（英文）
      */
+    @Size(max = 200,message = "产品名称（英文）最大200字符")
     private String nameEn;
 
     /**
@@ -86,6 +87,7 @@ public class ProductInfoDTO {
     /**
      * spuNo
      */
+    @Size(max = 50,message = "SPU最大50字符")
     private String spuNo;
 
     /**

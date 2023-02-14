@@ -574,6 +574,27 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
     }
 
+    @Override
+    public List<BasicDTO> listProjectInfo(ProductSearchDTO params) {
+        //获取@RequestPermissions的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        //根据当前登录人id 获取收藏的列表
+        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
+
+        List<BasicDTO> list = new ArrayList<>();
+        //如果是我的收藏
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
+            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
+                list = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
+            }
+        } else {
+            list = baseMapper.listNotPaging(params, archiveProductIds);
+        }
+        return list;
+    }
+
     /**
      * 检查项目是否完成
      *

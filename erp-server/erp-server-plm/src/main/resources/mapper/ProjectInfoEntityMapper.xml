@@ -98,4 +98,91 @@
         ORDER BY  pi.create_time DESC
     </select>
 
+    <select id="listMyCollectNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
+        SELECT
+               p.id, p.name
+        FROM product_info p
+        INNER JOIN project_info pi ON p.id=pi.product_id
+        WHERE  P.delete_state=0 AND p.is_finished_product_dev = 1
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id=#{params.categoryId}
+        </if>
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND pi.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="productIds !=null and productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="archiveProductIds !=null and archiveProductIds.size()>0">
+            AND p.id NOT IN
+            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
+        </if>
+
+        ORDER BY  pi.create_time DESC
+    </select>
+
+    <select id="listNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
+        SELECT
+            p.id, p.name
+        FROM product_info p INNER JOIN project_info pi
+        ON p.id=pi.product_id
+        WHERE   P.delete_state=0 AND p.is_finished_product_dev = 1
+        <if test="params.categoryId!='' and params.categoryId!=null">
+            AND P.category_id = #{params.categoryId}
+        </if>
+        <if test="params.searchKeyword!='' and params.searchKeyword!=null">
+            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
+        </if>
+        <if test="params.stateList !=null and params.stateList.size()>0">
+            AND pi.project_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+
+        <if test="params.productIds !=null and params.productIds.size()>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="archiveProductIds !=null and archiveProductIds.size()>0">
+            AND p.id NOT IN
+            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+        <if test="params.param!='' and params.param!=null">
+            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.param})
+            or p.id IN (SELECT pt.product_id FROM project_task pt WHERE (pt.charge_id is null or pt.charge_id = ''))
+            or p.id IN (SELECT pi.product_id FROM project_info pi WHERE (pi.charge_id is null or pi.charge_id = ''))
+            )
+        </if>
+
+        ORDER BY  pi.create_time DESC
+    </select>
+
 </mapper>

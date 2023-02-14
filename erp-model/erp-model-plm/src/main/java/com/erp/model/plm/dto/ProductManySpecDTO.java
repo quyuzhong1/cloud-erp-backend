@@ -31,11 +31,13 @@ public class ProductManySpecDTO {
      * 成本信息
      */
     @NotNull(message = "成本信息不能为空")
+    @Valid
     private List<ProductCostDTO> productCostList;
 
     /**
      * 采购信息信息
      */
+    @Valid
     private List<ProductPurchaseDTO> productPurchaseList;
 
     /**

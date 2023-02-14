@@ -45,4 +45,6 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     ProjectInfoEntity getByProductId(String productId);
 
     void setProjectPhase(List<ProjectTaskEntity> taskList, List<ProjectPhaseEntity> phaseList, ProductShowDTO item);
+
+    List<BasicDTO> listProjectInfo(ProductSearchDTO dto);
 }
