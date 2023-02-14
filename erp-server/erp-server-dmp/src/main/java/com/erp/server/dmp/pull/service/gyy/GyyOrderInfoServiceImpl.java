@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -49,30 +50,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     private MongoService mongoService;
     @Autowired
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
-    public static void main(String[] args) {
-        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
-        PlatformApiEnum platformApiEnum = PlatformApiEnum.GY_ERP_TRADE_GET;
-        JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode(platformApiEnum.getTaskName());
-        jobTaskDTO.setApiId(7);
-        jobTaskDTO.setApiName("管易云查询订单列表");
-        jobTaskDTO.setId(32L);
-        jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.now());
-        jobTaskDTO.setNextTime(LocalDateTime.now().minusDays(2));
-        jobTaskDTO.setPlatformId(1);
-        jobTaskDTO.setState(1);
-        RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setPlatformApiEnum(platformApiEnum);
-        requestDTO.setJobTaskDTO(jobTaskDTO);
-        List<GyyOrderEntity> orderEntities = null;
-        try {
-            orderEntities = gyyOrderInfoService.pullDate(requestDTO);
-            System.out.println(orderEntities);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * 拉取订单数据
@@ -92,14 +69,6 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         List<GyyOrderEntity> insertList = new ArrayList<>();
         List<GyyOrderEntity> pushToMqList = new ArrayList<>();
         for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
-            if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
-                continue;
-            }
-            if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
-                if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
-                    continue;
-                }
-            }
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(gyyOrderEntity.getPlatformCode(), gyyOrderEntity.getCode());
             List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
@@ -128,6 +97,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         // 构造订单结构
         List<DmpOrderInfoEntity> mabangToMqlist = pushToMqList.parallelStream()
                 .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
@@ -160,6 +130,14 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      **/
 
     public DmpOrderInfoEntity initOrderInfoEntity(GyyOrderEntity gyyOrderEntity){
+        if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
+            if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
+                return null;
+            }
+        }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getCode());
