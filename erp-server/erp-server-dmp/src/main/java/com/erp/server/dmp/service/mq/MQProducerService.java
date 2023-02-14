@@ -1,11 +1,10 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
 import com.erp.common.entity.MessageBody;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -13,12 +12,11 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +30,9 @@ public class MQProducerService<T> {
      */
     @Autowired
     private RocketMQTemplate rocketMQTemplate;
+
+    private String activeProfile = SpringUtil.getActiveProfile();
+
 
 	private void sendMsg(MSG_TYPE msgType,String msgKey, String destination, Object payload, String msgSource){
         if(StrUtil.isBlank(msgKey)){
@@ -53,12 +54,14 @@ public class MQProducerService<T> {
                     @Override
                     public void onException(Throwable throwable) {
                         log.error("MQService:" + ExceptionUtils.getStackTrace(throwable));
-                        throw new RuntimeException(String.format("消息发送失败 topic_tag:%s", destination ));
+                        throw new RuntimeException(StrUtil.format("消息发送失败 topic_tag={}", destination ));
                     }
                 });
                 break;
             case SYNC:
                 result = rocketMQTemplate.syncSend(destination, message);
+                break;
+            default:
                 break;
         }
         log.info("消息发送 MQService 结束: result: {} dest: {} msg: {}}", JSONUtil.toJsonStr(result), destination, message);
@@ -110,7 +113,7 @@ public class MQProducerService<T> {
     public void oneWaySendMsg(String msgKey,String topic, String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = topic + ":" + tag;
+        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
@@ -118,7 +121,7 @@ public class MQProducerService<T> {
      * 普通发送（这里的参数对象User可以随意定义，可以发送个对象，也可以是字符串等）
      */
     public void sendEntity(String topic, String tag, T entity) {
-        rocketMQTemplate.convertAndSend(topic + tag, entity);
+        rocketMQTemplate.convertAndSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), entity);
     }
 
     /**
@@ -134,7 +137,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtils.simpleUUID())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(topic + tag, messageList);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), messageList);
     }
 
     /**
@@ -149,7 +152,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic, tag), msg);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), msg);
     }
 
     /**
@@ -163,7 +166,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        String destination = StrUtil.format("{}:{}", topic, tag);
+        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
         rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
