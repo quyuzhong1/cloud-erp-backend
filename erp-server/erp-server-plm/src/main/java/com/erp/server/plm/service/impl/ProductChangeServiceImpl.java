@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.SkuApproveConfigureEnum;
@@ -75,6 +76,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProductChangeDetailsService productChangeDetailsService;
+
+    @Autowired
+    private SysLogService sysLogService;
+
 
     //变更财务人员审核
     @Value("{changeFinancialAudit}")
@@ -878,5 +886,43 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             return list;
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public List<String> listChangeField(String id) {
+        ProductChangeEntity productChangeEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productChangeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95127);
+        }
+        //查询变更后的json字符串
+        String detailsJson = productChangeDetailsService.getDetailsJson(id);
+        if (StringUtils.isBlank(detailsJson)) {
+            throw new ServiceException(ApiError.ERROR_95128);
+        }
+        //变更后数据
+        ProductSmallestUnitDTO newBom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
+        //变更前数据
+        ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
+        if (ObjectUtils.isEmpty(oldbom)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        List<String> list1 = sysLogService.listSysLogField(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO());
+        List<String> list2 = sysLogService.listSysLogField(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList());
+        List<String> list3 = sysLogService.listSysLogField(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO());
+        List<String> list4 = sysLogService.listSysLogField(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO());
+        List<String> list5 = sysLogService.listSysLogField(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail());
+        List<String> list6 = sysLogService.listSysLogField(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO());
+        List<String> list7 = sysLogService.listSysLogField(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList());
+        List<String> list8 = sysLogService.listSysLogField(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList());
+        List<String> list9 = sysLogService.listSysLogField(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO());
+        list1.addAll(list2);
+        list1.addAll(list3);
+        list1.addAll(list4);
+        list1.addAll(list5);
+        list1.addAll(list6);
+        list1.addAll(list7);
+        list1.addAll(list8);
+        list1.addAll(list9);
+        return list1;
     }
 }

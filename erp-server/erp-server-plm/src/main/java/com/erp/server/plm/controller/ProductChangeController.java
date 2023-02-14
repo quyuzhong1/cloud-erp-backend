@@ -187,6 +187,18 @@ public class ProductChangeController extends BaseController {
         return success();
     }
 
+    /**
+     * 查询变更字段
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listChangeField")
+    public ApiResult<List<String>> listChangeField(@RequestBody @Validated BaseIdDTO dto) {
+        List<String> list = productChangeService.listChangeField(dto.getId());
+        return success(list);
+    }
+
 
     /**
      * bom 审核情况

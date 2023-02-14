@@ -38,12 +38,9 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @date: 2022/12/5 20:29
      * @param oldObj 旧对象
      * @param newObj 新对象
-     * @param classPath 实体类路径
-     * @param businessId 实体对应业务id
-     * @param pid 父级id
      * @return String
      */
-    String getSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid,String msg);
+    List<String> listSysLogField(Object oldObj,Object newObj);
     /**
      * @description: 新增时保存日志
      * @author Will
