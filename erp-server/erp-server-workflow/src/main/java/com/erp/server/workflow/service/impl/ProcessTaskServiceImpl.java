@@ -295,6 +295,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             Date endTime = item.getEndTime();
             //表示没有处理
             if (endTime == null) {
+                auditorHandleDTO.setHandContent("待审核");
             } else {
                 //表示有处理
                 //表示有活动节点

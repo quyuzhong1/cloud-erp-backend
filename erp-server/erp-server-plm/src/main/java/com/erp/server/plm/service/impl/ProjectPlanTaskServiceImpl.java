@@ -7,6 +7,7 @@ import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
 import com.common.core.utils.ExcelUtil;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
@@ -20,6 +21,7 @@ import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
@@ -533,6 +535,24 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange) {
 
         return baseMapper.getTaskByPlanType(productId, projectPlanChange);
+    }
+
+
+    /**
+     * 查询变更 排期的任务
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.ScheduleChangeTaskVO>
+     * @author yl
+     * @date 2023-02-14 8:27
+     */
+    @Override
+    public List<ScheduleChangeTaskVO> getChangeTaskList(BaseIdDTO dto) {
+        List<ScheduleChangeTaskVO> list = baseMapper.getChangeTaskList(dto.getId(), dto.getName(), BaseStatusEnum.AUDIT_PASS.getStatus());
+        for (ScheduleChangeTaskVO vo : list) {
+            vo.setStatusName(TaskStateEnum.getName(vo.getStatus()));
+        }
+        return list;
     }
 
 }

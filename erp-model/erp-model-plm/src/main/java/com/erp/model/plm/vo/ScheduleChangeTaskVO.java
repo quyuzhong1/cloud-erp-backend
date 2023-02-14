@@ -19,10 +19,18 @@ public class ScheduleChangeTaskVO implements Serializable {
 
     private String taskId;
 
+
+    private String taskName;
+
     /**
      * 任务负责人id
      */
     private String chargeId;
+
+    /**
+     * 任务负责人名
+     */
+    private String chargeName;
 
 
 
@@ -46,5 +54,10 @@ public class ScheduleChangeTaskVO implements Serializable {
     /*
      * 状态
      */
-    private String status;
+    private Integer status;
+
+    /*
+     * 任务状态名
+     */
+    private String statusName;
 }

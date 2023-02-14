@@ -1,12 +1,14 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
+import com.erp.model.plm.vo.ScheduleChangeTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
@@ -102,5 +104,14 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
     List<ScheduleTaskDetailsVO> getTaskByPlanType(String productId, String projectPlanChange);
 
+    
+    /**
+     * 查询变更 排期的任务
+     * @author yl
+     * @date 2023-02-14 8:27
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.ScheduleChangeTaskVO>
+     */
 
+    List<ScheduleChangeTaskVO> getChangeTaskList(BaseIdDTO dto);
 }

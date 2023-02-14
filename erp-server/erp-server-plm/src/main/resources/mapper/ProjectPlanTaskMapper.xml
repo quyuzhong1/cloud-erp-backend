@@ -55,7 +55,17 @@
                 SELECT id FROM  project_plan WHERE product_id=#{productId} AND type=#{projectPlanType} AND is_deleted=false
             )
 
+    </select>
+    <select id="getChangeTaskList" resultType="com.erp.model.plm.vo.ScheduleChangeTaskVO">
+        SELECT id AS taskId,charge_id ,charge_name,
+        plan_start_time,plan_end_time,product_id,
+        status,name AS taskName
+        FROM project_task WHERE product_id=#{productId}
+        AND schedule_status=#{scheduleStatus}
+        <if test="taskName!=null and taskName!=''">
+            AND name LIKE concat('%',#{taskName},'%')
 
+        </if>
     </select>
 </mapper>
 

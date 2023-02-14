@@ -146,9 +146,8 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @PostMapping("/changeTaskList")
     public ApiResult<List<ScheduleChangeTaskVO>> addChangeTask(@RequestBody @Validated BaseIdDTO dto) {
-        // Boolean result = projectTaskService.getChangeTaskList(dto);
-        //  return result == true ? success() : failure();
-        return success();
+        List<ScheduleChangeTaskVO> list = projectPlanTaskService.getChangeTaskList(dto);
+        return success(list);
     }
 
 
