@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ProductTaskVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
@@ -159,5 +160,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<ScheduleTaskExportExcelVO> getExportScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
 
     ScheduleTaskExportExcelVO getExport(@Param("productId") String productId, @Param("taskId")  String taskId);
+
+    List<ChangeScheduleExportVO> getExportChangeScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
 }
 

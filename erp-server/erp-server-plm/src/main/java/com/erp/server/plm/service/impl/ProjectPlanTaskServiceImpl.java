@@ -7,6 +7,7 @@ import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
 import com.common.core.utils.ExcelUtil;
+import com.erp.common.business.utils.FastDFSClientUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -22,6 +23,7 @@ import com.erp.model.sys.vo.UserFieldVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.TaskStateEnum;
+import com.erp.server.plm.listener.ChangeScheduleExcelListener;
 import com.erp.server.plm.listener.ProjectPlanTaskExcelListener;
 import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
@@ -33,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -119,6 +122,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     List<String> docsNameList = deliveryDocsList.stream().filter(d -> d.getTaskId().equals(taskId))
                             .map(TaskDeliveryDocsEntity::getDocsName).collect(Collectors.toList());
                     vo.setDeliveryDocsNames(String.join(",", docsNameList));
+                    vo.setStatusName(TaskStateEnum.getName(vo.getStatus()));
+                    vo.setScheduleStatusName(BaseStatusEnum.getName(vo.getScheduleStatusName()));
                     parentId++;
                 }
                 resultList.add(parentVO);
@@ -126,8 +131,28 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
             }
         }
+        //取值统计为已经有排期时间的统计数值
+        String waitSubmit = BaseStatusEnum.WAIT_SUBMIT.getStatus();
+        Integer scheduleTaskCount = Math.toIntExact(taskList.stream().filter(t -> t.getPlanEndTime() != null &&
+                t.getPlanStartTime() != null && !waitSubmit.equals(t.getScheduleStatus())).count());
+
+        /**
+         * 未排期任务数
+         */
+        Integer unscheduledTaskCount = taskList.size() - scheduleTaskCount;
+        /**
+         * 审核的任务数
+         * 取值为排期审核状态为审核通过的数值统计
+         */
+        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+        Integer scheduleAuditTaskCount = Math.toIntExact(taskList.stream().filter(t -> t.getPlanEndTime() != null &&
+                t.getPlanStartTime() != null && auditPassStatus.equals(t.getScheduleStatus())).count());
+
 
         resultVO.setTaskList(resultList);
+        resultVO.setScheduleTaskCount(scheduleTaskCount);
+        resultVO.setUnscheduledTaskCount(unscheduledTaskCount);
+        resultVO.setScheduleAuditTaskCount(scheduleTaskCount);
         resultVO.setTotalTaskCount(taskList.size());
         return resultVO;
     }
@@ -552,7 +577,67 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         for (ScheduleChangeTaskVO vo : list) {
             vo.setStatusName(TaskStateEnum.getName(vo.getStatus()));
         }
-        return list;
+
+        //前期任务
+        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskByProductId(dto.getId());
+        List<String> taskIdList = preTaskList.stream().map(PreTaskEntity::getTaskId).collect(Collectors.toList());
+
+        return list.stream().filter(t -> !taskIdList.contains(t.getTaskId())).collect(Collectors.toList());
+    }
+
+
+    /**
+     * 导出排期变更
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-02-14 10:39
+     */
+    @Override
+    public void exportChangeSchedule(HandleTaskScheduleDTO dto, HttpServletResponse response) {
+        List<ChangeScheduleExportVO> excelList = projectTaskMapper.getExportChangeScheduleTask(dto);
+        for (ChangeScheduleExportVO vo : excelList) {
+            Integer status = vo.getStatus();
+            vo.setStatusName(TaskStateEnum.getName(status));
+        }
+        String fileName = "变更排期任务数据";
+        ExcelUtil.export(fileName, "task", excelList, ChangeScheduleExportVO.class, response);
+    }
+
+
+    /**
+     * 导入排期变更 数据
+     *
+     * @param excelFile
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-02-14 11:25
+     */
+    @Override
+    public ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response) {
+        ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ChangeScheduleExportVO.class, excelListener).sheet(0).doRead();
+            List<ChangeScheduleExportVO> errorDateList = excelListener.getErrorDateList();
+
+            String fileName = "排期变更错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ChangeScheduleExportVO.class);
+            String url = "";
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+            vo.setErrorUrl(url);
+            vo.setSucceedList(excelListener.getSucceedDateList());
+
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.Default);
+        }
+
+        return vo;
     }
 
 }

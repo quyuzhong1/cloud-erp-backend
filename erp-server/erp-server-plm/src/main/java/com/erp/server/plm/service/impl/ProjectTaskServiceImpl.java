@@ -217,7 +217,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     //查询模板任务下审核人
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
                     if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                        for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                        for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                             String charges = taskChargeDistributionEntity.getCharges();
                             List<String> chargeList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
                             if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
@@ -480,7 +480,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     //查询模板任务下审核人
                     List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
                     if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                        for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                        for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                             String charges = taskChargeDistributionEntity.getCharges();
                             List<String> chargeList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
                             if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
@@ -1429,8 +1429,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionDTO.getDistributionType())) {
-                        List<String> chargesList= Arrays.stream(charges.split(",")).collect(Collectors.toList());
-                        for (String chargeName:chargesList) {
+                        List<String> chargesList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
+                        for (String chargeName : chargesList) {
                             if (chargeList.contains(chargeName)) {
                                 chargeList.remove(chargeName);
                             }
@@ -1450,8 +1450,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             }
                         }
                         if (CollectionUtils.isNotEmpty(chargeList)) {
-                            chargeList = chargeList.stream().distinct().collect(Collectors.toList());;
-                            taskChargeDistributionDTO.setChargeIds(String.join(",",chargeList));
+                            chargeList = chargeList.stream().distinct().collect(Collectors.toList());
+                            ;
+                            taskChargeDistributionDTO.setChargeIds(String.join(",", chargeList));
                         }
                     }
                 }
@@ -2552,31 +2553,53 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public Boolean batchUpdate(BatchScheduleTaskDTO dto) {
         LambdaUpdateWrapper<ProjectTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(ProjectTaskEntity::getId, dto.getTaskIdList());
-        updateWrapper.set(ProjectTaskEntity::getPlanStartTime, dto.getPlanEndTime());
-        updateWrapper.set(ProjectTaskEntity::getPlanEndTime, dto.getPlanEndTime());
-        updateWrapper.set(ProjectTaskEntity::getPhaseId, dto.getPhaseId());
-
-        ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
-        String phaseName = "";
-        if (phaseEntity != null) {
-            phaseName = phaseEntity.getName();
+        if (dto.getPlanStartTime() != null) {
+            updateWrapper.set(ProjectTaskEntity::getPlanStartTime, dto.getPlanStartTime());
         }
-        updateWrapper.set(ProjectTaskEntity::getPhaseName, phaseName);
+        if (dto.getPlanEndTime() != null) {
+            updateWrapper.set(ProjectTaskEntity::getPlanEndTime, dto.getPlanEndTime());
+        }
+        if (StringUtils.isNotBlank(dto.getPhaseId())) {
+            updateWrapper.set(ProjectTaskEntity::getPhaseId, dto.getPhaseId());
+            ProjectPhaseEntity phaseEntity = projectPhaseService.getById(dto.getPhaseId());
+            String phaseName = "";
+            if (phaseEntity != null) {
+                phaseName = phaseEntity.getName();
+            }
+            updateWrapper.set(ProjectTaskEntity::getPhaseName, phaseName);
+        }
         List<String> chargeId = dto.getChargeIds();
-        updateWrapper.set(ProjectTaskEntity::getChargeId, String.join(",", chargeId));
-        String chargeNames = commonService.getNameByIds(chargeId);
-        updateWrapper.set(ProjectTaskEntity::getChargeName, chargeNames);
-        updateWrapper.set(ProjectTaskEntity::getDescription, dto.getDescription());
-        updateWrapper.set(ProjectTaskEntity::getPriority, dto.getPriority());
-        updateWrapper.set(ProjectTaskEntity::getIsMilepost, dto.getIsMilepost());
+        if (CollectionUtils.isNotEmpty(chargeId)) {
+            updateWrapper.set(ProjectTaskEntity::getChargeId, String.join(",", chargeId));
+            String chargeNames = commonService.getNameByIds(chargeId);
+            updateWrapper.set(ProjectTaskEntity::getChargeName, chargeNames);
+        }
+        //描述
+        if (StringUtils.isNotBlank(dto.getDescription())) {
+            updateWrapper.set(ProjectTaskEntity::getDescription, dto.getDescription());
+        }
+        if (dto.getPriority() != null) {
+            updateWrapper.set(ProjectTaskEntity::getPriority, dto.getPriority());
+        }
+        if (dto.getIsMilepost() != null) {
+            updateWrapper.set(ProjectTaskEntity::getIsMilepost, dto.getIsMilepost());
+        }
+        if (StringUtils.isNotBlank(dto.getRelatedSkuType())) {
+            updateWrapper.set(ProjectTaskEntity::getRelatedSkuType, dto.getRelatedSkuType());
+        }
+
         Boolean result = this.update(updateWrapper);
-        //更改成功
-        if (result) {
+
+        //前置任务
+        if (CollectionUtils.isNotEmpty(dto.getPreTaskIdList())) {
             //批量更新前置任务
             preTaskService.batchUpdate(dto.getProductId(), dto.getTaskIdList(), dto.getPreTaskIdList());
+        }
+        if (CollectionUtils.isNotEmpty(dto.getRefSkuIdList())) {
             //批量更新关联的sku
             projectTaskRefSkuService.batchUpdate(dto.getProductId(), dto.getTaskIdList(), dto.getRefSkuIdList());
         }
+
         return result;
     }
 
@@ -2614,7 +2637,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                                 names.add("");
                             }
                         }
-                        item.setChargeName(String.join(",",names));
+                        item.setChargeName(String.join(",", names));
                     }
 
                     item.setPlanStartTime(planTask.getChangeStartTime());

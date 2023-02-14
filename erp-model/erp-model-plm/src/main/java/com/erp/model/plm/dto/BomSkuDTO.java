@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -47,6 +49,8 @@ public class BomSkuDTO implements Serializable {
      * 数量
      */
     @NotNull(message = "数量不能为空")
+    @DecimalMax(value = "999",message ="最大值为999" )
+    @DecimalMin(value = "1",message ="最小值为1" )
     private Integer quantity;
 
 

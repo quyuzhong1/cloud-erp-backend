@@ -7,6 +7,7 @@ import com.erp.model.plm.dto.BatchScheduleTaskDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
+import com.erp.model.plm.vo.ChangeScheduleExportResultVO;
 import com.erp.model.plm.vo.ProductItemScheduleVO;
 import com.erp.model.plm.vo.ScheduleChangeTaskVO;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
@@ -149,6 +150,28 @@ public class ProjectPlanTaskController extends BaseController {
         List<ScheduleChangeTaskVO> list = projectPlanTaskService.getChangeTaskList(dto);
         return success(list);
     }
+
+
+    /**
+     * 导出变更排期数据
+     */
+    @PostMapping("/exportChangeSchedule")
+    public ApiResult exportChangeSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
+        projectPlanTaskService.exportChangeSchedule(dto, response);
+        return success();
+    }
+
+
+    /**
+     * 导入变更排期数据
+     */
+    @PostMapping("/importChangeSchedule")
+    public ApiResult<ChangeScheduleExportResultVO> importChangeSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        ChangeScheduleExportResultVO vo=  projectPlanTaskService.importChangeSchedule(excelFile, response);
+        return success(vo);
+    }
+
+
 
 
 }

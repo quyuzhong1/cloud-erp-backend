@@ -7,10 +7,7 @@ import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.vo.ProductItemScheduleVO;
-import com.erp.model.plm.vo.ScheduleChangeTaskVO;
-import com.erp.model.plm.vo.ScheduleTaskDetailsVO;
-import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.CustomizeFieldLayoutDTO;
 import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
@@ -114,4 +111,26 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
 
     List<ScheduleChangeTaskVO> getChangeTaskList(BaseIdDTO dto);
+
+    
+    /**
+     * 导出排期变更
+     * @author yl
+     * @date 2023-02-14 10:39
+     * @param dto
+     * @param response
+     * @return void
+     */
+    void exportChangeSchedule(HandleTaskScheduleDTO dto, HttpServletResponse response);
+
+    
+    /**
+     * 导入数据
+     * @author yl
+     * @date 2023-02-14 11:25
+     * @param excelFile
+     * @param response
+     * @return void
+     */
+    ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response);
 }

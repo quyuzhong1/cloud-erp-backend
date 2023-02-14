@@ -10,11 +10,13 @@ import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
@@ -182,9 +184,28 @@ public class ExcelUtil {
                     .sheetName(fileName)
                     //自定义注解
                     .doWrite(list2);
+
         } catch (Exception e) {
             throw new ServiceException(ApiError.Default);
         }
     }
 
+    /**
+     * 返回文件
+     * @author yl
+     * @date 2023-02-14 12:15
+     * @param fileName
+     * @param sheetName
+     * @param dataResult
+     * @param clazz
+     * @return java.lang.String
+     */
+    public static File exportFile(String fileName, String sheetName, List<?> dataResult, Class<?> clazz) {
+        File tempDirectory = FileUtils.getTempDirectory();
+        File filePath = new File(tempDirectory,fileName);
+        //生成本地文件
+        EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
+        return filePath;
+
+    }
 }
