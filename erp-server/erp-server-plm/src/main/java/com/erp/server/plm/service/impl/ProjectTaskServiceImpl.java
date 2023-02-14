@@ -45,7 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -3859,14 +3858,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 approveProcess.setProcessInstanceId(item.getProcessId());
                 approveProcess.setUserId(userId);
                 approveProcess.setComment(comment);
-                CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
-                    return workflowFeign.taskPass(approveProcess);
-                });
-
+                workflowFeign.taskPass(approveProcess);
             }
         }
         noticeMessageService.approvalTaskNotice(loginUser.getUserName(), list, dto.getProductId());
 
+        //发送完成待审核的消息
+        noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), list, dto.getProductId());
         return true;
     }
 

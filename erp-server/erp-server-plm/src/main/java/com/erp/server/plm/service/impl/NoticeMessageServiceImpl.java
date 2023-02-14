@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
+import com.common.core.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -782,7 +783,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 if (CollectionUtils.isEmpty(approveRecordShowList)){
                     throw new ServiceException(ApiError.ERROR_95045);
                 }
-                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj->"待审核".equals(obj.getActivityType())).map(AuditorHandleDTO::getHandleUserName).collect(Collectors.toList());
+                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj-> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent())).map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
