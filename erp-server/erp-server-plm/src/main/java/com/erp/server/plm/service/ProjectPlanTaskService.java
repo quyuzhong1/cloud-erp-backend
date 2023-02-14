@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
@@ -75,7 +76,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean changeSchedule(List<ChangeTaskScheduleDTO> dto);
+    Boolean changeSchedule(ChangeScheduleDTO dto);
 
     
     /**
