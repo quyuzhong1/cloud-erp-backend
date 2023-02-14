@@ -220,7 +220,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
                             String charges = taskChargeDistributionEntity.getCharges();
                             List<String> chargeList = Arrays.stream(charges.split(",")).collect(Collectors.toList());
-                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(entity.getDistributionType())) {
+                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                                 List<TemplateMembersEntity> templateMembersList = templateMembersService.listByRoleNames(chargeList, projectTemplateEntity.getId());
                                 if (CollectionUtils.isNotEmpty(templateMembersList)) {
                                     List<String> memberIds = templateMembersList.stream().map(TemplateMembersEntity::getMemberId).distinct().collect(Collectors.toList());

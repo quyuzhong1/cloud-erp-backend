@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.List;
 
@@ -32,6 +31,5 @@ public class TaskChangeFileDTO  implements Serializable {
     /**
      * 上传文件集合
      */
-    @NotEmpty(message = "上传数据不能为空")
     private List<UploadMultipartFileDTO> list;
 }
