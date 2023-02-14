@@ -78,12 +78,11 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public List<BomSkuDTO> getByBomId(String bomId) {
         List<BomSkuEntity> bomSkuEntityList = this.getBomSkuListByBomId(bomId);
-        List<BomSkuDTO> treeList = new ArrayList<>();
         Map<String, List<BomSkuEntity>> map = bomSkuEntityList.stream().
                 collect(Collectors.groupingBy(BomSkuEntity::getParentSkuNo));
 
         List<BomSkuDTO> resultList = new ArrayList<>(map.size());
-        List<String> skuIdList = bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = bomSkuEntityList.stream().map(BomSkuEntity::getParentSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(skuIdList);
 
         for (Map.Entry<String, List<BomSkuEntity>> item : map.entrySet()) {
@@ -93,7 +92,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             bomSku.setLevel(1);
             String skuId = skuEntity.getParentSkuId();
             bomSku.setSkuId(skuId);
-            bomSku.setSkuNo(skuEntity.getSkuNo());
+            bomSku.setSkuNo(skuEntity.getParentSkuNo());
             SkuVO sku = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             if (sku != null) {
@@ -106,7 +105,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             bomSku.setChildren(children);
             resultList.add(bomSku);
         }
-        return treeList;
+        return resultList;
     }
 
 

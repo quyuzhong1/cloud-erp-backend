@@ -11,6 +11,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.service.ProductChangeService;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -186,6 +187,17 @@ public class ProductChangeController extends BaseController {
         return success();
     }
 
+
+    /**
+     * bom 审核情况
+     *
+     * @return
+     */
+    @PostMapping("/auditInfo")
+    public ApiResult<List<ApproveNodeRecordVO>> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ApproveNodeRecordVO> list=productChangeService.auditInfo(dto.getId());
+        return success(list);
+    }
 
 }
 

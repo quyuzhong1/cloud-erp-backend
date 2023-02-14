@@ -21,6 +21,7 @@ import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -860,5 +861,22 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     public List<String> getChangeSearchCondition(String searchKeyword) {
         return baseMapper.getChangeSearchCondition(searchKeyword);
+    }
+
+    /**
+     * 审核情况
+     *
+     * @param bomId
+     * @return void
+     * @author yl
+     * @date 2023-02-08 9:00
+     */
+    @Override
+    public List<ApproveNodeRecordVO> auditInfo(String id) {
+        if (StringUtils.isNotBlank(id)) {
+            List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
+            return list;
+        }
+        return new ArrayList<>();
     }
 }
