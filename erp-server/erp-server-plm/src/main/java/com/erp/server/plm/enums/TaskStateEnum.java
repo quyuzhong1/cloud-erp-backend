@@ -36,9 +36,11 @@ public enum TaskStateEnum {
     }
 
     public static String getName(Integer code) {
-        for (TaskStateEnum state : TaskStateEnum.values()) {
-            if (code.equals(state.getCode())) {
-                return state.getName();
+        if(code!=null){
+            for (TaskStateEnum state : TaskStateEnum.values()) {
+                if (code.equals(state.getCode())) {
+                    return state.getName();
+                }
             }
         }
         return "";

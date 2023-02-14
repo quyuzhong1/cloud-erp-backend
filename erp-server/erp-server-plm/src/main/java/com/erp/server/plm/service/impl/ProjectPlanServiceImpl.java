@@ -380,7 +380,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @return
      */
     @Override
-    public Boolean changeSchedule(List<ChangeTaskScheduleDTO> list) {
+    public Boolean changeSchedule(String productId,List<ChangeTaskScheduleDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
@@ -388,7 +388,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         checkAuditor();
         List<String> taskIds = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
-        String productId = list.get(0).getProductId();
         long approvalTaskCount = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).count();
         long projectTaskCount = taskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).count();
         String phase = "all";
@@ -414,6 +413,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             startScheduleTaskProcess(id);
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(), type);
+
         }
         return saveResult;
 

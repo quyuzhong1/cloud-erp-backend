@@ -19,11 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ChangeTaskScheduleDTO implements Serializable {
 
-    /**
-     * 产品id
-     */
-    @NotBlank(message = "产品id不能为空")
-    private String productId;
+
 
 
     /**
@@ -47,6 +43,15 @@ public class ChangeTaskScheduleDTO implements Serializable {
     private Date planEndTime;
 
 
+    /**
+     * 任务负责人id
+     */
     private List<String> chargeIdList;
+
+
+    /**
+     *是否重启 true 是
+     */
+    private Boolean isRestart;
 }
 

@@ -55,7 +55,7 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
 
     Boolean restartSchedule(String id);
 
-    Boolean changeSchedule(List<ChangeTaskScheduleDTO> list);
+    Boolean changeSchedule(String productId,List<ChangeTaskScheduleDTO> list);
 
     List<ProjectPlanEntity> getByIds(List<String> projectPlanIds);
 

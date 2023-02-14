@@ -4,7 +4,7 @@ import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.BatchScheduleTaskDTO;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
+import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
 import com.erp.model.plm.vo.ChangeScheduleExportResultVO;
@@ -87,8 +87,8 @@ public class ProjectPlanTaskController extends BaseController {
      * 变更排期
      */
     @PostMapping("/change")
-    public ApiResult changeSchedule(@RequestBody @Validated List<ChangeTaskScheduleDTO> list) {
-        Boolean result = projectPlanTaskService.changeSchedule(list);
+    public ApiResult changeSchedule(@RequestBody @Validated ChangeScheduleDTO dto) {
+        Boolean result = projectPlanTaskService.changeSchedule(dto);
         return result == true ? success() : failure();
     }
 

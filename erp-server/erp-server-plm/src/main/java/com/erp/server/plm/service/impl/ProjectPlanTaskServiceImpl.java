@@ -11,6 +11,7 @@ import com.erp.common.business.utils.FastDFSClientUtil;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.ChangeScheduleDTO;
 import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.dto.ProjectPlanTaskConditionDTO;
@@ -469,16 +470,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * 变更排期
      * 只有审核通过才能变更
      *
-     * @param list
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-02-09 15:43
      */
     @Override
-    public Boolean changeSchedule(List<ChangeTaskScheduleDTO> list) {
+    public Boolean changeSchedule(ChangeScheduleDTO dto) {
         Boolean result = true;
+        List<ChangeTaskScheduleDTO> list=dto.getChangeTaskList();
         if (CollectionUtils.isNotEmpty(list)) {
-            String productId = list.get(0).getProductId();
+            String productId = dto.getProductId();
             List<String> taskIdList = list.stream().map(ChangeTaskScheduleDTO::getTaskId).collect(Collectors.toList());
             List<ScheduleTaskVO> taskList = this.getPlanTaskByTaskIds(productId, taskIdList);
             String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
@@ -495,7 +497,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 throw new ServiceException(ApiError.ERROR_95010);
             }
 
-            result = projectPlanService.changeSchedule(list);
+            result = projectPlanService.changeSchedule(productId,list);
         }
 
         return result;
