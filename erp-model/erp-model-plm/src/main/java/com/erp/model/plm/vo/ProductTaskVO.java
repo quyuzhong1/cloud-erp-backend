@@ -131,14 +131,25 @@ public class ProductTaskVO implements Serializable {
 
 
     /**
-     * 状态
+     * 任务状态
      */
     private Integer status;
 
     /**
-     * 状态名
+     * 任务状态名
      */
     private String statusName;
+
+    /**
+     * 任务排期状态
+     */
+    private String scheduleStatus;
+
+    /**
+     * 任务排期状态名
+     */
+    private String scheduleStatusName;
+
 
 
     /**

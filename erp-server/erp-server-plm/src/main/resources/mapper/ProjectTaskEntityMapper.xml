@@ -968,26 +968,28 @@
     <select id="getScheduleTask" resultType="com.erp.model.plm.vo.ProductTaskVO">
         SELECT
         id AS taskId,
-        project_id,
+        project_id AS projectId,
         pid,
-        product_id,
+        product_id  AS productId,
         name,
         type,
-        charge_id,
-        charge_name,
-        plan_start_time,
-        plan_end_time,
-        reality_start_time,
-        reality_end_time,
+        charge_id AS chargeId,
+        charge_name AS chargeName,
+        plan_start_time AS planStartTime,
+        plan_end_time AS planEndTime,
+        reality_start_time AS realityStartTime,
+        reality_end_time AS realityEndTime,
         priority,
-        phase_id,
-        phase_name,
+        phase_id AS phaseId,
+        phase_name AS phaseName,
         description,
-        is_milepost,
-        create_user_name,
-        create_time,
-        update_time,
-        update_user_name
+        is_milepost AS isMilepost,
+        create_user_name AS createUserName,
+        create_time AS createTime,
+        update_time AS updateTime,
+        update_user_name AS updateUserName,
+        schedule_status AS scheduleStatus,
+        status
         FROM project_task
         WHERE product_id=#{dto.productId}
         <if test="dto.phase!=null and dto.phase!=''  ">
@@ -1081,6 +1083,25 @@
         ON pt.product_id=pi.id
         WHERE  product_id=#{productId}
         AND pt.id=#{taskId}
+    </select>
+
+
+    <select id="getExportChangeScheduleTask" resultType="com.erp.model.plm.vo.ChangeScheduleExportVO">
+        SELECT
+        pt.id AS taskId,
+        pt.name AS taskName,
+        pt.plan_start_time AS originStartTime,
+        pt.plan_end_time AS originEndTime,
+        pt.charge_name,
+        pt.status
+        FROM project_task pt
+        WHERE  pt.product_id=#{dto.productId}
+        <if test="dto.taskIdList !=null and dto.taskIdList.size>0">
+            AND pt.id IN
+            <foreach collection="dto.taskIdList" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </if>
     </select>
 
 

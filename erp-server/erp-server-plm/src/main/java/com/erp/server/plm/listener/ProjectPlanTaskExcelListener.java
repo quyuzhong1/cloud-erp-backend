@@ -44,7 +44,6 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         this.projectPlanService = projectPlanService;
         this.list = new ArrayList<>();
         this.taskIdList = new ArrayList<>();
-        this.productId = productId;
     }
 
     /**

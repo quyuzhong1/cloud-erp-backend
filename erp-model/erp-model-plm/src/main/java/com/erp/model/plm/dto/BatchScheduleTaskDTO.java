@@ -31,15 +31,13 @@ public class BatchScheduleTaskDTO  implements Serializable {
     private List<String> taskIdList;
 
 
-    @NotNull(message = "任务负责人集合不能为空")
-    @Size(min = 1,message = "负责人至少有一个")
+
     private List<String> chargeIds;
 
 
     /**
      * 任务阶段id
      */
-    @NotBlank(message = "阶段id 不能为空")
     private String phaseId;
 
 
@@ -84,5 +82,11 @@ public class BatchScheduleTaskDTO  implements Serializable {
      * 任务描述
      */
     private String description;
+
+
+    /**
+     * 关联sku类型
+     */
+    private String relatedSkuType;
 
 }
