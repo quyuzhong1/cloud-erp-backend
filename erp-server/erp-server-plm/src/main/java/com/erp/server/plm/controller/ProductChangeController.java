@@ -13,6 +13,8 @@ import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.service.ProductChangeService;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +33,7 @@ import java.util.Objects;
  */
 @RestController
 @RequestMapping("plm/change")
+@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProductChangeController extends BaseController {
 
 

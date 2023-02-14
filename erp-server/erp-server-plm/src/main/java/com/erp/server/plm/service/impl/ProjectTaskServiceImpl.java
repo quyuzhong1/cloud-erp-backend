@@ -2643,6 +2643,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     item.setPlanStartTime(planTask.getChangeStartTime());
                     item.setPlanEndTime(planTask.getChangeEndTime());
                     item.setScheduleStatus(status);
+                    //如果是重启
+                    if(planTask.getIsRestart()){
+                        //任务状态变成未开始
+                        item.setStatus(TaskStateEnum.NOT_START.getCode());
+                    }
                     updateList.add(item);
                 }
             }

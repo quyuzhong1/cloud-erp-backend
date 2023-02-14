@@ -12,6 +12,8 @@ import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.ProjectPlanService;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +31,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("plm/product/schedule")
+@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProjectPlanController extends BaseController {
     /**
      * 服务对象

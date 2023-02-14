@@ -34,6 +34,9 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +52,7 @@ import java.util.stream.Collectors;
  * @since 2023-01-11 14:05:03
  */
 @Service
+@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, ProductChangeEntity> implements ProductChangeService {
 
 
@@ -73,6 +77,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    //变更财务人员审核
+    @Value("{changeFinancialAudit}")
+    private String financial;
 
     /**
      * 添加变更
@@ -169,11 +177,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
             throw new ServiceException(ApiError.ERROR_9031);
         }
-
-
+        //财务人员检查
+        if(StringUtils.isBlank(financial)){
+            throw new ServiceException(ApiError.ERROR_9035);
+        }
         //品质部人员审核
         List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
-        if(CollectionUtils.isEmpty(qualityPeople)){
+        if (CollectionUtils.isEmpty(qualityPeople)) {
             throw new ServiceException(ApiError.ERROR_9034);
         }
 
@@ -258,19 +268,18 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
 
 
-
             //品质部人员审核
             List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
-            if(CollectionUtils.isEmpty(qualityPeople)){
+            if (CollectionUtils.isEmpty(qualityPeople)) {
                 throw new ServiceException(ApiError.ERROR_9034);
             }
-            parameterMap.put("qualityPeopleList",qualityPeople);
+            parameterMap.put("qualityPeopleList", qualityPeople);
 
+            if(StringUtils.isBlank(financial)){
+                throw new ServiceException(ApiError.ERROR_9035);
+            }
 
-
-            parameterMap.put("financial","1597846207349260290");
-
-
+            parameterMap.put("financial", financial);
 
 
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
@@ -402,7 +411,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
         }
         //如果搜索是空就返回空
-        if(CollectionUtils.isEmpty(changeSearch)&&StringUtils.isNotBlank(searchKeyword)){
+        if (CollectionUtils.isEmpty(changeSearch) && StringUtils.isNotBlank(searchKeyword)) {
             IPage pageData = new Page();
             return new PagingVO(pageData);
         }

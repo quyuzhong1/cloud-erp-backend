@@ -37,6 +37,9 @@ import com.erp.server.plm.mapper.ProjectPlanMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +55,7 @@ import java.util.stream.Collectors;
  * @since 2023-02-03 15:14:29
  */
 @Service
+@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, ProjectPlanEntity> implements ProjectPlanService {
 
     @Resource
@@ -71,6 +75,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private ProductDetailService productDetailService;
+
+    @Value("${pmoCharge}")
+    private String pmoCharge;
 
     /**
      * 提交项目计划
@@ -445,7 +452,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
             startProcess.setBusinessKey(business.getBusinessKey());
             Map<String, Object> parameterMap = new HashMap<>();
-            parameterMap.put("pmoCharge", "1585078174348218369");
+
+            if(StringUtils.isBlank(pmoCharge)){
+                throw new ServiceException(ApiError.ERROR_9036);
+            }
+            parameterMap.put("pmoCharge", pmoCharge);
+
             List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
             if (CollectionUtils.isEmpty(departmentHeadList)) {
                 throw new ServiceException(ApiError.ERROR_9032);
@@ -654,6 +666,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      */
     @Override
     public void checkAuditor() {
+
+        if(StringUtils.isBlank(pmoCharge)){
+            throw new ServiceException(ApiError.ERROR_9036);
+        }
+
         //研发中心负责人
         List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
         if (CollectionUtils.isEmpty(departmentHeadList)) {
