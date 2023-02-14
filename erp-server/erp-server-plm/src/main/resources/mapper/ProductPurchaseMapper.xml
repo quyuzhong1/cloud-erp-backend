@@ -11,7 +11,7 @@
         arrival_state,purchase_user_id,main_supplier,
         second_supplier,pp.create_time,pp.create_user_id,
         pp.update_time,pp.update_user_id,actual_arrival_qty,
-        trial_production_output,trial_production_qty,first_mass_qty
+        trial_production_qty,first_mass_qty
     </sql>
 
     <select id="list" resultType="com.erp.model.plm.dto.ProductPurchaseShowDTO">

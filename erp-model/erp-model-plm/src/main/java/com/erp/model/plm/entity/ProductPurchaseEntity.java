@@ -135,12 +135,6 @@ public class ProductPurchaseEntity implements Serializable {
     private Long actualArrivalQty;
 
     /**
-     * 试产/产量
-     */
-    @TableField(value = "trial_production_output")
-    private Long trialProductionOutput;
-
-    /**
      * 试产数量
      */
     @TableField(value = "trial_production_qty")

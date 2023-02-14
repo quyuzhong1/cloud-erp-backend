@@ -103,11 +103,6 @@ public class ProductPurchaseDTO implements Serializable {
     private Long actualArrivalQty;
 
     /**
-     * 试产/产量
-     */
-    private Long trialProductionOutput;
-
-    /**
      * 试产数量
      */
     private Long trialProductionQty;

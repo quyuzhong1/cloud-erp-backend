@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.TaskFinishSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
+import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,10 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
 
     @Autowired
     private ProductDetailService productDetailService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
 
     /**
      * 保存任务与sku 关系表
@@ -162,7 +170,10 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Transactional
     public void taskFinishRefSku(TaskFinishSkuDTO dto) {
         String taskId = dto.getTaskId();
-        String productId = dto.getProductId();
+        ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
+        if (ObjectUtils.isEmpty(projectTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
         List<String> skuIdList = dto.getSkuIdList();
         List<String> allList = dto.getAllList();
         List<ProjectTaskRefSkuEntity> addList = new ArrayList<>();
@@ -172,7 +183,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
                 ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
                 addEntity.setTaskId(taskId);
                 addEntity.setSkuId(taskId);
-                addEntity.setProductId(productId);
+                addEntity.setProductId(projectTaskEntity.getProductId());
                 addEntity.setIsFinishTask(IsConstant.NO);
                 addList.add(addEntity);
             }
