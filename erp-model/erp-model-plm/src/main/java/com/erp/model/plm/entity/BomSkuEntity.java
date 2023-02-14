@@ -64,6 +64,16 @@ public class BomSkuEntity implements Serializable {
      */
     private String bomId;
 
+    /**
+     * 父级表skuid
+     */
+    private String parentSkuId;
+
+    /**
+     *产品id
+     */
+    private String productId;
+
 
 
 }

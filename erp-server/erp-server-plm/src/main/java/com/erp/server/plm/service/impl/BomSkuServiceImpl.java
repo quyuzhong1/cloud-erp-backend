@@ -2,7 +2,8 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -17,6 +18,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -44,12 +46,24 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public void saveBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
         List<BomSkuEntity> saveBatchList = new LinkedList<>();
-        if (CollectionUtils.isNotEmpty(bomSkuList)) {
-            for (BomSkuDTO item : bomSkuList) {
-                getSaveTree("0", saveBatchList, item, bomId);
+        for (BomSkuDTO item : bomSkuList) {
+            List<BomChildrenSkuDTO> childrenList = item.getChildren();
+            for (BomChildrenSkuDTO children : childrenList) {
+                BomSkuEntity entity = new BomSkuEntity();
+                entity.setParentSkuId(item.getSkuId());
+                entity.setParentSkuNo(item.getSkuNo());
+                entity.setSkuId(children.getSkuId());
+                entity.setSkuNo(children.getSkuNo());
+                entity.setQuantity(children.getQuantity());
+                entity.setBomId(bomId);
+                entity.setProductId(children.getProductId());
+                saveBatchList.add(entity);
             }
+        }
+        if (CollectionUtils.isNotEmpty(saveBatchList)) {
             this.saveBatch(saveBatchList);
         }
+
     }
 
 
@@ -64,23 +78,33 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Override
     public List<BomSkuDTO> getByBomId(String bomId) {
         List<BomSkuEntity> bomSkuEntityList = this.getBomSkuListByBomId(bomId);
-        List<BomSkuDTO> bomSkuList = BeanMapperUtils.copyList(BomSkuDTO.class, bomSkuEntityList);
-        List<BomSkuDTO> treeList = bomSkuList.stream().
-                filter(b -> "0".equals(b.getParentSkuNo())).
-                map(item -> {
-                    item.setLevel(1);
-                    item.setChildren(getChildren(item, bomSkuList, 1));
-                    return item;
-                }).collect(Collectors.toList());
-        List<String> skuIdList = bomSkuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+        List<BomSkuDTO> treeList = new ArrayList<>();
+        Map<String, List<BomSkuEntity>> map = bomSkuEntityList.stream().
+                collect(Collectors.groupingBy(BomSkuEntity::getParentSkuNo));
+
+        List<BomSkuDTO> resultList = new ArrayList<>(map.size());
+        List<String> skuIdList = bomSkuEntityList.stream().map(BomSkuEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = productDetailService.getSkuBySkuIds(skuIdList);
-        for (BomSkuDTO item : bomSkuList) {
-            String skuId = item.getSkuId();
+
+        for (Map.Entry<String, List<BomSkuEntity>> item : map.entrySet()) {
+            List<BomSkuEntity> bomSkuList = item.getValue();
+            BomSkuEntity skuEntity = bomSkuList.get(0);
+            BomSkuDTO bomSku = new BomSkuDTO();
+            bomSku.setLevel(1);
+            String skuId = skuEntity.getParentSkuId();
+            bomSku.setSkuId(skuId);
+            bomSku.setSkuNo(skuEntity.getSkuNo());
             SkuVO sku = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
-            if(sku!=null){
-                item.setProductId(sku.getProductId());
+            if (sku != null) {
+                bomSku.setProductId(sku.getProductId());
             }
+            List<BomChildrenSkuDTO> children = BeanMapper.copyList(bomSkuList, BomChildrenSkuDTO.class);
+            for (BomChildrenSkuDTO skuDTO : children) {
+                skuDTO.setLevel(2);
+            }
+            bomSku.setChildren(children);
+            resultList.add(bomSku);
         }
         return treeList;
     }
@@ -127,27 +151,6 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     }
 
     /**
-     * 获取子sku
-     *
-     * @param item
-     * @param bomSkuList
-     * @return java.util.List<com.erp.model.plm.dto.BomSkuDTO>
-     * @author yl
-     * @date 2023-01-11 17:11
-     */
-    private List<BomSkuDTO> getChildren(BomSkuDTO item, List<BomSkuDTO> bomSkuList, Integer level) {
-        List<BomSkuDTO> collect = bomSkuList.stream().filter(bom -> item.getSkuNo().equals(bom.getParentSkuNo())).
-                map(b -> {
-                    b.setLevel(level + 1);
-                    b.setChildren(getChildren(b, bomSkuList, level + 1));
-
-                    return b;
-                }).collect(Collectors.toList());
-
-        return CollectionUtils.isEmpty(collect) ? new ArrayList<>() : collect;
-    }
-
-    /**
      * 根据bom id  获取列表
      *
      * @param bomId
@@ -163,30 +166,4 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     }
 
 
-    /**
-     * 获取到保存的数据 树结构
-     *
-     * @param
-     * @param saveBatchList 对应保存的实体
-     * @param item          具体的参数
-     * @param bomId         bom 表id
-     * @return void
-     * @author yl
-     * @date 2023-01-09 14:30
-     */
-    private void getSaveTree(String parentSkuNo, List<BomSkuEntity> saveBatchList, BomSkuDTO item, String bomId) {
-        BomSkuEntity bomRefSku = new BomSkuEntity();
-        bomRefSku.setBomId(bomId);
-        bomRefSku.setParentSkuNo(parentSkuNo);
-        bomRefSku.setQuantity(item.getQuantity());
-        bomRefSku.setSkuNo(item.getSkuNo());
-        bomRefSku.setSkuId(item.getSkuId());
-        saveBatchList.add(bomRefSku);
-        List<BomSkuDTO> childrenList = item.getChildren();
-        if (CollectionUtils.isNotEmpty(childrenList)) {
-            for (BomSkuDTO childBomSku : childrenList) {
-                this.getSaveTree(item.getSkuNo(), saveBatchList, childBomSku, bomId);
-            }
-        }
-    }
 }

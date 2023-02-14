@@ -61,6 +61,21 @@ public class ProductBomSkuHistoryEntity implements Serializable {
     private String bomHistoryId;
 
 
+    /**
+     * 父级表skuid
+     */
+    private String parentSkuId;
 
+
+    /**
+     * skuId
+     */
+    private String skuId;
+
+
+    /**
+     *产品id
+     */
+    private String productId;
 }
 
