@@ -1,7 +1,7 @@
 package com.common.core.constant;
 
 /**
- * TODO
+ * rocket mq  topic
  *
  * @Author Cloud
  * @Date 2023/2/3 16:55

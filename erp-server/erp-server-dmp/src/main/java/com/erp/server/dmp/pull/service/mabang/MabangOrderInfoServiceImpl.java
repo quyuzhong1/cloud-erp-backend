@@ -141,10 +141,6 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     private List<OrderEntity> pullDate(RequestDTO dto) throws Exception {
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
-        if(null != lastTime && null != nextTime && TaskConstant.MABANG_PULL_DATA_TASK.equals(dto.getJobTaskDTO().getTaskName())){
-            lastTime = LocalDateTime.of(lastTime.toLocalDate(), LocalTime.MIN);
-            nextTime = LocalDateTime.of(nextTime.toLocalDate(), LocalTime.MAX);
-        }
         dto.getJobTaskDTO().setLastTime(nextTime);
         return MabangApiUtils.querySalesList(dto.getPlatformApiEnum().getTaskName(), lastTime, nextTime);
     }

@@ -69,14 +69,14 @@ public class TbTaskTypeService {
                 inProgressList.add(jobTaskDTO);
             }else if(2 == jobTaskDTO.getState()){
                 // 马帮历史数据超时
+                LocalDateTime nextTime = jobTaskDTO.getNextTime();
+                LocalDateTime updateTime = jobTaskDTO.getUpdateTime();
                 if (TaskConstant.MABANG_PULL_DATA_TASK.equals(jobTaskDTO.getTaskName())) {
-                    LocalDateTime nextTime = jobTaskDTO.getNextTime();
-                    if (nextTime.plusHours(timeoutMabangHours).isAfter(localTime)) {
+                    if (localTime.isBefore(nextTime.plusHours(timeoutMabangHours)) && localTime.isBefore(updateTime.plusHours(timeoutMabangHours))) {
                         timeoutList.add(jobTaskDTO);
                     }
                 }else {
-                    LocalDateTime nextTime = jobTaskDTO.getNextTime();
-                    if (nextTime.plusSeconds(timeoutSeconds).isAfter(localTime)) {
+                    if (localTime.isBefore(nextTime.plusSeconds(timeoutSeconds)) && localTime.isBefore(updateTime.plusSeconds(timeoutSeconds))) {
                         timeoutList.add(jobTaskDTO);
                     }
                 }
