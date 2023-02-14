@@ -4254,7 +4254,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             throw new ServiceException(ApiError.Default);
                         }
                     }
-                    if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName)) {
+                    if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName) && !TaskStateEnum.APPROVAL_PASS.getName().equals(auditorHandleDTO.getHandContent())) {
                         //审核不通过时将对应数据状态变更为审核不通过
                         taskProcessNodeDTO.setNodeName(TaskStateEnum.APPROVAL_NO_PASS.getName());
                         taskProcessNodeDTO.setOperateTime(operatorTime);
