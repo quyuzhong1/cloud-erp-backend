@@ -341,7 +341,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 sourceList.add(source);
 
                 //查询模板任务下审核人
-                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.ONE, item.getId());
+                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
                 if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
                     for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
                         String charges = taskChargeDistributionEntity.getCharges();
