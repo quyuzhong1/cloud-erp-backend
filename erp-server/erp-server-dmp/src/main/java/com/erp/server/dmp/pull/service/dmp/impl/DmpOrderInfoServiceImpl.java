@@ -11,6 +11,7 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.vo.CleanAmountAfterVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -140,11 +141,12 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public void cleanOrder(Integer pageSize) {
         List<DmpOrderInfoEntity> list = lambdaQuery()
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
+                .in(DmpOrderInfoEntity::getPlatformSign, new ArrayList<>(Arrays.asList(PlatformEnum.KINGDEE.getDesc(), PlatformEnum.GYY.getDesc())))
                 .and(wrapper ->
                         wrapper.isNull(DmpOrderInfoEntity::getChargeId)
                                 .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
-                                .or().isNull(DmpOrderInfoEntity::getDeptId)
-                                .or().isNull(DmpOrderInfoEntity::getSite)
+                                .or().eq(DmpOrderInfoEntity::getDeptId, "")
+                                .or().eq(DmpOrderInfoEntity::getSite, "")
                 )
                 .orderByAsc(DmpOrderInfoEntity::getRetryCount)
                 .orderByAsc(DmpOrderInfoEntity::getId)
@@ -171,33 +173,30 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public void cleanDmpOrderInfo(List<SysUserDeptDTO> userDeptList, DmpOrderInfoEntity dmpOrderInfoEntity) {
         LambdaUpdateWrapper<DmpOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(DmpOrderInfoEntity::getRetryCount, dmpOrderInfoEntity.getRetryCount() + 1);
-        Boolean tag = false;
+        Boolean deliveryTimeTag = false;
         if (0 == dmpOrderInfoEntity.getCleanState()){
             //查询店铺信息获取'负责人','站点信息'同步到订单
             DmpShopInfoEntity shopByShopNo = dmpShopInfoService.getShopByShopNo(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign());
-            if (shopByShopNo != null) {
+            if (null != shopByShopNo) {
                 if(!Objects.equals(dmpOrderInfoEntity.getSite(), shopByShopNo.getSite())){
                     updateWrapper.set(DmpOrderInfoEntity::getSite, shopByShopNo.getSite());
                 }
                 DmpShopChangeLogEntity shopChargeName = dmpShopChangeLogService.getShopChargeName(shopByShopNo.getId(), dmpOrderInfoEntity.getPlatformCreateTime());
-                if (shopChargeName != null && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
+                if (null != shopChargeName && StringUtils.isNotBlank(shopChargeName.getChargeId())) {
                     if(!(Objects.equals(shopChargeName.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopChargeName.getChargeName(), dmpOrderInfoEntity.getChargeName()))){
                         updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopChargeName.getChargeId());
                         updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopChargeName.getChargeName());
                     }
-                    tag = true;
                 }else if (StringUtils.isNotBlank(shopByShopNo.getChargeId())){
                     // 无变更日志时使用当前负责人
                     if(!(Objects.equals(shopByShopNo.getChargeId(), dmpOrderInfoEntity.getChargeId()) && Objects.equals(shopByShopNo.getChargeName(), dmpOrderInfoEntity.getChargeName()))){
                         updateWrapper.set(DmpOrderInfoEntity::getChargeId, shopByShopNo.getChargeId());
                         updateWrapper.set(DmpOrderInfoEntity::getChargeName, shopByShopNo.getChargeName());
                     }
-                    tag = true;
                 }
             }
 
             //根据负责人获取部门信息，同步到订单
-            tag = false;
             if (StringUtils.isNotBlank(dmpOrderInfoEntity.getShopNo())) {
                 DmpShopInfoDTO dmpShopInfoDTO = dmpShopInfoService.queryShopByPlatformList(dmpOrderInfoEntity.getShopNo(), dmpOrderInfoEntity.getPlatformSign(), userDeptList);
                 if (dmpShopInfoDTO != null &&StringUtils.isNotBlank(dmpShopInfoDTO.getDeptId()) &&StringUtils.isNotBlank(dmpShopInfoDTO.getDeptName())) {
@@ -205,14 +204,11 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         updateWrapper.set(DmpOrderInfoEntity::getDeptId, dmpShopInfoDTO.getDeptId());
                         updateWrapper.set(DmpOrderInfoEntity::getDeptName, dmpShopInfoDTO.getDeptName());
                     }
-                    tag = true;
                 }
             }
             //查询订单商品明细，根据sku查询sku信息，获取'类别'、'品牌' 同步到商品信息
             List<DmpOrderItemEntity> itemEntityList = dmpOrderItemService.getByOrderId(dmpOrderInfoEntity.getId());
-            tag = false;
             for (DmpOrderItemEntity dmpOrderItemEntity : itemEntityList) {
-                tag = false;
                 if (StringUtils.isNotBlank(dmpOrderItemEntity.getSkuNo())) {
                     DmpSkuInfoEntity skuBySkuNo = dmpSkuInfoService.getSkuBySkuNo(dmpOrderItemEntity.getSkuNo());
                     boolean updateStatus = false;
@@ -229,7 +225,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                         LocalDateTime platformCreateTime = dmpOrderInfoEntity.getPlatformCreateTime();
                         if (null !=  listingTime && null != platformCreateTime) {
                             dmpOrderItemEntity.setNewSign(listingTime.getYear() == platformCreateTime.getYear() ? 1 : 0);
-                            tag = true;
                             updateStatus = true;
                         }
                         if (updateStatus){
@@ -238,15 +233,15 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                     }
                 }
             }
-            updateWrapper.set(tag, DmpOrderInfoEntity::getCleanState, 1);
-            updateWrapper.eq(DmpOrderInfoEntity::getId, dmpOrderInfoEntity.getId());
         }
         //查询发货详情获取发货时间，同步到订单信息
-        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getPlatformOrderId());
+        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getSalesRecordNumber());
         if (null != deliveryDetailOrderNo) {
             updateWrapper.set(DmpOrderInfoEntity::getDeliveryTime, deliveryDetailOrderNo.getDeliveryDate());
-            updateWrapper.set(tag || 1 == dmpOrderInfoEntity.getCleanState(), DmpOrderInfoEntity::getCleanState, 2);
+            deliveryTimeTag = true;
         }
+        updateWrapper.set(deliveryTimeTag, DmpOrderInfoEntity::getCleanState, dmpOrderInfoEntity.getCleanState() + 1);
+        updateWrapper.eq(DmpOrderInfoEntity::getId, dmpOrderInfoEntity.getId());
         this.update(updateWrapper);
     }
 
