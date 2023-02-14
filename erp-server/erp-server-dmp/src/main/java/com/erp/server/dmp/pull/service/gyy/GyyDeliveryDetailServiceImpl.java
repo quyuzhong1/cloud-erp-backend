@@ -136,7 +136,11 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         deliveryDetailInfoEntity.setBillNo(gyyDeliveryDetailEntity.getCode());
 
         //订单编号
-        deliveryDetailInfoEntity.setOrderNo(gyyDeliveryDetailEntity.getPlatformCode());
+        String orderNo = "";
+        if(CollectionUtil.isNotEmpty(gyyDeliveryDetailEntity.getDetails())){
+            orderNo = gyyDeliveryDetailEntity.getDetails().get(0).getTradeCode();
+        }
+        deliveryDetailInfoEntity.setOrderNo(orderNo);
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(gyyDeliveryDetailEntity.getExpressNo());
         //客户名称
