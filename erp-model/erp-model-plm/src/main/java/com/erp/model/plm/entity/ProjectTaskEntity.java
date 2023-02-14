@@ -201,6 +201,11 @@ public class ProjectTaskEntity implements Serializable {
     @TableField(exist = false)
     private Integer isfinish;
 
+    /**
+     * 辅助字段：前任务id
+     */
+    @TableField(exist = false)
+    private String prevId;
 
     /**
      * 计划状态
