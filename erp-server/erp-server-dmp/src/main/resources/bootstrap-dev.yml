@@ -55,10 +55,10 @@ rocketmq:
     #生产者消息失败容错策略,默认false不开启,生产环境建议开启
     retry-next-server: true
     #配置acl用户名密码
-    access-key: dmp_erp_mq
+    access-key: ulanzi_erp_mq
     secret-key: ttzgyaW48nyWpKy2
   consumer:
-    access-key: dmp_erp_mq
+    access-key: ulanzi_erp_mq
     secret-key: ttzgyaW48nyWpKy2
     message-model: CLUSTERING
     #TAG or SelectorType.SQL92

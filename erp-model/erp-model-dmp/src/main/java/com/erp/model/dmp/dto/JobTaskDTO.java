@@ -56,6 +56,8 @@ public class JobTaskDTO {
      */
     private LocalDateTime createTime;
 
+    private LocalDateTime updateTime;
+
     /**
      * 平台api接口
      */

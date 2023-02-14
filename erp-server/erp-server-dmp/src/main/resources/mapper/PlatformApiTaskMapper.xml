@@ -21,6 +21,7 @@
         pat.next_time,
         pat.state,
         pat.create_time,
+        pat.update_time,
         pat.retry_count,
         pa.api_code,
         pa.api_name,

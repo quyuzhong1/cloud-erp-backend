@@ -61,9 +61,9 @@ public class PullTaskCreateJob {
     @XxlJob("addShopTask")
     public ReturnT<String> addShopTask() {
         XxlJobHelper.log("addShopTask 任务开始执行");
-         tbTaskTypeService.addTask();
+        tbTaskTypeService.addTask();
         XxlJobHelper.log("addShopTask 任务开始完成");
-         return ReturnT.SUCCESS;
+        return ReturnT.SUCCESS;
     }
 
 

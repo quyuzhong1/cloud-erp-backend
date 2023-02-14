@@ -54,12 +54,14 @@ public class MQProducerService<T> {
                     @Override
                     public void onException(Throwable throwable) {
                         log.error("MQService:" + ExceptionUtils.getStackTrace(throwable));
-                        throw new RuntimeException(String.format("消息发送失败 topic_tag:%s", destination ));
+                        throw new RuntimeException(StrUtil.format("消息发送失败 topic_tag={}", destination ));
                     }
                 });
                 break;
             case SYNC:
                 result = rocketMQTemplate.syncSend(destination, message);
+                break;
+            default:
                 break;
         }
         log.info("消息发送 MQService 结束: result: {} dest: {} msg: {}}", JSONUtil.toJsonStr(result), destination, message);
@@ -111,7 +113,7 @@ public class MQProducerService<T> {
     public void oneWaySendMsg(String msgKey,String topic, String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = topic + ":" + tag;
+        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
@@ -119,7 +121,7 @@ public class MQProducerService<T> {
      * 普通发送（这里的参数对象User可以随意定义，可以发送个对象，也可以是字符串等）
      */
     public void sendEntity(String topic, String tag, T entity) {
-        rocketMQTemplate.convertAndSend(topic + tag, entity);
+        rocketMQTemplate.convertAndSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), entity);
     }
 
     /**
@@ -135,7 +137,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtils.simpleUUID())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(topic + tag, messageList);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), messageList);
     }
 
     /**
@@ -150,7 +152,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic, tag), msg);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), msg);
     }
 
     /**
