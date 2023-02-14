@@ -457,7 +457,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                     contentList.add(childrenQuantityContent);
                 }
             }
-            if (oldSize < i) {
+            if (oldSize <= i) {
                 String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
                 contentList.add(addContent);
             }

@@ -2035,7 +2035,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     for (String item : chargeIdList) {
                         resultList.add(item);
                     }
-
                 } else {
                     resultList.add(chargeId);
                 }
@@ -2043,7 +2042,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
 
-        return resultList.stream().filter(s -> StringUtils.isNotBlank(s)).collect(Collectors.toList());
+        return resultList.stream().filter(s -> StringUtils.isNotBlank(s)).distinct().collect(Collectors.toList());
     }
 
 
