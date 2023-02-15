@@ -23,6 +23,7 @@
             pt.process_id as processId,
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
+            pt.related_sku_type as relatedSkuType,
             pp.seq
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id
@@ -123,6 +124,7 @@
             pt.process_id as processId,
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
+            pt.related_sku_type as relatedSkuType,
             pp.seq
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id
@@ -270,6 +272,7 @@
             pt.process_id as processId,
             pt.role_name as roleName,
             pt.distribution_type as distributionType,
+            pt.related_sku_type as relatedSkuType,
             pp.seq
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id
@@ -556,7 +559,8 @@
                pt.charge_id as chargeId,
                pt.process_id as processId,
                pt.role_name as roleName,
-               pt.distribution_type as distributionType
+               pt.distribution_type as distributionType,
+               pt.related_sku_type as relatedSkuType
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
