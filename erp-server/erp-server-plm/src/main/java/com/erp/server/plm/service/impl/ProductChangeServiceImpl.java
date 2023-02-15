@@ -675,7 +675,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
-        log.info("难道是这里吗？？？？？？？");
         changeEntity.setApprovalFinishTime(new Date());
         changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         this.updateById(changeEntity);
@@ -722,18 +721,21 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         //从流程那边获取到具体业务表id
         String id = dto.getBusinessTableId();
 
-        log.info("processPas>>>id ==",id);
+        log.info("processPas>>>id =={}",id);
         if (StringUtils.isNotBlank(id)) {
             //获取到变更信息
             ProductChangeEntity change = this.getById(id);
 
-            log.info("processPas>>>change ==", JSONUtil.toJsonStr(change));
+            log.info("processPas>>>change =={}", JSONUtil.toJsonStr(change));
             if (change != null) {
                 String type = change.getType();
                 change.setApprovalFinishTime(new Date());
                 change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
-                log.info("change.State ==",change.getState());
+                log.info("change.State =={}",change.getState());
+
+                log.info(" 前  change.shjit =={}",JSONObject.toJSONString(change));
                 this.updateById(change);
+                log.info(" 后  change.shjit =={}",JSONObject.toJSONString(change));
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(change.getId());
                 if (StringUtils.isNotBlank(detailsJson)) {
