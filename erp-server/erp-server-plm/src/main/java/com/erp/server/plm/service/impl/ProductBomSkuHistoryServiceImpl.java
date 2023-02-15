@@ -36,7 +36,7 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
     @Override
     public void saveBomSku(String bomHistoryId, List<BomSkuDTO> bomSkuList) {
         List<ProductBomSkuHistoryEntity> saveBatchList = new LinkedList<>();
-        for(BomSkuDTO item:bomSkuList){
+        for (BomSkuDTO item : bomSkuList) {
             List<BomChildrenSkuDTO> childrenList = item.getChildren();
             for (BomChildrenSkuDTO children : childrenList) {
                 ProductBomSkuHistoryEntity entity = new ProductBomSkuHistoryEntity();
@@ -49,6 +49,9 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
                 entity.setProductId(children.getProductId());
                 saveBatchList.add(entity);
             }
+        }
+        if (CollectionUtils.isNotEmpty(saveBatchList)) {
+            this.saveBatch(saveBatchList);
         }
 
     }
