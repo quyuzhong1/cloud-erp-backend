@@ -4352,7 +4352,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         try {
                             Date date = DateUtils.parseDate(auditorHandleDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
                             taskProcessNodeDTO.setOperateTime(date);
-                            dateList.add(new Pair<>(userName,date));
+
                         } catch (ParseException e) {
                             throw new ServiceException(ApiError.Default);
                         }
@@ -4367,6 +4367,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (BaseStatusEnum.WAIT_AUDIT.getName().equals(auditorHandleDTO.getHandContent())) {
                         isShwoDate = Boolean.FALSE;
                     }
+                    dateList.add(new Pair<>(userName,taskProcessNodeDTO.getOperateTime()));
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
                 taskProcessNodeDetailDTO.setIfFinishNode(Boolean.TRUE);
@@ -4379,7 +4380,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 waitReleasedDTO.setDetailList(collect);
             }
             if (CollectionUtils.isNotEmpty(dateList)) {
-                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(Pair::getValue)).get();
+                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(e ->e.getValue(),Comparator.nullsLast(Date::compareTo))).get();
                 waitReleasedDTO.setOperateUserName(pair.getKey());
                 if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
                     Date date = pair.getValue();
