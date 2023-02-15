@@ -666,14 +666,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         Integer state = bom.getState();
-        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+        if (!BomStateEnum.SCRAP.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95103);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
 
         Boolean result = this.updateById(bom);
         if (result) {
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.SCRAP.getName(), BomStateEnum.AUDIT_PASS.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }
         return result;
