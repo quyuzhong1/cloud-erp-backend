@@ -29,5 +29,5 @@ public class ProcessBaseDTO implements Serializable {
     private String fieldName;
 
     //评论 意见
-    private String comment;
+    private String comment="";
 }

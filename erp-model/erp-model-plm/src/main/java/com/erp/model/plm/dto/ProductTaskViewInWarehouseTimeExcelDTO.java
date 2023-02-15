@@ -35,7 +35,7 @@ public class ProductTaskViewInWarehouseTimeExcelDTO implements Serializable {
     private String statusName;
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "首批量产入库时间", index = 4)
+    @ExcelProperty(value = "计划上市时间", index = 4)
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private String planListingTime;
 

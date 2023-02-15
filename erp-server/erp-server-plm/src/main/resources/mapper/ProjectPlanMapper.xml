@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectPlanMapper">
+
+
+    <select id="paging" resultType="com.erp.model.plm.vo.SchedulePagingVO">
+        SELECT
+          pp.id,pp.create_user_id AS createUserId,
+          pp.create_user_name AS createUserName,
+          pp.create_time AS createTime,
+          pp.product_id AS productId,
+          pi.name AS productName,
+          pp.type,pp.phase,
+          pp.approval_finish_time AS approvalFinishTime,
+          pp.status,pp.task_quantity  AS taskQuantity,
+          pp.remark
+          FROM project_plan PP LEFT JOIN product_info pi
+          ON PP.product_id =pi.id
+          WHERE PP.is_deleted=false
+          <if test="params.searchKeyword !=null and params.searchKeyword!=''">
+               AND
+               pi.name LIKE concat('%',#{params.searchKeyword},'%')
+          </if>
+          <if test="idList!=null and idList.size>0">
+              AND
+              pp.id IN
+              <foreach collection="idList" item="id" open="(" separator="," close=")">
+                 #{id}
+              </foreach>
+          </if>
+          <if test="statusList !=null and statusList.size>0">
+              AND
+              pp.status IN
+              <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                  #{status}
+              </foreach>
+          </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                pp.${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC
+    </select>
+</mapper>
+

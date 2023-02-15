@@ -3,7 +3,9 @@ package com.erp.server.sys.controller.api;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.modules.sys.dto.SysUserDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;

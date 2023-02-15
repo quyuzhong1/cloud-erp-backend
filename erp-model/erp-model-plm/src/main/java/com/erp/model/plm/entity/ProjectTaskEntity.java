@@ -49,18 +49,28 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("charge_name")
     private String chargeName;
 
+    /**
+     * 角色名称，由模板生成时带过来
+     */
+    @TableField("role_name")
+    private String roleName;
 
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    @TableField("distribution_type")
+    private Integer distributionType;
 
     /**
      * 计划开始时间
      */
-    @TableField(value = "plan_start_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "plan_start_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
     private Date planStartTime;
 
     /**
      * j计划结束时间
      */
-    @TableField(value = "plan_end_time",insertStrategy =FieldStrategy.IGNORED ,updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "plan_end_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
     private Date planEndTime;
 
     /**
@@ -104,13 +114,6 @@ public class ProjectTaskEntity implements Serializable {
      */
     @TableField("project_id")
     private String projectId;
-
-    /**
-     * 审核人id 多个以逗号分割
-     */
-    @TableField("approval_user_id")
-    private String approvalUserId;
-
 
     /**
      * 创建时间
@@ -158,11 +161,17 @@ public class ProjectTaskEntity implements Serializable {
     @TableField("pid")
     private String pid;
 
-    @TableField("create_user_id")
+    @TableField(value = "create_user_id", fill = FieldFill.INSERT)
     private String createUserId;
 
-    @TableField("create_user_name")
+    @TableField(value = "create_user_name", fill = FieldFill.INSERT)
     private String createUserName;
+
+    @TableField(value = "update_user_id", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserId;
+
+    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
+    private String updateUserName;
 
     //流程表id
     @TableField("business_process_id")
@@ -181,8 +190,32 @@ public class ProjectTaskEntity implements Serializable {
     private Integer isSkuChange;
 
     /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+     */
+    @TableField("related_sku_type")
+    private String relatedSkuType;
+
+    /**
      * 辅助字段：是否完成
      */
-    @TableField(exist=false)
+    @TableField(exist = false)
     private Integer isfinish;
+
+    /**
+     * 辅助字段：前任务id
+     */
+    @TableField(exist = false)
+    private String prevId;
+
+    /**
+     * 计划状态
+     */
+    @TableField("schedule_status")
+    private String scheduleStatus;
+
+    /**
+     * 排期类型
+     */
+    @TableField("schedule_type")
+    private String scheduleType;
 }

@@ -3,8 +3,10 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.sys.dto.BatchSysDepartUserDTO;
@@ -126,7 +128,33 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         return false;
     }
 
+    @Override
+    public SysDepartmentUserNumberDTO getByUserId(String id) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentUserEntity::getUserId,id);
+        queryWrapper.last("limit 1");
+        SysDepartmentUserEntity sysDepartmentUserEntity = this.getOne(queryWrapper);
+        SysDepartmentUserNumberDTO dto = new SysDepartmentUserNumberDTO();
+        if (ObjectUtils.isNotEmpty(sysDepartmentUserEntity)) {
+            BeanMapperUtils.copy(sysDepartmentUserEntity,dto);
+        }
+        return dto;
+    }
 
+    @Override
+    public List<SysDepartmentUserEntity> listByDepartmentIds(List<String> departmentIdList) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysDepartmentUserEntity::getDepartmentId,departmentIdList);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<SysDepartmentUserEntity> listSuperiorById(String id) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDepartmentUserEntity::getDepartmentId,id);
+        queryWrapper.eq(SysDepartmentUserEntity::getLeadState,1);
+        return this.list(queryWrapper);
+    }
 
 
     public void removeDepartmentUser(String departmentId, Set<String> userIds) {

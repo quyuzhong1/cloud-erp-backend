@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
+import com.erp.model.plm.vo.SkuVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -291,4 +292,106 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return ProductDetailDTO
      */
     ProductDetailDTO getSkuByParam(Map<String, String> params);
+
+
+    /**
+     * 根据sku 编号 获取sku 信息以及对应的spu 信息
+     * @param skuNoList
+     * @return
+     */
+    List<SkuVO> getSkuBySkuNos(List<String> skuNoList);
+
+
+    /**
+     * 根据sku 编号 获取sku 信息以及对应的spu 信息
+     * @param skuIdList
+     * @return
+     */
+    List<SkuVO> getSkuBySkuIds(List<String> skuIdList);
+
+    /**
+     * 搜索sku 信息
+     * @param searchKeyword
+     * @return
+     */
+    List<SkuVO> searchSku(String searchKeyword);
+
+    /**
+     *  获取 审核通过 的sku 信息
+     * @param searchKeyword
+     * @return
+     */
+    List<ChangeInfoDTO> getSku(String searchKeyword);
+
+    /**
+     * 根据skuId 获取到sku 单位最小的信息 在bom 和变更那边会用到
+     * @author yl
+     * @date 2023-01-29 14:11
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductSmallestUnitDTO
+     */
+    ProductSmallestUnitDTO getSkuBySkuId(String skuId);
+
+    
+    /**
+     * 变更管理 审核通过后
+     * 变更sku
+     * @author yl
+     * @date 2023-01-30 17:10
+     * @param sku
+     * @return void
+     */
+    void changeSku(ProductSmallestUnitDTO sku);
+
+    
+    /**
+     * 根据sku ids 获取到产品经理
+     * @author yl
+     * @date 2023-02-01 17:24
+     * @param skuIdList
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> getManagerBySkuIds(List<String> skuIdList);
+
+
+    /**
+     * 根据部门名称获取到对应的领导
+     * @author yl
+     * @date 2023-02-01 17:49
+     * @param secondDeptName
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> getApproveLead(String secondDeptName);
+    /**
+     * @description: 根据产品id更新产品开发状态
+     * @author Will
+     * @date: 2023/2/2 14:53
+     * @param productId
+     * @param state
+     */
+    void updateProductStateByProductId(String productId, Integer state);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/2/9 13:34
+     * @param id
+     * @return Boolean
+     */
+    Boolean commit(String id);
+    /**
+     * @description: 反提交
+     * @author Will
+     * @date: 2023/2/9 14:37
+     * @param id
+     * @return Boolean
+     */
+    Boolean unCommit(String id);
+    /**
+     * @description: 发送金蝶数据
+     * @author Will
+     * @date: 2023/2/13 13:27
+     * @param id
+     * @return Boolean
+     */
+    Boolean sendKingDeeData(String id);
 }

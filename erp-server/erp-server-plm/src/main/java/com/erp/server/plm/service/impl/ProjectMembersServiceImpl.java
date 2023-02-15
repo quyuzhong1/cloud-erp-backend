@@ -4,25 +4,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.PagingDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
+import com.erp.server.plm.enums.DistributionTypeEnum;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectMembersMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,6 +73,8 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     @Autowired
     private CommonService commonService;
 
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
 
     /**
      * 启动项目 添加成员
@@ -148,7 +154,13 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(), dto.getProductId());
+        List<String> members = roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(), dto.getProductId());
+        if (CollectionUtils.isNotEmpty(members)) {
+            userIdList = userIdList.stream().filter(e -> !members.contains(e)).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(userIdList) && MathUtil.ONE.equals(dto.getFlag())) {
+            throw new ServiceException(ApiError.ERROR_95021);
+        }
         List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
         for (String userId : userIdList) {
             ProjectMembersEntity entity = new ProjectMembersEntity();
@@ -172,6 +184,108 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             List<String> membersTableIds = addList.stream().map(ProjectMembersEntity::getId).collect(Collectors.toList());
             roleRefMemberService.saveRef(membersTableIds, dto.getRoleId(), dto.getProductId());
         }
+        ProjectRoleEntity projectRoleEntity = projectRoleService.getById(dto.getRoleId());
+        if (ObjectUtils.isEmpty(projectRoleEntity)) {
+            throw new ServiceException(ApiError.ERROR_9021);
+        }
+        //成员新增成功后，需要更新产品下面的未发布、未开始、进行中的任务
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByProductId(dto.getProductId());
+        if (CollectionUtils.isNotEmpty(projectTaskList)) {
+            List<ProjectTaskEntity> list = projectTaskList.stream().filter(obj -> (TaskStateEnum.TO_BE_RELEASED.getCode().equals(obj.getStatus()) || TaskStateEnum.NOT_START.getCode().equals(obj.getStatus()) || TaskStateEnum.ING.getCode().equals(obj.getStatus()))).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(list)) {
+                List<ProjectTaskEntity> addTaskList = new ArrayList<>();
+                List<TaskChargeDistributionEntity> addTaskChargeDistributionList = new ArrayList<>();
+                list.forEach(obj -> {
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                        List<String> collect = Arrays.stream(obj.getRoleName().split(",")).collect(Collectors.toList());
+                        if (collect.contains(projectRoleEntity.getName())) {
+                            //更新任务负责人
+                            if (StringUtils.isNotBlank(obj.getChargeId())) {
+                                List<String> chargetIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                                for (String userId :dto.getUserIdList()) {
+                                    if (!chargetIds.contains(userId)) {
+                                        chargetIds.add(userId);
+                                    }
+                                }
+                                chargetIds = chargetIds.stream().distinct().collect(Collectors.toList());
+                                List<String> finalChargetIds = chargetIds;
+                                //人员名称
+                                List<String> userNameList = userList.stream().filter(e -> finalChargetIds.contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                obj.setChargeId(StringUtils.join(chargetIds,","));
+                                if (CollectionUtils.isNotEmpty(userNameList)) {
+                                    obj.setChargeName(StringUtils.join(userNameList,","));
+                                }
+                            } else {
+                                obj.setChargeId(StringUtils.join(dto.getUserIdList(),","));
+                                //人员名称
+                                List<String> userNameList = userList.stream().filter(e -> dto.getUserIdList().contains(e.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                if (CollectionUtils.isNotEmpty(userNameList)) {
+                                    obj.setChargeName(StringUtils.join(userNameList,","));
+                                }
+                            }
+                            addTaskList.add(obj);
+                        }
+                    }
+                    //查询任务下审核人
+                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, obj.getId());
+                    if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                        //根据分配类型查询模板中的数据
+                        for (TaskChargeDistributionEntity taskChargeDistributionEntity: taskChargeDistributionList) {
+                            if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
+                                throw new ServiceException(ApiError.ERROR_95097);
+                            }
+                            List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
+                            //按角色分配
+                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
+                                if (chargeList.contains(projectRoleEntity.getName())) {
+                                    //更新任务审核人
+                                    if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                                        List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                                        for (String userId :dto.getUserIdList()) {
+                                            if (!chargetIds.contains(userId)) {
+                                                chargetIds.add(userId);
+                                            }
+                                        }
+                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds,","));
+                                    } else {
+                                        taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(),","));
+                                    }
+                                    addTaskChargeDistributionList.add(taskChargeDistributionEntity);
+                                }
+                            }
+                            //按上级分配
+                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && StringUtils.isNotBlank(obj.getChargeId())) {
+                                //查询对应负责人的上级
+                                List<String> ids = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
+                                List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
+                                if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
+                                    for (String superiorType: chargeList) {
+                                        List<String> userIds = userSuperiorDTOS.stream().filter(e -> e.getSuperiorType().equals(superiorType)).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
+                                        //判断是否存在上级
+                                        if (CollectionUtils.isNotEmpty(userIds)) {
+                                            if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                                                List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                                                userIds.addAll(chargetIds);
+                                                userIds = userIds.stream().distinct().collect(Collectors.toList());
+                                            }
+                                            taskChargeDistributionEntity.setChargeIds(StringUtils.join(userIds,","));
+                                            addTaskChargeDistributionList.add(taskChargeDistributionEntity);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (CollectionUtils.isNotEmpty(addTaskChargeDistributionList)) {
+                            taskChargeDistributionService.updateBatchById(addTaskChargeDistributionList);
+                        }
+                    }
+                });
+                if (CollectionUtils.isNotEmpty(addTaskList)) {
+                    projectTaskService.updateBatchById(addTaskList);
+                }
+            }
+        }
+
         return flag;
 
     }
@@ -277,7 +391,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         //当不为空
         if (CollectionUtils.isNotEmpty(memberList)) {
             LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(ProjectMembersEntity::getMemberId, memberList);
+            queryWrapper.in(ProjectMembersEntity::getId, memberList);
             List<ProjectMembersEntity> list = this.list(queryWrapper);
             //以成员id 分类
             Map<String, List<ProjectMembersEntity>> memberMap = list.parallelStream().collect(Collectors.groupingBy(ProjectMembersEntity::getMemberId));
@@ -410,63 +524,44 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         queryWrapper.eq(ProjectTemplateEntity::getType, ProjectTemplateTypeEnum.APPROVAL_TEMPLATE.getCode());
         ProjectTemplateEntity entity = projectTemplateService.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(entity)) {
-            //模板角色成员关联表
-            List<TemplateRoleRefMembersEntity> oldRefList = templateRoleRefMembersService.getByTemplateId(entity.getId());
-            List<TemplateRoleEntity> newRoleList = new ArrayList<>();
-            if (CollectionUtils.isNotEmpty(oldRefList)) {
-                //模板角色
-                List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
-                //模板成员
-                List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
-                List<Pair<String, String>> addRoleList = new ArrayList<>();
-                oldRefList.stream().forEach(obj -> {
-                    TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-
-                    TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
-                    //新增角色
-                    if (CollectionUtils.isNotEmpty(addRoleList)) {
-                        //如果已经新增过则无需再次新增
-                        Pair<String, String> pair = addRoleList.stream().filter(e -> e.getKey().equals(oldRole.getId())).findAny().orElse(null);
-                        if (pair != null) {
-                            obj.setRoleId(pair.getValue());
-                        } else {
-                            //新增角色，防止重复新增先存储List中
-                            ProjectRoleEntity newRole = new ProjectRoleEntity();
-                            BeanMapperUtils.copy(oldRole, newRole);
-                            newRole.setProductId(productId);
-                            newRole.setId(null);
-                            projectRoleService.save(newRole);
-                            obj.setRoleId(newRole.getId());
-                            Pair<String, String> newPair = new Pair<>(oldRole.getId(), newRole.getId());
-                            if (!addRoleList.contains(newPair)) {
-                                addRoleList.add(newPair);
-                            }
-                        }
-                    } else {
-                        //新增角色，防止重复新增先存储List中
-                        ProjectRoleEntity newRole = new ProjectRoleEntity();
-                        BeanMapperUtils.copy(oldRole, newRole);
-                        newRole.setProductId(productId);
-                        newRole.setId(null);
-                        projectRoleService.save(newRole);
-                        obj.setRoleId(newRole.getId());
-                        Pair<String, String> pair = new Pair<>(oldRole.getId(), newRole.getId());
-                        if (!addRoleList.contains(pair)) {
-                            addRoleList.add(pair);
-                        }
-                    }
-                    //新增成员
-                    ProjectMembersEntity newMembers = new ProjectMembersEntity();
-                    BeanMapperUtils.copy(oldMembers, newMembers);
-                    newMembers.setProductId(productId);
-                    newMembers.setId(null);
-                    this.save(newMembers);
-                    obj.setMembersId(newMembers.getId());
+            //模板角色
+            List<TemplateRoleEntity> oldRoleList = templateRoleService.getByTemplateId(entity.getId());
+            //新增角色
+            if (CollectionUtils.isNotEmpty(oldRoleList)) {
+                List<ProjectRoleEntity> projectRoleList = BeanMapperUtils.copyList(ProjectRoleEntity.class, oldRoleList);
+                projectRoleList.forEach(obj->{
+                    obj.setProductId(productId);
+                    obj.setId(null);
                 });
-                List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
-                roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
-                roleRefMemberService.saveBatch(roleRefMemberList);
+                projectRoleService.saveBatch(projectRoleList);
+                //模板角色成员关联表
+                List<TemplateRoleRefMembersEntity> oldRefList = templateRoleRefMembersService.getByTemplateId(entity.getId());
+                if (CollectionUtils.isNotEmpty(oldRefList)) {
+                    //模板成员
+                    List<TemplateMembersEntity> oldMembersList = templateMembersService.getByTemplateId(entity.getId());
+                    oldRefList.forEach(obj -> {
+                        TemplateRoleEntity oldRole = oldRoleList.stream().filter(e -> e.getId().equals(obj.getRoleId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
+                        if (ObjectUtils.isEmpty(oldRole)) {
+                            return;
+                        }
+                        String roleId = projectRoleList.stream().filter(e -> e.getName().equals(oldRole.getName())).map(ProjectRoleEntity::getId).findFirst().orElse("");
+                        TemplateMembersEntity oldMembers = oldMembersList.stream().filter(e -> e.getId().equals(obj.getMembersId()) && e.getTemplateId().equals(obj.getTemplateId())).findAny().orElse(null);
+                        //新增成员
+                        ProjectMembersEntity newMembers = new ProjectMembersEntity();
+                        BeanMapperUtils.copy(oldMembers, newMembers);
+                        newMembers.setProductId(productId);
+                        newMembers.setId(null);
+                        this.save(newMembers);
+                        obj.setMembersId(newMembers.getId());
+                        obj.setRoleId(roleId);
+                    });
+                    List<RoleRefMemberEntity> roleRefMemberList = BeanMapperUtils.copyList(RoleRefMemberEntity.class, oldRefList);
+                    roleRefMemberList.stream().forEach(obj -> obj.setProductId(productId).setId(null));
+                    roleRefMemberService.saveBatch(roleRefMemberList);
+                }
             }
+
+
         }
 
     }
@@ -490,5 +585,32 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         return new ArrayList<>();
     }
 
+    @Override
+    public List<ProjectMembersEntity> listByRoleIds(List<String> roleIdList, String productId) {
+        List<RoleRefMemberEntity> list = roleRefMemberService.getByRoleIdsAndProductId(roleIdList, productId);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<String> membersIds = list.stream().map(RoleRefMemberEntity::getMembersId).collect(Collectors.toList());
+        return this.listByIds(membersIds);
+    }
 
+    @Override
+    public Boolean saveByRoleAndMembers(String productId,String projectId, String roleName, List<String> memberList) {
+        ProjectRoleEntity found = projectRoleService.getByRoleName(productId, roleName);
+        if (ObjectUtils.isEmpty(found)) {
+            //查询产品经理角色，不存在则新增
+            found = new ProjectRoleEntity();
+            found.setProductId(productId);
+            found.setProjectId(projectId);
+            found.setName(roleName);
+            projectRoleService.save(found);
+        }
+        SaveOrUpdateProjectMemberDTO saveOrUpdateProjectMemberDTO = new SaveOrUpdateProjectMemberDTO();
+        saveOrUpdateProjectMemberDTO.setProductId(productId);
+        saveOrUpdateProjectMemberDTO.setRoleId(found.getId());
+        saveOrUpdateProjectMemberDTO.setUserIdList(memberList);
+        //新增或修改产品经理角色和对应成员
+        return  this.saveOrUpdateMember(saveOrUpdateProjectMemberDTO);
+    }
 }

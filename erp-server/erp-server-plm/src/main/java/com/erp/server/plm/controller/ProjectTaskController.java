@@ -9,6 +9,7 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.enums.DataAttributeEnum;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.server.plm.enums.TaskPriorityEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.service.PreTaskService;
 import com.erp.server.plm.service.ProductInfoService;
@@ -49,7 +50,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "plm:task:paging",
-            tableAlias = "project_task"
+            tableAlias = "pt"
           )
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
@@ -193,6 +194,22 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
+     * 项目任务-2全部任务/0待我完成的任务/1待我审核的任务全部数量
+     *
+     * @return
+     */
+    @PostMapping("/listProductTaskCategoryCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:task:paging",
+            tableAlias = "project_task"
+    )
+    public ApiResult<List<ProductTaskCategoryCountDTO>> listProductTaskCategoryCount(@RequestBody TaskPagingDTO dto) {
+        List<ProductTaskCategoryCountDTO> list = taskService.listProductTaskCategoryCount(dto);
+        return success(list);
+    }
+
+    /**
      * 项目任务-获取新建产品 -所属产品列表
      *
      * @return
@@ -210,6 +227,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/updateTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+                tableField = "charge_id",
+                menuCode = "plm:task:update",
+                serviceClass = ProjectTaskService.class
+    )
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);
         return result == true ? success() : failure();
@@ -386,6 +408,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/group/condition/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id,charge_ids",
+            menuCode = "plm:task:expert:paging:all",
+            tableAlias = "t,tcd"
+    )
     public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
         return success(resultList);
@@ -398,9 +425,9 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/group/condition/assignToMe/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "t"
+            tableAlias = "t,tcd"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupAssignToMeConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
         List<TaskGroupResultDTO> resultList = taskService.getGroupAssignToMeCondition(dto);
@@ -428,6 +455,11 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id,charge_ids",
+            menuCode = "plm:task:expert:paging:all",
+            tableAlias = "pt,tcd"
+    )
     @PostMapping("/all/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.expertPaging(searchParamDTO);
@@ -441,9 +473,9 @@ public class ProjectTaskController extends BaseController {
      */
 
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,approval_user_id",
+            tableField = "charge_id,charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "pt,tcd"
     )
     @PostMapping("/assignToMe/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -459,7 +491,7 @@ public class ProjectTaskController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "charge_id",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/assignToMe/waitFinish/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -473,9 +505,9 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "approval_user_id",
+            tableField = "charge_ids",
             menuCode = "plm:task:expert:paging:assignToMe",
-            tableAlias = "project_task"
+            tableAlias = "tcd"
     )
     @PostMapping("/assignToMe/waitAudit/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -486,13 +518,14 @@ public class ProjectTaskController extends BaseController {
     /**
      * 我创造的任务列表
      *
+     *
      * @return
      */
 
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:task:expert:paging:myCreate",
-            tableAlias = "project_task"
+            tableAlias = "pt"
     )
     @PostMapping("/myCreate/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
@@ -531,6 +564,24 @@ public class ProjectTaskController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 任务列表-优先级下拉框
+     * @author Will
+     * @date: 2023/1/31 17:16
+     * @return ApiResult<List<SelectShowDTO>>
+     */
+    @GetMapping("/getTaskPrioritySelect")
+    public ApiResult<List<SelectShowDTO>> getTaskPrioritySelect() {
+        List<SelectShowDTO> list = new ArrayList<>();
+        Arrays.stream(TaskPriorityEnum.values()).forEach(obj -> {
+            SelectShowDTO dto = new SelectShowDTO();
+            dto.setValue(obj.getCode());
+            dto.setLabel(obj.getName());
+            list.add(dto);
+        });
+        return success(list);
+    }
+
 
     /**
      * 配置表单-输出物-完成sku
@@ -560,6 +611,18 @@ public class ProjectTaskController extends BaseController {
         return success();
     }
 
+    /**
+     * 任务列表-飞书提醒
+     * @author Will
+     * @date: 2023/2/1 14:13
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping(value = "/flyingBookReminder")
+    public ApiResult flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
+        taskService.flyingBookReminder(dto);
+        return success();
+    }
 
 }
 

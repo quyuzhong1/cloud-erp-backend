@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -78,6 +79,14 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
     CleanSkuDto getProductIdBySkuClean(@Param("sku") String sku);
+
+    List<SkuVO> getSkuBySkuNos(@Param("skuList") List<String> skuNoList);
+
+    List<SkuVO> searchSku(@Param("searchKeyword") String searchKeyword,@Param("state") Integer state);
+
+    List<ChangeInfoDTO> searchStateSku(@Param("state") Integer state,@Param("searchKeyword") String searchKeyword);
+
+    List<SkuVO> getSkuBySkuIds(@Param("skuIdList")List<String> skuIdList);
 }
 
 

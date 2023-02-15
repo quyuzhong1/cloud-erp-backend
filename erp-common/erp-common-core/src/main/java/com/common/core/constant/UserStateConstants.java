@@ -8,6 +8,8 @@ package com.common.core.constant;
  */
 public class UserStateConstants {
 
-
+    /**
+     * UTF-8 字符集
+     */
     public static final Integer USER_DISABLE = 0;
 }

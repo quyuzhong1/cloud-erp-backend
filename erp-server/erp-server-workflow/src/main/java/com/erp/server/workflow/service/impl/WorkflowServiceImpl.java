@@ -1,7 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-
+import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.ProcessInstanceStateEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.enums.ApiError;
@@ -345,18 +345,18 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @date 2022-08-18 11:34
      */
     @Override
-    public List<ApproveRecordShowDTO> queryApproveRecord(ProcessBaseDTO dto) {
+    public List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         List<HistoricActivityInstance> list = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .orderByHistoricActivityInstanceStartTime()
                 .asc()
                 .list();
-        List<ApproveRecordShowDTO> resultList = new ArrayList<>(list.size());
+        List<AuditorHandleDTO> resultList = new ArrayList<>(list.size());
         for (HistoricActivityInstance item : list) {
             String taskId = item.getTaskId();
             List<Comment> taskComments = taskService.getTaskComments(taskId);
-            ApproveRecordShowDTO vo = new ApproveRecordShowDTO();
+            AuditorHandleDTO vo = new AuditorHandleDTO();
             vo.setActivityName(item.getActivityName());
             vo.setActivityType(matching(item.getActivityType()));
             vo.setComment(taskComments.size() > 0 ? taskComments.get(0).getFullMessage() : "");
@@ -368,6 +368,65 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         return resultList;
+    }
+
+    /**
+     * 终止流程
+     * @author yl
+     * @date 2023-02-01 11:12
+     * @param dto
+     * @return void
+     */
+    @Override
+    public void terminateProcess(ApproveProcessDTO dto) {
+        String procId = dto.getProcessInstanceId();
+
+        Task task = taskService.createTaskQuery().
+                taskId(dto.getTaskId()).singleResult();
+        if (Objects.isNull(task)) {
+            return ;
+        }
+        //获取流程状态
+        int state = checkProcessInstanceState(procId);
+        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
+            throw new ServiceException(ApiError.ERROR_94000);
+        }
+
+        //判断是否有任务
+        List<Task> taskList = taskService.createTaskQuery().processInstanceId(procId).list();
+        if (CollectionUtils.isEmpty(taskList)) {
+            throw new ServiceException(ApiError.ERROR_94001);
+        }
+
+        //获取到流程的节点
+        ActivityInstance activityInstance = runtimeService.getActivityInstance(procId);
+        if (ObjectUtils.isNull(activityInstance) || ObjectUtils.isEmpty(activityInstance.getChildActivityInstances())) {
+            throw new ServiceException(ApiError.ERROR_94002);
+        }
+
+        // 删除任务表其它任务
+        List<String> taskIdList = new ArrayList<>();
+        List<String> actIdList = new ArrayList<>();
+        for (int i = 0; i < taskList.size(); i++) {
+            taskIdList.add(taskList.get(i).getId());
+            actIdList.add(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()));
+        }
+
+        // 对于并行的任务，只能取消其中一个，另外的任务取消不了，所以只能自己操作表，去删除、更新数据状态
+        if (CollectionUtils.isNotEmpty(taskIdList) && CollectionUtils.isNotEmpty(actIdList)) {
+            // 删除ACT_RU_EXECUTION 表中的实例
+            workflowMapper.deleteTaskByIdArray(taskIdList);
+        }
+
+
+        String nowActivityId = task.getTaskDefinitionKey();
+        ActivityDTO activityDTO = new ActivityDTO();
+        activityDTO.setNowActivityId(nowActivityId);
+        activityDTO.setProcessInstanceId(procId);
+        activityDTO.setAuditStatus(BaseStatusEnum.AUDIT_NO_PASS.getStatus());
+        //审批通过后 需要保存流程节点信息
+        actHistoryActivityService.saveActivity(activityDTO);
+
     }
 
     public String matching(String activityType) {

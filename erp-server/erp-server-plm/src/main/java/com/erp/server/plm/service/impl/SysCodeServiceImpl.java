@@ -1,15 +1,15 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
-import com.erp.common.modules.sys.dto.SysCodeDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.SysNoEnum;
-import com.erp.server.plm.enums.VariantColorEnum;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.SysCodeService;
@@ -17,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * @author Will
@@ -52,7 +54,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95010);
         }
-        SysCodeDTO dto = new SysCodeDTO();
+        com.erp.common.modules.sys.dto.SysCodeSkuDTO dto = new com.erp.common.modules.sys.dto.SysCodeSkuDTO();
         //查询产品分类代码
         BasicCategoryEntity bestEntity = new BasicCategoryEntity();
         basicCategoryService.getBestEntity(entity.getCategoryId(),bestEntity);
@@ -96,7 +98,55 @@ public class SysCodeServiceImpl implements SysCodeService {
             }
             dto.setVersion(String.valueOf(c));
         }
-        String sysNo = sysUserFeign.getSysCode(dto);
+
+        String sysNo = sysUserFeign.getSkuNo(dto);
         return sysNo;
     }
+
+
+    @Override
+    @Transactional
+    public String getSpuNo(String categoryId){
+        //spuNo生成规则：一级品类代码+二级品类代码+顺序码（两位数以内自动填充0到两位，例如：01）
+        //父级品类
+        List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(categoryId);
+        if (CollectionUtils.isEmpty(categoryList)) {
+            throw new ServiceException(ApiError.ERROR_95091);
+        }
+        //一级品类
+        BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+            throw new ServiceException(ApiError.ERROR_95091);
+        }
+        //二级品类
+        BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
+            throw new ServiceException(ApiError.ERROR_95092);
+        }
+        SysCodeDTO dto = new SysCodeDTO();
+        //分类组合
+        String category = bestEntity.getCode() + secondEntity.getCode();
+        dto.setCategory(category);
+        dto.setType(SysNoEnum.SPU_NO.getCode());
+        String sysNo = sysUserFeign.getSpuNo(dto);
+        isExistSpuNo(sysNo,dto);
+        return sysNo;
+    }
+
+    /**
+     * 判断spu编号是否存在
+     */
+    private void isExistSpuNo(String sysNo,SysCodeDTO dto) {
+        //判断spu编码系统中是否已经存在，存在则获取下一个编码
+        ProductInfoEntity productInfoEntity = productInfoService.getBySpuNo(sysNo);
+        if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+             sysNo = sysUserFeign.getSpuNo(dto);
+             //再次判断是否存在
+             isExistSpuNo(sysNo,dto);
+        } else {
+            return;
+        }
+    }
+
+
 }

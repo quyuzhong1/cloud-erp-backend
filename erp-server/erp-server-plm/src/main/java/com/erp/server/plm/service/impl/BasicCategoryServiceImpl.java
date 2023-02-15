@@ -183,6 +183,26 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         return null;
     }
 
+    @Override
+    public List<BasicCategoryEntity> listParentEntity(String categoryId) {
+        List<BasicCategoryEntity> list = new ArrayList<>();
+        setParentEntity(categoryId,list);
+        return list;
+    }
+
+    /**
+     * list加入父级品类
+     */
+    private void setParentEntity(String pid,List<BasicCategoryEntity> list) {
+        BasicCategoryEntity basicCategoryEntity = this.getById(pid);
+        if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
+            list.add(basicCategoryEntity);
+            if (!"0".equals(basicCategoryEntity.getPid())) {
+                setParentEntity(basicCategoryEntity.getPid(),list);
+            }
+        }
+    }
+
     /**
      * 获取父级id 集合
      *
@@ -287,28 +307,38 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @param id
      */
     private void checkCategoryCode(String code,String pid,String id) {
-        if ("0".equals(pid)) {
-            //一级分类必须要填分类代码
+        BasicCategoryEntity parent = this.getById(pid);
+        //一二级分类必须填写代号
+        if ("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) {
             if (StringUtils.isBlank(code)) {
                 throw new ServiceException(ApiError.ERROR_95069);
-            } else {
-                Boolean flag = false;
-                for (int i = 65;i <= 90; i++) {
-                    char c = (char) (i);
-                    if ( code.equals(String.valueOf(c)) ) {
-                       flag = true;
-                    }
+            }
+        }
+        if (!"0".equals(pid) && StringUtils.isNotBlank(code)) {
+            //判断是否是二级分类，非一、二级分类无需添加代号
+            if (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid())) {
+                throw new ServiceException(ApiError.ERROR_95093);
+            }
+        }
+        //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
+        if (StringUtils.isNotBlank(code)) {
+            Boolean flag = false;
+            for (int i = 65;i <= 90; i++) {
+                char c = (char) (i);
+                if ( code.equals(String.valueOf(c)) ) {
+                   flag = true;
                 }
-                if (!flag) {
-                    throw new ServiceException(ApiError.ERROR_95071);
-                }
-                LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
-                queryWrapper.eq(BasicCategoryEntity::getCode, code);
-                queryWrapper.last("LIMIT 1");
-                BasicCategoryEntity entity = this.getOne(queryWrapper);
-                if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
-                    throw new ServiceException(ApiError.ERROR_95070);
-                }
+            }
+            if (!flag) {
+                throw new ServiceException(ApiError.ERROR_95071);
+            }
+            LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+            queryWrapper.eq(BasicCategoryEntity::getCode, code);
+            queryWrapper.eq(BasicCategoryEntity::getPid, pid);
+            queryWrapper.last("LIMIT 1");
+            BasicCategoryEntity entity = this.getOne(queryWrapper);
+            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
+                throw new ServiceException(ApiError.ERROR_95070);
             }
         }
     }

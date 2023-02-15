@@ -47,4 +47,6 @@ public interface TaskRefSkuConfigService  extends IService<TaskRefSkuConfigEntit
     List<TaskRefSkuConfigEntity> getDisableFieldByProductId(String productId);
 
     void autoCreateSkuConfig(List<String> taskIdList,String configType,String productId);
+
+
 }

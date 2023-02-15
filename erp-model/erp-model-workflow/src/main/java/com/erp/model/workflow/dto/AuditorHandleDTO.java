@@ -13,13 +13,20 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class ApproveRecordShowDTO implements Serializable {
+public class AuditorHandleDTO implements Serializable {
 
     //节点名称
     private String activityName;
 
+
     //节点类型
     private String activityType;
+
+
+    //操作内容
+    private String handContent;
+
+
 
     //开始时间
     private String startTime;
@@ -32,10 +39,17 @@ public class ApproveRecordShowDTO implements Serializable {
 
 
     //处理人
+    private String handleUserId;
+
+
+    //处理人
     private String handleUserName;
 
 
     //意见
     private String comment;
+
+    //任务的数据
+    private String taskDefinitionKey;
 
 }

@@ -5,8 +5,11 @@ import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.Date;
@@ -145,6 +148,15 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     void skuChangeResult(StateDTO dto);
 
     /**
+     * @description: 根据产品id查询任务
+     * @author Will
+     * @date: 2023/1/10 10:54
+     * @param productId
+     * @return List<ProjectTaskEntity>
+     */
+    List<ProjectTaskEntity> listByProductId(String productId);
+
+    /**
      * 分配给我 待审核
      * @author yl
      * @date 2023-01-10 15:33
@@ -152,4 +164,73 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
      */
     PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    /**
+     * @description: 查询各个分类任务的数量
+     * @author Will
+     * @date: 2023/1/30 16:05
+     * @param dto
+     * @return List<ProductTaskCategoryCountDTO>
+     */
+    List<ProductTaskCategoryCountDTO> listProductTaskCategoryCount(TaskPagingDTO dto);
+
+    /**
+     * @description: 飞书提醒
+     * @author Will
+     * @date: 2023/2/1 14:14
+     * @param dto
+     */
+    void flyingBookReminder(FlyingBookReminderDTO dto);
+
+    
+    /**
+     * 更改任务排期状态
+     * @author yl
+     * @date 2023-02-09 14:16
+     * @param productId
+     * @param taskIdList
+     * @return void
+     */
+    void updateScheduleStatus(String productId, List<String> taskIdList,String status,String scheduleType);
+
+    /**
+     * 获取产品名称及任务数
+     * @author yl
+     * @date 2023-02-09 17:14
+     * @param productId
+     * @return java.util.Map<java.lang.String,java.lang.Integer>
+     */
+    Map<String, Object> getProductMapByProductId(String productId);
+
+    /**
+     * 获取计划的任务 根据任务id
+     * @author yl
+     * @date 2023-02-09 19:51
+     * @param productId
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.vo.ScheduleTaskVO>
+     */
+    List<ScheduleTaskVO> getScheduleTaskByTaskIds(String productId, List<String> taskIds);
+
+    ScheduleTaskExportExcelVO getExport(String productId, String taskId);
+
+    
+    /**
+     * 批量更新任务字段
+     * @author yl
+     * @date 2023-02-10 16:37
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean batchUpdate(BatchScheduleTaskDTO dto);
+
+    
+    /**
+     * 当变更通过后 更改负责人 和时间
+     * @author yl
+     * @date 2023-02-11 16:42
+     * @param taskList
+     * @param status
+     * @return void
+     */
+    void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status);
 }

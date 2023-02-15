@@ -1,11 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
@@ -13,15 +10,11 @@ import com.erp.server.plm.mapper.RoleRefMemberMapper;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.RoleRefMemberService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.aspectj.lang.annotation.Around;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -92,7 +85,7 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
      * @date 2022-10-11 11:02
      */
     @Override
-    public void checkRoleMember(String id, String roleId, List<String> memberIds, String productId) {
+    public List<String> checkRoleMember(String id, String roleId, List<String> memberIds, String productId) {
 
         List<RoleRefMemberEntity> existList = getExistList(roleId);
         List<String> existMemberTableIds = existList.stream().map(RoleRefMemberEntity::getMembersId).collect(Collectors.toList());
@@ -101,8 +94,13 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         List<String> intersection = existMemberTableIds.stream().filter(item -> memberTableIds.contains(item)).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(intersection)) {
-            throw new ServiceException(ApiError.ERROR_95021);
+            List<ProjectMembersEntity> projectMembers = projectMembersService.listByIds(intersection);
+            if (CollectionUtils.isNotEmpty(projectMembers)) {
+                List<String> collect = projectMembers.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.toList());
+                return collect;
+            }
         }
+        return new ArrayList<>();
     }
 
     @Override
@@ -120,6 +118,21 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         queryWrapper.eq(RoleRefMemberEntity::getProductId, productId);
         queryWrapper.eq(RoleRefMemberEntity::getMembersId, userId);
         return this.listObjs(queryWrapper, Object::toString);
+    }
+
+    @Override
+    public List<RoleRefMemberEntity> listByMembersIds(List<String> membersIds) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(RoleRefMemberEntity::getMembersId,membersIds);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<RoleRefMemberEntity> getByRoleIdsAndProductId(List<String> roleIdList, String productId) {
+        LambdaQueryWrapper<RoleRefMemberEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(RoleRefMemberEntity::getRoleId,roleIdList);
+        queryWrapper.eq(RoleRefMemberEntity::getProductId,productId);
+        return this.list(queryWrapper);
     }
 }
 

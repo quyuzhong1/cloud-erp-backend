@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.EnumMessage;
 import com.common.core.utils.EnumsUtil;
 import com.common.core.utils.OperationLogUtil;
 import com.erp.common.dto.base.PagingDTO;
@@ -30,10 +31,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +41,7 @@ import java.util.stream.Collectors;
  * @date 2022/12/5 18:18
  */
 @Service
-public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> implements SysLogService {
+public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> implements SysLogService {
 
     @Autowired
     private SysLogFieldService sysLogFieldService;
@@ -57,10 +55,10 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
     @Autowired
     private SysUserFeign sysUserFeign;
 
-    private static final  String PACKAGEPATH = "com.erp.server.plm.enums";
+    private static final String PACKAGEPATH = "com.erp.server.plm.enums";
 
     @Override
-    public Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid,String msg) {
+    public Boolean addSysLogByUpdate(Object oldObj, Object newObj, String classPath, String businessId, String pid, String msg) {
 
         Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
         //判断是否为空
@@ -75,7 +73,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         LoginUser loginUser = commonService.getUserInfo();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
-        List<SysLogEntity>  list = new LinkedList<>();
+        List<SysLogEntity> list = new LinkedList<>();
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
             Pair<String, String> keyPair = entry.getKey();
@@ -84,13 +82,13 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
             SysLogFieldEntity sysLogFieldEntity = sysLogFieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(sysLogFieldEntity)){
+            if (ObjectUtils.isEmpty(sysLogFieldEntity)) {
                 continue;
             }
             String fieldName = sysLogFieldEntity.getFieldName();
             Integer type = sysLogFieldEntity.getType();
-            String oldValue = valuePair.getKey();
-            String newValue = valuePair.getValue();
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
             if (type == 1) {//是或否
                 oldValue = IsConstant.YES.toString().equals(oldValue) ? "是" : "否";
                 newValue = IsConstant.YES.toString().equals(newValue) ? "是" : "否";
@@ -104,7 +102,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 }
                 Class<?> aClass = null;
                 try {
-                     aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
+                    aClass = Class.forName(PACKAGEPATH.concat(".").concat(sysLogFieldEntity.getEnumClass()));
                 } catch (ClassNotFoundException e) {
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
@@ -113,10 +111,20 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
                 if (StringUtils.isNotBlank(oldValue)) {
-                    oldValue =   EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass).getName();
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        oldValue = enumObject.getName();
+                    } else {
+                        oldValue = "";
+                    }
                 }
                 if (StringUtils.isNotBlank(newValue)) {
-                    newValue =   EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass).getName();
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass);
+                    if (ObjectUtils.isNotEmpty(enumObject)) {
+                        newValue = enumObject.getName();
+                    } else {
+                        newValue = "";
+                    }
                 }
 
             } else if (type == 3) {//字典
@@ -139,7 +147,9 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
                 }
 
             }
-
+            if (oldValue.equals(newValue)) {
+                continue;
+            }
             String content = "";
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = msg.concat("编辑了[").concat(fieldName).concat("]").concat("由空值变更为[").concat(newValue).concat("]");
@@ -163,18 +173,35 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
     }
 
     @Override
-    public Boolean addSysLogBySave(String content,String classPath,String businessId,String pid) {
+    public List<String> listSysLogField(Object oldObj, Object newObj) {
+        List<String> contentList = new ArrayList<>();
+        Map<Pair<String, String>, Pair<String, String>> operationLogMap = OperationLogUtil.getOperationLogMap(oldObj, newObj);
+        //判断是否为空
+        if (operationLogMap.size() == 0) {
+            return contentList;
+        }
+        for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
+            //Pair<字段名称, 类路径>
+            Pair<String, String> keyPair = entry.getKey();
+            String field = keyPair.getKey();
+            contentList.add(field);
+        }
+        return contentList;
+    }
+
+    @Override
+    public Boolean addSysLogBySave(String content, String classPath, String businessId, String pid) {
         SysLogEntity entity = new SysLogEntity();
         LoginUser loginUser = commonService.getUserInfo();
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         entity.setClassPath(classPath)
-              .setBusinessId(businessId)
-              .setPid(pid)
-              .setContent(content)
-              .setOperation("新增信息")
-              .setCreateUserId(userId)
-              .setCreateUserName(userName);
+                .setBusinessId(businessId)
+                .setPid(pid)
+                .setContent(content)
+                .setOperation("新增信息")
+                .setCreateUserId(userId)
+                .setCreateUserName(userName);
         return this.save(entity);
     }
 
@@ -196,7 +223,7 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         String userName = loginUser.getUserName();
         String userId = loginUser.getUid();
         String content = entity.getContent();
-        if (StringUtils.isBlank(content))  {
+        if (StringUtils.isBlank(content)) {
             if (StringUtils.isBlank(entity.getFieldName())) {
                 throw new ServiceException(ApiError.ERROR_95089);
             }
@@ -218,5 +245,10 @@ public class SysLogServiceImpl  extends ServiceImpl<SysLogMapper, SysLogEntity> 
         SysLogSelectDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto) {
+        return baseMapper.listSysLog(dto);
     }
 }

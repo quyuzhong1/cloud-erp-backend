@@ -93,7 +93,23 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
     List<SysUserDeptDTO> getUserDeptList();
+    /**
+     * @description: 查询人员所有上级
+     * @author Will
+     * @date: 2023/1/9 9:24
+     * @param userIds
+     * @return List<UserSuperiorDTO>
+     */
+    List<UserSuperiorDTO> listSuperiorByUserIds(List<String> userIds);
 
+    /**
+     * 根据用户id 获取用户信息
+     * @author yl
+     * @date 2023-01-29 10:25
+     * @param userId
+     * @return com.erp.common.modules.sys.dto.SysUserDTO
+     */
     SysUserDTO getSysUserById(String userId);
+
 }
 

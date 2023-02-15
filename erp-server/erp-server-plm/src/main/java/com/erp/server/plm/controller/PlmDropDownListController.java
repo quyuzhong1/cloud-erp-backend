@@ -1,0 +1,54 @@
+package com.erp.server.plm.controller;
+
+
+import com.erp.common.controller.BaseController;
+import com.erp.common.dto.base.ApiResult;
+import com.erp.model.dmp.enums.SalesPlatformEnum;
+import com.erp.model.plm.dto.SelectShowDTO;
+import com.erp.server.plm.enums.RelatedSkuTypeEnum;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * BI 下拉列表
+ *
+ * @Author Cloud
+ * @Date 2022/12/19 11:26
+ **/
+
+@RestController
+@RequestMapping("plm/drop/down")
+public class PlmDropDownListController extends BaseController {
+
+    /**
+     * 平台下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/platform/list")
+    public ApiResult<List<SelectShowDTO>> listPlatformDropDown() {
+        List<SelectShowDTO> result = Arrays.stream(SalesPlatformEnum.values())
+                .map(x -> new SelectShowDTO(x.getCode(), x.getName(), x.getDesc()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+    /**
+     * 关联类型下拉列表
+     *
+     * @return
+     */
+    @GetMapping("/relatedSkuType/list")
+    public ApiResult<List<SelectShowDTO>> listRelatedSkuType() {
+        List<SelectShowDTO> result = Arrays.stream(RelatedSkuTypeEnum.values())
+                .map(x -> new SelectShowDTO(0, x.getCode(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+
+}

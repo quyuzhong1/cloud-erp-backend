@@ -10,7 +10,8 @@ public enum ProductDetailStatusEnum {
     WAIT_CONFIRM(0, "待审核"),
     APPROVAL_ING(1, "审核中"),
     APPROVAL_PASS(2, "审核通过"),
-    APPROVAL_NO_PASS(3, "审核不通过");
+    APPROVAL_NO_PASS(3, "审核不通过"),
+    WAIT_COMMIT(4, "待提交");
 
 
     private Integer code;

@@ -23,7 +23,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     int countByCategoryId(String id);
 
-    Boolean saveOrUpdateProduct(ProductDTO dto);
+    String saveOrUpdateProduct(ProductDTO dto);
 
     Boolean updateCategory(MoveCategoryDTO dto);
 
@@ -33,6 +33,14 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO> dto);
 
+    /**
+     * @description: 查询产品列表数据（无分页）
+     * @author Will
+     * @date: 2023/2/10 14:35
+     * @param dto
+     * @return List<ProductShowDTO>
+     */
+    List<BasicDTO> listProductInfo(ProductSearchDTO dto);
 
     Boolean saveTemplate(SaveProductTemplateDTO dto);
 
@@ -74,4 +82,23 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return ProductInfoDTO
      */
     ProductInfoDTO getSpuByParam(Map<String, String> params);
+
+    /**
+     * 更改信息 基于sku 变更的
+     * @author yl
+     * @date 2023-02-07 19:58
+     * @param productInfoDTO
+     * @return void
+     */
+    void updateSpecByChangeSku(ProductInfoDTO productInfoDTO);
+    /**
+     * @description: 根据spu编码查询产品
+     * @author Will
+     * @date: 2023/2/8 14:49
+     * @param spuNo
+     * @return ProductInfoEntity
+     */
+    ProductInfoEntity getBySpuNo(String spuNo);
+
+
 }

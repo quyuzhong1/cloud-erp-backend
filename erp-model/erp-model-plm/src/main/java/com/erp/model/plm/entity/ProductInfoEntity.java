@@ -33,6 +33,12 @@ public class ProductInfoEntity implements Serializable {
     private String name;
 
     /**
+     * 产品名称（英文）
+     */
+    @TableField("name_en")
+    private String nameEn;
+
+    /**
      * 产品类别
      */
     @TableField("category")

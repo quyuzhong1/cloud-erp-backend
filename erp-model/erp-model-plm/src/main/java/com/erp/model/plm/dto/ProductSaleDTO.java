@@ -91,7 +91,7 @@ public class ProductSaleDTO implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售平台
+     * 销售平台(SalesPlatformEnum枚举)
      */
     private String salesPlatform;
 

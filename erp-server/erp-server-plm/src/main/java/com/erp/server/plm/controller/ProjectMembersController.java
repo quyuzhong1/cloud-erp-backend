@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller;
 
 
+import com.common.core.utils.MathUtil;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
@@ -49,6 +50,7 @@ public class ProjectMembersController extends BaseController {
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:project:member:saveOrUpdate")
     public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
+        dto.setFlag(MathUtil.ONE);
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
         return flag == true ? success() : failure();
     }

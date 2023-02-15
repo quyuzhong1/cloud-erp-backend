@@ -1,0 +1,59 @@
+package com.erp.model.plm.vo;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * @Classname ScheduleTaskDetailsVO
+ * @Description TODO
+ * @Date 2023-02-09 16:58
+ * @Created by yl
+ */
+@Data
+@NoArgsConstructor
+public class ScheduleTaskDetailsVO implements Serializable {
+
+
+
+
+    /**
+     * 任务id
+     */
+    private String taskId;
+
+
+    /**
+     * 任务负责人id
+     */
+    private String chargeId;
+
+    /**
+     * 任务负责人id
+     */
+    private String chargeName;
+
+    /**
+     * 计划开始时间
+     */
+    private Date planStartTime;
+
+    /**
+     * 计划结束时间
+     */
+    private Date planEndTime;
+
+
+    private List<ScheduleTaskDetailsVO> historyList;
+
+
+
+
+
+
+
+
+}

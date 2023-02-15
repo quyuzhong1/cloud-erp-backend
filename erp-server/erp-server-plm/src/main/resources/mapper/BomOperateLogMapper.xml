@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.BomOperateLogMapper">
+
+
+
+    <select id="paging" resultType="com.erp.model.plm.vo.BomOperateVO">
+        SELECT
+          id,create_time,
+          create_user_id,
+          update_time,update_user_id,
+          type,content
+        FROM product_bom_operate_log
+          WHERE bom_id=#{bomId}
+          ORDER BY create_time DESC
+
+    </select>
+</mapper>

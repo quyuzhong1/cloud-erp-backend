@@ -167,6 +167,7 @@
         pd.product_state,
         pd.name,
         pi.name as spuName,
+        pi.name_en as spuNameEn,
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -184,6 +185,7 @@
         pi.pirate_risk,
         pi.materials,
         pd.plan_listing_time,
+        pd.first_mass_product_date,
         pd.unit_id,
         unit.name AS unit_name,
         pd.product_state,
@@ -206,6 +208,7 @@
         pi."id",
         pi.spu_no,
         pi."name",
+        pi.name_en,
         pi.charge_name,
         pi.charge_id,
         pi.brand_name,
@@ -345,5 +348,76 @@
         FROM product_info pi
         LEFT JOIN product_detail pd ON pd.product_id = pi.id
         WHERE pd.sku_no = #{sku}
+    </select>
+
+    <select id="getSkuBySkuNos" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0
+        <if test="skuList != null and skuList.size>0">
+         AND pd.sku_no IN
+            <foreach collection="skuList" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="searchSku" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0 AND pd.status=#{state}
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND
+            (
+            pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+             OR
+            pd.name LIKE  concat('%',#{searchKeyword},'%')
+            )
+        </if>
+    </select>
+    <select id="searchStateSku" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
+        SELECT
+        pd.id AS sourceId,
+        pd.product_id,
+        pd.sku_no,
+        pd.name
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0 AND pd.status=#{state}
+        <if test="searchKeyword != null and searchKeyword!=''">
+            AND pd.sku_no LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+
+    <select id="getSkuBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
+        SELECT
+        pd.id AS skuId,
+        pi.id AS productId,
+        pi.spu_no,
+        pi.name AS spuName,
+        pd.sku_no,
+        pd.name AS skuName
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id
+        WHERE pi.delete_state = 0
+        <if test="skuIdList != null and skuIdList.size>0">
+            AND pd.id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 </mapper>

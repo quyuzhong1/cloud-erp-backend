@@ -1,9 +1,8 @@
-package com.erp.common.modules.sys.dto;
+package com.erp.model.sys.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -14,7 +13,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class SysCodeDTO implements Serializable {
+public class SysCodeSkuDTO implements Serializable {
 
     /**
      * 主键id
@@ -24,7 +23,6 @@ public class SysCodeDTO implements Serializable {
     /**
      * 类目
      */
-    @NotBlank(message = "类目不能为空")
     private String category;
 
     /**
@@ -55,7 +53,6 @@ public class SysCodeDTO implements Serializable {
     /**
      * 编码类型
      */
-    @NotBlank(message = "编码类型不能为空")
     private Integer type;
 
 }

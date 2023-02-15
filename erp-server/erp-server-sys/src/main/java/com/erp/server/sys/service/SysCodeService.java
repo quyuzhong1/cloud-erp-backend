@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 
 /**
@@ -13,11 +14,19 @@ import com.erp.model.sys.entity.SysCodeEntity;
 public interface SysCodeService extends IService<SysCodeEntity> {
 
     /**
-     * @description: 根据编码信息生成系统编码
+     * @description: 根据编码信息生成sku编码
      * @author Will
      * @date: 2022/11/21 12:15
      * @param dto
      * @return String
      */
-    String getSysCode(SysCodeDTO dto);
+    String getSkuNo(SysCodeSkuDTO dto);
+    /**
+     * @description: 根据编码信息生成spu编码
+     * @author Will
+     * @date: 2023/1/7 10:05
+     * @param dto
+     * @return String
+     */
+    String getSpuNo(SysCodeDTO dto);
 }

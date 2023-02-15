@@ -30,6 +30,17 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @return Boolean
      */
     Boolean addSysLogByUpdate(Object oldObj,Object newObj,String classPath ,String businessId,String pid,String msg);
+
+
+    /**
+     * @description: 修改时保存日志
+     * @author Will
+     * @date: 2022/12/5 20:29
+     * @param oldObj 旧对象
+     * @param newObj 新对象
+     * @return String
+     */
+    List<String> listSysLogField(Object oldObj,Object newObj);
     /**
      * @description: 新增时保存日志
      * @author Will
@@ -66,4 +77,13 @@ public interface SysLogService  extends IService<SysLogEntity> {
      * @return PagingVO<SysLogShowDTO>
      */
     PagingVO<SysLogShowDTO> paging(PagingDTO<SysLogSelectDTO> dto);
+
+    /**
+     * @description: 列表不分页查询
+     * @author Will
+     * @date: 2023/1/6 16:48
+     * @param dto
+     * @return List<SysLogShowDTO>
+     */
+    List<SysLogShowDTO> listSysLog(SysLogSelectDTO dto);
 }

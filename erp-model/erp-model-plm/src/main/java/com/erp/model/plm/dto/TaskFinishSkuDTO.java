@@ -26,7 +26,17 @@ public class TaskFinishSkuDTO implements Serializable {
     private String taskId;
 
     /**
+     * 产品id
+     */
+    private String productId;
+
+    /**
      * skuId 集合
      */
     private List<String> skuIdList;
+
+    /**
+     * 全部的集合
+     */
+    private List<String> allList;
 }

@@ -35,10 +35,8 @@ public interface WorkflowService {
    //发布流程
    void deployDefinitionByResource(DeployProcessDTO dto);
 
-   List<ApproveRecordShowDTO> queryApproveRecord(ProcessBaseDTO dto);
+   List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 
-
-
-
+    void terminateProcess(ApproveProcessDTO dto);
 }

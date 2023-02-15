@@ -60,12 +60,12 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "0005"));
+        queryFilters.add(String.format("FNumber = '%s'", "SKU1"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
                 "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
                 "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
-                "FWIDTH,F_ulz_Qty1";
+                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -137,17 +137,32 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),JSONObject.toJSONString(ex));
                 return;
             }
-            if (save.isSuccessfully()) {
-                //新增成功操作日志
-                insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),"新增成功");
-                //提交
-                submit(platformEntity, map,apiUtils,viewMap,save);
-                return;
-            } else {
-                //添加失败操作日志及定时任务
-                insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
+            //新增成功后编辑二级类目
+            String id = save.getResult().getId();
+            //主单据id
+            KingdeeUtils.makeFieldJson(json,"FMATERIALID",".",id);
+            //需要修改字段添加二级类目
+            ArrayList<String> needUpDateFields = new ArrayList<>();
+            String secondLevelCategory = mapList.stream().filter(obj -> "secondLevelCategory".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
+            String secondLevelCategoryCode = mapList.stream().filter(obj -> "secondLevelCategoryCode".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
+            ArrayList<String> fields =(ArrayList<String>) Arrays.stream(secondLevelCategory.split("\\.")).collect(Collectors.toList());
+            needUpDateFields.addAll(fields);
+            ArrayList<String> codeFields =(ArrayList<String>) Arrays.stream(secondLevelCategoryCode.split("\\.")).collect(Collectors.toList());
+            needUpDateFields.addAll(codeFields);
+            param.setNeedUpDateFields(needUpDateFields);
+            try {
+                //修改二级类目
+                save = apiUtils.save(param);
+            } catch (Exception ex) {
+                //新增失败时添加日志及定时任务
+                insertFailureLog(platformEntity, map,JSONObject.toJSONString(json),JSONObject.toJSONString(ex));
                 return;
             }
+            //新增成功操作日志
+            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(json),"新增成功");
+            //提交
+            submit(platformEntity, map,apiUtils,viewMap,save);
+            return;
         }
        //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");//单据状态
@@ -195,17 +210,11 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),e.getMessage());
                 return;
             }
-           if (save.isSuccessfully()) {
-               //修改成功操作日志
-               insertSuccessLog( platformEntity, map, JSONObject.toJSONString(json),"修改成功");
-               //提交
-               submit(platformEntity, map,apiUtils,viewMap,save);
-               return;
-           } else {
-               //修改失败操作日志及定时任务
-               insertFailureLog(platformEntity,map,JSONObject.toJSONString(json),JSONObject.toJSONString(save));
-               return;
-           }
+           //修改成功操作日志
+           insertSuccessLog( platformEntity, map, JSONObject.toJSONString(json),"修改成功");
+           //提交
+           submit(platformEntity, map,apiUtils,viewMap,save);
+           return;
         }
     }
 
@@ -230,15 +239,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             insertFailureLog(platformEntity,map,"提交失败",e.getMessage());
             return;
         }
-        if (submit.isSuccessfully()) {
-            //提交成功操作日志
-            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"提交成功");
-            //提交成功后继续审核直至已审核
-            audit(platformEntity, map,apiUtils,viewMap);
-        } else {
-            //提交失败操作日志及定时任务
-            insertFailureLog(platformEntity,map,"提交失败",JSONObject.toJSONString(save));
-        }
+        //提交成功操作日志
+        insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"提交成功");
+        //提交成功后继续审核直至已审核
+        audit(platformEntity, map,apiUtils,viewMap);
     }
 
     /**
@@ -265,14 +269,8 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
                 insertFailureLog(platformEntity,map,"审核失败",e.getMessage());
                 return;
             }
-            if (operatorResult.isSuccessfully()) {
-                //审核成功操作日志
-                insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"审核成功");
-            } else {
-                //审核失败操作日志及定时任务
-                insertFailureLog(platformEntity,map,"审核失败",JSONArray.toJSONString(ids));
-                return;
-            }
+            //审核成功操作日志
+            insertSuccessLog(platformEntity,map,JSONObject.toJSONString(viewMap),"审核成功");
             //当审核状态非已审核时继续审核
             audit(platformEntity, map,apiUtils,viewMap);
         }

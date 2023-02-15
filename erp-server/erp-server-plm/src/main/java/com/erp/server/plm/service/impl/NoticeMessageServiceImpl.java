@@ -1,12 +1,13 @@
 package com.erp.server.plm.service.impl;
 
 
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.constant.ThirdConstants;
+import com.common.core.enums.BaseStatusEnum;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
@@ -16,13 +17,15 @@ import com.erp.common.exception.ServiceException;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.common.modules.third.dto.FsBatchSendMessageDTO;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
+import com.erp.model.plm.dto.FlyingBookReminderDTO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.NoticeMessageConstant;
@@ -31,10 +34,8 @@ import com.erp.server.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;
-import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tools.ant.Project;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -42,7 +43,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,6 +80,12 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -691,16 +697,21 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 } else {
                     allNoticeUserIds = noticeUserIds;
                 }
+                //任务完成通知消息
+                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, userName);
                 //获取对应的前置关系
                 PreTaskEntity preTask = preTaskList.stream().filter(p -> p.getPreTaskId().equals(task.getId())).findFirst().orElse(null);
                 if (!Objects.isNull(preTask)) {
                     String taskId = preTask.getTaskId();
                     ProjectTaskEntity taskEntity = projectTaskList.stream().filter(p -> p.getId().equals(taskId)).findFirst().orElse(null);
-                    if (!Objects.isNull(taskEntity) && StringUtils.isNotBlank(taskEntity.getChargeId())) {
-                        List<String> preTaskChargeIdList = Arrays.asList(taskEntity.getChargeId().split(","));
-                        allNoticeUserIds.addAll(preTaskChargeIdList);
+                    if (!Objects.isNull(taskEntity)) {
+                        if (StringUtils.isNotBlank(taskEntity.getChargeId())) {
+                            List<String> preTaskChargeIdList = Arrays.asList(taskEntity.getChargeId().split(","));
+                            allNoticeUserIds.addAll(preTaskChargeIdList);
+                        }
+                        //完成任务的通知信息
+                        messageContent = String.format(NoticeMessageConstant.EXIST_PRE_FINISH_TASK, task.getName(),taskEntity.getName());
                     }
-
                 }
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
@@ -708,7 +719,6 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_TASK, userName);
                 String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -768,20 +778,20 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //消息通知记录
             List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
             for (ProjectTaskEntity task : taskList) {
-                List<String> allNoticeUserIds = new ArrayList<>();
-                //所有的通知用户人
-                String approvalUserId = task.getApprovalUserId();
-                if (StringUtils.isNotBlank(approvalUserId)) {
-                    List<String> approvalUserIdList = Arrays.asList(approvalUserId.split(","));
-                    allNoticeUserIds.addAll(approvalUserIdList);
+                //查询当前需要审核的人员
+                List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
+                if (CollectionUtils.isEmpty(approveRecordShowList)){
+                    throw new ServiceException(ApiError.ERROR_95045);
                 }
+                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj-> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent())).map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                String messageContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM, userName);
+
+                String messageContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM, task.getChargeName());
                 String projectContent = getTaskProjectContent(task.getName(), product.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
                 Map contentMap = getCardMessageMap(messageContent, projectContent, fsAppUrl);
                 sendMessage.setContentMap(contentMap);
@@ -813,6 +823,79 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
 
 
+    }
+
+    @Override
+    @Async("customExecutor")
+    @Transactional
+    public Boolean flyingBookReminder(FlyingBookReminderDTO dto) {
+        //需要发生通知的人员
+        List<String> sendIds = new ArrayList<>();
+        //抄送人id
+        List<String> userIds = dto.getUserIds();
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            sendIds.addAll(userIds);
+        }
+        //提醒内容
+        String content = dto.getContent();
+        //任务id
+        List<String> taskIds = dto.getTaskIds();
+        //任务信息
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.listByIds(taskIds);
+        if (CollectionUtils.isEmpty(projectTaskList)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        //消息记录
+        List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+        for (ProjectTaskEntity task : projectTaskList) {
+            //产品id
+            String productId = task.getProductId();
+            String chargeIds = task.getChargeId();
+            if (StringUtils.isNotBlank(chargeIds)) {
+                 List<String> chargeIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                 sendIds.addAll(chargeIdList);
+                 //去重
+                sendIds = sendIds.stream().distinct().collect(Collectors.toList());
+            }
+            //产品信息
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
+            if (ObjectUtils.isEmpty(productInfoEntity)) {
+                throw new ServiceException(ApiError.ERROR_95010);
+            }
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, sendIds);
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            String projectContent = getTaskProjectContent(task.getName(), productInfoEntity.getName(), DateUtil.conversionDate(task.getPlanEndTime(), ""), taskCharge, task.getChargeName());
+            Map contentMap = getCardMessageMap(content, projectContent, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            //当发送成功后
+            if (sendResult) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(task.getChargeId());
+                    recordEntity.setMessageContent(content);
+                    recordEntity.setNoticeMessageId(null);
+                    recordEntity.setNoticeNode(null);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setPlanEndTime(task.getPlanEndTime());
+                    recordEntity.setProductId(productId);
+                    recordEntity.setProductName(productInfoEntity.getName());
+                    recordEntity.setTaskId(task.getId());
+                    recordEntity.setTaskName(task.getName());
+                    recordEntity.setChargeName(task.getChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+            }
+        }
+        //保存发送消息通知记录
+        noticeMessageRecordService.saveBatch(messageRecordList);
+        return true;
     }
 
 

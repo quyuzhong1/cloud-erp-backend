@@ -2,10 +2,11 @@ package com.erp.rpc.sys.feign;
 
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseSearchDTO;
+import com.erp.common.modules.sys.dto.SysCodeSkuDTO;
 import com.erp.common.modules.sys.dto.*;
 import com.erp.common.modules.third.dto.ThirdUnionDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.dto.*;
+import com.erp.model.sys.vo.UserFieldVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -70,9 +71,13 @@ public interface SysUserFeign {
     @GetMapping("sys/feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 
-    //查询编码
-    @PostMapping("sys/feign/code/getSysCode")
-    String getSysCode(@RequestBody SysCodeDTO dto);
+    //查询sku编码
+    @PostMapping("sys/feign/code/getSkuNo")
+    String getSkuNo(@RequestBody SysCodeSkuDTO dto);
+
+    //查询spu编码
+    @PostMapping("sys/feign/code/getSpuNo")
+    String getSpuNo(@RequestBody SysCodeDTO dto);
 
     @PostMapping("sys/feign/user/getUserDeptList")
     List<SysUserDeptDTO> getUserDeptList();
@@ -92,8 +97,28 @@ public interface SysUserFeign {
 
     @PostMapping("sys/feign/user/getSysUserById")
     SysUserDTO getSysUserById(@RequestBody String uid);
+    //根据用户id查询所有上级用户
+    @PostMapping("sys/feign/user/listSuperiorByUserIds")
+    List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds);
+
+    //根据角色id查用户名称
+    @PostMapping("sys/feign/user/listRoleByIds")
+    List<String> listRoleByIds(@RequestBody List<String> roleIds);
+
+    //根据用户ids查询角色
+    @PostMapping("sys/feign/user/listRoleByUserIds")
+    List<SysRoleDTO> listRoleByUserIds(List<String> userIds);
 
     //根据部门名称查询部门负责人
     @PostMapping("sys/feign/dept/getByDeptNames")
     List<SysUserDeptDTO> getByDeptNames(@RequestBody List<String> deptNames);
+
+    //保存反选字段
+    @PostMapping("sys/feign/customize/field/add")
+    Boolean batchAdd(@RequestBody CustomizeFieldLayoutDTO dto);
+
+    //获取反选字段
+    @PostMapping("sys/feign/customize/field/getByUserId")
+    UserFieldVO getByUserId(@RequestBody FindCustomizeFieldDTO dto);
+
 }

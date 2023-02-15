@@ -29,6 +29,12 @@ public class ProductInfoDTO {
     private String name;
 
     /**
+     * 产品名称（英文）
+     */
+    @Size(max = 200,message = "产品名称（英文）最大200字符")
+    private String nameEn;
+
+    /**
      * 产品类别
      */
     private String category;
@@ -81,6 +87,7 @@ public class ProductInfoDTO {
     /**
      * spuNo
      */
+    @Size(max = 50,message = "SPU最大50字符")
     private String spuNo;
 
     /**
@@ -171,4 +178,9 @@ public class ProductInfoDTO {
      * 修改人名称
      */
     private String updateUserName;
+
+    /**
+     * 是否是无规格新增
+     */
+    private Integer isNoSpecAdd;
 }

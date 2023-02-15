@@ -126,6 +126,14 @@ public class TemplateRoleRefMembersServiceImpl extends ServiceImpl<TemplateRoleR
     }
 
     @Override
+    public List<TemplateRoleRefMembersEntity> getByRoleIdsAndTemplateId(List<String> roleIds, String templateId) {
+        LambdaQueryWrapper<TemplateRoleRefMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplateRoleRefMembersEntity::getRoleId,roleIds);
+        queryWrapper.eq(TemplateRoleRefMembersEntity::getTemplateId,templateId);
+        return this.list(queryWrapper);
+    }
+
+    @Override
     public Boolean removeByIdAndTemplateId(String roleRefMembersId, String templateId) {
         LambdaQueryWrapper<TemplateRoleRefMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateRoleRefMembersEntity::getTemplateId,templateId);

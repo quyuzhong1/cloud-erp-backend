@@ -21,6 +21,8 @@ public interface TemplateMembersMapper extends BaseMapper<TemplateMembersEntity>
      * @return List<TemplateMembersEntity>
      */
     List<TemplateMembersEntity> getMembersByRoleIdAndTemplateId(@Param("roleId") String roleId,@Param("templateId") String templateId);
+
+    List<TemplateMembersEntity> listByRoleNames(@Param("roleNames")  List<String> roleNames,@Param("templateId") String templateId);
 }
 
 

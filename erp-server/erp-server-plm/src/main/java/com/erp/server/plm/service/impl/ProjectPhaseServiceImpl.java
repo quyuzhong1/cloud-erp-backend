@@ -1,9 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.utils.MathUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.BasicProductIdDTO;
@@ -17,18 +18,18 @@ import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.SysTaskPhaseService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -89,20 +90,24 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         if (CollectionUtils.isNotEmpty(list)) {
             //获取不是系统的阶段名 那就是产品的阶段名
             chekPhaseName(list, productId);
-            List<ProjectPhaseEntity> updateList = new LinkedList<>();
+            List<ProjectPhaseEntity> saveList = new LinkedList<>();
+            Integer seq = MathUtil.ONE;
             for (TaskPhaseDTO item : list) {
                 if (StringUtils.isBlank(item.getName())) {
                     throw new ServiceException(ApiError.ERROR_95002);
                 }
                 ProjectPhaseEntity entity = new ProjectPhaseEntity();
-                entity.setId(item.getId());
                 entity.setName(item.getName());
                 entity.setProductId(productId);
-                updateList.add(entity);
+                entity.setId(item.getId());
+                entity.setSeq(seq);
+                saveList.add(entity);
+                seq++;
             }
-            this.saveOrUpdateBatch(updateList);
+            this.saveOrUpdateBatch(saveList);
         }
     }
+
 
     private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {
         List<ProjectPhaseEntity> phaseList = getByProductId(productId);
@@ -236,7 +241,21 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
     public List<ProjectPhaseEntity> getByProductId(String productId) {
         LambdaQueryWrapper<ProjectPhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectPhaseEntity::getProductId, productId);
+        queryWrapper.orderByAsc(ProjectPhaseEntity::getCreateTime);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<ProjectPhaseEntity> listByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return new ArrayList<>();
+        }
+        return this.baseMapper.listTaskPhaseByProductIds(productIds);
+    }
+
+    @Override
+    public List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId) {
+        return this.baseMapper.listByPhaseNames(phaseNames,productId);
     }
 
     private void checkPhaseTask(String id) {

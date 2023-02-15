@@ -42,4 +42,8 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
     List<CopySourceDTO> saveSysPhase(String productId);
 
     List<ProjectPhaseEntity> getByProductId(String productId);
+
+    List<ProjectPhaseEntity> listByProductIds(List<String> productIds);
+
+    List<ProjectPhaseEntity> listByPhaseNames(List<String> phaseNames,String productId);
 }

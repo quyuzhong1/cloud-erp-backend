@@ -37,7 +37,7 @@ public class ProductDetailEntity implements Serializable {
     private String skuNo;
 
     /**
-     * 产品名称
+     * 品名
      */
     @TableField(value = "name")
     private String name;
@@ -55,6 +55,13 @@ public class ProductDetailEntity implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planListingTime;
 
+    /**
+     * 首批量产入库时间
+     */
+    @TableField(value = "first_mass_product_date")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private Date firstMassProductDate;
+    
     /**
      * 单位表id
      */
@@ -137,7 +144,7 @@ public class ProductDetailEntity implements Serializable {
     private List<String> disableFieldList;
 
     /**
-     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过
+     * 任务状态 0待审核，1审核中，2审核通过，3审核不通过,4，待提交
      */
     @TableField("status")
     private Integer status;

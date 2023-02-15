@@ -1,7 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.erp.common.annotation.StateEnumValue;
-import com.erp.common.dto.base.PermissionsDTO;
+import com.erp.common.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,22 +17,18 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskPagingDTO extends PermissionsDTO implements Serializable {
+public class TaskPagingDTO extends SortDTO implements Serializable {
 
-
-     //产品id
      /**
       * 产品id
       */
      @NotBlank(message = "产品id不能为空")
      private String productId;
 
-
      /**
       * 阶段id 如果没有就是全部
       */
      private String phaseId;
-
 
      /**
       * 任务类型
@@ -43,20 +39,15 @@ public class TaskPagingDTO extends PermissionsDTO implements Serializable {
      @StateEnumValue(intValues = {0,1,2}, message = "任务类型有误")
      private Integer taskFlag;
 
-
-     //
      /**
-      * 筛选条件
+      * 高级搜索筛选条件
       */
-     List<TaskSearchDTO>  searchList;
-
+     TaskSearchDTO  taskSearchDTO;
 
      /**
       * 搜索关键字
       */
      private String searchKeyword;
-
-
 
      /**
       *  状态值 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过

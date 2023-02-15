@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -160,8 +161,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private BasicDictService basicDictService;
 
+    @Autowired
+    private SysCodeService sysCodeService;
 
-    private static final  String CLASSPATH = String.valueOf(ProductInfoEntity.class);
+    @Autowired
+    private ProjectPhaseService projectPhaseService;
+
+    @Autowired
+    private ProjectRoleService projectRoleService;
+
+
+    private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
      * 查询 分类id 下有多少产品
@@ -231,7 +241,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:06
      */
     @Override
-    public Boolean saveOrUpdateProduct(ProductDTO dto) {
+    @Transactional
+    public String saveOrUpdateProduct(ProductDTO dto) {
         //检查名字是否重复
         checkName(dto.getName(), dto.getId());
         //根据id查询
@@ -242,9 +253,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String chargeId = StringUtils.join(chargeIds, ",");
         String chargeName = commonService.getNameByIds(chargeIds);
         dto.setChargeName(chargeName);
-        String CategoryId = dto.getCategoryId();
+        String categoryId = dto.getCategoryId();
         BeanMapper.copy(dto, entity);
-        BasicCategoryEntity category = basicCategoryService.getById(CategoryId);
+        BasicCategoryEntity category = basicCategoryService.getById(categoryId);
         if (category != null) {
             entity.setCategory(category.getName());
             dto.setCategory(category.getName());
@@ -272,15 +283,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeId(chargeId);
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
+        //自动生成产品编号
+        if (ObjectUtils.isEmpty(entity.getId()) || !entity.getCategoryId().equals(oldEntity.getCategoryId())) {
+            String spuNo = sysCodeService.getSpuNo(categoryId);
+            entity.setSpuNo(spuNo);
+        }
         Boolean flag = this.saveOrUpdate(entity);
-
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
-            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList,loginUser);
+            List<ProjectTaskEntity> projectTaskList = projectTaskService.addSysTask(entity.getId(), taskDocsNameList, loginUser);
             //异步发送通知
             noticeMessageService.newTaskNotice(loginUser.getUserName(), projectTaskList, entity.getId());
-            //默认查询立项模板中的成员信息
+            //默认查询立项模板中的成员和角色信息
             projectMembersService.addRoleAndMembersByApproval(entity.getId());
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
@@ -290,7 +305,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             //操作日志
-            sysLogService.addSysLogBySave("生成了一个产品：["+entity.getName()+"]",CLASSPATH,entity.getId(),entity.getId());
+            sysLogService.addSysLogBySave("生成了一个产品：[" + entity.getName() + "]", CLASSPATH, entity.getId(), entity.getId());
             //通知新建产品
             noticeMessageService.newProductNotice(loginUser.getUserName(), entity.getId());
         } else {
@@ -303,11 +318,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             }
             //产品信息修改操作日志
-            addProductInfoLog(dto,oldEntity,entity.getId(),entity.getId());
+            addProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
         }
-        return flag;
+        //新增或修改产品经理角色和对应成员
+        projectMembersService.saveByRoleAndMembers(entity.getId(),null,"产品经理",chargeIds);
+        return entity.getId();
     }
-
 
 
     /**
@@ -324,13 +340,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (Objects.isNull(category)) {
             throw new ServiceException(ApiError.ERROR_95025);
         }
-        LambdaUpdateWrapper<ProductInfoEntity> updateWrapper = new LambdaUpdateWrapper();
-        updateWrapper.set(ProductInfoEntity::getCategoryId, dto.getCategoryId());
-        updateWrapper.set(ProductInfoEntity::getCategory, category.getName());
-        updateWrapper.in(ProductInfoEntity::getId, dto.getProductIds());
+        List<ProductInfoEntity> list = new ArrayList<>();
 
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
+            //自动生成产品编号
+            if (!dto.getCategoryId().equals(productInfoEntity.getCategoryId())) {
+                String spuNo = sysCodeService.getSpuNo(category.getId());
+                productInfoEntity.setSpuNo(spuNo);
+            }
+
+            productInfoEntity.setCategory(category.getName());
+            productInfoEntity.setCategoryId(dto.getCategoryId());
+            list.add(productInfoEntity);
             //新增产品操作日志
             ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
             productOperateRecordDTO.setProductId(req);
@@ -343,8 +365,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
                     .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
         });
-
-        return this.update(updateWrapper);
+        if (CollectionUtils.isNotEmpty(list)) {
+            this.saveOrUpdateBatch(list);
+        }
+         return Boolean.TRUE;
     }
 
 
@@ -415,6 +439,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     }
 
+
     /**
      * @return
      * @description
@@ -457,7 +482,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
             //   获取到 产品迭代的数量
             List<CountDTO> productRelevance = this.getProductRelevanceList();
+            //查询阶段
+            List<ProjectPhaseEntity> phaseList = projectPhaseService.listByProductIds(productIds);
+
             for (ProductShowDTO item : list) {
+                //项目阶段，判断阶段任务是否全部完成
+                projectInfoService.setProjectPhase(taskList,phaseList,item);
+
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                 }
@@ -539,7 +570,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
         }
         return new PagingVO(pageData);
-}
+    }
+
+    @Override
+    public List<BasicDTO> listProductInfo(ProductSearchDTO params) {
+        List<BasicDTO> dataList = new ArrayList<>();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userId = loginUser.getUid();
+        //获取到归档的产品id
+        List<String> archiveProductIds = archiveService.getArchiveProductIds();
+        //根据当前登录人id 获取收藏的列表
+        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
+
+        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
+            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
+                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
+            }
+        } else {
+            dataList = baseMapper.listNotPaging(params, archiveProductIds);
+        }
+        return dataList;
+    }
 
 
     /**
@@ -691,7 +742,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //任务与配置字段 关系
         List<TaskRefSkuConfigEntity> refSkuFiledConfigList = taskRefSkuConfigService.getDisableFieldByProductId(id);
         //基础信息 禁用字段
-        List<String> manySpecBaseDisableFields =productDetailService.getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
+        List<String> manySpecBaseDisableFields = productDetailService.getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SPEC_BASE, refSkuFiledConfigList);
         result.setDisableFieldList(manySpecBaseDisableFields);
         return result;
     }
@@ -715,6 +766,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setUpdateUserId(loginUser.getUid());
             productInfoEntity.setUpdateUserName(loginUser.getUserName());
         }
+        //自动生成产品编号
+        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo()) && !MathUtil.ONE.equals(dto.getIsNoSpecAdd())) {
+            String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
+            productInfoEntity.setSpuNo(spuNo);
+        }
         this.saveOrUpdate(productInfoEntity);
         return productInfoEntity.getId();
     }
@@ -737,7 +793,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
             ProductInfoEntity newProduct = new ProductInfoEntity();
-            BeanMapperUtils.copy(product,newProduct);
+            BeanMapperUtils.copy(product, newProduct);
             String grade = dto.getGrade();
             String productName = dto.getProductName();
             String gradeId = dto.getGradeId();
@@ -792,10 +848,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), newProduct.getName());
             }
+            //如果状态为已中止则更新产品开发列表开发状态为中止开发
+            if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
+                productDetailService.updateProductStateByProductId(newProduct.getId(), ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+            }
+
+
             UpdateProductDTO updateDto = new UpdateProductDTO();
-            BeanMapperUtils.copy(newProduct,updateDto);
+            BeanMapperUtils.copy(newProduct, updateDto);
             //产品信息修改操作日志
-            addProductLog(updateDto,product,productId,productId);
+            addProductLog(updateDto, product, productId, productId);
         }
 
         //项目信息
@@ -831,6 +893,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         //开始项目
                         if (ProjectStateEnum.ING.getState().equals(projectStatus)) {
                             noticeMessageService.beginProjectNotice(loginUser.getUserName(), productId);
+                        }
+                        //如果状态为已终止则更新产品开发列表开发状态为中止开发
+                        if (ProjectStateEnum.STOP.getState().equals(projectStatus)) {
+                            productDetailService.updateProductStateByProductId(productId, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
                         }
                     }
                     project.setProjectStatus(projectStatus);
@@ -947,7 +1013,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProjectInfoEntity projectInfo = projectInfoService.getByProductId(productId);
         if (!Objects.isNull(projectInfo)) {
             Integer projectState = projectInfo.getProjectStatus();
-            if(ProjectStateEnum.FINISH.getState().equals(projectState)){
+            if (ProjectStateEnum.FINISH.getState().equals(projectState)) {
                 throw new ServiceException(ApiError.ERROR_95076);
             }
 
@@ -963,19 +1029,59 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String spuNo = params.get("spuNo");
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         if (StringUtils.isNotBlank(id)) {
-            queryWrapper.eq(ProductInfoEntity::getId,id);
+            queryWrapper.eq(ProductInfoEntity::getId, id);
         }
         if (StringUtils.isNotBlank(spuNo)) {
-            queryWrapper.eq(ProductInfoEntity::getSpuNo,spuNo);
+            queryWrapper.eq(ProductInfoEntity::getSpuNo, spuNo);
         }
         queryWrapper.last("limit 1");
         ProductInfoEntity entity = this.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(entity)) {
             ProductInfoDTO dto = new ProductInfoDTO();
-            BeanUtils.copyProperties(entity,dto);
+            BeanUtils.copyProperties(entity, dto);
             return dto;
         }
         return null;
+    }
+
+    /**
+     * 更改sku 信息
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-02-07 20:02
+     */
+    @Override
+    public void updateSpecByChangeSku(ProductInfoDTO dto) {
+        String id = dto.getId();
+        ProductInfoEntity productInfoEntity = this.getById(id);
+        if(productInfoEntity!=null){
+            BeanMapper.copy(dto, productInfoEntity);
+            LoginUser loginUser = commonService.getUserInfo();
+            if (StringUtils.isBlank(productInfoEntity.getId())) {
+                productInfoEntity.setCreateUserId(loginUser.getUid());
+                productInfoEntity.setCreateUserName(loginUser.getUserName());
+            } else {
+                productInfoEntity.setUpdateUserId(loginUser.getUid());
+                productInfoEntity.setUpdateUserName(loginUser.getUserName());
+            }
+            //自动生成产品编号
+            if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+                String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
+                productInfoEntity.setSpuNo(spuNo);
+            }
+            this.saveOrUpdate(productInfoEntity);
+        }
+
+    }
+
+    @Override
+    public ProductInfoEntity getBySpuNo(String spuNo) {
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProductInfoEntity::getSpuNo,spuNo);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 
     /**
@@ -1094,10 +1200,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     /**
      * 产品信息修改日志
      */
-    private void addProductInfoLog(ProductDTO dto,ProductInfoEntity oldEntity,String businessId,String pid) {
+    private void addProductInfoLog(ProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
         ProductDTO oldDto = new ProductDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
-            BeanMapperUtils.copy(oldEntity,oldDto);
+            BeanMapperUtils.copy(oldEntity, oldDto);
         }
         //查询关联产品版本
         ProductInfoEntity productInfoEntity = this.getById(oldDto.getRelevanceProductId());
@@ -1105,18 +1211,18 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             oldDto.setRelevanceProductName(productInfoEntity.getName());
         }
 
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getSpuNo()));
+        sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
     /**
      * 产品信息修改日志
      */
-    private void addProductLog(UpdateProductDTO dto,ProductInfoEntity oldEntity,String businessId,String pid) {
+    private void addProductLog(UpdateProductDTO dto, ProductInfoEntity oldEntity, String businessId, String pid) {
         UpdateProductDTO oldDto = new UpdateProductDTO();
         if (ObjectUtils.isNotEmpty(oldEntity)) {
-            BeanMapperUtils.copy(oldEntity,oldDto);
+            BeanMapperUtils.copy(oldEntity, oldDto);
         }
-        sysLogService.addSysLogByUpdate(oldDto,dto,CLASSPATH,businessId,pid,String.format("SPU[%s]",oldEntity.getSpuNo()));
+        sysLogService.addSysLogByUpdate(oldDto, dto, CLASSPATH, businessId, pid, String.format("SPU[%s]", oldEntity.getSpuNo()));
     }
 
 

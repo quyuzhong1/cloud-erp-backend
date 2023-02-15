@@ -57,6 +57,12 @@ public class TaskPagingShowDTO implements Serializable {
 
 
     /**
+     * 阶段名称
+     */
+    private String phaseName;
+
+
+    /**
      * 任务名
      */
     private String name;
@@ -185,7 +191,18 @@ public class TaskPagingShowDTO implements Serializable {
      */
     private  Boolean ifEditTask;
 
+    /**
+     * 角色名称，由模板生成时带过来
+     */
+    private String roleName;
 
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    private Integer distributionType;
 
-
+    /**
+     * 是否是固定任务 1是  0  不是
+     */
+    private Integer isFixed;
 }

@@ -74,6 +74,19 @@ public class ProjectInfoController extends BaseController {
     }
 
     /**
+     * 项目列表-无分页
+     * @param dto
+     * @return
+     */
+    @PostMapping("/list")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "pt")
+    public ApiResult<List<BasicDTO>> listProjectInfo(@RequestBody @Validated ProductSearchDTO dto) {
+        List<BasicDTO> list = projectInfoService.listProjectInfo(dto);
+        return success(list);
+    }
+
+
+    /**
      * 项目列表-项目归档
      *
      * @param

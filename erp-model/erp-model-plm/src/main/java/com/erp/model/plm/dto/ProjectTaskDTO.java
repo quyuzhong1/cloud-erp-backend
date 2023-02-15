@@ -131,11 +131,11 @@ public class ProjectTaskDTO  implements Serializable {
      * 状态
      */
     private Integer status;
-    
+
     /**
-     * 审核人集合
+     * 交付文档审核分配人集合
      */
-    private List<UserInfoDTO> approvalUserIds;
+    private List<TaskChargeDistributionDTO> approvalList;
 
     /**
      * 交付文档
@@ -182,7 +182,27 @@ public class ProjectTaskDTO  implements Serializable {
     private List<Map<String,Object>> refSkuFinishList;
 
 
+    /**
+     * 交付文档名称（逗号分隔，用于操作日志）
+     */
+    private String  deliveryDocsNames;
+    /**
+     * 前置任务名称（逗号分隔，用于操作 日志）
+     */
+    private String preTaskNames;
 
-    
+    /**
+     * 分配类型，由模板生成时带过来（0角色，1人员）
+     */
+    private Integer distributionType;
 
+    /**
+     * 是否是固定任务 1是  0  不是
+     */
+    private Integer isFixed;
+
+    /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+     */
+    private String relatedSkuType;
 }

@@ -4,11 +4,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProjectTemplateDTO;
-import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
-import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.sys.dto.UserDTO;
 
 import java.util.List;
 
@@ -49,4 +47,20 @@ public interface ProjectTemplateService extends IService<ProjectTemplateEntity> 
      * @return Boolean
      */
     Boolean updateTemplateStatus(ProjectTemplateUpdateStatusDTO dto);
+    /**
+     * @description: 根据模板id查询模板成员角色
+     * @author Will
+     * @date: 2023/1/9 15:33
+     * @param templateId
+     * @return List<SysRoleDTO>
+     */
+    List<SysRoleDTO> listTemplateRole(String templateId);
+    /**
+     * @description: 根据类型查询第一条模板
+     * @author Will
+     * @date: 2023/1/14 10:01
+     * @param code
+     * @return ProjectTemplateEntity
+     */
+    ProjectTemplateEntity getByType(Integer code);
 }

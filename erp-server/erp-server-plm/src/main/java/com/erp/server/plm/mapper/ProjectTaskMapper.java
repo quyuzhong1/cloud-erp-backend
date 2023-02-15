@@ -5,11 +5,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.vo.ChangeScheduleExportVO;
+import com.erp.model.plm.vo.ProductTaskVO;
+import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
+import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,19 +28,20 @@ import java.util.List;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage<TaskPagingShowDTO> paging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
-                 @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
-                 @Param("statusList") List<Integer> statusList, @Param("param") String param
-                 );
+    IPage<TaskPagingShowDTO> paging(Page query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
+
+    Integer pagingCount(@Param("productId") String productId,@Param("userId") String userId,
+                                    @Param("statusList") List<Integer> statusList, @Param("param") String param
+    );
 
 
     /**
      *产品的全部任务列表
      * @return
      */
-    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("productId") String productId, @Param("phaseId") String phaseId ,
-                                       @Param("searchKeyword")  String searchKeyword,
-                                       @Param("statusList") List<Integer> statusList,@Param("param") String param);
+    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("params") TaskPagingDTO params);
+
+    Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
 
     List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 
@@ -51,35 +57,26 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 
-    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("productId") String productId ,@Param("phaseId") String phaseId, @Param("searchList") List<TaskSearchDTO> searchList,
-                          @Param("userId") String userId,@Param("searchKeyword") String searchKeyword,
-                          @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
+    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("params") TaskPagingDTO params,@Param("processIdList") List<String> processIdList);
+
+    Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
+                                              @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
     int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
 
-    List<TaskGroupResultDTO> toMeTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskGroup(@Param("params") TaskGroupParamDTO params,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(@Param("param") String param, List<Integer> notStateList);
+    List<TaskGroupResultDTO> toMeTaskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("param") String param,@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskGroup(@Param("params") TaskGroupParamDTO params,@Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("param") String param, @Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> myCreateTaskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, @Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> allTaskGroup( @Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> allTaskGroup(@Param("params") TaskGroupParamDTO params,  @Param("notStateList") List<Integer> notStateList);
 
-    List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("notStateList") List<Integer> notStateList);
+    List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, @Param("notStateList") List<Integer> notStateList);
 
-    IPage<TaskPagingShowDTO> toMeProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> toMePlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
-
-    IPage<TaskPagingShowDTO> myCreateProductTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> myCreatePlanEndTimeTaskList(Page query,@Param("userId") String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,  @Param("startTime") Date startTime,@Param("endTime") Date endTime);
-
-    IPage<TaskPagingShowDTO> allProductTaskList(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params")TaskSearchParamDTO params);
-
-    IPage<TaskPagingShowDTO> allPlanTimeTaskList(Page query,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params, @Param("startTime")Date startTime,@Param("endTime") Date endTime);
+    IPage<TaskPagingShowDTO> listProductTaskBySearchCategory(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
 
     List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
     /**
@@ -132,16 +129,38 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<ProjectTaskEntity> getProjectTaskByProductId(@Param("showDTO") ProductTaskCountShowDTO showDTO);
 
     /**
-     * 分配给我待审额
-     * @param query
-     * @param userId
-     * @param notStateList
-     * @param params
-     * @param processInstanceIds
-     * @return
+     * 根据产品id 获取到项目计划的任务
+     * @author yl
+     * @date 2023-02-08 9:26
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.vo.ProductTaskVO>
      */
-    IPage<TaskPagingShowDTO> toMeWaitAuditProductTaskList(Page query, @Param("userId")String userId,@Param("notStateList") List<Integer> notStateList,@Param("params") TaskSearchParamDTO params,@Param("processInstanceIdList") List<String> processInstanceIds);
+    List<ProductTaskVO> getScheduleTask(@Param("dto") ProjectPlanTaskConditionDTO dto);
 
-    IPage<TaskPagingShowDTO> toMeWaitAuditPlanEndTimeTaskList(Page query,@Param("userId") String userId, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params,@Param("startTime") Date startTime, @Param("endTime") Date endTime,@Param("processInstanceIdList") List<String> processInstanceIds);
+    /**
+     * 更改任务排期状态
+     * @param productId
+     * @param taskIdList
+     * @param status
+     */
+    void updateScheduleStatus(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status);
+
+    /**
+     * 更改任务排期状态及类型
+     * @param productId
+     * @param taskIdList
+     * @param status
+     */
+    void updateScheduleTask(@Param("productId") String productId, @Param("taskIdList") List<String> taskIdList, @Param("scheduleStatus") String status,@Param("scheduleType") String scheduleType);
+
+    Map<String, Object> getProductMapByProductId(@Param("productId") String productId);
+
+    List<ScheduleTaskVO> getScheduleTaskByTaskIds(@Param("productId") String productId, @Param("taskIdList")List<String> taskIds);
+
+    List<ScheduleTaskExportExcelVO> getExportScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
+
+    ScheduleTaskExportExcelVO getExport(@Param("productId") String productId, @Param("taskId")  String taskId);
+
+    List<ChangeScheduleExportVO> getExportChangeScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
 }
 

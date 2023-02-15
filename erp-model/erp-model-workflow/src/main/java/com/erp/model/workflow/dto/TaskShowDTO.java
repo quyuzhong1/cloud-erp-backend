@@ -16,6 +16,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class TaskShowDTO implements Serializable {
+
     private String taskId;
 
     private String assignee;

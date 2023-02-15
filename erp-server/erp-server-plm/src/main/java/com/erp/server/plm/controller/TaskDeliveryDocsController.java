@@ -7,6 +7,7 @@ import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.DeliveryDocsDTO;
+import com.erp.model.plm.dto.DeliveryDocsGroupDTO;
 import com.erp.model.plm.dto.SetDocsPowerDTO;
 import com.erp.server.plm.service.DocsPermissionService;
 import com.erp.server.plm.service.TaskDeliveryService;
@@ -58,6 +59,19 @@ public class TaskDeliveryDocsController extends BaseController {
     //  @RequestPermissions("plm:taskDocs:list")
     public ApiResult<List<DeliveryDocsDTO>> list(@RequestBody @Validated BaseIdDTO dto) {
         List<DeliveryDocsDTO> list = taskDeliveryService.getByTaskId(dto.getId());
+        return success(list);
+    }
+
+    /**
+     * 根据交付物文档分组显示附件
+     * @author Will
+     * @date: 2023/2/7 10:01
+     * @param dto
+     * @return ApiResult<List<DeliveryDocsGroupDTO>>
+     */
+    @PostMapping("/groupList")
+    public ApiResult<List<DeliveryDocsGroupDTO>> groupList(@RequestBody @Validated BaseIdDTO dto) {
+        List<DeliveryDocsGroupDTO> list = taskDeliveryService.listGroupByTaskId(dto.getId());
         return success(list);
     }
 

@@ -14,19 +14,21 @@ import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.common.vo.LoginUser;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.ProjectTemplateDTO;
-import com.erp.model.plm.dto.ProjectTemplateSaveOrUpdateDTO;
-import com.erp.model.plm.dto.ProjectTemplateUpdateStatusDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectTemplateEntity;
+import com.erp.model.plm.entity.TemplateRoleEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.enums.ProjectTemplateShowTypeEnum;
 import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.ProjectTemplateService;
+import com.erp.server.plm.service.TemplateRoleService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,6 +42,11 @@ import java.util.List;
 @Service
 public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMapper, ProjectTemplateEntity> implements ProjectTemplateService {
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private TemplateRoleService templateRoleService;
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
@@ -156,6 +163,27 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         entity.setUpdateUserId(uid);
         entity.setUpdateUserName(userName);
         return this.updateById(entity);
+    }
+
+    @Override
+    public List<SysRoleDTO> listTemplateRole(String templateId) {
+        List<TemplateRoleEntity> list = templateRoleService.getByTemplateId(templateId);
+        List<SysRoleDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return  new ArrayList<>();
+        }
+        list.forEach(obj->{
+            resultList.add(new SysRoleDTO().setId(obj.getId()).setRoleName(obj.getName()));
+        });
+        return resultList;
+    }
+
+    @Override
+    public ProjectTemplateEntity getByType(Integer type) {
+        LambdaQueryWrapper<ProjectTemplateEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTemplateEntity::getType,type);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 
     /**

@@ -2,14 +2,20 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.dto.base.BaseIdDTO;
+import com.erp.common.enums.ApiError;
+import com.erp.common.exception.ServiceException;
+import com.erp.model.plm.dto.TaskFinishSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.ProjectTaskRefSkuMapper;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProjectTaskRefSkuService;
+import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +37,10 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
 
     @Autowired
     private ProductDetailService productDetailService;
+
+    @Autowired
+    private ProjectTaskService projectTaskService;
+
 
     /**
      * 保存任务与sku 关系表
@@ -151,14 +161,36 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     /**
      * 完成 任务相关的sku
      *
-     * @param taskId
-     * @param skuIdList
+     * @param dto
      * @return void
      * @author yl
      * @date 2022-12-05 11:00
      */
     @Override
-    public void taskFinishRefSku(String taskId, List<String> skuIdList) {
+    @Transactional
+    public void taskFinishRefSku(TaskFinishSkuDTO dto) {
+        String taskId = dto.getTaskId();
+        ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
+        if (ObjectUtils.isEmpty(projectTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95010);
+        }
+        List<String> skuIdList = dto.getSkuIdList();
+        List<String> allList = dto.getAllList();
+        List<ProjectTaskRefSkuEntity> addList = new ArrayList<>();
+        for (String skuId : allList) {
+            ProjectTaskRefSkuEntity entity = this.getBySkuIdAndTaskId(skuId, taskId);
+            if (ObjectUtils.isEmpty(entity)) {
+                ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
+                addEntity.setTaskId(taskId);
+                addEntity.setSkuId(taskId);
+                addEntity.setProductId(projectTaskEntity.getProductId());
+                addEntity.setIsFinishTask(IsConstant.NO);
+                addList.add(addEntity);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
         setTaskNoFinishRefSku(taskId);
         if (CollectionUtils.isNotEmpty(skuIdList)) {
             LambdaUpdateWrapper<ProjectTaskRefSkuEntity> updateWrapper = new LambdaUpdateWrapper<>();
@@ -173,8 +205,42 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
     @Override
     public List<ProjectTaskRefSkuEntity> listBySkuId(String skuId) {
         LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId,skuId);
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId, skuId);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 批量更新 关联的sku
+     *
+     * @param productId
+     * @param taskIdList
+     * @param refSkuIdList
+     * @return void
+     * @author yl
+     * @date 2023-02-11 9:27
+     */
+    @Override
+    public void batchUpdate(String productId, List<String> taskIdList, List<String> refSkuIdList) {
+        if (CollectionUtils.isEmpty(taskIdList) || CollectionUtils.isEmpty(refSkuIdList)) {
+            return;
+        }
+        //先删除
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskIdList);
+        this.remove(queryWrapper);
+        //后添加
+        List<ProjectTaskRefSkuEntity> addList = new ArrayList<>(20);
+        for (String taskId : taskIdList) {
+            for (String skuId : refSkuIdList) {
+                ProjectTaskRefSkuEntity entity = new ProjectTaskRefSkuEntity();
+                entity.setProductId(productId);
+                entity.setTaskId(taskId);
+                entity.setSkuId(skuId);
+                addList.add(entity);
+            }
+        }
+        this.saveBatch(addList);
     }
 
 
@@ -198,5 +264,21 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
         queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
         this.remove(queryWrapper);
 
+    }
+
+    /**
+     * @param skuId
+     * @param taskId
+     * @return ProjectTaskRefSkuEntity
+     * @description: 根据skuId和任务id查询关联信息
+     * @author Will
+     * @date: 2023/2/7 16:42
+     */
+    public ProjectTaskRefSkuEntity getBySkuIdAndTaskId(String skuId, String taskId) {
+        LambdaQueryWrapper<ProjectTaskRefSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getSkuId, skuId);
+        queryWrapper.eq(ProjectTaskRefSkuEntity::getTaskId, taskId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
     }
 }

@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -10,17 +9,18 @@ import com.erp.model.plm.dto.ProductRoleMemberDTO;
 import com.erp.model.plm.dto.ProjectRoleDTO;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
 import com.erp.model.plm.entity.ProjectRoleEntity;
+import com.erp.model.plm.entity.RoleRefMemberEntity;
 import com.erp.server.plm.mapper.ProjectRoleMapper;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.ProjectRoleService;
 import com.erp.server.plm.service.RoleRefMemberService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -119,7 +119,24 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
     }
 
 
+    @Override
+    public List<ProjectRoleEntity> listRoleByMemberIds(List<String> memberList) {
+        List<RoleRefMemberEntity> roleRefMemberList= roleRefMemberService.listByMembersIds(memberList);
+        if (CollectionUtils.isEmpty(roleRefMemberList)) {
+            return new ArrayList<>();
+        }
+        List<String> roleIds = roleRefMemberList.stream().map(RoleRefMemberEntity::getRoleId).collect(Collectors.toList());
+        return this.listByIds(roleIds);
+    }
 
+    @Override
+    public ProjectRoleEntity getByRoleName(String productId, String roleName) {
+        LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectRoleEntity::getName,roleName);
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
 
 
     /**

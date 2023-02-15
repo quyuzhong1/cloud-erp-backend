@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.BomInfoMapper">
+
+
+    <select id="getMaxSequence" resultType="java.lang.Integer">
+         SELECT COALESCE( max(sequence),0) as maxSequence FROM product_bom_info
+    </select>
+
+    <select id="paging" resultType="com.erp.model.plm.vo.BomPagingVO">
+           SELECT
+               b.id,
+               b.type,
+               b.serial_number,
+               b.version,
+               b.STATE,
+               b.remark,
+               b.create_time,
+               b.create_user_id,
+               b.update_time,
+               bs.sku_no,
+               bs.quantity,
+               bs.parent_sku_no
+            FROM product_bom_sku bs LEFT JOIN product_bom_info b
+            ON bs.bom_id = b.id
+            <where>
+                <if test="bomIdList !=null and bomIdList.size>0">
+                    b.id IN
+                    <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                         #{id}
+                    </foreach>
+                </if>
+
+                <if test="skuIdList !=null and skuIdList.size>0">
+                    AND
+                    bs.sku_id IN
+                    <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                        #{skuId}
+                    </foreach>
+                </if>
+                <if test="stateList !=null and stateList.size>0">
+                    AND
+                    b.state IN
+                    <foreach collection="stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+            </where>
+            ORDER BY b.create_time DESC
+
+    </select>
+    <select id="getByIds" resultType="com.erp.model.plm.vo.BomVO">
+        SELECT serial_number,id AS bomId
+        FROM  product_bom_info
+        <where>
+          <if test="bomIdList !=null and bomIdList.size>0">
+                id IN
+                <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+          </if>
+
+        </where>
+    </select>
+
+    <select id="getBomInfo" resultType="com.erp.model.plm.dto.ChangeInfoDTO">
+        SELECT id AS sourceId,serial_number AS  name FROM product_bom_info
+        WHERE state=#{state}
+        <if test="searchKeyword!=null and searchKeyword !=''">
+            AND serial_number LIKE concat('%',#{searchKeyword},'%')
+        </if>
+    </select>
+
+    <select id="getAllBom" resultType="com.erp.model.plm.vo.BomPagingVO">
+        SELECT
+        b.id,
+        b.type,
+        b.serial_number,
+        b.version,
+        b.STATE,
+        b.remark,
+        b.create_time,
+        b.create_user_id,
+        b.update_time,
+        bs.sku_no,
+        bs.quantity
+        FROM product_bom_sku bs LEFT JOIN product_bom_info b
+        ON bs.bom_id = b.id
+        <where>
+            <if test="bomIdList !=null and bomIdList.size>0">
+                b.id IN
+                <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="skuIdList !=null and skuIdList.size>0">
+                AND
+                bs.sku_id IN
+                <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                    #{skuId}
+                </foreach>
+            </if>
+            <if test="stateList !=null and stateList.size>0">
+                AND
+                b.state IN
+                <foreach collection="stateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY b.create_time DESC
+    </select>
+</mapper>

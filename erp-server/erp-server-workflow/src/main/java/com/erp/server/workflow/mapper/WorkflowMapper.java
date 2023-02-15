@@ -21,7 +21,7 @@ public interface WorkflowMapper  extends BaseMapper {
 
     void deleteExecutionByProcInstIdAndActInstIdArray(@Param("procId") String procId, @Param("actInstIdList") List<String> actIdList);
 
-    void updateHiTaskInstByIdArray(@Param("taskIdLit") List<String> taskIdLit, @Param("endTime") Date endTime);
+    void updateHiTaskInstByIdArray(@Param("taskIdList") List<String> taskIdList, @Param("endTime") Date endTime);
 
     void updateHiActInstById(@Param("actInstIdList") List<String> actInstIdList, @Param("endTime") Date endTime);
 }

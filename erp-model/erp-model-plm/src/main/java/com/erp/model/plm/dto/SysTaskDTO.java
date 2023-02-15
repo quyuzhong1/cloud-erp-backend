@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.common.annotation.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -38,14 +39,22 @@ public class SysTaskDTO implements Serializable {
     @StateEnumValue(intValues = {0, 1}, message = "任务类型只能是0或者1")
     private Integer type;
 
+
+    /**
+     * 分配类型（0角色，1人员）
+     */
+    @NotNull(message = "分配类型不能为空")
+    private Integer distributionType;
+
     /**
      * 负责人id
      */
-    @NotNull(message = "任务负责人集合不能为空")
-    @Size(min = 1,message = "负责人至少有一个")
     private List<String> chargeIds;
 
-
+    /**
+     * 角色id
+     */
+    private List<String> roleIds;
 
     /**
      * 前置任务id
@@ -55,23 +64,18 @@ public class SysTaskDTO implements Serializable {
     /**
      * 计划开始时间
      */
-  //  @NotNull(message = "计划开始时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planStartTime;
-
-
 
     /**
      * 计划结束时间
      */
- //   @NotNull(message = "计划结束时间不能为空")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planEndTime;
 
     /**
      * 任务优先级 1 低级 2 中级 3 高级
      */
-//    @StateEnumValue(intValues = {1, 2, 3}, message = "任务优先级有误")
     private Integer priority;
 
     /**
@@ -89,23 +93,25 @@ public class SysTaskDTO implements Serializable {
      */
     private Integer isFixed;
 
-
-
     /**
      * 任务描述
      */
     private String description;
 
-
     /**
-     * 审核人集合
+     * 交付文档审核分配人集合
      */
-    private List<UserInfoDTO> approvalUserIds;
+    private List<TaskChargeDistributionDTO> approvalList;
 
     /**
      * 业务流程表id
      */
     private String businessProcessId;
+
+    /**
+     * 关联sku类型,RelatedSkuTypeEnum枚举(1，自动关联，2选择关联，3不关联)
+     */
+    private String relatedSkuType;
 
     /**
      * 业务流程名

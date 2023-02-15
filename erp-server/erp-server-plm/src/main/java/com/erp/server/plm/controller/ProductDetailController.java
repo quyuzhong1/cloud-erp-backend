@@ -15,9 +15,11 @@ import com.erp.model.plm.entity.ProductDetailApproverEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -613,20 +615,28 @@ ProductDetailController extends BaseController {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener(importType, productDetailService, productUnitService, basicCategoryService, basicDictService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productNoSpecDetail.xlsx";
-                String name = "productNoSpecDetail";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-
-             return failure();
-            }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<ProductDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProductDetailExcelDTO> list = excelListenerUtil.getDateList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String name = "productNoSpecDetail";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+
+            return failure();
         }
         return success();
     }
@@ -687,10 +697,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-设置审批人
-     * @author Will
-     * @date: 2022/11/28 16:43
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:43
      */
     @PostMapping("/updateApprover")
     public ApiResult updateApprover(@RequestBody @Validated ProductDetailApproveParamDTO dto) {
@@ -700,9 +711,10 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-设置审批人回显
+     *
+     * @return ApiResult
      * @author Will
      * @date: 2022/11/28 16:43
-     * @return ApiResult
      */
     @GetMapping("/getProductDetailApprover")
     public ApiResult<ProductDetailApproverEntity> getProductDetailApprover() {
@@ -710,26 +722,28 @@ ProductDetailController extends BaseController {
         return success(entity);
     }
 
-   /**
-    * 产品信息-状态操作-审核通过
-    * @author Will
-    * @date: 2022/11/28 16:37
-    * @param dto
-    * @return ApiResult
-    */
+    /**
+     * 产品信息-状态操作-审核通过
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:37
+     */
     @PostMapping("/approvalPass")
     public ApiResult approvalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalPass(dto);
         return result == true ? success() : failure();
     }
 
-   /**
-    * 产品信息-状态操作-审核不通过
-    * @author Will
-    * @date: 2022/11/28 16:37
-    * @param dto
-    * @return ApiResult
-    */
+    /**
+     * 产品信息-状态操作-审核不通过
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Will
+     * @date: 2022/11/28 16:37
+     */
     @PostMapping("/approvalReject")
     public ApiResult approvalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
         Boolean result = productDetailService.approvalReject(dto);
@@ -738,10 +752,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-反审核
-     * @author Will
-     * @date: 2022/12/1 16:56
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 16:56
      */
     @PostMapping("/deApprove")
     public ApiResult deApprove(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -752,10 +767,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-申请变更
-     * @author Will
-     * @date: 2022/12/1 15:41
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:41
      */
     @PostMapping("/applyChange")
     public ApiResult applyChange(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -766,10 +782,11 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-重启审核流程
-     * @author Will
-     * @date: 2022/12/1 15:55
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:55
      */
     @PostMapping("/restartProcessPass")
     public ApiResult restartProcessPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
@@ -779,14 +796,84 @@ ProductDetailController extends BaseController {
 
     /**
      * 产品信息-审核完成监听调用
-     * @author Will
-     * @date: 2022/12/1 15:21
+     *
      * @param processId
      * @return ApiResult
+     * @author Will
+     * @date: 2022/12/1 15:21
      */
     @PostMapping("/productDetailProcessPass")
     public ApiResult productDetailProcessPass(String processId) {
         Boolean result = productDetailService.productDetailProcessPass(processId);
+        return result == true ? success() : failure();
+    }
+
+
+    /**
+     * 搜索sku
+     *
+     * @return com.erp.common.dto.base.ApiResult
+     * @author yl
+     * @date 2023-01-11 14:58
+     */
+    @GetMapping("/search/sku")
+    public ApiResult<List<SkuVO>> searchSku(String searchKeyword) {
+        List<SkuVO> skuList = productDetailService.searchSku(searchKeyword);
+        return success(skuList);
+    }
+
+
+    /**
+     * 在bom 管理 或者变更管理  获取到sku 信息
+     * 根据sku id
+     *
+     * @param
+     * @return com.erp.common.dto.base.ApiResult<com.erp.model.plm.dto.ProductSmallestUnitDTO>
+     * @author yl
+     * @date 2023-01-29 14:03
+     */
+    @GetMapping("/skuInfo")
+    public ApiResult<ProductSmallestUnitDTO> getSkuInfo(String skuId) {
+        ProductSmallestUnitDTO sku = productDetailService.getSkuBySkuId(skuId);
+        return success(sku);
+    }
+
+   /**
+    *  产品信息-提交
+    * @author Will
+    * @date: 2023/2/9 13:34
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/commit")
+    public ApiResult commit(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productDetailService.commit(dto.getId());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     *  产品信息-反提交
+     * @author Will
+     * @date: 2023/2/9 13:34
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/unCommit")
+    public ApiResult unCommit(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productDetailService.unCommit(dto.getId());
+        return result == true ? success() : failure();
+    }
+
+    /**
+     * 产品信息-发送金蝶数据
+     * @author Will
+     * @date: 2023/2/13 13:30
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/sendKingDeeData")
+    public ApiResult sendKingDeeData(@RequestBody @Validated BaseIdDTO dto) {
+        Boolean result = productDetailService.sendKingDeeData(dto.getId());
         return result == true ? success() : failure();
     }
 

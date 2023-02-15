@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.TaskFinishSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskRefSkuEntity;
 
@@ -26,7 +27,7 @@ public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEnti
 
     List<ProjectTaskRefSkuEntity> getByTaskIdList(List<String> noProcessTaskIds);
 
-    void taskFinishRefSku(String taskId, List<String> skuIdList);
+    void taskFinishRefSku(TaskFinishSkuDTO dto);
     /**
      * @description: 根据skuid查询
      * @author Will
@@ -35,4 +36,6 @@ public interface ProjectTaskRefSkuService extends IService<ProjectTaskRefSkuEnti
      * @return List<ProjectTaskRefSkuEntity>
      */
     List<ProjectTaskRefSkuEntity> listBySkuId(String skuId);
+
+    void batchUpdate(String productId, List<String> taskIdList, List<String> refSkuIdList);
 }

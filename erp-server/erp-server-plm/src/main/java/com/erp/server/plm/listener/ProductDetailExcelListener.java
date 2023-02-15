@@ -2,25 +2,29 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.BasicCategoryEntity;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.enums.BasicDictTypeEnum;
-import com.erp.server.plm.enums.PurchaseStateEnum;
-import com.erp.server.plm.enums.SaleMethodEnum;
-import com.erp.server.plm.enums.SaleStateEnum;
-import com.erp.server.plm.service.*;
-import org.apache.commons.lang3.StringUtils;
+import com.erp.server.plm.enums.*;
+import com.erp.server.plm.service.BasicCategoryService;
+import com.erp.server.plm.service.BasicDictService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.ProductUnitService;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
+
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
     private Integer importType;
@@ -36,6 +40,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
     private SysUserFeign sysUserFeign;
 
     private List<ProductDetailExcelDTO> list;
+
+    private List<ProductDetailExcelDTO> dataList = new ArrayList<>();
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
@@ -60,12 +66,13 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
     @Override
     public void invoke(ProductDetailExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        
+        //添加
+        dataList.add(dto);
         if (StringUtils.isBlank(dto.getName())) {
             errorMsgList.add("产品名称不能为空");
         }
-        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 50) {
-            errorMsgList.add("产品名称不能超过50个字节");
+        if (StringUtils.isNotBlank(dto.getName()) && dto.getName().length() > 250) {
+            errorMsgList.add("产品名称不能超过250个字节");
         }
         if (StringUtils.isBlank(dto.getChargeName())) {
             errorMsgList.add("产品负责人不能为空");
@@ -149,12 +156,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 productInfoDTO.setPirateRisk(2);
             }
         }
+        List<FindUserDTO> resultList = sysUserFeign.getUserList();
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
-            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-            baseSearchDTO.setSearchKeyword(dto.getChargeName());
-            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-            chargeNameList = listApiResult.getData();
+            chargeNameList = resultList.stream().filter(e -> e.getUserName().equals(dto.getChargeName())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(chargeNameList)) {
                 errorMsgList.add("产品经理在系统中未找到");
             }
@@ -162,10 +167,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         List<FindUserDTO> purchaseUserList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseUser())) {
-            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-            baseSearchDTO.setSearchKeyword(dto.getPurchaseUser());
-            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-            purchaseUserList =  listApiResult.getData();
+            purchaseUserList = resultList.stream().filter(e -> e.getUserName().equals(dto.getPurchaseUser())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(purchaseUserList)) {
                 errorMsgList.add("采购员在系统中未找到");
             }
@@ -229,7 +231,45 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add("视频是否完成：是 或者 否");
             }
         }
+        //产品开发状态
+        String productState = dto.getProductStateName();
+        if (StringUtils.isNotBlank(productState)) {
+            Integer code = ProductDetailStateEnum.getCodeByName(productState);
+            if (ObjectUtils.isEmpty(code)) {
+                errorMsgList.add("产品开发状态有误");
+            }
+            productSkuBaseInfoDTO.setProductState(code);
+        }
 
+        //产品分类
+        String category = dto.getCategory();
+        if (StringUtils.isBlank(category)) {
+            errorMsgList.add("产品分类不能为空");
+        } else {
+            BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
+            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                errorMsgList.add("产品分类不存在");
+            } else {
+                //父级品类
+                List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
+                if (CollectionUtils.isEmpty(categoryList)) {
+                    errorMsgList.add("产品分类不存在");
+                }
+                //一级品类
+                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95091.msg);
+                }
+                //二级品类
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95092.msg);
+                }
+                productInfoDTO.setCategory(category);
+                productInfoDTO.setCategoryId(basicCategoryEntity.getId());
+            }
+
+        }
         String errStr = "";
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
@@ -268,7 +308,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
-
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         productSkuBaseInfoDTO.setPlanListingTime(dto.getPlanListingTime());
@@ -276,6 +315,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
+        productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
+        productSkuBaseInfoDTO.setFirstMassProductDate(dto.getFirstMassProductDate());
 
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
@@ -346,6 +387,36 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //产品包装信息
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(dto, productPackDTO);
+        String productSize = "";
+        String boxSize ="";
+        BigDecimal productSizeLength = dto.getProductSizeLength();
+        BigDecimal productSizeWide = dto.getProductSizeWide();
+        BigDecimal productSizeHigh = dto.getProductSizeHigh();
+        BigDecimal boxSizeLength = dto.getBoxSizeLength();
+        BigDecimal boxSizeWide = dto.getBoxSizeWide();
+        BigDecimal boxSizeHigh = dto.getBoxSizeHigh();
+
+        if (ObjectUtils.isNotEmpty(productSizeLength)) {
+            productSize = productSizeLength.stripTrailingZeros().toPlainString();
+        }
+        if (ObjectUtils.isNotEmpty(productSizeWide)) {
+            productSize = productSize.concat("X").concat(productSizeWide.stripTrailingZeros().toPlainString());
+        }
+        if (ObjectUtils.isNotEmpty(productSizeHigh)) {
+            productSize = productSize.concat("X").concat(productSizeHigh.stripTrailingZeros().toPlainString());
+        }
+        productPackDTO.setProductSize(productSize);
+
+        if (ObjectUtils.isNotEmpty(boxSizeLength)) {
+            boxSize = boxSizeLength.stripTrailingZeros().toPlainString();
+        }
+        if (ObjectUtils.isNotEmpty(boxSizeWide)) {
+            boxSize = boxSize.concat("X").concat(boxSizeWide.stripTrailingZeros().toPlainString());
+        }
+        if (ObjectUtils.isNotEmpty(boxSizeHigh)) {
+            boxSize = boxSize.concat("X").concat(boxSizeHigh.stripTrailingZeros().toPlainString());
+        }
+        productPackDTO.setBoxSize(boxSize);
         productNoSpecDTO.setProductPackDTO(productPackDTO);
 
         /*//产品证书信息
@@ -358,6 +429,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
     public List<ProductDetailExcelDTO> getDateList(){
         return list;
+    }
+
+    public List<ProductDetailExcelDTO> getExcelDateList(){
+        return dataList;
     }
 
     /**

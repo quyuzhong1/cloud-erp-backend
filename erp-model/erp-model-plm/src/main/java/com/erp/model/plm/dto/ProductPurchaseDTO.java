@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Max;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -60,6 +62,7 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 交货周期(天)
      */
+    @Digits(integer = 20,fraction = 4,message = "交货周期(天)最大20字符")
     private BigDecimal deliveryCycle;
 
     /**
@@ -81,11 +84,13 @@ public class ProductPurchaseDTO implements Serializable {
     /**
      * 一级供应商
      */
+    @Size(max = 200,message = "一级供应商最大200字符")
     private String mainSupplier;
 
     /**
      * 二级供应商
      */
+    @Size(max = 200,message = "二级供应商最大200字符")
     private String secondSupplier;
 
     /**
@@ -102,6 +107,16 @@ public class ProductPurchaseDTO implements Serializable {
      * 实际首批到货量
      */
     private Long actualArrivalQty;
+
+    /**
+     * 试产数量
+     */
+    private Long trialProductionQty;
+
+    /**
+     * 首批量产数量
+     */
+    private Long firstMassQty;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
