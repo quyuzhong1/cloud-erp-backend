@@ -288,9 +288,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
 
-
-
-
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
@@ -299,7 +296,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
 
             }
-
+            if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
+            }
 
         }
 
@@ -658,7 +657,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-10-12 10:49
      */
     @Override
-    public void addProject(String productId, String productName,String chargeIds) {
+    public void addProject(String productId, String productName) {
         int getIfExist = getIfExist(productId);
         if (getIfExist == 0) {
             ProjectInfoEntity project = new ProjectInfoEntity();
@@ -666,12 +665,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             project.setProductId(productId);
             project.setProjectStatus(ProjectStateEnum.NOT_START.getState());
             this.save(project);
-            if (StringUtils.isNotBlank(chargeIds)) {
-                List<String> chargeIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
-                projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
-            }
         }
-
 
     }
 

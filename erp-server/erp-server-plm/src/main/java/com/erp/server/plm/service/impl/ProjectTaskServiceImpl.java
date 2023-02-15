@@ -4378,13 +4378,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<TaskProcessNodeDetailDTO> collect = detailList.stream().sorted(Comparator.comparing(e -> e.getStartDate(), Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
                 waitReleasedDTO.setDetailList(collect);
             }
-            Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(Pair::getValue)).get();
-            waitReleasedDTO.setOperateUserName(pair.getKey());
-            if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
-                Date date = pair.getValue();
-                waitReleasedDTO.setOperateTime(date);
-            } else {
-                waitReleasedDTO.setOperateTime(null);
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(Pair::getValue)).get();
+                waitReleasedDTO.setOperateUserName(pair.getKey());
+                if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
+                    Date date = pair.getValue();
+                    waitReleasedDTO.setOperateTime(date);
+                } else {
+                    waitReleasedDTO.setOperateTime(null);
+                }
             }
         }
         return waitReleasedDTO;

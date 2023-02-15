@@ -36,7 +36,7 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
     List<StartItemSourceDTO> getStartItemSourceList();
 
-    void addProject(String productId,String productName,String chargeIds);
+    void addProject(String productId,String productName);
 
     void removeByProductId(String productId);
 
