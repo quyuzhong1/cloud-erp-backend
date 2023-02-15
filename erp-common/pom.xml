@@ -12,6 +12,10 @@
     <artifactId>erp-common</artifactId>
     <packaging>pom</packaging>
 
+    <properties>
+        <hutool.version>5.8.10</hutool.version>
+    </properties>
+
     <modules>
         <module>erp-common-pojo</module>
         <module>erp-common-message</module>
