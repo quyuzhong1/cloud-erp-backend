@@ -675,6 +675,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
+        log.info("难道是这里吗？？？？？？？");
         changeEntity.setApprovalFinishTime(new Date());
         changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         this.updateById(changeEntity);
