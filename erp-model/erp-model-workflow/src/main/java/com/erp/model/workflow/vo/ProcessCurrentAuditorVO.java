@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  *  当前审核人
@@ -28,5 +29,5 @@ public class ProcessCurrentAuditorVO implements Serializable {
 
 
 
-    private String handleUserId;
+    private List<String> handleUserIdList;
 }

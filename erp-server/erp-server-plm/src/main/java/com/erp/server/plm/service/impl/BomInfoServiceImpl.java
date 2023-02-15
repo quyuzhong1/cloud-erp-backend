@@ -304,8 +304,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }
-            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-            stateList.add(BomStateEnum.AUDIT_ING.getState());
         }
 
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
@@ -413,14 +411,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 getChildrenUpdateContent(oldParent.getChildren(), newParent.getChildren(), contentList);
             }
         }
-
-
-
-
-
-
-
-
 
         return String.join(";", contentList);
     }

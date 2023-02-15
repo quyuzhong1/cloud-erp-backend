@@ -184,7 +184,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_9031);
         }
         //财务人员检查
-        if(StringUtils.isBlank(financial)){
+        if (StringUtils.isBlank(financial)) {
             throw new ServiceException(ApiError.ERROR_9035);
         }
         //品质部人员审核
@@ -281,7 +281,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             parameterMap.put("qualityPeopleList", qualityPeople);
 
-            if(StringUtils.isBlank(financial)){
+            if (StringUtils.isBlank(financial)) {
                 throw new ServiceException(ApiError.ERROR_9035);
             }
 
@@ -476,12 +476,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
             ProcessCurrentAuditorVO currentAuditor = currentAuditorList.stream().filter(c -> c.getBusinessTableId().
                     equals(item.getId())).findFirst().orElse(null);
+            List<String> userNameList = new ArrayList<>(5);
             if (currentAuditor != null) {
-                FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(currentAuditor.getHandleUserId())).
-                        findFirst().orElse(null);
-                if (user != null) {
-                    item.setPersonApproving(user.getUserName());
+                List<String> handleUserIdList = currentAuditor.getHandleUserIdList();
+                for (String  handleUserId:handleUserIdList) {
+                    FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(handleUserId)).
+                            findFirst().orElse(null);
+                    if (user != null) {
+                        userNameList.add(user.getUserName());
+                    }
                 }
+            }
+            if(CollectionUtils.isNotEmpty(userNameList)){
+                item.setPersonApproving(String.join(",",userNameList));
             }
 
         }
@@ -874,7 +881,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     /**
      * 审核情况
      *
-     * @param bomId
+     * @param id
      * @return void
      * @author yl
      * @date 2023-02-08 9:00
@@ -907,23 +914,23 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_95084);
         }
         List<String> resultList = new ArrayList<>();
-        setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(),resultList);
-        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(),resultList);
-        setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(),resultList);
-        setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(),resultList);
-        setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(),resultList);
-        setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(),resultList);
-        setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(),resultList);
-        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(),resultList);
-        setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(),resultList);
+        setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);
+        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(), resultList);
+        setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(), resultList);
+        setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(), resultList);
+        setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(), resultList);
+        setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(), resultList);
+        setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(), resultList);
+        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(), resultList);
+        setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
         if (CollectionUtils.isNotEmpty(resultList)) {
-            resultList = resultList.stream().filter(e ->!"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
+            resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
         }
         return resultList;
     }
 
 
-    private void setList(Object newObj,Object oldObj,List<String> resultList) {
+    private void setList(Object newObj, Object oldObj, List<String> resultList) {
         List<String> list = sysLogService.listSysLogField(newObj, oldObj);
         if (CollectionUtils.isNotEmpty(list)) {
             resultList.addAll(list);
