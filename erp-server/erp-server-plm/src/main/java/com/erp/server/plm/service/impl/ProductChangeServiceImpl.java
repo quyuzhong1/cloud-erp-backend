@@ -906,23 +906,27 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (ObjectUtils.isEmpty(oldbom)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        List<String> list1 = sysLogService.listSysLogField(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO());
-        List<String> list2 = sysLogService.listSysLogField(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList());
-        List<String> list3 = sysLogService.listSysLogField(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO());
-        List<String> list4 = sysLogService.listSysLogField(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO());
-        List<String> list5 = sysLogService.listSysLogField(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail());
-        List<String> list6 = sysLogService.listSysLogField(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO());
-        List<String> list7 = sysLogService.listSysLogField(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList());
-        List<String> list8 = sysLogService.listSysLogField(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList());
-        List<String> list9 = sysLogService.listSysLogField(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO());
-        list1.addAll(list2);
-        list1.addAll(list3);
-        list1.addAll(list4);
-        list1.addAll(list5);
-        list1.addAll(list6);
-        list1.addAll(list7);
-        list1.addAll(list8);
-        list1.addAll(list9);
-        return list1;
+        List<String> resultList = new ArrayList<>();
+        setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(),resultList);
+        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(),resultList);
+        setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(),resultList);
+        setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(),resultList);
+        setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(),resultList);
+        setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(),resultList);
+        setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(),resultList);
+        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(),resultList);
+        setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(),resultList);
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            resultList = resultList.stream().filter(e ->!"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
+        }
+        return resultList;
+    }
+
+
+    private void setList(Object newObj,Object oldObj,List<String> resultList) {
+        List<String> list = sysLogService.listSysLogField(newObj, oldObj);
+        if (CollectionUtils.isNotEmpty(list)) {
+            resultList.addAll(list);
+        }
     }
 }
