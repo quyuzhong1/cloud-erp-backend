@@ -299,7 +299,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
             //流程id
             String processId = processResult.getProcessId();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(processId)) {
+            if (StringUtils.isNotBlank(processId)) {
                 WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
                 businessProcess.setBusinessId(business.getId());
                 businessProcess.setCreateTime(LocalDateTime.now());
