@@ -1954,8 +1954,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
         if (purchaseShowDTO != null) {
             ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
-            BeanMapper.copy(costShowDTO, productPurchaseDTO);
-
+            BeanMapper.copy(purchaseShowDTO, productPurchaseDTO);
             //SKU操作日志
             addProductPurchaseLog(productPurchaseDTO, id);
             productPurchaseService.saveOrUpdate(productPurchaseDTO);
