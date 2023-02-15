@@ -1937,7 +1937,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BeanMapper.copy(detailEntity, detail);
         addProductDetailLog(detail, oldEntity, detail.getId(), detailEntity.getProductId());
         //2.修改/新增 sku信息
-
         if (detailEntity != null) {
             this.updateById(detailEntity);
         }
