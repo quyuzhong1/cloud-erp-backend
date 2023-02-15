@@ -1443,6 +1443,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         Map<String, Object> resultMap = new HashMap<>();
         //sku
+        resultMap.put("id", entity.getId());
+        //sku
         resultMap.put("skuNo", entity.getSkuNo());
         //名称
         resultMap.put("name",entity.getName());
