@@ -20,10 +20,7 @@ import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.server.plm.enums.ChargeSuperiorEnum;
-import com.erp.server.plm.enums.DistributionTypeEnum;
-import com.erp.server.plm.enums.ProjectTemplateTypeEnum;
-import com.erp.server.plm.enums.TaskTypeEnum;
+import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProjectTaskSysMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -109,15 +106,27 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             entity.setChargeName(chargeNames);
         }
 
-        //自定义审核人
-        List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         //配置表单属性
         String fieldConfigType = dto.getFieldConfigType();
+        //生成sku
+        String createSku = TaskConstant.CREATE_SKU;
+        //填写sku
+        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
+        //filedjson
+        String fieldJson = dto.getFieldJson();
+        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
+        Boolean needCheckFirst =  (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
+
+        //第二种 sku 没有  并且 表单属性不为空 且为生成
+        Boolean needCheckSecond =  (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
+
+        //自定义审核人
+        List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         Integer type = dto.getType();
         //如果配置表单 一般任务 一定要走流程
-        if (StringUtils.isNotBlank(fieldConfigType)) {
-            Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-            //如果是一般任务 必须要有审核流程
+        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+        //如果是一般任务 必须要有审核流程
+        if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
