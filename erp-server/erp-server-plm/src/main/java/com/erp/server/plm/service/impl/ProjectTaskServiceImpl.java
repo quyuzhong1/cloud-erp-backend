@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.BaseStatusEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -808,7 +809,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
         Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList)
-                && (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (fillProductInfo.equals(fieldConfigType) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
+                && (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
 
 
         //自定义审核人
@@ -4323,10 +4324,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         waitReleasedDTO.setOperateUserName(operatorName);
         waitReleasedDTO.setOperateTime(operatorTime);
         waitReleasedDTO.setIfFinishNode(flag);
-        List<Date> dateList = new ArrayList<>();
+        List<Pair<String,Date>> dateList = new ArrayList<>();
+
         if (CollectionUtils.isEmpty(approveRecordShowList)) {
             return waitReleasedDTO;
         }
+        Boolean isShwoDate = Boolean.TRUE;
         List<TaskProcessNodeDetailDTO> detailList = new ArrayList<>();
         //当状态为待审核、审核中、审核通过、审核不通过时添加详情
         if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(state) || TaskStateEnum.APPROVAL_ING.getCode().equals(state)
@@ -4349,7 +4352,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         try {
                             Date date = DateUtils.parseDate(auditorHandleDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
                             taskProcessNodeDTO.setOperateTime(date);
-                            dateList.add(date);
+                            dateList.add(new Pair<>(userName,date));
                         } catch (ParseException e) {
                             throw new ServiceException(ApiError.Default);
                         }
@@ -4360,6 +4363,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         taskProcessNodeDTO.setOperateTime(operatorTime);
                     } else {
                         taskProcessNodeDTO.setNodeName(auditorHandleDTO.getHandContent());
+                    }
+                    if (BaseStatusEnum.WAIT_AUDIT.getName().equals(auditorHandleDTO.getHandContent())) {
+                        isShwoDate = Boolean.FALSE;
                     }
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
@@ -4372,12 +4378,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<TaskProcessNodeDetailDTO> collect = detailList.stream().sorted(Comparator.comparing(e -> e.getStartDate(), Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
                 waitReleasedDTO.setDetailList(collect);
             }
-            TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = detailList.get(detailList.size() - 1);
-            List<TaskProcessNodeDTO> list = taskProcessNodeDetailDTO.getList();
-            waitReleasedDTO.setOperateUserName(list.get(list.size() - 1).getOperateUserName());
-            if (CollectionUtils.isNotEmpty(dateList)) {
-                Date date = dateList.stream().max(Date::compareTo).orElse(null);
+            Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(Pair::getValue)).get();
+            waitReleasedDTO.setOperateUserName(pair.getKey());
+            if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
+                Date date = pair.getValue();
                 waitReleasedDTO.setOperateTime(date);
+            } else {
+                waitReleasedDTO.setOperateTime(null);
             }
         }
         return waitReleasedDTO;
