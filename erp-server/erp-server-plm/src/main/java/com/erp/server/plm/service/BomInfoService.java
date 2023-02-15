@@ -69,4 +69,8 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
     void changeBom(BomDTO bom);
 
     List<ApproveNodeRecordVO> auditInfo(String id);
+
+    void checkAuditor(List<BomSkuDTO> skuList);
+
+    List<String> getSkuIdList(List<BomSkuDTO> skuList);
 }

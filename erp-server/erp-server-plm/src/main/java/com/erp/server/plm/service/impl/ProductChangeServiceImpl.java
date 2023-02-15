@@ -341,8 +341,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             Map<String, Object> parameterMap = new HashMap<>();
 
             List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
-            //skuId
-            List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+            List<String> skuIdList=bomInfoService.getSkuIdList(skuList);
+
+
+
+
             //产品经理
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
             if (CollectionUtils.isEmpty(productManagerList)) {
