@@ -383,7 +383,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
             String operateContent = getUpdateContent(oldBomList, bomSkuList);
-            bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
+            if(StringUtils.isNotBlank(operateContent)){
+                bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
+            }
         }
         return result;
     }
