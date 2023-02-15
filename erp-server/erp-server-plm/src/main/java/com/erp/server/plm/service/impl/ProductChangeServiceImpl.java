@@ -85,7 +85,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
     //变更财务人员审核
-    @Value("{changeFinancialAudit}")
+    @Value("${changeFinancialAudit}")
     private String financial;
 
     /**
