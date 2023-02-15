@@ -37,6 +37,7 @@
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <mybatis-version>3.4.2</mybatis-version>
         <joda.time.version>2.9.9</joda.time.version>
+        <jasypt.version>3.0.4</jasypt.version>
     </properties>
 
     <!--公共依赖组件-->
