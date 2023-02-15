@@ -921,7 +921,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(), resultList);
         setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(), resultList);
         setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(), resultList);
-        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(), resultList);
+        setList(newBom.getProductLogisticsShowDTO(), oldbom.getProductLogisticsShowDTO(), resultList);
         setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
         if (CollectionUtils.isNotEmpty(resultList)) {
             resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
