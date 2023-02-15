@@ -546,11 +546,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
                 List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
+                entity.setChargeId("");
+                entity.setChargeName("");
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {//分配类型为负责人
             String chargeNames = commonService.getNameByIds(chargeIds);
             entity.setChargeId(String.join(",", chargeIds));
             entity.setChargeName(chargeNames);
+            entity.setRoleName("");
+            entity.setRoleId("");
         }
         //阶段名称
         if (StringUtils.isNotBlank(dto.getPhaseId())) {
