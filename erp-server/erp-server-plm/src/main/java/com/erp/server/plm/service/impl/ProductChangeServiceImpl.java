@@ -647,10 +647,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Map<String, Object> parameterMap = new HashMap<>();
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
+        this.updateById(changeEntity);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
-        if (node != null) {
-            this.updateById(changeEntity);
-        }
+
 
     }
 

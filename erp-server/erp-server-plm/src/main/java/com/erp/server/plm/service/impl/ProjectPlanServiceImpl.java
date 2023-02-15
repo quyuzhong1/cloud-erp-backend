@@ -519,10 +519,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+        Boolean result = this.updateById(plan);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         //表示成功
         if (node != null) {
-            Boolean result = this.updateById(plan);
             if (result) {
                 List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
                 List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());
