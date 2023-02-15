@@ -281,10 +281,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             parameterMap.put("qualityPeopleList", qualityPeople);
 
+            //财务人员
             if (StringUtils.isBlank(financial)) {
                 throw new ServiceException(ApiError.ERROR_9035);
             }
-
             parameterMap.put("financial", financial);
 
 
