@@ -86,5 +86,5 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
     TemplateTaskDTO taskDetails(TemplateTaskParamDTO dto);
 
 
-
+    List<TemplateTaskEntity> listByRoleId(String roleId);
 }

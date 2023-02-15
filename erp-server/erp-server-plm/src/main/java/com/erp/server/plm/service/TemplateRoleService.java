@@ -68,4 +68,13 @@ public interface TemplateRoleService extends IService<TemplateRoleEntity> {
 
      */
     List<TemplateRoleEntity> getByTemplateId(String templateId);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/2/15 12:59
+     * @param templateId
+     * @param roleId
+     * @return TemplateRoleEntity
+     */
+    TemplateRoleEntity getByTemplateIdAndRoleId(String templateId, String roleId);
 }

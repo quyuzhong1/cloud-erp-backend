@@ -41,4 +41,13 @@ public interface TaskChargeDistributionService extends IService<TaskChargeDistri
      * @param taskId
      */
     void removeBySourceAndTaskId(Integer source, String taskId);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2023/2/15 13:06
+     * @param source 
+     * @param name 
+     * @return List<TaskChargeDistributionEntity> 
+     */
+    List<TaskChargeDistributionEntity> listBySourceAndRoleName(List<Integer> source, String name);
 }

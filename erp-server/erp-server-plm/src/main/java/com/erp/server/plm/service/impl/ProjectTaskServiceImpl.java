@@ -2830,7 +2830,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskEntity taskEntity = this.getById(taskId);
         TaskRefSkuConfigEntity skuConfigEntity = taskRefSkuConfigService.getByTaskId(taskId);
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
-        Boolean taskRefSkuFlag = CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0;
+        Boolean taskRefSkuFlag = (CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0)  || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType()) ;
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);

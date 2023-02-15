@@ -9,6 +9,8 @@ import com.erp.model.plm.entity.TemplateTaskEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Classname TemplateTaskMapper
  * @Description TODO
@@ -26,4 +28,6 @@ public interface TemplateTaskMapper  extends BaseMapper<TemplateTaskEntity> {
      * @return IPage<TemplateTaskShowDTO>
      */
     IPage<TemplateTaskShowDTO> paging(Page query, @Param("params") TemplateSearchDTO params);
+
+    List<TemplateTaskEntity> listByRoleId( @Param("roleId")String roleId);
 }

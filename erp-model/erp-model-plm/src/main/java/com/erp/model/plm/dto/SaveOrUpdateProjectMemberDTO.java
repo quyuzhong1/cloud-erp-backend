@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.erp.common.annotation.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -50,6 +49,8 @@ public class SaveOrUpdateProjectMemberDTO implements Serializable {
     @NotBlank(message = "项目角色id 不能为空")
     private String roleId;
 
-
-
+    /**
+     * 判断是否是界面新增
+     */
+    private Integer flag;
 }

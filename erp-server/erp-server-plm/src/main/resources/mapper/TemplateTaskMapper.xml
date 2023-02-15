@@ -43,5 +43,35 @@
         order by tt.create_time asc
     </select>
 
+    <select id="listByRoleId" resultType="com.erp.model.plm.entity.TemplateTaskEntity">
+        select
+           tt.id,
+           tt.name,
+           tt.type,
+           case when tt.distribution_type = 0 then tt.role_name
+                when tt.distribution_type = 1 then tt.charge_name
+                else '' end as charge_name,
+           tt.priority,
+           tt.is_fixed,
+           tt.create_user_name,
+           tt.create_user_id,
+           tt.create_time
+           from template_task tt where tt.distribution_type = 0 and string_to_array(tt.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+           union
+        select
+            tts.id,
+            tts.name,
+            tts.type,
+            case when tts.distribution_type = 0 then tts.role_name
+                 when tts.distribution_type = 1 then tts.charge_name
+                 else '' end as charge_name,
+            tts.priority,
+            tts.is_fixed,
+            tts.create_user_name,
+            tts.create_user_id,
+            tts.create_time
+        from project_task_sys tts where tts.distribution_type = 0 and string_to_array(tts.role_id,',') &amp;&amp; string_to_array(#{roleId},',')
+    </select>
+
 
 </mapper>

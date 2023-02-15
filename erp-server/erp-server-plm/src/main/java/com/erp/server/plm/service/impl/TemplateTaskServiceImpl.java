@@ -271,6 +271,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         return resultDTO;
     }
 
+    @Override
+    public List<TemplateTaskEntity> listByRoleId(String roleId) {
+       return this.baseMapper.listByRoleId(roleId);
+    }
+
     /**
      * 复制模板任务
      *

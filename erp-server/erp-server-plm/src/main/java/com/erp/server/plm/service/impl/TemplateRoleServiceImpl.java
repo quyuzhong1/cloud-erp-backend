@@ -161,6 +161,15 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
 
     }
 
+    @Override
+    public TemplateRoleEntity getByTemplateIdAndRoleId(String templateId, String roleId) {
+        LambdaQueryWrapper<TemplateRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplateRoleEntity::getTemplateId, templateId);
+        queryWrapper.eq(TemplateRoleEntity::getId, roleId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
     /**
      * @description: 验证该模板下是否存在该角色
      * @author Will

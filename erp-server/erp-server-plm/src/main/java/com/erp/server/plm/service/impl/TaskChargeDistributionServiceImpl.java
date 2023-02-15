@@ -59,4 +59,9 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
         this.remove(updateWrapper);
     }
 
+    @Override
+    public List<TaskChargeDistributionEntity> listBySourceAndRoleName(List<Integer> source, String name) {
+        return this.baseMapper.listBySourceAndRoleName(source,name);
+    }
+
 }

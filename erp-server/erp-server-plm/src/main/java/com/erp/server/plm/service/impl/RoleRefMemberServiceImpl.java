@@ -3,8 +3,6 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
-import com.erp.common.enums.ApiError;
-import com.erp.common.exception.ServiceException;
 import com.erp.model.plm.dto.RoleRefMemberDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.RoleRefMemberEntity;
@@ -87,7 +85,7 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
      * @date 2022-10-11 11:02
      */
     @Override
-    public void checkRoleMember(String id, String roleId, List<String> memberIds, String productId) {
+    public List<String> checkRoleMember(String id, String roleId, List<String> memberIds, String productId) {
 
         List<RoleRefMemberEntity> existList = getExistList(roleId);
         List<String> existMemberTableIds = existList.stream().map(RoleRefMemberEntity::getMembersId).collect(Collectors.toList());
@@ -96,8 +94,13 @@ public class RoleRefMemberServiceImpl extends ServiceImpl<RoleRefMemberMapper, R
         List<String> intersection = existMemberTableIds.stream().filter(item -> memberTableIds.contains(item)).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(intersection)) {
-            throw new ServiceException(ApiError.ERROR_95021);
+            List<ProjectMembersEntity> projectMembers = projectMembersService.listByIds(intersection);
+            if (CollectionUtils.isNotEmpty(projectMembers)) {
+                List<String> collect = projectMembers.stream().map(ProjectMembersEntity::getMemberId).distinct().collect(Collectors.toList());
+                return collect;
+            }
         }
+        return new ArrayList<>();
     }
 
     @Override

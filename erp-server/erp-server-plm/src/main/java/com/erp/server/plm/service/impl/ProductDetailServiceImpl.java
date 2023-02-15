@@ -12,6 +12,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.ApiResult;
@@ -503,7 +504,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
         //1.修改产品表 主表信息
-        productSpuBaseInfoDTO.setIsNoSpec(true);
+        productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息

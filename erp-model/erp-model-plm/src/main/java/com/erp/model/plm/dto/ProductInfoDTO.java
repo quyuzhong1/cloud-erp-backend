@@ -180,7 +180,7 @@ public class ProductInfoDTO {
     private String updateUserName;
 
     /**
-     * 是否是无规格
+     * 是否是无规格新增
      */
-    private Boolean isNoSpec;
+    private Integer isNoSpecAdd;
 }
