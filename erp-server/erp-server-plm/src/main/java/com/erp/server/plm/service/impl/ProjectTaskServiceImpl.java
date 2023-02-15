@@ -4334,7 +4334,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<AuditorHandleDTO> value = entry.getValue();
                 List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                 TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
-                taskProcessNodeDetailDTO.setStartDate(value.get(0).getStartTime());
+                taskProcessNodeDetailDTO.setStartDate(StringUtils.isBlank(value.get(0).getStartTime())? null :value.get(0).getStartTime());
                 //查询流程
                 for (AuditorHandleDTO auditorHandleDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();

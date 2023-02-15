@@ -762,7 +762,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setUpdateUserName(loginUser.getUserName());
         }
         //自动生成产品编号
-        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo()) && !Boolean.TRUE.equals(dto.getIsNoSpec())) {
             String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
             productInfoEntity.setSpuNo(spuNo);
         }

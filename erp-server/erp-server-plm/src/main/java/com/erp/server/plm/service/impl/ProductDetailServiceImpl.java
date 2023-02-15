@@ -503,6 +503,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
         //1.修改产品表 主表信息
+        productSpuBaseInfoDTO.setIsNoSpec(true);
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息

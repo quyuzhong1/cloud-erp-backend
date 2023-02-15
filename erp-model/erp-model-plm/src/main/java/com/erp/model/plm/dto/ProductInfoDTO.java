@@ -178,4 +178,9 @@ public class ProductInfoDTO {
      * 修改人名称
      */
     private String updateUserName;
+
+    /**
+     * 是否是无规格
+     */
+    private Boolean isNoSpec;
 }
