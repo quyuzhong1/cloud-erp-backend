@@ -439,15 +439,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         int newSize = newChildrenList.size();
         for (int i = 0; i < newSize; i++) {
             BomChildrenSkuDTO newBom = newChildrenList.get(i);
-            if (oldSize > i) {
-                BomChildrenSkuDTO oldBom = OldChildrenList.get(i);
+            BomChildrenSkuDTO oldBom=OldChildrenList.stream().filter(o->o.getSkuId().equals(newBom.getSkuId())).
+                    findFirst().orElse(null);
+            if(oldBom!=null){
                 if (!oldBom.getSkuNo().equals(newBom.getSkuNo())) {
                     String childrenContent = "子物料" + oldBom.getSkuNo() +
-                            "变更到" + newBom.getSkuNo() + "用量为" + newBom.getQuantity();
+                            "变更到" + newBom.getSkuNo() + " 用量为" + newBom.getQuantity();
                     contentList.add(childrenContent);
                 }
-                if (
-                        oldBom.getSkuNo().equals(newBom.getSkuNo())
+                if (oldBom.getSkuNo().equals(newBom.getSkuNo())
                                 && (!oldBom.getQuantity().
                                 equals(newBom.getQuantity()))) {
                     String childrenQuantityContent = "子物料" + oldBom.getSkuNo() + "用量" + oldBom.getQuantity() + "变更到" + newBom.getQuantity();
