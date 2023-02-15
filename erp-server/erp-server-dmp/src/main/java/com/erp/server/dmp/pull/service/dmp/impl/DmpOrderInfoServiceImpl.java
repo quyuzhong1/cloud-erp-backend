@@ -143,7 +143,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 .in(DmpOrderInfoEntity::getCleanState, new ArrayList<>(Arrays.asList(0, 1)))
                 .in(DmpOrderInfoEntity::getPlatformSign, new ArrayList<>(Arrays.asList(PlatformEnum.KINGDEE.getDesc(), PlatformEnum.GYY.getDesc())))
                 .and(wrapper ->
-                        wrapper.isNull(DmpOrderInfoEntity::getChargeId)
+                        wrapper.eq(DmpOrderInfoEntity::getChargeId, "")
                                 .or().isNull(DmpOrderInfoEntity::getDeliveryTime)
                                 .or().eq(DmpOrderInfoEntity::getDeptId, "")
                                 .or().eq(DmpOrderInfoEntity::getSite, "")
@@ -235,7 +235,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }
         }
         //查询发货详情获取发货时间，同步到订单信息
-        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getSalesRecordNumber());
+        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getPlatformOrderId());
         if (null != deliveryDetailOrderNo) {
             updateWrapper.set(DmpOrderInfoEntity::getDeliveryTime, deliveryDetailOrderNo.getDeliveryDate());
             deliveryTimeTag = true;
