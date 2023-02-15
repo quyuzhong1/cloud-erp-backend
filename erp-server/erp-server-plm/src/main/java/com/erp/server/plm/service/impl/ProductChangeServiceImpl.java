@@ -672,7 +672,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (Objects.isNull(changeEntity)) {
             throw new ServiceException(ApiError.ERROR_95105);
         }
-        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }

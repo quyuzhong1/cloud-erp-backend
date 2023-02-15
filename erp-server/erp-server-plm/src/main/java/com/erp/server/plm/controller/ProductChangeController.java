@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -14,6 +15,7 @@ import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.service.ProductChangeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
@@ -35,6 +37,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("plm/change")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
+@Slf4j
 public class ProductChangeController extends BaseController {
 
 
@@ -183,6 +186,7 @@ public class ProductChangeController extends BaseController {
      */
     @PostMapping("/workflow/pass")
     public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
+        log.info("ProcessPassDTO=="+ JSONObject.toJSONString(dto));
         productChangeService.processPass(dto);
         return success();
     }
