@@ -54,21 +54,24 @@ public class MabangApiUtils {
      * @throws Exception
      */
     public static List<OrderEntity> querySalesList(String method, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
-        Integer pageSize = 100;
-        Integer pageIndex = 1;
+        String pageSize = "1000";
+        String pageIndex = "";
         //总页数
-        Integer pageCount = 1;
         Integer status = NOT_SHIPPED_STATUS;
+        Boolean hasNext = false;
         List<OrderEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount || NOT_SHIPPED_STATUS.equals(status)) {
-            HashMap<String, Object> params = new HashMap<>(6);
+        while (hasNext || NOT_SHIPPED_STATUS.equals(status)) {
+            HashMap<String, Object> params = new HashMap<>(10);
             params.put("status", status);
             params.put("canSend", "3");
+            if (StrUtil.isNotBlank(pageIndex)){
+                params.put("cursor", pageIndex);
+            }
             params.put("updateTimeStart", sdf.format(startDate));
             params.put("updateTimeEnd", sdf.format(endDate));
-            params.put("pageSize", pageSize);
-            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            params.put("maxRows", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, 0, params);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
                 log.error("调用url={} param={} {}马帮销售订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
@@ -77,15 +80,15 @@ public class MabangApiUtils {
             }
             JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
             List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), OrderEntity.class);
-            pageCount = dataJson.getInteger("pageCount");
+            hasNext = dataJson.getBoolean("hasNext");
+            pageIndex = dataJson.getString("nextCursor");
             if(CollectionUtil.isNotEmpty(dataList)){
                 infoArrayList.addAll(dataList);
             }
-            pageIndex ++;
-            if (pageIndex > pageCount && NOT_SHIPPED_STATUS.equals(status)) {
+            if (!hasNext && NOT_SHIPPED_STATUS.equals(status)) {
                 status = NOT_UNSHIPPED_STATUS;
-                pageIndex = 1;
-                pageCount = 1;
+                pageIndex = "";
+                hasNext = true;
             }
         }
         return infoArrayList;
