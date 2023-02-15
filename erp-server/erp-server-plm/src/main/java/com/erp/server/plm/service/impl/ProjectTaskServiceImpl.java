@@ -4320,6 +4320,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         waitReleasedDTO.setOperateUserName(operatorName);
         waitReleasedDTO.setOperateTime(operatorTime);
         waitReleasedDTO.setIfFinishNode(flag);
+        List<Date> dateList = new ArrayList<>();
         if (CollectionUtils.isEmpty(approveRecordShowList)) {
             return waitReleasedDTO;
         }
@@ -4345,6 +4346,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         try {
                             Date date = DateUtils.parseDate(auditorHandleDTO.getEndTime(), DateUtils.DATE_FORMAT_19);
                             taskProcessNodeDTO.setOperateTime(date);
+                            dateList.add(date);
                         } catch (ParseException e) {
                             throw new ServiceException(ApiError.Default);
                         }
@@ -4364,11 +4366,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
             //按生成时间排序（逐级排序）
             if (CollectionUtils.isNotEmpty(detailList)) {
-                detailList = detailList.stream().sorted(Comparator.comparing(TaskProcessNodeDetailDTO::getStartDate)).collect(Collectors.toList());
+                List<TaskProcessNodeDetailDTO> collect = detailList.stream().sorted(Comparator.comparing(e -> e.getStartDate(), Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+                waitReleasedDTO.setDetailList(collect);
             }
-            waitReleasedDTO.setDetailList(detailList);
-            Integer count = detailList.stream().map(obj -> obj.getList().size()).reduce(MathUtil.ZERO, Integer::sum);
-            waitReleasedDTO.setOperateUserName("审核人【".concat(String.valueOf(count)).concat("】人"));
+            TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = detailList.get(detailList.size() - 1);
+            List<TaskProcessNodeDTO> list = taskProcessNodeDetailDTO.getList();
+            waitReleasedDTO.setOperateUserName(list.get(list.size() - 1).getOperateUserName());
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                Date date = dateList.stream().max(Date::compareTo).orElse(null);
+                waitReleasedDTO.setOperateTime(date);
+            }
         }
         return waitReleasedDTO;
     }
