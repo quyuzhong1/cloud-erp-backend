@@ -1,6 +1,5 @@
 package com.erp.server.plm.controller;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -186,7 +185,6 @@ public class ProductChangeController extends BaseController {
      */
     @PostMapping("/workflow/pass")
     public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
-        log.info("ProcessPassDTO=="+ JSONObject.toJSONString(dto));
         productChangeService.processPass(dto);
         return success();
     }
