@@ -227,6 +227,11 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/updateTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+                tableField = "charge_id",
+                menuCode = "plm:task:update",
+                serviceClass = ProjectTaskService.class
+    )
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = taskService.updateBaseTask(dto);
         return result == true ? success() : failure();

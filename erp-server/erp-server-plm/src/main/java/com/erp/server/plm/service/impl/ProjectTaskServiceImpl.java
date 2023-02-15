@@ -807,7 +807,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Boolean needCheckFirst = CollectionUtils.isNotEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
 
         //第二种 sku 没有  并且 表单属性不为空 且为生成
-        Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList) && (StringUtils.isNotBlank(fieldConfigType) && createSku.equals(fieldConfigType));
+        Boolean needCheckSecond = CollectionUtils.isEmpty(refSkuIdList)
+                && (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (fillProductInfo.equals(fieldConfigType) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
 
 
         //自定义审核人
