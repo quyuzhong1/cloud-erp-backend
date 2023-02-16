@@ -240,6 +240,38 @@ public class MabangApiUtils {
         return infoArrayList;
     }
 
+    public static List<OrderEntity> queryHistorySalesList(String method, LocalDateTime endDate) throws Exception {
+        String pageSize = "1000";
+        String pageIndex = "";
+        //总页数
+        Boolean hasNext = true;
+        List<OrderEntity> infoArrayList = new ArrayList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_d.toTimePattern());
+        while (hasNext ) {
+            HashMap<String, Object> params = new HashMap<>(10);
+            if (StrUtil.isNotBlank(pageIndex)){
+                params.put("cursor", pageIndex);
+            }
+            params.put("paidTime", sdf.format(endDate));
+            params.put("pageSize", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, 0, params);
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={} {}马帮历史销售订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮历史销售订单数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
+            List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("list"), OrderEntity.class);
+            hasNext = dataJson.getBoolean("hasNext");
+            pageIndex = dataJson.getString("nextCursor");
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+        }
+        return infoArrayList;
+    }
+
     private static ParamHeaderVO getParamMap(String method,Integer pageIndex, Map<String,Object> params) {
         params.put("page", pageIndex);
         Map<String, Object> paramMap = new HashMap(16);

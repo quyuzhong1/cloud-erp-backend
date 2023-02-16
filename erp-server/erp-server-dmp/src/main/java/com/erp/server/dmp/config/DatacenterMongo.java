@@ -22,4 +22,13 @@ public class DatacenterMongo extends AbstractMongoConfig {
 		return new MongoTemplate(mongoDbFactory(env,"erp"));
 	}
 
+//	@Bean
+//	public MongoDatabaseFactory mongoDbFactory() throws Exception {
+//		return mongoDbFactory(env,"erp");
+//	}
+//	@Bean
+//	public MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory mongoDbFactory) {
+//		return new MongoTransactionManager(mongoDbFactory);
+//	}
+
 }
