@@ -186,7 +186,7 @@
                 </choose>
             </foreach>
         </if>
-        pt.create_time desc
+        pt.create_time asc
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -369,7 +369,7 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         <where>
             (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
@@ -380,12 +380,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-                = pt.id ))
+                = t.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -400,7 +400,7 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
         pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
@@ -410,12 +410,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-            = pt.id ))
+            = t.id ))
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -438,12 +438,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-                = pt.id ))
+                = t.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -468,12 +468,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-            = pt.id ))
+            = t.id ))
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -487,7 +487,7 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         <where>
             (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
             pji.project_status != 4)
@@ -498,12 +498,12 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-                = pt.id ))
+                = t.id ))
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+                AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.param != null and params.param != ''">
                 ${params.param}
@@ -517,7 +517,7 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id
         left join project_info pji on pdi.id = pji.product_id
-        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution group by task_id,source) tcd on t.id = tcd.task_id and tcd.source = 3
         WHERE (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
         pji.project_status != 4) and t.plan_end_time IS NOT NULL
         <if test="notStateList !=null and notStateList.size>0">
@@ -527,12 +527,12 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id) or not EXISTS (select
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id) or not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id where (b.status != 4 and b.status != 5) and a.task_id
-            = pt.id ))
+            = t.id ))
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
-            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = pt.id)
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id where b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}

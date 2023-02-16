@@ -210,6 +210,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }
                     }
                 }
+                Integer afterState = TaskStateEnum.NOT_START.getCode();
+                //如果不是是一般任务
+                if (!isGeneralTask) {
+                    afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+                }
+                entity.setStatus(afterState);
                 boolean flag = this.save(entity);
                 if (flag) {
                     addTaskList.add(entity);
@@ -258,11 +264,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     }
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
 
-                    Integer afterState = TaskStateEnum.NOT_START.getCode();
-                    //如果不是是一般任务
-                    if (!isGeneralTask) {
-                        afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
-                    }
+
                     //保存任务记录
                     taskOperatorRecordService.addTaskOperator(entity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
                     //发布任务通知
@@ -694,7 +696,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     totalDocsCount = countDTO.getCount();
                 }
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(item.getRelatedSkuType())) {
+                if (refSku != null) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 item.setTotalDocsCount(totalDocsCount);
@@ -2092,7 +2094,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDocsFinishEntity::getTaskDocsId).distinct().collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(item.getRelatedSkuType())) {
+                if (refSku != null ) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
@@ -2241,7 +2243,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     totalDocsCount = countDTO.getCount();
                 }
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(item.getRelatedSkuType())) {
+                if (refSku != null) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 item.setTotalDocsCount(totalDocsCount);
@@ -2398,7 +2400,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     totalDocsCount = countDTO.getCount();
                 }
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(item.getRelatedSkuType())) {
+                if (refSku != null) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 item.setTotalDocsCount(totalDocsCount);
@@ -2755,7 +2757,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
 
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null || RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(item.getRelatedSkuType())) {
+                if (refSku != null) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
