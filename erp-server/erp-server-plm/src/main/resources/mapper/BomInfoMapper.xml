@@ -109,7 +109,7 @@
                     <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                         #{skuId}
                     </foreach>
-
+                    OR
                     bs.parent_sku_id IN
                     <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                         #{skuId}
