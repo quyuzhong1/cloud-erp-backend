@@ -5,8 +5,8 @@ spring:
         server-addr: 172.16.100.12
         namespace: ${NACOS_NAMESPACE:dev-yl}
       config:
-        server-addr: 172.16.100.10
-        namespace: uat
+        server-addr: 172.16.100.12
+        namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-plm.yml,erp-third-party.yml,druid-common.yml
 #显示日期的
