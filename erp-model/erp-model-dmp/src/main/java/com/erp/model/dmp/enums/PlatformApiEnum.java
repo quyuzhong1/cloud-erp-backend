@@ -14,6 +14,11 @@ public enum PlatformApiEnum {
 //    ORDER_GET_ORDER_LIST(4,"order-get-order-list"),
     ORDER_GET_ORDER_LIST(4,"order-get-order-list-new"),
 
+    /**
+     * 获取历史订单列表
+     */
+    GET_HISTORY_ORDER_LIST(24,"get-history-order-list"),
+
     //获取退货订单数据
     ORDER_GET_RETURN_ORDER_LIST(5,"order-get-return-order-list"),
     //商品出库详情

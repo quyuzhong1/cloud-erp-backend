@@ -68,6 +68,16 @@ public class KingdeeApiUtils {
     }
 
     /**
+     * 使用配置文件创建client 用于订单任务拉取线上数据
+     * @param formId
+     * @param type
+     */
+    public KingdeeApiUtils(String formId, Integer type){
+        this.client = new K3CloudApi();
+        this.formId=formId;
+    }
+
+    /**
      * 查询列表(分页查询)
      * @param filterStr 过滤条件, 如 FModifyDate>"2022-01-01" and FCreatorId="1"
      * @param fieldKeys 要显示的字段, 如:FBillNo,FCreatorId,

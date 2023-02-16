@@ -137,7 +137,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         //每次最多获取100条
         Integer pageSize = 10000;
         while (dataSign) {
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(),1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize){

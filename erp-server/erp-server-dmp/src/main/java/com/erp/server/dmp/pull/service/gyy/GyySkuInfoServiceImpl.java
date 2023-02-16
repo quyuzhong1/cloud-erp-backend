@@ -146,7 +146,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
                 dmpSkuInfoEntity.setDefaultCost(gyySkuInfoEntity.getCostPrice());
 
                 //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
-                dmpSkuInfoEntity.setStatus(null);
+                dmpSkuInfoEntity.setStatus(0);
 
                 //商品创建时间
                 if (StringUtils.isNotBlank(gyySkuInfoEntity.getCreateDate())) {
@@ -162,10 +162,10 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
                 dmpSkuInfoEntity.setBrandName(gyySkuInfoEntity.getItemBrandName());
 
                 //商品目录(一级)
-                dmpSkuInfoEntity.setParentCategoryName(null);
+                dmpSkuInfoEntity.setParentCategoryName("");
 
                 //商品目录(二级)
-                dmpSkuInfoEntity.setCategoryName(null);
+                dmpSkuInfoEntity.setCategoryName("");
 
                 //售价
                 dmpSkuInfoEntity.setSalePrice(gyySkuInfoEntity.getSalesPrice());
@@ -174,10 +174,10 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
                 dmpSkuInfoEntity.setDeclarePrice(new BigDecimal(BigInteger.ZERO));
 
                 //开发员id
-                dmpSkuInfoEntity.setDeveloperId(null);
+                dmpSkuInfoEntity.setDeveloperId("");
 
                 //开发员名称
-                dmpSkuInfoEntity.setDeveloperName(null);
+                dmpSkuInfoEntity.setDeveloperName("");
 
                 //平台标识
                 dmpSkuInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());
@@ -201,7 +201,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
             dmpSkuInfoEntity.setDefaultCost(gyySkuInfoEntity.getCostPrice());
 
             //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
-            dmpSkuInfoEntity.setStatus(null);
+            dmpSkuInfoEntity.setStatus(0);
 
             //商品创建时间
             if (StringUtils.isNotBlank(gyySkuInfoEntity.getCreateDate())) {
@@ -217,10 +217,10 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
             dmpSkuInfoEntity.setBrandName(gyySkuInfoEntity.getItemBrandName());
 
             //商品目录(一级)
-            dmpSkuInfoEntity.setParentCategoryName(null);
+            dmpSkuInfoEntity.setParentCategoryName("");
 
             //商品目录(二级)
-            dmpSkuInfoEntity.setCategoryName(null);
+            dmpSkuInfoEntity.setCategoryName("");
 
             //售价
             dmpSkuInfoEntity.setSalePrice(gyySkuInfoEntity.getSalesPrice());
@@ -229,10 +229,10 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
             dmpSkuInfoEntity.setDeclarePrice(new BigDecimal(BigInteger.ZERO));
 
             //开发员id
-            dmpSkuInfoEntity.setDeveloperId(null);
+            dmpSkuInfoEntity.setDeveloperId("");
 
             //开发员名称
-            dmpSkuInfoEntity.setDeveloperName(null);
+            dmpSkuInfoEntity.setDeveloperName("");
 
             //平台标识
             dmpSkuInfoEntity.setPlatformSign(PlatformEnum.GYY.getDesc());

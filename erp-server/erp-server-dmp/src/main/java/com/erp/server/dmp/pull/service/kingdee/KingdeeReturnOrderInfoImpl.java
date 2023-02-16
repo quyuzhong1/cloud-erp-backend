@@ -131,7 +131,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         Integer pageSize = 10000;
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             log.info("获取金蝶退货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize){
