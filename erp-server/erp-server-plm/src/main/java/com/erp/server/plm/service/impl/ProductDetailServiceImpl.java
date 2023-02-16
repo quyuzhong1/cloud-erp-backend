@@ -1460,7 +1460,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BasicCategoryEntity basicCategoryEntity = basicCategoryService.getById(productInfoEntity.getCategoryId());
         if (ObjectUtils.isNotEmpty(basicCategoryEntity)) {
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
-            if (CollectionUtils.isNotEmpty(basicCategoryList)) {
+            if (CollectionUtils.isEmpty(basicCategoryList)) {
+                //TODO代码结构优化，有异常立即抛出
                 //一级分类
                 BasicCategoryEntity basicCategoryEntity1 = basicCategoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(basicCategoryEntity1)) {
@@ -1471,8 +1472,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     BasicCategoryEntity basicCategoryEntity2 = basicCategoryList.stream().filter(obj -> basicCategoryEntity1.getId().equals(obj.getPid())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(basicCategoryEntity2)) {
                         resultMap.put("secondLevelCategory", basicCategoryEntity2.getName());
-                        //二级分类编码
-                        resultMap.put("secondLevelCategoryCode", basicCategoryEntity1.getCode().concat(basicCategoryEntity2.getCode()));
+                        if (StringUtils.isNotBlank(basicCategoryEntity1.getCode()) && StringUtils.isNotBlank(basicCategoryEntity2.getCode())) {
+                            //二级分类编码
+                            resultMap.put("secondLevelCategoryCode", basicCategoryEntity1.getCode().concat(basicCategoryEntity2.getCode()));
+                        }
                     }
                 }
             }
