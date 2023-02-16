@@ -1549,7 +1549,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //单箱尺寸
             String boxSize = productPackEntity.getBoxSize();
             if (StringUtils.isNotBlank(boxSize)) {
-                List<String> boxSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
+                List<String> boxSizeList = Arrays.stream(boxSize.split("X")).collect(Collectors.toList());
                 if (boxSizeList.size() == 1) {
                     //产品尺寸-长(cm)
                     resultMap.put("boxSize_length", boxSizeList.get(0));
