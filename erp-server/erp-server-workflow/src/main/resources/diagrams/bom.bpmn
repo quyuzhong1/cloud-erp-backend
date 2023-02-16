@@ -4,13 +4,13 @@
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_1m87172</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:userTask id="Activity_155lgg1" name="产品经理审核" camunda:assignee="${productManagers}">
+        <bpmn:userTask id="Activity_155lgg1" name="产品经理" camunda:assignee="${productManagers}">
             <bpmn:extensionElements />
             <bpmn:incoming>Flow_1m87172</bpmn:incoming>
             <bpmn:outgoing>Flow_1cqil2m</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerList" camunda:elementVariable="productManagers" />
         </bpmn:userTask>
-        <bpmn:userTask id="Activity_1g5j07k" name="产品经理上一级审核" camunda:assignee="${productManagerSupervisors}">
+        <bpmn:userTask id="Activity_1g5j07k" name="产品经理上级" camunda:assignee="${productManagerSupervisors}">
             <bpmn:incoming>Flow_0ph99dh</bpmn:incoming>
             <bpmn:outgoing>Flow_01es1me</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerSupervisorList" camunda:elementVariable="productManagerSupervisors" />
@@ -48,7 +48,7 @@
         <bpmn:sequenceFlow id="Flow_0kbtu3v" name="不同意" sourceRef="Gateway_0ebv5qp" targetRef="Event_0uc96w0">
             <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${agree==false}</bpmn:conditionExpression>
         </bpmn:sequenceFlow>
-        <bpmn:userTask id="Activity_10tz888" name="产品部负责人审核" camunda:assignee="${departmentHead}">
+        <bpmn:userTask id="Activity_10tz888" name="产品部负责人" camunda:assignee="${departmentHead}">
             <bpmn:extensionElements />
             <bpmn:incoming>Flow_07v6hf5</bpmn:incoming>
             <bpmn:outgoing>Flow_158v1tv</bpmn:outgoing>

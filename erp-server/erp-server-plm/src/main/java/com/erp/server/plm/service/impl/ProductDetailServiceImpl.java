@@ -1914,8 +1914,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
-
-
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
@@ -1923,6 +1921,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(id);
         if (ObjectUtils.isNotEmpty(baseDTO)) {
+            //产品等级
+            if (StringUtils.isNotBlank(productInfoDTO.getGradeId())) {
+                //根据id查询字典表中的产品等级
+                BasicDictEntity basicDict = basicDictService.getById(productInfoDTO.getGradeId());
+                if (ObjectUtils.isNotEmpty(basicDict)) {
+                    productInfoDTO.setGrade(basicDict.getValue());
+                }
+            }
             if (StringUtils.isNotBlank(baseDTO.getId())) {
                 //产品操作日志
                 addProductInfoLog(productInfoDTO, productInfoEntity, baseDTO.getId(), baseDTO.getId());
@@ -1963,6 +1969,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductPurchaseRemarkEntity> remarkEntityList = skuDTO.getRemarkEntityList();
         if (CollectionUtils.isNotEmpty(remarkEntityList)) {
             List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = BeanMapper.copyList(remarkEntityList, ProductPurchaseRemarkDTO.class);
+            productPurchaseRemarkList.forEach(req -> {
+                req.setProductId(id);
+            });
+
             List<SysLogEntity> list = new LinkedList<>();
             remarkEntityList.forEach(req -> {
                 list.add(new SysLogEntity().setContent("更新采购备注信息：" + req.getRemark()).setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id));

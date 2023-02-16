@@ -4,13 +4,13 @@
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_0s3q0xt</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:userTask id="Activity_155lgg1" name="产品经理审核" camunda:assignee="${productManagers}">
+        <bpmn:userTask id="Activity_155lgg1" name="产品经理" camunda:assignee="${productManagers}">
             <bpmn:incoming>Flow_0s3q0xt</bpmn:incoming>
             <bpmn:outgoing>Flow_14zhikw</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerList" camunda:elementVariable="productManagers" />
         </bpmn:userTask>
         <bpmn:sequenceFlow id="Flow_0s3q0xt" sourceRef="StartEvent_1" targetRef="Activity_155lgg1" />
-        <bpmn:userTask id="Activity_011insp" name="产品经理上一级审核" camunda:assignee="${productManagerSupervisors}">
+        <bpmn:userTask id="Activity_011insp" name="产品经理上级" camunda:assignee="${productManagerSupervisors}">
             <bpmn:incoming>Flow_0dx3zbu</bpmn:incoming>
             <bpmn:outgoing>Flow_15fvef6</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerSupervisorList" camunda:elementVariable="productManagerSupervisors" />
@@ -24,7 +24,7 @@
         </bpmn:endEvent>
         <bpmn:sequenceFlow id="Flow_15fvef6" sourceRef="Activity_011insp" targetRef="Gateway_1pdzwdj" />
         <bpmn:sequenceFlow id="Flow_009pspz" sourceRef="Activity_1wntf44" targetRef="Gateway_0cly3on" />
-        <bpmn:userTask id="Activity_1wntf44" name="产品,供应链负责人审核" camunda:assignee="${departmentHeads}">
+        <bpmn:userTask id="Activity_1wntf44" name="产品部,供应链部负责人" camunda:assignee="${departmentHeads}">
             <bpmn:incoming>Flow_0b959de</bpmn:incoming>
             <bpmn:outgoing>Flow_009pspz</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="departmentHeadList" camunda:elementVariable="departmentHeads" />
@@ -72,7 +72,7 @@
             <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${agree==false}</bpmn:conditionExpression>
         </bpmn:sequenceFlow>
         <bpmn:sequenceFlow id="Flow_1a5lciz" sourceRef="Activity_0xkhs2b" targetRef="Gateway_0kvte04" />
-        <bpmn:userTask id="Activity_0xkhs2b" name="财务审核" camunda:assignee="${financial}">
+        <bpmn:userTask id="Activity_0xkhs2b" name="财务人员" camunda:assignee="${financial}">
             <bpmn:incoming>Flow_1hmg5ac</bpmn:incoming>
             <bpmn:outgoing>Flow_1a5lciz</bpmn:outgoing>
         </bpmn:userTask>
@@ -105,7 +105,7 @@
         <bpmn:sequenceFlow id="Flow_1ny4lg3" name="不同意" sourceRef="Gateway_0k0k7pn" targetRef="Event_1211vem">
             <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${agree==false}</bpmn:conditionExpression>
         </bpmn:sequenceFlow>
-        <bpmn:userTask id="Activity_1ipmtnc" name="品质部，采购开发组，采购执行组，物流部   负责人审核" camunda:assignee="${qualityPeoples}">
+        <bpmn:userTask id="Activity_1ipmtnc" name="品质部,采购开发组,采购执行组,物流部负责人" camunda:assignee="${qualityPeoples}">
             <bpmn:incoming>Flow_0v7opj1</bpmn:incoming>
             <bpmn:outgoing>Flow_1ac1n1x</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="qualityPeopleList" camunda:elementVariable="qualityPeoples" />

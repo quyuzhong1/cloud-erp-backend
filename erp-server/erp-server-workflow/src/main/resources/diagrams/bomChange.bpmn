@@ -4,12 +4,12 @@
         <bpmn:startEvent id="StartEvent_1" name="申请">
             <bpmn:outgoing>Flow_1vtm54y</bpmn:outgoing>
         </bpmn:startEvent>
-        <bpmn:userTask id="Activity_155lgg1" name="产品经理审核" camunda:assignee="${productManagers}">
+        <bpmn:userTask id="Activity_155lgg1" name="产品经理" camunda:assignee="${productManagers}">
             <bpmn:incoming>Flow_1vtm54y</bpmn:incoming>
             <bpmn:outgoing>Flow_1djwl0e</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerList" camunda:elementVariable="productManagers" />
         </bpmn:userTask>
-        <bpmn:userTask id="Activity_1g5j07k" name="产品经理上一级审核" camunda:assignee="${productManagerSupervisors}">
+        <bpmn:userTask id="Activity_1g5j07k" name="产品经理上级" camunda:assignee="${productManagerSupervisors}">
             <bpmn:incoming>Flow_1bqozij</bpmn:incoming>
             <bpmn:outgoing>Flow_0ta79bd</bpmn:outgoing>
             <bpmn:multiInstanceLoopCharacteristics camunda:collection="productManagerSupervisorList" camunda:elementVariable="productManagerSupervisors" />
@@ -22,7 +22,7 @@
         </bpmn:endEvent>
         <bpmn:sequenceFlow id="Flow_1vtm54y" sourceRef="StartEvent_1" targetRef="Activity_155lgg1" />
         <bpmn:sequenceFlow id="Flow_1djwl0e" sourceRef="Activity_155lgg1" targetRef="Gateway_1xctfsf" />
-        <bpmn:userTask id="Activity_10tz888" name="产品部负责人审核" camunda:assignee="${departmentHead}">
+        <bpmn:userTask id="Activity_10tz888" name="产品部负责人" camunda:assignee="${departmentHead}">
             <bpmn:incoming>Flow_1y1ihtw</bpmn:incoming>
             <bpmn:outgoing>Flow_0ppfxcj</bpmn:outgoing>
         </bpmn:userTask>
