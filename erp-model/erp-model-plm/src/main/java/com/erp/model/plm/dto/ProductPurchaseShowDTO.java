@@ -57,7 +57,7 @@ public class ProductPurchaseShowDTO implements Serializable {
      * 预计首批到货时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private String planArrivalTime;
+    private Date planArrivalTime;
 
     /**
      * MOQ(最小起订量)
@@ -73,7 +73,7 @@ public class ProductPurchaseShowDTO implements Serializable {
      * 实际首批到货时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone="GMT+8")
-    private String actualArrivalTime;
+    private Date actualArrivalTime;
 
     /**
      * 首批到货状态：1.未到货 2.已到货 3.部分到货

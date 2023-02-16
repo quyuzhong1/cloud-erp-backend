@@ -210,6 +210,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }
                     }
                 }
+                Integer afterState = TaskStateEnum.NOT_START.getCode();
+                //如果不是是一般任务
+                if (!isGeneralTask) {
+                    afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
+                }
+                entity.setStatus(afterState);
                 boolean flag = this.save(entity);
                 if (flag) {
                     addTaskList.add(entity);
@@ -258,17 +264,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     }
                     taskDeliveryService.saveTaskDeliveryDocs(productId, entity.getId(), item.getId(), taskDocsNameList);
 
-                    Integer afterState = TaskStateEnum.NOT_START.getCode();
-                    //如果不是是一般任务
-                    if (!isGeneralTask) {
-                        afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
-                    }
+
                     //保存任务记录
                     taskOperatorRecordService.addTaskOperator(entity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
                     //发布任务通知
                     List<ProjectTaskEntity> taskList = new ArrayList<>(1);
                     taskList.add(entity);
-                    noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+                    if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+                        noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, productId);
+                    } else {
+                        noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+                    }
                 }
                 sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
 
@@ -911,8 +917,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 //保存任务记录
                 taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
-                //发布任务通知
-                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(afterState)) {
+                   //发布任务通知
+                   noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               } else {
+                   //发布任务通知
+                   noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               }
+
             }
 
         }
@@ -2092,7 +2104,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDocsFinishEntity::getTaskDocsId).distinct().collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null) {
+                if (refSku != null ) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());

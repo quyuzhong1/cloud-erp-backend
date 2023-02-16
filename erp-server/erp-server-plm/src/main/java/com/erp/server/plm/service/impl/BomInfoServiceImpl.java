@@ -142,7 +142,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-03 12:13
      */
-    private List<String> getSkuIdList(List<BomSkuDTO> skuList) {
+    @Override
+    public List<String> getSkuIdList(List<BomSkuDTO> skuList) {
 
         List<String> skuIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(skuList)) {
@@ -251,6 +252,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-01 18:20
      */
+    @Override
     public void checkAuditor(List<BomSkuDTO> skuList) {
 
         //skuId
