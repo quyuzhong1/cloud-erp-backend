@@ -270,6 +270,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
         return resultList;
     }
 
+    @Override
     public List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId) {
         List<HistoricTaskInstance> list = historyService // 历史相关Service
                 .createHistoricTaskInstanceQuery() // 创建历史任务实例查询
