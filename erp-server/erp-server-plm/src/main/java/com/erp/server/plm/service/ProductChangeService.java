@@ -7,6 +7,7 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.controller.AuditParamDTO;
 
 import java.util.List;
@@ -59,4 +60,14 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @return
      */
     List<String> getChangeSearchCondition(String searchKeyword);
+
+    List<ApproveNodeRecordVO> auditInfo(String id);
+    /**
+     * @description: 根据变更id查询变更字段
+     * @author Will
+     * @date: 2023/2/14 18:35
+     * @param id
+     * @return List<String>
+     */
+    List<String> listChangeField(String id);
 }

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname WorkflowBusinessProcessServiceImpl
@@ -130,10 +131,8 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
                         .orderByHistoricActivityInstanceStartTime()
                         .asc()
                         .list();
-                HistoricTaskInstance historicTask = historyList.stream().filter(h -> h.getEndTime() == null).findFirst().orElse(null);
-                if (historicTask != null) {
-                    vo.setHandleUserId(historicTask.getAssignee());
-                }
+                List<String> assigneeList = historyList.stream().filter(h -> h.getEndTime() == null).map(HistoricTaskInstance::getAssignee).collect(Collectors.toList());
+                vo.setHandleUserIdList(assigneeList);
                 resultList.add(vo);
             }
 

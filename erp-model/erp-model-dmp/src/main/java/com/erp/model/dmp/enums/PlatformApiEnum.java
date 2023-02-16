@@ -11,7 +11,9 @@ public enum PlatformApiEnum {
     //订单退款列表
     ORDER_GET_REFUND_LIST(3,"order-get-refund-list"),
     //获取订单列表
-    ORDER_GET_ORDER_LIST(4,"order-get-order-list"),
+//    ORDER_GET_ORDER_LIST(4,"order-get-order-list"),
+    ORDER_GET_ORDER_LIST(4,"order-get-order-list-new"),
+
     //获取退货订单数据
     ORDER_GET_RETURN_ORDER_LIST(5,"order-get-return-order-list"),
     //商品出库详情

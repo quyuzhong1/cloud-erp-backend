@@ -38,8 +38,6 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +53,6 @@ import java.util.stream.Collectors;
  * @since 2023-02-03 15:14:29
  */
 @Service
-@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, ProjectPlanEntity> implements ProjectPlanService {
 
     @Resource
@@ -522,10 +519,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
+        Boolean result = this.updateById(plan);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         //表示成功
         if (node != null) {
-            Boolean result = this.updateById(plan);
             if (result) {
                 List<ProjectPlanTaskEntity> taskList = projectPlanTaskService.getByProjectPlanIdList(Arrays.asList(id));
                 List<String> taskIdList = taskList.stream().map(ProjectPlanTaskEntity::getTaskId).collect(Collectors.toList());

@@ -205,4 +205,9 @@ public class TaskPagingShowDTO implements Serializable {
      * 是否是固定任务 1是  0  不是
      */
     private Integer isFixed;
+
+    /**
+     * 关联类型
+     */
+    private String relatedSkuType;
 }

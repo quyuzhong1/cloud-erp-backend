@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.web.service.RedisService;
 import com.erp.common.dto.base.PagingDTO;
@@ -166,6 +167,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectPhaseService projectPhaseService;
 
+    @Autowired
+    private ProjectRoleService projectRoleService;
+
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -285,7 +289,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setSpuNo(spuNo);
         }
         Boolean flag = this.saveOrUpdate(entity);
-
         //表示是新添加的 需要查询是否有系统任务 如果有就要添加对应任务
         if (flag && StringUtils.isBlank(dto.getId())) {
             List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.saveBySys(entity.getId());
@@ -317,6 +320,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //产品信息修改操作日志
             addProductInfoLog(dto, oldEntity, entity.getId(), entity.getId());
         }
+        //新增或修改产品经理角色和对应成员
+        projectMembersService.saveByRoleAndMembers(entity.getId(),null,"产品经理",chargeIds);
         return entity.getId();
     }
 
@@ -762,7 +767,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setUpdateUserName(loginUser.getUserName());
         }
         //自动生成产品编号
-        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+        if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo()) && !MathUtil.ONE.equals(dto.getIsNoSpecAdd())) {
             String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());
             productInfoEntity.setSpuNo(spuNo);
         }

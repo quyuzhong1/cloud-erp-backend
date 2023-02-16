@@ -299,7 +299,6 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
             } else {
                 //表示有处理
                 //表示有活动节点
-
                 ActHistoryActivityEntity entity = historyActivityList.stream().filter(a -> a.getActivityId().
                         equals(item.getTaskDefinitionKey())).findFirst().orElse(null);
                 if (entity != null) {
@@ -311,6 +310,9 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
 
             auditorHandleDTO.setActivityName(item.getName());
             auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));
+            if("待审核".equals(auditorHandleDTO.getHandContent())){
+                auditorHandleDTO.setStartTime("");
+            }
             auditorHandleDTO.setEndTime(DateUtils.format(item.getEndTime(), DateUtils.DATE_FORMAT_19));
             auditorHandleDTO.setHandleUserId(item.getAssignee());
             auditorHandleDTO.setTaskDefinitionKey(item.getTaskDefinitionKey());

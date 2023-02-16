@@ -11,8 +11,10 @@ import com.erp.common.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.service.ProductChangeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +36,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("plm/change")
 @RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
+@Slf4j
 public class ProductChangeController extends BaseController {
 
 
@@ -186,6 +189,29 @@ public class ProductChangeController extends BaseController {
         return success();
     }
 
+    /**
+     * 查询变更字段
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listChangeField")
+    public ApiResult<List<String>> listChangeField(@RequestBody @Validated BaseIdDTO dto) {
+        List<String> list = productChangeService.listChangeField(dto.getId());
+        return success(list);
+    }
+
+
+    /**
+     * bom 审核情况
+     *
+     * @return
+     */
+    @PostMapping("/auditInfo")
+    public ApiResult<List<ApproveNodeRecordVO>> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ApproveNodeRecordVO> list=productChangeService.auditInfo(dto.getId());
+        return success(list);
+    }
 
 }
 

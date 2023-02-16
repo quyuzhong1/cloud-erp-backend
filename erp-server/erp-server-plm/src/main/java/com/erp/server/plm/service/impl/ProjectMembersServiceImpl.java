@@ -154,7 +154,13 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         List<String> userIdList = dto.getUserIdList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         String id = dto.getId();
-        roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(), dto.getProductId());
+        List<String> members = roleRefMemberService.checkRoleMember(dto.getRoleRefMemberId(), dto.getRoleId(), dto.getUserIdList(), dto.getProductId());
+        if (CollectionUtils.isNotEmpty(members)) {
+            userIdList = userIdList.stream().filter(e -> !members.contains(e)).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(userIdList) && MathUtil.ONE.equals(dto.getFlag())) {
+            throw new ServiceException(ApiError.ERROR_95021);
+        }
         List<ProjectMembersEntity> addList = new ArrayList<>(userIdList.size());
         for (String userId : userIdList) {
             ProjectMembersEntity entity = new ProjectMembersEntity();
@@ -589,5 +595,22 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         return this.listByIds(membersIds);
     }
 
-
+    @Override
+    public Boolean saveByRoleAndMembers(String productId,String projectId, String roleName, List<String> memberList) {
+        ProjectRoleEntity found = projectRoleService.getByRoleName(productId, roleName);
+        if (ObjectUtils.isEmpty(found)) {
+            //查询产品经理角色，不存在则新增
+            found = new ProjectRoleEntity();
+            found.setProductId(productId);
+            found.setProjectId(projectId);
+            found.setName(roleName);
+            projectRoleService.save(found);
+        }
+        SaveOrUpdateProjectMemberDTO saveOrUpdateProjectMemberDTO = new SaveOrUpdateProjectMemberDTO();
+        saveOrUpdateProjectMemberDTO.setProductId(productId);
+        saveOrUpdateProjectMemberDTO.setRoleId(found.getId());
+        saveOrUpdateProjectMemberDTO.setUserIdList(memberList);
+        //新增或修改产品经理角色和对应成员
+        return  this.saveOrUpdateMember(saveOrUpdateProjectMemberDTO);
+    }
 }

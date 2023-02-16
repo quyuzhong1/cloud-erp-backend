@@ -3,5 +3,21 @@
 <mapper namespace="com.erp.server.plm.mapper.TaskChargeDistributionMapper">
 
 
+    <select id="listBySourceAndRoleName" resultType="com.erp.model.plm.entity.TaskChargeDistributionEntity">
+        select
+               tcd.distribution_type,
+               tcd.charges,
+               tcd.charge_ids,
+               tcd.source,
+               tcd.seq
+        from task_charge_distribution tcd
+        <where>
+            tcd.source in
+            <foreach collection="source" item="item" open="(" close=")" separator=",">
+                 #{item}
+            </foreach>
+            and (string_to_array(tcd.charges,',') &amp;&amp; string_to_array(#{name},','))
+        </where>
+    </select>
 
 </mapper>

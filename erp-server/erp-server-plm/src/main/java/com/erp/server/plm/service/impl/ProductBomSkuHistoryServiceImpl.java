@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.server.plm.mapper.ProductBomSkuHistoryMapper;
@@ -35,10 +36,21 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
     @Override
     public void saveBomSku(String bomHistoryId, List<BomSkuDTO> bomSkuList) {
         List<ProductBomSkuHistoryEntity> saveBatchList = new LinkedList<>();
-        if (CollectionUtils.isNotEmpty(bomSkuList)) {
-            for (BomSkuDTO item : bomSkuList) {
-                getSaveTree("0", saveBatchList, item, bomHistoryId);
+        for (BomSkuDTO item : bomSkuList) {
+            List<BomChildrenSkuDTO> childrenList = item.getChildren();
+            for (BomChildrenSkuDTO children : childrenList) {
+                ProductBomSkuHistoryEntity entity = new ProductBomSkuHistoryEntity();
+                entity.setParentSkuId(item.getSkuId());
+                entity.setParentSkuNo(item.getSkuNo());
+                entity.setSkuId(children.getSkuId());
+                entity.setSkuNo(children.getSkuNo());
+                entity.setQuantity(children.getQuantity());
+                entity.setBomHistoryId(bomHistoryId);
+                entity.setProductId(children.getProductId());
+                saveBatchList.add(entity);
             }
+        }
+        if (CollectionUtils.isNotEmpty(saveBatchList)) {
             this.saveBatch(saveBatchList);
         }
 
@@ -54,18 +66,5 @@ public class ProductBomSkuHistoryServiceImpl extends ServiceImpl<ProductBomSkuHi
         return new ArrayList<>();
     }
 
-    private void getSaveTree(String parentSkuNo, List<ProductBomSkuHistoryEntity> saveBatchList, BomSkuDTO item, String bomHistoryId) {
-        ProductBomSkuHistoryEntity bomRefSku = new ProductBomSkuHistoryEntity();
-        bomRefSku.setBomHistoryId(bomHistoryId);
-        bomRefSku.setParentSkuNo(parentSkuNo);
-        bomRefSku.setQuantity(item.getQuantity());
-        bomRefSku.setSkuNo(item.getSkuNo());
-        saveBatchList.add(bomRefSku);
-        List<BomSkuDTO> childrenList = item.getChildren();
-        if (CollectionUtils.isNotEmpty(childrenList)) {
-            for (BomSkuDTO childBomSku : childrenList) {
-                this.getSaveTree(item.getSkuNo(), saveBatchList, childBomSku, bomHistoryId);
-            }
-        }
-    }
+
 }

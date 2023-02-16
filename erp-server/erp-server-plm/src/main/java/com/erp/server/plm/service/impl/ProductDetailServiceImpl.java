@@ -12,6 +12,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.AlgorithmUtil;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.dto.base.ApiResult;
@@ -503,6 +504,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
         //1.修改产品表 主表信息
+        productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
@@ -1441,6 +1443,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         Map<String, Object> resultMap = new HashMap<>();
         //sku
+        resultMap.put("id", entity.getId());
+        //sku
         resultMap.put("skuNo", entity.getSkuNo());
         //名称
         resultMap.put("name",entity.getName());
@@ -1910,8 +1914,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     @Override
     public void changeSku(ProductSmallestUnitDTO skuDTO) {
-
-
         String id = skuDTO.getProductManySpecBaseDTO().getId();
         ProductManySpecBaseDTO baseDTO = skuDTO.getProductManySpecBaseDTO();
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
@@ -1919,6 +1921,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(id);
         if (ObjectUtils.isNotEmpty(baseDTO)) {
+            //产品等级
+            if (StringUtils.isNotBlank(productInfoDTO.getGradeId())) {
+                //根据id查询字典表中的产品等级
+                BasicDictEntity basicDict = basicDictService.getById(productInfoDTO.getGradeId());
+                if (ObjectUtils.isNotEmpty(basicDict)) {
+                    productInfoDTO.setGrade(basicDict.getValue());
+                }
+            }
             if (StringUtils.isNotBlank(baseDTO.getId())) {
                 //产品操作日志
                 addProductInfoLog(productInfoDTO, productInfoEntity, baseDTO.getId(), baseDTO.getId());
@@ -1933,7 +1943,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         BeanMapper.copy(detailEntity, detail);
         addProductDetailLog(detail, oldEntity, detail.getId(), detailEntity.getProductId());
         //2.修改/新增 sku信息
-
         if (detailEntity != null) {
             this.updateById(detailEntity);
         }
@@ -1951,8 +1960,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
         if (purchaseShowDTO != null) {
             ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
-            BeanMapper.copy(costShowDTO, productPurchaseDTO);
-
+            BeanMapper.copy(purchaseShowDTO, productPurchaseDTO);
             //SKU操作日志
             addProductPurchaseLog(productPurchaseDTO, id);
             productPurchaseService.saveOrUpdate(productPurchaseDTO);
@@ -1961,6 +1969,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductPurchaseRemarkEntity> remarkEntityList = skuDTO.getRemarkEntityList();
         if (CollectionUtils.isNotEmpty(remarkEntityList)) {
             List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = BeanMapper.copyList(remarkEntityList, ProductPurchaseRemarkDTO.class);
+            productPurchaseRemarkList.forEach(req -> {
+                req.setProductId(id);
+            });
+
             List<SysLogEntity> list = new LinkedList<>();
             remarkEntityList.forEach(req -> {
                 list.add(new SysLogEntity().setContent("更新采购备注信息：" + req.getRemark()).setClassPath(SPUCLASSPATH).setBusinessId(id).setPid(id));
@@ -2035,7 +2047,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     for (String item : chargeIdList) {
                         resultList.add(item);
                     }
-
                 } else {
                     resultList.add(chargeId);
                 }
@@ -2043,7 +2054,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
 
-        return resultList.stream().filter(s -> StringUtils.isNotBlank(s)).collect(Collectors.toList());
+        return resultList.stream().filter(s -> StringUtils.isNotBlank(s)).distinct().collect(Collectors.toList());
     }
 
 

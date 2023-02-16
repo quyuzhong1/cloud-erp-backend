@@ -25,4 +25,5 @@ public interface ProjectRoleService extends IService<ProjectRoleEntity> {
 
     List<ProjectRoleEntity> listRoleByMemberIds(List<String> memberIds);
 
+    ProjectRoleEntity getByRoleName(String productId, String roleName);
 }

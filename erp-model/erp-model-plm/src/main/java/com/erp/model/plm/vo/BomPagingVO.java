@@ -37,6 +37,11 @@ public class BomPagingVO implements Serializable {
      */
     private String skuNo;
 
+
+    private String parentSkuNo;
+
+    private String parentSkuName;
+
     /**
      * sku 名称
      */

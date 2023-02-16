@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.common.business.interceptor.CommonInterceptor;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
@@ -16,21 +17,17 @@ import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateMembersAddOrUpdateDTO;
 import com.erp.model.plm.dto.TemplateMembersDTO;
 import com.erp.model.plm.dto.TemplateRoleMembersDeleteDTO;
-import com.erp.model.plm.entity.ProjectMembersEntity;
-import com.erp.model.plm.entity.TemplateMembersEntity;
-import com.erp.model.plm.entity.TemplateRoleRefMembersEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.TemplateMembersMapper;
-import com.erp.server.plm.service.ProjectMembersService;
-import com.erp.server.plm.service.TemplateMembersService;
-import com.erp.server.plm.service.TemplateRoleRefMembersService;
-import com.erp.server.plm.service.TemplateRoleService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,6 +57,14 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private TemplateTaskService templateTaskService;
+
+    @Autowired
+    private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Autowired
+    private ProjectTaskSysService projectTaskSysService;
 
     /**
      * 保存 模板成员
@@ -255,6 +260,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         if (roleRefMembers == null) {
             throw new ServiceException(ApiError.Default);
         }
+
         //删除成员表信息
         Boolean templateMembersRemove = templateMembersService.removeByIdAndTemplateId(roleRefMembers.getMembersId(), roleRefMembers.getTemplateId());
         if (!templateMembersRemove) {
@@ -268,9 +274,20 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //如果角色表下面没有成员信息则删除角色
         List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
         if (CollectionUtils.isEmpty(list)) {
-            Boolean templateRoleRemove = templateRoleService.removeByIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
-            if (!templateRoleRemove) {
-                throw new ServiceException(ApiError.Default);
+
+            //判断成员是否被引用
+            List<TemplateTaskEntity> templateTaskList = templateTaskService.listByRoleId(roleRefMembers.getRoleId());
+            if (CollectionUtils.isNotEmpty(templateTaskList)) {
+                throw new ServiceException(ApiError.ERROR_95129);
+            }
+            TemplateRoleEntity templateRoleEntity = templateRoleService.getByTemplateIdAndRoleId(roleRefMembers.getTemplateId(), roleRefMembers.getRoleId());
+            if (ObjectUtils.isNotEmpty(templateRoleEntity)) {
+                List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndRoleName(Arrays.asList(MathUtil.ONE,MathUtil.TWO) , templateRoleEntity.getName());
+                if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+                    throw new ServiceException(ApiError.ERROR_95129);
+                }
+                templateRoleService.removeByIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());
+
             }
         }
         return true;

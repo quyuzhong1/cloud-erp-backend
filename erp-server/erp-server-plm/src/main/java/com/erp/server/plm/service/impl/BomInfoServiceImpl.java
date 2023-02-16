@@ -142,7 +142,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-03 12:13
      */
-    private List<String> getSkuIdList(List<BomSkuDTO> skuList) {
+    @Override
+    public List<String> getSkuIdList(List<BomSkuDTO> skuList) {
 
         List<String> skuIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(skuList)) {
@@ -164,11 +165,10 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     private void getSkuIdList(List<String> skuIdList, BomSkuDTO item) {
         skuIdList.add(item.getSkuId());
-        List<BomSkuDTO> childrenList = item.getChildren();
+        List<BomChildrenSkuDTO> childrenList = item.getChildren();
         if (CollectionUtils.isNotEmpty(childrenList)) {
-            for (BomSkuDTO childBomSku : childrenList) {
-                this.getSkuIdList(skuIdList, childBomSku);
-            }
+            List<String> childrenSkuIds = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            skuIdList.addAll(childrenSkuIds);
         }
     }
 
@@ -252,6 +252,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-01 18:20
      */
+    @Override
     public void checkAuditor(List<BomSkuDTO> skuList) {
 
         //skuId
@@ -305,8 +306,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 IPage pageData = new Page();
                 return new PagingVO(pageData);
             }
-            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-            stateList.add(BomStateEnum.AUDIT_ING.getState());
         }
 
         IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
@@ -320,10 +319,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<FindUserDTO> userList = commonService.getAllUser();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
+        List<String> parentSkuList = list.stream().map(BomPagingVO::getParentSkuNo).collect(Collectors.toList());
+        skuNoList.addAll(parentSkuList);
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         for (BomPagingVO item : list) {
             String skuNo = item.getSkuNo();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+            SkuVO parentSkuVO = skuList.stream().filter(s -> s.getSkuNo().equals(item.getParentSkuNo())).findFirst().orElse(null);
+
             FindUserDTO createUser = userList.stream().filter(u -> u.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
             if (createUser != null) {
                 item.setCreateUserName(createUser.getUserName());
@@ -338,6 +341,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 item.setSkuName(skuVO.getSkuName());
                 item.setSpuNo(skuVO.getSpuNo());
                 item.setSpuName(skuVO.getSpuName());
+            }
+            if (parentSkuVO != null) {
+                item.setParentSkuName(parentSkuVO.getSkuName());
             }
         }
         return new PagingVO(pageData);
@@ -386,7 +392,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //添加 bom 与sku 关系
             bomSkuService.updateBomSku(id, bomSkuList);
             String operateContent = getUpdateContent(oldBomList, bomSkuList);
-            bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
+            if (StringUtils.isNotBlank(operateContent)) {
+                bomOperateLogService.saveOperate(id, BomOperationTypeEnum.UPDATE.getType(), operateContent);
+            }
         }
         return result;
     }
@@ -402,26 +410,16 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-02-07 17:07
      */
     private String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList) {
-
-        BomSkuDTO oldParent = oldBomList.stream().
-                filter(b -> b.getParentSkuNo().equals("0")).findFirst().orElse(null);
-        BomSkuDTO newParent = newBomList.stream().
-                filter(n -> n.getParentSkuNo().equals("0")).findFirst().orElse(null);
         List<String> contentList = new ArrayList<>(10);
-        if (oldParent != null && newParent != null) {
+        if (CollectionUtils.isNotEmpty(oldBomList) && CollectionUtils.isNotEmpty(newBomList)) {
+            BomSkuDTO oldParent = oldBomList.get(0);
+            BomSkuDTO newParent = newBomList.get(0);
             if (!oldParent.getSkuNo().equals(newParent.getSkuNo())) {
-                String parentContent = "父物料" + oldParent.getSkuNo() + "变更到" + newParent.getSkuNo();
+                String parentContent = "父物料" + oldParent.getSkuNo() + " 变更到" + newParent.getSkuNo();
                 contentList.add(parentContent);
             }
-            if (!oldParent.getQuantity().equals(newParent.getQuantity())) {
-                String parentQuantityContent = "父物料用量" + oldParent.getQuantity() + "变更到" + newParent.getQuantity();
-                contentList.add(parentQuantityContent);
-
-            }
             if (!oldParent.getChildren().equals(newParent.getChildren())) {
-
                 getChildrenUpdateContent(oldParent.getChildren(), newParent.getChildren(), contentList);
-
             }
         }
 
@@ -437,37 +435,36 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @author yl
      * @date 2023-02-07 17:11
      */
-    private void getChildrenUpdateContent(List<BomSkuDTO> OldChildrenList, List<BomSkuDTO> newChildrenList, List<String> contentList) {
+    private void getChildrenUpdateContent(List<BomChildrenSkuDTO> OldChildrenList, List<BomChildrenSkuDTO> newChildrenList, List<String> contentList) {
         int oldSize = OldChildrenList.size();
         int newSize = newChildrenList.size();
         for (int i = 0; i < newSize; i++) {
-            BomSkuDTO newBom = newChildrenList.get(i);
-            if (oldSize > i) {
-                BomSkuDTO oldBom = OldChildrenList.get(i);
+            BomChildrenSkuDTO newBom = newChildrenList.get(i);
+            BomChildrenSkuDTO oldBom = OldChildrenList.stream().filter(o -> o.getSkuId().equals(newBom.getSkuId())).
+                    findFirst().orElse(null);
+            if (oldBom != null) {
                 if (!oldBom.getSkuNo().equals(newBom.getSkuNo())) {
                     String childrenContent = "子物料" + oldBom.getSkuNo() +
-                            "变更到" + newBom.getSkuNo() + "用量为" + newBom.getQuantity();
+                            "变更到" + newBom.getSkuNo() + " 用量为" + newBom.getQuantity();
                     contentList.add(childrenContent);
                 }
-                if (
-                        oldBom.getSkuNo().equals(newBom.getSkuNo())
-                                && (!oldBom.getQuantity().
-                                equals(newBom.getQuantity()))) {
+                if (oldBom.getSkuNo().equals(newBom.getSkuNo())
+                        && (!oldBom.getQuantity().
+                        equals(newBom.getQuantity()))) {
                     String childrenQuantityContent = "子物料" + oldBom.getSkuNo() + "用量" + oldBom.getQuantity() + "变更到" + newBom.getQuantity();
                     contentList.add(childrenQuantityContent);
                 }
             }
-            if (oldSize < i) {
+            if (oldSize <= i) {
                 String addContent = "子物料添加" + newBom.getSkuNo() + ", 子物料添加用量" + newBom.getQuantity();
                 contentList.add(addContent);
             }
         }
         //删除
         if (oldSize > newSize) {
-            String removeContent = "删除了" + (oldSize-newSize) + "个子物料";
+            String removeContent = "删除了" + (oldSize - newSize) + "个子物料";
             contentList.add(removeContent);
         }
-
 
 
     }
@@ -643,7 +640,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<Integer> stateList = new ArrayList<>(2);
         stateList.add(BomStateEnum.AUDIT_PASS.getState());
         stateList.add(BomStateEnum.FREEZE.getState());
-        if (stateList.contains(state)) {
+        if (!stateList.contains(state)) {
             throw new ServiceException(ApiError.ERROR_95102);
         }
         bom.setState(BomStateEnum.SCRAP.getState());
@@ -670,14 +667,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         Integer state = bom.getState();
-        if (!BomStateEnum.FREEZE.getState().equals(state)) {
+        if (!BomStateEnum.SCRAP.getState().equals(state)) {
             throw new ServiceException(ApiError.ERROR_95103);
         }
         bom.setState(BomStateEnum.AUDIT_PASS.getState());
 
         Boolean result = this.updateById(bom);
         if (result) {
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.FREEZE.getName(), BomStateEnum.AUDIT_PASS.getName());
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.SCRAP.getName(), BomStateEnum.AUDIT_PASS.getName());
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }
         return result;
@@ -974,6 +971,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (Objects.isNull(bom)) {
             throw new ServiceException(ApiError.ERROR_95095);
         }
+
+        //是不是 第一次审核
+        Boolean isFirstAudit = BomStateEnum.WAIT_AUDIT.getState().equals(bom.getState());
+
+
         bom.setState(BomStateEnum.AUDIT_NO_PASS.getState());
         bom.setRemark(dto.getComment());
         String userId = commonService.getUserInfo().getUid();
@@ -1002,7 +1004,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         workflowFeign.taskNoPass(process);
 
         if (result) {
-            String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.AUDIT_ING.getName(), BomStateEnum.AUDIT_NO_PASS.getName());
+            String statusName = BomStateEnum.AUDIT_ING.getName();
+            if (isFirstAudit) {
+                statusName = BomStateEnum.WAIT_AUDIT.getName();
+            }
+            String operateContent = String.format(BomOperateContent.STATE_CHANGE, statusName, BomStateEnum.AUDIT_NO_PASS.getName());
             //操作记录
             bomOperateLogService.saveOperate(bom.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
         }

@@ -288,9 +288,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     taskRefSkuConfigService.autoCreateSkuConfig(noRefSkuConfigTaskIdList, TaskConstant.FILL_PRODUCT_INFO, productId);
                 }
 
-
-
-
                 //这个是交付文档
                 List<CopySourceDTO> deliveryDocsSourceList = templateDeliveryDocsService.copyTemplateDeliveryDocs(flagId, productId, taskSourceList, docsNameSourceList);
                 //这个是文档权限
@@ -299,7 +296,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 projectTaskRefSkuService.saveBatchTaskRefSku(addTaskIdList, productId, skuList);
 
             }
-
+            if (CollectionUtils.isNotEmpty(chargeIdList)) {
+                projectMembersService.saveByRoleAndMembers(productId,project.getId(),"项目经理",chargeIdList);
+            }
 
         }
 
@@ -667,7 +666,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             project.setProjectStatus(ProjectStateEnum.NOT_START.getState());
             this.save(project);
         }
-
 
     }
 

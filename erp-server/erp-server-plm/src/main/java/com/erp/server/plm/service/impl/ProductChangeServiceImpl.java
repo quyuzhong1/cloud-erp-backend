@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.SkuApproveConfigureEnum;
@@ -21,6 +22,7 @@ import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -31,12 +33,11 @@ import com.erp.server.plm.controller.AuditParamDTO;
 import com.erp.server.plm.enums.ProductChangeStateEnum;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
  * @since 2023-01-11 14:05:03
  */
 @Service
-@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
+@Slf4j
 public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, ProductChangeEntity> implements ProductChangeService {
 
 
@@ -78,8 +79,15 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private ProductChangeDetailsService productChangeDetailsService;
+
+    @Autowired
+    private SysLogService sysLogService;
+
+
     //变更财务人员审核
-    @Value("{changeFinancialAudit}")
+    @Value("${changeFinancialAudit}")
     private String financial;
 
     /**
@@ -178,7 +186,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_9031);
         }
         //财务人员检查
-        if(StringUtils.isBlank(financial)){
+        if (StringUtils.isBlank(financial)) {
             throw new ServiceException(ApiError.ERROR_9035);
         }
         //品质部人员审核
@@ -275,10 +283,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             }
             parameterMap.put("qualityPeopleList", qualityPeople);
 
-            if(StringUtils.isBlank(financial)){
+            //财务人员
+            if (StringUtils.isBlank(financial)) {
                 throw new ServiceException(ApiError.ERROR_9035);
             }
-
             parameterMap.put("financial", financial);
 
 
@@ -293,7 +301,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
             //流程id
             String processId = processResult.getProcessId();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(processId)) {
+            if (StringUtils.isNotBlank(processId)) {
                 WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
                 businessProcess.setBusinessId(business.getId());
                 businessProcess.setCreateTime(LocalDateTime.now());
@@ -333,8 +341,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             Map<String, Object> parameterMap = new HashMap<>();
 
             List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
-            //skuId
-            List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
+            List<String> skuIdList=bomInfoService.getSkuIdList(skuList);
+
+
+
+
             //产品经理
             List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
             if (CollectionUtils.isEmpty(productManagerList)) {
@@ -470,12 +481,19 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
             ProcessCurrentAuditorVO currentAuditor = currentAuditorList.stream().filter(c -> c.getBusinessTableId().
                     equals(item.getId())).findFirst().orElse(null);
+            List<String> userNameList = new ArrayList<>(5);
             if (currentAuditor != null) {
-                FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(currentAuditor.getHandleUserId())).
-                        findFirst().orElse(null);
-                if (user != null) {
-                    item.setPersonApproving(user.getUserName());
+                List<String> handleUserIdList = currentAuditor.getHandleUserIdList();
+                for (String  handleUserId:handleUserIdList) {
+                    FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(handleUserId)).
+                            findFirst().orElse(null);
+                    if (user != null) {
+                        userNameList.add(user.getUserName());
+                    }
                 }
+            }
+            if(CollectionUtils.isNotEmpty(userNameList)){
+                item.setPersonApproving(String.join(",",userNameList));
             }
 
         }
@@ -631,10 +649,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Map<String, Object> parameterMap = new HashMap<>();
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
+        this.updateById(changeEntity);
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
-        if (node != null) {
-            this.updateById(changeEntity);
-        }
+
 
     }
 
@@ -656,7 +673,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (Objects.isNull(changeEntity)) {
             throw new ServiceException(ApiError.ERROR_95105);
         }
-        changeEntity.setState(ProductChangeStateEnum.AUDIT_NO_PASS.getState());
         if (StringUtils.isNotBlank(dto.getComment())) {
             changeEntity.setRemark(dto.getComment());
         }
@@ -708,11 +724,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(id)) {
             //获取到变更信息
             ProductChangeEntity change = this.getById(id);
-            String type = change.getType();
-            change.setApprovalFinishTime(new Date());
-            change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
-            this.updateById(change);
             if (change != null) {
+                String type = change.getType();
+                change.setApprovalFinishTime(new Date());
+                change.setState(ProductChangeStateEnum.AUDIT_PASS.getState());
+                this.updateById(change);
                 //获取到对应的 json
                 String detailsJson = changeDetailsService.getDetailsJson(change.getId());
                 if (StringUtils.isNotBlank(detailsJson)) {
@@ -863,5 +879,64 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     public List<String> getChangeSearchCondition(String searchKeyword) {
         return baseMapper.getChangeSearchCondition(searchKeyword);
+    }
+
+    /**
+     * 审核情况
+     *
+     * @param id
+     * @return void
+     * @author yl
+     * @date 2023-02-08 9:00
+     */
+    @Override
+    public List<ApproveNodeRecordVO> auditInfo(String id) {
+        if (StringUtils.isNotBlank(id)) {
+            List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
+            return list;
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<String> listChangeField(String id) {
+        ProductChangeEntity productChangeEntity = this.getById(id);
+        if (ObjectUtils.isEmpty(productChangeEntity)) {
+            throw new ServiceException(ApiError.ERROR_95127);
+        }
+        //查询变更后的json字符串
+        String detailsJson = productChangeDetailsService.getDetailsJson(id);
+        if (StringUtils.isBlank(detailsJson)) {
+            throw new ServiceException(ApiError.ERROR_95128);
+        }
+        //变更后数据
+        ProductSmallestUnitDTO newBom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
+        //变更前数据
+        ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
+        if (ObjectUtils.isEmpty(oldbom)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        List<String> resultList = new ArrayList<>();
+        setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);
+        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(), resultList);
+        setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(), resultList);
+        setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(), resultList);
+        setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(), resultList);
+        setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(), resultList);
+        setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(), resultList);
+        setList(newBom.getProductLogisticsShowDTO(), oldbom.getProductLogisticsShowDTO(), resultList);
+        setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
+        }
+        return resultList;
+    }
+
+
+    private void setList(Object newObj, Object oldObj, List<String> resultList) {
+        List<String> list = sysLogService.listSysLogField(newObj, oldObj);
+        if (CollectionUtils.isNotEmpty(list)) {
+            resultList.addAll(list);
+        }
     }
 }

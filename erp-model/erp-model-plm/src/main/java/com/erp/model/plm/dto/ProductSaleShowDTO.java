@@ -110,7 +110,7 @@ public class ProductSaleShowDTO implements Serializable {
     /**
      * 销售平台(SalesPlatformEnum枚举)
      */
-    private Integer salesPlatform;
+    private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)

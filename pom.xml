@@ -37,6 +37,8 @@
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <mybatis-version>3.4.2</mybatis-version>
         <joda.time.version>2.9.9</joda.time.version>
+        <jasypt.version>3.0.4</jasypt.version>
+        <jsqlparser.version>4.5</jsqlparser.version>
     </properties>
 
     <!--公共依赖组件-->
@@ -108,7 +110,19 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>${mybatis-version}</version>
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <artifactId>jsqlparser</artifactId>-->
+<!--                    <groupId>com.github.jsqlparser</groupId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.github.jsqlparser</groupId>-->
+<!--            <artifactId>jsqlparser</artifactId>-->
+<!--            <version>${jsqlparser.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.alibaba</groupId>

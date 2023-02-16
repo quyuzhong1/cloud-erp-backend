@@ -6,7 +6,9 @@ import com.erp.model.workflow.dto.*;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
+import org.camunda.bpm.engine.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +30,10 @@ public class ReimbursementController extends BaseController {
     @Autowired
     private WorkflowService workflowService;
 
-
+    @Autowired
+    private SpringProcessEngineConfiguration springProcessEngineConfiguration;
+    @Autowired
+    private RepositoryService repositoryService;
     @Autowired
     private ProcessTaskService processTaskService;
 
@@ -36,6 +41,14 @@ public class ReimbursementController extends BaseController {
     @PostMapping("/deploy")
     public ApiResult deploy(@RequestBody @Validated DeployProcessDTO dto) {
         workflowService.deployDefinitionByResource(dto);
+        return success();
+    }
+
+
+    //删除缓存
+    @PostMapping("/removeProcess")
+    public ApiResult removeCache(@RequestParam(value = "deploymentId")  String  deploymentId) {
+        repositoryService.deleteDeployment(deploymentId);
         return success();
     }
 

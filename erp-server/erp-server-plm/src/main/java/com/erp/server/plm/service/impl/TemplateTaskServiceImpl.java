@@ -271,6 +271,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         return resultDTO;
     }
 
+    @Override
+    public List<TemplateTaskEntity> listByRoleId(String roleId) {
+       return this.baseMapper.listByRoleId(roleId);
+    }
+
     /**
      * 复制模板任务
      *
@@ -498,14 +503,25 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (ObjectUtils.isEmpty(loginUser)) {
             throw new ServiceException(ApiError.ERROR_9011);
         }
-        Integer type = dto.getType();
+
         //配置表单属性
         String fieldConfigType = dto.getFieldConfigType();
+        //生成sku
+        String createSku = TaskConstant.CREATE_SKU;
+        //填写sku
+        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
+        //配置表单属性
+        String fieldJson = dto.getFieldJson();
+        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
+        Boolean needCheckFirst =  (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
+
+        //第二种 sku 没有  并且 表单属性不为空 且为生成
+        Boolean needCheckSecond =  (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
+        Integer type = dto.getType();
         Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         //如果配置表单 一般任务 一定要走流程,自定义审核人，存在多级审核及会签，暂时用两层list接收，之后公共审核模块可添加审核人表储存
-        if (StringUtils.isNotBlank(fieldConfigType)) {
-            //如果是一般任务 必须要有审核流程
+        if (needCheckFirst || needCheckSecond) {
             if (generalTask.equals(type)) {
                 if (CollectionUtils.isEmpty(approvalList)) {
                     throw new ServiceException(ApiError.ERROR_95078);
@@ -530,11 +546,15 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             if (CollectionUtils.isNotEmpty(templateRoleList)) {
                 List<String> roleNames = templateRoleList.stream().map(TemplateRoleEntity::getName).collect(Collectors.toList());
                 entity.setRoleName(String.join(",", roleNames));
+                entity.setChargeId("");
+                entity.setChargeName("");
             }
         } else if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(dto.getDistributionType())) {//分配类型为负责人
             String chargeNames = commonService.getNameByIds(chargeIds);
             entity.setChargeId(String.join(",", chargeIds));
             entity.setChargeName(chargeNames);
+            entity.setRoleName("");
+            entity.setRoleId("");
         }
         //阶段名称
         if (StringUtils.isNotBlank(dto.getPhaseId())) {

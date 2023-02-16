@@ -142,7 +142,7 @@ public class ProductSaleEntity implements Serializable {
      * 销售平台(SalesPlatformEnum枚举)
      */
     @TableField(value = "sales_platform")
-    private Integer salesPlatform;
+    private String salesPlatform;
 
     /**
      * 是否可销售(0否，1是)

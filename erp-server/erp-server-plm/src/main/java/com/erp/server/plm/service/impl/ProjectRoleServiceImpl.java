@@ -129,6 +129,15 @@ public class ProjectRoleServiceImpl extends ServiceImpl<ProjectRoleMapper, Proje
         return this.listByIds(roleIds);
     }
 
+    @Override
+    public ProjectRoleEntity getByRoleName(String productId, String roleName) {
+        LambdaQueryWrapper<ProjectRoleEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectRoleEntity::getName,roleName);
+        queryWrapper.eq(ProjectRoleEntity::getProductId, productId);
+        queryWrapper.last("limit 1");
+        return this.getOne(queryWrapper);
+    }
+
 
     /**
      * 检查角色名是否重复

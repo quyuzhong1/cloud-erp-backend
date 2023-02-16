@@ -19,7 +19,8 @@
                b.create_user_id,
                b.update_time,
                bs.sku_no,
-               bs.quantity
+               bs.quantity,
+               bs.parent_sku_no
             FROM product_bom_sku bs LEFT JOIN product_bom_info b
             ON bs.bom_id = b.id
             <where>

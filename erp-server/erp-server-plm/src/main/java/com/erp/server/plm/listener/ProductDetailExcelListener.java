@@ -5,8 +5,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
-import com.erp.common.dto.base.ApiResult;
-import com.erp.common.dto.base.BaseSearchDTO;
 import com.erp.common.enums.ApiError;
 import com.erp.common.modules.sys.dto.FindUserDTO;
 import com.erp.model.plm.dto.*;
@@ -26,6 +24,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductDetailExcelListener extends AnalysisEventListener<ProductDetailExcelDTO> {
     private Integer importType;
@@ -157,12 +156,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 productInfoDTO.setPirateRisk(2);
             }
         }
+        List<FindUserDTO> resultList = sysUserFeign.getUserList();
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
-            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-            baseSearchDTO.setSearchKeyword(dto.getChargeName());
-            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-            chargeNameList = listApiResult.getData();
+            chargeNameList = resultList.stream().filter(e -> e.getUserName().equals(dto.getChargeName())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(chargeNameList)) {
                 errorMsgList.add("产品经理在系统中未找到");
             }
@@ -170,10 +167,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         List<FindUserDTO> purchaseUserList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getPurchaseUser())) {
-            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-            baseSearchDTO.setSearchKeyword(dto.getPurchaseUser());
-            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-            purchaseUserList =  listApiResult.getData();
+            purchaseUserList = resultList.stream().filter(e -> e.getUserName().equals(dto.getPurchaseUser())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(purchaseUserList)) {
                 errorMsgList.add("采购员在系统中未找到");
             }

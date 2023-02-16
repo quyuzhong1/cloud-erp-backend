@@ -6,14 +6,12 @@ import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.common.dto.base.PagingDTO;
 import com.erp.common.modules.workflow.dto.ProcessPassDTO;
 import com.erp.common.vo.PagingVO;
-import com.erp.model.plm.dto.AddBomDTO;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
-import com.erp.model.plm.dto.UpdateBomDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.service.BomInfoService;
+import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +41,10 @@ public class BomInfoController extends BaseController {
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+
+
+    @Resource
+    private BomSkuService bomSkuService;
 
     /**
      * 分页查询
@@ -119,6 +121,21 @@ public class BomInfoController extends BaseController {
         return result == true ? success() : failure();
     }
 
+
+    /**
+     * 提交审核
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/test")
+    public ApiResult test(@RequestBody @Validated BaseIdDTO dto) {
+
+        List<BomSkuDTO> skuList = bomSkuService.getByBomId(dto.getId());
+        bomInfoService.checkAuditor(skuList);
+
+        return success();
+    }
 
     /**
      * 重启流程
