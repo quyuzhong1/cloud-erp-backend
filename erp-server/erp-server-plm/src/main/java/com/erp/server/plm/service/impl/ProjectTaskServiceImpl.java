@@ -270,7 +270,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     //发布任务通知
                     List<ProjectTaskEntity> taskList = new ArrayList<>(1);
                     taskList.add(entity);
-                    noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+                    if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+                        noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, productId);
+                    } else {
+                        noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, productId);
+                    }
                 }
                 sysLogService.addSysLogBySave("新增了一个：[" + entity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), entity.getId(), null);
 
@@ -913,8 +917,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 //保存任务记录
                 taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
-                //发布任务通知
-                noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(afterState)) {
+                   //发布任务通知
+                   noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               } else {
+                   //发布任务通知
+                   noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+               }
+
             }
 
         }
