@@ -770,7 +770,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void exportExcel(SearchPagingDTO dto, HttpServletResponse response) {
-
         String fileName = "BOM数据";
         String searchType = dto.getSearchType();
         String searchKeyword = dto.getSearchKeyword();
@@ -797,14 +796,19 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
         List<FindUserDTO> userList = commonService.getAllUser();
 
-
         List<BomPagingVO> list = baseMapper.getAllBom(dto, bomIdList, skuIdList, stateList);
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
+        List<String> parentSkuNoList = list.stream().map(BomPagingVO::getParentSkuNo).collect(Collectors.toList());
+        skuNoList.addAll(parentSkuNoList);
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         for (BomPagingVO item : list) {
             String skuNo = item.getSkuNo();
+            String parentSkuNo = item.getParentSkuNo();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+
+            SkuVO parentSkuVO = skuList.stream().filter(s -> s.getSkuNo().equals(parentSkuNo)).findFirst().orElse(null);
+
             FindUserDTO createUser = userList.stream().filter(u -> u.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
             if (createUser != null) {
                 item.setCreateUserName(createUser.getUserName());
@@ -817,6 +821,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 item.setSkuName(skuVO.getSkuName());
                 item.setSpuNo(skuVO.getSpuNo());
                 item.setSpuName(skuVO.getSpuName());
+            }
+            if (parentSkuVO != null) {
+                item.setParentSkuName(parentSkuVO.getSkuName());
             }
         }
         List<BomExportExcelVO> excelList = BeanMapperUtils.copyList(BomExportExcelVO.class, list);
