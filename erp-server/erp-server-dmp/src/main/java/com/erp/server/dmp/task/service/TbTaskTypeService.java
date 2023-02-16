@@ -72,11 +72,11 @@ public class TbTaskTypeService {
                 LocalDateTime nextTime = jobTaskDTO.getNextTime();
                 LocalDateTime updateTime = jobTaskDTO.getUpdateTime();
                 if (TaskConstant.MABANG_PULL_DATA_TASK.equals(jobTaskDTO.getTaskName())) {
-                    if (localTime.isBefore(nextTime.plusHours(timeoutMabangHours)) && localTime.isBefore(updateTime.plusHours(timeoutMabangHours))) {
+                    if (localTime.isAfter(nextTime.plusHours(timeoutMabangHours)) && localTime.isAfter(updateTime.plusHours(timeoutMabangHours))) {
                         timeoutList.add(jobTaskDTO);
                     }
                 }else {
-                    if (localTime.isBefore(nextTime.plusSeconds(timeoutSeconds)) && localTime.isBefore(updateTime.plusSeconds(timeoutSeconds))) {
+                    if (localTime.isAfter(nextTime.plusSeconds(timeoutSeconds)) && localTime.isAfter(updateTime.plusSeconds(timeoutSeconds))) {
                         timeoutList.add(jobTaskDTO);
                     }
                 }
