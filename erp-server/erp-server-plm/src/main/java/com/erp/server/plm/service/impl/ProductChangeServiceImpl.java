@@ -918,16 +918,16 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         List<String> resultList = new ArrayList<>();
         setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);
-        setList(newBom.getProductCertificateShowDTOList(), oldbom.getProductCertificateShowDTOList(), resultList);
+        setList(CollectionUtils.isNotEmpty(newBom.getProductCertificateShowDTOList()) ? newBom.getProductCertificateShowDTOList().get(0) : null, CollectionUtils.isNotEmpty(oldbom.getProductCertificateShowDTOList()) ? oldbom.getProductCertificateShowDTOList().get(0) : null, resultList);
         setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(), resultList);
         setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(), resultList);
         setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(), resultList);
         setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(), resultList);
-        setList(newBom.getRemarkEntityList(), oldbom.getRemarkEntityList(), resultList);
+        setList(CollectionUtils.isNotEmpty(newBom.getRemarkEntityList()) ? newBom.getRemarkEntityList().get(0) : null, CollectionUtils.isNotEmpty(oldbom.getRemarkEntityList()) ? oldbom.getRemarkEntityList().get(0) : null, resultList);
         setList(newBom.getProductLogisticsShowDTO(), oldbom.getProductLogisticsShowDTO(), resultList);
         setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
         if (CollectionUtils.isNotEmpty(resultList)) {
-            resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e)).distinct().collect(Collectors.toList());
+            resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e) && !"updateUserName".equals(e) && !"createUserName".equals(e)).distinct().collect(Collectors.toList());
         }
         return resultList;
     }
