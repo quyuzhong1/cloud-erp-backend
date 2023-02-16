@@ -40,6 +40,7 @@ import com.erp.server.plm.enums.*;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -51,7 +52,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
  * @Author: Luo_WG
  * @Date: 2022/9/21 16:25
  **/
+@Slf4j
 @Service
 public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, ProductDetailEntity> implements ProductDetailService {
 
@@ -1305,10 +1306,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveProcess.setProcessInstanceId(entity.getProcessId());
         approveProcess.setUserId(userId);
         approveProcess.setComment(dto.getComment());
-        CompletableFuture completableFuture = CompletableFuture.supplyAsync(() -> {
-            return workflowFeign.taskPass(approveProcess);
-        });
-
         //查询审核任务下所有待办
         Integer code = ProductDetailStatusEnum.APPROVAL_ING.getCode();
         //更新产品信息状态
@@ -1318,6 +1315,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                     .setBusinessId(dto.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         }
+        workflowFeign.taskPass(approveProcess);
         return true;
     }
 
@@ -1417,7 +1415,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
         //审核通过后发送到金蝶系统
-        sendDataToKingdee(entity);
+        try {
+            sendDataToKingdee(entity);
+        } catch (Exception e) {
+            log.error("同步产品信息至金蝶失败！",e);
+        }
         return this.updateById(entity);
     }
 
