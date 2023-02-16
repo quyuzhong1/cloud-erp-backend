@@ -101,6 +101,10 @@ public class ProductDetailShowDTO implements Serializable {
      */
     private Integer isMarketable;
 
+    /**
+     * 流程id
+     */
+    private String processId;
 
     private Boolean isChangeIng;
 }

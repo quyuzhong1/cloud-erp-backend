@@ -37,18 +37,25 @@ public class FieldValidFilter {
     }
 
     private static String dataScopeFilter(FieldValid annotation, String fieldValue) {
+        //字段名称
+        String fieldName = annotation.fieldName();
         //是否必填
         boolean notNull = annotation.isNotNull();
         //长度
         int length = annotation.maxLength();
         //类型/正则
         String formatPattern = annotation.formatPattern();
-        String msg = "";
+        StringBuilder msg = new StringBuilder();
 
+        //必填校验
         if (notNull) {
             if (StringUtils.isBlank(fieldValue)) {
-                msg = "";
+                msg.append(fieldName.concat("不能为空"));
             }
+        }
+        //长度校验
+        if (length > 0) {
+
         }
         return msg.toString();
     }

@@ -50,7 +50,8 @@
         pd.create_user_id,
         pd.create_time,
         pi.spec_type,
-        ps.is_marketable
+        ps.is_marketable,
+        pd.process_id
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id"

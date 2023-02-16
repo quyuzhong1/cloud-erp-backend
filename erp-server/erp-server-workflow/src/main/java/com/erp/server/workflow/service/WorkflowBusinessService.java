@@ -5,6 +5,7 @@ import com.erp.model.workflow.dto.BusinessInfoDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessDTO;
 import com.erp.model.workflow.entity.WorkflowBusinessEntity;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.WorkflowBusinessVO;
 
 import java.util.List;
@@ -24,4 +25,12 @@ public interface WorkflowBusinessService  extends IService<WorkflowBusinessEntit
 
 
     BusinessInfoDTO getBusiness(FindProcessDTO  dto);
+    /**
+     * @description: 
+     * @author Will
+     * @date: 2023/2/16 19:29
+     * @param processId
+     * @return List<ApproveNodeRecordVO> 
+     */
+    List<ApproveNodeRecordVO> auditInfo(String processId);
 }

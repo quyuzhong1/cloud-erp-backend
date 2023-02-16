@@ -2,8 +2,10 @@ package com.erp.server.workflow.controller.api;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.WorkflowProcessIdDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessDTO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.WorkflowBusinessVO;
 import com.erp.server.workflow.service.WorkflowBusinessService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,5 +54,16 @@ public class WorkflowBusinessController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * bom 审核情况
+     *
+     * @return
+     */
+    @PostMapping("/auditInfo")
+    public ApiResult<List<ApproveNodeRecordVO>> auditInfo(@RequestBody @Validated WorkflowProcessIdDTO dto) {
+        List<ApproveNodeRecordVO> list=workflowBusinessService.auditInfo(dto.getProcessId());
+        return success(list);
+    }
 
 }
