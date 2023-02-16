@@ -3043,12 +3043,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskName = "审核任务";
             taskFlag = "approvalTask";
             taskShow = true;
-            //添加取消发布
-            Map<String, Object> cancelReleasedMap = new HashMap<>();
-            cancelReleasedMap.put("name", "取消发布");
-            cancelReleasedMap.put("flag", "cancelPublishTask");
-            cancelReleasedMap.put("isShow", true);
-            operateList.add(cancelReleasedMap);
         }
         if (TaskStateEnum.ING.getCode().equals(state)) {
             taskName = "完成任务";
