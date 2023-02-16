@@ -33,10 +33,18 @@
 
                 <if test="skuIdList !=null and skuIdList.size>0">
                     AND
-                    bs.sku_id IN
-                    <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-                        #{skuId}
-                    </foreach>
+                    (
+                        bs.sku_id IN
+                        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                            #{skuId}
+                        </foreach>
+
+                        OR
+                        bs.parent_sku_id IN
+                        <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                            #{skuId}
+                        </foreach>
+                    )
                 </if>
                 <if test="stateList !=null and stateList.size>0">
                     AND
@@ -83,6 +91,7 @@
         b.create_user_id,
         b.update_time,
         bs.sku_no,
+        bs.parent_sku_no,
         bs.quantity
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id
@@ -95,10 +104,17 @@
             </if>
             <if test="skuIdList !=null and skuIdList.size>0">
                 AND
-                bs.sku_id IN
-                <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
-                    #{skuId}
-                </foreach>
+                (
+                    bs.sku_id IN
+                    <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                        #{skuId}
+                    </foreach>
+                    OR
+                    bs.parent_sku_id IN
+                    <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                        #{skuId}
+                    </foreach>
+                )
             </if>
             <if test="stateList !=null and stateList.size>0">
                 AND

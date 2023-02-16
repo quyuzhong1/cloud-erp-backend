@@ -11,6 +11,7 @@ import com.erp.server.plm.mapper.ProductBomHistoryMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -80,16 +81,31 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
         List<BomVersionVO> list = baseMapper.getVersionList(bomId);
         List<FindUserDTO> userList = commonService.getAllUser();
         List<String> bomHistoryIds = list.stream().map(BomVersionVO::getBomHistoryId).collect(Collectors.toList());
-        List<ProductBomSkuHistoryEntity> refSkuList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIds);
+        List<ProductBomSkuHistoryEntity> skuList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIds);
         for (BomVersionVO item : list) {
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(item.getCreateUserId())).findFirst().orElse(null);
             if (findUserDTO != null) {
                 item.setCreateUserName(findUserDTO.getUserName());
             }
             String bomHistoryId = item.getBomHistoryId();
-            List<String> refSkuNoList = refSkuList.stream().filter(h->bomHistoryId.equals(h.getBomHistoryId()))
-                    .map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
-            item.setRefSku(String.join(";",refSkuNoList));
+            List<ProductBomSkuHistoryEntity> refSkuList = skuList.stream().filter(h -> bomHistoryId.equals(h.getBomHistoryId())).collect(Collectors.toList());
+            StringBuilder sb=new StringBuilder();
+            if (CollectionUtils.isNotEmpty(refSkuList)) {
+                List<String> childrenSkuList=refSkuList.stream().map(ProductBomSkuHistoryEntity::getSkuNo).collect(Collectors.toList());
+                //父sku
+                String parentSkuNo = refSkuList.get(0).getParentSkuNo();
+                sb.append("父物料:").append(parentSkuNo).append(";");
+                boolean addFlag=false;
+                for(String childrenSku:childrenSkuList){
+                    if(addFlag){
+                        sb.append(",");
+                    }
+                    sb.append("子物料:");
+                    sb.append(childrenSku);
+                    addFlag=true;
+                }
+            }
+            item.setRefSku(sb.toString());
         }
         return list;
     }

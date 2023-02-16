@@ -182,7 +182,7 @@ public class ProjectTaskRefSkuServiceImpl extends ServiceImpl<ProjectTaskRefSkuM
             if (ObjectUtils.isEmpty(entity)) {
                 ProjectTaskRefSkuEntity addEntity = new ProjectTaskRefSkuEntity();
                 addEntity.setTaskId(taskId);
-                addEntity.setSkuId(taskId);
+                addEntity.setSkuId(skuId);
                 addEntity.setProductId(projectTaskEntity.getProductId());
                 addEntity.setIsFinishTask(IsConstant.NO);
                 addList.add(addEntity);
