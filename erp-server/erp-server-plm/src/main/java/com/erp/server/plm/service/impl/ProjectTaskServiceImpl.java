@@ -3045,9 +3045,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             taskShow = true;
             //添加取消发布
             Map<String, Object> cancelReleasedMap = new HashMap<>();
-            taskMap.put("name", "取消发布");
-            taskMap.put("flag", "cancelPublishTask");
-            taskMap.put("isShow", true);
+            cancelReleasedMap.put("name", "取消发布");
+            cancelReleasedMap.put("flag", "cancelPublishTask");
+            cancelReleasedMap.put("isShow", true);
             operateList.add(cancelReleasedMap);
         }
         if (TaskStateEnum.ING.getCode().equals(state)) {
