@@ -1493,12 +1493,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //报关申报价
             resultMap.put("declarePrice", productLogisticsEntity.getDeclarePrice());
             //产品属性
-            BasicDictEntity declareProperty = basicDictService.getById( productLogisticsEntity.getProductPropertyId());
-            if (ObjectUtils.isNotEmpty(declareProperty)) {
-                //产品属性（是否带电）
-                resultMap.put("productProperty_electric","内电".equals(declareProperty.getValue()) ? true : false);
-                //产品属性（是否带磁）
-                resultMap.put("productProperty_magnetism", "带磁".equals(declareProperty.getValue()) ? true : false);
+            if (StringUtils.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
+                List<String> list = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
+                for (String id:list) {
+                    BasicDictEntity declareProperty = basicDictService.getById(id);
+                    if (ObjectUtils.isNotEmpty(declareProperty)) {
+                        String value = declareProperty.getValue();
+                        //产品属性（是否带电）
+                        if ("内电".equals(value) || "可拆卸电池".equals(value) || "纯电池".equals(value) ) {
+                            resultMap.put("productProperty_electric",true);
+                        }
+                        //产品属性（是否带磁）
+                        if ("带磁".equals(value)) {
+                            resultMap.put("productProperty_magnetism", true);
+                        }
+                    }
+                }
             }
             //海关编码
             resultMap.put("customsCode", productLogisticsEntity.getCustomsCode());
@@ -1538,7 +1548,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             resultMap.put("boxWeight", productPackEntity.getBoxWeight());
             //单箱尺寸
             String boxSize = productPackEntity.getBoxSize();
-            if (StringUtils.isBlank(boxSize)) {
+            if (StringUtils.isNotBlank(boxSize)) {
                 List<String> boxSizeList = Arrays.stream(productSize.split("X")).collect(Collectors.toList());
                 if (boxSizeList.size() == 1) {
                     //产品尺寸-长(cm)
@@ -1569,6 +1579,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productPurchaseEntity)) {
             //MOQ(最小起订量)
             resultMap.put("moq", productPurchaseEntity.getMoq());
+            //EAN码
+            resultMap.put("ean",productPurchaseEntity.getEan());
             if (StringUtils.isNotBlank(productPurchaseEntity.getPurchaseUserId())) {
                 FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(productPurchaseEntity.getPurchaseUserId());
                 if (ObjectUtils.isNotEmpty(findUserDTO)) {

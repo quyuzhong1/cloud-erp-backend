@@ -60,12 +60,12 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(PlatformApiEnum.BD_MATERIAL.getTaskName());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "SKU1"));
+        queryFilters.add(String.format("FNumber = '%s'", "testtes"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FUseOrgId,FUseOrgId.FNumber,FUseOrgId.FName,FNumber,FName,FSubHeadEntity_FEntryId," +
                 "SubHeadEntity_FEntryId,SubHeadEntity1_FEntryId,SubHeadEntity2_FEntryId,SubHeadEntity3_FEntryId,SubHeadEntity4_FEntryId,SubHeadEntity5_FEntryId," +
                 "SubHeadEntity6_FEntryId,SubHeadEntity7_FEntryId,FBarCodeEntity_CMK_FEntryId,FSpecialAttributeEntity_FEntryId,FCategoryID,FNETWEIGHT,FLENGTH," +
-                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId";
+                "FWIDTH,F_ulz_Qty1,F_PRVD_Assistant1.FNumber,F_PRVD_Assistant1.FDataValue,F_PRVD_Assistant1.FId,F_PRVD_Assistant.FId,SubHeadEntity_FErpClsID_FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
     }
@@ -145,7 +145,10 @@ public class KingdeeProductDetailServiceImpl implements KingdeeProductDetailServ
             ArrayList<String> needUpDateFields = new ArrayList<>();
             String secondLevelCategory = mapList.stream().filter(obj -> "secondLevelCategory".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
             String secondLevelCategoryCode = mapList.stream().filter(obj -> "secondLevelCategoryCode".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
-            ArrayList<String> fields =(ArrayList<String>) Arrays.stream(secondLevelCategory.split("\\.")).collect(Collectors.toList());
+            String grossWeight = mapList.stream().filter(obj -> "grossWeight".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
+            String mainSupplier = mapList.stream().filter(obj -> "mainSupplier".equals(obj.getSelfField())).map(CfgApiFieldMapDTO::getApiField).findFirst().orElse("");
+            needUpDateFields.addAll(Arrays.stream(grossWeight.split("\\.")).collect(Collectors.toList()));
+            needUpDateFields.addAll(Arrays.stream(mainSupplier.split("\\.")).collect(Collectors.toList()));            ArrayList<String> fields =(ArrayList<String>) Arrays.stream(secondLevelCategory.split("\\.")).collect(Collectors.toList());
             needUpDateFields.addAll(fields);
             ArrayList<String> codeFields =(ArrayList<String>) Arrays.stream(secondLevelCategoryCode.split("\\.")).collect(Collectors.toList());
             needUpDateFields.addAll(codeFields);
