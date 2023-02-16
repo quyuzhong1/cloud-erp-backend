@@ -766,11 +766,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
-        FindUserDTO userDTO = new FindUserDTO();
-        userDTO.setUserId(entity.getUid());
-        userDTO.setUserName(entity.getUserName());
-        userDTO.setIsMyState(0);
-        return userDTO;
+        if(!Objects.isNull(entity)){
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(entity.getUid());
+            userDTO.setUserName(entity.getUserName());
+            userDTO.setIsMyState(0);
+            return userDTO;
+        }
+        return new FindUserDTO();
+
+
     }
 
 
