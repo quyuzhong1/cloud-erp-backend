@@ -2033,6 +2033,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCertificateService.saveOrUpdateBatch(productCertificateList);
         }
 
+        //编辑通过后发送金蝶
+        this.sendKingDeeData(detailEntity.getId());
+
     }
 
 
