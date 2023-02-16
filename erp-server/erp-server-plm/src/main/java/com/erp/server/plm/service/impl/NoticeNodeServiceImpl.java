@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.NoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeNodeEntity;
-import com.erp.server.plm.constant.IsConstant;
 import com.erp.server.plm.mapper.NoticeNodeMapper;
 import com.erp.server.plm.service.NoticeNodeService;
 import org.springframework.stereotype.Service;
@@ -48,7 +47,7 @@ public class NoticeNodeServiceImpl extends ServiceImpl<NoticeNodeMapper, NoticeN
     public List<Map<String, Object>> getList() {
         LambdaQueryWrapper<NoticeNodeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(NoticeNodeEntity::getId, NoticeNodeEntity::getNodeName);
-        queryWrapper.notInSql(NoticeNodeEntity::getId,"select node_id from node_message");
+        queryWrapper.notInSql(NoticeNodeEntity::getId,"select node_id from notice_message");
 //        queryWrapper.eq(NoticeNodeEntity::getExistAdd, IsConstant.NO);
         return this.listMaps(queryWrapper);
     }
