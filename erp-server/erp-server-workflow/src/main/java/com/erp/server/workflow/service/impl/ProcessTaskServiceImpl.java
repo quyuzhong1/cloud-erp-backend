@@ -22,6 +22,7 @@ import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,6 +86,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
+    @Transactional
     public ProcessNodeDTO taskPass(ApproveProcessDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         Map<String, Object> map = dto.getParameterMap();
@@ -122,6 +124,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
      * @date 2022-08-10 16:57
      */
     @Override
+    @Transactional
     public ProcessNodeDTO taskNoPass(ApproveProcessDTO dto) {
         String processInstanceId = dto.getProcessInstanceId();
         String taskId = dto.getTaskId();
