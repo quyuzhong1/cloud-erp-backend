@@ -182,7 +182,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
+               // entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
 
                 //一般任务
                 Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
