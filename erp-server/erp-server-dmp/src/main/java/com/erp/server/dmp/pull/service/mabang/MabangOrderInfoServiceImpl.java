@@ -154,10 +154,10 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         BeanUtil.copyProperties(orderEntity, dmpOrderInfoEntity);
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         Integer orderStatus = orderEntity.getOrderStatus();
-        if (1 == orderEntity.getIsReturned()) {
+        if (null !=  orderEntity.getIsReturned() && 1 == orderEntity.getIsReturned()) {
             orderStatus = 6;
         }
-        if (1 == orderEntity.getIsRefund()) {
+        if (null !=  orderEntity.getIsRefund() && 1 == orderEntity.getIsRefund()) {
             orderStatus = 7;
         }
         dmpOrderInfoEntity.setOrderStatus(orderStatus);
@@ -179,7 +179,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         dmpOrderInfoEntity.setCurrencyCode(orderEntity.getCurrencyId());
         //汇率
         dmpOrderInfoEntity.setCurrencyRate(BigDecimal.ONE);
-        if (orderEntity.getCurrencyRate() != null
+        if (null != orderEntity.getCurrencyRate()
                 && BigDecimal.ZERO.compareTo(orderEntity.getCurrencyRate()) < 0) {
             dmpOrderInfoEntity.setCurrencyRate(orderEntity.getCurrencyRate());
         }

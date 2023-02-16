@@ -254,7 +254,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(itemEntity.getItemUnitName());
             //是否是赠品 1. 是 2. 否
-            dmpReturnOrderItemEntity.setIsGift(itemEntity.getIsGift() == 0 ? 1 : 2);
+            dmpReturnOrderItemEntity.setIsGift((null != itemEntity.getIsGift() && itemEntity.getIsGift() == 0) ? 1 : 2);
             //属性
             dmpReturnOrderItemEntity.setSpecifics(itemEntity.getPlatformSkuName());
             //订单商品备注

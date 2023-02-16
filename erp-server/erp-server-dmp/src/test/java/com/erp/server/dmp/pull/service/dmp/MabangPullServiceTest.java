@@ -38,17 +38,17 @@ public class MabangPullServiceTest {
     public void pullDeliveryTest(){
         MabangOrderInfoServiceImpl orderService = new MabangOrderInfoServiceImpl();
         JobTaskDTO jobTaskDTO = new JobTaskDTO();
-        jobTaskDTO.setApiCode("order-get-order-list-new");
+        jobTaskDTO.setApiCode("get-history-order-list");
         jobTaskDTO.setApiId(5);
         jobTaskDTO.setApiName("获取订单列表");
         jobTaskDTO.setId(30L);
         jobTaskDTO.setIntervalTime(1800);
-        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-02-10 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-02-11 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2022-02-10 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2022-02-11 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         jobTaskDTO.setPlatformId(1);
         jobTaskDTO.setState(1);
         RequestDTO requestDTO = new RequestDTO();
-        requestDTO.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
+        requestDTO.setPlatformApiEnum(PlatformApiEnum.GET_HISTORY_ORDER_LIST);
         requestDTO.setJobTaskDTO(jobTaskDTO);
         try {
             orderService.pullDataSave(requestDTO);

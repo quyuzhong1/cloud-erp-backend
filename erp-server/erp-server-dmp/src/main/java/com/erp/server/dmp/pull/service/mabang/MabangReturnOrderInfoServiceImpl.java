@@ -163,7 +163,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         dmpReturnOrderInfoEntity.setShopNo(returnOrderEntity.getShopId());
         //平台标识
         dmpReturnOrderInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
-        dmpReturnOrderInfoEntity.setIsDeleted(5 == returnOrderEntity.getStatus());
+        dmpReturnOrderInfoEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
         dmpReturnOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpReturnOrderInfoEntity.setItemList(initOrderItem(returnOrderEntity));
         return dmpReturnOrderInfoEntity;
@@ -194,7 +194,7 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
             dmpReturnOrderItemEntity.setSpecifics(orderItemBean.getSpecifics());
             //状态 1待处理 2验货入库 3自然耗损
             dmpReturnOrderItemEntity.setStatus(orderItemBean.getStatus());
-            dmpReturnOrderItemEntity.setIsDeleted(5 == returnOrderEntity.getStatus());
+            dmpReturnOrderItemEntity.setIsDeleted(null != returnOrderEntity.getStatus() && 5 == returnOrderEntity.getStatus());
             //erp平台商品id
             String erpOrderItemId = returnOrderEntity.getPlatformOrderId() + "_" + returnOrderEntity.getSalesRecordNumber() + "_" + skuNo;
             erpOrderItemId = MapCountUtils.getErpOrderItemId(skuCountMap, skuNo, erpOrderItemId);
