@@ -182,7 +182,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-                entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
+               // entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
 
                 //一般任务
                 Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
@@ -847,12 +847,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         /**
          *  如果是立项阶段
+         *  去掉  在排期审核通过后 在弄
          *  自动完成一步
          */
         Boolean isProjectApprovalPhase = false;
         if (TaskConstant.APPROVAL_TASK_NAME.equals(phaseName)) {
             isProjectApprovalPhase = true;
-            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
+//            taskEntity = automationTask(taskEntity, dto.getType(), chargeId, loginUser.getUid());
         }
 
         //是否是一般任务 true 是
@@ -3376,6 +3377,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByTaskIds(taskIds);
         //检查任务状态
         checkTaskState(list);
+
+        //如果  排期任务状态 要通过才能发布任务
+        //审核通过
+        String auditPassStatus= BaseStatusEnum.AUDIT_PASS.getStatus();
+        List<String> scheduleStatusList=list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+        //当不包含就要去除
+        if(!scheduleStatusList.contains(auditPassStatus)){
+            throw new ServiceException(ApiError.ERROR_95130);
+        }
+
         //统计项目状态为  不是待发布的任务
         long releasedCount = list.stream().filter(t -> !releasedCode.equals(t.getStatus())).count();
         if (releasedCount > 0) {
