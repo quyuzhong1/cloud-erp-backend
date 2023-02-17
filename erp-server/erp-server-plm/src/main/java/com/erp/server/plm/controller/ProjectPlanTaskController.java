@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -59,8 +60,17 @@ public class ProjectPlanTaskController extends BaseController {
      * 导出数据
      */
     @PostMapping("/exportExcel")
-    public ApiResult export(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
+    public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
         projectPlanTaskService.exportExcel(dto, response);
+        return success();
+    }
+
+    /**
+     * 导出模板
+     */
+    @PostMapping("/exportTemplate")
+    public ApiResult exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
+        projectPlanTaskService.exportScheduleTemplate(request, response);
         return success();
     }
 
@@ -96,8 +106,8 @@ public class ProjectPlanTaskController extends BaseController {
      * 导入数据
      */
     @PostMapping("/import")
-    public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = projectPlanTaskService.importTaskSchedule(excelFile, response);
+    public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
+        Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,productId, response);
         return result == true ? success() : failure();
     }
 
@@ -166,8 +176,8 @@ public class ProjectPlanTaskController extends BaseController {
      * 导入变更排期数据
      */
     @PostMapping("/importChangeSchedule")
-    public ApiResult<ChangeScheduleExportResultVO> importChangeSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        ChangeScheduleExportResultVO vo=  projectPlanTaskService.importChangeSchedule(excelFile, response);
+    public ApiResult<ChangeScheduleExportResultVO> importChangeSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
+        ChangeScheduleExportResultVO vo=  projectPlanTaskService.importChangeSchedule(excelFile, response,productId);
         return success(vo);
     }
 

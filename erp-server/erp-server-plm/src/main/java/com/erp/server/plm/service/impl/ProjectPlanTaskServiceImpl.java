@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.BaseStatusEnum;
 import com.common.core.enums.CustomizeFieldEnum;
 import com.common.core.enums.ModuleEnum;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.erp.common.business.utils.FastDFSClientUtil;
 import com.erp.common.dto.base.BaseIdDTO;
@@ -31,14 +32,21 @@ import com.erp.server.plm.mapper.ProjectPlanTaskMapper;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,7 +111,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             Map<String, List<ProductTaskVO>> map = taskList.stream().
                     collect(Collectors.groupingBy(ProductTaskVO::getPhaseId));
             //变更
-            String change= ProjectPlanConstant.PROJECT_PLAN_CHANGE;
+            String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
             int parentId = 1;
             for (Map.Entry<String, List<ProductTaskVO>> item : map.entrySet()) {
                 ProductTaskVO parentVO = new ProductTaskVO();
@@ -123,7 +131,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                             map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
                     vo.setPreTaskIdList(preTaskIds);
                     List<String> preTaskNameList = taskList.stream().filter(t -> preTaskIds.contains(t.getTaskId()))
-                            .map(ProductTaskVO::getName).collect(Collectors.toList());
+                            .map(ProductTaskVO::getTaskName).collect(Collectors.toList());
                     vo.setPreTaskNames(String.join(",", preTaskNameList));
                     vo.setId(parentId);
                     vo.setParentId(parentVO.getId());
@@ -136,8 +144,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //排期类型
                     String scheduleType = vo.getScheduleType();
                     //如果是变更 且不在 两个状态中 就是变更
-                    if(change.equals(scheduleType)){
-                        if(!scheduleStatusList.contains(scheduleStatus)){
+                    if (change.equals(scheduleType)) {
+                        if (!scheduleStatusList.contains(scheduleStatus)) {
                             vo.setIsChange(true);
                         }
                     }
@@ -170,29 +178,31 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         resultVO.setTaskList(resultList);
         resultVO.setScheduleTaskCount(scheduleTaskCount);
         resultVO.setUnscheduledTaskCount(unscheduledTaskCount);
-        resultVO.setScheduleAuditTaskCount(scheduleTaskCount);
+        resultVO.setScheduleAuditTaskCount(scheduleAuditTaskCount);
         resultVO.setTotalTaskCount(taskList.size());
         return resultVO;
     }
 
 
     /**
-     * 导出
+     * 导出排期任务
+     * 数据
      */
     @Override
-    public void exportExcel(HandleTaskScheduleDTO dto, HttpServletResponse response) {
-        List<ScheduleTaskExportExcelVO> excelList = projectTaskMapper.getExportScheduleTask(dto);
-        for (ScheduleTaskExportExcelVO vo : excelList) {
+    public void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
+        List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
+        for (ProductTaskVO vo : taskList) {
             String status = vo.getScheduleStatus();
             vo.setScheduleStatusName(BaseStatusEnum.getName(status));
         }
+        List<ScheduleTaskExportExcelVO> excelList = BeanMapper.copyList(taskList, ScheduleTaskExportExcelVO.class);
         String fileName = "任务数据";
         ExcelUtil.export(fileName, "task", excelList, ScheduleTaskExportExcelVO.class, response);
     }
 
 
     /**
-     * 导入
+     * 导入任务排期
      *
      * @param
      * @return java.lang.Boolean
@@ -200,8 +210,11 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-03 18:37
      */
     @Override
-    public Boolean importTaskSchedule(MultipartFile excelFile, HttpServletResponse response) {
-        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService);
+    public Boolean importTaskSchedule(MultipartFile excelFile, String productId,HttpServletResponse response) {
+        if(StringUtils.isBlank(productId)){
+            throw new ServiceException(95010,"产品id不能为空");
+        }
+        ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskService, projectPlanService,productId);
         try {
             EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportExcelVO> list = excelListenerUtil.getDateList();
@@ -554,7 +567,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 }
                 entity.setChangeStartTime(changeTask.getPlanStartTime());
                 entity.setChangeEndTime(changeTask.getPlanEndTime());
-                if(changeTask.getIsRestart()!=null){
+                if (changeTask.getIsRestart() != null) {
                     entity.setIsRestart(changeTask.getIsRestart());
                 }
             } else {
@@ -639,15 +652,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * @date 2023-02-14 11:25
      */
     @Override
-    public ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response) {
+    public ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response,String  productId) {
+        if(StringUtils.isBlank(productId)){
+            throw new ServiceException(95010,"产品id不能为空");
+        }
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
-        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService);
+        ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskService,productId);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ChangeScheduleExportVO.class, excelListener).sheet(0).doRead();
-            List<ChangeScheduleExportVO> errorDateList = excelListener.getErrorDateList();
+            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportExcelVO.class, excelListener).sheet(0).doRead();
+            List<ScheduleTaskExportExcelVO> errorDateList = excelListener.getErrorDateList();
 
             String fileName = "排期变更错误.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ChangeScheduleExportVO.class);
+            File file = ExcelUtil.exportFile(fileName, "task", errorDateList, ScheduleTaskExportExcelVO.class);
             String url = "";
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
@@ -660,6 +676,38 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
 
         return vo;
+    }
+
+
+    /**
+     * 导出任务排期
+     *
+     * @param request
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-02-17 11:43
+     */
+    @Override
+    public void exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/scheduleTask.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.Default);
+        }
     }
 
 }

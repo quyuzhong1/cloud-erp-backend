@@ -14,6 +14,7 @@ import com.erp.model.sys.vo.CustomizeFieldVO;
 import com.erp.model.sys.vo.UserFieldVO;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -33,9 +34,9 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
     ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto);
 
-    void exportExcel(HandleTaskScheduleDTO dto, HttpServletResponse response);
+    void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response);
 
-    Boolean importTaskSchedule(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importTaskSchedule(MultipartFile excelFile,String productId, HttpServletResponse response);
 
     Boolean fieldSet(CustomizeFieldLayoutDTO dto);
 
@@ -133,5 +134,15 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      * @param response
      * @return void
      */
-    ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response);
+    ChangeScheduleExportResultVO importChangeSchedule(MultipartFile excelFile, HttpServletResponse response,String  productId);
+
+    /**
+     * 导出任务排期模板
+     * @author yl
+     * @date 2023-02-17 11:41
+     * @param request
+     * @param response
+     * @return void
+     */
+    void exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response);
 }

@@ -233,4 +233,26 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return void
      */
     void updateScheduleTask(List<ProjectPlanTaskEntity> taskList, String status);
+
+    /**
+     * 如果是初始排期  任务审核通过后
+     * 就要发布
+     * @author yl
+     * @date 2023-02-17 10:57
+     * @param productId
+     * @param taskIdList
+     * @param status
+     * @return void
+     */
+    void initialScheduleTaskPass(String productId, List<String> taskIdList, String status);
+
+    /**
+     * 根据任务名 和产品id 获取到对应的人
+     * @author yl
+     * @date 2023-02-17 15:14
+     * @param productId
+     * @param taskName
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     */
+    ProjectTaskEntity getbyName(String productId, String taskName);
 }

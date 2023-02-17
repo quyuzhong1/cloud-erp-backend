@@ -290,7 +290,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public List<CopySourceDTO> copyTemplateTask(String templateId, String productId, String projectId, List<CopySourceDTO> phaseSourceList) {
         // 查询模板
         ProjectTemplateEntity projectTemplateEntity = projectTemplateService.getById(templateId);
-        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
+        if (ObjectUtils.isEmpty(projectTemplateEntity) || !MathUtil.ONE.equals(projectTemplateEntity.getStatus())) {
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId);
@@ -311,13 +311,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 List<String> chargeIdList = new ArrayList<>();
                 if (StringUtils.isNotBlank(chargeId)) {
                     chargeIdList = Arrays.asList(chargeId.split(","));
-                }
-                /**
-                 *  如果是立项阶段
-                 *  自动完成一步
-                 */
-                if (TaskConstant.APPROVAL_TASK_NAME.equals(item.getPhaseName())) {
-                    taskEntity = automationTask(taskEntity, taskEntity.getType(), chargeIdList, loginUser.getUid());
                 }
 
                 source.setNewCreateId(taskId);

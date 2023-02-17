@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 
 import java.util.List;
 
@@ -33,10 +34,12 @@ public interface WorkflowService {
 
 
    //发布流程
-   void deployDefinitionByResource(DeployProcessDTO dto);
+   Boolean deployDefinitionByResource(DeployProcessDTO dto);
 
    List<AuditorHandleDTO> queryApproveRecord(ProcessBaseDTO dto);
 
 
-    void terminateProcess(ApproveProcessDTO dto);
+   void terminateProcess(ApproveProcessDTO dto);
+
+   List<ApproveNodeRecordVO> queryApproveRecordById(String id);
 }

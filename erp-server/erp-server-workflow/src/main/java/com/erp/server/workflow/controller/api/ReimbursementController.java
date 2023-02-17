@@ -2,13 +2,14 @@ package com.erp.server.workflow.controller.api;
 
 import com.erp.common.controller.BaseController;
 import com.erp.common.dto.base.ApiResult;
+import com.erp.common.dto.base.BaseIdDTO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
-import org.camunda.bpm.engine.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +31,7 @@ public class ReimbursementController extends BaseController {
     @Autowired
     private WorkflowService workflowService;
 
-    @Autowired
-    private SpringProcessEngineConfiguration springProcessEngineConfiguration;
+
     @Autowired
     private RepositoryService repositoryService;
     @Autowired
@@ -40,8 +40,8 @@ public class ReimbursementController extends BaseController {
     //部署流程
     @PostMapping("/deploy")
     public ApiResult deploy(@RequestBody @Validated DeployProcessDTO dto) {
-        workflowService.deployDefinitionByResource(dto);
-        return success();
+        Boolean  deployResult= workflowService.deployDefinitionByResource(dto);
+        return deployResult==true?success():failure("部署失败");
     }
 
 
@@ -129,6 +129,17 @@ public class ReimbursementController extends BaseController {
     @GetMapping("/queryProcessApprove")
     public ApiResult queryProcessApprove(@RequestBody @Validated ProcessBaseDTO dto) {
         List<AuditorHandleDTO> resultList=workflowService.queryApproveRecord(dto);
+        return success(resultList);
+    }
+
+
+    /**
+     *  根据 表id 查看流程审批情况
+     */
+
+    @GetMapping("/queryProcessApproveById")
+    public ApiResult queryProcessApprove(@RequestBody @Validated BaseIdDTO dto) {
+        List<ApproveNodeRecordVO> resultList=workflowService.queryApproveRecordById(dto.getId());
         return success(resultList);
     }
 

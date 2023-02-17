@@ -7,8 +7,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.common.enums.ApiError;
 import com.erp.common.exception.ServiceException;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
 import com.erp.server.workflow.service.ActHistoryActivityService;
+import com.erp.server.workflow.service.ProcessTaskService;
 import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,6 +63,9 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired
     private IdentityService identityService;
+
+    @Autowired
+    private ProcessTaskService processTaskService;
 
     /**
      * 撤回流程
@@ -304,7 +309,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             ActivityInstance activity = runtimeService.getActivityInstance(processId);
             activityDTO.setProcessInstanceId(processId);
             activityDTO.setNowActivityId(activity.getActivityId());
-            currentNodeId=activity.getActivityId();
+            currentNodeId = activity.getActivityId();
 
             // 需要保存流程节点信息
             actHistoryActivityService.saveActivity(activityDTO);
@@ -328,11 +333,18 @@ public class WorkflowServiceImpl implements WorkflowService {
      * @date 2022-08-17 17:52
      */
     @Override
-    public void deployDefinitionByResource(DeployProcessDTO dto) {
-        Deployment deploy = repositoryService.createDeployment()
-                .name(dto.getBusinessName())
-                .addClasspathResource("diagrams/"+dto.getBpmnName())
-                .deploy();
+    public Boolean deployDefinitionByResource(DeployProcessDTO dto) {
+        Boolean deployResult = true;
+        try {
+            Deployment deploy = repositoryService.createDeployment()
+                    .name(dto.getBusinessName())
+                    .addClasspathResource("diagrams/" + dto.getBpmnName())
+                    .deploy();
+        } catch (Exception e) {
+            deployResult = false;
+            log.error("部署流程出错了====", e);
+        }
+        return deployResult;
     }
 
 
@@ -372,10 +384,11 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     /**
      * 终止流程
-     * @author yl
-     * @date 2023-02-01 11:12
+     *
      * @param dto
      * @return void
+     * @author yl
+     * @date 2023-02-01 11:12
      */
     @Override
     public void terminateProcess(ApproveProcessDTO dto) {
@@ -384,7 +397,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         Task task = taskService.createTaskQuery().
                 taskId(dto.getTaskId()).singleResult();
         if (Objects.isNull(task)) {
-            return ;
+            return;
         }
         //获取流程状态
         int state = checkProcessInstanceState(procId);
@@ -427,6 +440,15 @@ public class WorkflowServiceImpl implements WorkflowService {
         //审批通过后 需要保存流程节点信息
         actHistoryActivityService.saveActivity(activityDTO);
 
+    }
+
+    @Override
+    public List<ApproveNodeRecordVO> queryApproveRecordById(String id) {
+        if (StringUtils.isBlank(id)) {
+            return new ArrayList<>();
+        }
+        List<ApproveNodeRecordVO> recordList = processTaskService.getHistoryTaskByBusinessTableId(id);
+        return recordList;
     }
 
     public String matching(String activityType) {

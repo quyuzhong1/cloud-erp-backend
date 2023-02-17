@@ -55,7 +55,7 @@ public class ProductTaskVO implements Serializable {
     /**
      * 任务名
      */
-    private String name;
+    private String taskName;
 
 
     /**

@@ -971,51 +971,53 @@
 
     <select id="getScheduleTask" resultType="com.erp.model.plm.vo.ProductTaskVO">
         SELECT
-        id AS taskId,
-        project_id AS projectId,
-        pid,
-        product_id  AS productId,
-        name,
-        type,
-        charge_id AS chargeId,
-        charge_name AS chargeName,
-        plan_start_time AS planStartTime,
-        plan_end_time AS planEndTime,
-        reality_start_time AS realityStartTime,
-        reality_end_time AS realityEndTime,
-        priority,
-        phase_id AS phaseId,
-        phase_name AS phaseName,
-        description,
-        is_milepost AS isMilepost,
-        create_user_name AS createUserName,
-        create_time AS createTime,
-        update_time AS updateTime,
-        update_user_name AS updateUserName,
-        schedule_status AS scheduleStatus,
-        schedule_type AS scheduleType,
-        status
-        FROM project_task
-        WHERE product_id=#{dto.productId}
+        pt.id AS taskId,
+        pt.project_id AS projectId,
+        pi.name AS productName,
+        pt.pid,
+        pt.product_id  AS productId,
+        pt.name AS taskName,
+        pt.type,
+        pt.charge_id AS chargeId,
+        pt.charge_name AS chargeName,
+        pt.plan_start_time AS planStartTime,
+        pt.plan_end_time AS planEndTime,
+        pt.reality_start_time AS realityStartTime,
+        pt.reality_end_time AS realityEndTime,
+        pt.priority,
+        pt.phase_id AS phaseId,
+        pt.phase_name AS phaseName,
+        pt.description,
+        pt.is_milepost AS isMilepost,
+        pt.create_user_name AS createUserName,
+        pt.create_time AS createTime,
+        pt.update_time AS updateTime,
+        pt.update_user_name AS updateUserName,
+        pt.schedule_status AS scheduleStatus,
+        pt.schedule_type AS scheduleType,
+        pt.status
+        FROM project_task pt  LEFT JOIN  product_info pi
+        ON pt.product_id=pi.id
+        WHERE pt.product_id=#{dto.productId}
         <if test="dto.phase!=null and dto.phase!=''  ">
             <if test="dto.phase=='projectApproval'">
-                AND property=1
+                AND pt.property=1
             </if>
             <if test="dto.phase=='project'">
-                AND property=2
+                AND pt.property=2
             </if>
         </if>
         <if test="dto.taskChargeId !=null and dto.taskChargeId!=''">
-            AND string_to_array(charge_id,',') &amp;&amp; string_to_array(dto.taskChargeId,',')
+            AND string_to_array(pt.charge_id,',') &amp;&amp; string_to_array(dto.taskChargeId,',')
         </if>
         <if test="dto.searchKeyword !=null and dto.searchKeyword!=''">
             AND name LIKE concat('%',#{dto.searchKeyword},'%'
         </if>
         <if test="dto.planStartTime !=null ">
-            AND plan_start_time &gt;= #{dto.planStartTime}
+            AND pt.plan_start_time &gt;= #{dto.planStartTime}
         </if>
         <if test="dto.planEndTime !=null ">
-            AND plan_end_time &lt;= #{dto.planEndTime}
+            AND pt.plan_end_time &lt;= #{dto.planEndTime}
         </if>
         ORDER BY
         <if test="dto.sortList != null and dto.sortList.size > 0">
@@ -1023,7 +1025,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time asc
+        pt.create_time asc
     </select>
 
 

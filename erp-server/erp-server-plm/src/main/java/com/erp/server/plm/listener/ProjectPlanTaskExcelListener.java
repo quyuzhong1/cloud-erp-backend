@@ -39,11 +39,12 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     private String productId;
 
-    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService) {
+    public ProjectPlanTaskExcelListener(ProjectTaskService projectTaskService, ProjectPlanService projectPlanService, String productId) {
         this.projectTaskService = projectTaskService;
         this.projectPlanService = projectPlanService;
         this.list = new ArrayList<>();
         this.taskIdList = new ArrayList<>();
+        this.productId = productId;
     }
 
     /**
@@ -58,14 +59,15 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
     @Override
     public void invoke(ScheduleTaskExportExcelVO vo, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
+        if (StringUtils.isBlank(vo.getTaskName())) {
+            errorMsgList.add("任务名 不能为空");
+        }
         if (StringUtils.isBlank(vo.getChargeName())) {
             errorMsgList.add("负责人不能为空");
         }
-        if (StringUtils.isBlank(vo.getTaskId())) {
-            errorMsgList.add("任务id 不能为空");
-        }
-        if (StringUtils.isBlank(vo.getProductId())) {
-            errorMsgList.add("产品id 不能为空");
+        ProjectTaskEntity task=projectTaskService.getbyName(productId,vo.getTaskName().trim());
+        if(Objects.isNull(task)){
+            errorMsgList.add("任务不存在");
         }
         if (vo.getPlanStartTime() == null) {
             errorMsgList.add("计划开始时间 不能为空");
@@ -78,12 +80,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
                 errorMsgList.add("开始时间不可大于结束时间");
             }
         }
-        ScheduleTaskExportExcelVO excelVO = projectTaskService.getExport(vo.getProductId(), vo.getTaskId());
-        if (Objects.isNull(excelVO)) {
-            errorMsgList.add("任务不存在");
-        }
-        if (excelVO != null) {
-            String scheduleStatus = excelVO.getScheduleStatus();
+        if (task != null) {
+            String scheduleStatus = task.getScheduleStatus();
             List<String> statusList = new ArrayList<>();
             statusList.add(BaseStatusEnum.WAIT_SUBMIT.getStatus());
             statusList.add(BaseStatusEnum.CANCEL.getStatus());
@@ -101,12 +99,11 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             list.add(vo);
             return;
         }
-        taskIdList.add(excelVO.getTaskId());
-        productId = excelVO.getProductId();
-        ProjectTaskEntity taskEntity = projectTaskService.getById(vo.getTaskId());
-        taskEntity.setPlanStartTime(vo.getPlanStartTime());
-        taskEntity.setPlanEndTime(vo.getPlanEndTime());
-        projectTaskService.updateById(taskEntity);
+        taskIdList.add(task.getId());
+        productId = task.getProductId();
+        task.setPlanStartTime(vo.getPlanStartTime());
+        task.setPlanEndTime(vo.getPlanEndTime());
+        projectTaskService.updateById(task);
     }
 
     public List<ScheduleTaskExportExcelVO> getDateList() {

@@ -19,30 +19,29 @@ import java.util.Date;
 @NoArgsConstructor
 public class ScheduleTaskExportExcelVO  implements Serializable {
 
-    @ColumnWidth(50)
-    @ExcelProperty(value = "任务id", index = 0)
-    private String taskId;
-
-
-    @ColumnWidth(50)
-    @ExcelProperty(value = "产品id", index = 1)
-    private String productId;
-
-    @ColumnWidth(50)
-    @ExcelProperty(value = "产品名称", index = 2)
-    private String productName;
-
-    @ColumnWidth(50)
-    @ExcelProperty(value = "任务名称", index = 3)
-    private String taskName;
 
 
     @ExcelIgnore
     private String scheduleStatus;
 
+    @ExcelIgnore
+    private String taskId;
+
+    @ExcelIgnore
+    private String productId;
 
     @ColumnWidth(50)
-    @ExcelProperty(value = "任务状态", index = 4)
+    @ExcelProperty(value = "产品名称", index = 0)
+    private String productName;
+
+    @ColumnWidth(50)
+    @ExcelProperty(value = "任务名称", index = 1)
+    private String taskName;
+
+
+
+    @ColumnWidth(50)
+    @ExcelProperty(value = "任务排期状态", index = 2)
     private String scheduleStatusName;
 
 
@@ -50,25 +49,25 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      * 计划开始时间
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "计划开始时间", index = 5)
+    @ExcelProperty(value = "计划开始时间", index = 3)
     private Date planStartTime;
 
     /**
      * 计划结束时间
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "计划结束时间", index = 6)
+    @ExcelProperty(value = "计划结束时间", index = 4)
     private Date planEndTime;
 
 
 
 
     @ColumnWidth(50)
-    @ExcelProperty(value = "负责人名", index = 7)
+    @ExcelProperty(value = "负责人名", index = 5)
     private String chargeName;
 
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误信息", index = 8)
+    @ExcelProperty(value = "错误信息", index = 6)
     private String errorMsg;
 
 }

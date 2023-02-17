@@ -182,7 +182,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 entity.setPhaseId(taskPhaseId);
                 entity.setPhaseName(TaskConstant.APPROVAL_TASK_NAME);
-               // entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
+                // entity = automationTask(entity, taskType, chargeIdList, loginUser.getUid());
 
                 //一般任务
                 Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
@@ -918,13 +918,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 //保存任务记录
                 taskOperatorRecordService.addTaskOperator(taskEntity.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
-               if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(afterState)) {
-                   //发布任务通知
-                   noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, dto.getProductId());
-               } else {
-                   //发布任务通知
-                   noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
-               }
+                if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(afterState)) {
+                    //发布任务通知
+                    noticeMessageService.finishWaitConfirmNotice(loginUser.getUserName(), taskList, dto.getProductId());
+                } else {
+                    //发布任务通知
+                    noticeMessageService.releaseTaskNotice(loginUser.getUserName(), taskList, dto.getProductId());
+                }
 
             }
 
@@ -935,10 +935,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
-     * 立项阶段任务 自动操作一步
+     * 自动操作一步
      * taskType 任务属性 是一般任务 还是评审任务
      *
-     * @param
+     * @param taskEntity   任务实体
+     * @param taskType     任务类型
+     * @param chargeIdList 负责人id
+     * @param userId       用户id
      * @return com.erp.model.plm.entity.ProjectTaskEntity
      * @author yl
      * @date 2022-11-30 10:56
@@ -2105,7 +2108,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Integer finishDocsCount = finishTasks.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDocsFinishEntity::getTaskDocsId).distinct().collect(Collectors.toList()).size();
                 item.setFinishDocsCount(finishDocsCount);
                 TaskRefSkuConfigEntity refSku = refSkuConfigList.stream().filter(r -> r.getTaskId().equals(taskId)).findFirst().orElse(null);
-                if (refSku != null ) {
+                if (refSku != null) {
                     item.setTaskFieldConfigType(refSku.getFieldConfigType());
                 }
                 List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
@@ -2658,7 +2661,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     item.setPlanEndTime(planTask.getChangeEndTime());
                     item.setScheduleStatus(status);
                     //如果是重启
-                    if(planTask.getIsRestart()){
+                    if (planTask.getIsRestart()) {
                         //任务状态变成未开始
                         item.setStatus(TaskStateEnum.NOT_START.getCode());
                     }
@@ -2670,6 +2673,58 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
 
+    }
+
+
+    /**
+     * 在排期任务审核通过后就要 改变
+     * 任务排期状态 如果满足自动发布就要自动 发布
+     *
+     * @param productId
+     * @param taskIdList
+     * @param scheduleStatus 排期状态
+     * @return void
+     * @author yl
+     * @date 2023-02-17 10:59
+     */
+    @Override
+    public void initialScheduleTaskPass(String productId, List<String> taskIdList, String scheduleStatus) {
+        List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        String userId = commonService.getUserInfo().getUid();
+        for (ProjectTaskEntity task : taskList) {
+            Integer taskType = task.getType();
+            task.setScheduleStatus(scheduleStatus);
+            List<String> chargeIdList = new ArrayList<>();
+            String chargeId = task.getChargeId();
+            if (StringUtils.isNotBlank(chargeId)) {
+                chargeIdList = Arrays.asList(chargeId.split(","));
+            }
+
+            task = automationTask(task, taskType, chargeIdList, userId);
+
+        }
+        if (CollectionUtils.isNotEmpty(taskList)) {
+            this.updateBatchById(taskList);
+        }
+    }
+
+
+    /**
+     * 根据任务名 和产品id 获取到对应的人
+     *
+     * @param productId
+     * @param taskName
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
+     * @author yl
+     * @date 2023-02-17 15:14
+     */
+    @Override
+    public ProjectTaskEntity getbyName(String productId, String taskName) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectTaskEntity::getProductId, productId);
+        queryWrapper.eq(ProjectTaskEntity::getName, taskName);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 
     /**
@@ -2847,7 +2902,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskRefSkuEntity> taskRefSkuList = projectTaskRefSkuService.getByTaskId(taskId);
         //产品下sku
         List<ProductDetailEntity> list = productDetailService.getSkuListByProductId(taskEntity.getProductId());
-        Boolean taskRefSkuFlag = (CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0)  || (RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType()) && CollectionUtils.isNotEmpty(list));
+        Boolean taskRefSkuFlag = (CollectionUtils.isNotEmpty(taskRefSkuList) && taskRefSkuList.size() > 0) || (RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(taskEntity.getRelatedSkuType()) && CollectionUtils.isNotEmpty(list));
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
@@ -3380,10 +3435,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //如果  排期任务状态 要通过才能发布任务
         //审核通过
-        String auditPassStatus= BaseStatusEnum.AUDIT_PASS.getStatus();
-        List<String> scheduleStatusList=list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
+        String auditPassStatus = BaseStatusEnum.AUDIT_PASS.getStatus();
+        List<String> scheduleStatusList = list.stream().map(ProjectTaskEntity::getScheduleStatus).collect(Collectors.toList());
         //当不包含就要去除
-        if(!scheduleStatusList.contains(auditPassStatus)){
+        if (!scheduleStatusList.contains(auditPassStatus)) {
             throw new ServiceException(ApiError.ERROR_95130);
         }
 
@@ -4347,7 +4402,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         waitReleasedDTO.setOperateUserName(operatorName);
         waitReleasedDTO.setOperateTime(operatorTime);
         waitReleasedDTO.setIfFinishNode(flag);
-        List<Pair<String,Date>> dateList = new ArrayList<>();
+        List<Pair<String, Date>> dateList = new ArrayList<>();
 
         if (CollectionUtils.isEmpty(approveRecordShowList)) {
             return waitReleasedDTO;
@@ -4363,7 +4418,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<AuditorHandleDTO> value = entry.getValue();
                 List<TaskProcessNodeDTO> taskProcessNodeList = new ArrayList<>();
                 TaskProcessNodeDetailDTO taskProcessNodeDetailDTO = new TaskProcessNodeDetailDTO();
-                taskProcessNodeDetailDTO.setStartDate(StringUtils.isBlank(value.get(0).getStartTime())? null :value.get(0).getStartTime());
+                taskProcessNodeDetailDTO.setStartDate(StringUtils.isBlank(value.get(0).getStartTime()) ? null : value.get(0).getStartTime());
                 //查询流程
                 for (AuditorHandleDTO auditorHandleDTO : value) {
                     TaskProcessNodeDTO taskProcessNodeDTO = new TaskProcessNodeDTO();
@@ -4390,7 +4445,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     if (BaseStatusEnum.WAIT_AUDIT.getName().equals(auditorHandleDTO.getHandContent())) {
                         isShwoDate = Boolean.FALSE;
                     }
-                    dateList.add(new Pair<>(userName,taskProcessNodeDTO.getOperateTime()));
+                    dateList.add(new Pair<>(userName, taskProcessNodeDTO.getOperateTime()));
                     taskProcessNodeList.add(taskProcessNodeDTO);
                 }
                 taskProcessNodeDetailDTO.setIfFinishNode(Boolean.TRUE);
@@ -4403,7 +4458,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 waitReleasedDTO.setDetailList(collect);
             }
             if (CollectionUtils.isNotEmpty(dateList)) {
-                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(e ->e.getValue(),Comparator.nullsLast(Date::compareTo))).get();
+                Pair<String, Date> pair = dateList.stream().max(Comparator.comparing(e -> e.getValue(), Comparator.nullsLast(Date::compareTo))).get();
                 waitReleasedDTO.setOperateUserName(pair.getKey());
                 if (CollectionUtils.isNotEmpty(dateList) && isShwoDate) {
                     Date date = pair.getValue();

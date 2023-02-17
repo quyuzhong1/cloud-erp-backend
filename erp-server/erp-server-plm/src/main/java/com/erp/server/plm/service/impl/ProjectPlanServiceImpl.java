@@ -498,10 +498,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         String userId = commonService.getUserInfo().getUid();
 
+        //已存在的审核状态
+        String dbStatus=plan.getStatus();
         //意见
         String comment = dto.getComment();
         String status = BaseStatusEnum.AUDIT_ING.getStatus();
-        plan.setStatus(status);
+        //当不是审核通过的时候
+        if(!status.equals(dbStatus)){
+            plan.setStatus(status);
+        }
         plan.setRemark(dto.getComment());
 
         BusinessTableDTO tableDTO = new BusinessTableDTO();
@@ -520,6 +525,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setUserId(userId);
         approveProcess.setComment(comment);
         Boolean result = this.updateById(plan);
+
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
         //表示成功
         if (node != null) {
@@ -623,8 +629,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 if (ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(plan.getType())) {
                     taskService.updateScheduleTask(taskList, status);
                 } else {
-                    //只需要改状态
-                    taskService.updateScheduleStatus(plan.getProductId(), taskIdList, status, "");
+                    /**
+                     * 如果是初始排期 审核通过后
+                     * 就要
+                     * 如果是自动发布的任务 就要发布
+                     */
+                    taskService.initialScheduleTaskPass(plan.getProductId(), taskIdList, status);
 
                 }
 
