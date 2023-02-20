@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 项目计划任务列表条件
@@ -65,6 +66,9 @@ public class ProjectPlanTaskConditionDTO extends SortDTO {
      */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date planEndTime;
+
+
+    private List<String> taskIdList;
 
 
 }

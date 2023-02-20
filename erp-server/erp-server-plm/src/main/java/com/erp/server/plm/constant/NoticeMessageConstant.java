@@ -83,7 +83,13 @@ public interface NoticeMessageConstant {
     String TASK_PROJECT_CONTENT= "**任务名称：**%s\n**产品名称：**%s\n**截止日期：**%s\n**%s：**%s";
 
     //排期任务提交
-    String SCHEDULE_TASK_SUBMIT= "【%s】 有%S条 【%s】排期审核,请及时查看";
+    String SCHEDULE_TASK_CONTENT= "【%s】提交%S条排期审核,请及时查看";
+
+    //任务排期 提交 卡片
+    String SCHEDULE_TASK_SUBMIT_CARD="**任务名称：**%s\\n**产品名称：**%s\\n**产品经理：**%s";
+
+
+
 
 
 

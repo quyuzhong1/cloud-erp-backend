@@ -710,7 +710,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                             allNoticeUserIds.addAll(preTaskChargeIdList);
                         }
                         //完成任务的通知信息
-                        messageContent = String.format(NoticeMessageConstant.EXIST_PRE_FINISH_TASK, task.getName(),taskEntity.getName());
+                        messageContent = String.format(NoticeMessageConstant.EXIST_PRE_FINISH_TASK, task.getName(), taskEntity.getName());
                     }
                 }
                 //排除关闭通知的人员 并去重
@@ -780,10 +780,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             for (ProjectTaskEntity task : taskList) {
                 //查询当前需要审核的人员
                 List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(task.getProcessId());
-                if (CollectionUtils.isEmpty(approveRecordShowList)){
+                if (CollectionUtils.isEmpty(approveRecordShowList)) {
                     throw new ServiceException(ApiError.ERROR_95045);
                 }
-                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj-> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent())).map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
+                List<String> allNoticeUserIds = approveRecordShowList.stream().filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent())).map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
                 //排除关闭通知的人员 并去重
                 List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
                 List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
@@ -852,9 +852,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             String productId = task.getProductId();
             String chargeIds = task.getChargeId();
             if (StringUtils.isNotBlank(chargeIds)) {
-                 List<String> chargeIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
-                 sendIds.addAll(chargeIdList);
-                 //去重
+                List<String> chargeIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
+                sendIds.addAll(chargeIdList);
+                //去重
                 sendIds = sendIds.stream().distinct().collect(Collectors.toList());
             }
             //产品信息
@@ -898,44 +898,186 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         return true;
     }
 
-    
+
     /**
      * 排期任务提交
-     * @author yl
-     * @date 2023-02-17 18:18
+     *
      * @param
      * @return void
+     * @author yl
+     * @date 2023-02-17 18:18
      */
     @Override
-    public void scheduleTaskSubmit(List<ProjectTaskEntity> taskList, String productId) {
+    public void scheduleTaskSubmit(String userName, List<ProjectTaskEntity> taskList, String productId) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
-
         //排期任务 通知节点
-        String noticeFlag = NoticeEnum.SCHEDULE_TASK.getFlag();
+        String noticeFlag = NoticeEnum.SCHEDULE_TASK_SUBMIT.getFlag();
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
-        if(!Objects.isNull(notice )){
+        if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
             List<String> noticeUserIds = getSetNotice(notice, product);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
             List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
-            //消息通知记录
-            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
-            for (ProjectTaskEntity task : taskList){
-                String chargeId = task.getChargeId();
-                List<String> allNoticeUserIds = new ArrayList<>();
 
+            if (CollectionUtils.isEmpty(taskList)) {
+                return;
+            }
+            //需要通知所有的人
+            List<String> allNoticeUserIds = new ArrayList<>();
+            for (ProjectTaskEntity task : taskList) {
+                String chargeId = task.getChargeId();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
                     List<String> chargeIdList = Arrays.asList(chargeId.split(","));
                     allNoticeUserIds.addAll(noticeUserIds);
                     allNoticeUserIds.addAll(chargeIdList);
                 } else {
-                    allNoticeUserIds = noticeUserIds;
+                    allNoticeUserIds.addAll(noticeUserIds);
                 }
             }
+
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            //消息内容
+            String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
+            String taskName = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+
+            /**
+             * 获取到提交排期任务卡片的主内容
+             */
+            String scheduleTaskSubmitCard = getScheduleTaskSubmitCard(taskName, product.getName(), product.getProductChargeName());
+            Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            //发送成功
+            if (sendResult) {
+                //消息通知记录
+                List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setMessageContent(messageContent);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(noticeFlag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setProductId(product.getProductId());
+                    recordEntity.setProductName(product.getName());
+                    recordEntity.setTaskName(taskName);
+                    recordEntity.setChargeName(product.getProductChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+                //保存发送消息通知记录
+                noticeMessageRecordService.saveBatch(messageRecordList);
+
+            }
+
         }
+    }
+
+    
+    /**
+     * 排期任务审核通过
+     * @author yl
+     * @date 2023-02-20 15:13
+     * @param userName
+     * @param taskList
+     * @param productId
+     * @param auditResult 审核结果你
+     * @param remark 不通过原因
+     * @return void
+     */
+    @Override
+    public void scheduleTaskAudit(String userName, List<ProjectTaskEntity> taskList, String productId,String auditResult,  String remark) {
+        ProductShowDTO product = productInfoService.getProductInfo(productId);
+        //排期任务 通知节点
+        String noticeFlag = NoticeEnum.SCHEDULE_TASK_SUBMIT.getFlag();
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
+        if (!Objects.isNull(notice)) {
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getSetNotice(notice, product);
+            //如果包含任务负责人的话
+            boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+
+            if (CollectionUtils.isEmpty(taskList)) {
+                return;
+            }
+            //需要通知所有的人
+            List<String> allNoticeUserIds = new ArrayList<>();
+            for (ProjectTaskEntity task : taskList) {
+                String chargeId = task.getChargeId();
+                if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
+                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
+                    allNoticeUserIds.addAll(noticeUserIds);
+                    allNoticeUserIds.addAll(chargeIdList);
+                } else {
+                    allNoticeUserIds.addAll(noticeUserIds);
+                }
+            }
+
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), allNoticeUserIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            //消息内容
+            String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CONTENT, userName, taskList.size());
+            String taskName = taskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+
+            /**
+             * 获取到提交排期任务卡片的主内容
+             */
+            String scheduleTaskSubmitCard = getScheduleTaskSubmitCard(taskName, product.getName(), product.getProductChargeName());
+            Map contentMap = getCardMessageMap(messageContent, scheduleTaskSubmitCard, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.batchSendMessage(sendMessage);
+            //发送成功
+            if (sendResult) {
+                //消息通知记录
+                List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setMessageContent(messageContent);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(noticeFlag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setProductId(product.getProductId());
+                    recordEntity.setProductName(product.getName());
+                    recordEntity.setTaskName(taskName);
+                    recordEntity.setChargeName(product.getProductChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+                //保存发送消息通知记录
+                noticeMessageRecordService.saveBatch(messageRecordList);
+
+            }
+
+        }
+    }
+
+    /**
+     * 获取到 提交排期审核任务消息卡片主体
+     *
+     * @param taskName    任务名
+     * @param productName 产品名
+     * @param chargeName  产品经理
+     * @return
+     */
+    private String getScheduleTaskSubmitCard(String taskName, String productName, String chargeName) {
+        String content = String.format(NoticeMessageConstant.SCHEDULE_TASK_SUBMIT_CARD, taskName, productName, chargeName);
+        return content;
     }
 
 

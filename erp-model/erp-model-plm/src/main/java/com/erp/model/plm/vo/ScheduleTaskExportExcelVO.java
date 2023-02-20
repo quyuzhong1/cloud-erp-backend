@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @Classname ScheduleTaskExportExcelVO
@@ -50,14 +49,14 @@ public class ScheduleTaskExportExcelVO  implements Serializable {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间", index = 3)
-    private Date planStartTime;
+    private String planStartTime;
 
     /**
      * 计划结束时间
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间", index = 4)
-    private Date planEndTime;
+    private String planEndTime;
 
 
 

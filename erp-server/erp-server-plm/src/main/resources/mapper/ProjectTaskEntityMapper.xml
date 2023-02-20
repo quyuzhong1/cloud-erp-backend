@@ -1022,6 +1022,12 @@
         <if test="dto.planAuditState !=null and  dto.planAuditState!=''">
             AND pt.schedule_status = #{dto.planAuditState}
         </if>
+        <if test="dto.taskIdList!=null and dto.taskIdList.size>0">
+            AND pt.id IN
+            <foreach collection="dto.taskIdList" item="taskId" open="(" close=")" separator=",">
+                #{taskId}
+            </foreach>
+        </if>
         ORDER BY
         <if test="dto.sortList != null and dto.sortList.size > 0">
             <foreach collection="dto.sortList" item="item" separator="," close=",">

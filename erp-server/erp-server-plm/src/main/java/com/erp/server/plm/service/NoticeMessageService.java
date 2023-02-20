@@ -96,5 +96,10 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     /**
      * 排期任务提交
      */
-    void scheduleTaskSubmit(List<ProjectTaskEntity> taskList, String productId);
+    void scheduleTaskSubmit(String userName, List<ProjectTaskEntity> taskList, String productId);
+
+    /**
+     * 排期任务审核通知
+     */
+    void scheduleTaskAudit(String userName, List<ProjectTaskEntity> taskList, String productId,String auditResult,  String remark);
 }

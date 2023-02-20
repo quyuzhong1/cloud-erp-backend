@@ -74,6 +74,7 @@ public class DateUtil {
 
     /**
      * 获取某天  结束时间
+     *
      * @return
      */
     public static Date getEndTime(Date date) {
@@ -86,6 +87,7 @@ public class DateUtil {
         calendar.set(Calendar.MILLISECOND, 999);
         return calendar.getTime();
     }
+
     /**
      * 对日期的【秒】进行加/减
      *
@@ -365,6 +367,27 @@ public class DateUtil {
         return "-";
     }
 
+    /**
+     * Z字符串转日期
+     *
+     * @param str
+     * @return
+     */
+    public static Date strToDate(String str, String fmt) {
+        if (StringUtils.isNotBlank(str)) {
+            SimpleDateFormat format = new SimpleDateFormat(fmt);
+            Date date = null;
+            try {
+                date = format.parse(str);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            return date;
+        }
+        return null;
+
+    }
+
 
     /**
      * 获取两个时间相差多少
@@ -399,7 +422,7 @@ public class DateUtil {
     /**
      * 验证是否是日期格式
      */
-    public static boolean isValid(String dateStr,DateTimeFormatter dateFormatter) {
+    public static boolean isValid(String dateStr, DateTimeFormatter dateFormatter) {
         try {
             LocalDateTime.parse(dateStr, dateFormatter);
         } catch (DateTimeParseException e) {
@@ -410,10 +433,11 @@ public class DateUtil {
 
     /**
      * 获取某年第一天日期
+     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearFirst(int year){
+    public static Date getYearFirst(int year) {
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -423,10 +447,11 @@ public class DateUtil {
 
     /**
      * 获取某年最后一天日期
+     *
      * @param year 年份
      * @return Date
      */
-    public static Date getYearLast(int year){
+    public static Date getYearLast(int year) {
         Calendar calendar = Calendar.getInstance();
         calendar.clear();
         calendar.set(Calendar.YEAR, year);
@@ -437,6 +462,7 @@ public class DateUtil {
 
     /**
      * 获取环比日期
+     *
      * @param endDate
      * @param startDate
      * @return java.lang.String

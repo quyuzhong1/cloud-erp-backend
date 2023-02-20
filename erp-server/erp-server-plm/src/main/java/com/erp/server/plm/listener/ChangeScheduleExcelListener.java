@@ -1,9 +1,9 @@
 package com.erp.server.plm.listener;
 
-import cn.hutool.core.date.DateUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.enums.BaseStatusEnum;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ChangeScheduleExportVO;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
@@ -56,15 +56,15 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             errorMsgList.add("任务不存在");
         }
 
-        if (vo.getPlanStartTime() == null) {
+        if (StringUtils.isBlank(vo.getPlanStartTime())) {
             errorMsgList.add("计划开始时间 不能为空");
         }
-        if (vo.getPlanEndTime() == null) {
+        if (StringUtils.isBlank(vo.getPlanEndTime())) {
             errorMsgList.add("计划结束时间 不能为空");
         }
-        if (vo.getPlanStartTime() != null && vo.getPlanEndTime() != null) {
-            if (DateUtil.compare(vo.getPlanStartTime(), vo.getPlanEndTime()) > 0) {
-                errorMsgList.add("开始时间不可大于结束时间");
+        if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
+            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime())<0) {
+                errorMsgList.add("结束时间必须大于开始时间");
             }
         }
 
@@ -89,8 +89,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         ChangeScheduleExportVO changeVO = new ChangeScheduleExportVO();
         changeVO.setStatusName(TaskStateEnum.getName(task.getStatus()));
         changeVO.setStatus(task.getStatus());
-        changeVO.setChangeEndTime(vo.getPlanEndTime());
-        changeVO.setChangeStartTime(vo.getPlanStartTime());
+        changeVO.setChangeEndTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
+        changeVO.setChangeStartTime(DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt));
         changeVO.setChargeName(vo.getChargeName());
         changeVO.setTaskId(task.getId());
         changeVO.setTaskName(task.getName());

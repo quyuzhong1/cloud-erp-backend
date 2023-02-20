@@ -1,9 +1,9 @@
 package com.erp.server.plm.listener;
 
-import cn.hutool.core.date.DateUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.enums.BaseStatusEnum;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.HandleTaskScheduleDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
@@ -69,15 +69,15 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         if(Objects.isNull(task)){
             errorMsgList.add("任务不存在");
         }
-        if (vo.getPlanStartTime() == null) {
+        if (StringUtils.isBlank(vo.getPlanStartTime())) {
             errorMsgList.add("计划开始时间 不能为空");
         }
-        if (vo.getPlanEndTime() == null) {
+        if (StringUtils.isBlank(vo.getPlanEndTime())) {
             errorMsgList.add("计划结束时间 不能为空");
         }
-        if (vo.getPlanStartTime() != null && vo.getPlanEndTime() != null) {
-            if (DateUtil.compare(vo.getPlanStartTime(), vo.getPlanEndTime()) > 0) {
-                errorMsgList.add("开始时间不可大于结束时间");
+        if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
+            if (vo.getPlanEndTime().compareTo(vo.getPlanStartTime())<0) {
+                errorMsgList.add("结束时间必须大于开始时间");
             }
         }
         if (task != null) {
@@ -101,8 +101,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         }
         taskIdList.add(task.getId());
         productId = task.getProductId();
-        task.setPlanStartTime(vo.getPlanStartTime());
-        task.setPlanEndTime(vo.getPlanEndTime());
+        task.setPlanStartTime(DateUtil.strToDate(vo.getPlanStartTime(),DateUtil.fmt));
+        task.setPlanEndTime(DateUtil.strToDate(vo.getPlanEndTime(),DateUtil.fmt));
         projectTaskService.updateById(task);
     }
 
