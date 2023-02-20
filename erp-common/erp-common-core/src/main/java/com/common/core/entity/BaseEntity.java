@@ -22,7 +22,7 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
      * 主键
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Long id;
+    private String id;
 
 
     /**

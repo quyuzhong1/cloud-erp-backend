@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="project_status_time")
 @Data
 @NoArgsConstructor
-public class ProjectStatusTime {
+public class ProjectStatusTimeEntity {
 
     /**
      * 产品ID

@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="product_planning_remark")
 @Data
 @NoArgsConstructor
-public class ProductPlanningRemark {
+public class ProductPlanningRemarkEntity {
 
 
     /**
