@@ -3,7 +3,7 @@ package com.erp.server.dmp.pull.service.gyy;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.erp.common.business.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -20,7 +20,7 @@ import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.service.mq.MQProducerService;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     @Resource
     private MongoService mongoService;
 
-    @Autowired
+    @Resource
     private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
 
     @Override
@@ -99,7 +99,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
                                 msg, msg.getBillNo()))
                 .collect(Collectors.toList());
     }

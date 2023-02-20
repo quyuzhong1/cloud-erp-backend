@@ -13,8 +13,6 @@
 
     <properties>
         <alibaba.druid.verison>1.2.15</alibaba.druid.verison>
-<!--        <jasypt.version>3.0.4</jasypt.version>-->
-        <rocketmq.verion>2.2.2</rocketmq.verion>
     </properties>
     <modules>
         <module>erp-server-auth</module>

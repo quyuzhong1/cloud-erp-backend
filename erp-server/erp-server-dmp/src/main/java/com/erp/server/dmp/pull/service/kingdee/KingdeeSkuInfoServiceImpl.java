@@ -6,7 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.erp.common.business.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -21,7 +21,7 @@ import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.service.mq.MQProducerService;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -95,7 +95,7 @@ public class KingdeeSkuInfoServiceImpl implements IReportSaveService<KingdeeSkuE
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_SKU_INFO_TAG.getName(),
                                 msg, StrUtil.format("{}_{}", msg.getSkuNo(), msg.getItemCode())))
                 .collect(Collectors.toList());
 

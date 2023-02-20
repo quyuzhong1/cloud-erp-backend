@@ -6,7 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.erp.common.business.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -22,7 +22,7 @@ import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.service.mq.MQProducerService;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -121,7 +121,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
         // 异步推送到MQ
         mabangToMqlist.stream().peek(msg ->
-                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
+                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
                                 msg, StrUtil.format("{}_{}",msg.getPlatformOrderId() + msg.getSalesRecordNumber())))
                 .collect(Collectors.toList());
     }

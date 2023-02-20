@@ -29,7 +29,7 @@ public  class MQProducerServiceTest {
 
     @Test
     public void syncSendMsg() {
-//        mQProducerService.syncSendMsg("testId2", RocketMqTopic.DMP_TOPIC, "tag2", "{'key':'value2'}","dmp jindie");
+//        mQProducerService.syncSendMsg("testId2", RocketMqTopic.DMP_ERP_ORDER_TOPIC, "tag2", "{'key':'value2'}","dmp jindie");
     }
 
     @Test
@@ -38,7 +38,7 @@ public  class MQProducerServiceTest {
 //        List<CfgApiFieldMapController.TestMq> list = IntStream.rangeClosed(1, 10)
 //                .mapToObj(x -> new CfgApiFieldMapController.TestMq(String.valueOf(x), LocalDateTime.now(), Arrays.asList(String.valueOf(x)), "tag2"))
 //                .collect(Collectors.toList());
-//        mQProducerService.sendBachMsg(RocketMqTopic.DMP_TOPIC, "tag2", list);
+//        mQProducerService.sendBachMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, "tag2", list);
     }
 
     @Test

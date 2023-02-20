@@ -1,4 +1,4 @@
-package com.erp.server.dmp.service.mq;
+package com.common.message.service.mq;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -12,9 +12,11 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,7 +73,7 @@ public class MQProducerService<T> {
      * @param destination
      * @param payload
      */
-    public void syncSendMsg(String msgKey, String destination, Object payload, String msgSource){
+    private void syncSendMsg(String msgKey, String destination, Object payload, String msgSource){
         sendMsg(MSG_TYPE.SYNC, msgKey, destination, payload, msgSource) ;
     }
     /**
@@ -83,7 +85,7 @@ public class MQProducerService<T> {
     public void syncSendMsg(String msgKey, String topic,String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
         syncSendMsg(msgKey, destination, payload, msgSource);
     }
     /**
@@ -100,7 +102,7 @@ public class MQProducerService<T> {
      * @param destination
      * @param payload
      */
-    public void oneWaySendMsg(String msgKey, String destination, Object payload, String msgSource){
+    private void oneWaySendMsg(String msgKey, String destination, Object payload, String msgSource){
         sendMsg(MSG_TYPE.ONEWAY, msgKey,destination, payload, msgSource);
     }
     /**
@@ -112,7 +114,7 @@ public class MQProducerService<T> {
     public void oneWaySendMsg(String msgKey,String topic, String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
@@ -130,7 +132,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtils.simpleUUID())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), messageList);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag), messageList);
     }
 
     /**
@@ -145,7 +147,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(StrUtil.format("{}-{}:{}", activeProfile, topic, tag), msg);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag), msg);
     }
 
     /**
@@ -159,7 +161,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        String destination = StrUtil.format("{}-{}:{}", activeProfile, topic, tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
         rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {

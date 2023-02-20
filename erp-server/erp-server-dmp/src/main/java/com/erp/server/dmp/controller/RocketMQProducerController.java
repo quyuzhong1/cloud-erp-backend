@@ -1,11 +1,11 @@
 package com.erp.server.dmp.controller;
 
 import cn.hutool.json.JSONUtil;
-import com.erp.common.business.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqTopic;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.server.dmp.service.mq.MQConsumerDemoService;
-import com.erp.server.dmp.service.mq.MQProducerService;
+import com.common.message.service.mq.MQConsumerDemoService;
+import com.common.message.service.mq.MQProducerService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,13 +29,13 @@ public class RocketMQProducerController extends BaseController {
 
     @PostMapping("/syncClassMsg")
     public ApiResult syncClassMsg(@RequestBody MQConsumerDemoService.ProducerDto dto){
-        mQProducerService.syncClassMsg(RocketMqTopic.DMP_TOPIC, dto.getTag(), dto.getEntity(), dto.getEntity().getId().toString());
+        mQProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, dto.getTag(), dto.getEntity(), dto.getEntity().getId().toString());
         return success();
     }
 
     @PostMapping("/oneWaySendMsg")
     public ApiResult oneWaySendMsg(@RequestBody MQConsumerDemoService.ProducerDto dto){
-        mQProducerService.oneWaySendMsg( dto.getEntity().getId().toString(),RocketMqTopic.DMP_TOPIC, dto.getTag(), "test", JSONUtil.toJsonStr(dto.getEntity()));
+        mQProducerService.oneWaySendMsg( dto.getEntity().getId().toString(),RocketMqTopic.DMP_ERP_ORDER_TOPIC, dto.getTag(), "test", JSONUtil.toJsonStr(dto.getEntity()));
         return success();
     }
 

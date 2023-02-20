@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * dmp topic 使用 RocketMqTopic.DMP_TOPIC
+ * dmp topic 使用 RocketMqTopic.DMP_ERP_ORDER_TOPIC
  * tag 区分不同类型数据方便订阅
  * tag 统一归集配置常量 避免不同业务发生冲突
  *

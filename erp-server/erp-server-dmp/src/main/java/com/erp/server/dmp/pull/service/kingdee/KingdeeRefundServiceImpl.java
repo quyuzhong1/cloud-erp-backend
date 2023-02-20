@@ -5,7 +5,7 @@
 //import cn.hutool.core.util.ObjectUtil;
 //import cn.hutool.core.util.StrUtil;
 //import com.alibaba.fastjson.JSONObject;
-//import com.erp.common.business.constant.RocketMqTopic;
+//import com.common.message.constant.RocketMqTopic;
 //import com.common.core.utils.MapUtil;
 //import com.common.core.utils.date.EnumTimePattern;
 //import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -25,7 +25,7 @@
 //import com.erp.server.dmp.pull.service.SaveData;
 //import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 //import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
-//import com.erp.server.dmp.service.mq.MQProducerService;
+//import com.common.message.service.mq.MQProducerService;
 //import com.erp.server.dmp.utils.KingdeeApiUtils;
 //import com.erp.server.dmp.utils.KingdeeUtils;
 //import com.kingdee.bos.webapi.entity.QueryParam;
@@ -107,7 +107,7 @@
 //
 //        // 异步推送到MQ
 //        mabangToMqlist.stream().peek(msg ->
-//                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TAG.getName(),
+//                        mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TAG.getName(),
 //                        msg, StrUtil.format("{}_{}",msg.getPlatformOrderId(), msg.getSalesRecordNumber())))
 //                .collect(Collectors.toList());
 //

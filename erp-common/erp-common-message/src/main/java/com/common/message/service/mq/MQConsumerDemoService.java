@@ -1,7 +1,7 @@
-package com.erp.server.dmp.service.mq;
+package com.common.message.service.mq;
 
 import cn.hutool.json.JSONUtil;
-import com.erp.common.business.constant.RocketMqTopic;
+import com.common.message.constant.RocketMqTopic;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -26,7 +26,7 @@ public class MQConsumerDemoService {
      * consumeMode = ConsumeMode.ORDERLY  每秒进行一次重试 一直重试
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC, selectorExpression = "tag2", consumerGroup = "tag2_consumer", consumeMode = ConsumeMode.ORDERLY)
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag2", consumerGroup = "tag2_consumer", consumeMode = ConsumeMode.ORDERLY)
     public class ConsumerSend2 implements RocketMQListener<String> {
         @Override
         public void onMessage(String str) {
@@ -40,7 +40,7 @@ public class MQConsumerDemoService {
      * consumeMode = ConsumeMode.ORDERLY  每秒进行一次重试 一直重试
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_CONSUMER_TOPIC, selectorExpression = "tag1", consumerGroup = "tag1_consumer")
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC, selectorExpression = "tag1", consumerGroup = "tag1_consumer")
     public class Consumer implements RocketMQListener<ProducerDto.EntityDto> {
         @Override
         public void onMessage(ProducerDto.EntityDto dto) {
